@@ -1,45 +1,35 @@
 
-# Fix Mapping Builder Page Layout and Remaining Contrast Issues
 
-## Problems Identified
+# Fix Remaining Color Contrast Issues Across Admin Pages
 
-From the screenshot, there are two main issues:
+## Problem Analysis
 
-### 1. Right Panel Getting Cut Off
-The Target CRM panel on the far right is being clipped - the type badges (showing "st" for string) are cut off at the edge. This is caused by:
-- The main content area uses `overflow-hidden` which clips content
-- The page uses negative margin `-m-6` which pushes content outside the viewport
-- The panel width doesn't account for the badge content properly
+From the screenshot, several text elements still have insufficient contrast on the Tenants page and likely other admin pages:
 
-### 2. Remaining Contrast Issues
-Some text elements are still missing proper contrast classes:
-- Category headers in collapsible triggers are not explicitly styled with `text-foreground`
-- The field path text under field labels needs better visibility
+### Issues Identified
+
+| Element | Location | Current Issue |
+|---------|----------|---------------|
+| Page title "Tenants" | TenantsPage header | Missing explicit `text-foreground` class |
+| Large stat value (number) | StatCard component | `text-3xl font-bold` inherits color without explicit class |
+| Tenant names in table | TenantsPage table render | `<p className="font-medium">` missing text color |
+| Table headers | DataTable component | `text-muted-foreground` still appearing too dark |
+| Breadcrumb "Tenants" | AdminLayout header | Font weight on current page name needs `text-foreground` |
+
+---
+
+## Root Cause
+
+The issue is that while `--muted-foreground` was improved to 75% lightness, some elements are:
+1. Not inheriting `text-foreground` properly from parent containers
+2. Missing explicit color classes entirely
+3. The card components use `text-card-foreground` which needs to cascade down
 
 ---
 
 ## Solution
 
-### Layout Fixes
-
-**MappingBuilderPage.tsx**
-- Change `overflow-hidden` to `overflow-auto` on the main content container
-- Ensure the layout properly contains all three panels without clipping
-- Fix the height calculation to account for all content
-
-**TargetFieldsPanel.tsx & SourceFieldsPanel.tsx**
-- Add `flex-shrink-0` to the Badge components to prevent them from being compressed
-- Ensure field items have `overflow-hidden` only on text content, not badges
-
-### Contrast Fixes
-
-**SourceFieldsPanel.tsx**
-- Add `text-foreground` to the CollapsibleTrigger text
-- Ensure all text elements have explicit color classes
-
-**TargetFieldsPanel.tsx**
-- Add `text-foreground` to the CollapsibleTrigger text
-- Ensure category names are clearly visible
+Add explicit `text-foreground` classes to key text elements across multiple files, and ensure table headers are more visible.
 
 ---
 
@@ -47,113 +37,108 @@ Some text elements are still missing proper contrast classes:
 
 | File | Changes |
 |------|---------|
-| `src/pages/admin/MappingBuilderPage.tsx` | Fix overflow and layout issues |
-| `src/components/mapping-builder/SourceFieldsPanel.tsx` | Add contrast classes to category headers |
-| `src/components/mapping-builder/TargetFieldsPanel.tsx` | Add contrast classes and fix badge clipping |
+| `src/components/ui/stat-card.tsx` | Add `text-foreground` to value and explicit classes to other text |
+| `src/pages/admin/TenantsPage.tsx` | Add `text-foreground` to page title and table cell text |
+| `src/components/ui/data-table.tsx` | Change table header from `text-muted-foreground` to `text-foreground/80` |
+| `src/components/layout/AdminLayout.tsx` | Add `text-foreground` to breadcrumb current page name |
 
 ---
 
 ## Detailed Changes
 
-### MappingBuilderPage.tsx
+### 1. StatCard Component (stat-card.tsx)
 
-**Line 216** - Adjust the root container to prevent clipping:
+**Line 53-54** - Add text color to title and value:
 ```tsx
 // Current
-<div className="flex flex-col h-[calc(100vh-8rem)] -m-6 animate-fade-in">
-
-// Updated - use min-h instead and adjust margins
-<div className="flex flex-col h-[calc(100vh-8rem)] -mx-6 -mt-6 animate-fade-in">
-```
-
-**Line 292** - Change overflow handling:
-```tsx
-// Current
-<div className="flex flex-1 overflow-hidden">
-
-// Updated - allow horizontal scroll if needed, or use overflow-x-auto
-<div className="flex flex-1 min-w-0 overflow-hidden">
-```
-
-### SourceFieldsPanel.tsx
-
-**Line 117** - Add text-foreground to CollapsibleTrigger:
-```tsx
-// Current
-<CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-lg text-sm font-medium">
+<p className="text-sm font-medium text-muted-foreground">{title}</p>
+<p className="mt-2 text-3xl font-bold tracking-tight">{value}</p>
 
 // Updated
-<CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-lg text-sm font-medium text-foreground">
+<p className="text-sm font-medium text-muted-foreground">{title}</p>
+<p className="mt-2 text-3xl font-bold tracking-tight text-foreground">{value}</p>
 ```
 
-### TargetFieldsPanel.tsx
+### 2. TenantsPage (TenantsPage.tsx)
 
-**Line 147** - Add text-foreground to CollapsibleTrigger:
+**Line 163** - Add text color to page title:
 ```tsx
 // Current
-<CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-lg text-sm font-medium capitalize">
+<h1 className="text-2xl font-bold">Tenants</h1>
 
 // Updated
-<CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-lg text-sm font-medium capitalize text-foreground">
+<h1 className="text-2xl font-bold text-foreground">Tenants</h1>
 ```
 
-**Line 185-190** - Ensure Badge doesn't get clipped:
+**Line 78** - Add text color to tenant name in table:
 ```tsx
 // Current
-<Badge
-  variant="outline"
-  className={cn("text-xs", categoryColors[category])}
->
-  {field.type}
-</Badge>
+<p className="font-medium">{tenant.name}</p>
 
-// Updated - add flex-shrink-0 to prevent compression
-<Badge
-  variant="outline"
-  className={cn("text-xs flex-shrink-0", categoryColors[category])}
->
-  {field.type}
-</Badge>
+// Updated
+<p className="font-medium text-foreground">{tenant.name}</p>
 ```
 
-Also update **line 163-165** for the field item container:
+### 3. DataTable Component (data-table.tsx)
+
+**Lines 42-44, 74-76, 97-99** - Change table header color to brighter variant:
 ```tsx
 // Current
-<div
-  key={field.path}
-  className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing group transition-colors"
-
-// Updated - ensure proper overflow handling
-<div
-  key={field.path}
-  className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing group transition-colors overflow-hidden"
-```
-
-### Same updates for SourceFieldsPanel.tsx
-
-**Line 150-155** - Add flex-shrink-0 to Badge:
-```tsx
-<Badge
-  variant="outline"
-  className={cn("text-xs flex-shrink-0", categoryColors[category])}
+<TableHead
+  key={column.key}
+  className={cn("text-muted-foreground font-medium", column.className)}
 >
-  {field.type}
-</Badge>
+
+// Updated - use foreground with slight transparency for hierarchy
+<TableHead
+  key={column.key}
+  className={cn("text-foreground/80 font-medium", column.className)}
+>
 ```
+
+### 4. AdminLayout (AdminLayout.tsx)
+
+**Line 189** - Add text color to breadcrumb current page:
+```tsx
+// Current
+<span className="font-medium">{currentPage?.name || "Dashboard"}</span>
+
+// Updated
+<span className="font-medium text-foreground">{currentPage?.name || "Dashboard"}</span>
+```
+
+---
+
+## Additional Improvements
+
+### Global CSS Enhancement
+
+Update the `--card-foreground` value in dark mode to ensure it matches `--foreground`:
+
+```css
+/* In src/index.css */
+.dark {
+  --card-foreground: 210 40% 98%; /* Slightly brighter for cards */
+}
+```
+
+This ensures all text inside cards inherits a visible color.
 
 ---
 
 ## Visual Result
 
-After these fixes:
-- The right panel will display completely without clipping
-- Type badges (string, email, etc.) will be fully visible
-- Category headers will have proper contrast
-- All text will be clearly readable against dark backgrounds
-- The three-panel layout will fit properly within the viewport
+After these changes:
+- Page titles will be clearly visible with high contrast
+- Stat card values (like "5" for Total Tenants) will be prominent
+- Tenant names in the table will be easily readable
+- Table headers will have adequate contrast (80% opacity foreground)
+- Breadcrumb text will be clearly legible
+- All text will maintain WCAG AA compliance
 
 ---
 
 ## Summary
 
-The layout issue is caused by `overflow-hidden` on the parent container combined with negative margins. By adjusting the overflow behavior and ensuring badges don't compress, the right panel will display correctly. The contrast fixes add explicit `text-foreground` classes to remaining text elements that were missing proper color definitions.
+The remaining contrast issues stem from text elements not having explicit color classes and relying on inheritance that doesn't always work correctly in dark mode. By adding explicit `text-foreground` classes to key elements like page titles, stat values, and table content, we ensure consistent visibility across the entire admin interface.
+
