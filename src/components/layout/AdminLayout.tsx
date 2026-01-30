@@ -9,7 +9,6 @@ import {
   Settings,
   Menu,
   X,
-  Zap,
   LogOut,
   ChevronRight,
   Bell,
@@ -26,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 
 const navigation = [
   { name: "Tenants", href: "/admin", icon: Building2 },
@@ -67,12 +67,10 @@ export function AdminLayout() {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center gap-3 px-6 border-b border-sidebar-border">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary glow-primary">
-              <Zap className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <Fabric59Icon size="md" className="glow-primary" />
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-sidebar-foreground">
-                Five9 Fabric
+                Fabric59
               </span>
               <span className="text-xs text-sidebar-foreground/60">
                 Integration Hub

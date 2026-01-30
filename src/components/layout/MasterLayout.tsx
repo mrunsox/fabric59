@@ -5,10 +5,10 @@ import {
   Building2, 
   Users, 
   LogOut,
-  LayoutDashboard,
-  Shield
+  LayoutDashboard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 
 export function MasterLayout() {
   const { signOut, user } = useAuth();
@@ -30,9 +30,9 @@ export function MasterLayout() {
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card flex flex-col">
         <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2 text-primary">
-            <Shield className="h-6 w-6" />
-            <span className="font-semibold text-lg">System Access</span>
+          <div className="flex items-center gap-2">
+            <Fabric59Icon size="sm" />
+            <span className="font-semibold text-lg text-foreground">System Admin</span>
           </div>
         </div>
 

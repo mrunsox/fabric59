@@ -34,7 +34,7 @@ export default function MasterDashboardPage() {
   const statCards = [
     { label: "Organizations", value: stats?.organizations || 0, icon: Building2 },
     { label: "Users", value: stats?.users || 0, icon: Users },
-    { label: "Five9 Domains", value: stats?.domains || 0, icon: Globe },
+    { label: "Domains", value: stats?.domains || 0, icon: Globe },
     { label: "Tenants", value: stats?.tenants || 0, icon: FileText },
   ];
 

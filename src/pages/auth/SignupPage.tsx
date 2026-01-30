@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 
 export default function SignupPage() {
   const { signUp, isAuthenticated, isLoading } = useAuth();
@@ -61,12 +62,12 @@ export default function SignupPage() {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary glow-primary">
-              <Zap className="h-6 w-6 text-primary-foreground" />
+              <Fabric59Icon size="lg" className="h-12 w-12" />
             </div>
           </div>
           <CardTitle className="text-2xl">Create your account</CardTitle>
           <CardDescription>
-            Start connecting Five9 with your CRMs
+            Start connecting your CRMs with Five9
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
