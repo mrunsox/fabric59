@@ -27,7 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [membership, setMembership] = useState<OrganizationMember | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isOrgLoading, setIsOrgLoading] = useState(true);
   const [isMasterAdmin, setIsMasterAdmin] = useState(false);
 
   // Check master admin status
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Load user's organizations
   const loadOrganizations = async (userId: string) => {
+    setIsOrgLoading(true);
     try {
       // Get memberships
       const { data: memberships, error: membError } = await supabase
@@ -107,6 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Error loading organizations:", error);
+    } finally {
+      setIsOrgLoading(false);
     }
   };
 
@@ -128,9 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setOrganization(null);
           setMembership(null);
           setIsMasterAdmin(false);
+          setIsOrgLoading(false);
         }
 
-        setIsLoading(false);
+        setIsAuthLoading(false);
       }
     );
 
@@ -142,9 +147,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (existingSession?.user) {
         loadOrganizations(existingSession.user.id);
         checkMasterAdmin(existingSession.user.id);
+      } else {
+        setIsOrgLoading(false);
       }
 
-      setIsLoading(false);
+      setIsAuthLoading(false);
     });
 
     return () => {
@@ -250,7 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     organization,
     membership,
     organizations,
-    isLoading,
+    isLoading: isAuthLoading || isOrgLoading,
     isAuthenticated: !!user,
     orgRole: membership?.role ?? null,
     isMasterAdmin,
