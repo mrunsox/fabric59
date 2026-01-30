@@ -20,6 +20,7 @@ import TenantsPage from "@/pages/admin/TenantsPage";
 import DomainsPage from "@/pages/admin/DomainsPage";
 import DomainDetailPage from "@/pages/admin/DomainDetailPage";
 import MappingsPage from "@/pages/admin/MappingsPage";
+import MappingBuilderPage from "@/pages/admin/MappingBuilderPage";
 import ApiLogsPage from "@/pages/admin/ApiLogsPage";
 import NotificationsPage from "@/pages/admin/NotificationsPage";
 import TestConsolePage from "@/pages/admin/TestConsolePage";
@@ -64,6 +65,8 @@ const App = () => (
                 <Route path="domains" element={<DomainsPage />} />
                 <Route path="domains/:id" element={<DomainDetailPage />} />
                 <Route path="mappings" element={<MappingsPage />} />
+                <Route path="mappings/builder" element={<MappingBuilderPage />} />
+                <Route path="mappings/builder/:id" element={<MappingBuilderPage />} />
                 <Route path="logs" element={<ApiLogsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="test" element={<TestConsolePage />} />
