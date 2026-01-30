@@ -1,161 +1,128 @@
 
 
-# Generate Polished Fabric59 Logo with AI Image Generation
+# Generate Fabric59 Wordmark Logo with Woven Texture
 
-## Current State
+## Overview
 
-The Fabric59 branding is now active across the application:
-- ✅ Login page shows "Sign in to your Fabric59 account"
-- ✅ Icon displays with stylized "F" and "59"
-- ✅ Cyan/blue color scheme is consistent
-- ✅ Favicon is configured in index.html
-
-The current logo is functional but uses a simple SVG design. A more polished version with a woven fabric texture pattern would better represent the "Fabric" brand identity.
+Create a full wordmark version of the Fabric59 logo that displays the icon alongside the "Fabric59" text in a horizontal layout, using AI image generation to achieve a polished woven texture aesthetic matching the existing icon.
 
 ---
 
-## AI Image Generation Plan
+## What We'll Create
 
-### Generate Polished Icon
+### Wordmark Logo Asset
+A horizontal logo featuring:
+- The Fabric59 woven "F" icon on the left
+- "Fabric59" text with woven/fabric texture treatment
+- "Integration Hub" subtitle (optional variant)
+- Optimized for headers, marketing pages, and hero sections
+- Multiple size variants for different use cases
 
-Use the Lovable AI image generation endpoint to create a professional logo with these characteristics:
+---
+
+## Implementation Steps
+
+### 1. Generate Wordmark Image via AI
+
+Use the Lovable AI image generation to create a polished wordmark:
 
 **Design Brief:**
-- Modern SaaS aesthetic
-- Woven/interlaced fabric pattern forming the letter "F"
-- Subtle "59" integration
-- Cyan/teal primary color (#0EA5E9)
-- Works as a square icon (favicon-compatible)
-- Dark background optimized
-- Clean, professional appearance
+- Horizontal layout (approx 400x100 or similar aspect ratio)
+- Woven/interlaced "F" icon matching existing style
+- "Fabric59" text with subtle fabric texture
+- Cyan/teal primary color (#0EA5E9) on transparent or dark background
+- Clean, modern SaaS typography
+- Works on both light and dark backgrounds
 
-### Implementation Steps
+### 2. Create Assets
 
-1. **Create Edge Function for Logo Generation**
-   - New function: `supabase/functions/generate-logo/index.ts`
-   - Use Lovable AI gateway with `google/gemini-2.5-flash-image` model
-   - Generate logo based on specific design prompt
+| Asset | Size | Purpose |
+|-------|------|---------|
+| `fabric59-wordmark.png` | 400x100 | Standard header use |
+| `fabric59-wordmark-light.png` | 400x100 | Light backgrounds |
+| `fabric59-wordmark-dark.png` | 400x100 | Dark backgrounds |
 
-2. **Create Logo Generation UI (Optional)**
-   - Add a temporary admin tool to generate and preview logos
-   - Allow downloading and saving the generated image
+### 3. Create Wordmark Component
 
-3. **Upload Generated Logo to Storage**
-   - Save the best generated logo to Supabase Storage
-   - Update the Fabric59Icon component to use the generated image
+**File:** `src/components/brand/Fabric59Wordmark.tsx`
+
+A new React component that:
+- Displays the generated wordmark image
+- Supports size variants (sm, md, lg, xl)
+- Works for headers, hero sections, and marketing pages
+- Falls back to text + icon combo if image fails
+
+### 4. Update Existing Logo Component
+
+Enhance `Fabric59Logo.tsx` with:
+- Option to use wordmark image vs icon + text
+- New `variant` prop: "default" | "wordmark" | "icon-only"
+- Consistent sizing across variants
 
 ---
 
-## Edge Function Implementation
+## Files to Create
 
-**File:** `supabase/functions/generate-logo/index.ts`
+| File | Purpose |
+|------|---------|
+| `src/assets/fabric59-wordmark.png` | Generated wordmark image |
+| `public/fabric59-wordmark.png` | Copy for public access |
+| `src/components/brand/Fabric59Wordmark.tsx` | Wordmark component |
 
-```typescript
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+## Files to Modify
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+| File | Change |
+|------|--------|
+| `src/components/brand/Fabric59Logo.tsx` | Add wordmark variant option |
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+---
 
-  try {
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
-        messages: [{
-          role: 'user',
-          content: `Create a modern SaaS logo icon for "Fabric59". Design requirements:
-          - Square format, 512x512 pixels
-          - Woven/interlaced fabric pattern forming an abstract letter "F"
-          - The number "59" subtly integrated into the bottom right corner
-          - Primary color: Cyan/teal (#0EA5E9) 
-          - Dark navy background (#0A1929) for contrast
-          - Clean, geometric, professional look
-          - Rounded corners on the outer square (8px radius feel)
-          - The woven pattern should have depth with subtle shadows
-          - Minimalist style suitable for favicon and app icons`
-        }],
-        modalities: ['image', 'text']
-      })
-    });
+## Component API
 
-    const data = await response.json();
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+```tsx
+// Wordmark for headers and marketing
+<Fabric59Wordmark size="lg" />
 
-    return new Response(
-      JSON.stringify({ success: true, imageUrl }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-});
+// Updated logo with variant
+<Fabric59Logo variant="wordmark" />
+<Fabric59Logo variant="default" /> // icon + text (current)
+<Fabric59Logo variant="icon-only" />
 ```
 
 ---
 
-## Alternative: Direct SVG Enhancement
+## Usage Examples
 
-If AI generation doesn't produce ideal results, enhance the current SVG with:
+**Header/Navbar:**
+```tsx
+<Fabric59Wordmark size="md" />
+```
 
-1. **Woven pattern overlay** - Add interlacing lines to the "F" letterform
-2. **Gradient fills** - Add depth with subtle gradients
-3. **Shadow effects** - Inner shadows for dimension
-4. **Refined typography** - Polish the "59" text positioning
+**Marketing Hero:**
+```tsx
+<Fabric59Wordmark size="xl" className="mb-4" />
+```
 
-**Enhanced SVG Concept:**
-```svg
-<svg viewBox="0 0 40 40">
-  <!-- Background with subtle gradient -->
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0EA5E9"/>
-      <stop offset="100%" style="stop-color:#0284C7"/>
-    </linearGradient>
-    <!-- Woven pattern -->
-    <pattern id="weave" patternUnits="userSpaceOnUse" width="4" height="4">
-      <path d="M0,2 h4 M2,0 v4" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
-    </pattern>
-  </defs>
-  <rect width="40" height="40" rx="8" fill="url(#bg)"/>
-  <rect width="40" height="40" rx="8" fill="url(#weave)"/>
-  <!-- Woven F letterform with interlacing -->
-  ...
-</svg>
+**Footer:**
+```tsx
+<Fabric59Wordmark size="sm" />
 ```
 
 ---
 
-## Files to Create/Modify
+## AI Generation Prompt
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `supabase/functions/generate-logo/index.ts` | Create | Edge function for AI logo generation |
-| `src/pages/admin/LogoGeneratorPage.tsx` | Create | UI to generate and preview logos (optional) |
-| `public/fabric59-icon.png` | Create | Save generated logo as PNG |
-| `src/components/brand/Fabric59Icon.tsx` | Modify | Option to use generated image |
-| `index.html` | Modify | Update favicon to PNG if better quality |
-
----
-
-## Summary
-
-This plan provides two paths:
-1. **AI Generation** - Use Lovable AI to generate a polished woven-pattern logo
-2. **SVG Enhancement** - Manually improve the current SVG with woven texture effects
-
-Both approaches maintain brand consistency while adding the textured "fabric" aesthetic to better represent the Fabric59 brand identity.
+The wordmark will be generated with this prompt:
+```
+Create a modern SaaS wordmark logo for "Fabric59". Design requirements:
+- Horizontal layout, approximately 400x100 pixels
+- On the left: the woven/interlaced "F" icon with subtle "59" integration
+- On the right: "Fabric59" text in clean, modern sans-serif typography
+- The text should have a subtle woven fabric texture overlay
+- Primary color: Cyan/teal (#0EA5E9)
+- Transparent background (or dark navy #0A1929)
+- Professional, clean, minimalist SaaS aesthetic
+- Text and icon should be visually balanced
+- Optional: "Integration Hub" as smaller subtitle below main text
+```
 
