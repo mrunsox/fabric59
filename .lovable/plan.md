@@ -1,124 +1,64 @@
 
-
-# Fix Navigation Race Condition and Verify Mapping Builder
+# Fix Table Text Contrast in DomainsPage
 
 ## Problem Identified
 
-After completing onboarding, users cannot access the admin dashboard because:
-1. `ProtectedRoute` checks `!organization` before `loadOrganizations` completes
-2. The `isLoading` flag becomes `false` before organization data is available
-3. This causes a redirect loop back to `/onboarding`
+The text in the "Domain" and "Display Name" columns is barely visible because:
+1. The table cells don't have explicit text color classes
+2. The text is inheriting a color that doesn't contrast well with the dark card background
+3. Looking at the screenshot, the text appears extremely faded/dark on the dark background
 
 ---
 
 ## Solution
 
-Update the AuthContext to properly track organization loading state separately from auth loading state, and update ProtectedRoute to wait for both.
-
-### Step 1: Update AuthContext
-
-Add a separate `isOrgLoading` state to track organization data loading:
-
-```typescript
-// New state
-const [isOrgLoading, setIsOrgLoading] = useState(true);
-
-// In loadOrganizations
-const loadOrganizations = async (userId: string) => {
-  setIsOrgLoading(true);
-  try {
-    // ... existing logic
-  } finally {
-    setIsOrgLoading(false);
-  }
-};
-
-// Export combined loading state
-isLoading: isAuthLoading || isOrgLoading,
-```
-
-### Step 2: Update ProtectedRoute
-
-Change the redirect logic to handle the case where organization is still loading:
-
-```typescript
-// Wait for BOTH auth and org to finish loading
-if (isLoading) {
-  return <Loader2 ... />;
-}
-
-// Only redirect if we've finished loading and still have no org
-if (!organization && location.pathname !== "/onboarding") {
-  return <Navigate to="/onboarding" replace />;
-}
-```
+Add explicit `text-foreground` classes to the table cells to ensure proper contrast with the dark card background.
 
 ---
 
-## Files to Modify
+## File to Modify
 
 | File | Change |
 |------|--------|
-| `src/contexts/AuthContext.tsx` | Add `isOrgLoading` state, don't set `isLoading` to false until org loads |
-| `src/components/auth/ProtectedRoute.tsx` | No changes needed if AuthContext is fixed |
+| `src/pages/admin/DomainsPage.tsx` | Add `text-foreground` class to domain name and display name cells |
 
 ---
 
-## Implementation Details
+## Changes
 
-### AuthContext Changes
+### Line 178 - Domain Name
+**Current:**
+```tsx
+<span className="font-medium">{domain.domain}</span>
+```
 
-```typescript
-// Add new state
-const [isAuthLoading, setIsAuthLoading] = useState(true);
-const [isOrgLoading, setIsOrgLoading] = useState(true);
+**Updated:**
+```tsx
+<span className="font-medium text-foreground">{domain.domain}</span>
+```
 
-// Update loadOrganizations
-const loadOrganizations = async (userId: string) => {
-  setIsOrgLoading(true);
-  try {
-    // ... existing code ...
-  } catch (error) {
-    console.error("Error loading organizations:", error);
-  } finally {
-    setIsOrgLoading(false);
-  }
-};
+### Line 181 - Display Name Cell
+**Current:**
+```tsx
+<TableCell>{domain.display_name}</TableCell>
+```
 
-// In auth state change handler
-if (currentSession?.user) {
-  loadOrganizations(currentSession.user.id);
-  checkMasterAdmin(currentSession.user.id);
-} else {
-  setOrganizations([]);
-  setOrganization(null);
-  setMembership(null);
-  setIsMasterAdmin(false);
-  setIsOrgLoading(false); // Not loading if no user
-}
-setIsAuthLoading(false);
-
-// Export combined isLoading
-isLoading: isAuthLoading || isOrgLoading,
+**Updated:**
+```tsx
+<TableCell className="text-foreground">{domain.display_name}</TableCell>
 ```
 
 ---
 
-## After Fix: Test Plan
+## Visual Result
 
-1. Complete onboarding with a test account
-2. Verify user is redirected to `/admin` successfully
-3. Navigate to **Field Mappings** page
-4. Click **Create Visual Mapping** button
-5. Verify the React Flow canvas loads with:
-   - Left panel showing Five9 fields
-   - Right panel showing CRM fields (Clio)
-   - Center canvas for drag-and-drop connections
-6. Test creating a field mapping between Five9 and Clio fields
+After the fix:
+- Domain names will display in light text (96% lightness) on the dark card
+- Display names will also use the proper foreground color
+- Both columns will have clear, readable text matching the design system
 
 ---
 
 ## Summary
 
-The navigation issue is caused by a race condition where `isLoading` becomes false before organization data finishes loading. By tracking organization loading separately and ensuring both complete before proceeding, users will be able to access the admin dashboard after onboarding.
-
+The fix adds explicit `text-foreground` Tailwind classes to ensure the table cell text uses the proper CSS variable (`--foreground: 210 40% 96%`) which provides good contrast against the dark card background (`--card: 222 47% 9%`).
