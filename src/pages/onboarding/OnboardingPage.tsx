@@ -6,17 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ArrowRight, Check, Globe, Building2 } from "lucide-react";
+import { Loader2, ArrowRight, Check, Globe, Building2, Building } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { toast } from "sonner";
 
-type Step = "domain" | "tenant" | "complete";
+type Step = "org" | "domain" | "tenant" | "complete";
 
 export default function OnboardingPage() {
   const { organization, user, isMasterAdmin } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>("domain");
+  
+  // Determine initial step based on whether user has an organization
+  const [step, setStep] = useState<Step>(organization ? "domain" : "org");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Organization form
+  const [orgName, setOrgName] = useState("");
 
   // Domain form
   const [domain, setDomain] = useState("");
@@ -27,6 +32,9 @@ export default function OnboardingPage() {
   const [tenantName, setTenantName] = useState("");
   const [crmType, setCrmType] = useState<"clio" | "workiz" | "salesforce" | "generic_rest" | "other">("other");
 
+  // Track the organization ID for domain/tenant creation when org was just created
+  const [createdOrgId, setCreatedOrgId] = useState<string | null>(null);
+
   // Redirect master admins to their dashboard
   useEffect(() => {
     if (isMasterAdmin && !organization) {
@@ -34,7 +42,15 @@ export default function OnboardingPage() {
     }
   }, [isMasterAdmin, organization, navigate]);
 
-  if (!organization || !user) {
+  // Update step when organization becomes available (after creation)
+  useEffect(() => {
+    if (organization && step === "org") {
+      setStep("domain");
+    }
+  }, [organization, step]);
+
+  // Only block on missing user (auth loading), not missing organization
+  if (!user) {
     return (
       <div className="dark min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -42,15 +58,59 @@ export default function OnboardingPage() {
     );
   }
 
+  const getOrgId = () => createdOrgId || organization?.id;
+
+  const handleCreateOrg = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Create organization
+      const { data: org, error: orgError } = await supabase
+        .from("organizations")
+        .insert({ name: orgName, billing_email: user.email })
+        .select()
+        .single();
+
+      if (orgError) throw orgError;
+
+      // Add user as owner
+      const { error: memberError } = await supabase
+        .from("organization_members")
+        .insert({
+          organization_id: org.id,
+          user_id: user.id,
+          role: "owner"
+        });
+
+      if (memberError) throw memberError;
+
+      setCreatedOrgId(org.id);
+      setStep("domain");
+      toast.success("Organization created!");
+    } catch (error: unknown) {
+      toast.error((error as Error).message || "Failed to create organization");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleCreateDomain = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    const orgId = getOrgId();
+    if (!orgId) {
+      toast.error("Organization not found");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
         .from("five9_domains")
         .insert({
-          organization_id: organization.id,
+          organization_id: orgId,
           domain,
           display_name: domainDisplayName,
         })
@@ -73,12 +133,19 @@ export default function OnboardingPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const orgId = getOrgId();
+    if (!orgId) {
+      toast.error("Organization not found");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.from("tenants").insert([
         {
           name: tenantName,
           crm_type: crmType,
-          organization_id: organization.id,
+          organization_id: orgId,
           five9_domain_id: createdDomainId,
         },
       ]);
@@ -95,35 +162,39 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = () => {
-    navigate("/admin");
+    // Force reload to pick up organization in auth context
+    window.location.href = "/admin";
   };
+
+  const getStepIndex = (s: Step) => ["org", "domain", "tenant", "complete"].indexOf(s);
+  const steps = ["org", "domain", "tenant", "complete"] as const;
 
   return (
     <div className="dark min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Progress indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {["domain", "tenant", "complete"].map((s, i) => (
+          {steps.map((s, i) => (
             <div key={s} className="flex items-center">
               <div
                 className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
                   step === s
                     ? "bg-primary text-primary-foreground"
-                    : ["domain", "tenant", "complete"].indexOf(step) > i
+                    : getStepIndex(step) > i
                     ? "bg-success text-success-foreground"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
-                {["domain", "tenant", "complete"].indexOf(step) > i ? (
+                {getStepIndex(step) > i ? (
                   <Check className="h-4 w-4" />
                 ) : (
                   i + 1
                 )}
               </div>
-              {i < 2 && (
+              {i < 3 && (
                 <div
                   className={`w-12 h-0.5 mx-2 ${
-                    ["domain", "tenant", "complete"].indexOf(step) > i
+                    getStepIndex(step) > i
                       ? "bg-success"
                       : "bg-muted"
                   }`}
@@ -132,6 +203,50 @@ export default function OnboardingPage() {
             </div>
           ))}
         </div>
+
+        {step === "org" && (
+          <Card>
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                  <Building className="h-6 w-6 text-primary" />
+                </div>
+              </div>
+              <CardTitle>Create your organization</CardTitle>
+              <CardDescription>
+                Set up your agency or company to get started
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleCreateOrg}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="orgName">Organization Name</Label>
+                  <Input
+                    id="orgName"
+                    type="text"
+                    placeholder="Your Agency Name"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This will be your workspace name in Fabric59
+                  </p>
+                </div>
+              </CardContent>
+              <div className="px-6 pb-6">
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                  )}
+                  Create Organization
+                </Button>
+              </div>
+            </form>
+          </Card>
+        )}
 
         {step === "domain" && (
           <Card>
@@ -269,7 +384,7 @@ export default function OnboardingPage() {
               <div className="rounded-lg bg-muted/50 p-4 space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-success" />
-                  <span>Organization: {organization.name}</span>
+                  <span>Organization: {orgName || organization?.name}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-success" />
