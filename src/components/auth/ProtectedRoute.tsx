@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 export function ProtectedRoute() {
-  const { isAuthenticated, isLoading, organization } = useAuth();
+  const { isAuthenticated, isLoading, organization, isMasterAdmin } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -16,6 +16,12 @@ export function ProtectedRoute() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Master admins can bypass organization requirement
+  // They should access /master routes instead
+  if (isMasterAdmin && !organization) {
+    return <Navigate to="/master" replace />;
   }
 
   // If user is authenticated but has no organization, redirect to onboarding
