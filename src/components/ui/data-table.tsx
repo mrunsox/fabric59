@@ -41,7 +41,7 @@ export function DataTable<T>({
               {columns.map((column) => (
                 <TableHead
                   key={column.key}
-                  className={cn("text-muted-foreground font-medium", column.className)}
+                  className={cn("text-foreground/80 font-medium", column.className)}
                 >
                   {column.header}
                 </TableHead>
@@ -73,7 +73,7 @@ export function DataTable<T>({
               {columns.map((column) => (
                 <TableHead
                   key={column.key}
-                  className={cn("text-muted-foreground font-medium", column.className)}
+                  className={cn("text-foreground/80 font-medium", column.className)}
                 >
                   {column.header}
                 </TableHead>
@@ -96,7 +96,7 @@ export function DataTable<T>({
             {columns.map((column) => (
               <TableHead
                 key={column.key}
-                className={cn("text-muted-foreground font-medium", column.className)}
+                className={cn("text-foreground/80 font-medium", column.className)}
               >
                 {column.header}
               </TableHead>

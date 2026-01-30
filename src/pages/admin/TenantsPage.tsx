@@ -75,7 +75,7 @@ export default function TenantsPage() {
             <Building2 className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <p className="font-medium">{tenant.name}</p>
+            <p className="font-medium text-foreground">{tenant.name}</p>
             <p className="text-xs text-muted-foreground font-mono">
               {tenant.id.slice(0, 8)}...
             </p>
@@ -160,7 +160,7 @@ export default function TenantsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Tenants</h1>
+          <h1 className="text-2xl font-bold text-foreground">Tenants</h1>
           <p className="text-muted-foreground">
             Manage client integrations across Clio, Workiz, and other CRMs
           </p>
