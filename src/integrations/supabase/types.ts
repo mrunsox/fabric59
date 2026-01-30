@@ -99,6 +99,50 @@ export type Database = {
           },
         ]
       }
+      five9_domains: {
+        Row: {
+          api_key_encrypted: string | null
+          created_at: string
+          display_name: string
+          domain: string
+          id: string
+          organization_id: string
+          status: Database["public"]["Enums"]["five9_domain_status"]
+          updated_at: string
+          workflow_settings: Json | null
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          created_at?: string
+          display_name: string
+          domain: string
+          id?: string
+          organization_id: string
+          status?: Database["public"]["Enums"]["five9_domain_status"]
+          updated_at?: string
+          workflow_settings?: Json | null
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          created_at?: string
+          display_name?: string
+          domain?: string
+          id?: string
+          organization_id?: string
+          status?: Database["public"]["Enums"]["five9_domain_status"]
+          updated_at?: string
+          workflow_settings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "five9_domains_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           channel: Database["public"]["Enums"]["notification_channel"]
@@ -143,6 +187,68 @@ export type Database = {
           },
         ]
       }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          billing_email: string | null
+          created_at: string
+          id: string
+          name: string
+          plan: Database["public"]["Enums"]["org_plan"]
+          status: Database["public"]["Enums"]["org_status"]
+          updated_at: string
+        }
+        Insert: {
+          billing_email?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          plan?: Database["public"]["Enums"]["org_plan"]
+          status?: Database["public"]["Enums"]["org_status"]
+          updated_at?: string
+        }
+        Update: {
+          billing_email?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          plan?: Database["public"]["Enums"]["org_plan"]
+          status?: Database["public"]["Enums"]["org_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           created_at: string
@@ -150,9 +256,11 @@ export type Database = {
           crm_api_url: string | null
           crm_type: Database["public"]["Enums"]["crm_type"]
           custom_mappings: Json | null
+          five9_domain_id: string | null
           id: string
           name: string
           notification_triggers: Json | null
+          organization_id: string | null
           slack_webhook_url: string | null
           status: string
           updated_at: string
@@ -164,9 +272,11 @@ export type Database = {
           crm_api_url?: string | null
           crm_type?: Database["public"]["Enums"]["crm_type"]
           custom_mappings?: Json | null
+          five9_domain_id?: string | null
           id?: string
           name: string
           notification_triggers?: Json | null
+          organization_id?: string | null
           slack_webhook_url?: string | null
           status?: string
           updated_at?: string
@@ -178,15 +288,32 @@ export type Database = {
           crm_api_url?: string | null
           crm_type?: Database["public"]["Enums"]["crm_type"]
           custom_mappings?: Json | null
+          five9_domain_id?: string | null
           id?: string
           name?: string
           notification_triggers?: Json | null
+          organization_id?: string | null
           slack_webhook_url?: string | null
           status?: string
           updated_at?: string
           webhook_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tenants_five9_domain_id_fkey"
+            columns: ["five9_domain_id"]
+            isOneToOne: false
+            referencedRelation: "five9_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenants_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       unified_schema: {
         Row: {
@@ -249,6 +376,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_org_ids: { Args: { _user_id: string }; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -257,12 +385,20 @@ export type Database = {
         Returns: boolean
       }
       is_ops_member: { Args: { _user_id: string }; Returns: boolean }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "ops_team" | "viewer"
       crm_type: "clio" | "workiz" | "salesforce" | "generic_rest" | "other"
+      five9_domain_status: "active" | "inactive" | "pending_verification"
       notification_channel: "slack" | "email" | "sms"
       notification_status: "sent" | "failed" | "pending"
+      org_plan: "free" | "starter" | "pro" | "enterprise"
+      org_role: "owner" | "admin" | "member"
+      org_status: "active" | "suspended" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -392,8 +528,12 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "ops_team", "viewer"],
       crm_type: ["clio", "workiz", "salesforce", "generic_rest", "other"],
+      five9_domain_status: ["active", "inactive", "pending_verification"],
       notification_channel: ["slack", "email", "sms"],
       notification_status: ["sent", "failed", "pending"],
+      org_plan: ["free", "starter", "pro", "enterprise"],
+      org_role: ["owner", "admin", "member"],
+      org_status: ["active", "suspended", "cancelled"],
     },
   },
 } as const

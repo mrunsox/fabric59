@@ -24,6 +24,8 @@ export function useTenants() {
       return (data || []).map((row) => ({
         id: row.id,
         name: row.name,
+        organization_id: row.organization_id ?? null,
+        five9_domain_id: row.five9_domain_id ?? null,
         crm_type: row.crm_type as CrmType,
         crm_api_url: row.crm_api_url,
         crm_api_key: row.crm_api_key,
@@ -55,6 +57,8 @@ export function useTenant(id: string) {
       return {
         id: data.id,
         name: data.name,
+        organization_id: data.organization_id ?? null,
+        five9_domain_id: data.five9_domain_id ?? null,
         crm_type: data.crm_type as CrmType,
         crm_api_url: data.crm_api_url,
         crm_api_key: data.crm_api_key,
