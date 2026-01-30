@@ -1,28 +1,45 @@
 
+# Fix Mapping Builder Page Layout and Remaining Contrast Issues
 
-# Comprehensive Color Contrast Fix Across the Site
+## Problems Identified
 
-## Problem Analysis
+From the screenshot, there are two main issues:
 
-Looking at the screenshot and codebase, there are systemic color contrast issues affecting readability across multiple components and pages. The issues fall into these categories:
+### 1. Right Panel Getting Cut Off
+The Target CRM panel on the far right is being clipped - the type badges (showing "st" for string) are cut off at the edge. This is caused by:
+- The main content area uses `overflow-hidden` which clips content
+- The page uses negative margin `-m-6` which pushes content outside the viewport
+- The panel width doesn't account for the badge content properly
 
-### 1. Select/Dropdown Components
-The `SelectTrigger` component uses `bg-background` which in dark mode has very low contrast with text. The placeholder text uses implicit colors that don't contrast well.
-
-### 2. Labels and Text
-Labels using `text-muted-foreground` (defined as `215 20% 65%` in dark mode - a medium gray) on dark backgrounds create insufficient contrast, especially in headers and toolbars.
-
-### 3. Panel Headers
-Headers like "Five9 Fields", "Target CRM", "New Mapping" in the mapping builder are barely visible.
-
-### 4. Input Fields
-Input fields have `bg-background` which in dark mode is very dark (`222 47% 6%`), causing text to blend in.
+### 2. Remaining Contrast Issues
+Some text elements are still missing proper contrast classes:
+- Category headers in collapsible triggers are not explicitly styled with `text-foreground`
+- The field path text under field labels needs better visibility
 
 ---
 
-## Solution Overview
+## Solution
 
-Update the CSS custom properties and add explicit text color classes throughout the application to ensure WCAG AA compliant contrast ratios.
+### Layout Fixes
+
+**MappingBuilderPage.tsx**
+- Change `overflow-hidden` to `overflow-auto` on the main content container
+- Ensure the layout properly contains all three panels without clipping
+- Fix the height calculation to account for all content
+
+**TargetFieldsPanel.tsx & SourceFieldsPanel.tsx**
+- Add `flex-shrink-0` to the Badge components to prevent them from being compressed
+- Ensure field items have `overflow-hidden` only on text content, not badges
+
+### Contrast Fixes
+
+**SourceFieldsPanel.tsx**
+- Add `text-foreground` to the CollapsibleTrigger text
+- Ensure all text elements have explicit color classes
+
+**TargetFieldsPanel.tsx**
+- Add `text-foreground` to the CollapsibleTrigger text
+- Ensure category names are clearly visible
 
 ---
 
@@ -30,136 +47,113 @@ Update the CSS custom properties and add explicit text color classes throughout 
 
 | File | Changes |
 |------|---------|
-| `src/index.css` | Adjust `--muted-foreground` and `--input` CSS variables for better contrast |
-| `src/components/ui/select.tsx` | Add `text-foreground` class to SelectTrigger |
-| `src/components/ui/input.tsx` | Add `text-foreground` class |
-| `src/components/mapping-builder/SourceFieldsPanel.tsx` | Add `text-foreground` to header and field labels |
-| `src/components/mapping-builder/TargetFieldsPanel.tsx` | Add `text-foreground` to header and field labels |
-| `src/components/mapping-builder/MappingToolbar.tsx` | Add `text-foreground` to mapping name |
-| `src/pages/admin/MappingBuilderPage.tsx` | Add `text-foreground` to labels |
-| `src/components/ui/data-table.tsx` | Ensure table cells have proper text color |
+| `src/pages/admin/MappingBuilderPage.tsx` | Fix overflow and layout issues |
+| `src/components/mapping-builder/SourceFieldsPanel.tsx` | Add contrast classes to category headers |
+| `src/components/mapping-builder/TargetFieldsPanel.tsx` | Add contrast classes and fix badge clipping |
 
 ---
 
 ## Detailed Changes
 
-### 1. CSS Variable Adjustments (index.css)
+### MappingBuilderPage.tsx
 
-Update dark mode variables for better contrast:
+**Line 216** - Adjust the root container to prevent clipping:
+```tsx
+// Current
+<div className="flex flex-col h-[calc(100vh-8rem)] -m-6 animate-fade-in">
 
-```css
-.dark {
-  /* Increase muted-foreground brightness from 65% to 75% */
-  --muted-foreground: 215 20% 75%;
-  
-  /* Lighten input background for better visibility */
-  --input: 217 33% 22%;
-}
+// Updated - use min-h instead and adjust margins
+<div className="flex flex-col h-[calc(100vh-8rem)] -mx-6 -mt-6 animate-fade-in">
 ```
 
-### 2. Select Component (select.tsx)
-
-Add explicit text color to SelectTrigger:
-
+**Line 292** - Change overflow handling:
 ```tsx
-// Line 20 - Update SelectTrigger className
-"flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none..."
+// Current
+<div className="flex flex-1 overflow-hidden">
+
+// Updated - allow horizontal scroll if needed, or use overflow-x-auto
+<div className="flex flex-1 min-w-0 overflow-hidden">
 ```
 
-### 3. Input Component (input.tsx)
+### SourceFieldsPanel.tsx
 
-Add explicit text color:
-
+**Line 117** - Add text-foreground to CollapsibleTrigger:
 ```tsx
-// Line 11 - Update Input className
-"flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base text-foreground ring-offset-background..."
+// Current
+<CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-lg text-sm font-medium">
+
+// Updated
+<CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-lg text-sm font-medium text-foreground">
 ```
 
-### 4. SourceFieldsPanel (mapping-builder/SourceFieldsPanel.tsx)
+### TargetFieldsPanel.tsx
 
-Add text-foreground to header:
-
+**Line 147** - Add text-foreground to CollapsibleTrigger:
 ```tsx
-// Line 76 - Update header text
-<h3 className="font-semibold text-sm text-foreground">Five9 Fields</h3>
+// Current
+<CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-lg text-sm font-medium capitalize">
 
-// Line 145 - Update field label
-<p className="text-sm font-medium truncate text-foreground">{field.label}</p>
+// Updated
+<CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-lg text-sm font-medium capitalize text-foreground">
 ```
 
-### 5. TargetFieldsPanel (mapping-builder/TargetFieldsPanel.tsx)
-
-Add text-foreground to header and labels:
-
+**Line 185-190** - Ensure Badge doesn't get clipped:
 ```tsx
-// Line 95-96 - Update label
-<label className="text-xs font-medium text-foreground mb-1.5 block">
-  Target CRM
-</label>
+// Current
+<Badge
+  variant="outline"
+  className={cn("text-xs", categoryColors[category])}
+>
+  {field.type}
+</Badge>
 
-// Line 175 - Update field label
-<p className="text-sm font-medium truncate text-foreground">
+// Updated - add flex-shrink-0 to prevent compression
+<Badge
+  variant="outline"
+  className={cn("text-xs flex-shrink-0", categoryColors[category])}
+>
+  {field.type}
+</Badge>
 ```
 
-### 6. MappingToolbar (mapping-builder/MappingToolbar.tsx)
-
-Add text-foreground to mapping name:
-
+Also update **line 163-165** for the field item container:
 ```tsx
-// Line 38 - Update mapping name
-<h2 className="font-semibold text-sm text-foreground">
-  {mappingName || "Untitled Mapping"}
+// Current
+<div
+  key={field.path}
+  className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing group transition-colors"
+
+// Updated - ensure proper overflow handling
+<div
+  key={field.path}
+  className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing group transition-colors overflow-hidden"
 ```
 
-### 7. MappingBuilderPage (pages/admin/MappingBuilderPage.tsx)
+### Same updates for SourceFieldsPanel.tsx
 
-Add text-foreground to labels:
-
+**Line 150-155** - Add flex-shrink-0 to Badge:
 ```tsx
-// Line 225 - Update label
-<label className="text-xs font-medium text-foreground">Five9 Domain</label>
-
-// Line 248 - Update label
-<label className="text-xs font-medium text-foreground">Mapping</label>
-```
-
-### 8. Data Table (components/ui/data-table.tsx)
-
-Add text-foreground to TableCell:
-
-```tsx
-// Line 117 - Update TableCell
-<TableCell key={column.key} className={cn("text-foreground", column.className)}>
+<Badge
+  variant="outline"
+  className={cn("text-xs flex-shrink-0", categoryColors[category])}
+>
+  {field.type}
+</Badge>
 ```
 
 ---
 
-## Additional Pages to Review
+## Visual Result
 
-These pages may also need contrast fixes:
-- `TenantsPage.tsx` - Table text visibility
-- `ApiLogsPage.tsx` - Table text visibility  
-- `MappingsPage.tsx` - Card content text
-- `DomainsPage.tsx` - Already partially fixed
-
----
-
-## Visual Impact
-
-After these changes:
-- All text will be clearly visible with proper contrast ratios
-- Labels will be readable against dark card backgrounds
-- Input placeholders will be distinguishable but not overwhelming
-- Table content will be easily scannable
-- The overall dark theme aesthetic will be maintained while improving accessibility
+After these fixes:
+- The right panel will display completely without clipping
+- Type badges (string, email, etc.) will be fully visible
+- Category headers will have proper contrast
+- All text will be clearly readable against dark backgrounds
+- The three-panel layout will fit properly within the viewport
 
 ---
 
-## Technical Notes
+## Summary
 
-The root cause is the CSS variable `--muted-foreground` being set to `215 20% 65%` (a medium gray at ~65% lightness), which doesn't provide sufficient contrast against dark backgrounds at ~6-9% lightness. By:
-1. Increasing `--muted-foreground` to 75% lightness
-2. Adding explicit `text-foreground` classes to key text elements
-
-We ensure WCAG AA compliance (4.5:1 contrast ratio for normal text).
-
+The layout issue is caused by `overflow-hidden` on the parent container combined with negative margins. By adjusting the overflow behavior and ensuring badges don't compress, the right panel will display correctly. The contrast fixes add explicit `text-foreground` classes to remaining text elements that were missing proper color definitions.
