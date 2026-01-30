@@ -2,7 +2,7 @@
 
 // Existing enums
 export type CrmType = 'clio' | 'workiz' | 'salesforce' | 'generic_rest' | 'other';
-export type AppRole = 'admin' | 'ops_team' | 'viewer';
+export type AppRole = 'master_admin' | 'admin' | 'ops_team' | 'viewer';
 export type TenantStatus = 'active' | 'inactive' | 'pending';
 export type ApiLogStatus = 'success' | 'error' | 'pending';
 export type EntityType = 'contact' | 'matter' | 'job' | 'intake';

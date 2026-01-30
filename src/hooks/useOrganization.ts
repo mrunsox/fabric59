@@ -65,11 +65,16 @@ export function useUpdateOrganization() {
 
 export function useInviteMember() {
   const queryClient = useQueryClient();
-  const { organization } = useAuth();
+  const { organization, isMasterAdmin } = useAuth();
 
   return useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: OrgRole }) => {
       if (!organization) throw new Error("No organization selected");
+      
+      // Prevent non-master admins from assigning restricted roles via direct API manipulation
+      if (!isMasterAdmin && role === "owner") {
+        throw new Error("Cannot assign owner role");
+      }
 
       const { error } = await supabase.from("organization_members").insert([
         {

@@ -12,6 +12,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   orgRole: OrgRole | null;
+  isMasterAdmin: boolean;
   signUp: (email: string, password: string, orgName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -27,6 +28,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [membership, setMembership] = useState<OrganizationMember | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMasterAdmin, setIsMasterAdmin] = useState(false);
+
+  // Check master admin status
+  const checkMasterAdmin = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "master_admin")
+        .single();
+
+      setIsMasterAdmin(!!data);
+    } catch {
+      setIsMasterAdmin(false);
+    }
+  };
 
   // Load user's organizations
   const loadOrganizations = async (userId: string) => {
@@ -103,11 +121,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Defer organization loading to avoid auth deadlock
           setTimeout(() => {
             loadOrganizations(currentSession.user.id);
+            checkMasterAdmin(currentSession.user.id);
           }, 0);
         } else {
           setOrganizations([]);
           setOrganization(null);
           setMembership(null);
+          setIsMasterAdmin(false);
         }
 
         setIsLoading(false);
@@ -121,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (existingSession?.user) {
         loadOrganizations(existingSession.user.id);
+        checkMasterAdmin(existingSession.user.id);
       }
 
       setIsLoading(false);
@@ -191,6 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOrganization(null);
     setMembership(null);
     setOrganizations([]);
+    setIsMasterAdmin(false);
   };
 
   const switchOrganization = (orgId: string) => {
@@ -231,6 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     isAuthenticated: !!user,
     orgRole: membership?.role ?? null,
+    isMasterAdmin,
     signUp,
     signIn,
     signOut,
