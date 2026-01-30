@@ -99,6 +99,50 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          created_at: string
+          id: string
+          payload: Json
+          recipient: string
+          response: Json | null
+          status: Database["public"]["Enums"]["notification_status"]
+          tenant_id: string
+          trigger_event: string
+        }
+        Insert: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          id?: string
+          payload?: Json
+          recipient: string
+          response?: Json | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          tenant_id: string
+          trigger_event: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          created_at?: string
+          id?: string
+          payload?: Json
+          recipient?: string
+          response?: Json | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          tenant_id?: string
+          trigger_event?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           created_at: string
@@ -108,6 +152,8 @@ export type Database = {
           custom_mappings: Json | null
           id: string
           name: string
+          notification_triggers: Json | null
+          slack_webhook_url: string | null
           status: string
           updated_at: string
           webhook_url: string | null
@@ -120,6 +166,8 @@ export type Database = {
           custom_mappings?: Json | null
           id?: string
           name: string
+          notification_triggers?: Json | null
+          slack_webhook_url?: string | null
           status?: string
           updated_at?: string
           webhook_url?: string | null
@@ -132,6 +180,8 @@ export type Database = {
           custom_mappings?: Json | null
           id?: string
           name?: string
+          notification_triggers?: Json | null
+          slack_webhook_url?: string | null
           status?: string
           updated_at?: string
           webhook_url?: string | null
@@ -211,6 +261,8 @@ export type Database = {
     Enums: {
       app_role: "admin" | "ops_team" | "viewer"
       crm_type: "clio" | "workiz" | "salesforce" | "generic_rest" | "other"
+      notification_channel: "slack" | "email" | "sms"
+      notification_status: "sent" | "failed" | "pending"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -340,6 +392,8 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "ops_team", "viewer"],
       crm_type: ["clio", "workiz", "salesforce", "generic_rest", "other"],
+      notification_channel: ["slack", "email", "sms"],
+      notification_status: ["sent", "failed", "pending"],
     },
   },
 } as const

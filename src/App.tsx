@@ -7,6 +7,7 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import TenantsPage from "@/pages/admin/TenantsPage";
 import MappingsPage from "@/pages/admin/MappingsPage";
 import ApiLogsPage from "@/pages/admin/ApiLogsPage";
+import NotificationsPage from "@/pages/admin/NotificationsPage";
 import TestConsolePage from "@/pages/admin/TestConsolePage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
             <Route index element={<TenantsPage />} />
             <Route path="mappings" element={<MappingsPage />} />
             <Route path="logs" element={<ApiLogsPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="test" element={<TestConsolePage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>

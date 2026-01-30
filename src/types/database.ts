@@ -5,6 +5,15 @@ export type AppRole = 'admin' | 'ops_team' | 'viewer';
 export type TenantStatus = 'active' | 'inactive' | 'pending';
 export type ApiLogStatus = 'success' | 'error' | 'pending';
 export type EntityType = 'contact' | 'matter' | 'job' | 'intake';
+export type NotificationChannel = 'slack' | 'email' | 'sms';
+export type NotificationStatus = 'sent' | 'failed' | 'pending';
+export type NotificationTrigger = 'intake_created' | 'call_ended' | 'contact_updated';
+
+export interface NotificationTriggers {
+  intake_created: boolean;
+  call_ended: boolean;
+  contact_updated: boolean;
+}
 
 export interface Tenant {
   id: string;
@@ -14,9 +23,23 @@ export interface Tenant {
   crm_api_key: string | null;
   custom_mappings: Record<string, unknown>;
   webhook_url: string | null;
+  slack_webhook_url: string | null;
+  notification_triggers: NotificationTriggers;
   status: TenantStatus;
   created_at: string;
   updated_at: string;
+}
+
+export interface Notification {
+  id: string;
+  tenant_id: string;
+  channel: NotificationChannel;
+  recipient: string;
+  payload: Record<string, unknown>;
+  status: NotificationStatus;
+  response: Record<string, unknown> | null;
+  trigger_event: NotificationTrigger;
+  created_at: string;
 }
 
 export interface UnifiedSchema {
@@ -65,6 +88,8 @@ export interface TenantFormData {
   crm_api_url: string;
   crm_api_key: string;
   webhook_url: string;
+  slack_webhook_url: string;
+  notification_triggers: NotificationTriggers;
   status: TenantStatus;
 }
 

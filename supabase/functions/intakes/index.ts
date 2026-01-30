@@ -46,16 +46,25 @@ serve(async (req) => {
     // 4. Create contact + matter/job in CRM
     // 5. Return unified response
     
+    const contactId = crypto.randomUUID();
+    const intakeId = crypto.randomUUID();
+    
     const response = {
       success: true,
       tenant_id: tenantId,
       message: "Intake created successfully (simulation)",
       data: {
-        contact_id: crypto.randomUUID(),
-        intake_id: crypto.randomUUID(),
+        contact_id: contactId,
+        intake_id: intakeId,
         ...body
       }
     };
+
+    // Trigger notification asynchronously (fire-and-forget)
+    // This calls the send-notification edge function
+    triggerNotification(tenantId, body).catch((err) => {
+      console.error("Failed to trigger notification:", err);
+    });
 
     return new Response(
       JSON.stringify(response),
@@ -69,3 +78,42 @@ serve(async (req) => {
     );
   }
 });
+
+async function triggerNotification(
+  tenantId: string,
+  payload: { contact?: unknown; intake?: unknown }
+): Promise<void> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.warn("Missing Supabase credentials for notification");
+    return;
+  }
+
+  const notificationUrl = `${supabaseUrl}/functions/v1/send-notification`;
+
+  const response = await fetch(notificationUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${supabaseServiceKey}`,
+    },
+    body: JSON.stringify({
+      tenant_id: tenantId,
+      trigger_event: "intake_created",
+      payload: {
+        contact: payload.contact,
+        intake: payload.intake,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    console.error("Notification failed:", response.status, text);
+  } else {
+    const result = await response.json();
+    console.log("Notification result:", result);
+  }
+}
