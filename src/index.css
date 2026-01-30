@@ -80,7 +80,7 @@
     --secondary-foreground: 210 40% 96%;
 
     --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 215 20% 75%;
 
     --accent: 172 66% 50%;
     --accent-foreground: 222 47% 11%;
@@ -89,7 +89,7 @@
     --destructive-foreground: 0 0% 100%;
 
     --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --input: 217 33% 22%;
     --ring: 199 89% 48%;
 
     /* Status colors - dark mode */

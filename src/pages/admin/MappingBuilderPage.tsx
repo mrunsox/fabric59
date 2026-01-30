@@ -222,7 +222,7 @@ export default function MappingBuilderPage() {
 
         <div className="flex items-center gap-3">
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Five9 Domain</label>
+            <label className="text-xs font-medium text-foreground">Five9 Domain</label>
             <Select
               value={selectedDomainId || ""}
               onValueChange={(v) => {
@@ -245,7 +245,7 @@ export default function MappingBuilderPage() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Mapping</label>
+            <label className="text-xs font-medium text-foreground">Mapping</label>
             <div className="flex items-center gap-2">
               <Select
                 value={selectedMappingId || ""}

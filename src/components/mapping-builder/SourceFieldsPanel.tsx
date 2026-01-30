@@ -73,7 +73,7 @@ export function SourceFieldsPanel({
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-sm">Five9 Fields</h3>
+          <h3 className="font-semibold text-sm text-foreground">Five9 Fields</h3>
           <Button
             variant="ghost"
             size="icon"
@@ -142,7 +142,7 @@ export function SourceFieldsPanel({
                       >
                         <GripVertical className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{field.label}</p>
+                          <p className="text-sm font-medium truncate text-foreground">{field.label}</p>
                           <p className="text-xs text-muted-foreground truncate">
                             {field.path}
                           </p>

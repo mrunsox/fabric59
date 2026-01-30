@@ -92,7 +92,7 @@ export function TargetFieldsPanel({
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="mb-3">
-          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+          <label className="text-xs font-medium text-foreground mb-1.5 block">
             Target CRM
           </label>
           <Select value={selectedCRM} onValueChange={onCRMChange}>
@@ -172,7 +172,7 @@ export function TargetFieldsPanel({
                         >
                           <GripVertical className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
+                            <p className="text-sm font-medium truncate text-foreground">
                               {field.label}
                               {field.required && (
                                 <span className="text-destructive ml-1">*</span>
