@@ -1,5 +1,6 @@
 // Database types for the Five9 Integration Fabric
 
+// Existing enums
 export type CrmType = 'clio' | 'workiz' | 'salesforce' | 'generic_rest' | 'other';
 export type AppRole = 'admin' | 'ops_team' | 'viewer';
 export type TenantStatus = 'active' | 'inactive' | 'pending';
@@ -9,15 +10,73 @@ export type NotificationChannel = 'slack' | 'email' | 'sms';
 export type NotificationStatus = 'sent' | 'failed' | 'pending';
 export type NotificationTrigger = 'intake_created' | 'call_ended' | 'contact_updated';
 
+// New SaaS architecture enums
+export type OrgRole = 'owner' | 'admin' | 'member';
+export type OrgStatus = 'active' | 'suspended' | 'cancelled';
+export type OrgPlan = 'free' | 'starter' | 'pro' | 'enterprise';
+export type Five9DomainStatus = 'active' | 'inactive' | 'pending_verification';
+
 export interface NotificationTriggers {
   intake_created: boolean;
   call_ended: boolean;
   contact_updated: boolean;
 }
 
+// SaaS entity interfaces
+export interface Organization {
+  id: string;
+  name: string;
+  billing_email: string | null;
+  plan: OrgPlan;
+  status: OrgStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  role: OrgRole;
+  created_at: string;
+}
+
+export interface Five9Domain {
+  id: string;
+  organization_id: string;
+  domain: string;
+  display_name: string;
+  api_key_encrypted: string | null;
+  workflow_settings: WorkflowSettings;
+  status: Five9DomainStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkflowSettings {
+  scripts?: Record<string, unknown>;
+  branding?: {
+    logo_url?: string;
+    primary_color?: string;
+    company_name?: string;
+  };
+  custom_fields?: Array<{
+    name: string;
+    type: 'text' | 'select' | 'boolean';
+    options?: string[];
+    required?: boolean;
+  }>;
+  call_handling?: {
+    greeting?: string;
+    transfer_rules?: Record<string, unknown>;
+  };
+}
+
 export interface Tenant {
   id: string;
   name: string;
+  organization_id: string | null;
+  five9_domain_id: string | null;
   crm_type: CrmType;
   crm_api_url: string | null;
   crm_api_key: string | null;
@@ -82,8 +141,23 @@ export interface ApiKey {
 }
 
 // Form types
+export interface OrganizationFormData {
+  name: string;
+  billing_email: string;
+  plan: OrgPlan;
+}
+
+export interface Five9DomainFormData {
+  domain: string;
+  display_name: string;
+  api_key?: string;
+  workflow_settings?: WorkflowSettings;
+}
+
 export interface TenantFormData {
   name: string;
+  organization_id?: string;
+  five9_domain_id?: string;
   crm_type: CrmType;
   crm_api_url: string;
   crm_api_key: string;

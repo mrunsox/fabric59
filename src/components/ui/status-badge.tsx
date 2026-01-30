@@ -9,9 +9,12 @@ const statusBadgeVariants = cva(
         active: "bg-success/15 text-success border-success/30",
         inactive: "bg-muted text-muted-foreground border-border",
         pending: "bg-warning/15 text-warning border-warning/30",
+        pending_verification: "bg-warning/15 text-warning border-warning/30",
         success: "bg-success/15 text-success border-success/30",
+        warning: "bg-warning/15 text-warning border-warning/30",
         error: "bg-destructive/15 text-destructive border-destructive/30",
         info: "bg-primary/15 text-primary border-primary/30",
+        default: "bg-muted text-muted-foreground border-border",
         clio: "bg-blue-500/15 text-blue-400 border-blue-500/30",
         workiz: "bg-orange-500/15 text-orange-400 border-orange-500/30",
         salesforce: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
@@ -40,9 +43,12 @@ export function StatusBadge({ variant, children, className, dot = false }: Statu
             "h-1.5 w-1.5 rounded-full",
             variant === "active" && "bg-success",
             variant === "pending" && "bg-warning",
+            variant === "pending_verification" && "bg-warning",
+            variant === "warning" && "bg-warning",
             variant === "error" && "bg-destructive",
             variant === "success" && "bg-success",
             variant === "inactive" && "bg-muted-foreground",
+            variant === "default" && "bg-muted-foreground",
             variant === "info" && "bg-primary"
           )}
         />

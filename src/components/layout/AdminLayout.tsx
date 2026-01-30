@@ -13,13 +13,23 @@ import {
   LogOut,
   ChevronRight,
   Bell,
+  Globe,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navigation = [
   { name: "Tenants", href: "/admin", icon: Building2 },
+  { name: "Five9 Domains", href: "/admin/domains", icon: Globe },
   { name: "Field Mappings", href: "/admin/mappings", icon: FileJson },
   { name: "API Logs", href: "/admin/logs", icon: Activity },
   { name: "Notifications", href: "/admin/notifications", icon: Bell },
@@ -30,8 +40,12 @@ const navigation = [
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { organization, organizations, switchOrganization, signOut, user } = useAuth();
 
-  const currentPage = navigation.find((item) => item.href === location.pathname);
+  const currentPage = navigation.find((item) => 
+    location.pathname === item.href || 
+    (item.href !== "/admin" && location.pathname.startsWith(item.href))
+  );
 
   return (
     <div className="dark min-h-screen bg-background">
@@ -107,23 +121,49 @@ export function AdminLayout() {
           </ScrollArea>
 
           {/* Footer */}
-          <div className="border-t border-sidebar-border p-4">
+          <div className="border-t border-sidebar-border p-4 space-y-3">
+            {/* Org Switcher */}
+            {organizations.length > 1 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between text-left">
+                    <span className="truncate">{organization?.name}</span>
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {organizations.map((org) => (
+                    <DropdownMenuItem
+                      key={org.id}
+                      onClick={() => switchOrganization(org.id)}
+                      className={cn(org.id === organization?.id && "bg-accent")}
+                    >
+                      {org.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             <div className="flex items-center gap-3 rounded-lg bg-sidebar-accent/50 p-3">
               <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-xs font-medium text-primary">OP</span>
+                <span className="text-xs font-medium text-primary">
+                  {user?.email?.slice(0, 2).toUpperCase() || "U"}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
-                  Ops Team
+                  {organization?.name || "Loading..."}
                 </p>
                 <p className="text-xs text-sidebar-foreground/60 truncate">
-                  admin@five9fabric.com
+                  {user?.email || ""}
                 </p>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                onClick={() => signOut()}
               >
                 <LogOut className="h-4 w-4" />
               </Button>
