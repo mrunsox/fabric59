@@ -186,7 +186,7 @@ export function AdminLayout() {
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Admin</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-            <span className="font-medium">{currentPage?.name || "Dashboard"}</span>
+            <span className="font-medium text-foreground">{currentPage?.name || "Dashboard"}</span>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
