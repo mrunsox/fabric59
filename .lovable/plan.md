@@ -1,35 +1,70 @@
 
+# Fix Remaining Contrast Issues in Dropdown Components
 
-# Fix Remaining Color Contrast Issues Across Admin Pages
+## Problem Identified
 
-## Problem Analysis
+Looking at the screenshot, the contrast issues are in the organization switcher dropdown in the sidebar:
 
-From the screenshot, several text elements still have insufficient contrast on the Tenants page and likely other admin pages:
-
-### Issues Identified
-
-| Element | Location | Current Issue |
-|---------|----------|---------------|
-| Page title "Tenants" | TenantsPage header | Missing explicit `text-foreground` class |
-| Large stat value (number) | StatCard component | `text-3xl font-bold` inherits color without explicit class |
-| Tenant names in table | TenantsPage table render | `<p className="font-medium">` missing text color |
-| Table headers | DataTable component | `text-muted-foreground` still appearing too dark |
-| Breadcrumb "Tenants" | AdminLayout header | Font weight on current page name needs `text-foreground` |
-
----
+| Element | Issue |
+|---------|-------|
+| Dropdown trigger button text ("24H Virtual") | The `outline` button variant has no explicit text color, only `hover:text-accent-foreground` |
+| Dropdown menu item text | Relies on inherited `text-popover-foreground` but may not render correctly in context |
+| User email in dropdown | Text color not explicitly defined |
 
 ## Root Cause
 
-The issue is that while `--muted-foreground` was improved to 75% lightness, some elements are:
-1. Not inheriting `text-foreground` properly from parent containers
-2. Missing explicit color classes entirely
-3. The card components use `text-card-foreground` which needs to cascade down
+The `Button` component's `outline` variant is defined as:
+```tsx
+outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+```
+
+Notice there's NO default text color - it only sets the hover state. This means text color is inherited, which doesn't work correctly in the sidebar context.
+
+Similarly, `DropdownMenuItem` doesn't explicitly set text color.
 
 ---
 
 ## Solution
 
-Add explicit `text-foreground` classes to key text elements across multiple files, and ensure table headers are more visible.
+### 1. Fix Button Outline Variant
+
+Add explicit `text-foreground` to the outline variant:
+
+**File: `src/components/ui/button.tsx`**
+```tsx
+// Line 14
+// From:
+outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+
+// To:
+outline: "border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
+```
+
+### 2. Fix DropdownMenuItem Text Color
+
+Add explicit `text-popover-foreground` to menu items:
+
+**File: `src/components/ui/dropdown-menu.tsx`**
+```tsx
+// DropdownMenuItem (around line 71)
+// From:
+"relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+
+// To:
+"relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm text-popover-foreground outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+```
+
+### 3. Increase Popover Foreground Brightness
+
+Update the `--popover-foreground` variable to be brighter:
+
+**File: `src/index.css`**
+```css
+.dark {
+  /* Line 74 - brighten popover text */
+  --popover-foreground: 210 40% 98%;
+}
+```
 
 ---
 
@@ -37,108 +72,37 @@ Add explicit `text-foreground` classes to key text elements across multiple file
 
 | File | Changes |
 |------|---------|
-| `src/components/ui/stat-card.tsx` | Add `text-foreground` to value and explicit classes to other text |
-| `src/pages/admin/TenantsPage.tsx` | Add `text-foreground` to page title and table cell text |
-| `src/components/ui/data-table.tsx` | Change table header from `text-muted-foreground` to `text-foreground/80` |
-| `src/components/layout/AdminLayout.tsx` | Add `text-foreground` to breadcrumb current page name |
+| `src/components/ui/button.tsx` | Add `text-foreground` to outline variant |
+| `src/components/ui/dropdown-menu.tsx` | Add `text-popover-foreground` to DropdownMenuItem |
+| `src/index.css` | Brighten `--popover-foreground` to 98% |
 
 ---
 
-## Detailed Changes
+## Additional Fix: AdminLayout User Section
 
-### 1. StatCard Component (stat-card.tsx)
+The user card in the sidebar footer may also need explicit text colors:
 
-**Line 53-54** - Add text color to title and value:
-```tsx
-// Current
-<p className="text-sm font-medium text-muted-foreground">{title}</p>
-<p className="mt-2 text-3xl font-bold tracking-tight">{value}</p>
-
-// Updated
-<p className="text-sm font-medium text-muted-foreground">{title}</p>
-<p className="mt-2 text-3xl font-bold tracking-tight text-foreground">{value}</p>
-```
-
-### 2. TenantsPage (TenantsPage.tsx)
-
-**Line 163** - Add text color to page title:
-```tsx
-// Current
-<h1 className="text-2xl font-bold">Tenants</h1>
-
-// Updated
-<h1 className="text-2xl font-bold text-foreground">Tenants</h1>
-```
-
-**Line 78** - Add text color to tenant name in table:
-```tsx
-// Current
-<p className="font-medium">{tenant.name}</p>
-
-// Updated
-<p className="font-medium text-foreground">{tenant.name}</p>
-```
-
-### 3. DataTable Component (data-table.tsx)
-
-**Lines 42-44, 74-76, 97-99** - Change table header color to brighter variant:
-```tsx
-// Current
-<TableHead
-  key={column.key}
-  className={cn("text-muted-foreground font-medium", column.className)}
->
-
-// Updated - use foreground with slight transparency for hierarchy
-<TableHead
-  key={column.key}
-  className={cn("text-foreground/80 font-medium", column.className)}
->
-```
-
-### 4. AdminLayout (AdminLayout.tsx)
-
-**Line 189** - Add text color to breadcrumb current page:
-```tsx
-// Current
-<span className="font-medium">{currentPage?.name || "Dashboard"}</span>
-
-// Updated
-<span className="font-medium text-foreground">{currentPage?.name || "Dashboard"}</span>
-```
-
----
-
-## Additional Improvements
-
-### Global CSS Enhancement
-
-Update the `--card-foreground` value in dark mode to ensure it matches `--foreground`:
-
-```css
-/* In src/index.css */
-.dark {
-  --card-foreground: 210 40% 98%; /* Slightly brighter for cards */
-}
-```
-
-This ensures all text inside cards inherits a visible color.
+**File: `src/components/layout/AdminLayout.tsx`**
+- Lines 153-157: The org name and email already use `text-sidebar-foreground` which should be visible
+- Line 128: The dropdown trigger text relies on button styling
 
 ---
 
 ## Visual Result
 
-After these changes:
-- Page titles will be clearly visible with high contrast
-- Stat card values (like "5" for Total Tenants) will be prominent
-- Tenant names in the table will be easily readable
-- Table headers will have adequate contrast (80% opacity foreground)
-- Breadcrumb text will be clearly legible
-- All text will maintain WCAG AA compliance
+After these fixes:
+- The organization dropdown trigger ("24H Virtual") will have proper text contrast
+- Dropdown menu items will display with explicit foreground color
+- All popover/dropdown text will be clearly visible against dark backgrounds
+- The button outline variant will work correctly throughout the application
 
 ---
 
 ## Summary
 
-The remaining contrast issues stem from text elements not having explicit color classes and relying on inheritance that doesn't always work correctly in dark mode. By adding explicit `text-foreground` classes to key elements like page titles, stat values, and table content, we ensure consistent visibility across the entire admin interface.
+The core issue is that several components rely on color inheritance rather than explicit classes. By adding:
+1. `text-foreground` to the outline button variant
+2. `text-popover-foreground` to dropdown menu items
+3. Brightening the popover foreground CSS variable
 
+We ensure consistent visibility across all dropdown and button contexts.
