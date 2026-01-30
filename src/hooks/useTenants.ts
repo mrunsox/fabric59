@@ -1,7 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tenant, TenantFormData, CrmType, TenantStatus } from "@/types/database";
+import type { Tenant, TenantFormData, CrmType, TenantStatus, NotificationTriggers } from "@/types/database";
 import { toast } from "sonner";
+
+const DEFAULT_NOTIFICATION_TRIGGERS: NotificationTriggers = {
+  intake_created: false,
+  call_ended: false,
+  contact_updated: false,
+};
 
 export function useTenants() {
   return useQuery({
@@ -23,6 +29,8 @@ export function useTenants() {
         crm_api_key: row.crm_api_key,
         custom_mappings: (row.custom_mappings || {}) as Record<string, unknown>,
         webhook_url: row.webhook_url,
+        slack_webhook_url: row.slack_webhook_url,
+        notification_triggers: (row.notification_triggers as unknown as NotificationTriggers) || DEFAULT_NOTIFICATION_TRIGGERS,
         status: row.status as TenantStatus,
         created_at: row.created_at,
         updated_at: row.updated_at,
@@ -52,6 +60,8 @@ export function useTenant(id: string) {
         crm_api_key: data.crm_api_key,
         custom_mappings: (data.custom_mappings || {}) as Record<string, unknown>,
         webhook_url: data.webhook_url,
+        slack_webhook_url: data.slack_webhook_url,
+        notification_triggers: (data.notification_triggers as unknown as NotificationTriggers) || DEFAULT_NOTIFICATION_TRIGGERS,
         status: data.status as TenantStatus,
         created_at: data.created_at,
         updated_at: data.updated_at,
@@ -73,6 +83,8 @@ export function useCreateTenant() {
           crm_api_url: data.crm_api_url || null,
           crm_api_key: data.crm_api_key || null,
           webhook_url: data.webhook_url || null,
+          slack_webhook_url: data.slack_webhook_url || null,
+          notification_triggers: data.notification_triggers as unknown as Record<string, boolean>,
           status: data.status,
         },
       ]);
@@ -94,16 +106,20 @@ export function useUpdateTenant() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<TenantFormData> }) => {
+      const updateData: Record<string, unknown> = {};
+      
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.crm_type !== undefined) updateData.crm_type = data.crm_type;
+      if (data.crm_api_url !== undefined) updateData.crm_api_url = data.crm_api_url || null;
+      if (data.crm_api_key !== undefined) updateData.crm_api_key = data.crm_api_key || null;
+      if (data.webhook_url !== undefined) updateData.webhook_url = data.webhook_url || null;
+      if (data.slack_webhook_url !== undefined) updateData.slack_webhook_url = data.slack_webhook_url || null;
+      if (data.notification_triggers !== undefined) updateData.notification_triggers = data.notification_triggers as unknown as Record<string, boolean>;
+      if (data.status !== undefined) updateData.status = data.status;
+
       const { error } = await supabase
         .from("tenants")
-        .update({
-          name: data.name,
-          crm_type: data.crm_type,
-          crm_api_url: data.crm_api_url || null,
-          crm_api_key: data.crm_api_key || null,
-          webhook_url: data.webhook_url || null,
-          status: data.status,
-        })
+        .update(updateData)
         .eq("id", id);
 
       if (error) throw error;

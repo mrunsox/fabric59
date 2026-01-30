@@ -12,6 +12,7 @@ import {
   Zap,
   LogOut,
   ChevronRight,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,6 +22,7 @@ const navigation = [
   { name: "Tenants", href: "/admin", icon: Building2 },
   { name: "Field Mappings", href: "/admin/mappings", icon: FileJson },
   { name: "API Logs", href: "/admin/logs", icon: Activity },
+  { name: "Notifications", href: "/admin/notifications", icon: Bell },
   { name: "Test Console", href: "/admin/test", icon: TestTube2 },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
