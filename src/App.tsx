@@ -55,6 +55,7 @@ const App = () => (
                 <Route path="users" element={<UsersManagementPage />} />
               </Route>
             </Route>
+
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<OnboardingPage />} />
