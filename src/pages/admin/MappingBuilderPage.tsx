@@ -213,7 +213,7 @@ export default function MappingBuilderPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] -m-6 animate-fade-in">
+    <div className="flex flex-col h-[calc(100vh-8rem)] -mx-6 -mt-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-4 px-6 py-4 border-b border-border bg-card">
         <Button variant="ghost" size="icon" onClick={() => navigate("/admin/mappings")}>
@@ -289,7 +289,7 @@ export default function MappingBuilderPage() {
       />
 
       {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-w-0 overflow-hidden">
         {/* Source panel */}
         <div className="w-72 flex-shrink-0">
           <SourceFieldsPanel

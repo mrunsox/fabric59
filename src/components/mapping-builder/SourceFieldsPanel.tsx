@@ -114,7 +114,7 @@ export function SourceFieldsPanel({
                 open={expandedCategories.includes(category)}
                 onOpenChange={() => toggleCategory(category)}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-lg text-sm font-medium">
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-accent rounded-lg text-sm font-medium text-foreground">
                   <span className="flex items-center gap-2">
                     {expandedCategories.includes(category) ? (
                       <ChevronDown className="h-4 w-4" />
@@ -129,10 +129,10 @@ export function SourceFieldsPanel({
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="ml-2 space-y-1 mt-1">
-                    {fields.map((field) => (
-                      <div
-                        key={field.path}
-                        className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing group transition-colors"
+                      {fields.map((field) => (
+                        <div
+                          key={field.path}
+                          className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent cursor-grab active:cursor-grabbing group transition-colors overflow-hidden"
                         draggable
                         onDragStart={(e) => {
                           e.dataTransfer.setData("application/json", JSON.stringify(field));
@@ -149,7 +149,7 @@ export function SourceFieldsPanel({
                         </div>
                         <Badge
                           variant="outline"
-                          className={cn("text-xs", categoryColors[category])}
+                          className={cn("text-xs flex-shrink-0", categoryColors[category])}
                         >
                           {field.type}
                         </Badge>
