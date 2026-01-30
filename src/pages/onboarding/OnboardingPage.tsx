@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Loader2, ArrowRight, Check, Globe, Building2 } from "lucide-react";
+import { Loader2, ArrowRight, Check, Globe, Building2 } from "lucide-react";
+import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { toast } from "sonner";
 
 type Step = "domain" | "tenant" | "complete";
@@ -256,12 +257,12 @@ export default function OnboardingPage() {
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success/20">
-                  <Zap className="h-6 w-6 text-success" />
+                  <Fabric59Icon size="lg" className="h-12 w-12" />
                 </div>
               </div>
               <CardTitle>You're all set!</CardTitle>
               <CardDescription>
-                Your Five9 Fabric account is ready to use
+                Your Fabric59 account is ready to use
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
