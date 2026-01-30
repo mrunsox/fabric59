@@ -26,6 +26,23 @@ interface NotificationRequest {
   };
 }
 
+interface TenantWebhooks {
+  slack_webhook_url: string | null;
+  zapier_webhook_url: string | null;
+  make_webhook_url: string | null;
+  pabbly_webhook_url: string | null;
+  n8n_webhook_url: string | null;
+  notification_triggers: Record<string, boolean>;
+  name: string;
+}
+
+interface WebhookResult {
+  platform: string;
+  success: boolean;
+  response?: unknown;
+  error?: string;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -57,10 +74,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Look up tenant's Slack webhook URL
+    // Look up tenant's webhook URLs
     const { data: tenant, error: tenantError } = await supabase
       .from("tenants")
-      .select("slack_webhook_url, notification_triggers, name")
+      .select("slack_webhook_url, zapier_webhook_url, make_webhook_url, pabbly_webhook_url, n8n_webhook_url, notification_triggers, name")
       .eq("id", body.tenant_id)
       .single();
 
@@ -71,23 +88,10 @@ serve(async (req) => {
       });
     }
 
-    // Check if Slack is configured
-    if (!tenant.slack_webhook_url) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          skipped: true,
-          message: "No Slack webhook configured for this tenant",
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
+    const tenantData = tenant as TenantWebhooks;
 
     // Check if this trigger is enabled
-    const triggers = tenant.notification_triggers as Record<string, boolean>;
+    const triggers = tenantData.notification_triggers as Record<string, boolean>;
     if (!triggers?.[body.trigger_event]) {
       return new Response(
         JSON.stringify({
@@ -102,57 +106,122 @@ serve(async (req) => {
       );
     }
 
-    // Build Slack message
-    const slackMessage = buildSlackMessage(body, tenant.name);
-
-    // Send to Slack
-    let slackResponse: Response;
-    let responseBody: unknown;
-    let status: "sent" | "failed" = "sent";
-
-    try {
-      slackResponse = await fetch(tenant.slack_webhook_url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(slackMessage),
-      });
-
-      responseBody = await slackResponse.text();
-
-      if (!slackResponse.ok) {
-        status = "failed";
-      }
-    } catch (slackError) {
-      status = "failed";
-      responseBody = { error: slackError instanceof Error ? slackError.message : "Unknown error" };
+    // Collect all configured webhooks
+    const webhooks: Array<{ platform: string; url: string; isSlack: boolean }> = [];
+    
+    if (tenantData.slack_webhook_url) {
+      webhooks.push({ platform: "slack", url: tenantData.slack_webhook_url, isSlack: true });
+    }
+    if (tenantData.zapier_webhook_url) {
+      webhooks.push({ platform: "zapier", url: tenantData.zapier_webhook_url, isSlack: false });
+    }
+    if (tenantData.make_webhook_url) {
+      webhooks.push({ platform: "make", url: tenantData.make_webhook_url, isSlack: false });
+    }
+    if (tenantData.pabbly_webhook_url) {
+      webhooks.push({ platform: "pabbly", url: tenantData.pabbly_webhook_url, isSlack: false });
+    }
+    if (tenantData.n8n_webhook_url) {
+      webhooks.push({ platform: "n8n", url: tenantData.n8n_webhook_url, isSlack: false });
     }
 
-    // Log notification to database
-    const { error: logError } = await supabase.from("notifications").insert({
-      tenant_id: body.tenant_id,
-      channel: "slack",
-      recipient: tenant.slack_webhook_url,
-      payload: body.payload,
-      status,
-      response: typeof responseBody === "string" ? { text: responseBody } : responseBody,
-      trigger_event: body.trigger_event,
+    // If no webhooks configured, return early
+    if (webhooks.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          skipped: true,
+          message: "No webhook URLs configured for this tenant",
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Build payloads
+    const slackMessage = buildSlackMessage(body, tenantData.name);
+    const genericPayload = buildGenericPayload(body, tenantData.name);
+
+    // Send to all configured webhooks in parallel
+    const results = await Promise.allSettled(
+      webhooks.map(async (webhook): Promise<WebhookResult> => {
+        const payload = webhook.isSlack ? slackMessage : genericPayload;
+        
+        try {
+          const response = await fetch(webhook.url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const responseBody = await response.text();
+          const success = response.ok;
+
+          // Log to database
+          await supabase.from("notifications").insert({
+            tenant_id: body.tenant_id,
+            channel: webhook.platform as "slack" | "email" | "sms",
+            recipient: webhook.url,
+            payload: body.payload,
+            status: success ? "sent" : "failed",
+            response: { text: responseBody, status: response.status },
+            trigger_event: body.trigger_event,
+          });
+
+          return {
+            platform: webhook.platform,
+            success,
+            response: responseBody,
+          };
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          
+          // Log failure to database
+          await supabase.from("notifications").insert({
+            tenant_id: body.tenant_id,
+            channel: webhook.platform as "slack" | "email" | "sms",
+            recipient: webhook.url,
+            payload: body.payload,
+            status: "failed",
+            response: { error: errorMessage },
+            trigger_event: body.trigger_event,
+          });
+
+          return {
+            platform: webhook.platform,
+            success: false,
+            error: errorMessage,
+          };
+        }
+      })
+    );
+
+    // Summarize results
+    const summaryResults = results.map((r) => {
+      if (r.status === "fulfilled") {
+        return r.value;
+      }
+      return { platform: "unknown", success: false, error: "Promise rejected" };
     });
 
-    if (logError) {
-      console.error("Failed to log notification:", logError);
-    }
+    const allSuccessful = summaryResults.every((r) => r.success);
+    const someSuccessful = summaryResults.some((r) => r.success);
 
     return new Response(
       JSON.stringify({
-        success: status === "sent",
-        status,
-        message:
-          status === "sent"
-            ? "Notification sent successfully"
-            : "Failed to send notification",
+        success: allSuccessful,
+        partial: someSuccessful && !allSuccessful,
+        results: summaryResults,
+        message: allSuccessful
+          ? "All notifications sent successfully"
+          : someSuccessful
+          ? "Some notifications failed"
+          : "All notifications failed",
       }),
       {
-        status: status === "sent" ? 200 : 500,
+        status: allSuccessful ? 200 : someSuccessful ? 207 : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
@@ -166,6 +235,25 @@ serve(async (req) => {
   }
 });
 
+/**
+ * Build a standardized payload for generic webhook platforms (Zapier, Make, Pabbly, n8n)
+ */
+function buildGenericPayload(
+  request: NotificationRequest,
+  tenantName: string
+): Record<string, unknown> {
+  return {
+    event: request.trigger_event,
+    tenant_id: request.tenant_id,
+    tenant_name: tenantName,
+    timestamp: new Date().toISOString(),
+    data: request.payload,
+  };
+}
+
+/**
+ * Build a Slack-formatted message with attachments
+ */
 function buildSlackMessage(
   request: NotificationRequest,
   tenantName: string
@@ -173,7 +261,7 @@ function buildSlackMessage(
   const { trigger_event, payload } = request;
 
   let title = "📞 Notification";
-  let fields: Array<{ title: string; value: string; short: boolean }> = [];
+  const fields: Array<{ title: string; value: string; short: boolean }> = [];
 
   switch (trigger_event) {
     case "intake_created":

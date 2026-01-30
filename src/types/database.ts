@@ -83,6 +83,10 @@ export interface Tenant {
   custom_mappings: Record<string, unknown>;
   webhook_url: string | null;
   slack_webhook_url: string | null;
+  zapier_webhook_url: string | null;
+  make_webhook_url: string | null;
+  pabbly_webhook_url: string | null;
+  n8n_webhook_url: string | null;
   notification_triggers: NotificationTriggers;
   status: TenantStatus;
   created_at: string;
@@ -163,6 +167,10 @@ export interface TenantFormData {
   crm_api_key: string;
   webhook_url: string;
   slack_webhook_url: string;
+  zapier_webhook_url: string;
+  make_webhook_url: string;
+  pabbly_webhook_url: string;
+  n8n_webhook_url: string;
   notification_triggers: NotificationTriggers;
   status: TenantStatus;
 }
