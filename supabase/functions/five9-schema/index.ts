@@ -68,30 +68,164 @@ const standardDispositions: Five9Field[] = [
   { name: "Transfer", label: "Transfer", type: "disposition", category: "disposition" },
 ];
 
-async function fetchFive9Schema(domainId: string, apiKey: string | null): Promise<Five9Schema> {
-  // In a full implementation, we would call Five9's Admin Web Services API here
-  // For now, we return standard fields plus any custom fields from domain config
+// SOAP envelope builders
+function buildSoapEnvelope(operation: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:ser="http://service.admin.ws.five9.com/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <ser:${operation}/>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+}
+
+// Parse XML response for contact fields
+function parseContactFieldsResponse(xml: string): Five9Field[] {
+  const fields: Five9Field[] = [];
   
-  // TODO: Implement Five9 SOAP API call to getContactFields, getCallVariables, etc.
-  // The Five9 Admin Web Services uses SOAP, so we'd need to construct XML requests
+  // Match each return element containing field data
+  const returnRegex = /<return>([\s\S]*?)<\/return>/g;
+  let match;
   
-  // Example Five9 API call structure:
-  // const soapEnvelope = `<?xml version="1.0" encoding="UTF-8"?>
-  // <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-  //                   xmlns:ser="http://service.admin.ws.five9.com/">
-  //   <soapenv:Header/>
-  //   <soapenv:Body>
-  //     <ser:getContactFields/>
-  //   </soapenv:Body>
-  // </soapenv:Envelope>`;
+  while ((match = returnRegex.exec(xml)) !== null) {
+    const fieldXml = match[1];
+    
+    const nameMatch = fieldXml.match(/<name>([^<]+)<\/name>/);
+    const displayNameMatch = fieldXml.match(/<displayName>([^<]+)<\/displayName>/);
+    const typeMatch = fieldXml.match(/<type>([^<]+)<\/type>/);
+    const requiredMatch = fieldXml.match(/<required>([^<]+)<\/required>/);
+    
+    if (nameMatch) {
+      const field: Five9Field = {
+        name: nameMatch[1],
+        label: displayNameMatch ? displayNameMatch[1] : nameMatch[1],
+        type: typeMatch ? typeMatch[1].toLowerCase() : "string",
+        category: "contact",
+        required: requiredMatch ? requiredMatch[1] === "true" : false
+      };
+      
+      // Parse predefined list values if present
+      const predefinedMatch = fieldXml.match(/<predefinedList>([^<]+)<\/predefinedList>/);
+      if (predefinedMatch) {
+        field.options = predefinedMatch[1].split(",").map(s => s.trim());
+      }
+      
+      fields.push(field);
+    }
+  }
   
-  // For now, return the standard fields
-  return {
-    contactFields: standardContactFields,
-    callVariables: standardCallVariables,
-    dispositions: standardDispositions,
-    campaigns: [],
-  };
+  return fields;
+}
+
+// Parse XML response for call variables
+function parseCallVariablesResponse(xml: string): Five9Field[] {
+  const fields: Five9Field[] = [];
+  
+  const returnRegex = /<return>([\s\S]*?)<\/return>/g;
+  let match;
+  
+  while ((match = returnRegex.exec(xml)) !== null) {
+    const varXml = match[1];
+    
+    const nameMatch = varXml.match(/<name>([^<]+)<\/name>/);
+    const descMatch = varXml.match(/<description>([^<]+)<\/description>/);
+    const typeMatch = varXml.match(/<type>([^<]+)<\/type>/);
+    
+    if (nameMatch) {
+      fields.push({
+        name: nameMatch[1],
+        label: descMatch ? descMatch[1] : nameMatch[1],
+        type: typeMatch ? typeMatch[1].toLowerCase() : "string",
+        category: "call"
+      });
+    }
+  }
+  
+  return fields;
+}
+
+// Parse XML response for dispositions
+function parseDispositionsResponse(xml: string): Five9Field[] {
+  const fields: Five9Field[] = [];
+  
+  const returnRegex = /<return>([\s\S]*?)<\/return>/g;
+  let match;
+  
+  while ((match = returnRegex.exec(xml)) !== null) {
+    const dispXml = match[1];
+    
+    const nameMatch = dispXml.match(/<name>([^<]+)<\/name>/);
+    const descMatch = dispXml.match(/<description>([^<]+)<\/description>/);
+    
+    if (nameMatch) {
+      fields.push({
+        name: nameMatch[1],
+        label: descMatch ? descMatch[1] : nameMatch[1],
+        type: "disposition",
+        category: "disposition"
+      });
+    }
+  }
+  
+  return fields;
+}
+
+async function makeFive9Request(username: string, password: string, operation: string): Promise<string> {
+  const response = await fetch("https://api.five9.com/wsadmin/v2/AdminWebService", {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/xml;charset=UTF-8",
+      "SOAPAction": "",
+      "Authorization": `Basic ${btoa(`${username}:${password}`)}`
+    },
+    body: buildSoapEnvelope(operation)
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Five9 API returned ${response.status}`);
+  }
+  
+  return response.text();
+}
+
+async function fetchFive9Schema(username: string, password: string): Promise<Five9Schema> {
+  try {
+    // Fetch all schema data in parallel
+    const [contactFieldsXml, callVariablesXml, dispositionsXml] = await Promise.all([
+      makeFive9Request(username, password, "getContactFields"),
+      makeFive9Request(username, password, "getCallVariables"),
+      makeFive9Request(username, password, "getDispositions")
+    ]);
+    
+    // Parse responses
+    const customContactFields = parseContactFieldsResponse(contactFieldsXml);
+    const customCallVariables = parseCallVariablesResponse(callVariablesXml);
+    const customDispositions = parseDispositionsResponse(dispositionsXml);
+    
+    // Merge with standard fields, avoiding duplicates
+    const contactFieldNames = new Set(standardContactFields.map(f => f.name));
+    const filteredCustomContacts = customContactFields.filter(f => !contactFieldNames.has(f.name));
+    
+    const callVarNames = new Set(standardCallVariables.map(f => f.name));
+    const filteredCustomCallVars = customCallVariables.filter(f => !callVarNames.has(f.name));
+    
+    return {
+      contactFields: [...standardContactFields, ...filteredCustomContacts],
+      callVariables: [...standardCallVariables, ...filteredCustomCallVars],
+      dispositions: customDispositions.length > 0 ? customDispositions : standardDispositions,
+      campaigns: []
+    };
+  } catch (error) {
+    console.error("Error fetching Five9 schema:", error);
+    // Fall back to standard fields if API call fails
+    return {
+      contactFields: standardContactFields,
+      callVariables: standardCallVariables,
+      dispositions: standardDispositions,
+      campaigns: []
+    };
+  }
 }
 
 Deno.serve(async (req) => {
@@ -139,8 +273,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch Five9 schema (with caching in future)
-    const schema = await fetchFive9Schema(domainId, domain.api_key_encrypted);
+    let schema: Five9Schema;
+    
+    // If credentials are configured, fetch real schema from Five9
+    if (domain.five9_username && domain.five9_password_encrypted) {
+      schema = await fetchFive9Schema(domain.five9_username, domain.five9_password_encrypted);
+    } else {
+      // Fall back to standard fields if no credentials
+      schema = {
+        contactFields: standardContactFields,
+        callVariables: standardCallVariables,
+        dispositions: standardDispositions,
+        campaigns: []
+      };
+    }
 
     // Add any custom fields from workflow_settings if available
     if (domain.workflow_settings?.customFields) {
@@ -156,6 +302,8 @@ Deno.serve(async (req) => {
           domain: domain.domain,
         },
         schema,
+        hasCredentials: !!(domain.five9_username && domain.five9_password_encrypted),
+        connectionStatus: domain.api_connection_status
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
