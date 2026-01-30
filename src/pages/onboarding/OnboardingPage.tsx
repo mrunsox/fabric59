@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,7 @@ import { toast } from "sonner";
 type Step = "domain" | "tenant" | "complete";
 
 export default function OnboardingPage() {
-  const { organization, user } = useAuth();
+  const { organization, user, isMasterAdmin } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>("domain");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,6 +25,13 @@ export default function OnboardingPage() {
   // Tenant form
   const [tenantName, setTenantName] = useState("");
   const [crmType, setCrmType] = useState<"clio" | "workiz" | "salesforce" | "generic_rest" | "other">("other");
+
+  // Redirect master admins to their dashboard
+  useEffect(() => {
+    if (isMasterAdmin && !organization) {
+      navigate("/master", { replace: true });
+    }
+  }, [isMasterAdmin, organization, navigate]);
 
   if (!organization || !user) {
     return (
