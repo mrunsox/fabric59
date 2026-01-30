@@ -19,7 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Loader2, ChevronDown, Bell } from "lucide-react";
+import { Loader2, ChevronDown, Bell, Zap, Workflow } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +36,10 @@ const formSchema = z.object({
   crm_api_key: z.string().optional(),
   webhook_url: z.string().url().optional().or(z.literal("")),
   slack_webhook_url: z.string().url().optional().or(z.literal("")),
+  zapier_webhook_url: z.string().url().optional().or(z.literal("")),
+  make_webhook_url: z.string().url().optional().or(z.literal("")),
+  pabbly_webhook_url: z.string().url().optional().or(z.literal("")),
+  n8n_webhook_url: z.string().url().optional().or(z.literal("")),
   notification_triggers: z.object({
     intake_created: z.boolean(),
     call_ended: z.boolean(),
@@ -49,11 +53,46 @@ interface TenantFormProps {
   onSuccess?: () => void;
 }
 
+// Platform configuration for the automation section
+const AUTOMATION_PLATFORMS = [
+  {
+    key: "zapier_webhook_url" as const,
+    name: "Zapier",
+    placeholder: "https://hooks.zapier.com/hooks/catch/...",
+    description: "Create a Zap with 'Webhooks by Zapier' as the trigger.",
+    color: "text-orange-500",
+  },
+  {
+    key: "make_webhook_url" as const,
+    name: "Make",
+    placeholder: "https://hook.make.com/...",
+    description: "Create a scenario with 'Webhooks' module.",
+    color: "text-purple-500",
+  },
+  {
+    key: "pabbly_webhook_url" as const,
+    name: "Pabbly Connect",
+    placeholder: "https://connect.pabbly.com/workflow/...",
+    description: "Create a workflow with 'Webhook' trigger.",
+    color: "text-blue-500",
+  },
+  {
+    key: "n8n_webhook_url" as const,
+    name: "n8n",
+    placeholder: "https://your-n8n.app/webhook/...",
+    description: "Add a Webhook node to your workflow.",
+    color: "text-green-500",
+  },
+] as const;
+
 export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
   const createTenant = useCreateTenant();
   const updateTenant = useUpdateTenant();
   const [notificationsOpen, setNotificationsOpen] = useState(
     !!(tenant?.slack_webhook_url)
+  );
+  const [automationsOpen, setAutomationsOpen] = useState(
+    !!(tenant?.zapier_webhook_url || tenant?.make_webhook_url || tenant?.pabbly_webhook_url || tenant?.n8n_webhook_url)
   );
 
   const form = useForm<TenantFormData>({
@@ -65,6 +104,10 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
       crm_api_key: tenant?.crm_api_key || "",
       webhook_url: tenant?.webhook_url || "",
       slack_webhook_url: tenant?.slack_webhook_url || "",
+      zapier_webhook_url: tenant?.zapier_webhook_url || "",
+      make_webhook_url: tenant?.make_webhook_url || "",
+      pabbly_webhook_url: tenant?.pabbly_webhook_url || "",
+      n8n_webhook_url: tenant?.n8n_webhook_url || "",
       notification_triggers: tenant?.notification_triggers || DEFAULT_NOTIFICATION_TRIGGERS,
       status: tenant?.status || "pending",
     },
@@ -73,6 +116,11 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
   const isSubmitting = createTenant.isPending || updateTenant.isPending;
   const slackWebhookUrl = form.watch("slack_webhook_url");
   const hasSlackConfigured = !!slackWebhookUrl;
+
+  // Check if any automation platform is configured
+  const hasAutomationsConfigured = AUTOMATION_PLATFORMS.some(
+    (platform) => !!form.watch(platform.key)
+  );
 
   const onSubmit = async (data: TenantFormData) => {
     // If no Slack webhook, reset triggers to false
@@ -199,7 +247,7 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
           >
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Notifications (Optional)</span>
+              <span className="font-medium">Slack Notifications</span>
               {hasSlackConfigured && (
                 <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                   Configured
@@ -283,6 +331,81 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
               </div>
             </div>
           )}
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Workflow Automations Section */}
+      <Collapsible
+        open={automationsOpen}
+        onOpenChange={setAutomationsOpen}
+        className="rounded-lg border border-border"
+      >
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg"
+          >
+            <div className="flex items-center gap-2">
+              <Workflow className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Workflow Automations</span>
+              {hasAutomationsConfigured && (
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                  {AUTOMATION_PLATFORMS.filter((p) => !!form.watch(p.key)).length} Active
+                </span>
+              )}
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform",
+                automationsOpen && "rotate-180"
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Connect to workflow automation platforms to trigger actions when events occur.
+            All configured platforms will receive the same event data.
+          </p>
+
+          <div className="space-y-4">
+            {AUTOMATION_PLATFORMS.map((platform) => (
+              <div key={platform.key} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Zap className={cn("h-4 w-4", platform.color)} />
+                  <Label htmlFor={platform.key} className="font-medium">
+                    {platform.name}
+                  </Label>
+                  {form.watch(platform.key) && (
+                    <span className="text-xs bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full">
+                      Connected
+                    </span>
+                  )}
+                </div>
+                <Input
+                  id={platform.key}
+                  placeholder={platform.placeholder}
+                  {...form.register(platform.key)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {platform.description}
+                </p>
+                {form.formState.errors[platform.key] && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors[platform.key]?.message}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-md bg-muted/50 p-3 mt-4">
+            <p className="text-xs text-muted-foreground">
+              <strong>Note:</strong> Automations are triggered by the same events as Slack notifications 
+              (intake created, call ended, contact updated). Make sure to enable the appropriate triggers 
+              in the Slack Notifications section above, or the webhook URL if Slack isn't configured.
+            </p>
+          </div>
         </CollapsibleContent>
       </Collapsible>
 

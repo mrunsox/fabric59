@@ -258,13 +258,17 @@ export type Database = {
           custom_mappings: Json | null
           five9_domain_id: string | null
           id: string
+          make_webhook_url: string | null
+          n8n_webhook_url: string | null
           name: string
           notification_triggers: Json | null
           organization_id: string | null
+          pabbly_webhook_url: string | null
           slack_webhook_url: string | null
           status: string
           updated_at: string
           webhook_url: string | null
+          zapier_webhook_url: string | null
         }
         Insert: {
           created_at?: string
@@ -274,13 +278,17 @@ export type Database = {
           custom_mappings?: Json | null
           five9_domain_id?: string | null
           id?: string
+          make_webhook_url?: string | null
+          n8n_webhook_url?: string | null
           name: string
           notification_triggers?: Json | null
           organization_id?: string | null
+          pabbly_webhook_url?: string | null
           slack_webhook_url?: string | null
           status?: string
           updated_at?: string
           webhook_url?: string | null
+          zapier_webhook_url?: string | null
         }
         Update: {
           created_at?: string
@@ -290,13 +298,17 @@ export type Database = {
           custom_mappings?: Json | null
           five9_domain_id?: string | null
           id?: string
+          make_webhook_url?: string | null
+          n8n_webhook_url?: string | null
           name?: string
           notification_triggers?: Json | null
           organization_id?: string | null
+          pabbly_webhook_url?: string | null
           slack_webhook_url?: string | null
           status?: string
           updated_at?: string
           webhook_url?: string | null
+          zapier_webhook_url?: string | null
         }
         Relationships: [
           {
@@ -399,7 +411,15 @@ export type Database = {
       app_role: "master_admin" | "admin" | "ops_team" | "viewer"
       crm_type: "clio" | "workiz" | "salesforce" | "generic_rest" | "other"
       five9_domain_status: "active" | "inactive" | "pending_verification"
-      notification_channel: "slack" | "email" | "sms"
+      notification_channel:
+        | "slack"
+        | "email"
+        | "sms"
+        | "zapier"
+        | "make"
+        | "pabbly"
+        | "n8n"
+        | "webhook"
       notification_status: "sent" | "failed" | "pending"
       org_plan: "free" | "starter" | "pro" | "enterprise"
       org_role: "owner" | "admin" | "member"
@@ -534,7 +554,16 @@ export const Constants = {
       app_role: ["master_admin", "admin", "ops_team", "viewer"],
       crm_type: ["clio", "workiz", "salesforce", "generic_rest", "other"],
       five9_domain_status: ["active", "inactive", "pending_verification"],
-      notification_channel: ["slack", "email", "sms"],
+      notification_channel: [
+        "slack",
+        "email",
+        "sms",
+        "zapier",
+        "make",
+        "pabbly",
+        "n8n",
+        "webhook",
+      ],
       notification_status: ["sent", "failed", "pending"],
       org_plan: ["free", "starter", "pro", "enterprise"],
       org_role: ["owner", "admin", "member"],
