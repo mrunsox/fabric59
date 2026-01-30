@@ -384,6 +384,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_master_admin: { Args: { _user_id: string }; Returns: boolean }
       is_ops_member: { Args: { _user_id: string }; Returns: boolean }
       is_org_member: {
         Args: { _org_id: string; _user_id: string }
@@ -391,7 +392,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "ops_team" | "viewer"
+      app_role: "master_admin" | "admin" | "ops_team" | "viewer"
       crm_type: "clio" | "workiz" | "salesforce" | "generic_rest" | "other"
       five9_domain_status: "active" | "inactive" | "pending_verification"
       notification_channel: "slack" | "email" | "sms"
@@ -526,7 +527,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "ops_team", "viewer"],
+      app_role: ["master_admin", "admin", "ops_team", "viewer"],
       crm_type: ["clio", "workiz", "salesforce", "generic_rest", "other"],
       five9_domain_status: ["active", "inactive", "pending_verification"],
       notification_channel: ["slack", "email", "sms"],
