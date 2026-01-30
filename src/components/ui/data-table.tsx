@@ -114,7 +114,7 @@ export function DataTable<T>({
               onClick={() => onRowClick?.(item)}
             >
               {columns.map((column) => (
-                <TableCell key={column.key} className={column.className}>
+                <TableCell key={column.key} className={cn("text-foreground", column.className)}>
                   {column.render
                     ? column.render(item)
                     : String((item as Record<string, unknown>)[column.key] ?? "")}
