@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTenants } from "@/hooks/useTenants";
+import { useDomains } from "@/hooks/useDomains";
+import { useFieldMappings, useDeleteFieldMapping } from "@/hooks/useFieldMappings";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -14,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Save, RotateCcw, Copy, FileJson, ArrowRight } from "lucide-react";
+import { Save, RotateCcw, Copy, FileJson, ArrowRight, Workflow, Trash2, Edit } from "lucide-react";
 
 const defaultMappings = {
   clio: {
@@ -45,14 +48,25 @@ const defaultMappings = {
 };
 
 export default function MappingsPage() {
+  const navigate = useNavigate();
   const { data: tenants = [] } = useTenants();
+  const { data: domains = [] } = useDomains();
   const [selectedTenant, setSelectedTenant] = useState<string>("");
+  const [selectedDomain, setSelectedDomain] = useState<string>("");
   const [mappings, setMappings] = useState<string>(
     JSON.stringify(defaultMappings.clio, null, 2)
   );
   const [isDirty, setIsDirty] = useState(false);
 
+  // Fetch visual mappings for selected domain
+  const { data: visualMappings = [] } = useFieldMappings(selectedDomain || null);
+  const deleteMapping = useDeleteFieldMapping();
+
   const selectedTenantData = tenants.find((t) => t.id === selectedTenant);
+
+  const handleDomainChange = (domainId: string) => {
+    setSelectedDomain(domainId);
+  };
 
   const handleTenantChange = (tenantId: string) => {
     setSelectedTenant(tenantId);
@@ -99,12 +113,106 @@ export default function MappingsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Field Mappings</h1>
-        <p className="text-muted-foreground">
-          Configure how unified fields map to CRM-specific fields
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Field Mappings</h1>
+          <p className="text-muted-foreground">
+            Configure how unified fields map to CRM-specific fields
+          </p>
+        </div>
+        <Button onClick={() => navigate("/admin/mappings/builder")}>
+          <Workflow className="mr-2 h-4 w-4" />
+          Visual Mapping Builder
+        </Button>
       </div>
+
+      {/* Visual Mappings Section */}
+      {domains.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Workflow className="h-5 w-5 text-primary" />
+                  Visual Field Mappings
+                </CardTitle>
+                <CardDescription>
+                  Drag-and-drop mappings created with the visual builder
+                </CardDescription>
+              </div>
+              <Select value={selectedDomain} onValueChange={handleDomainChange}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select Five9 Domain" />
+                </SelectTrigger>
+                <SelectContent>
+                  {domains.map((domain) => (
+                    <SelectItem key={domain.id} value={domain.id}>
+                      {domain.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!selectedDomain ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Select a Five9 domain to view visual mappings
+              </div>
+            ) : visualMappings.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="mb-3">No visual mappings created yet</p>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/admin/mappings/builder?domain=${selectedDomain}`)}
+                >
+                  <Workflow className="mr-2 h-4 w-4" />
+                  Create Visual Mapping
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {visualMappings.map((mapping) => (
+                  <div
+                    key={mapping.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  >
+                    <div>
+                      <h4 className="font-medium">{mapping.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {mapping.mappings.length} field mappings → {mapping.destination_type}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <StatusBadge variant={mapping.is_active ? "active" : "inactive"} dot>
+                        {mapping.is_active ? "Active" : "Inactive"}
+                      </StatusBadge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(`/admin/mappings/builder/${mapping.id}`)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          if (confirm("Delete this mapping?")) {
+                            deleteMapping.mutate(mapping.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Tenant Selection & Quick Reference */}

@@ -99,6 +99,66 @@ export type Database = {
           },
         ]
       }
+      field_mappings: {
+        Row: {
+          created_at: string
+          description: string | null
+          destination_type: string
+          five9_domain_id: string
+          id: string
+          is_active: boolean | null
+          mappings: Json
+          name: string
+          source_type: string
+          tenant_id: string | null
+          transformations: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          destination_type: string
+          five9_domain_id: string
+          id?: string
+          is_active?: boolean | null
+          mappings?: Json
+          name: string
+          source_type?: string
+          tenant_id?: string | null
+          transformations?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          destination_type?: string
+          five9_domain_id?: string
+          id?: string
+          is_active?: boolean | null
+          mappings?: Json
+          name?: string
+          source_type?: string
+          tenant_id?: string | null
+          transformations?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_mappings_five9_domain_id_fkey"
+            columns: ["five9_domain_id"]
+            isOneToOne: false
+            referencedRelation: "five9_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       five9_domains: {
         Row: {
           api_key_encrypted: string | null
