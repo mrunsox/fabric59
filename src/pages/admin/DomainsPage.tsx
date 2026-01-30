@@ -175,10 +175,10 @@ export default function DomainsPage() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{domain.domain}</span>
+                      <span className="font-medium text-foreground">{domain.domain}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{domain.display_name}</TableCell>
+                  <TableCell className="text-foreground">{domain.display_name}</TableCell>
                   <TableCell>
                     <StatusBadge variant={getStatusVariant(domain.status)}>
                       {domain.status.replace("_", " ")}
