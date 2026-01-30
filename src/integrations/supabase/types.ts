@@ -161,33 +161,45 @@ export type Database = {
       }
       five9_domains: {
         Row: {
+          api_connection_status: string | null
           api_key_encrypted: string | null
           created_at: string
           display_name: string
           domain: string
+          five9_password_encrypted: string | null
+          five9_username: string | null
           id: string
+          last_connection_test: string | null
           organization_id: string
           status: Database["public"]["Enums"]["five9_domain_status"]
           updated_at: string
           workflow_settings: Json | null
         }
         Insert: {
+          api_connection_status?: string | null
           api_key_encrypted?: string | null
           created_at?: string
           display_name: string
           domain: string
+          five9_password_encrypted?: string | null
+          five9_username?: string | null
           id?: string
+          last_connection_test?: string | null
           organization_id: string
           status?: Database["public"]["Enums"]["five9_domain_status"]
           updated_at?: string
           workflow_settings?: Json | null
         }
         Update: {
+          api_connection_status?: string | null
           api_key_encrypted?: string | null
           created_at?: string
           display_name?: string
           domain?: string
+          five9_password_encrypted?: string | null
+          five9_username?: string | null
           id?: string
+          last_connection_test?: string | null
           organization_id?: string
           status?: Database["public"]["Enums"]["five9_domain_status"]
           updated_at?: string

@@ -27,6 +27,10 @@ export function useDomains() {
         domain: row.domain,
         display_name: row.display_name,
         api_key_encrypted: row.api_key_encrypted,
+        five9_username: row.five9_username,
+        five9_password_encrypted: row.five9_password_encrypted,
+        api_connection_status: row.api_connection_status as Five9Domain['api_connection_status'],
+        last_connection_test: row.last_connection_test,
         workflow_settings: (row.workflow_settings || {}) as WorkflowSettings,
         status: row.status as Five9DomainStatus,
         created_at: row.created_at,
@@ -56,6 +60,10 @@ export function useDomain(id: string) {
         domain: data.domain,
         display_name: data.display_name,
         api_key_encrypted: data.api_key_encrypted,
+        five9_username: data.five9_username,
+        five9_password_encrypted: data.five9_password_encrypted,
+        api_connection_status: data.api_connection_status as Five9Domain['api_connection_status'],
+        last_connection_test: data.last_connection_test,
         workflow_settings: (data.workflow_settings || {}) as WorkflowSettings,
         status: data.status as Five9DomainStatus,
         created_at: data.created_at,
@@ -106,6 +114,8 @@ export function useUpdateDomain() {
       if (data.domain !== undefined) updateData.domain = data.domain;
       if (data.display_name !== undefined) updateData.display_name = data.display_name;
       if (data.api_key !== undefined) updateData.api_key_encrypted = data.api_key || null;
+      if (data.five9_username !== undefined) updateData.five9_username = data.five9_username || null;
+      if (data.five9_password !== undefined) updateData.five9_password_encrypted = data.five9_password || null;
       if (data.workflow_settings !== undefined) updateData.workflow_settings = data.workflow_settings as Json;
       if (data.status !== undefined) updateData.status = data.status;
 

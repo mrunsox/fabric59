@@ -47,6 +47,10 @@ export interface Five9Domain {
   domain: string;
   display_name: string;
   api_key_encrypted: string | null;
+  five9_username: string | null;
+  five9_password_encrypted: string | null;
+  api_connection_status: 'pending' | 'connected' | 'failed' | null;
+  last_connection_test: string | null;
   workflow_settings: WorkflowSettings;
   status: Five9DomainStatus;
   created_at: string;
@@ -155,6 +159,8 @@ export interface Five9DomainFormData {
   domain: string;
   display_name: string;
   api_key?: string;
+  five9_username?: string;
+  five9_password?: string;
   workflow_settings?: WorkflowSettings;
 }
 
