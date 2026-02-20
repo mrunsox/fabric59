@@ -57,8 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setDevMode((prev) => !prev);
   };
 
-  // Check master admin status
-  const checkMasterAdmin = async (userId: string) => {
+  // Check master admin status — returns boolean for use in loadOrganizations
+  const checkMasterAdmin = async (userId: string): Promise<boolean> => {
     try {
       const { data } = await supabase
         .from("user_roles")
@@ -67,9 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq("role", "master_admin")
         .single();
 
-      setIsMasterAdmin(!!data);
+      const isMaster = !!data;
+      setIsMasterAdmin(isMaster);
+      return isMaster;
     } catch {
       setIsMasterAdmin(false);
+      return false;
     }
   };
 
@@ -85,9 +88,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (membError) throw membError;
 
       if (!memberships || memberships.length === 0) {
-        setOrganizations([]);
-        setOrganization(null);
-        setMembership(null);
+        // For master admins, load all organizations so they can operate in any org context
+        const isMaster = await checkMasterAdmin(userId);
+        if (isMaster) {
+          const { data: allOrgs } = await supabase.from("organizations").select("*");
+          const typedAllOrgs: Organization[] = (allOrgs || []).map((o) => ({
+            id: o.id,
+            name: o.name,
+            billing_email: o.billing_email,
+            plan: o.plan as Organization["plan"],
+            status: o.status as Organization["status"],
+            created_at: o.created_at,
+            updated_at: o.updated_at,
+          }));
+          setOrganizations(typedAllOrgs);
+          const savedOrgId = localStorage.getItem("currentOrgId");
+          const currentOrg = typedAllOrgs.find((o) => o.id === savedOrgId) || typedAllOrgs[0] || null;
+          setOrganization(currentOrg);
+          if (currentOrg) localStorage.setItem("currentOrgId", currentOrg.id);
+          setMembership(null);
+        } else {
+          setOrganizations([]);
+          setOrganization(null);
+          setMembership(null);
+        }
         return;
       }
 

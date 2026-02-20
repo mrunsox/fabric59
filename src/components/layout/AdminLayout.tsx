@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+import { DashboardSwitcher } from "@/components/layout/DashboardSwitcher";
 
 const navigation = [
   { name: "Tenants", href: "/admin", icon: Building2 },
@@ -45,7 +46,7 @@ const navigation = [
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { organization, organizations, switchOrganization, signOut, user, devMode, toggleDevMode } = useAuth();
+  const { organization, organizations, switchOrganization, signOut, user, devMode, toggleDevMode, isMasterAdmin } = useAuth();
 
   const currentPage = navigation.find((item) => 
     location.pathname === item.href || 
@@ -125,6 +126,7 @@ export function AdminLayout() {
 
           {/* Footer */}
           <div className="border-t border-sidebar-border p-4 space-y-3">
+            <DashboardSwitcher current="admin" />
             {/* Org Switcher */}
             {organizations.length > 1 && (
               <DropdownMenu>
