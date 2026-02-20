@@ -1,9 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Trash2, Copy } from "lucide-react";
+import { toast } from "sonner";
 
 interface UserWithRoles {
   user_id: string;
@@ -14,10 +18,12 @@ interface UserWithRoles {
 }
 
 export default function UsersManagementPage() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
   const { data: members, isLoading } = useQuery({
     queryKey: ["master-users"],
     queryFn: async () => {
-      // Get all organization members with org details
       const { data: membersData, error: membersError } = await supabase
         .from("organization_members")
         .select(`
@@ -41,7 +47,6 @@ export default function UsersManagementPage() {
     },
   });
 
-  // Get platform roles (admin, ops_team, etc.)
   const { data: platformRoles } = useQuery({
     queryKey: ["master-platform-roles"],
     queryFn: async () => {
@@ -54,6 +59,41 @@ export default function UsersManagementPage() {
       return data || [];
     },
   });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ id, role }: { id: string; role: string }) => {
+      const { error } = await supabase
+        .from("user_roles")
+        .update({ role: role as "master_admin" | "admin" | "ops_team" | "viewer" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["master-platform-roles"] });
+      toast.success("Role updated");
+    },
+    onError: () => toast.error("Failed to update role"),
+  });
+
+  const removeRoleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["master-platform-roles"] });
+      toast.success("Role removed");
+    },
+    onError: () => toast.error("Failed to remove role"),
+  });
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
 
   if (isLoading) {
     return (
@@ -82,27 +122,74 @@ export default function UsersManagementPage() {
                 <TableHead>User ID</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Assigned</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {platformRoles?.map((role) => (
-                <TableRow key={role.id}>
-                  <TableCell className="font-mono text-xs">
-                    {role.user_id}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={role.role === "master_admin" ? "default" : "secondary"}>
-                      {role.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(role.created_at).toLocaleDateString()}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {platformRoles?.map((role) => {
+                const isSelf = role.user_id === user?.id;
+                const isMasterAdmin = role.role === "master_admin";
+                return (
+                  <TableRow key={role.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {role.user_id.slice(0, 8)}…
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => copyToClipboard(role.user_id)}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        {isSelf && (
+                          <Badge variant="outline" className="text-xs">you</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={role.role}
+                        disabled={isSelf && isMasterAdmin}
+                        onValueChange={(val) => updateRoleMutation.mutate({ id: role.id, role: val })}
+                      >
+                        <SelectTrigger className="h-7 w-32 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="master_admin">Master Admin</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="ops_team">Ops Team</SelectItem>
+                          <SelectItem value="viewer">Viewer</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(role.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        disabled={isSelf && isMasterAdmin}
+                        onClick={() => {
+                          if (confirm("Remove this platform role?")) {
+                            removeRoleMutation.mutate(role.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {(!platformRoles || platformRoles.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     No platform roles assigned
                   </TableCell>
                 </TableRow>
@@ -130,8 +217,20 @@ export default function UsersManagementPage() {
             <TableBody>
               {members?.map((member, index) => (
                 <TableRow key={`${member.user_id}-${member.organization_id}-${index}`}>
-                  <TableCell className="font-mono text-xs">
-                    {member.user_id}
+                  <TableCell>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {member.user_id.slice(0, 8)}…
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => copyToClipboard(member.user_id)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell>{member.organization_name}</TableCell>
                   <TableCell>

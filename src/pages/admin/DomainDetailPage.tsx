@@ -314,14 +314,14 @@ export default function DomainDetailPage() {
                   <Label htmlFor="five9Username">Five9 Username</Label>
                   <Input
                     id="five9Username"
-                    type="email"
-                    placeholder="admin@yourdomain.five9.com"
+                    type="text"
+                    placeholder="yourusername"
                     value={five9Username}
                     onChange={(e) => setFive9Username(e.target.value)}
                     disabled={!canManage}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Your Five9 administrator username (email address)
+                    Your Five9 administrator username
                   </p>
                 </div>
 
