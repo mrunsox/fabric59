@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ArrowRight, Check, Globe, Building2, Building } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, ArrowRight, Check, Globe, Building2, Building, Eye, EyeOff } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { toast } from "sonner";
 
@@ -26,6 +27,9 @@ export default function OnboardingPage() {
   // Domain form
   const [domain, setDomain] = useState("");
   const [domainDisplayName, setDomainDisplayName] = useState("");
+  const [five9Username, setFive9Username] = useState("");
+  const [five9Password, setFive9Password] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [createdDomainId, setCreatedDomainId] = useState<string | null>(null);
 
   // Tenant form
@@ -113,6 +117,8 @@ export default function OnboardingPage() {
           organization_id: orgId,
           domain,
           display_name: domainDisplayName,
+          five9_username: five9Username || null,
+          five9_password_encrypted: five9Password || null,
         })
         .select()
         .single();
@@ -286,6 +292,59 @@ export default function OnboardingPage() {
                   />
                   <p className="text-xs text-muted-foreground">
                     A friendly name to identify this domain
+                  </p>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">API Credentials (optional)</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="five9Username">Five9 Admin Username</Label>
+                  <Input
+                    id="five9Username"
+                    type="text"
+                    placeholder="admin@yourcompany.com"
+                    value={five9Username}
+                    onChange={(e) => setFive9Username(e.target.value)}
+                    autoComplete="username"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="five9Password">Admin Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="five9Password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••••••"
+                      value={five9Password}
+                      onChange={(e) => setFive9Password(e.target.value)}
+                      autoComplete="current-password"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Used to sync agent skills, call variables, and dispositions from your Five9 domain
                   </p>
                 </div>
               </CardContent>
