@@ -1,5 +1,7 @@
-import { CheckCircle2, Circle, Loader2, Map } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, LayoutDashboard, Loader2, Map } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { buildMap, type ItemStatus } from "@/data/buildMap";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 
@@ -31,10 +33,22 @@ export default function OutlinePage() {
             <p className="text-xs text-muted-foreground">Living map of all planned and built features</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <Map className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground hidden sm:inline">
-              {done} of {total} features built
-            </span>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/" className="flex items-center gap-1.5">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Back to Landing</span>
+              </Link>
+            </Button>
+            <Button variant="default" size="sm" asChild>
+              <Link to="/admin" className="flex items-center gap-1.5">
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="hidden sm:inline">Go to Dashboard</span>
+              </Link>
+            </Button>
+            <div className="hidden md:flex items-center gap-1.5 pl-2 border-l border-border">
+              <Map className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">{done} of {total} built</span>
+            </div>
           </div>
         </div>
       </header>
