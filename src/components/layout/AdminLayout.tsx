@@ -17,6 +17,7 @@ import {
   Map,
   FlaskConical,
   Users,
+  Plug,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,6 +36,7 @@ const navigation = [
   { name: "Five9 Domains", href: "/admin/domains", icon: Globe },
   { name: "Agents", href: "/admin/agents", icon: Users },
   { name: "Tenants", href: "/admin", icon: Building2 },
+  { name: "Integrations", href: "/admin/integrations", icon: Plug },
   { name: "Field Mappings", href: "/admin/mappings", icon: FileJson },
   { name: "API Logs", href: "/admin/logs", icon: Activity },
   { name: "Test Console", href: "/admin/test", icon: TestTube2 },
