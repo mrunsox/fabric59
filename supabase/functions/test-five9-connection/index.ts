@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     }
 
     // Make SOAP request to Five9 Admin Web Services
-    const soapResponse = await fetch("https://api.five9.com/wsadmin/v2/AdminWebService", {
+    const soapResponse = await fetch("https://api.five9.com/wsadmin/v13/AdminWebService", {
       method: "POST",
       headers: {
         "Content-Type": "text/xml;charset=UTF-8",

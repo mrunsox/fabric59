@@ -83,8 +83,9 @@ serve(async (req) => {
   }
 
   try {
-    const FIVE9_USERNAME = await getConfig('five9_username', Deno.env.get('FIVE9_USERNAME'));
-    const FIVE9_PASSWORD = await getConfig('five9_password', Deno.env.get('FIVE9_PASSWORD'));
+    // Read credentials ONLY from env secrets — bypass DB config to avoid stale/wrong values
+    const FIVE9_USERNAME = Deno.env.get('FIVE9_USERNAME');
+    const FIVE9_PASSWORD = Deno.env.get('FIVE9_PASSWORD');
 
     if (!FIVE9_USERNAME || !FIVE9_PASSWORD) {
       return new Response(JSON.stringify({ success: false, error: 'Five9 credentials not configured. Please add them in Settings → Integration Credentials.' }), {
