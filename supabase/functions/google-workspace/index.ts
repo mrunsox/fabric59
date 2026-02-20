@@ -1,4 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+async function getConfig(key: string, envFallback: string | undefined): Promise<string | undefined> {
+  if (envFallback) return envFallback;
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    const { data } = await supabase.from('app_config').select('value').eq('key', key).maybeSingle();
+    return data?.value ?? undefined;
+  } catch { return undefined; }
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -67,9 +80,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const serviceAccountEmail = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL');
-  const privateKeyPem = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY');
-  const impersonateEmail = Deno.env.get('GOOGLE_ADMIN_IMPERSONATE_EMAIL');
+  const serviceAccountEmail = await getConfig('google_service_account_email', Deno.env.get('GOOGLE_SERVICE_ACCOUNT_EMAIL'));
+  const privateKeyPem = await getConfig('google_service_account_private_key', Deno.env.get('GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY'));
+  const impersonateEmail = await getConfig('google_admin_impersonate_email', Deno.env.get('GOOGLE_ADMIN_IMPERSONATE_EMAIL'));
 
   if (!serviceAccountEmail || !privateKeyPem || !impersonateEmail) {
     return new Response(JSON.stringify({
