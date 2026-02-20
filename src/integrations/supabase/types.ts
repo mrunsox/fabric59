@@ -420,6 +420,11 @@ export type Database = {
       organizations: {
         Row: {
           billing_email: string | null
+          brand_from_email: string | null
+          brand_logo_url: string | null
+          brand_name: string | null
+          brand_primary_color: string | null
+          brand_reply_to: string | null
           created_at: string
           id: string
           name: string
@@ -429,6 +434,11 @@ export type Database = {
         }
         Insert: {
           billing_email?: string | null
+          brand_from_email?: string | null
+          brand_logo_url?: string | null
+          brand_name?: string | null
+          brand_primary_color?: string | null
+          brand_reply_to?: string | null
           created_at?: string
           id?: string
           name: string
@@ -438,6 +448,11 @@ export type Database = {
         }
         Update: {
           billing_email?: string | null
+          brand_from_email?: string | null
+          brand_logo_url?: string | null
+          brand_name?: string | null
+          brand_primary_color?: string | null
+          brand_reply_to?: string | null
           created_at?: string
           id?: string
           name?: string

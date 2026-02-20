@@ -22,6 +22,8 @@ import {
 import { Loader2, ChevronDown, Bell, Zap, Workflow } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const DEFAULT_NOTIFICATION_TRIGGERS: NotificationTriggers = {
   intake_created: false,
@@ -31,6 +33,7 @@ const DEFAULT_NOTIFICATION_TRIGGERS: NotificationTriggers = {
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
+  organization_id: z.string().optional(),
   crm_type: z.enum(["clio", "workiz", "salesforce", "generic_rest", "other"]),
   crm_api_url: z.string().url().optional().or(z.literal("")),
   crm_api_key: z.string().optional(),
@@ -95,10 +98,25 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
     !!(tenant?.zapier_webhook_url || tenant?.make_webhook_url || tenant?.pabbly_webhook_url || tenant?.n8n_webhook_url)
   );
 
+  // Load organizations (white-label partners) for the dropdown
+  const { data: organizations = [] } = useQuery({
+    queryKey: ["organizations-for-form"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name")
+        .eq("status", "active")
+        .order("name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const form = useForm<TenantFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: tenant?.name || "",
+      organization_id: tenant?.organization_id || "",
       crm_type: tenant?.crm_type || "other",
       crm_api_url: tenant?.crm_api_url || "",
       crm_api_key: tenant?.crm_api_key || "",
@@ -126,6 +144,7 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
     // If no Slack webhook, reset triggers to false
     const finalData = {
       ...data,
+      organization_id: data.organization_id || undefined,
       notification_triggers: data.slack_webhook_url
         ? data.notification_triggers
         : DEFAULT_NOTIFICATION_TRIGGERS,
@@ -147,10 +166,10 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Tenant Name *</Label>
+        <Label htmlFor="name">Client Name *</Label>
         <Input
           id="name"
-          placeholder="e.g., Law Firm Alpha"
+          placeholder="e.g., Smith & Associates Law"
           {...form.register("name")}
         />
         {form.formState.errors.name && (
@@ -158,6 +177,30 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
             {form.formState.errors.name.message}
           </p>
         )}
+      </div>
+
+      {/* White-Label Partner dropdown */}
+      <div className="space-y-2">
+        <Label htmlFor="organization_id">White-Label Partner</Label>
+        <Select
+          value={form.watch("organization_id") || "none"}
+          onValueChange={(val) => form.setValue("organization_id", val === "none" ? "" : val)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a partner..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">— No partner (direct client) —</SelectItem>
+            {organizations.map((org) => (
+              <SelectItem key={org.id} value={org.id}>
+                {org.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Which white-label partner does this client belong to?
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -412,7 +455,7 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
       <div className="flex justify-end gap-3 pt-4">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {tenant ? "Update Tenant" : "Create Tenant"}
+          {tenant ? "Update Client" : "Create Client"}
         </Button>
       </div>
     </form>

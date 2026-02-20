@@ -68,7 +68,7 @@ export default function TenantsPage() {
   const columns = [
     {
       key: "name",
-      header: "Tenant Name",
+      header: "Client Name",
       render: (tenant: Tenant) => (
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
@@ -160,7 +160,7 @@ export default function TenantsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Tenants</h1>
+      <h1 className="text-2xl font-bold text-foreground">Clients</h1>
           <p className="text-muted-foreground">
             Manage client integrations across Clio, Workiz, and other CRMs
           </p>
@@ -169,12 +169,12 @@ export default function TenantsPage() {
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Tenant
+              Add Client
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Create New Tenant</DialogTitle>
+              <DialogTitle>Create New Client</DialogTitle>
               <DialogDescription>
                 Add a new client integration. Configure CRM connection details.
               </DialogDescription>
@@ -187,14 +187,14 @@ export default function TenantsPage() {
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Tenants"
+          title="Total Clients"
           value={tenants.length}
           subtitle="Across all CRMs"
           icon={Building2}
           variant="primary"
         />
         <StatCard
-          title="Active Tenants"
+          title="Active Clients"
           value={activeTenants}
           subtitle="Currently integrated"
           icon={CheckCircle2}
@@ -221,7 +221,7 @@ export default function TenantsPage() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search tenants..."
+            placeholder="Search clients..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -235,16 +235,16 @@ export default function TenantsPage() {
         data={filteredTenants}
         keyExtractor={(t) => t.id}
         isLoading={isLoading}
-        emptyMessage="No tenants found. Create your first tenant to get started."
+        emptyMessage="No clients found. Create your first client to get started."
       />
 
       {/* Edit Dialog */}
       <Dialog open={!!editingTenant} onOpenChange={() => setEditingTenant(null)}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Edit Tenant</DialogTitle>
+          <DialogTitle>Edit Client</DialogTitle>
             <DialogDescription>
-              Update tenant configuration and CRM connection details.
+              Update client configuration and CRM connection details.
             </DialogDescription>
           </DialogHeader>
           {editingTenant && (
@@ -263,7 +263,7 @@ export default function TenantsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Tenant</AlertDialogTitle>
+          <AlertDialogTitle>Delete Client</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{deletingTenant?.name}"? This will
               remove all associated field mappings and API logs. This action cannot
