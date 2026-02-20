@@ -120,6 +120,32 @@ Deno.serve(async (req) => {
       // Extract fault message
       const faultMatch = responseText.match(/<faultstring>([^<]+)<\/faultstring>/);
       const faultMessage = faultMatch ? faultMatch[1] : "Unknown error from Five9 API";
+      const faultLower = faultMessage.toLowerCase();
+
+      // Classify the fault type for better UX
+      let errorType: "auth" | "permission" | "unknown" = "unknown";
+      let friendlyMessage = `Five9 API error: ${faultMessage}`;
+
+      if (
+        faultLower.includes("fault occurred while processing") ||
+        faultLower.includes("authentication") ||
+        faultLower.includes("invalid credentials") ||
+        faultLower.includes("invalid username") ||
+        faultLower.includes("invalid password") ||
+        soapResponse.status === 401
+      ) {
+        errorType = "auth";
+        friendlyMessage = "Authentication failed — wrong username or password. Double-check your Five9 admin credentials and try again.";
+      } else if (
+        faultLower.includes("permission") ||
+        faultLower.includes("not authorized") ||
+        faultLower.includes("access denied") ||
+        faultLower.includes("adminwebservice") ||
+        faultLower.includes("admin web service")
+      ) {
+        errorType = "permission";
+        friendlyMessage = "Credentials are correct but this account doesn't have AdminWebService API access. Ask your Five9 admin to enable it for this user account.";
+      }
 
       await supabase
         .from("five9_domains")
@@ -133,7 +159,8 @@ Deno.serve(async (req) => {
         JSON.stringify({
           success: false,
           status: "failed",
-          message: `Five9 API error: ${faultMessage}`
+          message: friendlyMessage,
+          errorType
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

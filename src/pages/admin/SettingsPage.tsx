@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw, Activity } from "lucide-react";
 import { useAppConfig } from "@/hooks/useAppConfig";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_ROLES } from "@/types/provisioning";
@@ -161,6 +161,18 @@ export default function SettingsPage() {
     }
   };
 
+  // Derive integration status from loaded configValues
+  const integrationStatus = {
+    five9: !!(configValues.five9_username && configValues.five9_password),
+    resend: !!(configValues.resend_api_key && configValues.resend_from_email),
+    google: !!(
+      configValues.google_service_account_email &&
+      configValues.google_service_account_private_key &&
+      configValues.google_admin_impersonate_email
+    ),
+    slack: slackStatus?.connected ?? null,
+  };
+
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       {/* Header */}
@@ -171,7 +183,84 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {/* API Settings */}
+      {/* Integration Status Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Activity className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Integration Status</CardTitle>
+              <CardDescription>Live status of all configured service credentials</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {[
+              {
+                label: "Five9 Admin API",
+                description: "Agent provisioning & SOAP access",
+                ok: integrationStatus.five9,
+                missingHint: "Five9 username and password required",
+              },
+              {
+                label: "Email (Resend)",
+                description: "Credential delivery to new agents",
+                ok: integrationStatus.resend,
+                missingHint: "Resend API key and from-email required",
+              },
+              {
+                label: "Google Workspace",
+                description: "Agent account creation & deletion",
+                ok: integrationStatus.google,
+                missingHint: "Service account email, impersonation email, and private key required",
+              },
+              {
+                label: "Slack",
+                description: "Channel notifications & invites",
+                ok: integrationStatus.slack,
+                missingHint: "Test the Slack connector below to verify",
+              },
+            ].map(({ label, description, ok, missingHint }) => (
+              <div
+                key={label}
+                className={`flex items-start gap-3 rounded-lg border p-3 transition-colors ${
+                  ok === true
+                    ? "border-success/20 bg-success/5"
+                    : ok === false
+                    ? "border-warning/20 bg-warning/5"
+                    : "border-border bg-muted/30"
+                }`}
+              >
+                {ok === true ? (
+                  <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" />
+                ) : ok === false ? (
+                  <AlertCircle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium leading-none">{label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {ok === true ? description : missingHint}
+                  </p>
+                </div>
+                <div className="ml-auto shrink-0">
+                  {ok === true ? (
+                    <Badge variant="outline" className="text-success border-success/30 bg-success/10 text-xs">Configured</Badge>
+                  ) : ok === false ? (
+                    <Badge variant="outline" className="text-warning border-warning/30 bg-warning/10 text-xs">Missing</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground text-xs">Unknown</Badge>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
