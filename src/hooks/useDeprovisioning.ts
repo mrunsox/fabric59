@@ -136,10 +136,23 @@ export function useDeprovisioning() {
       updateStep('five9-deletion', { status: 'error', errorMessage: 'Five9 unavailable' });
     }
 
-    // Step 3 — Slack removal (stubbed)
+    // Step 3 — Slack removal (real)
     updateStep('slack-removal', { status: 'active' });
-    await delay(1200);
-    updateStep('slack-removal', { status: 'complete' });
+    try {
+      const { data: slackData } = await supabase.functions.invoke('slack-agent', {
+        body: {
+          action: 'removeUser',
+          email: agentData?.email || request.email,
+          slackUserId: agentData?.slack_user_id || undefined,
+        },
+      });
+      updateStep('slack-removal', {
+        status: (slackData?.success || slackData?.skipped) ? 'complete' : 'error',
+        errorMessage: slackData?.error,
+      });
+    } catch {
+      updateStep('slack-removal', { status: 'error', errorMessage: 'Slack unavailable' });
+    }
 
     // Step 4 — Google suspension (real call)
     updateStep('google-suspension', { status: 'active' });

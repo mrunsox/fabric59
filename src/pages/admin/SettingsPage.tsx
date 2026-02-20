@@ -6,9 +6,12 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { useAppConfig } from "@/hooks/useAppConfig";
+import { supabase } from "@/integrations/supabase/client";
+import { AGENT_ROLES } from "@/types/provisioning";
 
 function MaskedInput({
   id,
@@ -92,6 +95,8 @@ function MaskedTextarea({
 export default function SettingsPage() {
   const { configValues, saveIntegrationCredentials, loading } = useAppConfig();
   const [saving, setSaving] = useState(false);
+  const [slackTesting, setSlackTesting] = useState(false);
+  const [slackStatus, setSlackStatus] = useState<{ connected: boolean; workspace?: string; botName?: string } | null>(null);
 
   const [creds, setCreds] = useState({
     email_domain: "",
@@ -133,6 +138,27 @@ export default function SettingsPage() {
     setSaving(true);
     await saveIntegrationCredentials(creds);
     setSaving(false);
+  };
+
+  const handleTestSlack = async () => {
+    setSlackTesting(true);
+    try {
+      const { data } = await supabase.functions.invoke('slack-agent', {
+        body: { action: 'test' },
+      });
+      if (data?.success) {
+        setSlackStatus({ connected: true, workspace: data.workspace, botName: data.botName });
+        toast.success(`Slack connected — workspace: ${data.workspace}`);
+      } else {
+        setSlackStatus({ connected: false });
+        toast.error(`Slack test failed: ${data?.error || 'Unknown error'}`);
+      }
+    } catch {
+      setSlackStatus({ connected: false });
+      toast.error('Could not reach Slack — connector may not be linked');
+    } finally {
+      setSlackTesting(false);
+    }
   };
 
   return (
@@ -299,6 +325,78 @@ export default function SettingsPage() {
                 rows={6}
               />
               <p className="text-xs text-muted-foreground">Paste the full PEM private key from your Google service account JSON file</p>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Slack Integration */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Slack Integration</p>
+              {slackStatus !== null && (
+                slackStatus.connected
+                  ? <Badge variant="outline" className="gap-1.5 text-success border-success/30 bg-success/10"><CheckCircle2 className="h-3 w-3" />Connected</Badge>
+                  : <Badge variant="outline" className="gap-1.5 text-destructive border-destructive/30 bg-destructive/10"><AlertCircle className="h-3 w-3" />Not connected</Badge>
+              )}
+            </div>
+
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Lovable Slack Connector</p>
+                  <p className="text-xs text-muted-foreground">
+                    Connected via the Lovable connector gateway. The bot is auto-present in all public channels.
+                    {slackStatus?.workspace && <span className="ml-1 font-medium text-foreground">Workspace: {slackStatus.workspace}</span>}
+                    {slackStatus?.botName && <span className="ml-1 text-muted-foreground">· Bot: {slackStatus.botName}</span>}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTestSlack}
+                  disabled={slackTesting}
+                  className="shrink-0 gap-2"
+                >
+                  {slackTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  Test Connection
+                </Button>
+              </div>
+            </div>
+
+            {/* Channel Mapping Table */}
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground font-medium">Channel mapping by role</p>
+              <div className="rounded-lg border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</th>
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Slack Channels</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {AGENT_ROLES.filter(r => r.slackChannels.length > 0).map(role => (
+                      <tr key={role.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-4 py-3 font-medium">{role.name}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1.5">
+                            {role.slackChannels.map(ch => (
+                              <span key={ch} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                <Hash className="h-2.5 w-2.5" />{ch.replace(/^#/, '')}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="hover:bg-muted/20 transition-colors">
+                      <td className="px-4 py-3 font-medium text-muted-foreground">Manager</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground italic">No channels assigned</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
