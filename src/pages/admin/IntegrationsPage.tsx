@@ -9,6 +9,7 @@ import {
   CATEGORIES,
   type Integration,
 } from "@/data/integrations-catalog";
+import { useTenants } from "@/hooks/useTenants";
 
 const ALL_TAB = "All";
 
@@ -16,6 +17,21 @@ export default function IntegrationsPage() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState(ALL_TAB);
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const { data: tenants } = useTenants();
+
+  const connectedIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!tenants) return ids;
+    for (const t of tenants) {
+      if (t.crm_type && t.crm_type !== "other") ids.add(t.crm_type);
+      if (t.slack_webhook_url) ids.add("slack");
+      if (t.zapier_webhook_url) ids.add("zapier");
+      if (t.make_webhook_url) ids.add("make");
+      if (t.n8n_webhook_url) ids.add("n8n");
+      if (t.pabbly_webhook_url) ids.add("pabbly");
+    }
+    return ids;
+  }, [tenants]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -91,6 +107,7 @@ export default function IntegrationsPage() {
                 <IntegrationCard
                   key={integration.id}
                   integration={integration}
+                  isConnected={connectedIds.has(integration.id)}
                   onSelect={setSelectedIntegration}
                 />
               ))}

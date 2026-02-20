@@ -54,7 +54,11 @@ export function IntegrationDetailDialog({ integration, open, onOpenChange }: Pro
         <DialogHeader>
           <div className="flex items-center gap-3 mb-1">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Icon className="h-5 w-5" />
+              {integration.logoUrl ? (
+                <img src={integration.logoUrl} alt={integration.name} className="h-6 w-6 object-contain dark:invert" />
+              ) : (
+                <Icon className="h-5 w-5" />
+              )}
             </div>
             <div>
               <DialogTitle className="text-lg">{integration.name}</DialogTitle>

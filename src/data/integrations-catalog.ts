@@ -77,6 +77,7 @@ export interface Integration {
   actions: IntegrationAction[];
   docsUrl: string;
   icon: LucideIcon;
+  logoUrl?: string;
   status: IntegrationStatus;
 }
 
@@ -132,6 +133,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developer.salesforce.com/docs",
     icon: Building2,
+    logoUrl: "/integration-logos/salesforce.svg",
     status: "available",
   },
   {
@@ -324,6 +326,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developers.hubspot.com/docs/api/overview",
     icon: BarChart3,
+    logoUrl: "/integration-logos/hubspot.svg",
     status: "coming_soon",
   },
   {
@@ -381,6 +384,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developer.zendesk.com/api-reference/",
     icon: Headphones,
+    logoUrl: "/integration-logos/zendesk.svg",
     status: "coming_soon",
   },
   {
@@ -510,6 +514,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://api.slack.com/",
     icon: MessageSquare,
+    logoUrl: "/integration-logos/slack.svg",
     status: "available",
   },
   {
@@ -528,6 +533,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://learn.microsoft.com/en-us/graph/api/resources/teams-api-overview",
     icon: MessageCircle,
+    logoUrl: "/integration-logos/teams.svg",
     status: "coming_soon",
   },
   {
@@ -546,6 +552,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.twilio.com/docs/sms",
     icon: Send,
+    logoUrl: "/integration-logos/twilio.svg",
     status: "coming_soon",
   },
   {
@@ -582,6 +589,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developers.zoom.us/docs/api/",
     icon: Video,
+    logoUrl: "/integration-logos/zoom.svg",
     status: "coming_soon",
   },
   {
@@ -620,6 +628,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developers.google.com/calendar/api",
     icon: Calendar,
+    logoUrl: "/integration-logos/google.svg",
     status: "coming_soon",
   },
   {
@@ -638,6 +647,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://learn.microsoft.com/en-us/graph/api/resources/mail-api-overview",
     icon: Mail,
+    logoUrl: "/integration-logos/microsoft.svg",
     status: "coming_soon",
   },
   {
@@ -656,6 +666,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developer.calendly.com/api-docs",
     icon: CalendarCheck,
+    logoUrl: "/integration-logos/calendly.svg",
     status: "coming_soon",
   },
   {
@@ -692,6 +703,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developers.asana.com/docs",
     icon: ListTodo,
+    logoUrl: "/integration-logos/asana.svg",
     status: "coming_soon",
   },
   {
@@ -730,6 +742,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developers.google.com/drive/api",
     icon: HardDrive,
+    logoUrl: "/integration-logos/google-drive.svg",
     status: "coming_soon",
   },
   {
@@ -748,6 +761,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.dropbox.com/developers/documentation",
     icon: CloudUpload,
+    logoUrl: "/integration-logos/dropbox.svg",
     status: "coming_soon",
   },
   {
@@ -766,6 +780,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://learn.microsoft.com/en-us/onedrive/developer/",
     icon: Cloud,
+    logoUrl: "/integration-logos/onedrive.svg",
     status: "coming_soon",
   },
   {
@@ -783,6 +798,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developers.docusign.com/docs/esign-rest-api/",
     icon: PenTool,
+    logoUrl: "/integration-logos/docusign.svg",
     status: "coming_soon",
   },
   {
@@ -872,6 +888,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://stripe.com/docs/api",
     icon: CreditCard,
+    logoUrl: "/integration-logos/stripe.svg",
     status: "coming_soon",
   },
   {
@@ -890,6 +907,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developer.intuit.com/app/developer/qbo/docs/develop",
     icon: Receipt,
+    logoUrl: "/integration-logos/quickbooks.svg",
     status: "coming_soon",
   },
   {
@@ -945,6 +963,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://zapier.com/platform",
     icon: Zap,
+    logoUrl: "/integration-logos/zapier.svg",
     status: "available",
   },
   {
@@ -962,6 +981,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.make.com/en/api-documentation",
     icon: Workflow,
+    logoUrl: "/integration-logos/make.svg",
     status: "available",
   },
   {
@@ -1034,6 +1054,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://platform.openai.com/docs/api-reference",
     icon: Bot,
+    logoUrl: "/integration-logos/openai.svg",
     status: "coming_soon",
   },
   {
