@@ -143,7 +143,7 @@ serve(async (req) => {
       const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getUsersGeneralInfo', soapBody);
 
       // Parse user blocks
-      const userBlocks = xml.match(/<generalInfo>(.*?)<\/generalInfo>/gs) || [];
+      const userBlocks = xml.match(/<return>(.*?)<\/return>/gs) || [];
       const users = userBlocks.map(block => ({
         firstName: extractFirst(block, 'firstName'),
         lastName: extractFirst(block, 'lastName'),
@@ -191,6 +191,28 @@ serve(async (req) => {
         skills: extractValues(xml, 'skillName'),
       };
       responseData = { success: true, info };
+    } else if (action === 'syncFromFive9') {
+      // Fetch both users and skills in parallel for sync
+      const usersBody = `<ser:getUsersGeneralInfo/>`;
+      const skillsBody = `<ser:getSkills/>`;
+      const [usersXml, skillsXml] = await Promise.all([
+        soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getUsersGeneralInfo', usersBody),
+        soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getSkills', skillsBody),
+      ]);
+
+      const userBlocks = usersXml.match(/<return>(.*?)<\/return>/gs) || [];
+      const users = userBlocks.map(block => ({
+        firstName: extractFirst(block, 'firstName'),
+        lastName: extractFirst(block, 'lastName'),
+        email: extractFirst(block, 'EMail') || extractFirst(block, 'email'),
+        userName: extractFirst(block, 'userName'),
+        extension: extractFirst(block, 'extension'),
+        active: extractFirst(block, 'active') === 'true',
+      }));
+
+      const skills = [...new Set(extractValues(skillsXml, 'name').filter(Boolean))];
+      responseData = { success: true, users, skills };
+
     } else {
       responseData = { success: false, error: `Unknown action: ${action}` };
     }

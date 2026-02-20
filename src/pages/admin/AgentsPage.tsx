@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, UserMinus, Users2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { UserPlus, UserMinus, Users2, CheckCircle2, XCircle, Clock, RefreshCw } from "lucide-react";
 import { StatCard } from "@/components/ui/stat-card";
+import { Button } from "@/components/ui/button";
 import { ProvisioningForm } from "@/components/agents/onboarding/ProvisioningForm";
 import { WorkflowPanel } from "@/components/agents/onboarding/WorkflowPanel";
 import { Five9UsersTable } from "@/components/agents/onboarding/Five9UsersTable";
@@ -11,13 +12,15 @@ import { DeprovisioningModal } from "@/components/agents/offboarding/Deprovision
 import { AuditLogTable } from "@/components/agents/offboarding/AuditLogTable";
 import { useProvisioning } from "@/hooks/useProvisioning";
 import { useDeprovisioning } from "@/hooks/useDeprovisioning";
+import { useFive9Sync } from "@/hooks/useFive9Sync";
 import { ProvisioningHistory, ProvisioningInput } from "@/types/provisioning";
 import { DataTransferConfig } from "@/types/deprovisioning";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function AgentsPage() {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const { steps, isProvisioning, lastResult, history, provisionAgent, refreshAgents } = useProvisioning();
+  const { syncFromFive9, isSyncing } = useFive9Sync();
   const {
     steps: deprovSteps,
     isDeprovisioning,
@@ -89,9 +92,23 @@ export default function AgentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Agent Lifecycle</h1>
-        <p className="text-muted-foreground text-sm mt-1">Provision and offboard Five9 agents across Google Workspace and Slack</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Agent Lifecycle</h1>
+          <p className="text-muted-foreground text-sm mt-1">Provision and offboard Five9 agents across Google Workspace and Slack</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={async () => {
+            await syncFromFive9(organization?.id);
+            await refreshAgents();
+          }}
+          disabled={isSyncing}
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+          {isSyncing ? 'Syncing…' : 'Sync from Five9'}
+        </Button>
       </div>
 
       {/* Stat cards */}
