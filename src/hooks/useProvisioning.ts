@@ -53,6 +53,7 @@ export function useProvisioning() {
     const lastName = lastParts.join(' ') || '';
     const email = input.emailHandle;
     let googleUserId: string | null = null;
+    let slackUserId: string | null = null;
     let allSuccess = true;
 
     // Step 1 — Google Workspace
@@ -76,10 +77,27 @@ export function useProvisioning() {
     await delay(800);
     updateStep('password-generation', { status: 'complete' });
 
-    // Step 3 — Slack (stubbed)
+    // Step 3 — Slack invitation (real)
     updateStep('slack-invitation', { status: 'active' });
-    await delay(1200);
-    updateStep('slack-invitation', { status: 'complete' });
+    try {
+      const { data: slackData } = await supabase.functions.invoke('slack-agent', {
+        body: {
+          action: 'inviteUser',
+          email,
+          agentName: input.agentName,
+          channels: input.role.slackChannels,
+        },
+      });
+      updateStep('slack-invitation', {
+        status: slackData?.success ? 'complete' : 'error',
+        errorMessage: slackData?.error,
+      });
+      if (slackData?.slackUserId) {
+        slackUserId = slackData.slackUserId;
+      }
+    } catch {
+      updateStep('slack-invitation', { status: 'error', errorMessage: 'Slack unavailable' });
+    }
 
     // Step 4 — Five9
     updateStep('five9-creation', { status: 'active' });
@@ -144,6 +162,7 @@ export function useProvisioning() {
       five9_username: input.five9Username,
       five9_user_id: five9UserId,
       google_user_id: googleUserId,
+      slack_user_id: slackUserId,
       status: finalStatus,
       provisioned_by: user?.id ?? null,
     }).select().single();
