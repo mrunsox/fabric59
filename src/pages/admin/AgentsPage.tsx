@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, UserMinus } from "lucide-react";
+import { UserPlus, UserMinus, Users2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { StatCard } from "@/components/ui/stat-card";
 import { ProvisioningForm } from "@/components/agents/onboarding/ProvisioningForm";
 import { WorkflowPanel } from "@/components/agents/onboarding/WorkflowPanel";
 import { Five9UsersTable } from "@/components/agents/onboarding/Five9UsersTable";
@@ -81,11 +82,24 @@ export default function AgentsPage() {
     await refreshAgents();
   };
 
+  const totalAgents = history.length;
+  const activeAgents = history.filter(a => a.status === 'active').length;
+  const deprovisionedAgents = history.filter(a => a.status === 'deprovisioned').length;
+  const pendingJobs = history.filter(a => a.status === 'pending_deletion').length;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Agent Lifecycle</h1>
         <p className="text-muted-foreground text-sm mt-1">Provision and offboard Five9 agents across Google Workspace and Slack</p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Total Agents" value={totalAgents} icon={Users2} variant="default" />
+        <StatCard title="Active" value={activeAgents} icon={CheckCircle2} variant="success" />
+        <StatCard title="Deprovisioned" value={deprovisionedAgents} icon={XCircle} variant="destructive" />
+        <StatCard title="Pending Jobs" value={pendingJobs} icon={Clock} variant="warning" />
       </div>
 
       <Tabs defaultValue="onboarding">

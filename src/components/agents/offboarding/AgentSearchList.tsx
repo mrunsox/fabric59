@@ -3,6 +3,7 @@ import { Search, UserMinus, X, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/agents/shared/StatusBadge";
 import { ProvisioningHistory } from "@/types/provisioning";
 import { cn } from "@/lib/utils";
@@ -17,11 +18,18 @@ interface AgentSearchListProps {
 
 export function AgentSearchList({ agents, onOffboard, onCancel, onRestore, onBatchOffboard }: AgentSearchListProps) {
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const filtered = agents.filter(a =>
-    `${a.agentName} ${a.email} ${a.role} ${a.extension}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const uniqueRoles = Array.from(new Set(agents.map(a => a.role).filter(Boolean)));
+
+  const filtered = agents.filter(a => {
+    const matchesSearch = `${a.agentName} ${a.email} ${a.role} ${a.extension}`.toLowerCase().includes(search.toLowerCase());
+    const matchesRole = roleFilter === "all" || a.role === roleFilter;
+    const matchesStatus = statusFilter === "all" || a.status === statusFilter;
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
@@ -38,7 +46,7 @@ export function AgentSearchList({ agents, onOffboard, onCancel, onRestore, onBat
       {/* Batch action bar */}
       {selected.size >= 2 && (
         <div className="flex items-center justify-between px-4 py-2.5 bg-warning/10 border-b border-warning/20">
-          <span className="text-sm font-medium text-warning">{selected.size} agents selected</span>
+          <span className="text-sm font-medium text-warning-foreground">{selected.size} agents selected</span>
           <Button size="sm" variant="destructive" onClick={() => {
             onBatchOffboard?.(selectedAgents);
             setSelected(new Set());
@@ -48,15 +56,40 @@ export function AgentSearchList({ agents, onOffboard, onCancel, onRestore, onBat
         </div>
       )}
 
-      <div className="px-4 py-3 border-b border-border">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            placeholder="Search agents..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-8 h-8 text-xs"
-          />
+      <div className="px-4 py-3 border-b border-border space-y-2">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search agents..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-8 h-8 text-xs"
+            />
+          </div>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="h-8 text-xs w-32">
+              <SelectValue placeholder="All Roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              {uniqueRoles.map(role => (
+                <SelectItem key={role} value={role}>{role}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-8 text-xs w-36">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="pending_deletion">Scheduled</SelectItem>
+              <SelectItem value="under_review">Under Review</SelectItem>
+              <SelectItem value="deprovisioned">Removed</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
