@@ -1,144 +1,110 @@
 
-# Slack Integration + Settings Connector Panel
+# White-Label Branding + Data Model Clarification
 
-## Current State
+## Summary of What You Told Me
 
-- **Slack**: No Slack connection in the workspace. No `slack-agent` edge function exists. Both `useProvisioning.ts` (step 3) and `useDeprovisioning.ts` (step 3) have `await delay(1200)` stubs that immediately mark Slack steps as complete without doing anything real.
-- **Settings page**: Has sections for Five9, Resend/Email, and Google Workspace credentials but no Slack section at all.
-- **AGENT_ROLES**: Already has `slackChannels` arrays per role (e.g. `['#english-support', '#all-agents']`) — ready to use.
-- **agents table**: Already has a `slack_user_id` column ready to be populated.
-
----
-
-## Step 1 — Connect Slack Workspace
-
-Before any code runs, the Slack connector must be linked to this project via the Lovable connector gateway. This will make `SLACK_API_KEY` and `LOVABLE_API_KEY` available as edge function environment variables.
-
-The user will be prompted to authorize their Slack workspace via OAuth. The bot will be automatically present in all public channels.
+- **24H Virtual** is the only agency operating the platform (single operator, not a SaaS yet)
+- They have **white-label partners** — businesses that resell 24H Virtual's services under their own brand
+- Each white-label partner has their own **clients** (the end-businesses being served)
+- Any email, notification, or outbound communication to a partner's client must carry **the partner's brand** — not 24H Virtual's name, logo, or colors
+- Future: multi-agency SaaS with multi-domain, multi-admin, and full white-label — but the architecture must be designed now to support that transition cleanly
 
 ---
 
-## Step 2 — New Edge Function: `supabase/functions/slack-agent/index.ts`
+## Current Terminology Map (Clarified)
 
-A self-contained Deno edge function that handles two actions via the connector gateway at `https://connector-gateway.lovable.dev/slack/api`.
-
-**`inviteUser` action** (called during onboarding):
-1. `POST /users.lookupByEmail` with agent email → get Slack `user_id`
-2. For each channel name in `channels[]`: resolve channel name → ID via `GET /conversations.list`, then `POST /conversations.invite`
-3. If user not found in Slack workspace: post a notification message to `#all-agents` (or first available channel) saying the agent has been onboarded and needs a Slack invite
-4. Returns `{ success: true, slackUserId }` or `{ success: false, error, notFound: true }`
-
-**`removeUser` action** (called during offboarding):
-1. `POST /users.lookupByEmail` → get Slack `user_id` (or use stored `slack_user_id` from agent record)
-2. `GET /users.conversations?user={userId}` → list all channels the user is in
-3. `POST /conversations.kick` for each channel
-4. Graceful degradation — if user not found in Slack, treat as `skipped` (not error)
-
-**Channel name→ID resolution**: Uses `conversations.list` with pagination to build a `name→id` map. Caches nothing (stateless function), just resolves on each call.
-
-**config.toml**: Add `[functions.slack-agent]` with `verify_jwt = false`.
-
----
-
-## Step 3 — Replace Stubs in `useProvisioning.ts`
-
-Replace lines 79–82 (Slack stub) with a real invoke:
-
-```typescript
-// Step 3 — Slack invitation (real)
-updateStep('slack-invitation', { status: 'active' });
-try {
-  const { data: slackData } = await supabase.functions.invoke('slack-agent', {
-    body: {
-      action: 'inviteUser',
-      email,
-      agentName: input.agentName,
-      channels: input.role.slackChannels,
-    },
-  });
-  updateStep('slack-invitation', {
-    status: slackData?.success ? 'complete' : 'error',
-    errorMessage: slackData?.error,
-  });
-  // Store slack_user_id so offboarding can use it later
-  if (slackData?.slackUserId) {
-    slackUserId = slackData.slackUserId;
-  }
-} catch {
-  updateStep('slack-invitation', { status: 'error', errorMessage: 'Slack unavailable' });
-}
+```text
+24H Virtual (the operator — single, today)
+  └─ White-Label Partners  ← currently called "Organizations" in the DB
+       └─ Clients           ← currently called "Tenants" in the DB
+            └─ Agents       ← individual call center reps
 ```
 
-Also add `slackUserId` to the `agents` insert so it's persisted for offboarding.
+The existing three-tier structure is **exactly right** — just the names and branding need to catch up. No structural database redesign is needed now.
 
 ---
 
-## Step 4 — Replace Stub in `useDeprovisioning.ts`
+## What Needs to Change
 
-Replace lines 139–142 (Slack stub) with:
+### 1. Add Branding Fields to the `organizations` Table (White-Label Partners)
 
-```typescript
-// Step 3 — Slack removal (real)
-updateStep('slack-removal', { status: 'active' });
-try {
-  const { data: slackData } = await supabase.functions.invoke('slack-agent', {
-    body: {
-      action: 'removeUser',
-      email: agentData?.email || request.email,
-      slackUserId: agentData?.slack_user_id || undefined,
-    },
-  });
-  updateStep('slack-removal', {
-    status: (slackData?.success || slackData?.skipped) ? 'complete' : 'error',
-    errorMessage: slackData?.error,
-  });
-} catch {
-  updateStep('slack-removal', { status: 'error', errorMessage: 'Slack unavailable' });
-}
-```
+The `organizations` table currently only has `name`, `billing_email`, `plan`, and `status`. To support white-label branding, each partner needs:
+
+| New Column | Type | Purpose |
+|---|---|---|
+| `brand_name` | text | Display name on emails (e.g. "Acme Services") |
+| `brand_logo_url` | text | Logo URL for email headers |
+| `brand_primary_color` | text | Hex color for email button/accent |
+| `brand_from_email` | text | Override "from" address (e.g. noreply@acme.com) |
+| `brand_reply_to` | text | Reply-to address for outbound emails |
+
+This is a database migration — 5 nullable columns added to `organizations`.
+
+### 2. Rename "Tenants" → "Clients" in the UI
+
+The word "Tenant" is a developer SaaS term that doesn't mean anything to 24H Virtual staff. Every label on the Clients/Tenants page, forms, dialogs, and stat cards will be updated to say "Client" instead. The database table stays named `tenants` — only the displayed labels change.
+
+### 3. Link Clients to White-Label Partners on Creation
+
+The `TenantForm` (`TenantForm.tsx`) currently has no way to associate a client with a white-label partner (organization). When creating or editing a client, there needs to be a dropdown that says "Which partner does this client belong to?" — populated from the `organizations` table. This linkage already exists as `organization_id` on the `tenants` table — it just isn't exposed in the form.
+
+### 4. White-Label Branded Credential Emails
+
+The `send-credentials` edge function currently sends emails with hardcoded styling — no partner name, no logo, no custom color. It needs to:
+
+1. Accept an optional `organizationId` in the request body
+2. Look up that organization's branding fields (`brand_name`, `brand_logo_url`, `brand_primary_color`, `brand_from_email`, `brand_reply_to`) from the database
+3. Use the partner's `brand_from_email` as the "from" address (falling back to the default Resend from address)
+4. Render the email with the partner's `brand_name` in the header instead of a generic greeting
+5. Use the partner's `brand_primary_color` for button/accent colors
+6. Show the partner's logo in the email header if `brand_logo_url` is set
+
+The provisioning hook (`useProvisioning.ts`) will pass the `organizationId` when invoking `send-credentials`.
+
+### 5. Add "White-Label Partners" Section to Settings / Organizations Management
+
+Currently the Organizations page (under Master admin) exists but doesn't expose branding fields. A new branding sub-section needs to be added to the organization edit form with fields for: brand name, logo URL, primary color, from email, and reply-to. This is where 24H Virtual admins configure each partner's white-label identity.
 
 ---
 
-## Step 5 — Add Slack Section to `SettingsPage.tsx`
-
-Add a new **Slack Integration** card below the Google Workspace section in the Integration Credentials card. This card will:
-
-- Show the Slack connection **status** (connected / not connected) by checking if `SLACK_API_KEY` is available — the edge function can expose a `status` check action, or we simply show a static "Connected via Lovable Connector" badge once the connection is linked
-- Show the **bot display name** being used (fetch from `auth.test` Slack API call)
-- Show a **channel mapping table** — read-only list of each role and its assigned Slack channels pulled from `AGENT_ROLES`
-- Provide a **"Test Connection"** button that calls the `slack-agent` function with `action: 'test'` which calls Slack's `auth.test` endpoint and returns workspace name + bot name
-- Show a **"Reconnect Slack"** link/button that opens the Lovable connector settings if the token is invalid
-
-The Slack section sits inside the existing "Integration Credentials" card under a new `<Separator />` after Google Workspace, with the same visual pattern (label in muted uppercase, content below).
-
----
-
-## Files to Create/Modify
+## Files to Create / Modify
 
 | File | Action | Change |
-|------|--------|--------|
-| `supabase/functions/slack-agent/index.ts` | Create | New Slack edge function — `inviteUser`, `removeUser`, `test` actions via connector gateway |
-| `supabase/config.toml` | Modify | Add `[functions.slack-agent]` with `verify_jwt = false` |
-| `src/hooks/useProvisioning.ts` | Modify | Replace Slack stub with real `slack-agent` invoke; save `slack_user_id` |
-| `src/hooks/useDeprovisioning.ts` | Modify | Replace Slack stub with real `slack-agent` invoke using stored `slack_user_id` |
-| `src/pages/admin/SettingsPage.tsx` | Modify | Add Slack Integration section with connection status, channel mapping, and test button |
+|---|---|---|
+| DB Migration | Create | Add 5 branding columns to `organizations` table |
+| `src/pages/admin/TenantsPage.tsx` | Modify | Rename all "Tenant" labels to "Client" throughout |
+| `src/components/tenants/TenantForm.tsx` | Modify | Add partner (organization) dropdown; rename labels |
+| `supabase/functions/send-credentials/index.ts` | Modify | Accept `organizationId`, fetch branding, render white-labeled email |
+| `src/hooks/useProvisioning.ts` | Modify | Pass `organizationId` to `send-credentials` invoke |
+| `src/pages/master/OrganizationsOverviewPage.tsx` | Modify | Add branding fields section to org edit UI |
+| `src/types/database.ts` | Modify | Add branding fields to `Organization` interface |
 
 ---
 
-## Important Notes
+## Future SaaS Migration Notes (No Work Now)
 
-- The Slack connector uses a **bot token** — the bot is auto-present in all public channels, so no manual channel invites for the bot are needed
-- `conversations.invite` invites a **user** to a channel (the bot invites the agent) — this works for public channels automatically
-- If the agent does not yet have a Slack account (common for new hires), the function gracefully falls back to posting a `#all-agents` notification rather than failing
-- Offboarding `conversations.kick` silently succeeds even if the user isn't in the channel
-- The `slack_user_id` stored during onboarding speeds up offboarding by skipping the email lookup step
+When you're ready to go multi-agency SaaS, the architecture already supports it because:
+- `organizations` table = agency accounts (just need auth + billing)
+- `tenants.organization_id` = already links clients to partners
+- RLS policies = already isolate by organization
+- Branding fields added now = each org already has their own brand identity
+
+The only things needed later are: per-org login domains, per-org admin user management, and Stripe billing — none of which require changing the data model.
 
 ---
 
-## Sequence: First Run
+## Sequence of Changes
 
-1. User clicks "Connect Slack" prompt → authorizes workspace → `SLACK_API_KEY` becomes available
-2. Edge function deployed automatically
-3. During next agent provision → Slack step calls `inviteUser` → real result shown in stepper
-4. During offboarding → Slack step calls `removeUser` → real result shown in stepper
-5. Settings page shows Slack status badge + channel mapping table
+1. Run DB migration (add branding columns to organizations)
+2. Update Organization type in TypeScript
+3. Add branding fields to the Organizations management page (where admins set up partners)
+4. Update TenantForm to show partner dropdown + rename "Tenant" → "Client"
+5. Update TenantsPage labels
+6. Update send-credentials edge function to fetch and apply partner branding
+7. Update useProvisioning to pass organizationId when sending credentials
+
+---
+
+## Data Cleanup (From Previous Discussion)
+
+The SQL to delete test data was identified in the previous session. Once this plan is approved and implemented, you'll have a clean slate: 1 real organization (24H Virtual), 1 real Five9 domain, and 0 clients — ready to add your actual white-label partners and their real clients.
