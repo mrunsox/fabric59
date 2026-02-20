@@ -192,6 +192,8 @@ serve(async (req) => {
       };
       responseData = { success: true, info };
     } else if (action === 'syncFromFive9') {
+      const { organizationId } = payload;
+
       // Fetch both users and skills in parallel for sync
       const usersBody = `<ser:getUsersGeneralInfo/>`;
       const skillsBody = `<ser:getSkills/>`;
@@ -211,7 +213,76 @@ serve(async (req) => {
       }));
 
       const skills = [...new Set(extractValues(skillsXml, 'name').filter(Boolean))];
-      responseData = { success: true, users, skills };
+
+      // --- Server-side DB upserts using service role key ---
+      const adminClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+
+      // Role inference based on extension ranges
+      function inferRole(extension: string): string {
+        const ext = parseInt(extension, 10);
+        if (isNaN(ext)) return 'Unknown';
+        if (ext >= 0 && ext <= 99) return 'Manager';
+        if (ext >= 1000 && ext <= 1100) return 'English Support';
+        if (ext >= 2000 && ext <= 2100) return 'French Support';
+        if (ext >= 3000 && ext <= 3100) return 'Spanish Support';
+        if (ext >= 4000 && ext <= 4100) return 'Trilingual Support';
+        if (ext >= 5000 && ext <= 5100) return 'Supervisor';
+        if (ext >= 6000 && ext <= 6100) return 'QA Specialist';
+        if (ext >= 7000 && ext <= 7100) return 'Tech Support';
+        return 'Agent';
+      }
+
+      // Get existing agents to avoid duplicates
+      const { data: existingAgents } = await adminClient
+        .from('agents')
+        .select('five9_username');
+      const existingUsernames = new Set((existingAgents || []).map((a: { five9_username: string | null }) => a.five9_username));
+
+      const newAgents = users
+        .filter(u => u.userName && !existingUsernames.has(u.userName))
+        .map(u => ({
+          first_name: u.firstName,
+          last_name: u.lastName,
+          email: u.email || `${u.userName}@five9.local`,
+          role: inferRole(u.extension),
+          extension: u.extension || null,
+          five9_username: u.userName,
+          status: u.active ? 'active' : 'inactive',
+        }));
+
+      let agentsAdded = 0;
+      if (newAgents.length > 0) {
+        const { error: insertErr } = await adminClient.from('agents').insert(newAgents);
+        if (insertErr) console.error('Agent insert error:', insertErr);
+        else agentsAdded = newAgents.length;
+      }
+
+      // Get existing tenants to avoid duplicates
+      const { data: existingTenants } = await adminClient
+        .from('tenants')
+        .select('name');
+      const existingNames = new Set((existingTenants || []).map((t: { name: string }) => t.name));
+
+      const newTenants = skills
+        .filter(s => !existingNames.has(s))
+        .map(s => ({
+          name: s,
+          crm_type: 'other',
+          status: 'active',
+          ...(organizationId ? { organization_id: organizationId } : {}),
+        }));
+
+      let tenantsAdded = 0;
+      if (newTenants.length > 0) {
+        const { error: insertErr } = await adminClient.from('tenants').insert(newTenants);
+        if (insertErr) console.error('Tenant insert error:', insertErr);
+        else tenantsAdded = newTenants.length;
+      }
+
+      responseData = { success: true, agentsAdded, tenantsAdded };
 
     } else {
       responseData = { success: false, error: `Unknown action: ${action}` };

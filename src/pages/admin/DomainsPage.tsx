@@ -159,13 +159,14 @@ export default function DomainsPage() {
 
         if (result.success) {
           setConnectionStatus("success");
-          setConnectionMessage(result.message || "Successfully connected to Five9 Admin Web Services");
-          // Auto-sync agents and clients from Five9
-          syncFromFive9(organization?.id);
+          setConnectionMessage("Connected! Syncing agents and clients…");
+          // Auto-sync agents and clients from Five9 (server-side)
+          await syncFromFive9(organization?.id);
+          setConnectionMessage("Done! Agents and clients synced.");
           setTimeout(() => {
             setIsAddDialogOpen(false);
             resetDialog();
-          }, 2000);
+          }, 1500);
         } else {
           setConnectionStatus("failed");
           setConnectionMessage(result.message || "Authentication failed. Please check your credentials.");
