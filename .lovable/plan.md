@@ -1,103 +1,111 @@
 
-# Fix: Uneditable Fields + Ghost Button Contrast
+# Fix: Domain Connection Retry Flow (Duplicate Insert Bug)
 
-## Issue 1 — Domain Settings fields are disabled for master admin users
+## What's Broken
 
-### Root Cause
+When a domain connection test fails (e.g. wrong credentials), the dialog shows a "Try Different Credentials" button. Clicking it resets the UI back to the form — but the domain record **has already been inserted** into the database with the first attempt.
 
-In `DomainDetailPage.tsx` line 59:
+When the user fills in corrected credentials and clicks "Connect Domain" again, `handleAddDomain` runs another **INSERT** instead of **updating** the existing record. This creates a second orphaned domain row in the database every retry attempt.
+
+The fix must turn the retry submit into an **UPDATE + re-test** rather than an INSERT.
+
+## Root Cause
+
+In `DomainsPage.tsx`, `handleAddDomain`:
+
+1. Inserts the domain → saves `createdDomainId`
+2. Runs the connection test
+3. On failure, `handleRetryCredentials()` resets `connectionStatus` to `"idle"` but does **not** clear `createdDomainId`
+4. On re-submit, `handleAddDomain` ignores `createdDomainId` and does a fresh `INSERT`
+
+## Fix
+
+In `handleAddDomain`, check if `createdDomainId` already has a value. If it does, **UPDATE** the existing record instead of inserting a new one:
+
 ```typescript
-const canManage = orgRole === "owner" || orgRole === "admin";
+const handleAddDomain = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!organization) return;
+  setIsSubmitting(true);
+
+  const derivedDomain = five9Username.includes("@")
+    ? five9Username.split("@")[1]
+    : newDisplayName.toLowerCase().replace(/\s+/g, "-");
+
+  try {
+    let domainId: string;
+
+    if (createdDomainId) {
+      // Domain was already created on a previous attempt — update it
+      const { error: updateError } = await supabase
+        .from("five9_domains")
+        .update({
+          display_name: newDisplayName,
+          five9_username: five9Username,
+          five9_password_encrypted: five9Password,
+        })
+        .eq("id", createdDomainId);
+
+      if (updateError) throw updateError;
+      domainId = createdDomainId;
+    } else {
+      // First attempt — insert
+      const { data, error: insertError } = await supabase
+        .from("five9_domains")
+        .insert({
+          organization_id: organization.id,
+          domain: derivedDomain,
+          display_name: newDisplayName,
+          five9_username: five9Username,
+          five9_password_encrypted: five9Password,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      domainId = data.id;
+      setCreatedDomainId(domainId);
+    }
+
+    setConnectionStatus("testing");
+    setIsSubmitting(false);
+
+    // Run connection test with the saved domain ID
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-five9-connection`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.session?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ domain_id: domainId }),
+        }
+      );
+      const result = await response.json();
+      // ... rest unchanged
+    }
+  }
+};
 ```
 
-Master admin users have no `organization_members` row, so `orgRole` is always `null` for them. This makes `canManage = false` — every field and button in the entire detail page is disabled.
+## What the Fix Does
 
-The same page's list view (`DomainsPage.tsx` line 76) already handles this correctly:
-```typescript
-const canManage = isAuthLoading ? false : (orgRole === "owner" || orgRole === "admin" || isMasterAdmin);
-```
+- On **first submit**: inserts the domain, saves the ID, runs the test.
+- On **retry** (after "Try Different Credentials"): updates the **same** domain row with corrected credentials, re-runs the test — no duplicate.
+- On **success**: auto-closes as before.
+- On **"Save Anyway"**: closes as before. The single domain record persists.
 
-`DomainDetailPage.tsx` simply forgot to include `isMasterAdmin`.
+## Also: Delete the orphaned domain on dialog cancel
 
-### Fix
-
-Update `DomainDetailPage.tsx` line 39 to also pull `isMasterAdmin` and `isLoading` from `useAuth()`, then update the `canManage` expression to match `DomainsPage.tsx`.
-
-```typescript
-// Before
-const { orgRole } = useAuth();
-const canManage = orgRole === "owner" || orgRole === "admin";
-
-// After
-const { orgRole, isMasterAdmin, isLoading: isAuthLoading } = useAuth();
-const canManage = isAuthLoading ? false : (orgRole === "owner" || orgRole === "admin" || isMasterAdmin);
-```
-
-### The "gate before editing" requirement
-
-Per the request: once the API connection is established (`api_connection_status === "connected"`), there should be a confirmation step before allowing edits to credentials. We'll add a small "unlock" state for the API Credentials tab — when `connected`, show a locked state with an "Edit Credentials" button that toggles editable mode on. General settings (display name, status, workflow, branding) remain freely editable at all times.
-
----
-
-## Issue 2 — Settings icon invisible until hover (contrast bug)
-
-### Root Cause
-
-Ghost buttons (`variant="ghost"`) have no default foreground color. The button component defines:
-```
-ghost: "hover:bg-accent hover:text-accent-foreground"
-```
-
-With no default text color, the icon inherits the transparent background color — invisible on the dark card surface until hover applies `text-accent-foreground`. This is the exact behavior shown in the screenshot.
-
-### Fix
-
-Add `text-muted-foreground` to ghost icon buttons in all table action columns so they're always visible, then brighten to `text-foreground` on hover:
-
-```tsx
-// Before
-<Button variant="ghost" size="icon" asChild>
-  <Link to={`/admin/domains/${domain.id}`}>
-    <Settings className="h-4 w-4" />
-  </Link>
-</Button>
-
-// After
-<Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" asChild>
-  <Link to={`/admin/domains/${domain.id}`}>
-    <Settings className="h-4 w-4" />
-  </Link>
-</Button>
-```
-
-### Breadth of the fix — all affected files
-
-The same pattern (ghost icon button with no default color in action columns) exists in:
-
-| File | Location |
-|---|---|
-| `src/pages/admin/DomainsPage.tsx` | Settings + Trash icon buttons in table rows |
-| `src/pages/admin/TenantsPage.tsx` | Action buttons in table rows |
-| `src/pages/admin/AgentsPage.tsx` | Action buttons in table rows |
-| `src/pages/admin/ApiLogsPage.tsx` | Copy/expand icon buttons |
-| `src/pages/admin/NotificationsPage.tsx` | Icon buttons |
-| `src/components/agents/offboarding/AgentSearchList.tsx` | Row action buttons |
-| `src/components/agents/onboarding/WorkflowPanel.tsx` | Step action buttons |
-
-Each will get `text-muted-foreground hover:text-foreground` on all ghost icon buttons that render icons without explicit color classes.
-
----
+Currently, if the user closes the dialog mid-retry (with a `createdDomainId` already saved and status `"failed"`), the domain record remains in the DB in a failed state — which is correct, since the user can update credentials in Domain Settings. No change needed here.
 
 ## Files to Modify
 
 | File | Change |
 |---|---|
-| `src/pages/admin/DomainDetailPage.tsx` | Fix `canManage` to include `isMasterAdmin`; add credential lock/unlock gate when connected |
-| `src/pages/admin/DomainsPage.tsx` | Add `text-muted-foreground hover:text-foreground` to ghost icon buttons |
-| `src/pages/admin/TenantsPage.tsx` | Same ghost button fix |
-| `src/pages/admin/AgentsPage.tsx` | Same ghost button fix |
-| `src/pages/admin/ApiLogsPage.tsx` | Same ghost button fix |
-| `src/pages/admin/NotificationsPage.tsx` | Same ghost button fix |
-| `src/components/agents/offboarding/AgentSearchList.tsx` | Same ghost button fix |
+| `src/pages/admin/DomainsPage.tsx` | Rewrite `handleAddDomain` to branch on `createdDomainId`: UPDATE on retry, INSERT on first attempt |
 
-No database changes. No new secrets. No migrations.
+No edge function changes. No database schema changes. No migration needed.
