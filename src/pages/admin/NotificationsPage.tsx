@@ -165,6 +165,7 @@ export default function NotificationsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="text-muted-foreground hover:text-foreground"
                       onClick={() => setSelectedNotification(notification)}
                     >
                       <Eye className="h-4 w-4" />

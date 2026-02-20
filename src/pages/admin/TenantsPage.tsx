@@ -125,13 +125,13 @@ export default function TenantsPage() {
       className: "text-right",
       render: (tenant: Tenant) => (
         <div className="flex items-center justify-end gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" title="Test Connection">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" title="Test Connection">
             <Plug className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             onClick={(e) => {
               e.stopPropagation();
               setEditingTenant(tenant);
