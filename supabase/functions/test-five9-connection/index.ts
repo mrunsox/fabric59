@@ -176,7 +176,8 @@ Deno.serve(async (req) => {
     // Success - update domain status
     const updateData: Record<string, unknown> = {
       api_connection_status: "connected",
-      last_connection_test: new Date().toISOString()
+      last_connection_test: new Date().toISOString(),
+      status: "active",
     };
 
     // If new credentials were provided, save them
