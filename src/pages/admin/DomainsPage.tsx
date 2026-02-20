@@ -46,12 +46,16 @@ import {
   Wifi,
   CheckCircle,
   XCircle,
+  ShieldAlert,
+  KeyRound,
 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import type { Five9DomainStatus } from "@/types/database";
 
 type ConnectionStatus = "idle" | "testing" | "success" | "failed";
+type ErrorType = "auth" | "permission" | "unknown";
 
 export default function DomainsPage() {
   const { organization, orgRole, isMasterAdmin, isLoading: isAuthLoading } = useAuth();
@@ -65,6 +69,7 @@ export default function DomainsPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("idle");
   const [connectionMessage, setConnectionMessage] = useState("");
+  const [connectionErrorType, setConnectionErrorType] = useState<ErrorType>("unknown");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdDomainId, setCreatedDomainId] = useState<string | null>(null);
 
@@ -77,6 +82,7 @@ export default function DomainsPage() {
     setShowPassword(false);
     setConnectionStatus("idle");
     setConnectionMessage("");
+    setConnectionErrorType("unknown");
     setCreatedDomainId(null);
     setIsSubmitting(false);
   };
@@ -140,10 +146,12 @@ export default function DomainsPage() {
         } else {
           setConnectionStatus("failed");
           setConnectionMessage(result.message || "Authentication failed. Please check your credentials.");
+          setConnectionErrorType(result.errorType || "unknown");
         }
       } catch {
         setConnectionStatus("failed");
         setConnectionMessage("Could not reach Five9. Please check your credentials and try again.");
+        setConnectionErrorType("unknown");
       }
     } catch (err: unknown) {
       toast.error((err as Error).message || "Failed to connect domain");
@@ -304,12 +312,12 @@ export default function DomainsPage() {
                     <DialogTitle className="text-center">
                       {connectionStatus === "testing" && "Verifying Connection"}
                       {connectionStatus === "success" && "Connected!"}
-                      {connectionStatus === "failed" && "Connection Failed"}
+                      {connectionStatus === "failed" && connectionErrorType === "permission" && "Permission Denied"}
+                      {connectionStatus === "failed" && connectionErrorType !== "permission" && "Authentication Failed"}
                     </DialogTitle>
                     <DialogDescription className="text-center">
                       {connectionStatus === "testing" && "Connecting to Five9 Admin Web Services…"}
                       {connectionStatus === "success" && connectionMessage}
-                      {connectionStatus === "failed" && connectionMessage}
                     </DialogDescription>
                   </DialogHeader>
 
@@ -328,7 +336,24 @@ export default function DomainsPage() {
                     )}
 
                     {connectionStatus === "failed" && (
-                      <div className="space-y-3 pt-2">
+                      <div className="space-y-4 pt-1">
+                        {connectionErrorType === "permission" ? (
+                          <Alert className="border-warning/30 bg-warning/10 text-warning-foreground">
+                            <ShieldAlert className="h-4 w-4 !text-warning" />
+                            <AlertTitle className="text-warning">AdminWebService Access Required</AlertTitle>
+                            <AlertDescription className="text-warning text-xs leading-relaxed opacity-90">
+                              {connectionMessage}
+                            </AlertDescription>
+                          </Alert>
+                        ) : (
+                          <Alert className="border-destructive/30 bg-destructive/10 text-destructive">
+                            <KeyRound className="h-4 w-4 !text-destructive" />
+                            <AlertTitle>Wrong Credentials</AlertTitle>
+                            <AlertDescription className="text-xs leading-relaxed">
+                              {connectionMessage}
+                            </AlertDescription>
+                          </Alert>
+                        )}
                         <Button variant="default" className="w-full" onClick={handleRetryCredentials}>
                           Try Different Credentials
                         </Button>
