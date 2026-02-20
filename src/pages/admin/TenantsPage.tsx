@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useTenants, useDeleteTenant } from "@/hooks/useTenants";
 import { useApiLogStats } from "@/hooks/useApiLogs";
+import { useFive9Sync } from "@/hooks/useFive9Sync";
+import { useAuth } from "@/contexts/AuthContext";
 import { DataTable } from "@/components/ui/data-table";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -33,6 +35,7 @@ import {
   AlertCircle,
   Plus,
   Search,
+  RefreshCw,
   Pencil,
   Trash2,
   Plug,
@@ -51,6 +54,8 @@ export default function TenantsPage() {
   const { data: tenants = [], isLoading } = useTenants();
   const { data: stats } = useApiLogStats();
   const deleteTenant = useDeleteTenant();
+  const { syncFromFive9, isSyncing } = useFive9Sync();
+  const { organization } = useAuth();
 
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -165,13 +170,23 @@ export default function TenantsPage() {
             Manage client integrations across Clio, Workiz, and other CRMs
           </p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Client
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => syncFromFive9(organization?.id)}
+            disabled={isSyncing}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing…' : 'Sync from Five9'}
+          </Button>
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Client
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Create New Client</DialogTitle>
@@ -181,7 +196,8 @@ export default function TenantsPage() {
             </DialogHeader>
             <TenantForm onSuccess={() => setIsCreateOpen(false)} />
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {/* Stats */}
