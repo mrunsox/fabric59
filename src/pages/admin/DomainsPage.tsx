@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useDomains, useCreateDomain, useDeleteDomain } from "@/hooks/useDomains";
+import { useDomains, useDeleteDomain } from "@/hooks/useDomains";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -34,31 +34,134 @@ import {
 } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Globe, Trash2, Settings, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Plus,
+  Globe,
+  Trash2,
+  Settings,
+  Loader2,
+  Eye,
+  EyeOff,
+  Wifi,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import type { Five9DomainStatus } from "@/types/database";
+
+type ConnectionStatus = "idle" | "testing" | "success" | "failed";
 
 export default function DomainsPage() {
   const { organization, orgRole } = useAuth();
   const { data: domains, isLoading, error } = useDomains();
-  const createDomain = useCreateDomain();
   const deleteDomain = useDeleteDomain();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newDomain, setNewDomain] = useState("");
   const [newDisplayName, setNewDisplayName] = useState("");
+  const [five9Username, setFive9Username] = useState("");
+  const [five9Password, setFive9Password] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("idle");
+  const [connectionMessage, setConnectionMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdDomainId, setCreatedDomainId] = useState<string | null>(null);
 
   const canManage = orgRole === "owner" || orgRole === "admin";
 
+  const resetDialog = () => {
+    setNewDisplayName("");
+    setFive9Username("");
+    setFive9Password("");
+    setShowPassword(false);
+    setConnectionStatus("idle");
+    setConnectionMessage("");
+    setCreatedDomainId(null);
+    setIsSubmitting(false);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) resetDialog();
+    setIsAddDialogOpen(open);
+  };
+
   const handleAddDomain = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createDomain.mutateAsync({
-      domain: newDomain,
-      display_name: newDisplayName,
-    });
-    setNewDomain("");
-    setNewDisplayName("");
+    if (!organization) return;
+    setIsSubmitting(true);
+
+    const derivedDomain = five9Username.includes("@")
+      ? five9Username.split("@")[1]
+      : newDisplayName.toLowerCase().replace(/\s+/g, "-");
+
+    try {
+      const { data, error: insertError } = await supabase
+        .from("five9_domains")
+        .insert({
+          organization_id: organization.id,
+          domain: derivedDomain,
+          display_name: newDisplayName,
+          five9_username: five9Username,
+          five9_password_encrypted: five9Password,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      setCreatedDomainId(data.id);
+      setConnectionStatus("testing");
+      setIsSubmitting(false);
+
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-five9-connection`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.session?.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ domain_id: data.id }),
+          }
+        );
+
+        const result = await response.json();
+
+        if (result.success) {
+          setConnectionStatus("success");
+          setConnectionMessage(result.message || "Successfully connected to Five9 Admin Web Services");
+          setTimeout(() => {
+            setIsAddDialogOpen(false);
+            resetDialog();
+          }, 1500);
+        } else {
+          setConnectionStatus("failed");
+          setConnectionMessage(result.message || "Authentication failed. Please check your credentials.");
+        }
+      } catch {
+        setConnectionStatus("failed");
+        setConnectionMessage("Could not reach Five9. Please check your credentials and try again.");
+      }
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Failed to connect domain");
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRetryCredentials = () => {
+    setConnectionStatus("idle");
+    setConnectionMessage("");
+    setFive9Password("");
+    // Keep display name + username so user only needs to fix password
+  };
+
+  const handleSaveAnyway = () => {
+    toast.success("Domain saved. You can update credentials in Domain Settings.");
     setIsAddDialogOpen(false);
+    resetDialog();
   };
 
   const handleDeleteDomain = async (id: string) => {
@@ -77,6 +180,8 @@ export default function DomainsPage() {
     );
   }
 
+  const isTestingOrResult = connectionStatus !== "idle";
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -88,59 +193,156 @@ export default function DomainsPage() {
           </p>
         </div>
         {canManage && (
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={handleDialogOpenChange}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Domain
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <form onSubmit={handleAddDomain}>
-                <DialogHeader>
-                  <DialogTitle>Connect Five9 Domain</DialogTitle>
-                  <DialogDescription>
-                    Add a new Five9 domain to your organization
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="domain">Five9 Domain</Label>
-                    <Input
-                      id="domain"
-                      placeholder="yourcompany.five9.com"
-                      value={newDomain}
-                      onChange={(e) => setNewDomain(e.target.value)}
-                      required
-                    />
+            <DialogContent className="sm:max-w-md">
+              {!isTestingOrResult ? (
+                /* ── Form State ── */
+                <form onSubmit={handleAddDomain}>
+                  <DialogHeader className="mb-4">
+                    <DialogTitle>Connect Five9 Domain</DialogTitle>
+                    <DialogDescription>
+                      Sign in with your Five9 admin account to connect your domain
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="displayName">Display Name</Label>
+                      <Input
+                        id="displayName"
+                        type="text"
+                        placeholder="Main Call Center"
+                        value={newDisplayName}
+                        onChange={(e) => setNewDisplayName(e.target.value)}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">A friendly name to identify this domain</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="five9Username">Five9 Admin Username</Label>
+                      <Input
+                        id="five9Username"
+                        type="text"
+                        placeholder="admin@yourcompany.com"
+                        value={five9Username}
+                        onChange={(e) => setFive9Username(e.target.value)}
+                        autoComplete="username"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="five9Password">Admin Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="five9Password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••••••"
+                          value={five9Password}
+                          onChange={(e) => setFive9Password(e.target.value)}
+                          autoComplete="current-password"
+                          className="pr-10"
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          tabIndex={-1}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Used to sync agent skills, call variables, and dispositions from your Five9 domain
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="displayName">Display Name</Label>
-                    <Input
-                      id="displayName"
-                      placeholder="Main Call Center"
-                      value={newDisplayName}
-                      onChange={(e) => setNewDisplayName(e.target.value)}
-                      required
-                    />
+
+                  <div className="flex justify-end gap-2 mt-6">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleDialogOpenChange(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Connect Domain
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                /* ── Testing / Result State ── */
+                <div>
+                  <DialogHeader className="mb-6">
+                    <div className="flex justify-center mb-4">
+                      <div className={cn(
+                        "flex h-12 w-12 items-center justify-center rounded-xl",
+                        connectionStatus === "success" ? "bg-success/10" :
+                        connectionStatus === "failed" ? "bg-destructive/10" :
+                        "bg-primary/10"
+                      )}>
+                        {connectionStatus === "testing" && <Wifi className="h-6 w-6 text-primary animate-pulse" />}
+                        {connectionStatus === "success" && <CheckCircle className="h-6 w-6 text-success" />}
+                        {connectionStatus === "failed" && <XCircle className="h-6 w-6 text-destructive" />}
+                      </div>
+                    </div>
+                    <DialogTitle className="text-center">
+                      {connectionStatus === "testing" && "Verifying Connection"}
+                      {connectionStatus === "success" && "Connected!"}
+                      {connectionStatus === "failed" && "Connection Failed"}
+                    </DialogTitle>
+                    <DialogDescription className="text-center">
+                      {connectionStatus === "testing" && "Connecting to Five9 Admin Web Services…"}
+                      {connectionStatus === "success" && connectionMessage}
+                      {connectionStatus === "failed" && connectionMessage}
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div>
+                    {connectionStatus === "testing" && (
+                      <div className="flex items-center justify-center gap-3 py-4 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span className="text-sm">Authenticating with Five9…</span>
+                      </div>
+                    )}
+
+                    {connectionStatus === "success" && (
+                      <div className="flex items-center justify-center gap-3 py-4 text-muted-foreground">
+                        <span className="text-sm">Closing in a moment…</span>
+                      </div>
+                    )}
+
+                    {connectionStatus === "failed" && (
+                      <div className="space-y-3 pt-2">
+                        <Button variant="default" className="w-full" onClick={handleRetryCredentials}>
+                          Try Different Credentials
+                        </Button>
+                        <Button variant="outline" className="w-full" onClick={handleSaveAnyway}>
+                          Save Anyway
+                        </Button>
+                        <p className="text-xs text-center text-muted-foreground">
+                          You can update your credentials later in Domain Settings.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsAddDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={createDomain.isPending}>
-                    {createDomain.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Add Domain
-                  </Button>
-                </DialogFooter>
-              </form>
+              )}
             </DialogContent>
           </Dialog>
         )}
