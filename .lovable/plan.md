@@ -1,44 +1,47 @@
 
-# Fix: Apply Username Normalization to five9-provisioning
+# Fix: test-five9-connection Uses Wrong API Version (v2 vs v13)
 
-## Root Cause
+## Root Cause — Definitive
 
-The hyphen-to-space normalization fix was only applied to `supabase/functions/test-five9-connection/index.ts` previously. The `five9-provisioning/index.ts` function passes `FIVE9_USERNAME` directly into `btoa()` with zero transformation:
-
-```typescript
-// Line 41 — no normalization applied
-const credentials = btoa(`${username}:${password}`);
+The `test-five9-connection` edge function calls Five9's **v2** endpoint:
+```
+https://api.five9.com/wsadmin/v2/AdminWebService
 ```
 
-So if the `FIVE9_USERNAME` secret contains `"24H-Virtual"` (with a hyphen) instead of `"24H Virtual"` (with a space), every single SOAP call this function makes — creating users, fetching all users, getting skills, deactivating users — fails with a Five9 authentication fault.
+The `five9-provisioning` edge function (which works, fetching 67 live extensions) calls Five9's **v13** endpoint:
+```
+https://api.five9.com/wsadmin/v13/AdminWebService
+```
+
+Both functions have correct username normalization (hyphen → space). The credentials are correct — confirmed by the working `five9-provisioning` test. The v2 endpoint is either deprecated or has different authentication behavior, causing it to reject the same credentials that v13 accepts without issue.
+
+This is why:
+- Fetching extensions / users via `five9-provisioning` (v13) works perfectly
+- "Test Connection" in the Add Domain dialog (which calls `test-five9-connection` → v2) fails with "Authentication Failed"
 
 ## The Fix
 
-Apply the same normalization logic inside `soapCall()`, immediately before `btoa()`:
+One-line change in `supabase/functions/test-five9-connection/index.ts` — update the SOAP URL from v2 to v13:
 
 ```typescript
-// Normalize: non-email Five9 usernames (e.g. "24H-Virtual") may have hyphens
-// instead of spaces. Replace hyphens with spaces for non-email usernames only.
-const normalizedUsername = username.includes("@")
-  ? username
-  : username.replace(/-/g, " ");
+// Before (line 92)
+const soapResponse = await fetch("https://api.five9.com/wsadmin/v2/AdminWebService", {
 
-const credentials = btoa(`${normalizedUsername}:${password}`);
+// After
+const soapResponse = await fetch("https://api.five9.com/wsadmin/v13/AdminWebService", {
 ```
 
-This is identical to the fix already applied in `test-five9-connection/index.ts` at the same point in the auth flow.
+## Why This Is Safe
 
-## Why this is safe
-
-- Email-format usernames (containing `@`) are untouched — hyphens in the domain part of an email address are valid and must not be altered.
-- Non-email usernames (e.g. `"24H-Virtual"`, `"John-Smith"`) have hyphens replaced with spaces, matching Five9's expected format.
-- The normalization only affects the in-flight Basic Auth header — nothing written back to the database or secrets store.
-- This is a one-line logical change inside `soapCall()`, so it applies automatically to every action (`create`, `deactivate`, `getAllUsers`, `getSkills`, `addSkillsToUser`, `getUserInfo`, `getExtensions`) without any other changes.
+- v13 is the same endpoint already proven to authenticate and respond correctly with these credentials
+- The SOAP body (`getContactFields`) is a valid v13 call — the namespace `xmlns:ser="http://service.admin.ws.five9.com/"` is the same across all versions
+- No credential changes. No database changes. No new secrets
+- The function logic (fault detection, status update, error classification) remains identical
 
 ## File to Modify
 
 | File | Change |
 |---|---|
-| `supabase/functions/five9-provisioning/index.ts` | Add username normalization inside `soapCall()` before `btoa()` on line 41 |
+| `supabase/functions/test-five9-connection/index.ts` | Change SOAP URL from `v2` to `v13` on line 92 |
 
-No frontend changes. No database changes. No new secrets. No migration needed. The edge function will be redeployed automatically.
+The edge function redeploys automatically.
