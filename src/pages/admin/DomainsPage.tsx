@@ -54,7 +54,7 @@ import type { Five9DomainStatus } from "@/types/database";
 type ConnectionStatus = "idle" | "testing" | "success" | "failed";
 
 export default function DomainsPage() {
-  const { organization, orgRole } = useAuth();
+  const { organization, orgRole, isMasterAdmin, isLoading: isAuthLoading } = useAuth();
   const { data: domains, isLoading, error } = useDomains();
   const deleteDomain = useDeleteDomain();
 
@@ -68,7 +68,7 @@ export default function DomainsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdDomainId, setCreatedDomainId] = useState<string | null>(null);
 
-  const canManage = orgRole === "owner" || orgRole === "admin";
+  const canManage = isAuthLoading ? false : (orgRole === "owner" || orgRole === "admin" || isMasterAdmin);
 
   const resetDialog = () => {
     setNewDisplayName("");
