@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+
 import { Loader2, ArrowRight, Check, Globe, Building2, Building, Eye, EyeOff } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { toast } from "sonner";
@@ -25,7 +25,6 @@ export default function OnboardingPage() {
   const [orgName, setOrgName] = useState("");
 
   // Domain form
-  const [domain, setDomain] = useState("");
   const [domainDisplayName, setDomainDisplayName] = useState("");
   const [five9Username, setFive9Username] = useState("");
   const [five9Password, setFive9Password] = useState("");
@@ -110,15 +109,20 @@ export default function OnboardingPage() {
       return;
     }
 
+    // Derive domain from admin username email
+    const derivedDomain = five9Username.includes("@")
+      ? five9Username.split("@")[1]
+      : domainDisplayName.toLowerCase().replace(/\s+/g, "-");
+
     try {
       const { data, error } = await supabase
         .from("five9_domains")
         .insert({
           organization_id: orgId,
-          domain,
+          domain: derivedDomain,
           display_name: domainDisplayName,
-          five9_username: five9Username || null,
-          five9_password_encrypted: five9Password || null,
+          five9_username: five9Username,
+          five9_password_encrypted: five9Password,
         })
         .select()
         .single();
@@ -264,22 +268,11 @@ export default function OnboardingPage() {
               </div>
               <CardTitle>Connect your Five9 Domain</CardTitle>
               <CardDescription>
-                Enter your Five9 domain to start routing calls
+                Sign in with your Five9 admin account to connect your domain
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleCreateDomain}>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="domain">Five9 Domain</Label>
-                  <Input
-                    id="domain"
-                    type="text"
-                    placeholder="yourcompany.five9.com"
-                    value={domain}
-                    onChange={(e) => setDomain(e.target.value)}
-                    required
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="displayName">Display Name</Label>
                   <Input
@@ -295,15 +288,6 @@ export default function OnboardingPage() {
                   </p>
                 </div>
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <Separator />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">API Credentials (optional)</span>
-                  </div>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="five9Username">Five9 Admin Username</Label>
                   <Input
@@ -313,6 +297,7 @@ export default function OnboardingPage() {
                     value={five9Username}
                     onChange={(e) => setFive9Username(e.target.value)}
                     autoComplete="username"
+                    required
                   />
                 </div>
 
@@ -327,6 +312,7 @@ export default function OnboardingPage() {
                       onChange={(e) => setFive9Password(e.target.value)}
                       autoComplete="current-password"
                       className="pr-10"
+                      required
                     />
                     <Button
                       type="button"
@@ -447,7 +433,7 @@ export default function OnboardingPage() {
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-success" />
-                  <span>Domain: {domain}</span>
+                  <span>Domain: {five9Username.includes("@") ? five9Username.split("@")[1] : domainDisplayName}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Check className="h-4 w-4 text-success" />
