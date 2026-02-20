@@ -1,65 +1,103 @@
 
-# Fix: Hyphen Instead of Space in Five9 Username
+# Fix: Uneditable Fields + Ghost Button Contrast
 
-## Root Cause
+## Issue 1 — Domain Settings fields are disabled for master admin users
 
-The issue has two contributing factors:
+### Root Cause
 
-### Factor 1 — The `derivedDomain` fallback uses hyphens
-
-In `DomainsPage.tsx` line 100–102:
+In `DomainDetailPage.tsx` line 59:
 ```typescript
-const derivedDomain = five9Username.includes("@")
-  ? five9Username.split("@")[1]
-  : newDisplayName.toLowerCase().replace(/\s+/g, "-");
+const canManage = orgRole === "owner" || orgRole === "admin";
 ```
 
-When the username does **not** contain `@` (i.e., Five9 usernames in `Firstname Lastname` format like `"John Smith"`), this code derives the domain slug from the display name using `.replace(/\s+/g, "-")`. This is only used for the `domain` column — not the username — **but** it signals that the form doesn't properly guide non-email username formats.
+Master admin users have no `organization_members` row, so `orgRole` is always `null` for them. This makes `canManage = false` — every field and button in the entire detail page is disabled.
 
-### Factor 2 — The stored username may already be mangled
+The same page's list view (`DomainsPage.tsx` line 76) already handles this correctly:
+```typescript
+const canManage = isAuthLoading ? false : (orgRole === "owner" || orgRole === "admin" || isMasterAdmin);
+```
 
-If a previous "Add Domain" attempt stored a username with a hyphen (e.g., `"john-smith"` instead of `"john smith"`), the `test-five9-connection` edge function reads it back from the database and sends it as-is via Basic Auth, causing Five9 to reject it with `"Fault occurred while processing"`.
+`DomainDetailPage.tsx` simply forgot to include `isMasterAdmin`.
 
-### The Fix: Two-pronged
+### Fix
 
-**1. Sanitize the username in the edge function** — strip any hyphens that appear where spaces should be in non-email usernames. Since email usernames contain `@`, any username without `@` that has a hyphen is likely a mangled space. Apply `username.replace(/-/g, ' ')` for non-email usernames only.
+Update `DomainDetailPage.tsx` line 39 to also pull `isMasterAdmin` and `isLoading` from `useAuth()`, then update the `canManage` expression to match `DomainsPage.tsx`.
 
-**2. Fix the stored username in the database** — add a note in the form UI clarifying the format, and ensure the username is trimmed before saving.
+```typescript
+// Before
+const { orgRole } = useAuth();
+const canManage = orgRole === "owner" || orgRole === "admin";
 
-**3. Normalize username before `btoa()`** — in `test-five9-connection/index.ts`, normalize the username right before it's used for SOAP auth.
+// After
+const { orgRole, isMasterAdmin, isLoading: isAuthLoading } = useAuth();
+const canManage = isAuthLoading ? false : (orgRole === "owner" || orgRole === "admin" || isMasterAdmin);
+```
+
+### The "gate before editing" requirement
+
+Per the request: once the API connection is established (`api_connection_status === "connected"`), there should be a confirmation step before allowing edits to credentials. We'll add a small "unlock" state for the API Credentials tab — when `connected`, show a locked state with an "Edit Credentials" button that toggles editable mode on. General settings (display name, status, workflow, branding) remain freely editable at all times.
+
+---
+
+## Issue 2 — Settings icon invisible until hover (contrast bug)
+
+### Root Cause
+
+Ghost buttons (`variant="ghost"`) have no default foreground color. The button component defines:
+```
+ghost: "hover:bg-accent hover:text-accent-foreground"
+```
+
+With no default text color, the icon inherits the transparent background color — invisible on the dark card surface until hover applies `text-accent-foreground`. This is the exact behavior shown in the screenshot.
+
+### Fix
+
+Add `text-muted-foreground` to ghost icon buttons in all table action columns so they're always visible, then brighten to `text-foreground` on hover:
+
+```tsx
+// Before
+<Button variant="ghost" size="icon" asChild>
+  <Link to={`/admin/domains/${domain.id}`}>
+    <Settings className="h-4 w-4" />
+  </Link>
+</Button>
+
+// After
+<Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" asChild>
+  <Link to={`/admin/domains/${domain.id}`}>
+    <Settings className="h-4 w-4" />
+  </Link>
+</Button>
+```
+
+### Breadth of the fix — all affected files
+
+The same pattern (ghost icon button with no default color in action columns) exists in:
+
+| File | Location |
+|---|---|
+| `src/pages/admin/DomainsPage.tsx` | Settings + Trash icon buttons in table rows |
+| `src/pages/admin/TenantsPage.tsx` | Action buttons in table rows |
+| `src/pages/admin/AgentsPage.tsx` | Action buttons in table rows |
+| `src/pages/admin/ApiLogsPage.tsx` | Copy/expand icon buttons |
+| `src/pages/admin/NotificationsPage.tsx` | Icon buttons |
+| `src/components/agents/offboarding/AgentSearchList.tsx` | Row action buttons |
+| `src/components/agents/onboarding/WorkflowPanel.tsx` | Step action buttons |
+
+Each will get `text-muted-foreground hover:text-foreground` on all ghost icon buttons that render icons without explicit color classes.
+
+---
 
 ## Files to Modify
 
 | File | Change |
 |---|---|
-| `supabase/functions/test-five9-connection/index.ts` | Normalize username: if it doesn't contain `@`, replace hyphens with spaces before the SOAP call |
-| `src/pages/admin/DomainsPage.tsx` | Trim the username before saving, add helper text clarifying format (e.g., `"John Smith"` not `"john-smith"`) |
+| `src/pages/admin/DomainDetailPage.tsx` | Fix `canManage` to include `isMasterAdmin`; add credential lock/unlock gate when connected |
+| `src/pages/admin/DomainsPage.tsx` | Add `text-muted-foreground hover:text-foreground` to ghost icon buttons |
+| `src/pages/admin/TenantsPage.tsx` | Same ghost button fix |
+| `src/pages/admin/AgentsPage.tsx` | Same ghost button fix |
+| `src/pages/admin/ApiLogsPage.tsx` | Same ghost button fix |
+| `src/pages/admin/NotificationsPage.tsx` | Same ghost button fix |
+| `src/components/agents/offboarding/AgentSearchList.tsx` | Same ghost button fix |
 
-## The Normalization Logic
-
-In `test-five9-connection/index.ts`, right after computing `testUsername`:
-
-```typescript
-const testUsername = username || domain.five9_username;
-
-// Normalize: Five9 usernames with spaces are sometimes stored with hyphens
-// Only apply to non-email usernames (emails contain @)
-const normalizedUsername = testUsername.includes("@")
-  ? testUsername
-  : testUsername.replace(/-/g, " ");
-```
-
-Then use `normalizedUsername` in the SOAP `Authorization` header instead of `testUsername`.
-
-This is a safe transformation because:
-- Email-format usernames (containing `@`) are left untouched
-- Non-email usernames (e.g. `"john-smith"`) get hyphens replaced with spaces (`"john smith"`)
-- The change only affects the in-flight SOAP call, not what's stored in the database
-
-## Also: Fix What's Already Stored
-
-The domain currently in the database likely has `five9_username = "john-smith"` (hyphenated). The user can correct this via **Domain Settings → API Credentials tab** — updating the username field to `"john smith"` (with a space) and clicking "Save Credentials". The normalization fix in the edge function covers the existing stored value immediately without requiring manual correction, but we should also add the fix there.
-
-## No Database Migration Required
-
-This is a pure code fix. No schema changes, no new tables, no new secrets.
+No database changes. No new secrets. No migrations.
