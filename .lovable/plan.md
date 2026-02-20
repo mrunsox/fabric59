@@ -1,66 +1,119 @@
 
-# Fixes: Three Issues
+# Dashboard Switcher for pauljoseph@24hvirtual.com
 
-## Issue 1 — Navigation Orientation (No Code Change Needed)
+## Current Situation
 
-The app already has an "Agents" tab in the left sidebar linking to `/admin/agents`. Integration Credentials are on the **Settings page** (`/admin/settings`) — scroll down to the "Integration Credentials" card with the key icon.
+Paul (`pauljoseph@24hvirtual.com`) is confirmed as `master_admin` in the database but has **zero organization memberships**. This means:
 
-This will be documented in a quick-help banner on the Settings page so it's easier to find.
+- He can access `/master` (System Admin dashboard) fine
+- When he tries to visit `/admin`, `ProtectedRoute` detects `isMasterAdmin && !organization` and immediately redirects him back to `/master`
+- He is effectively locked out of the Admin (Organization) dashboard
 
-## Issue 2 — Five9 Username Field Accepts Any Text (Not Just Email)
+## Goal
 
-**File:** `src/pages/admin/DomainDetailPage.tsx` — line 317
+Give Paul frictionless access to **both** dashboards with a visible switcher — so he can jump between "System Admin" and "Admin" views without signing in/out or manually editing the URL.
 
-The username input field currently uses `type="email"`, which forces browser email validation and auto-correct. Five9 SOAP API accepts usernames in any format (often plain username strings, not emails). Fix: change to `type="text"` and update the placeholder/helper text to reflect this.
+---
 
-Additionally, the "Add Domain" dialog on `DomainsPage.tsx` only collects domain name and display name — no username/password at create time, which is correct (those go on the detail page). No change needed there.
+## What Needs to Change
 
-## Issue 3 — Organization Tab / Users Management — Nothing is Clickable
+### 1. Fix `ProtectedRoute` — Allow Master Admins into `/admin`
 
-**File:** `src/pages/master/OrganizationsOverviewPage.tsx` and `src/pages/master/UsersManagementPage.tsx`
+Currently:
+```
+if (isMasterAdmin && !organization) → redirect to /master
+```
 
-Both master admin pages are currently read-only tables with no interactive elements. The rows show user UUIDs, org names, and roles — but nothing can be clicked, managed, or acted upon.
+The fix: remove this block entirely. Master admins **should** be allowed to pass through to `/admin` — they will simply see the admin dashboard without an organization context (which is fine since they have full DB access via RLS).
 
-**Fix:** Add clickable row functionality and action buttons:
+**File:** `src/components/auth/ProtectedRoute.tsx`
 
-- **Organizations page**: Each row gets a "View Members" action that expands inline or links to a detail view. Add the ability to change an organization's plan/status. Make rows visually feel clickable (cursor-pointer, hover highlight).
+### 2. Update `AuthContext` — Master Admins Can Load Orgs
 
-- **Users Management page**: Show more useful data. Instead of raw UUIDs, attempt to show the email from the auth context (master admin can see all users). Add the ability to change a user's platform role (e.g. promote from `admin` to `master_admin` or demote). Make rows interactive.
+Right now, `loadOrganizations` is only called for the current user's memberships. Paul has none, so `organization` stays `null`. We need to allow Paul to optionally load **all** organizations (for the org picker in AdminLayout). This is already possible since master admins can SELECT all orgs via RLS.
 
-Since the master admin has no email column available in the `user_roles` or `organization_members` tables (emails live in `auth.users` which is not directly queryable), we'll display the user ID truncated with a copy button, and note that email lookup requires the Lovable Cloud backend view.
+We'll add a `loadAllOrganizationsForMasterAdmin()` path in `AuthContext` that fetches all orgs when `isMasterAdmin === true` and the user has no memberships. This lets Paul pick an org from the switcher in AdminLayout and operate in that context.
 
-For the Organization members, we'll add:
-- A clickable row that expands to show member details
-- A "Change Role" action dropdown (owner → admin → member)
-- A "Remove Member" button
+**File:** `src/contexts/AuthContext.tsx`
 
-For Platform Roles (Users Management page):
-- A "Change Role" dropdown per user
-- A "Remove Role" button for non-master-admin entries
+### 3. Add Dashboard Switcher to Both Layouts
 
-## Files to Modify
+A `DashboardSwitcher` component visible only to master admins, placed in the sidebar footer of both `AdminLayout` and `MasterLayout`. It renders two buttons:
+
+```
+┌─────────────────────────────────┐
+│ Switch Dashboard                 │
+│  [⚙ System Admin]  [🏢 Admin]  │
+└─────────────────────────────────┘
+```
+
+- Active dashboard is highlighted
+- Inactive one is a clickable link
+
+**New file:** `src/components/layout/DashboardSwitcher.tsx`
+
+### 4. Integrate Switcher into Both Layouts
+
+- `MasterLayout.tsx` — add `<DashboardSwitcher current="master" />` in the sidebar footer above the sign-out button
+- `AdminLayout.tsx` — add `<DashboardSwitcher current="admin" />` in the sidebar footer, visible only when `isMasterAdmin` is true
+
+---
+
+## Technical Details
+
+### ProtectedRoute change (simple)
+Remove the redirect block:
+```tsx
+// REMOVE THIS:
+if (isMasterAdmin && !organization) {
+  return <Navigate to="/master" replace />;
+}
+```
+Master admins will land on `/admin` without an org. The AdminLayout already handles `organization?.name` gracefully with `|| "Loading..."` fallback, so no crash.
+
+### AuthContext change
+In `loadOrganizations`, after checking memberships — if the user is a master admin and has no memberships, fetch all orgs from the `organizations` table and set them as available choices. Paul can then pick one from the org switcher in AdminLayout.
+
+```typescript
+// After memberships check — if master_admin and no memberships:
+if (!memberships || memberships.length === 0) {
+  const isMaster = await checkMasterAdmin(userId); // already runs separately
+  if (isMaster) {
+    const { data: allOrgs } = await supabase.from("organizations").select("*");
+    // set allOrgs as available organizations so the switcher populates
+  }
+}
+```
+
+Since master admins already have SELECT on all organizations via RLS (`Master admin can manage all organizations` policy), this query will succeed.
+
+### DashboardSwitcher Component
+```tsx
+// src/components/layout/DashboardSwitcher.tsx
+interface Props { current: "master" | "admin" }
+
+// Renders two pill buttons using react-router Link
+// Only shown when isMasterAdmin === true
+```
+
+---
+
+## Files to Modify/Create
 
 | File | Change |
 |------|--------|
-| `src/pages/admin/DomainDetailPage.tsx` | Change username field from `type="email"` to `type="text"`, update placeholder and helper text |
-| `src/pages/master/OrganizationsOverviewPage.tsx` | Make rows clickable, add expandable member list per org, add status/plan change actions |
-| `src/pages/master/UsersManagementPage.tsx` | Add role change dropdown and remove actions to Platform Roles table |
+| `src/components/auth/ProtectedRoute.tsx` | Remove master admin redirect block |
+| `src/contexts/AuthContext.tsx` | Load all orgs when master admin has no memberships |
+| `src/components/layout/DashboardSwitcher.tsx` | New component — dashboard toggle buttons |
+| `src/components/layout/MasterLayout.tsx` | Add `<DashboardSwitcher current="master" />` |
+| `src/components/layout/AdminLayout.tsx` | Add `<DashboardSwitcher current="admin" />` |
 
-## Implementation Details
+---
 
-### DomainDetailPage fix (simple)
-- Line 317: `type="email"` → `type="text"`
-- Line 318: placeholder `"admin@yourdomain.five9.com"` → `"yourusername"` 
-- Line 322: helper text → `"Your Five9 administrator username"`
+## User Experience After This Change
 
-### OrganizationsOverviewPage (interactive rows)
-- Wrap each `<TableRow>` with `onClick` to expand an inline panel showing members of that org
-- Use a `selectedOrgId` state to track which org is expanded
-- Show members in a sub-table below the selected row
-- Add "Change Status" select dropdown per org row actions column
-
-### UsersManagementPage (role management)
-- Add "Actions" column to Platform Roles table
-- Each row: a `Select` dropdown to change role + a "Remove" button (disabled for master_admin to prevent self-lock-out)
-- Wire to `supabase.from("user_roles").update(...)` and `.delete(...)`
-- Confirm before removing a role
+1. Paul logs in → lands on `/admin` (or `/master`, same as before, depending on where he came from)
+2. In either sidebar he sees a "Switch Dashboard" section with two buttons
+3. Clicking "System Admin" takes him to `/master`
+4. Clicking "Admin" takes him to `/admin` — now allowed without crashing
+5. The org switcher in AdminLayout will be pre-populated with all organizations so Paul can select which org context to browse under
