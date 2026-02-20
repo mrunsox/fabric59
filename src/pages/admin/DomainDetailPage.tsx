@@ -36,7 +36,7 @@ import { format } from "date-fns";
 export default function DomainDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orgRole } = useAuth();
+  const { orgRole, isMasterAdmin, isLoading: isAuthLoading } = useAuth();
   const { data: domain, isLoading, error } = useDomain(id || "");
   const updateDomain = useUpdateDomain();
   const deleteDomain = useDeleteDomain();
@@ -53,10 +53,12 @@ export default function DomainDetailPage() {
   const [five9Username, setFive9Username] = useState("");
   const [five9Password, setFive9Password] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  // When already connected, gate edits behind an explicit unlock
+  const [credentialsUnlocked, setCredentialsUnlocked] = useState(false);
   
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const canManage = orgRole === "owner" || orgRole === "admin";
+  const canManage = isAuthLoading ? false : (orgRole === "owner" || orgRole === "admin" || isMasterAdmin);
 
   // Initialize form with domain data
   if (domain && !isInitialized) {
@@ -133,7 +135,7 @@ export default function DomainDetailPage() {
     switch (status) {
       case "connected":
         return (
-          <Badge variant="default" className="bg-green-600 text-white">
+          <Badge variant="default" className="bg-success text-success-foreground">
             <CheckCircle2 className="mr-1 h-3 w-3" />
             Connected
           </Badge>
@@ -308,95 +310,131 @@ export default function DomainDetailPage() {
                 {getConnectionStatusBadge()}
               </div>
 
-              {/* Credentials Form */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="five9Username">Five9 Username</Label>
-                  <Input
-                    id="five9Username"
-                    type="text"
-                    placeholder="yourusername"
-                    value={five9Username}
-                    onChange={(e) => setFive9Username(e.target.value)}
-                    disabled={!canManage}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Your Five9 administrator username
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="five9Password">Five9 Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="five9Password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder={domain.five9_password_encrypted ? "••••••••••••" : "Enter your Five9 password"}
-                      value={five9Password}
-                      onChange={(e) => setFive9Password(e.target.value)}
-                      disabled={!canManage}
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                      disabled={!canManage}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
+              {/* Lock gate when already connected */}
+              {canManage && domain.api_connection_status === "connected" && !credentialsUnlocked ? (
+                <div className="rounded-lg border bg-muted/30 p-5 flex flex-col items-center gap-3 text-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
+                    <CheckCircle2 className="h-5 w-5 text-success" />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Password is encrypted and stored securely
-                    {domain.five9_password_encrypted && " • Leave blank to keep existing password"}
-                  </p>
+                  <div>
+                    <p className="text-sm font-medium">Credentials are configured</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      This domain is connected. Click below to update the credentials.
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setCredentialsUnlocked(true)}>
+                    Edit Credentials
+                  </Button>
                 </div>
-              </div>
+              ) : (
+                canManage && (
+                  <>
+                    {/* Credentials Form */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="five9Username">Five9 Username</Label>
+                        <Input
+                          id="five9Username"
+                          type="text"
+                          placeholder="e.g. John Smith or admin@company.com"
+                          value={five9Username}
+                          onChange={(e) => setFive9Username(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Enter exactly as shown in Five9 — e.g. <code className="bg-muted px-1 rounded">John Smith</code> (with a space, not a hyphen) or <code className="bg-muted px-1 rounded">admin@company.com</code>
+                        </p>
+                      </div>
 
-              {/* Action Buttons */}
-              {canManage && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={handleTestConnection}
-                    disabled={testConnection.isPending || (!five9Username && !domain.five9_username)}
-                  >
-                    {testConnection.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Plug className="mr-2 h-4 w-4" />
-                    )}
-                    Test Connection
-                  </Button>
-                  <Button
-                    onClick={handleSaveCredentials}
-                    disabled={updateDomain.isPending || !five9Username}
-                  >
-                    {updateDomain.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="mr-2 h-4 w-4" />
-                    )}
-                    Save Credentials
-                  </Button>
+                      <div className="space-y-2">
+                        <Label htmlFor="five9Password">Five9 Password</Label>
+                        <div className="relative">
+                          <Input
+                            id="five9Password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder={domain.five9_password_encrypted ? "••••••••••••" : "Enter your Five9 password"}
+                            value={five9Password}
+                            onChange={(e) => setFive9Password(e.target.value)}
+                            className="pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Password is encrypted and stored securely
+                          {domain.five9_password_encrypted && " • Leave blank to keep existing password"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        variant="outline"
+                        onClick={handleTestConnection}
+                        disabled={testConnection.isPending || (!five9Username && !domain.five9_username)}
+                      >
+                        {testConnection.isPending ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Plug className="mr-2 h-4 w-4" />
+                        )}
+                        Test Connection
+                      </Button>
+                      <Button
+                        onClick={handleSaveCredentials}
+                        disabled={updateDomain.isPending || !five9Username}
+                      >
+                        {updateDomain.isPending ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Save className="mr-2 h-4 w-4" />
+                        )}
+                        Save Credentials
+                      </Button>
+                      {credentialsUnlocked && (
+                        <Button variant="ghost" onClick={() => setCredentialsUnlocked(false)} className="text-muted-foreground hover:text-foreground">
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )
+              )}
+
+              {/* Shown to non-managers if not connected yet */}
+              {!canManage && (
+                <div className="space-y-4 opacity-60 pointer-events-none">
+                  <div className="space-y-2">
+                    <Label>Five9 Username</Label>
+                    <Input value={five9Username} disabled />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Five9 Password</Label>
+                    <Input type="password" placeholder="••••••••••••" disabled />
+                  </div>
                 </div>
               )}
 
               {/* Help Text */}
-              <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/50 p-4">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
                 <div className="flex gap-3">
-                  <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                  <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-2 text-sm">
-                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                    <p className="font-medium text-foreground">
                       Where to find your Five9 API credentials
                     </p>
-                    <ol className="list-decimal list-inside space-y-1 text-blue-800 dark:text-blue-200">
+                    <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
                       <li>Log in to your Five9 VCC Administrator portal</li>
                       <li>Navigate to User Management → Users</li>
                       <li>Use an admin user's credentials that has API access enabled</li>

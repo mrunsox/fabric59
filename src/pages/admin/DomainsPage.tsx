@@ -420,15 +420,15 @@ export default function DomainsPage() {
                   {canManage && (
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" asChild>
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" asChild>
                           <Link to={`/admin/domains/${domain.id}`}>
                             <Settings className="h-4 w-4" />
                           </Link>
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
