@@ -1,57 +1,131 @@
 
-# Remove the Five9 Domain Field + Make Credentials Mandatory
+# Three-Part Plan: Connection Test in Onboarding + Intent Question + Domain Credentials Update
 
-## What Changes
+## What's Being Built
 
-The "Connect your Five9 Domain" step currently has 4 fields:
-1. **Five9 Domain** (yourcompany.five9.com) — REMOVE THIS
-2. Display Name — keep, required
-3. Five9 Admin Username — keep, make **required**
-4. Admin Password — keep, make **required**
+Three improvements in one pass:
 
-Remove the "API Credentials (optional)" separator label — credentials are now mandatory, not optional. Update the card description to reflect logging in with an admin account.
+1. **Auto-test credentials during onboarding** — After saving the Five9 domain, automatically call the `test-five9-connection` edge function and show a result screen (success or failure with retry) before advancing to the next step.
+2. **Intent question after connection** — Once credentials are verified, ask the user what they want to do next: "Provision agents" or "Set up a campaign integration" — with a clean card-based choice UI. This determines which onboarding path they follow.
+3. **Domain Detail credentials are already there** — Checking the `DomainDetailPage.tsx`, the "API Credentials" tab already has Five9 Admin Username and Password fields with save + test buttons. No changes needed here — it's fully built.
 
-## The `domain` Column Problem
+---
 
-The `five9_domains.domain` column is `NOT NULL` in the database. Since we're removing the field from the UI, the value needs to come from somewhere automatically. The cleanest approach: **derive the domain from the admin username email**.
+## Step 1: Onboarding — Auto-Test After Domain Save
 
-- If the username is `paul.joseph@24hvirtual.com`, the stored domain becomes `24hvirtual.com`
-- If the username has no `@`, fall back to the display name (slugified)
+### New state added to `OnboardingPage.tsx`
 
-This is done in the `handleCreateDomain` function before the insert — no DB migration needed.
+```typescript
+type Step = "org" | "domain" | "testing" | "intent" | "tenant" | "complete";
 
-## File to Modify
+const [connectionStatus, setConnectionStatus] = useState<"testing" | "success" | "failed" | null>(null);
+const [connectionMessage, setConnectionMessage] = useState("");
+```
 
-**`src/pages/onboarding/OnboardingPage.tsx`**
+### Updated `handleCreateDomain` flow
 
-Changes:
-1. Remove the `domain` state variable (no longer needed as user input)
-2. Remove the "Five9 Domain" input field from the form
-3. Remove the "API Credentials (optional)" separator — replace with just a clean divider or nothing
-4. Add `required` to `five9Username` and `five9Password` inputs
-5. Update `handleCreateDomain` to derive `domain` from `five9Username.split('@')[1]` before insert
-6. Update the card subtitle from "Enter your Five9 domain to start routing calls" to "Sign in with your Five9 admin account to connect your domain"
+```
+1. Validate fields (display name, username, password)
+2. Insert into five9_domains → get back domain ID
+3. Immediately set step to "testing" (spinner shown)
+4. Call test-five9-connection edge function with the new domain ID
+5. If success → set connectionStatus = "success" → after 1.5s advance to "intent"
+6. If failure → set connectionStatus = "failed" → show error + "Try Different Credentials" button
+```
 
-## Updated Form Layout
+### New "testing" step card
 
 ```text
 ┌─────────────────────────────────────────┐
-│  🌐  Connect your Five9 Domain          │
-│  Sign in with your Five9 admin account  │
+│  🔌  Verifying Connection               │
+│  Connecting to Five9 Admin Web Services │
 │                                         │
-│  Display Name                           │
-│  [Main Call Center                   ]  │
-│  A friendly name to identify this domain│
+│   [spinner] Authenticating...           │  ← while testing
 │                                         │
-│  Five9 Admin Username                   │
-│  [admin@yourcompany.com              ]  │
+│   ✅  Connected successfully            │  ← on success
+│   Advancing in a moment...              │
 │                                         │
-│  Admin Password                         │
-│  [••••••••••••••••••••••••         👁] │
-│  Used to sync agent skills and skills   │
+│   ❌  Connection failed                 │  ← on failure
+│   "Authentication failed. Please        │
+│    check your credentials."             │
 │                                         │
-│  [→  Connect Domain                  ]  │
+│   [Try Again]  [Continue Anyway]        │  ← failure actions
 └─────────────────────────────────────────┘
 ```
 
-No database migration required — the `domain` field is still stored, just derived automatically from the username email rather than entered manually.
+"Try Again" returns to the domain step with credentials pre-filled so the user can correct them. "Continue Anyway" advances to intent so they aren't completely blocked.
+
+---
+
+## Step 2: Intent Selection After Successful Connection
+
+### New "intent" step card
+
+After a successful connection test, show a clean choice screen before the tenant step:
+
+```text
+┌─────────────────────────────────────────┐
+│  🎯  What would you like to set up?     │
+│  Choose your primary use case           │
+│                                         │
+│  ┌──────────────────────────────────┐   │
+│  │  👤  Agent Provisioning          │   │
+│  │  Onboard and offboard call       │   │
+│  │  center agents — create Five9    │   │
+│  │  users, assign skills, send      │   │
+│  │  credentials automatically.      │   │
+│  └──────────────────────────────────┘   │
+│                                         │
+│  ┌──────────────────────────────────┐   │
+│  │  🔗  CRM & Campaign Integration  │   │
+│  │  Connect your clients' CRMs to   │   │
+│  │  Five9 campaigns — map fields,   │   │
+│  │  sync contacts, and route calls  │   │
+│  │  to the right disposition.       │   │
+│  └──────────────────────────────────┘   │
+│                                         │
+│  [→  Continue]   (selection required)   │
+└─────────────────────────────────────────┘
+```
+
+Selecting a card highlights it. Clicking Continue advances to the "tenant" step regardless of choice — the selection is stored in state and used later to customize the complete screen's CTA (e.g., "Go to Agent Provisioning" vs "Go to Mapping Builder").
+
+---
+
+## Step 3: Domain Detail Page — Already Done
+
+The `DomainDetailPage.tsx` already has a full "API Credentials" tab with:
+- Five9 Admin Username field (pre-populated from saved data)
+- Admin Password field (blank for security, with placeholder showing if a password exists)
+- Save Credentials button
+- Test Connection button
+- Connection status badge
+- Help text explaining where to find credentials
+
+No changes needed to `DomainDetailPage.tsx`.
+
+---
+
+## Progress Indicator Update
+
+The step indicator needs to account for the new steps. The visible steps for the progress bar will remain 4 dots (org, domain, clients, done) — the "testing" and "intent" steps happen within the domain step visually (step 2 stays highlighted during testing and intent selection).
+
+---
+
+## Files to Modify
+
+| File | Change |
+|---|---|
+| `src/pages/onboarding/OnboardingPage.tsx` | Add "testing" + "intent" steps, auto-test logic, intent selection card UI |
+
+No other files need changing. The `test-five9-connection` edge function already exists and is deployed. The `DomainDetailPage.tsx` already has credential management.
+
+---
+
+## Technical Implementation Notes
+
+- The connection test uses a direct `fetch` to the edge function (same pattern as `useTestFive9Connection.ts`) — no need to import the hook since we need inline control over the step transition timing
+- The 1.5 second delay on success gives the user a moment to see the green checkmark before moving on
+- The "intent" selection is stored as `const [intent, setIntent] = useState<"provisioning" | "integration" | null>(null)` — used to customize the final complete screen CTA
+- Progress dots: "testing" and "intent" steps both show step 2 (domain) as active so the visual progress stays clean and doesn't jump around with extra dots
+
