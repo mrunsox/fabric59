@@ -1,15 +1,138 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Save, Shield, Bell, Zap, Database } from "lucide-react";
+import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useAppConfig } from "@/hooks/useAppConfig";
+
+function MaskedInput({
+  id,
+  value,
+  onChange,
+  placeholder,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="flex gap-2">
+      <Input
+        id={id}
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="font-mono"
+        autoComplete="off"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={() => setShow(s => !s)}
+        className="shrink-0"
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </Button>
+    </div>
+  );
+}
+
+function MaskedTextarea({
+  id,
+  value,
+  onChange,
+  placeholder,
+  rows = 6,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShow(s => !s)}
+          className="h-7 text-xs gap-1.5"
+        >
+          {show ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+          {show ? "Hide" : "Show"} key
+        </Button>
+      </div>
+      <Textarea
+        id={id}
+        value={show ? value : value ? value.replace(/[^\n]/g, "•") : ""}
+        onChange={e => {
+          if (show) onChange(e.target.value);
+        }}
+        onFocus={() => setShow(true)}
+        placeholder={placeholder}
+        rows={rows}
+        className="font-mono text-xs resize-none"
+      />
+    </div>
+  );
+}
 
 export default function SettingsPage() {
-  const handleSave = () => {
+  const { configValues, saveIntegrationCredentials, loading } = useAppConfig();
+  const [saving, setSaving] = useState(false);
+
+  const [creds, setCreds] = useState({
+    email_domain: "",
+    five9_username: "",
+    five9_password: "",
+    resend_api_key: "",
+    resend_from_email: "",
+    google_service_account_email: "",
+    google_service_account_private_key: "",
+    google_admin_impersonate_email: "",
+  });
+
+  // Populate from DB once loaded
+  // Populate form once DB values load
+  useEffect(() => {
+    if (!loading) {
+      setCreds({
+        email_domain: configValues.email_domain ?? "",
+        five9_username: configValues.five9_username ?? "",
+        five9_password: configValues.five9_password ?? "",
+        resend_api_key: configValues.resend_api_key ?? "",
+        resend_from_email: configValues.resend_from_email ?? "",
+        google_service_account_email: configValues.google_service_account_email ?? "",
+        google_service_account_private_key: configValues.google_service_account_private_key ?? "",
+        google_admin_impersonate_email: configValues.google_admin_impersonate_email ?? "",
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
+  const set = (key: keyof typeof creds) => (value: string) =>
+    setCreds(prev => ({ ...prev, [key]: value }));
+
+  const handleSaveGeneral = () => {
     toast.success("Settings saved successfully");
+  };
+
+  const handleSaveCredentials = async () => {
+    setSaving(true);
+    await saveIntegrationCredentials(creds);
+    setSaving(false);
   };
 
   return (
@@ -31,9 +154,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <CardTitle>API Configuration</CardTitle>
-              <CardDescription>
-                Configure API rate limits and timeouts
-              </CardDescription>
+              <CardDescription>Configure API rate limits and timeouts</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -61,6 +182,135 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Integration Credentials */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Key className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Integration Credentials</CardTitle>
+              <CardDescription>API keys and credentials for connected services</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Agent Provisioning */}
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Agent Provisioning</p>
+
+            <div className="space-y-2">
+              <Label htmlFor="email-domain">Email Domain</Label>
+              <Input
+                id="email-domain"
+                value={creds.email_domain}
+                onChange={e => set("email_domain")(e.target.value)}
+                placeholder="yourcompany.com"
+              />
+              <p className="text-xs text-muted-foreground">Used to construct agent email addresses (e.g. firstname.l@yourcompany.com)</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="five9-username">Five9 Admin Username</Label>
+              <Input
+                id="five9-username"
+                value={creds.five9_username}
+                onChange={e => set("five9_username")(e.target.value)}
+                placeholder="admin@yourdomain.five9.com"
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="five9-password">Five9 Admin Password</Label>
+              <MaskedInput
+                id="five9-password"
+                value={creds.five9_password}
+                onChange={set("five9_password")}
+                placeholder="Five9 admin password"
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Email (Resend) */}
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Email (Resend)</p>
+
+            <div className="space-y-2">
+              <Label htmlFor="resend-api-key">Resend API Key</Label>
+              <MaskedInput
+                id="resend-api-key"
+                value={creds.resend_api_key}
+                onChange={set("resend_api_key")}
+                placeholder="re_••••••••••••••••"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="resend-from">From Email Address</Label>
+              <Input
+                id="resend-from"
+                type="email"
+                value={creds.resend_from_email}
+                onChange={e => set("resend_from_email")(e.target.value)}
+                placeholder="noreply@yourcompany.com"
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Google Workspace */}
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Google Workspace</p>
+
+            <div className="space-y-2">
+              <Label htmlFor="google-sa-email">Service Account Email</Label>
+              <Input
+                id="google-sa-email"
+                value={creds.google_service_account_email}
+                onChange={e => set("google_service_account_email")(e.target.value)}
+                placeholder="service@project.iam.gserviceaccount.com"
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="google-impersonate">Admin Impersonation Email</Label>
+              <Input
+                id="google-impersonate"
+                value={creds.google_admin_impersonate_email}
+                onChange={e => set("google_admin_impersonate_email")(e.target.value)}
+                placeholder="admin@yourcompany.com"
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="google-pk">Service Account Private Key (PEM)</Label>
+              <MaskedTextarea
+                id="google-pk"
+                value={creds.google_service_account_private_key}
+                onChange={set("google_service_account_private_key")}
+                placeholder={"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"}
+                rows={6}
+              />
+              <p className="text-xs text-muted-foreground">Paste the full PEM private key from your Google service account JSON file</p>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <Button onClick={handleSaveCredentials} disabled={saving || loading} className="gap-2">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {saving ? "Saving…" : "Save Integration Credentials"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Security */}
       <Card>
         <CardHeader>
@@ -70,9 +320,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <CardTitle>Security</CardTitle>
-              <CardDescription>
-                Authentication and encryption settings
-              </CardDescription>
+              <CardDescription>Authentication and encryption settings</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -80,9 +328,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Require API Key Authentication</Label>
-              <p className="text-sm text-muted-foreground">
-                All API requests must include a valid X-Tenant-Id header
-              </p>
+              <p className="text-sm text-muted-foreground">All API requests must include a valid X-Tenant-Id header</p>
             </div>
             <Switch defaultChecked />
           </div>
@@ -90,9 +336,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Encrypt CRM API Keys</Label>
-              <p className="text-sm text-muted-foreground">
-                Store CRM credentials with AES-256 encryption
-              </p>
+              <p className="text-sm text-muted-foreground">Store CRM credentials with AES-256 encryption</p>
             </div>
             <Switch defaultChecked />
           </div>
@@ -100,9 +344,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>CORS: Allow Five9 Domains</Label>
-              <p className="text-sm text-muted-foreground">
-                Whitelist *.five9.com for cross-origin requests
-              </p>
+              <p className="text-sm text-muted-foreground">Whitelist *.five9.com for cross-origin requests</p>
             </div>
             <Switch defaultChecked />
           </div>
@@ -118,9 +360,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <CardTitle>Notifications</CardTitle>
-              <CardDescription>
-                Configure alerts and webhooks
-              </CardDescription>
+              <CardDescription>Configure alerts and webhooks</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -128,28 +368,18 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Email on Error Threshold</Label>
-              <p className="text-sm text-muted-foreground">
-                Send alert when error rate exceeds 5%
-              </p>
+              <p className="text-sm text-muted-foreground">Send alert when error rate exceeds 5%</p>
             </div>
             <Switch defaultChecked />
           </div>
           <Separator />
           <div className="space-y-2">
             <Label htmlFor="alert-email">Alert Email</Label>
-            <Input
-              id="alert-email"
-              type="email"
-              placeholder="ops@yourcompany.com"
-            />
+            <Input id="alert-email" type="email" placeholder="ops@yourcompany.com" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
-            <Input
-              id="slack-webhook"
-              type="url"
-              placeholder="https://hooks.slack.com/services/..."
-            />
+            <Input id="slack-webhook" type="url" placeholder="https://hooks.slack.com/services/..." />
           </div>
         </CardContent>
       </Card>
@@ -163,9 +393,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <CardTitle>Data Retention</CardTitle>
-              <CardDescription>
-                Configure log storage and cleanup policies
-              </CardDescription>
+              <CardDescription>Configure log storage and cleanup policies</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -183,9 +411,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Auto-purge Old Logs</Label>
-              <p className="text-sm text-muted-foreground">
-                Automatically delete logs older than retention period
-              </p>
+              <p className="text-sm text-muted-foreground">Automatically delete logs older than retention period</p>
             </div>
             <Switch defaultChecked />
           </div>
@@ -194,7 +420,7 @@ export default function SettingsPage() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} className="gap-2">
+        <Button onClick={handleSaveGeneral} className="gap-2">
           <Save className="h-4 w-4" />
           Save All Settings
         </Button>

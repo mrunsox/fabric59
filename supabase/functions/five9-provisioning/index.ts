@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +7,18 @@ const corsHeaders = {
 };
 
 const FIVE9_SOAP_URL = 'https://api.five9.com/wsadmin/v13/AdminWebService';
+
+async function getConfig(key: string, envFallback: string | undefined): Promise<string | undefined> {
+  if (envFallback) return envFallback;
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    const { data } = await supabase.from('app_config').select('value').eq('key', key).maybeSingle();
+    return data?.value ?? undefined;
+  } catch { return undefined; }
+}
 
 function escapeXml(str: string): string {
   return str
@@ -65,11 +78,11 @@ serve(async (req) => {
   }
 
   try {
-    const FIVE9_USERNAME = Deno.env.get('FIVE9_USERNAME');
-    const FIVE9_PASSWORD = Deno.env.get('FIVE9_PASSWORD');
+    const FIVE9_USERNAME = await getConfig('five9_username', Deno.env.get('FIVE9_USERNAME'));
+    const FIVE9_PASSWORD = await getConfig('five9_password', Deno.env.get('FIVE9_PASSWORD'));
 
     if (!FIVE9_USERNAME || !FIVE9_PASSWORD) {
-      return new Response(JSON.stringify({ success: false, error: 'Five9 credentials not configured' }), {
+      return new Response(JSON.stringify({ success: false, error: 'Five9 credentials not configured. Please add them in Settings → Integration Credentials.' }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

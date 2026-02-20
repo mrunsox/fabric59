@@ -1,4 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+async function getConfig(key: string, envFallback: string | undefined): Promise<string | undefined> {
+  if (envFallback) return envFallback;
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    const { data } = await supabase.from('app_config').select('value').eq('key', key).maybeSingle();
+    return data?.value ?? undefined;
+  } catch { return undefined; }
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,8 +24,8 @@ serve(async (req) => {
   }
 
   try {
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-    const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL');
+    const RESEND_API_KEY = await getConfig('resend_api_key', Deno.env.get('RESEND_API_KEY'));
+    const RESEND_FROM_EMAIL = await getConfig('resend_from_email', Deno.env.get('RESEND_FROM_EMAIL'));
 
     if (!RESEND_API_KEY || !RESEND_FROM_EMAIL) {
       return new Response(JSON.stringify({ success: false, error: 'Resend secrets not configured' }), {

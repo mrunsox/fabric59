@@ -87,6 +87,7 @@ export const buildMap: BuildCategory[] = [
     name: "Settings & UX",
     items: [
       { name: "Settings Page", description: "Organization-level configuration", status: "done" },
+      { name: "Integration Credentials UI", description: "Admin UI to configure Five9, Resend, and Google Workspace keys via app_config table", status: "done" },
       { name: "Dark Mode UI", description: "Consistent dark theme throughout the app", status: "done" },
       { name: "Responsive Sidebar", description: "Mobile-friendly collapsible navigation", status: "done" },
       { name: "Onboarding Flow", description: "New user org creation wizard", status: "done" },
