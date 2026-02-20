@@ -144,6 +144,7 @@ export function useProvisioning() {
           role: input.role.name,
           password: input.password,
           toEmail: input.externalEmail,
+          organizationId: input.organizationId ?? null,
         },
       });
       updateStep('credential-delivery', { status: data?.success ? 'complete' : 'error', errorMessage: data?.error });

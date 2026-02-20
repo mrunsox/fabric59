@@ -31,6 +31,12 @@ export interface Organization {
   status: OrgStatus;
   created_at: string;
   updated_at: string;
+  // White-label branding fields
+  brand_name: string | null;
+  brand_logo_url: string | null;
+  brand_primary_color: string | null;
+  brand_from_email: string | null;
+  brand_reply_to: string | null;
 }
 
 export interface OrganizationMember {

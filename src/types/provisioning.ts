@@ -17,6 +17,7 @@ export interface ProvisioningInput {
   externalEmail: string;
   password: string;
   skills?: string[];
+  organizationId?: string | null;
 }
 
 export interface ProvisioningStep {

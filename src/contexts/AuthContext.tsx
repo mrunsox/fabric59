@@ -12,6 +12,11 @@ const DEV_ORG: Organization = {
   status: "active",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  brand_name: null,
+  brand_logo_url: null,
+  brand_primary_color: null,
+  brand_from_email: null,
+  brand_reply_to: null,
 };
 const DEV_MEMBERSHIP: OrganizationMember = {
   id: "dev-membership",
@@ -100,6 +105,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             status: o.status as Organization["status"],
             created_at: o.created_at,
             updated_at: o.updated_at,
+            brand_name: (o as Record<string, unknown>).brand_name as string | null ?? null,
+            brand_logo_url: (o as Record<string, unknown>).brand_logo_url as string | null ?? null,
+            brand_primary_color: (o as Record<string, unknown>).brand_primary_color as string | null ?? null,
+            brand_from_email: (o as Record<string, unknown>).brand_from_email as string | null ?? null,
+            brand_reply_to: (o as Record<string, unknown>).brand_reply_to as string | null ?? null,
           }));
           setOrganizations(typedAllOrgs);
           const savedOrgId = localStorage.getItem("currentOrgId");
@@ -131,6 +141,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         status: o.status as Organization["status"],
         created_at: o.created_at,
         updated_at: o.updated_at,
+        brand_name: (o as Record<string, unknown>).brand_name as string | null ?? null,
+        brand_logo_url: (o as Record<string, unknown>).brand_logo_url as string | null ?? null,
+        brand_primary_color: (o as Record<string, unknown>).brand_primary_color as string | null ?? null,
+        brand_from_email: (o as Record<string, unknown>).brand_from_email as string | null ?? null,
+        brand_reply_to: (o as Record<string, unknown>).brand_reply_to as string | null ?? null,
       }));
 
       setOrganizations(typedOrgs);

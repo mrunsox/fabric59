@@ -1,16 +1,38 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+);
+
 async function getConfig(key: string, envFallback: string | undefined): Promise<string | undefined> {
   if (envFallback) return envFallback;
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-    const { data } = await supabase.from('app_config').select('value').eq('key', key).maybeSingle();
+    const { data } = await supabaseAdmin.from('app_config').select('value').eq('key', key).maybeSingle();
     return data?.value ?? undefined;
   } catch { return undefined; }
+}
+
+interface OrgBranding {
+  brand_name: string | null;
+  brand_logo_url: string | null;
+  brand_primary_color: string | null;
+  brand_from_email: string | null;
+  brand_reply_to: string | null;
+}
+
+async function getOrgBranding(organizationId: string | undefined): Promise<OrgBranding | null> {
+  if (!organizationId) return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabaseAdmin as any)
+      .from('organizations')
+      .select('brand_name, brand_logo_url, brand_primary_color, brand_from_email, brand_reply_to')
+      .eq('id', organizationId)
+      .maybeSingle();
+    return data ?? null;
+  } catch { return null; }
 }
 
 const corsHeaders = {
@@ -34,7 +56,24 @@ serve(async (req) => {
       });
     }
 
-    const { agentName, email, five9Username, extension, role, password, toEmail } = await req.json();
+    const { agentName, email, five9Username, extension, role, password, toEmail, organizationId } = await req.json();
+
+    // Fetch white-label partner branding if an org is provided
+    const branding = await getOrgBranding(organizationId);
+
+    const brandName = branding?.brand_name || null;
+    const brandLogoUrl = branding?.brand_logo_url || null;
+    const brandColor = branding?.brand_primary_color || '#a78bfa';
+    const fromEmail = branding?.brand_from_email || RESEND_FROM_EMAIL;
+    const replyTo = branding?.brand_reply_to || null;
+
+    const logoHtml = brandLogoUrl
+      ? `<img src="${brandLogoUrl}" alt="${brandName || 'Logo'}" style="max-height: 48px; max-width: 200px; object-fit: contain; margin-bottom: 16px;" />`
+      : '';
+
+    const headerTitle = brandName
+      ? `Welcome to ${brandName}`
+      : 'Welcome to the Team';
 
     const html = `
 <!DOCTYPE html>
@@ -43,12 +82,13 @@ serve(async (req) => {
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e5e5e5; padding: 40px 20px; margin: 0;">
   <div style="max-width: 560px; margin: 0 auto; background: #1a1a1a; border-radius: 12px; padding: 40px; border: 1px solid #2a2a2a;">
     <div style="text-align: center; margin-bottom: 32px;">
-      <h1 style="font-size: 24px; font-weight: 700; color: #fff; margin: 0 0 8px;">Welcome to the Team</h1>
+      ${logoHtml}
+      <h1 style="font-size: 24px; font-weight: 700; color: #fff; margin: 0 0 8px;">${headerTitle}</h1>
       <p style="color: #888; margin: 0;">Your agent account credentials</p>
     </div>
 
     <div style="background: #111; border-radius: 8px; padding: 24px; margin-bottom: 24px; border: 1px solid #222;">
-      <h2 style="font-size: 16px; font-weight: 600; color: #a78bfa; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 0.05em;">Account Details</h2>
+      <h2 style="font-size: 16px; font-weight: 600; color: ${brandColor}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 0.05em;">Account Details</h2>
 
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
@@ -88,18 +128,24 @@ serve(async (req) => {
 </body>
 </html>`;
 
+    const emailPayload: Record<string, unknown> = {
+      from: fromEmail,
+      to: [toEmail || email],
+      subject: `Agent Credentials — ${agentName}`,
+      html,
+    };
+
+    if (replyTo) {
+      emailPayload.reply_to = replyTo;
+    }
+
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: RESEND_FROM_EMAIL,
-        to: [toEmail || email],
-        subject: `Agent Credentials — ${agentName}`,
-        html,
-      }),
+      body: JSON.stringify(emailPayload),
     });
 
     const data = await res.json();
