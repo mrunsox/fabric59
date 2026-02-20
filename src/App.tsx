@@ -29,6 +29,7 @@ import NotificationsPage from "@/pages/admin/NotificationsPage";
 import TestConsolePage from "@/pages/admin/TestConsolePage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import AgentsPage from "@/pages/admin/AgentsPage";
+import IntegrationsPage from "@/pages/admin/IntegrationsPage";
 import NotFound from "./pages/NotFound";
 
 // Master admin pages
@@ -78,6 +79,7 @@ const App = () => (
                 <Route path="logs" element={<ApiLogsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="agents" element={<AgentsPage />} />
+                <Route path="integrations" element={<IntegrationsPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
