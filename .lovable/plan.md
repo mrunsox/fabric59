@@ -1,263 +1,162 @@
 
-# Four Features: Login Improvements, Dev Mode, and Build Outline Page
+# Agent Lifecycle Management Module
 
 ## Overview
 
-This plan covers four distinct features:
-1. Back button on the login page (to a home/landing page)
-2. Forgot password flow on the login page
-3. Dev Mode button in the header that bypasses auth
-4. /outline page with a living build map
+This adds a complete **Agent Lifecycle Management** system (Onboarding + Offboarding) as a new **"Agents"** section in the existing sidebar navigation. It integrates with Five9, Google Workspace, Slack, and Resend — and updates the `/outline` build map to track all new features.
 
 ---
 
-## Feature 1: Back Button on Login Page
+## What Gets Built
 
-### Current State
-The `LoginPage.tsx` has no back navigation — users are stuck with only a "Sign up" link.
+### Navigation
+- New **"Agents"** nav item in the left sidebar, linking to `/admin/agents`
+- Two sub-tabs on that page: **Onboarding** and **Offboarding**
 
-### Implementation
-Add a back button at the top of the card that navigates to `/` (which currently redirects to `/admin`). Since there is no public landing/home page, we will create a minimal public `/home` route as the back destination, OR simply use `navigate(-1)` to go back in history, which is the simplest and most flexible approach.
+### Database Tables (4 new)
+| Table | Purpose |
+|-------|---------|
+| `agents` | Agent records — status, Five9 ID, extension, role, timestamps |
+| `scheduled_jobs` | Background jobs for deferred deprovisioning |
+| `audit_logs` | Immutable log of every lifecycle action |
+| `app_config` | Key/value config (e.g. email domain setting) |
 
-We'll add a ghost button with an `ArrowLeft` icon above the card header.
+> Note: `user_roles` and `profiles` tables already exist in this project — we will **not** recreate them. The existing `app_role` enum (`master_admin`, `admin`, `ops_team`, `viewer`) is already defined and will be reused. The migration will only add the 4 missing tables.
 
-**File: `src/pages/auth/LoginPage.tsx`**
-- Import `useNavigate` from `react-router-dom`
-- Add an arrow-left button above the card using `navigate(-1)` or linking to a `/` public landing
+### Secrets Required (must be added before edge functions work)
+| Secret | Purpose |
+|--------|---------|
+| `FIVE9_USERNAME` | Five9 admin username for provisioning API |
+| `FIVE9_PASSWORD` | Five9 admin password |
+| `RESEND_API_KEY` | Resend.com API key for credential emails |
+| `RESEND_FROM_EMAIL` | Verified sender email |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Google service account |
+| `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | RSA private key (PEM) |
+| `GOOGLE_ADMIN_IMPERSONATE_EMAIL` | Super admin to impersonate for Directory API |
 
----
+### Edge Functions (4 new)
+| Function | Purpose |
+|----------|---------|
+| `five9-provisioning` | Full SOAP wrapper — createUser, deactivate, getExtensions, getAllUsers, getSkills, addSkillsToUser, getUserInfo |
+| `google-workspace` | Google Admin Directory API — createUser, suspendUser, deleteUser |
+| `send-credentials` | Sends styled HTML credential email via Resend |
+| `process-jobs` | Background job processor for scheduled deprovisionings |
 
-## Feature 2: Forgot Password Flow
+### TypeScript Types (2 new files)
+- `src/types/provisioning.ts` — `AgentRole`, `ProvisioningInput`, `ProvisioningStep`, `ProvisioningResult`, `ProvisioningHistory`, `AGENT_ROLES`, `PROVISIONING_STEPS`
+- `src/types/deprovisioning.ts` — `DeprovisioningRequest`, `DeprovisioningStep`, `DeprovisioningResult`, `AuditLogEntry`, `DEPROVISIONING_STEPS`, `GRACE_PERIOD_OPTIONS`
 
-### How It Works
-The password reset flow requires two steps:
-1. **Request reset**: User enters email → system sends reset email
-2. **Set new password**: User clicks link in email → lands on `/reset-password` page → enters new password
+### Hooks (4 new)
+- `useAuditLog.ts` — `logAction()` to insert into `audit_logs`
+- `useAppConfig.ts` — reads/writes `app_config` (email domain setting)
+- `useProvisioning.ts` — 5-step provisioning workflow; fetches agent history
+- `useDeprovisioning.ts` — schedule, cancel, execute 6-step offboarding; audit logging
+- `useFive9Users.ts` — fetches live agent roster from Five9 via `getAllUsers`
 
-### New Files
-- `src/pages/auth/ForgotPasswordPage.tsx` — form to request reset email
-- `src/pages/auth/ResetPasswordPage.tsx` — form to set new password (handles `type=recovery` in URL hash)
+### Pages & Components
 
-### Changes to Existing Files
-**`src/pages/auth/LoginPage.tsx`**
-- Add "Forgot your password?" link below the password field that navigates to `/forgot-password`
+**`/admin/agents` page** with two tabs:
 
-**`src/App.tsx`**
-- Add two new public routes:
-  - `/forgot-password` → `ForgotPasswordPage`
-  - `/reset-password` → `ResetPasswordPage`
+**Onboarding Tab:**
+- `ProvisioningForm` — Agent Name, Email Handle + domain suffix, Five9 Username, Role dropdown, Extension (with live conflict check), Skills multi-select, External Email, Password (copy + regenerate)
+- `WorkflowPanel` with `WorkflowStepper` — 5 steps with animated icons
+- `CredentialsCard` — shown after success, all credentials with copy buttons
+- `Five9UsersTable` — live roster with search, Name / Username / Extension / Role / Status
 
-### Key Logic
-
-```typescript
-// ForgotPasswordPage.tsx
-const { error } = await supabase.auth.resetPasswordForEmail(email, {
-  redirectTo: `${window.location.origin}/reset-password`
-});
-
-// ResetPasswordPage.tsx — must detect recovery session
-useEffect(() => {
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === "PASSWORD_RECOVERY") {
-      // show the new password form
-    }
-  });
-}, []);
-
-const { error } = await supabase.auth.updateUser({ password: newPassword });
-```
-
----
-
-## Feature 3: Dev Mode Button
-
-### What It Does
-A **DEV MODE** toggle button visible only in development (`import.meta.env.DEV`) that bypasses the auth check entirely. When active, the app skips the `ProtectedRoute` redirect and treats the user as authenticated with full dashboard access, without actually signing in.
-
-### Implementation Strategy
-- Add a `devMode` boolean state to `AuthContext` (only settable in dev)
-- When `devMode` is true, `isAuthenticated` returns `true` and a mock organization/user is provided
-- A floating button (or header button) toggles dev mode on/off
-- A dismissible banner shows when dev mode is active
-
-**Files to modify:**
-- `src/contexts/AuthContext.tsx` — add `devMode` state and `toggleDevMode` function; when devMode is active, override `isAuthenticated`, provide mock `user`, `organization`, `membership`
-- `src/components/layout/AdminLayout.tsx` — add dev mode indicator badge in header (only when `import.meta.env.DEV`)
-- `src/components/auth/ProtectedRoute.tsx` — check `devMode` flag to bypass redirect
-
-### Dev Mode Mock Data
-```typescript
-const DEV_USER = { id: "dev-user", email: "dev@fabric59.com" };
-const DEV_ORG = { id: "dev-org", name: "Dev Organization", plan: "pro", status: "active" };
-```
-
-### UI
-In the AdminLayout top bar header, add a yellow "DEV MODE" badge button that is only rendered when `import.meta.env.DEV === true`. Clicking it shows a confirmation or toggles off dev mode.
+**Offboarding Tab:**
+- `AgentSearchList` — searchable list with status badges, Offboard/Cancel/Restore actions per agent, multi-select checkboxes
+- `DeprovisioningWorkflowPanel` with 6-step stepper
+- `AuditLogTable` — Action, Agent, Performed By, Timestamp, Details
+- `DeprovisioningModal` — grace period, data transfer config, reason textarea
 
 ---
 
-## Feature 4: /outline Build Map Page
+## Files to Create / Modify
 
-### Architecture
-
-```text
-src/data/buildMap.ts        ← single source of truth (array of categories + items)
-src/pages/OutlinePage.tsx   ← reads buildMap, renders progress + grouped items
-App.tsx                     ← adds /outline route (public, no auth required)
-AdminLayout.tsx             ← adds "Outline" link in sidebar navigation
-```
-
-### Data Structure (`src/data/buildMap.ts`)
-
-```typescript
-export type ItemStatus = "done" | "in-progress" | "planned";
-
-export interface BuildItem {
-  name: string;
-  description: string;
-  status: ItemStatus;
-}
-
-export interface BuildCategory {
-  name: string;
-  items: BuildItem[];
-}
-
-export const buildMap: BuildCategory[] = [
-  {
-    name: "Authentication & Access",
-    items: [
-      { name: "Login Page", description: "Email/password authentication", status: "done" },
-      { name: "Signup Page", description: "New organization registration", status: "done" },
-      { name: "Forgot Password", description: "Email-based password reset flow", status: "in-progress" },
-      { name: "Dev Mode Bypass", description: "Development auth bypass for faster building", status: "in-progress" },
-      { name: "Master Admin Access", description: "Hidden /system-access route for platform admins", status: "done" },
-    ]
-  },
-  {
-    name: "Tenant Management",
-    items: [
-      { name: "Tenants List", description: "View and manage all tenants/clients", status: "done" },
-      { name: "Add/Edit Tenant", description: "Form to create and update tenant records", status: "done" },
-      { name: "Delete Tenant", description: "Remove tenant with confirmation dialog", status: "done" },
-      { name: "Tenant CRM Type", description: "Tag tenants by CRM system (Clio, Workiz, etc.)", status: "done" },
-    ]
-  },
-  {
-    name: "Five9 Domain Management",
-    items: [
-      { name: "Domains List", description: "View all connected Five9 domains", status: "done" },
-      { name: "Domain Detail Page", description: "Per-domain settings with tabbed UI", status: "done" },
-      { name: "API Credentials Tab", description: "Securely store Five9 username and password", status: "done" },
-      { name: "Test Connection", description: "Validate Five9 API credentials via SOAP", status: "done" },
-      { name: "Workflow Settings", description: "Configure IVR, callback, and queue behavior", status: "done" },
-      { name: "Branding Settings", description: "Per-domain greeting, company name, colors", status: "done" },
-    ]
-  },
-  {
-    name: "Field Mapping Builder",
-    items: [
-      { name: "Mappings List", description: "View all field mapping configurations", status: "done" },
-      { name: "Visual Mapping Canvas", description: "Drag-and-drop field mapping interface using React Flow", status: "done" },
-      { name: "Source Fields Panel", description: "Five9 contact fields and call variables", status: "done" },
-      { name: "Target Fields Panel", description: "CRM destination fields", status: "done" },
-      { name: "Transform Dialog", description: "Add transformation logic to field mappings", status: "done" },
-      { name: "Live Five9 Schema", description: "Dynamically fetch real fields from connected Five9 domain", status: "done" },
-    ]
-  },
-  {
-    name: "API & Integrations",
-    items: [
-      { name: "Contacts Edge Function", description: "Handle incoming contact sync requests", status: "done" },
-      { name: "Intakes Edge Function", description: "Process intake form submissions from Five9", status: "done" },
-      { name: "Five9 Schema Function", description: "Fetch fields/dispositions via SOAP API", status: "done" },
-      { name: "CRM Push Logic", description: "Send mapped data to tenant CRM systems", status: "planned" },
-      { name: "Webhook Support", description: "Receive real-time events from Five9", status: "planned" },
-    ]
-  },
-  {
-    name: "Monitoring & Logs",
-    items: [
-      { name: "API Logs Page", description: "View inbound/outbound API request history", status: "done" },
-      { name: "Notifications Page", description: "System alerts and event notifications", status: "done" },
-      { name: "Test Console", description: "Send test API requests and view responses", status: "done" },
-      { name: "Real-time Log Streaming", description: "Live log updates via websockets", status: "planned" },
-      { name: "Error Alerting", description: "Email/Slack alerts for critical failures", status: "planned" },
-    ]
-  },
-  {
-    name: "Master Admin (Platform)",
-    items: [
-      { name: "Master Dashboard", description: "Platform-wide stats and health overview", status: "done" },
-      { name: "Organizations Overview", description: "View all tenant organizations on the platform", status: "done" },
-      { name: "Users Management", description: "Manage platform users and roles", status: "done" },
-    ]
-  },
-  {
-    name: "Settings & UX",
-    items: [
-      { name: "Settings Page", description: "Organization-level configuration", status: "done" },
-      { name: "Dark Mode UI", description: "Consistent dark theme throughout the app", status: "done" },
-      { name: "Responsive Sidebar", description: "Mobile-friendly collapsible navigation", status: "done" },
-      { name: "Onboarding Flow", description: "New user org creation wizard", status: "done" },
-      { name: "Build Outline Page", description: "Living build map showing feature progress", status: "in-progress" },
-    ]
-  },
-];
-```
-
-### OutlinePage UI
-
-```text
-+----------------------------------------------------------+
-|  Fabric59 Build Outline                                   |
-|  Living map of all planned and built features             |
-|                                                           |
-|  [████████████░░░░░░░░░░] 28 of 38 features complete      |
-+----------------------------------------------------------+
-|                                                           |
-|  Authentication & Access          [4 / 5]                 |
-|  +-------------------------------------------------+      |
-|  | ✅ Login Page           Email/password auth     |      |
-|  | ✅ Signup Page          New org registration    |      |
-|  | 🔄 Forgot Password      Email reset flow        |      |
-|  | ⬜ Dev Mode Bypass      Build-time auth bypass  |      |
-|  +-------------------------------------------------+      |
-|                                                           |
-|  ... (all other categories)                               |
-+----------------------------------------------------------+
-```
-
-### Status Icons
-- `done` → `CheckCircle2` (green, `text-success`)
-- `in-progress` → `Loader2` with `animate-spin` (yellow, `text-warning`)
-- `planned` → `Circle` (muted, `text-muted-foreground`)
-
-### Route
-The `/outline` page will be added as a **public route** in `App.tsx` (no auth required — it's a dev/reference tool). It will also appear in the `AdminLayout` sidebar navigation as the last item with a `Map` icon.
-
----
-
-## Files to Create/Modify
-
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/pages/auth/ForgotPasswordPage.tsx` | Create | Request password reset email |
-| `src/pages/auth/ResetPasswordPage.tsx` | Create | Set new password after reset link click |
-| `src/data/buildMap.ts` | Create | Single source of truth for build outline |
-| `src/pages/OutlinePage.tsx` | Create | Render the build map visually |
-| `src/pages/auth/LoginPage.tsx` | Modify | Add back button + forgot password link |
-| `src/contexts/AuthContext.tsx` | Modify | Add `devMode` state and `toggleDevMode` |
-| `src/components/auth/ProtectedRoute.tsx` | Modify | Bypass auth check when devMode is active |
-| `src/components/layout/AdminLayout.tsx` | Modify | Add Outline nav link + DEV MODE indicator badge in header |
-| `src/App.tsx` | Modify | Add `/forgot-password`, `/reset-password`, `/outline` routes |
+| File | Action |
+|------|--------|
+| `supabase/migrations/YYYYMMDD_agents_module.sql` | Create — 4 new tables + RLS policies |
+| `src/types/provisioning.ts` | Create |
+| `src/types/deprovisioning.ts` | Create |
+| `src/hooks/useAuditLog.ts` | Create |
+| `src/hooks/useAppConfig.ts` | Create |
+| `src/hooks/useProvisioning.ts` | Create |
+| `src/hooks/useDeprovisioning.ts` | Create |
+| `src/hooks/useFive9Users.ts` | Create |
+| `supabase/functions/five9-provisioning/index.ts` | Create |
+| `supabase/functions/google-workspace/index.ts` | Create |
+| `supabase/functions/send-credentials/index.ts` | Create |
+| `supabase/functions/process-jobs/index.ts` | Create |
+| `src/pages/admin/AgentsPage.tsx` | Create — hosts both tabs |
+| `src/components/agents/onboarding/ProvisioningForm.tsx` | Create |
+| `src/components/agents/onboarding/WorkflowPanel.tsx` | Create |
+| `src/components/agents/onboarding/WorkflowStepper.tsx` | Create |
+| `src/components/agents/onboarding/CredentialsCard.tsx` | Create |
+| `src/components/agents/onboarding/Five9UsersTable.tsx` | Create |
+| `src/components/agents/offboarding/AgentSearchList.tsx` | Create |
+| `src/components/agents/offboarding/DeprovisioningWorkflowPanel.tsx` | Create |
+| `src/components/agents/offboarding/DeprovisioningModal.tsx` | Create |
+| `src/components/agents/offboarding/AuditLogTable.tsx` | Create |
+| `src/components/agents/shared/StatusBadge.tsx` | Create |
+| `src/components/layout/AdminLayout.tsx` | Modify — add Agents nav item |
+| `src/App.tsx` | Modify — add `/admin/agents` route |
+| `src/data/buildMap.ts` | Modify — add Agent Lifecycle Management category |
 
 ---
 
 ## Implementation Notes
 
-- The "back button" on login will use `navigate(-1)` to go back in history — this is simpler than hardcoding a home URL since there is no dedicated public landing page yet.
-- Dev mode is only available when `import.meta.env.DEV` is `true`, so it cannot be accidentally enabled in production.
-- The `/outline` page is accessible without auth so it can be viewed before logging in during development.
-- The build map status changes require only editing `src/data/buildMap.ts` — no database, no backend calls.
-- Password reset emails are sent by the auth system automatically; no custom email template setup is needed for this to work.
+### Conflicts with existing project
+- The existing `user_roles` table uses `app_role` enum with values `master_admin`, `admin`, `ops_team`, `viewer`. The original prompt references an `app_role` with only `admin` and `viewer` — we will **not** recreate this, and will use the existing enum. RLS policies on new tables will use the existing `has_role()` function.
+- The existing `profiles` table does **not** exist in this project — the migration will create it.
+- The `handle_new_user` trigger will NOT be created — it would conflict with existing auth flow.
+- The `send-notification` edge function already exists; the new `send-credentials` is a separate function.
+
+### Google Integration (V1 — wired up)
+- Google Workspace steps in offboarding (suspendUser, deleteUser) will be wired to the real `google-workspace` edge function using `agent.google_user_id`. Graceful skip if secrets aren't configured.
+
+### Cron Job for process-jobs
+- A pg_cron entry will be created to call `process-jobs` every 30 minutes automatically.
+
+### Outline Updates
+A new **"Agent Lifecycle Management"** category is added to `buildMap.ts` with all features marked as `in-progress` or `planned`.
+
+---
+
+## Database Schema
+
+```text
+agents
+├── id, first_name, last_name, email, role, extension
+├── slack_channel, google_user_id, slack_user_id
+├── five9_user_id, five9_username
+├── status (active | pending_deletion | deprovisioned | under_review | failed)
+├── provisioned_by, provisioned_at
+└── deprovisioned_by, deprovisioned_at
+
+scheduled_jobs
+├── id, agent_id, job_type, status
+├── scheduled_for, initiated_by, cancelled_by, cancelled_at
+├── config (jsonb), result (jsonb), error_message
+└── created_at, updated_at
+
+audit_logs
+├── id, user_id, action, entity_type, entity_id
+├── details (jsonb), ip_address
+└── created_at
+
+app_config
+├── id, key, value, description
+├── updated_by
+└── created_at, updated_at
+```
+
+---
+
+## RLS Policy Summary
+
+All 4 new tables follow the existing platform pattern:
+- **agents**: Authenticated users can SELECT; admins (existing `has_role`) can INSERT/UPDATE/DELETE; master admin has full access
+- **scheduled_jobs**: Same as agents
+- **audit_logs**: Authenticated users can SELECT and INSERT their own rows; master admin reads all
+- **app_config**: Authenticated users can SELECT; admins can INSERT/UPDATE
