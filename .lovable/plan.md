@@ -1,65 +1,64 @@
 
 
-# Fix Domain Status, Contrast Issues, and Clean Up Workflow Tab
+# Fix: Auto-Populate Agents and Clients from Five9
 
-## Issues Identified
+## Problem
 
-### 1. "Pending Verification" status never updates to "Active"
-The `test-five9-connection` edge function updates the `api_connection_status` column to `"connected"` on success, but it never touches the `status` column. So `status` stays at its default `"pending_verification"` forever -- even after a successful connection.
+The Five9 domain is connected (status: "active"), but both the agents and tenants (clients) tables are empty -- 0 records each. The sync hook (`useFive9Sync.ts`) fetches data from Five9 correctly but then tries to INSERT into the database from the frontend client. The RLS policies on both tables require `admin` or `master_admin` roles, and the frontend Supabase client uses the anon key, so **all inserts are silently rejected**.
 
-**Fix**: Update the edge function to also set `status = 'active'` when the connection succeeds. Additionally, fix the existing database record directly (it currently has `status: pending_verification` with `api_connection_status: connected`).
+## Solution: Server-Side Sync
 
-### 2. Form label contrast issues (dark-on-dark)
-The uploaded screenshot shows labels and helper text are barely visible against the dark card backgrounds. This is a systemic issue with the dark theme on the main content area.
-
-### 3. Light background for main dashboard area
-The user wants the main content area (everything to the right of the sidebar) to use a light background. The sidebar will stay dark. This means removing `className="dark"` from the AdminLayout root and instead scoping `dark` only to the sidebar.
-
-### 4. What is the Workflow tab?
-The "Workflow" tab (Call Handling + greeting) and "Branding" tab are placeholder configuration sections. They store optional metadata (greeting text, company name, brand color) in the domain's `workflow_settings` JSON column. They are not connected to Five9 -- they are local settings for future use. For now, they can remain as-is or be hidden. The plan keeps them but this is noted for the user.
+Move all database insert logic into the `five9-provisioning` edge function, which has access to the service role key and bypasses RLS entirely.
 
 ## Changes
 
-### A. Edge function: auto-set status to "active" on successful connection
-**File**: `supabase/functions/test-five9-connection/index.ts`
+### 1. Update `supabase/functions/five9-provisioning/index.ts`
 
-Add `status: 'active'` to the success update block (around line 177-191):
+Modify the existing `syncFromFive9` action to:
 
-```typescript
-const updateData: Record<string, unknown> = {
-  api_connection_status: "connected",
-  last_connection_test: new Date().toISOString(),
-  status: "active",  // <-- add this
-};
-```
+- After fetching users and skills from Five9, create a Supabase client using the **service role key**
+- Accept an `organizationId` parameter from the frontend
+- Query existing `agents` (by `five9_username`) and `tenants` (by `name`) to avoid duplicates
+- Insert new agents with inferred roles based on extension ranges
+- Insert new tenants (skills) with `crm_type: 'other'`, `status: 'active'`, and the provided `organization_id`
+- Return `{ success: true, agentsAdded: N, tenantsAdded: N }` so the frontend can show accurate counts
 
-### B. Fix existing database record
-Run a migration to update the existing domain that is already connected but stuck on `pending_verification`:
+The role inference logic (extension ranges to role names) will be duplicated server-side from the existing `useFive9Sync.ts`.
 
-```sql
-UPDATE five9_domains
-SET status = 'active'
-WHERE api_connection_status = 'connected' AND status = 'pending_verification';
-```
+### 2. Simplify `src/hooks/useFive9Sync.ts`
 
-### C. Light background for main content area
-**File**: `src/components/layout/AdminLayout.tsx`
+Remove all client-side database operations. The hook becomes:
 
-- Remove `dark` from the root `<div>` class (`className="dark min-h-screen bg-background"` becomes `className="min-h-screen bg-gray-50"`)
-- Wrap only the `<aside>` sidebar in `dark` class so it keeps its dark theme
-- Update the top header bar to use light-compatible styling (`bg-white border-gray-200`)
-- The main content `<Outlet />` renders with the default light theme variables
+- Call `five9-provisioning` with `action: 'syncFromFive9'` and pass `organizationId`
+- Show a toast with the result counts
+- Invalidate React Query caches for `["tenants"]` and `["agents"]` so the UI refreshes immediately
+- No more direct Supabase queries from the frontend
 
-### D. Fix form contrast for light mode
-Since the main area will now be light, form labels, inputs, and helper text will naturally have proper contrast using the existing light-mode CSS variables already defined in `index.css`. No additional CSS changes needed -- the light-mode variables already have dark text on light backgrounds.
+### 3. Fix `src/pages/admin/DomainsPage.tsx`
+
+- **Await** the `syncFromFive9()` call before closing the dialog
+- Show "Syncing agents and clients..." status while sync is in progress
+- Only close the dialog after sync completes (or fails gracefully)
+
+## Five9 API Reference Notes
+
+From the Five9 Admin Web Services v13 documentation:
+
+- `getUsersGeneralInfo` returns all users wrapped in `<return>` elements (already fixed in the current code)
+- `getSkills` returns skill objects with `<name>` elements
+- Both are called in parallel in the existing `syncFromFive9` action -- this stays the same
+
+No changes to SOAP calls are needed. The XML parsing is already correct.
 
 ## Files to Modify
 
 | File | Change |
 |---|---|
-| `supabase/functions/test-five9-connection/index.ts` | Add `status: 'active'` to success update |
-| Database migration | Fix existing stuck record |
-| `src/components/layout/AdminLayout.tsx` | Light background for main area, dark stays on sidebar only |
+| `supabase/functions/five9-provisioning/index.ts` | Add server-side DB upserts to `syncFromFive9` action using service role client |
+| `src/hooks/useFive9Sync.ts` | Remove client-side inserts; add React Query invalidation |
+| `src/pages/admin/DomainsPage.tsx` | Await sync call; update status messaging during sync |
 
-## What the Workflow tab is for
-The Workflow and Branding tabs store optional local configuration (default greeting, company name, brand color) in the domain's JSON settings. They are not connected to Five9 -- they are for future features like auto-populating agent scripts or branding agent-facing UIs. No changes are planned for these tabs in this update.
+## Expected Result
+
+After connecting a Five9 domain (or clicking "Sync from Five9" on the Agents page), all Five9 users will appear in the Agents tab and all Five9 skills will appear in the Clients tab immediately.
+
