@@ -27,10 +27,10 @@ export function AuditLogTable({ entries }: AuditLogTableProps) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/30">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Time</th>
               <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Action</th>
               <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Agent</th>
               <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Performed By</th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Timestamp</th>
               <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Details</th>
             </tr>
           </thead>
@@ -42,6 +42,9 @@ export function AuditLogTable({ entries }: AuditLogTableProps) {
             )}
             {entries.map(entry => (
               <tr key={entry.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                  {format(entry.performedAt, 'MMM d, yyyy HH:mm')}
+                </td>
                 <td className="px-4 py-2.5">
                   <span className={cn("text-xs font-semibold uppercase tracking-wide", ACTION_COLORS[entry.action] || 'text-foreground')}>
                     {entry.action}
@@ -53,9 +56,6 @@ export function AuditLogTable({ entries }: AuditLogTableProps) {
                 </td>
                 <td className="px-4 py-2.5 text-xs text-muted-foreground font-mono">
                   {entry.performedBy === 'system' ? 'System' : entry.performedBy.slice(0, 8) + '...'}
-                </td>
-                <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
-                  {format(entry.performedAt, 'MMM d, yyyy HH:mm')}
                 </td>
                 <td className="px-4 py-2.5 text-xs text-muted-foreground max-w-xs truncate">
                   {entry.details || '—'}

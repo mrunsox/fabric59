@@ -5,8 +5,8 @@ type AgentStatus = 'active' | 'pending_deletion' | 'deprovisioned' | 'under_revi
 const STATUS_CONFIG: Record<AgentStatus, { label: string; className: string }> = {
   active: { label: 'Active', className: 'bg-success/15 text-success border-success/30' },
   pending_deletion: { label: 'Pending Deletion', className: 'bg-warning/15 text-warning border-warning/30' },
-  deprovisioned: { label: 'Deprovisioned', className: 'bg-muted/40 text-muted-foreground border-border' },
-  under_review: { label: 'Under Review', className: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
+  deprovisioned: { label: 'Deprovisioned', className: 'bg-muted/40 text-foreground/70 border-border' },
+  under_review: { label: 'Under Review', className: 'bg-warning/15 text-warning border-warning/30' },
   failed: { label: 'Failed', className: 'bg-destructive/15 text-destructive border-destructive/30' },
   success: { label: 'Success', className: 'bg-success/15 text-success border-success/30' },
   partial: { label: 'Partial', className: 'bg-warning/15 text-warning border-warning/30' },
