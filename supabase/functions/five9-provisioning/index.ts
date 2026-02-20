@@ -38,7 +38,12 @@ async function soapCall(username: string, password: string, action: string, body
   </soapenv:Body>
 </soapenv:Envelope>`;
 
-  const credentials = btoa(`${username}:${password}`);
+  // Normalize: non-email Five9 usernames (e.g. "24H-Virtual") may have hyphens
+  // instead of spaces. Replace hyphens with spaces for non-email usernames only.
+  const normalizedUsername = username.includes("@")
+    ? username
+    : username.replace(/-/g, " ");
+  const credentials = btoa(`${normalizedUsername}:${password}`);
   const response = await fetch(FIVE9_SOAP_URL, {
     method: 'POST',
     headers: {
