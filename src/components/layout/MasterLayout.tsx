@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+import { DashboardSwitcher } from "@/components/layout/DashboardSwitcher";
 
 export function MasterLayout() {
   const { signOut, user } = useAuth();
@@ -58,6 +59,7 @@ export function MasterLayout() {
         </nav>
 
         <div className="p-4 border-t border-border space-y-3">
+          <DashboardSwitcher current="master" />
           <div className="text-xs text-muted-foreground truncate">
             {user?.email}
           </div>

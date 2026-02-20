@@ -18,13 +18,8 @@ export function ProtectedRoute() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Master admins can bypass organization requirement
-  // They should access /master routes instead
-  if (isMasterAdmin && !organization) {
-    return <Navigate to="/master" replace />;
-  }
-
   // If user is authenticated but has no organization, redirect to onboarding
+  // Master admins are exempt — they can access /admin without an org
   if (!organization && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
   }
