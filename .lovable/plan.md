@@ -1,130 +1,65 @@
 
-# Three Improvements: Secrets, Error Messages & Google deleteUser
+# Fix: Hyphen Instead of Space in Five9 Username
 
-## Overview
+## Root Cause
 
-This plan covers three coordinated changes:
+The issue has two contributing factors:
 
-1. **FIVE9_USERNAME + FIVE9_PASSWORD secrets** — Add them as backend secrets so the `five9-provisioning` edge function works for agent onboarding, and surface a clear "Setup Required" banner in Settings if they're missing.
-2. **Better SOAP error messages** in the Connect Domain dialog — distinguish authentication failures vs. permission/AdminWebService access failures.
-3. **Google deleteUser wiring** — Already implemented in `useDeprovisioning.ts` (steps 4 & 5 call `google-workspace` with `suspendUser` then `deleteUser`). The Google Workspace edge function (`google-workspace/index.ts`) already handles the `deleteUser` action. **This is already wired correctly** — no code changes needed here.
+### Factor 1 — The `derivedDomain` fallback uses hyphens
 
----
-
-## Change 1: Add FIVE9_USERNAME + FIVE9_PASSWORD Secrets
-
-### What & Why
-
-The `five9-provisioning` edge function calls `getConfig('five9_username', Deno.env.get('FIVE9_USERNAME'))`. It checks the env secret first, then falls back to `app_config` in the database.
-
-The Settings page already lets admins save `five9_username` and `five9_password` to `app_config` — so the database fallback path is already working. No secret needs to be added to the edge function environment itself unless the user wants the env-level override.
-
-**What to add to Settings page:** A visible "Integration Status" panel that checks if `five9_username` and `five9_password` exist in `app_config` and shows a warning banner if they're missing, with a direct link to the Five9 credentials section.
-
-### Files to Modify
-
-- `src/pages/admin/SettingsPage.tsx` — Add a status banner at the top of the Integration Credentials card showing which credentials are missing/configured, with green checkmarks or orange warnings per service.
-
-### Status Banner Design
-
-```
-┌─────────────────────────────────────────────────────────┐
-│ Integration Status                                      │
-│                                                         │
-│  ✅ Five9 Admin API       Configured                    │
-│  ⚠️  Email (Resend)       API key missing               │
-│  ✅ Google Workspace      Configured                    │
-│  ✅ Slack                 Connected via connector        │
-└─────────────────────────────────────────────────────────┘
+In `DomainsPage.tsx` line 100–102:
+```typescript
+const derivedDomain = five9Username.includes("@")
+  ? five9Username.split("@")[1]
+  : newDisplayName.toLowerCase().replace(/\s+/g, "-");
 ```
 
----
+When the username does **not** contain `@` (i.e., Five9 usernames in `Firstname Lastname` format like `"John Smith"`), this code derives the domain slug from the display name using `.replace(/\s+/g, "-")`. This is only used for the `domain` column — not the username — **but** it signals that the form doesn't properly guide non-email username formats.
 
-## Change 2: Better SOAP Error Messages in the Connect Domain Dialog
+### Factor 2 — The stored username may already be mangled
 
-### What & Why
+If a previous "Add Domain" attempt stored a username with a hyphen (e.g., `"john-smith"` instead of `"john smith"`), the `test-five9-connection` edge function reads it back from the database and sends it as-is via Basic Auth, causing Five9 to reject it with `"Fault occurred while processing"`.
 
-Currently, `test-five9-connection/index.ts` catches SOAP faults and returns the raw fault string: `"Five9 API error: Fault occurred while processing"`. This is unhelpful.
+### The Fix: Two-pronged
 
-Five9 SOAP faults have two distinct root causes:
-- **Wrong credentials** — Five9 returns HTTP 401 (already handled) or a SOAP Fault with message like "Fault occurred while processing" when Basic Auth is rejected at the SOAP level.
-- **No AdminWebService permission** — Five9 returns a SOAP Fault with a message like "User does not have permission" or the generic fault when the account lacks the Admin API role.
+**1. Sanitize the username in the edge function** — strip any hyphens that appear where spaces should be in non-email usernames. Since email usernames contain `@`, any username without `@` that has a hyphen is likely a mangled space. Apply `username.replace(/-/g, ' ')` for non-email usernames only.
 
-### Fix in `supabase/functions/test-five9-connection/index.ts`
+**2. Fix the stored username in the database** — add a note in the form UI clarifying the format, and ensure the username is trimmed before saving.
 
-Enhance the SOAP fault section to detect the fault type and return a more specific `errorType` field:
+**3. Normalize username before `btoa()`** — in `test-five9-connection/index.ts`, normalize the username right before it's used for SOAP auth.
+
+## Files to Modify
+
+| File | Change |
+|---|---|
+| `supabase/functions/test-five9-connection/index.ts` | Normalize username: if it doesn't contain `@`, replace hyphens with spaces before the SOAP call |
+| `src/pages/admin/DomainsPage.tsx` | Trim the username before saving, add helper text clarifying format (e.g., `"John Smith"` not `"john-smith"`) |
+
+## The Normalization Logic
+
+In `test-five9-connection/index.ts`, right after computing `testUsername`:
 
 ```typescript
-// Enhanced fault classification
-let errorType: "auth" | "permission" | "unknown" = "unknown";
-let friendlyMessage = `Five9 API error: ${faultMessage}`;
+const testUsername = username || domain.five9_username;
 
-if (
-  faultMessage.toLowerCase().includes("fault occurred while processing") ||
-  faultMessage.toLowerCase().includes("authentication") ||
-  faultMessage.toLowerCase().includes("invalid credentials") ||
-  soapResponse.status === 401
-) {
-  errorType = "auth";
-  friendlyMessage = "Authentication failed — wrong username or password.";
-} else if (
-  faultMessage.toLowerCase().includes("permission") ||
-  faultMessage.toLowerCase().includes("not authorized") ||
-  faultMessage.toLowerCase().includes("access denied")
-) {
-  errorType = "permission";
-  friendlyMessage = "Connected, but this account lacks AdminWebService API permission. Ask your Five9 admin to enable it.";
-}
-
-return { success: false, status: "failed", message: friendlyMessage, errorType }
+// Normalize: Five9 usernames with spaces are sometimes stored with hyphens
+// Only apply to non-email usernames (emails contain @)
+const normalizedUsername = testUsername.includes("@")
+  ? testUsername
+  : testUsername.replace(/-/g, " ");
 ```
 
-### Fix in `src/pages/admin/DomainsPage.tsx`
+Then use `normalizedUsername` in the SOAP `Authorization` header instead of `testUsername`.
 
-Update the "failed" state UI to show the specific error type with contextual help text:
+This is a safe transformation because:
+- Email-format usernames (containing `@`) are left untouched
+- Non-email usernames (e.g. `"john-smith"`) get hyphens replaced with spaces (`"john smith"`)
+- The change only affects the in-flight SOAP call, not what's stored in the database
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│  ❌  Authentication Failed                                   │
-│                                                              │
-│  Wrong username or password. Double-check your Five9         │
-│  admin credentials and try again.                            │
-│                                                              │
-│  [Try Different Credentials]         [Save Anyway]           │
-└──────────────────────────────────────────────────────────────┘
+## Also: Fix What's Already Stored
 
-┌──────────────────────────────────────────────────────────────┐
-│  ❌  Permission Denied                                       │
-│                                                              │
-│  Credentials are correct but this account doesn't have       │
-│  AdminWebService API access. Ask your Five9 admin to         │
-│  enable it for this user account.                            │
-│                                                              │
-│  [Try Different Credentials]         [Save Anyway]           │
-└──────────────────────────────────────────────────────────────┘
-```
+The domain currently in the database likely has `five9_username = "john-smith"` (hyphenated). The user can correct this via **Domain Settings → API Credentials tab** — updating the username field to `"john smith"` (with a space) and clicking "Save Credentials". The normalization fix in the edge function covers the existing stored value immediately without requiring manual correction, but we should also add the fix there.
 
----
+## No Database Migration Required
 
-## Change 3: Google deleteUser — Already Wired
-
-After reviewing `useDeprovisioning.ts` lines 157–193, the Google `suspendUser` and `deleteUser` calls are **already implemented and wired**:
-
-- Step 4 (`google-suspension`) calls `google-workspace` with `action: 'suspendUser'`
-- Step 5 (`google-deletion`) calls `google-workspace` with `action: 'deleteUser'`
-
-The `google-workspace/index.ts` edge function already handles `deleteUser`. No code changes needed.
-
-**What IS needed** is that the Google Workspace credentials are configured in Settings (service account email, impersonation email, private key PEM). The status banner from Change 1 will surface this clearly.
-
----
-
-## Technical Summary of Files Changed
-
-| File | What Changes |
-|---|---|
-| `src/pages/admin/SettingsPage.tsx` | Add Integration Status banner with per-service check/warning indicators |
-| `supabase/functions/test-five9-connection/index.ts` | Classify SOAP faults into `auth` vs `permission` error types with friendly messages |
-| `src/pages/admin/DomainsPage.tsx` | Show error-type-specific failure UI and help text in the connect dialog |
-
-No database migrations needed. No new secrets needed (Five9 credentials go through Settings → `app_config`).
+This is a pure code fix. No schema changes, no new tables, no new secrets.
