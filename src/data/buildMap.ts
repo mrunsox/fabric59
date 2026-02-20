@@ -84,6 +84,18 @@ export const buildMap: BuildCategory[] = [
     ],
   },
   {
+    name: "Integrations Library",
+    items: [
+      { name: "Integrations Catalog Page", description: "Marketplace-style grid of 55+ integrations", status: "done" },
+      { name: "Search and Category Filters", description: "Real-time search and tab-based category filtering", status: "done" },
+      { name: "Integration Detail Dialog", description: "Full details with supported actions and docs links", status: "done" },
+      { name: "Brand Logos", description: "Real SVG logos for recognizable integrations", status: "done" },
+      { name: "Connected Status Badges", description: "Show which integrations are active per tenant", status: "done" },
+      { name: "Integration Configure Flow", description: "End-to-end setup wizard for each integration", status: "planned" },
+      { name: "Live API Connection Testing", description: "Test integration credentials before saving", status: "planned" },
+    ],
+  },
+  {
     name: "Settings & UX",
     items: [
       { name: "Settings Page", description: "Organization-level configuration", status: "done" },
