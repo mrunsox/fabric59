@@ -1,88 +1,57 @@
 
-# Add Five9 Admin Credentials to Onboarding Domain Step
-
-## What the User Wants
-
-The "Connect your Five9 Domain" step in the onboarding flow (currently at `/onboarding`) needs two additional fields:
-- **Five9 Admin Username** (label: "Five9 Admin Username")
-- **Admin Password** (label: "Admin Password", with show/hide toggle)
-
-These credentials should be saved directly to the `five9_domains` table when the domain is created, so the system is ready for API calls immediately without needing to go to the Domain Detail page afterward.
-
-## Current State
-
-The `handleCreateDomain` function in `OnboardingPage.tsx` only inserts:
-```typescript
-{ organization_id: orgId, domain, display_name: domainDisplayName }
-```
-
-The `five9_domains` table already has `five9_username` and `five9_password_encrypted` columns — they just aren't used in the onboarding form.
+# Remove the Five9 Domain Field + Make Credentials Mandatory
 
 ## What Changes
 
-### `src/pages/onboarding/OnboardingPage.tsx`
+The "Connect your Five9 Domain" step currently has 4 fields:
+1. **Five9 Domain** (yourcompany.five9.com) — REMOVE THIS
+2. Display Name — keep, required
+3. Five9 Admin Username — keep, make **required**
+4. Admin Password — keep, make **required**
 
-**State additions** (alongside existing `domain` and `domainDisplayName` state):
-```typescript
-const [five9Username, setFive9Username] = useState("");
-const [five9Password, setFive9Password] = useState("");
-const [showPassword, setShowPassword] = useState(false);
-```
+Remove the "API Credentials (optional)" separator label — credentials are now mandatory, not optional. Update the card description to reflect logging in with an admin account.
 
-**Domain insert update** — include credentials in the insert:
-```typescript
-const { data, error } = await supabase
-  .from("five9_domains")
-  .insert({
-    organization_id: orgId,
-    domain,
-    display_name: domainDisplayName,
-    five9_username: five9Username || null,
-    five9_password_encrypted: five9Password || null,
-  })
-  .select()
-  .single();
-```
+## The `domain` Column Problem
 
-**Form fields added** to the domain step card, between "Display Name" and the "Connect Domain" button:
-- A `<Separator />` or visual divider with label "API Credentials (optional)"
-- `Five9 Admin Username` — text input with placeholder `admin@yourcompany.com`
-- `Admin Password` — password input with show/hide eye toggle (same pattern as `DomainDetailPage.tsx`)
-- Helper text: "Used to sync agent skills, call variables, and dispositions from your Five9 domain"
+The `five9_domains.domain` column is `NOT NULL` in the database. Since we're removing the field from the UI, the value needs to come from somewhere automatically. The cleanest approach: **derive the domain from the admin username email**.
 
-The fields are marked as **optional** so users can proceed without them and add credentials later from the Domain Detail settings page.
+- If the username is `paul.joseph@24hvirtual.com`, the stored domain becomes `24hvirtual.com`
+- If the username has no `@`, fall back to the display name (slugified)
 
-## Files to Modify
+This is done in the `handleCreateDomain` function before the insert — no DB migration needed.
 
-| File | Change |
-|------|--------|
-| `src/pages/onboarding/OnboardingPage.tsx` | Add username/password state, show/hide toggle, two new form fields in the domain step, and include credentials in the insert |
+## File to Modify
 
-No database migration needed — `five9_username` and `five9_password_encrypted` columns already exist on the `five9_domains` table.
+**`src/pages/onboarding/OnboardingPage.tsx`**
 
-## Visual Layout of Updated Domain Step
+Changes:
+1. Remove the `domain` state variable (no longer needed as user input)
+2. Remove the "Five9 Domain" input field from the form
+3. Remove the "API Credentials (optional)" separator — replace with just a clean divider or nothing
+4. Add `required` to `five9Username` and `five9Password` inputs
+5. Update `handleCreateDomain` to derive `domain` from `five9Username.split('@')[1]` before insert
+6. Update the card subtitle from "Enter your Five9 domain to start routing calls" to "Sign in with your Five9 admin account to connect your domain"
+
+## Updated Form Layout
 
 ```text
 ┌─────────────────────────────────────────┐
 │  🌐  Connect your Five9 Domain          │
-│  Enter your Five9 domain to start...    │
-│                                         │
-│  Five9 Domain                           │
-│  [yourcompany.five9.com              ]  │
+│  Sign in with your Five9 admin account  │
 │                                         │
 │  Display Name                           │
 │  [Main Call Center                   ]  │
 │  A friendly name to identify this domain│
-│                                         │
-│  ── API Credentials (optional) ─────── │
 │                                         │
 │  Five9 Admin Username                   │
 │  [admin@yourcompany.com              ]  │
 │                                         │
 │  Admin Password                         │
 │  [••••••••••••••••••••••••         👁] │
-│  Used to sync skills and call variables │
+│  Used to sync agent skills and skills   │
 │                                         │
 │  [→  Connect Domain                  ]  │
 └─────────────────────────────────────────┘
 ```
+
+No database migration required — the `domain` field is still stored, just derived automatically from the username email rather than entered manually.
