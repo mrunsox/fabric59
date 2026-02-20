@@ -32,13 +32,13 @@ import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { DashboardSwitcher } from "@/components/layout/DashboardSwitcher";
 
 const navigation = [
-  { name: "Tenants", href: "/admin", icon: Building2 },
   { name: "Five9 Domains", href: "/admin/domains", icon: Globe },
-  { name: "Field Mappings", href: "/admin/mappings", icon: FileJson },
   { name: "Agents", href: "/admin/agents", icon: Users },
+  { name: "Tenants", href: "/admin", icon: Building2 },
+  { name: "Field Mappings", href: "/admin/mappings", icon: FileJson },
   { name: "API Logs", href: "/admin/logs", icon: Activity },
-  { name: "Notifications", href: "/admin/notifications", icon: Bell },
   { name: "Test Console", href: "/admin/test", icon: TestTube2 },
+  { name: "Notifications", href: "/admin/notifications", icon: Bell },
   { name: "Settings", href: "/admin/settings", icon: Settings },
   { name: "Build Outline", href: "/outline", icon: Map },
 ];
