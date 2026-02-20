@@ -102,21 +102,40 @@ export default function DomainsPage() {
       : newDisplayName.toLowerCase().replace(/\s+/g, "-");
 
     try {
-      const { data, error: insertError } = await supabase
-        .from("five9_domains")
-        .insert({
-          organization_id: organization.id,
-          domain: derivedDomain,
-          display_name: newDisplayName,
-          five9_username: five9Username,
-          five9_password_encrypted: five9Password,
-        })
-        .select()
-        .single();
+      let domainId: string;
 
-      if (insertError) throw insertError;
+      if (createdDomainId) {
+        // Domain was already created on a previous attempt — update it instead of inserting
+        const { error: updateError } = await supabase
+          .from("five9_domains")
+          .update({
+            display_name: newDisplayName,
+            five9_username: five9Username,
+            five9_password_encrypted: five9Password,
+          })
+          .eq("id", createdDomainId);
 
-      setCreatedDomainId(data.id);
+        if (updateError) throw updateError;
+        domainId = createdDomainId;
+      } else {
+        // First attempt — insert a new domain record
+        const { data, error: insertError } = await supabase
+          .from("five9_domains")
+          .insert({
+            organization_id: organization.id,
+            domain: derivedDomain,
+            display_name: newDisplayName,
+            five9_username: five9Username,
+            five9_password_encrypted: five9Password,
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        domainId = data.id;
+        setCreatedDomainId(domainId);
+      }
+
       setConnectionStatus("testing");
       setIsSubmitting(false);
 
@@ -130,7 +149,7 @@ export default function DomainsPage() {
               Authorization: `Bearer ${session.session?.access_token}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ domain_id: data.id }),
+            body: JSON.stringify({ domain_id: domainId }),
           }
         );
 
