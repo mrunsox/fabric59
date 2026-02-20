@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDomains, useDeleteDomain } from "@/hooks/useDomains";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useFive9Sync } from "@/hooks/useFive9Sync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +62,7 @@ export default function DomainsPage() {
   const { organization, orgRole, isMasterAdmin, isLoading: isAuthLoading } = useAuth();
   const { data: domains, isLoading, error } = useDomains();
   const deleteDomain = useDeleteDomain();
+  const { syncFromFive9 } = useFive9Sync();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState("");
@@ -158,10 +160,12 @@ export default function DomainsPage() {
         if (result.success) {
           setConnectionStatus("success");
           setConnectionMessage(result.message || "Successfully connected to Five9 Admin Web Services");
+          // Auto-sync agents and clients from Five9
+          syncFromFive9(organization?.id);
           setTimeout(() => {
             setIsAddDialogOpen(false);
             resetDialog();
-          }, 1500);
+          }, 2000);
         } else {
           setConnectionStatus("failed");
           setConnectionMessage(result.message || "Authentication failed. Please check your credentials.");
