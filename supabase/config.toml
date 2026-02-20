@@ -1,1 +1,13 @@
 project_id = "lxwalsgqrnstjclafaka"
+
+[functions.five9-provisioning]
+verify_jwt = false
+
+[functions.google-workspace]
+verify_jwt = false
+
+[functions.send-credentials]
+verify_jwt = false
+
+[functions.process-jobs]
+verify_jwt = false

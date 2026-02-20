@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Map,
   FlaskConical,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -33,6 +34,7 @@ const navigation = [
   { name: "Tenants", href: "/admin", icon: Building2 },
   { name: "Five9 Domains", href: "/admin/domains", icon: Globe },
   { name: "Field Mappings", href: "/admin/mappings", icon: FileJson },
+  { name: "Agents", href: "/admin/agents", icon: Users },
   { name: "API Logs", href: "/admin/logs", icon: Activity },
   { name: "Notifications", href: "/admin/notifications", icon: Bell },
   { name: "Test Console", href: "/admin/test", icon: TestTube2 },
