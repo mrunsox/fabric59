@@ -1,119 +1,117 @@
 
-# Dashboard Switcher for pauljoseph@24hvirtual.com
+# Agent Page Fixes: Stat Cards, Filters & Color Contrast
 
-## Current Situation
+## What the Screenshots Show Is Missing
 
-Paul (`pauljoseph@24hvirtual.com`) is confirmed as `master_admin` in the database but has **zero organization memberships**. This means:
+### Missing: Stat Cards at the Top of the Page
+The light-mode screenshot (image-8) shows 4 stat cards at the very top of the Agent Lifecycle page:
+- **Total Agents** (people icon)
+- **Active** (green checkmark)
+- **Deprovisioned** (red X)
+- **Pending Jobs** (clock icon)
 
-- He can access `/master` (System Admin dashboard) fine
-- When he tries to visit `/admin`, `ProtectedRoute` detects `isMasterAdmin && !organization` and immediately redirects him back to `/master`
-- He is effectively locked out of the Admin (Organization) dashboard
+Currently `AgentsPage.tsx` has no stat cards at all — only a title and the tabs.
 
-## Goal
+### Missing: Role & Status Filters in Offboarding Tab
+The screenshot shows the `AgentSearchList` has two additional filter dropdowns:
+- **All Roles** dropdown (filtering by agent role)
+- **All Status** dropdown (filtering by status: Active, Scheduled, Under Review, Removed)
 
-Give Paul frictionless access to **both** dashboards with a visible switcher — so he can jump between "System Admin" and "Admin" views without signing in/out or manually editing the URL.
+Currently `AgentSearchList.tsx` only has a text search input — no role or status filters.
 
----
+### Color Contrast Issues
+Looking at the dark-theme form screenshot (image-9) and the CSS:
+- Input fields use `--input: 217 33% 22%` (dark background) but placeholder text uses `--muted-foreground: 215 20% 75%` which is reasonably ok, however **form labels** and certain text elements are hard to read
+- In dark mode, `--destructive: 0 62% 30%` is quite dark — destructive text/badges may be unreadable against dark card backgrounds  
+- The `under_review` badge uses `text-yellow-400` which may clash in light mode
+- The `AdminLayout` hardcodes `className="dark"` forcing dark mode at all times — this is correct per design intent, but some components (like the `DeprovisioningModal` dialog) don't inherit the dark class, so they render in light mode with wrong colors
 
-## What Needs to Change
+## Plan
 
-### 1. Fix `ProtectedRoute` — Allow Master Admins into `/admin`
+### 1. Add Stat Cards to `AgentsPage.tsx`
+Add 4 stat cards at the top of the page, computed from the `history` array:
+- **Total Agents**: `history.length`
+- **Active**: `history.filter(a => a.status === 'active').length`
+- **Deprovisioned**: `history.filter(a => a.status === 'deprovisioned').length`  
+- **Pending Jobs**: `history.filter(a => a.status === 'pending_deletion').length`
 
-Currently:
-```
-if (isMasterAdmin && !organization) → redirect to /master
-```
+Use the existing `StatCard` component from `src/components/ui/stat-card.tsx` (already in the project).
 
-The fix: remove this block entirely. Master admins **should** be allowed to pass through to `/admin` — they will simply see the admin dashboard without an organization context (which is fine since they have full DB access via RLS).
+### 2. Add Role & Status Filters to `AgentSearchList.tsx`
+Add two `Select` dropdowns above the agent list:
+- **Role filter**: populated from unique roles in the agents array
+- **Status filter**: predefined options — All Status, Active, Scheduled (pending_deletion), Under Review, Removed (deprovisioned)
 
-**File:** `src/components/auth/ProtectedRoute.tsx`
+Filter the displayed list by combining: text search + role filter + status filter.
 
-### 2. Update `AuthContext` — Master Admins Can Load Orgs
+Also fix the column layout to match the screenshot (search on left, two filter dropdowns on right).
 
-Right now, `loadOrganizations` is only called for the current user's memberships. Paul has none, so `organization` stays `null`. We need to allow Paul to optionally load **all** organizations (for the org picker in AdminLayout). This is already possible since master admins can SELECT all orgs via RLS.
+### 3. Fix Color Contrast
 
-We'll add a `loadAllOrganizationsForMasterAdmin()` path in `AuthContext` that fetches all orgs when `isMasterAdmin === true` and the user has no memberships. This lets Paul pick an org from the switcher in AdminLayout and operate in that context.
+**`src/index.css` — dark mode CSS variables:**
+- `--destructive`: Change from `0 62% 30%` → `0 72% 50%` so destructive text/buttons are readable against dark card backgrounds
+- `--muted-foreground`: Bump from `215 20% 75%` → `215 20% 80%` for slightly better readability
 
-**File:** `src/contexts/AuthContext.tsx`
+**`src/components/agents/shared/StatusBadge.tsx`:**
+- Fix `under_review` badge: change `text-yellow-400` → `text-yellow-500` (more contrast) or use the existing `--warning` token
+- Fix `deprovisioned` badge: currently `text-muted-foreground` which is invisible in dark mode — change to `text-foreground/60`
 
-### 3. Add Dashboard Switcher to Both Layouts
+**`DeprovisioningModal.tsx`:** The `<DialogContent>` renders outside the `dark` class container. Add `className="dark"` to the `DialogContent` so it inherits dark styling consistently. Actually the better fix is to apply `dark` class to the `<DialogPortal>` or ensure the dialog portal is under the dark root. The cleanest fix: add `dark` to the modal content wrapper directly.
 
-A `DashboardSwitcher` component visible only to master admins, placed in the sidebar footer of both `AdminLayout` and `MasterLayout`. It renders two buttons:
+**`AgentSearchList.tsx` batch bar:** The `text-warning` on the orange batch selection bar — ensure it's legible.
 
-```
-┌─────────────────────────────────┐
-│ Switch Dashboard                 │
-│  [⚙ System Admin]  [🏢 Admin]  │
-└─────────────────────────────────┘
-```
+### 4. Fix Audit Log Column Order
+Reorder columns to match the screenshot: **Time → Action → Agent → Performed By → Details** (currently Action is first).
 
-- Active dashboard is highlighted
-- Inactive one is a clickable link
-
-**New file:** `src/components/layout/DashboardSwitcher.tsx`
-
-### 4. Integrate Switcher into Both Layouts
-
-- `MasterLayout.tsx` — add `<DashboardSwitcher current="master" />` in the sidebar footer above the sign-out button
-- `AdminLayout.tsx` — add `<DashboardSwitcher current="admin" />` in the sidebar footer, visible only when `isMasterAdmin` is true
-
----
-
-## Technical Details
-
-### ProtectedRoute change (simple)
-Remove the redirect block:
-```tsx
-// REMOVE THIS:
-if (isMasterAdmin && !organization) {
-  return <Navigate to="/master" replace />;
-}
-```
-Master admins will land on `/admin` without an org. The AdminLayout already handles `organization?.name` gracefully with `|| "Loading..."` fallback, so no crash.
-
-### AuthContext change
-In `loadOrganizations`, after checking memberships — if the user is a master admin and has no memberships, fetch all orgs from the `organizations` table and set them as available choices. Paul can then pick one from the org switcher in AdminLayout.
-
-```typescript
-// After memberships check — if master_admin and no memberships:
-if (!memberships || memberships.length === 0) {
-  const isMaster = await checkMasterAdmin(userId); // already runs separately
-  if (isMaster) {
-    const { data: allOrgs } = await supabase.from("organizations").select("*");
-    // set allOrgs as available organizations so the switcher populates
-  }
-}
-```
-
-Since master admins already have SELECT on all organizations via RLS (`Master admin can manage all organizations` policy), this query will succeed.
-
-### DashboardSwitcher Component
-```tsx
-// src/components/layout/DashboardSwitcher.tsx
-interface Props { current: "master" | "admin" }
-
-// Renders two pill buttons using react-router Link
-// Only shown when isMasterAdmin === true
-```
-
----
-
-## Files to Modify/Create
+## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/auth/ProtectedRoute.tsx` | Remove master admin redirect block |
-| `src/contexts/AuthContext.tsx` | Load all orgs when master admin has no memberships |
-| `src/components/layout/DashboardSwitcher.tsx` | New component — dashboard toggle buttons |
-| `src/components/layout/MasterLayout.tsx` | Add `<DashboardSwitcher current="master" />` |
-| `src/components/layout/AdminLayout.tsx` | Add `<DashboardSwitcher current="admin" />` |
+| `src/pages/admin/AgentsPage.tsx` | Add 4 stat cards above the tabs |
+| `src/components/agents/offboarding/AgentSearchList.tsx` | Add Role + Status filter dropdowns; fix layout |
+| `src/components/agents/offboarding/AuditLogTable.tsx` | Reorder columns: Time first |
+| `src/components/agents/offboarding/DeprovisioningModal.tsx` | Add `dark` class to DialogContent for consistent dark styling |
+| `src/index.css` | Fix `--destructive` in dark mode for better readability |
+| `src/components/agents/shared/StatusBadge.tsx` | Fix `under_review` and `deprovisioned` badge contrast |
 
----
+## Implementation Detail: Stat Cards
 
-## User Experience After This Change
+```tsx
+// In AgentsPage.tsx — above <Tabs>
+const totalAgents = history.length;
+const activeAgents = history.filter(a => a.status === 'active').length;
+const deprovisionedAgents = history.filter(a => a.status === 'deprovisioned').length;
+const pendingJobs = history.filter(a => a.status === 'pending_deletion').length;
 
-1. Paul logs in → lands on `/admin` (or `/master`, same as before, depending on where he came from)
-2. In either sidebar he sees a "Switch Dashboard" section with two buttons
-3. Clicking "System Admin" takes him to `/master`
-4. Clicking "Admin" takes him to `/admin` — now allowed without crashing
-5. The org switcher in AdminLayout will be pre-populated with all organizations so Paul can select which org context to browse under
+// Render 4 StatCards in a grid
+<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+  <StatCard title="Total Agents" value={totalAgents} icon={Users2} />
+  <StatCard title="Active" value={activeAgents} icon={CheckCircle} iconColor="text-success" />
+  <StatCard title="Deprovisioned" value={deprovisionedAgents} icon={XCircle} iconColor="text-destructive" />
+  <StatCard title="Pending Jobs" value={pendingJobs} icon={Clock} iconColor="text-warning" />
+</div>
+```
+
+## Implementation Detail: Filters
+
+```tsx
+// New state in AgentSearchList
+const [roleFilter, setRoleFilter] = useState("all");
+const [statusFilter, setStatusFilter] = useState("all");
+
+// Filtered list
+const filtered = agents.filter(a => {
+  const matchesSearch = `${a.agentName} ${a.email} ${a.role} ${a.extension}`
+    .toLowerCase().includes(search.toLowerCase());
+  const matchesRole = roleFilter === "all" || a.role === roleFilter;
+  const matchesStatus = statusFilter === "all" || a.status === statusFilter;
+  return matchesSearch && matchesRole && matchesStatus;
+});
+```
+
+Status filter options map:
+- "all" → All Status
+- "active" → Active  
+- "pending_deletion" → Scheduled
+- "under_review" → Under Review
+- "deprovisioned" → Removed
