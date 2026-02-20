@@ -1,47 +1,76 @@
 
-# Fix: test-five9-connection Uses Wrong API Version (v2 vs v13)
 
-## Root Cause — Definitive
+# Auto-Populate Agents and Clients from Five9
 
-The `test-five9-connection` edge function calls Five9's **v2** endpoint:
+## Problem
+
+Two issues to solve:
+
+1. **`getAllUsers` returns empty** -- The XML parser in `five9-provisioning` looks for `<generalInfo>` blocks, but the Five9 v13 `getUsersGeneralInfo` response wraps each user in `<return>` elements, not `<generalInfo>`. The `getExtensions` action works because it just grabs all `<extension>` tags globally -- it doesn't need block-level grouping.
+
+2. **No auto-sync** -- When a Five9 domain is connected, nothing populates the `agents` or `tenants` (clients) tables. The user must manually provision every agent and manually create every client.
+
+## Solution
+
+### Part 1: Fix the XML Parsing Bug
+
+In `supabase/functions/five9-provisioning/index.ts`, change the `getAllUsers` regex from:
+
 ```
-https://api.five9.com/wsadmin/v2/AdminWebService
-```
-
-The `five9-provisioning` edge function (which works, fetching 67 live extensions) calls Five9's **v13** endpoint:
-```
-https://api.five9.com/wsadmin/v13/AdminWebService
-```
-
-Both functions have correct username normalization (hyphen → space). The credentials are correct — confirmed by the working `five9-provisioning` test. The v2 endpoint is either deprecated or has different authentication behavior, causing it to reject the same credentials that v13 accepts without issue.
-
-This is why:
-- Fetching extensions / users via `five9-provisioning` (v13) works perfectly
-- "Test Connection" in the Add Domain dialog (which calls `test-five9-connection` → v2) fails with "Authentication Failed"
-
-## The Fix
-
-One-line change in `supabase/functions/test-five9-connection/index.ts` — update the SOAP URL from v2 to v13:
-
-```typescript
-// Before (line 92)
-const soapResponse = await fetch("https://api.five9.com/wsadmin/v2/AdminWebService", {
-
-// After
-const soapResponse = await fetch("https://api.five9.com/wsadmin/v13/AdminWebService", {
+/<generalInfo>(.*?)<\/generalInfo>/gs
 ```
 
-## Why This Is Safe
+to:
 
-- v13 is the same endpoint already proven to authenticate and respond correctly with these credentials
-- The SOAP body (`getContactFields`) is a valid v13 call — the namespace `xmlns:ser="http://service.admin.ws.five9.com/"` is the same across all versions
-- No credential changes. No database changes. No new secrets
-- The function logic (fault detection, status update, error classification) remains identical
+```
+/<return>(.*?)<\/return>/gs
+```
 
-## File to Modify
+This matches the actual Five9 API response structure and will return all 67+ users.
+
+### Part 2: Add a "Sync from Five9" Action
+
+Create a new `syncFromFive9` action in the `five9-provisioning` edge function that:
+
+1. Calls `getUsersGeneralInfo` to fetch all Five9 users
+2. Calls `getSkills` to fetch all Five9 skills
+3. Returns both datasets so the frontend can upsert them
+
+### Part 3: Trigger Sync on Successful Connection
+
+In `DomainsPage.tsx`, after a domain connection succeeds (status = "success"), automatically call the sync action. The sync will:
+
+- **Agents**: Upsert each Five9 user into the `agents` table, matching on `five9_username` to avoid duplicates. Only inserts new agents; existing ones are left untouched.
+- **Clients**: Upsert each Five9 skill as a client in the `tenants` table, matching on `name` to avoid duplicates. New skills are inserted with `crm_type: 'other'` and `status: 'active'`.
+
+### Part 4: Add Manual Sync Button
+
+Add a "Sync from Five9" button on the Agents page (near the Live Five9 Roster) that triggers the same sync logic on demand, so admins can re-sync at any time without reconnecting the domain.
+
+## Files to Modify
 
 | File | Change |
 |---|---|
-| `supabase/functions/test-five9-connection/index.ts` | Change SOAP URL from `v2` to `v13` on line 92 |
+| `supabase/functions/five9-provisioning/index.ts` | Fix `<generalInfo>` to `<return>` regex; add `syncFromFive9` action |
+| `src/pages/admin/DomainsPage.tsx` | After successful connection, call sync to populate agents + clients |
+| `src/pages/admin/AgentsPage.tsx` | Add "Sync from Five9" button |
+| `src/hooks/useFive9Sync.ts` (new) | Hook that calls the sync action and upserts agents + tenants |
 
-The edge function redeploys automatically.
+## Technical Details
+
+The sync hook will:
+
+```text
+1. Call five9-provisioning with action: "syncFromFive9"
+2. Receive { users: [...], skills: [...] }
+3. For each user:
+   - Check if agents table has a row with matching five9_username
+   - If not, INSERT into agents (first_name, last_name, email, role, extension, five9_username, status: "active")
+4. For each skill:
+   - Check if tenants table has a row with matching name
+   - If not, INSERT into tenants (name, crm_type: "other", status: "active", organization_id)
+5. Refresh both queries via React Query invalidation
+```
+
+The role for each agent is inferred from their extension range using the existing `inferRole` logic already in `useFive9Users.ts`.
+
