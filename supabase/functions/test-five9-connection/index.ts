@@ -67,8 +67,15 @@ Deno.serve(async (req) => {
     }
 
     // Use provided credentials or fall back to stored ones
-    const testUsername = username || domain.five9_username;
+    const rawUsername = username || domain.five9_username;
     const testPassword = password || domain.five9_password_encrypted;
+
+    // Normalize: non-email Five9 usernames (e.g. "John Smith") may have been
+    // stored with hyphens instead of spaces. Replace hyphens with spaces for
+    // non-email usernames only (email usernames contain "@").
+    const testUsername = rawUsername && !rawUsername.includes("@")
+      ? rawUsername.replace(/-/g, " ")
+      : rawUsername;
 
     if (!testUsername || !testPassword) {
       return new Response(
