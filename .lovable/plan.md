@@ -1,117 +1,144 @@
 
-# Agent Page Fixes: Stat Cards, Filters & Color Contrast
+# Slack Integration + Settings Connector Panel
 
-## What the Screenshots Show Is Missing
+## Current State
 
-### Missing: Stat Cards at the Top of the Page
-The light-mode screenshot (image-8) shows 4 stat cards at the very top of the Agent Lifecycle page:
-- **Total Agents** (people icon)
-- **Active** (green checkmark)
-- **Deprovisioned** (red X)
-- **Pending Jobs** (clock icon)
+- **Slack**: No Slack connection in the workspace. No `slack-agent` edge function exists. Both `useProvisioning.ts` (step 3) and `useDeprovisioning.ts` (step 3) have `await delay(1200)` stubs that immediately mark Slack steps as complete without doing anything real.
+- **Settings page**: Has sections for Five9, Resend/Email, and Google Workspace credentials but no Slack section at all.
+- **AGENT_ROLES**: Already has `slackChannels` arrays per role (e.g. `['#english-support', '#all-agents']`) — ready to use.
+- **agents table**: Already has a `slack_user_id` column ready to be populated.
 
-Currently `AgentsPage.tsx` has no stat cards at all — only a title and the tabs.
+---
 
-### Missing: Role & Status Filters in Offboarding Tab
-The screenshot shows the `AgentSearchList` has two additional filter dropdowns:
-- **All Roles** dropdown (filtering by agent role)
-- **All Status** dropdown (filtering by status: Active, Scheduled, Under Review, Removed)
+## Step 1 — Connect Slack Workspace
 
-Currently `AgentSearchList.tsx` only has a text search input — no role or status filters.
+Before any code runs, the Slack connector must be linked to this project via the Lovable connector gateway. This will make `SLACK_API_KEY` and `LOVABLE_API_KEY` available as edge function environment variables.
 
-### Color Contrast Issues
-Looking at the dark-theme form screenshot (image-9) and the CSS:
-- Input fields use `--input: 217 33% 22%` (dark background) but placeholder text uses `--muted-foreground: 215 20% 75%` which is reasonably ok, however **form labels** and certain text elements are hard to read
-- In dark mode, `--destructive: 0 62% 30%` is quite dark — destructive text/badges may be unreadable against dark card backgrounds  
-- The `under_review` badge uses `text-yellow-400` which may clash in light mode
-- The `AdminLayout` hardcodes `className="dark"` forcing dark mode at all times — this is correct per design intent, but some components (like the `DeprovisioningModal` dialog) don't inherit the dark class, so they render in light mode with wrong colors
+The user will be prompted to authorize their Slack workspace via OAuth. The bot will be automatically present in all public channels.
 
-## Plan
+---
 
-### 1. Add Stat Cards to `AgentsPage.tsx`
-Add 4 stat cards at the top of the page, computed from the `history` array:
-- **Total Agents**: `history.length`
-- **Active**: `history.filter(a => a.status === 'active').length`
-- **Deprovisioned**: `history.filter(a => a.status === 'deprovisioned').length`  
-- **Pending Jobs**: `history.filter(a => a.status === 'pending_deletion').length`
+## Step 2 — New Edge Function: `supabase/functions/slack-agent/index.ts`
 
-Use the existing `StatCard` component from `src/components/ui/stat-card.tsx` (already in the project).
+A self-contained Deno edge function that handles two actions via the connector gateway at `https://connector-gateway.lovable.dev/slack/api`.
 
-### 2. Add Role & Status Filters to `AgentSearchList.tsx`
-Add two `Select` dropdowns above the agent list:
-- **Role filter**: populated from unique roles in the agents array
-- **Status filter**: predefined options — All Status, Active, Scheduled (pending_deletion), Under Review, Removed (deprovisioned)
+**`inviteUser` action** (called during onboarding):
+1. `POST /users.lookupByEmail` with agent email → get Slack `user_id`
+2. For each channel name in `channels[]`: resolve channel name → ID via `GET /conversations.list`, then `POST /conversations.invite`
+3. If user not found in Slack workspace: post a notification message to `#all-agents` (or first available channel) saying the agent has been onboarded and needs a Slack invite
+4. Returns `{ success: true, slackUserId }` or `{ success: false, error, notFound: true }`
 
-Filter the displayed list by combining: text search + role filter + status filter.
+**`removeUser` action** (called during offboarding):
+1. `POST /users.lookupByEmail` → get Slack `user_id` (or use stored `slack_user_id` from agent record)
+2. `GET /users.conversations?user={userId}` → list all channels the user is in
+3. `POST /conversations.kick` for each channel
+4. Graceful degradation — if user not found in Slack, treat as `skipped` (not error)
 
-Also fix the column layout to match the screenshot (search on left, two filter dropdowns on right).
+**Channel name→ID resolution**: Uses `conversations.list` with pagination to build a `name→id` map. Caches nothing (stateless function), just resolves on each call.
 
-### 3. Fix Color Contrast
+**config.toml**: Add `[functions.slack-agent]` with `verify_jwt = false`.
 
-**`src/index.css` — dark mode CSS variables:**
-- `--destructive`: Change from `0 62% 30%` → `0 72% 50%` so destructive text/buttons are readable against dark card backgrounds
-- `--muted-foreground`: Bump from `215 20% 75%` → `215 20% 80%` for slightly better readability
+---
 
-**`src/components/agents/shared/StatusBadge.tsx`:**
-- Fix `under_review` badge: change `text-yellow-400` → `text-yellow-500` (more contrast) or use the existing `--warning` token
-- Fix `deprovisioned` badge: currently `text-muted-foreground` which is invisible in dark mode — change to `text-foreground/60`
+## Step 3 — Replace Stubs in `useProvisioning.ts`
 
-**`DeprovisioningModal.tsx`:** The `<DialogContent>` renders outside the `dark` class container. Add `className="dark"` to the `DialogContent` so it inherits dark styling consistently. Actually the better fix is to apply `dark` class to the `<DialogPortal>` or ensure the dialog portal is under the dark root. The cleanest fix: add `dark` to the modal content wrapper directly.
+Replace lines 79–82 (Slack stub) with a real invoke:
 
-**`AgentSearchList.tsx` batch bar:** The `text-warning` on the orange batch selection bar — ensure it's legible.
-
-### 4. Fix Audit Log Column Order
-Reorder columns to match the screenshot: **Time → Action → Agent → Performed By → Details** (currently Action is first).
-
-## Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/pages/admin/AgentsPage.tsx` | Add 4 stat cards above the tabs |
-| `src/components/agents/offboarding/AgentSearchList.tsx` | Add Role + Status filter dropdowns; fix layout |
-| `src/components/agents/offboarding/AuditLogTable.tsx` | Reorder columns: Time first |
-| `src/components/agents/offboarding/DeprovisioningModal.tsx` | Add `dark` class to DialogContent for consistent dark styling |
-| `src/index.css` | Fix `--destructive` in dark mode for better readability |
-| `src/components/agents/shared/StatusBadge.tsx` | Fix `under_review` and `deprovisioned` badge contrast |
-
-## Implementation Detail: Stat Cards
-
-```tsx
-// In AgentsPage.tsx — above <Tabs>
-const totalAgents = history.length;
-const activeAgents = history.filter(a => a.status === 'active').length;
-const deprovisionedAgents = history.filter(a => a.status === 'deprovisioned').length;
-const pendingJobs = history.filter(a => a.status === 'pending_deletion').length;
-
-// Render 4 StatCards in a grid
-<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-  <StatCard title="Total Agents" value={totalAgents} icon={Users2} />
-  <StatCard title="Active" value={activeAgents} icon={CheckCircle} iconColor="text-success" />
-  <StatCard title="Deprovisioned" value={deprovisionedAgents} icon={XCircle} iconColor="text-destructive" />
-  <StatCard title="Pending Jobs" value={pendingJobs} icon={Clock} iconColor="text-warning" />
-</div>
+```typescript
+// Step 3 — Slack invitation (real)
+updateStep('slack-invitation', { status: 'active' });
+try {
+  const { data: slackData } = await supabase.functions.invoke('slack-agent', {
+    body: {
+      action: 'inviteUser',
+      email,
+      agentName: input.agentName,
+      channels: input.role.slackChannels,
+    },
+  });
+  updateStep('slack-invitation', {
+    status: slackData?.success ? 'complete' : 'error',
+    errorMessage: slackData?.error,
+  });
+  // Store slack_user_id so offboarding can use it later
+  if (slackData?.slackUserId) {
+    slackUserId = slackData.slackUserId;
+  }
+} catch {
+  updateStep('slack-invitation', { status: 'error', errorMessage: 'Slack unavailable' });
+}
 ```
 
-## Implementation Detail: Filters
+Also add `slackUserId` to the `agents` insert so it's persisted for offboarding.
 
-```tsx
-// New state in AgentSearchList
-const [roleFilter, setRoleFilter] = useState("all");
-const [statusFilter, setStatusFilter] = useState("all");
+---
 
-// Filtered list
-const filtered = agents.filter(a => {
-  const matchesSearch = `${a.agentName} ${a.email} ${a.role} ${a.extension}`
-    .toLowerCase().includes(search.toLowerCase());
-  const matchesRole = roleFilter === "all" || a.role === roleFilter;
-  const matchesStatus = statusFilter === "all" || a.status === statusFilter;
-  return matchesSearch && matchesRole && matchesStatus;
-});
+## Step 4 — Replace Stub in `useDeprovisioning.ts`
+
+Replace lines 139–142 (Slack stub) with:
+
+```typescript
+// Step 3 — Slack removal (real)
+updateStep('slack-removal', { status: 'active' });
+try {
+  const { data: slackData } = await supabase.functions.invoke('slack-agent', {
+    body: {
+      action: 'removeUser',
+      email: agentData?.email || request.email,
+      slackUserId: agentData?.slack_user_id || undefined,
+    },
+  });
+  updateStep('slack-removal', {
+    status: (slackData?.success || slackData?.skipped) ? 'complete' : 'error',
+    errorMessage: slackData?.error,
+  });
+} catch {
+  updateStep('slack-removal', { status: 'error', errorMessage: 'Slack unavailable' });
+}
 ```
 
-Status filter options map:
-- "all" → All Status
-- "active" → Active  
-- "pending_deletion" → Scheduled
-- "under_review" → Under Review
-- "deprovisioned" → Removed
+---
+
+## Step 5 — Add Slack Section to `SettingsPage.tsx`
+
+Add a new **Slack Integration** card below the Google Workspace section in the Integration Credentials card. This card will:
+
+- Show the Slack connection **status** (connected / not connected) by checking if `SLACK_API_KEY` is available — the edge function can expose a `status` check action, or we simply show a static "Connected via Lovable Connector" badge once the connection is linked
+- Show the **bot display name** being used (fetch from `auth.test` Slack API call)
+- Show a **channel mapping table** — read-only list of each role and its assigned Slack channels pulled from `AGENT_ROLES`
+- Provide a **"Test Connection"** button that calls the `slack-agent` function with `action: 'test'` which calls Slack's `auth.test` endpoint and returns workspace name + bot name
+- Show a **"Reconnect Slack"** link/button that opens the Lovable connector settings if the token is invalid
+
+The Slack section sits inside the existing "Integration Credentials" card under a new `<Separator />` after Google Workspace, with the same visual pattern (label in muted uppercase, content below).
+
+---
+
+## Files to Create/Modify
+
+| File | Action | Change |
+|------|--------|--------|
+| `supabase/functions/slack-agent/index.ts` | Create | New Slack edge function — `inviteUser`, `removeUser`, `test` actions via connector gateway |
+| `supabase/config.toml` | Modify | Add `[functions.slack-agent]` with `verify_jwt = false` |
+| `src/hooks/useProvisioning.ts` | Modify | Replace Slack stub with real `slack-agent` invoke; save `slack_user_id` |
+| `src/hooks/useDeprovisioning.ts` | Modify | Replace Slack stub with real `slack-agent` invoke using stored `slack_user_id` |
+| `src/pages/admin/SettingsPage.tsx` | Modify | Add Slack Integration section with connection status, channel mapping, and test button |
+
+---
+
+## Important Notes
+
+- The Slack connector uses a **bot token** — the bot is auto-present in all public channels, so no manual channel invites for the bot are needed
+- `conversations.invite` invites a **user** to a channel (the bot invites the agent) — this works for public channels automatically
+- If the agent does not yet have a Slack account (common for new hires), the function gracefully falls back to posting a `#all-agents` notification rather than failing
+- Offboarding `conversations.kick` silently succeeds even if the user isn't in the channel
+- The `slack_user_id` stored during onboarding speeds up offboarding by skipping the email lookup step
+
+---
+
+## Sequence: First Run
+
+1. User clicks "Connect Slack" prompt → authorizes workspace → `SLACK_API_KEY` becomes available
+2. Edge function deployed automatically
+3. During next agent provision → Slack step calls `inviteUser` → real result shown in stepper
+4. During offboarding → Slack step calls `removeUser` → real result shown in stepper
+5. Settings page shows Slack status badge + channel mapping table
