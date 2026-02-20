@@ -14,6 +14,8 @@ import {
   Bell,
   Globe,
   ChevronDown,
+  Map,
+  FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,12 +37,13 @@ const navigation = [
   { name: "Notifications", href: "/admin/notifications", icon: Bell },
   { name: "Test Console", href: "/admin/test", icon: TestTube2 },
   { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Build Outline", href: "/outline", icon: Map },
 ];
 
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { organization, organizations, switchOrganization, signOut, user } = useAuth();
+  const { organization, organizations, switchOrganization, signOut, user, devMode, toggleDevMode } = useAuth();
 
   const currentPage = navigation.find((item) => 
     location.pathname === item.href || 
@@ -190,6 +193,22 @@ export function AdminLayout() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* DEV MODE toggle — only visible in development */}
+            {import.meta.env.DEV && (
+              <button
+                onClick={toggleDevMode}
+                className={`hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border transition-all ${
+                  devMode
+                    ? "bg-warning/20 text-warning border-warning/40 animate-pulse"
+                    : "bg-muted text-muted-foreground border-border hover:border-warning/40 hover:text-warning"
+                }`}
+                title={devMode ? "Click to disable Dev Mode" : "Click to enable Dev Mode (bypasses auth)"}
+              >
+                <FlaskConical className="h-3.5 w-3.5" />
+                {devMode ? "DEV MODE ON" : "DEV MODE"}
+              </button>
+            )}
+
             <div className="hidden sm:flex items-center gap-2 rounded-full bg-success/10 px-3 py-1.5">
               <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
               <span className="text-xs font-medium text-success">All Systems Operational</span>
