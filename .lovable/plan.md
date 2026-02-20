@@ -1,243 +1,263 @@
 
-# Five9 API Credentials and SOAP Integration
+# Four Features: Login Improvements, Dev Mode, and Build Outline Page
 
 ## Overview
 
-This plan implements secure Five9 API credential management and real SOAP API integration to dynamically fetch contact fields, call variables, and dispositions from connected Five9 domains.
+This plan covers four distinct features:
+1. Back button on the login page (to a home/landing page)
+2. Forgot password flow on the login page
+3. Dev Mode button in the header that bypasses auth
+4. /outline page with a living build map
 
 ---
 
-## Architecture
+## Feature 1: Back Button on Login Page
 
-### Five9 Admin Web Services API
+### Current State
+The `LoginPage.tsx` has no back navigation — users are stuck with only a "Sign up" link.
 
-Five9 uses a **SOAP-based API** with Basic Authentication:
-- **Endpoint**: `https://api.five9.com/wsadmin/v2/AdminWebService`
-- **Authentication**: HTTP Basic Auth (username:password base64 encoded)
-- **Available Operations**: `getContactFields`, `getCallVariables`, `getDispositions`, `getCampaigns`
+### Implementation
+Add a back button at the top of the card that navigates to `/` (which currently redirects to `/admin`). Since there is no public landing/home page, we will create a minimal public `/home` route as the back destination, OR simply use `navigate(-1)` to go back in history, which is the simplest and most flexible approach.
 
-### Data Flow
+We'll add a ghost button with an `ArrowLeft` icon above the card header.
+
+**File: `src/pages/auth/LoginPage.tsx`**
+- Import `useNavigate` from `react-router-dom`
+- Add an arrow-left button above the card using `navigate(-1)` or linking to a `/` public landing
+
+---
+
+## Feature 2: Forgot Password Flow
+
+### How It Works
+The password reset flow requires two steps:
+1. **Request reset**: User enters email → system sends reset email
+2. **Set new password**: User clicks link in email → lands on `/reset-password` page → enters new password
+
+### New Files
+- `src/pages/auth/ForgotPasswordPage.tsx` — form to request reset email
+- `src/pages/auth/ResetPasswordPage.tsx` — form to set new password (handles `type=recovery` in URL hash)
+
+### Changes to Existing Files
+**`src/pages/auth/LoginPage.tsx`**
+- Add "Forgot your password?" link below the password field that navigates to `/forgot-password`
+
+**`src/App.tsx`**
+- Add two new public routes:
+  - `/forgot-password` → `ForgotPasswordPage`
+  - `/reset-password` → `ResetPasswordPage`
+
+### Key Logic
+
+```typescript
+// ForgotPasswordPage.tsx
+const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: `${window.location.origin}/reset-password`
+});
+
+// ResetPasswordPage.tsx — must detect recovery session
+useEffect(() => {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY") {
+      // show the new password form
+    }
+  });
+}, []);
+
+const { error } = await supabase.auth.updateUser({ password: newPassword });
+```
+
+---
+
+## Feature 3: Dev Mode Button
+
+### What It Does
+A **DEV MODE** toggle button visible only in development (`import.meta.env.DEV`) that bypasses the auth check entirely. When active, the app skips the `ProtectedRoute` redirect and treats the user as authenticated with full dashboard access, without actually signing in.
+
+### Implementation Strategy
+- Add a `devMode` boolean state to `AuthContext` (only settable in dev)
+- When `devMode` is true, `isAuthenticated` returns `true` and a mock organization/user is provided
+- A floating button (or header button) toggles dev mode on/off
+- A dismissible banner shows when dev mode is active
+
+**Files to modify:**
+- `src/contexts/AuthContext.tsx` — add `devMode` state and `toggleDevMode` function; when devMode is active, override `isAuthenticated`, provide mock `user`, `organization`, `membership`
+- `src/components/layout/AdminLayout.tsx` — add dev mode indicator badge in header (only when `import.meta.env.DEV`)
+- `src/components/auth/ProtectedRoute.tsx` — check `devMode` flag to bypass redirect
+
+### Dev Mode Mock Data
+```typescript
+const DEV_USER = { id: "dev-user", email: "dev@fabric59.com" };
+const DEV_ORG = { id: "dev-org", name: "Dev Organization", plan: "pro", status: "active" };
+```
+
+### UI
+In the AdminLayout top bar header, add a yellow "DEV MODE" badge button that is only rendered when `import.meta.env.DEV === true`. Clicking it shows a confirmation or toggles off dev mode.
+
+---
+
+## Feature 4: /outline Build Map Page
+
+### Architecture
 
 ```text
-+------------------+     +-------------------+     +------------------+
-|  Domain Detail   | --> |  test-five9-      | --> |  Five9 Admin     |
-|  Page (UI)       |     |  connection       |     |  Web Services    |
-+------------------+     +-------------------+     +------------------+
-        |                        |                         |
-        v                        v                         v
-  Save Credentials         Validate Auth            Return Schema
-        |                        |                         |
-        v                        v                         v
-+------------------+     +-------------------+     +------------------+
-|  five9_domains   | <-- |  five9-schema     | <-- |  SOAP Response   |
-|  (encrypted)     |     |  (fetch fields)   |     |  (parsed XML)    |
-+------------------+     +-------------------+     +------------------+
+src/data/buildMap.ts        ← single source of truth (array of categories + items)
+src/pages/OutlinePage.tsx   ← reads buildMap, renders progress + grouped items
+App.tsx                     ← adds /outline route (public, no auth required)
+AdminLayout.tsx             ← adds "Outline" link in sidebar navigation
 ```
 
----
+### Data Structure (`src/data/buildMap.ts`)
 
-## Database Changes
+```typescript
+export type ItemStatus = "done" | "in-progress" | "planned";
 
-### Add New Columns to five9_domains Table
+export interface BuildItem {
+  name: string;
+  description: string;
+  status: ItemStatus;
+}
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| `five9_username` | text | Five9 admin username for API access |
-| `five9_password_encrypted` | text | Encrypted password for API access |
-| `api_connection_status` | text | Connection status: pending, connected, failed |
-| `last_connection_test` | timestamptz | Timestamp of last successful connection test |
+export interface BuildCategory {
+  name: string;
+  items: BuildItem[];
+}
 
-```sql
-ALTER TABLE five9_domains
-  ADD COLUMN IF NOT EXISTS five9_username text,
-  ADD COLUMN IF NOT EXISTS five9_password_encrypted text,
-  ADD COLUMN IF NOT EXISTS api_connection_status text DEFAULT 'pending',
-  ADD COLUMN IF NOT EXISTS last_connection_test timestamptz;
+export const buildMap: BuildCategory[] = [
+  {
+    name: "Authentication & Access",
+    items: [
+      { name: "Login Page", description: "Email/password authentication", status: "done" },
+      { name: "Signup Page", description: "New organization registration", status: "done" },
+      { name: "Forgot Password", description: "Email-based password reset flow", status: "in-progress" },
+      { name: "Dev Mode Bypass", description: "Development auth bypass for faster building", status: "in-progress" },
+      { name: "Master Admin Access", description: "Hidden /system-access route for platform admins", status: "done" },
+    ]
+  },
+  {
+    name: "Tenant Management",
+    items: [
+      { name: "Tenants List", description: "View and manage all tenants/clients", status: "done" },
+      { name: "Add/Edit Tenant", description: "Form to create and update tenant records", status: "done" },
+      { name: "Delete Tenant", description: "Remove tenant with confirmation dialog", status: "done" },
+      { name: "Tenant CRM Type", description: "Tag tenants by CRM system (Clio, Workiz, etc.)", status: "done" },
+    ]
+  },
+  {
+    name: "Five9 Domain Management",
+    items: [
+      { name: "Domains List", description: "View all connected Five9 domains", status: "done" },
+      { name: "Domain Detail Page", description: "Per-domain settings with tabbed UI", status: "done" },
+      { name: "API Credentials Tab", description: "Securely store Five9 username and password", status: "done" },
+      { name: "Test Connection", description: "Validate Five9 API credentials via SOAP", status: "done" },
+      { name: "Workflow Settings", description: "Configure IVR, callback, and queue behavior", status: "done" },
+      { name: "Branding Settings", description: "Per-domain greeting, company name, colors", status: "done" },
+    ]
+  },
+  {
+    name: "Field Mapping Builder",
+    items: [
+      { name: "Mappings List", description: "View all field mapping configurations", status: "done" },
+      { name: "Visual Mapping Canvas", description: "Drag-and-drop field mapping interface using React Flow", status: "done" },
+      { name: "Source Fields Panel", description: "Five9 contact fields and call variables", status: "done" },
+      { name: "Target Fields Panel", description: "CRM destination fields", status: "done" },
+      { name: "Transform Dialog", description: "Add transformation logic to field mappings", status: "done" },
+      { name: "Live Five9 Schema", description: "Dynamically fetch real fields from connected Five9 domain", status: "done" },
+    ]
+  },
+  {
+    name: "API & Integrations",
+    items: [
+      { name: "Contacts Edge Function", description: "Handle incoming contact sync requests", status: "done" },
+      { name: "Intakes Edge Function", description: "Process intake form submissions from Five9", status: "done" },
+      { name: "Five9 Schema Function", description: "Fetch fields/dispositions via SOAP API", status: "done" },
+      { name: "CRM Push Logic", description: "Send mapped data to tenant CRM systems", status: "planned" },
+      { name: "Webhook Support", description: "Receive real-time events from Five9", status: "planned" },
+    ]
+  },
+  {
+    name: "Monitoring & Logs",
+    items: [
+      { name: "API Logs Page", description: "View inbound/outbound API request history", status: "done" },
+      { name: "Notifications Page", description: "System alerts and event notifications", status: "done" },
+      { name: "Test Console", description: "Send test API requests and view responses", status: "done" },
+      { name: "Real-time Log Streaming", description: "Live log updates via websockets", status: "planned" },
+      { name: "Error Alerting", description: "Email/Slack alerts for critical failures", status: "planned" },
+    ]
+  },
+  {
+    name: "Master Admin (Platform)",
+    items: [
+      { name: "Master Dashboard", description: "Platform-wide stats and health overview", status: "done" },
+      { name: "Organizations Overview", description: "View all tenant organizations on the platform", status: "done" },
+      { name: "Users Management", description: "Manage platform users and roles", status: "done" },
+    ]
+  },
+  {
+    name: "Settings & UX",
+    items: [
+      { name: "Settings Page", description: "Organization-level configuration", status: "done" },
+      { name: "Dark Mode UI", description: "Consistent dark theme throughout the app", status: "done" },
+      { name: "Responsive Sidebar", description: "Mobile-friendly collapsible navigation", status: "done" },
+      { name: "Onboarding Flow", description: "New user org creation wizard", status: "done" },
+      { name: "Build Outline Page", description: "Living build map showing feature progress", status: "in-progress" },
+    ]
+  },
+];
 ```
+
+### OutlinePage UI
+
+```text
++----------------------------------------------------------+
+|  Fabric59 Build Outline                                   |
+|  Living map of all planned and built features             |
+|                                                           |
+|  [████████████░░░░░░░░░░] 28 of 38 features complete      |
++----------------------------------------------------------+
+|                                                           |
+|  Authentication & Access          [4 / 5]                 |
+|  +-------------------------------------------------+      |
+|  | ✅ Login Page           Email/password auth     |      |
+|  | ✅ Signup Page          New org registration    |      |
+|  | 🔄 Forgot Password      Email reset flow        |      |
+|  | ⬜ Dev Mode Bypass      Build-time auth bypass  |      |
+|  +-------------------------------------------------+      |
+|                                                           |
+|  ... (all other categories)                               |
++----------------------------------------------------------+
+```
+
+### Status Icons
+- `done` → `CheckCircle2` (green, `text-success`)
+- `in-progress` → `Loader2` with `animate-spin` (yellow, `text-warning`)
+- `planned` → `Circle` (muted, `text-muted-foreground`)
+
+### Route
+The `/outline` page will be added as a **public route** in `App.tsx` (no auth required — it's a dev/reference tool). It will also appear in the `AdminLayout` sidebar navigation as the last item with a `Map` icon.
 
 ---
 
 ## Files to Create/Modify
 
-### New Files
-
-| File | Purpose |
-|------|---------|
-| `supabase/functions/test-five9-connection/index.ts` | Test API credentials and return connection status |
-
-### Modified Files
-
-| File | Changes |
-|------|---------|
-| `src/pages/admin/DomainDetailPage.tsx` | Add "API Credentials" tab with credential form and test button |
-| `src/types/database.ts` | Add new fields to Five9Domain interface |
-| `src/hooks/useDomains.ts` | Update to handle new credential fields |
-| `supabase/functions/five9-schema/index.ts` | Implement real SOAP API calls to Five9 |
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/pages/auth/ForgotPasswordPage.tsx` | Create | Request password reset email |
+| `src/pages/auth/ResetPasswordPage.tsx` | Create | Set new password after reset link click |
+| `src/data/buildMap.ts` | Create | Single source of truth for build outline |
+| `src/pages/OutlinePage.tsx` | Create | Render the build map visually |
+| `src/pages/auth/LoginPage.tsx` | Modify | Add back button + forgot password link |
+| `src/contexts/AuthContext.tsx` | Modify | Add `devMode` state and `toggleDevMode` |
+| `src/components/auth/ProtectedRoute.tsx` | Modify | Bypass auth check when devMode is active |
+| `src/components/layout/AdminLayout.tsx` | Modify | Add Outline nav link + DEV MODE indicator badge in header |
+| `src/App.tsx` | Modify | Add `/forgot-password`, `/reset-password`, `/outline` routes |
 
 ---
 
-## Detailed Implementation
+## Implementation Notes
 
-### 1. DomainDetailPage.tsx - New API Credentials Tab
-
-Add a fourth tab "API Credentials" to the existing tabs:
-
-```tsx
-<TabsList>
-  <TabsTrigger value="general">General</TabsTrigger>
-  <TabsTrigger value="api">API Credentials</TabsTrigger>  {/* NEW */}
-  <TabsTrigger value="workflow">Workflow</TabsTrigger>
-  <TabsTrigger value="branding">Branding</TabsTrigger>
-</TabsList>
-```
-
-The API Credentials tab will contain:
-- **Five9 Username** input field
-- **Five9 Password** input field (password type, with show/hide toggle)
-- **Connection Status** badge showing current status
-- **Test Connection** button that calls the test endpoint
-- **Last Tested** timestamp display
-- Help text explaining where to find Five9 API credentials
-
-### 2. test-five9-connection Edge Function
-
-Creates a new backend function that:
-1. Receives domain ID from the request
-2. Fetches stored credentials from database
-3. Makes a simple SOAP call to Five9 (`getContactFields`)
-4. Returns success/failure status
-5. Updates the domain's connection status in database
-
-```typescript
-// SOAP envelope for testing connection
-const soapEnvelope = `<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:ser="http://service.admin.ws.five9.com/">
-  <soapenv:Header/>
-  <soapenv:Body>
-    <ser:getContactFields/>
-  </soapenv:Body>
-</soapenv:Envelope>`;
-
-// Make request with Basic Auth
-const response = await fetch("https://api.five9.com/wsadmin/v2/AdminWebService", {
-  method: "POST",
-  headers: {
-    "Content-Type": "text/xml;charset=UTF-8",
-    "SOAPAction": "",
-    "Authorization": `Basic ${btoa(`${username}:${password}`)}`
-  },
-  body: soapEnvelope
-});
-```
-
-### 3. five9-schema Edge Function Update
-
-Modify the existing function to:
-1. Fetch credentials from the domain record
-2. Construct SOAP requests for each schema type
-3. Parse XML responses into JSON format
-4. Return combined schema with real Five9 data
-
-SOAP operations to implement:
-- `getContactFields` - Returns custom contact fields
-- `getCallVariables` - Returns call-attached data variables  
-- `getDispositions` - Returns disposition codes
-
-### 4. Type Updates
-
-```typescript
-// src/types/database.ts
-export interface Five9Domain {
-  id: string;
-  organization_id: string;
-  domain: string;
-  display_name: string;
-  api_key_encrypted: string | null;
-  five9_username: string | null;           // NEW
-  five9_password_encrypted: string | null; // NEW
-  api_connection_status: string | null;    // NEW
-  last_connection_test: string | null;     // NEW
-  workflow_settings: WorkflowSettings;
-  status: Five9DomainStatus;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Five9DomainFormData {
-  domain: string;
-  display_name: string;
-  api_key?: string;
-  five9_username?: string;      // NEW
-  five9_password?: string;      // NEW
-  workflow_settings?: WorkflowSettings;
-}
-```
-
----
-
-## UI Design for API Credentials Tab
-
-```text
-+----------------------------------------------------------+
-|  API Credentials                                          |
-|  Connect to Five9 Admin Web Services                      |
-+----------------------------------------------------------+
-|                                                           |
-|  Five9 Username                                           |
-|  +----------------------------------------------+         |
-|  | admin@yourdomain.five9.com                   |         |
-|  +----------------------------------------------+         |
-|  Your Five9 administrator username                        |
-|                                                           |
-|  Five9 Password                                           |
-|  +----------------------------------------------+ [👁]    |
-|  | ••••••••••••••••                             |         |
-|  +----------------------------------------------+         |
-|  Password is encrypted and stored securely                |
-|                                                           |
-|  +--------------------------------------------------+     |
-|  |  Connection Status                                |     |
-|  |  [🟢 Connected]  Last tested: Jan 30, 2026 2:45 PM|     |
-|  +--------------------------------------------------+     |
-|                                                           |
-|  [Test Connection]  [Save Credentials]                    |
-|                                                           |
-|  ℹ️ Find your API credentials in Five9 VCC Administrator  |
-|     under User Management > Users                         |
-+----------------------------------------------------------+
-```
-
----
-
-## Security Considerations
-
-1. **Password Storage**: Passwords are stored encrypted in the database using the existing `pgcrypto` pattern
-2. **Credential Transmission**: All API calls use HTTPS
-3. **Access Control**: Only org owners/admins can view and modify credentials
-4. **Password Masking**: Passwords are never returned to the frontend after saving
-5. **Audit Logging**: Connection tests are logged for security auditing
-
----
-
-## Implementation Order
-
-1. **Database Migration**: Add new columns to `five9_domains` table
-2. **Type Updates**: Update TypeScript interfaces in `database.ts`
-3. **Hook Updates**: Modify `useDomains.ts` to handle new fields
-4. **UI Tab**: Add API Credentials tab to `DomainDetailPage.tsx`
-5. **Test Connection Function**: Create `test-five9-connection` edge function
-6. **Schema Function Update**: Modify `five9-schema` to use real API calls
-7. **Testing**: Verify end-to-end credential flow
-
----
-
-## Summary
-
-This implementation adds secure Five9 API credential management through:
-- A new "API Credentials" tab on the Domain Detail page
-- Secure storage of Five9 username/password in the database
-- A "Test Connection" button that validates credentials against Five9's SOAP API
-- Real-time fetching of contact fields, call variables, and dispositions from the connected Five9 domain
-
-The solution follows the existing security patterns (encrypted credential storage) and maintains the multi-tenant architecture where each organization manages their own Five9 domains independently.
+- The "back button" on login will use `navigate(-1)` to go back in history — this is simpler than hardcoding a home URL since there is no dedicated public landing page yet.
+- Dev mode is only available when `import.meta.env.DEV` is `true`, so it cannot be accidentally enabled in production.
+- The `/outline` page is accessible without auth so it can be viewed before logging in during development.
+- The build map status changes require only editing `src/data/buildMap.ts` — no database, no backend calls.
+- Password reset emails are sent by the auth system automatically; no custom email template setup is needed for this to work.
