@@ -3,6 +3,24 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Organization, OrganizationMember, OrgRole } from "@/types/database";
 
+const DEV_USER = { id: "dev-user", email: "dev@fabric59.com" } as User;
+const DEV_ORG: Organization = {
+  id: "dev-org",
+  name: "Dev Organization",
+  billing_email: "dev@fabric59.com",
+  plan: "pro",
+  status: "active",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+const DEV_MEMBERSHIP: OrganizationMember = {
+  id: "dev-membership",
+  organization_id: "dev-org",
+  user_id: "dev-user",
+  role: "owner",
+  created_at: new Date().toISOString(),
+};
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -13,6 +31,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   orgRole: OrgRole | null;
   isMasterAdmin: boolean;
+  devMode: boolean;
+  toggleDevMode: () => void;
   signUp: (email: string, password: string, orgName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -30,6 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isOrgLoading, setIsOrgLoading] = useState(true);
   const [isMasterAdmin, setIsMasterAdmin] = useState(false);
+  const [devMode, setDevMode] = useState(false);
+
+  const toggleDevMode = () => {
+    if (!import.meta.env.DEV) return;
+    setDevMode((prev) => !prev);
+  };
 
   // Check master admin status
   const checkMasterAdmin = async (userId: string) => {
@@ -51,7 +77,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadOrganizations = async (userId: string) => {
     setIsOrgLoading(true);
     try {
-      // Get memberships
       const { data: memberships, error: membError } = await supabase
         .from("organization_members")
         .select("*")
@@ -66,7 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Get organizations
       const orgIds = memberships.map((m) => m.organization_id);
       const { data: orgs, error: orgsError } = await supabase
         .from("organizations")
@@ -87,15 +111,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setOrganizations(typedOrgs);
 
-      // Set current org (from localStorage or first one)
       const savedOrgId = localStorage.getItem("currentOrgId");
       const currentOrg = typedOrgs.find((o) => o.id === savedOrgId) || typedOrgs[0];
-      
+
       if (currentOrg) {
         setOrganization(currentOrg);
         localStorage.setItem("currentOrgId", currentOrg.id);
-        
-        // Find the membership for this org
+
         const currentMembership = memberships.find((m) => m.organization_id === currentOrg.id);
         if (currentMembership) {
           setMembership({
@@ -115,14 +137,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
 
         if (currentSession?.user) {
-          // Defer organization loading to avoid auth deadlock
           setTimeout(() => {
             loadOrganizations(currentSession.user.id);
             checkMasterAdmin(currentSession.user.id);
@@ -139,7 +159,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
@@ -161,7 +180,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, orgName: string) => {
     try {
-      // 1. Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -173,7 +191,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user returned from signup");
 
-      // 2. Create organization
       const { data: orgData, error: orgError } = await supabase
         .from("organizations")
         .insert({ name: orgName, billing_email: email })
@@ -182,7 +199,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (orgError) throw orgError;
 
-      // 3. Add user as owner
       const { error: memberError } = await supabase
         .from("organization_members")
         .insert({
@@ -201,11 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       return { error: null };
     } catch (error) {
@@ -214,6 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    setDevMode(false);
     await supabase.auth.signOut();
     localStorage.removeItem("currentOrgId");
     setOrganization(null);
@@ -227,8 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (newOrg) {
       setOrganization(newOrg);
       localStorage.setItem("currentOrgId", orgId);
-      
-      // Update membership
+
       if (user) {
         supabase
           .from("organization_members")
@@ -251,16 +263,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Dev mode overrides
+  const effectiveUser = devMode ? DEV_USER : user;
+  const effectiveOrg = devMode ? DEV_ORG : organization;
+  const effectiveMembership = devMode ? DEV_MEMBERSHIP : membership;
+  const effectiveOrgs = devMode ? [DEV_ORG] : organizations;
+
   const value: AuthContextType = {
-    user,
+    user: effectiveUser,
     session,
-    organization,
-    membership,
-    organizations,
-    isLoading: isAuthLoading || isOrgLoading,
-    isAuthenticated: !!user,
-    orgRole: membership?.role ?? null,
-    isMasterAdmin,
+    organization: effectiveOrg,
+    membership: effectiveMembership,
+    organizations: effectiveOrgs,
+    isLoading: devMode ? false : isAuthLoading || isOrgLoading,
+    isAuthenticated: devMode || !!user,
+    orgRole: effectiveMembership?.role ?? null,
+    isMasterAdmin: devMode ? false : isMasterAdmin,
+    devMode,
+    toggleDevMode,
     signUp,
     signIn,
     signOut,

@@ -13,7 +13,10 @@ import { MasterLayout } from "@/components/layout/MasterLayout";
 import LoginPage from "@/pages/auth/LoginPage";
 import SignupPage from "@/pages/auth/SignupPage";
 import SystemAccessPage from "@/pages/auth/SystemAccessPage";
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import OnboardingPage from "@/pages/onboarding/OnboardingPage";
+import OutlinePage from "@/pages/OutlinePage";
 
 // Admin pages
 import TenantsPage from "@/pages/admin/TenantsPage";
@@ -46,6 +49,9 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/system-access" element={<SystemAccessPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/outline" element={<OutlinePage />} />
 
             {/* Master admin routes - hidden, only accessible via /system-access */}
             <Route element={<MasterProtectedRoute />}>

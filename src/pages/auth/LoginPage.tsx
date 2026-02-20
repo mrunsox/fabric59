@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 
 export default function LoginPage() {
   const { signIn, isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -31,74 +32,86 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
-
     const { error } = await signIn(email, password);
-
-    if (error) {
-      setError(error.message);
-    }
-
+    if (error) setError(error.message);
     setIsSubmitting(false);
   };
 
   return (
     <div className="dark min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary glow-primary">
-              <Fabric59Icon size="lg" className="h-12 w-12" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <CardDescription>
-            Sign in to your Fabric59 account
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
-                <p className="text-sm text-destructive">{error}</p>
+      <div className="w-full max-w-md space-y-4">
+        {/* Back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+
+        <Card className="w-full">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary glow-primary">
+                <Fabric59Icon size="lg" className="h-12 w-12" />
               </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign in
-            </Button>
-            <p className="text-sm text-muted-foreground text-center">
-              Don't have an account?{" "}
-              <Link to="/signup" className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
+            <CardTitle className="text-2xl">Welcome back</CardTitle>
+            <CardDescription>Sign in to your Fabric59 account</CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              {error && (
+                <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
+                  <p className="text-sm text-destructive">{error}</p>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Sign in
+              </Button>
+              <p className="text-sm text-muted-foreground text-center">
+                Don't have an account?{" "}
+                <Link to="/signup" className="text-primary hover:underline">
+                  Sign up
+                </Link>
+              </p>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }
