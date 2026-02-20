@@ -237,12 +237,15 @@ export default function DomainsPage() {
                       <Input
                         id="five9Username"
                         type="text"
-                        placeholder="admin@yourcompany.com"
+                        placeholder="admin@yourcompany.com or John Smith"
                         value={five9Username}
-                        onChange={(e) => setFive9Username(e.target.value)}
+                        onChange={(e) => setFive9Username(e.target.value.trimStart())}
                         autoComplete="username"
                         required
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Enter exactly as shown in Five9 — e.g. <code className="bg-muted px-1 rounded">admin@company.com</code> or <code className="bg-muted px-1 rounded">John Smith</code> (with a space, not a hyphen)
+                      </p>
                     </div>
 
                     <div className="space-y-2">
