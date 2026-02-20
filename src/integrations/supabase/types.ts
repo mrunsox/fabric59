@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          created_at: string
+          deprovisioned_at: string | null
+          deprovisioned_by: string | null
+          email: string
+          extension: string | null
+          first_name: string
+          five9_user_id: string | null
+          five9_username: string | null
+          google_user_id: string | null
+          id: string
+          last_name: string
+          provisioned_at: string
+          provisioned_by: string | null
+          role: string
+          slack_channel: string | null
+          slack_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deprovisioned_at?: string | null
+          deprovisioned_by?: string | null
+          email: string
+          extension?: string | null
+          first_name: string
+          five9_user_id?: string | null
+          five9_username?: string | null
+          google_user_id?: string | null
+          id?: string
+          last_name: string
+          provisioned_at?: string
+          provisioned_by?: string | null
+          role: string
+          slack_channel?: string | null
+          slack_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deprovisioned_at?: string | null
+          deprovisioned_by?: string | null
+          email?: string
+          extension?: string | null
+          first_name?: string
+          five9_user_id?: string | null
+          five9_username?: string | null
+          google_user_id?: string | null
+          id?: string
+          last_name?: string
+          provisioned_at?: string
+          provisioned_by?: string | null
+          role?: string
+          slack_channel?: string | null
+          slack_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string
@@ -98,6 +161,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      app_config: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       field_mappings: {
         Row: {
@@ -320,6 +446,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      scheduled_jobs: {
+        Row: {
+          agent_id: string
+          cancelled_at: string | null
+          cancelled_by: string | null
+          config: Json | null
+          created_at: string
+          error_message: string | null
+          id: string
+          initiated_by: string | null
+          job_type: string
+          result: Json | null
+          scheduled_for: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          config?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          initiated_by?: string | null
+          job_type: string
+          result?: Json | null
+          scheduled_for: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          config?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          initiated_by?: string | null
+          job_type?: string
+          result?: Json | null
+          scheduled_for?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_jobs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenants: {
         Row: {
