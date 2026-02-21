@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, Outlet } from "react-router-dom";
+import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Building2,
@@ -18,10 +18,11 @@ import {
   FlaskConical,
   Users,
   Plug,
+  Workflow,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,32 +32,42 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { DashboardSwitcher } from "@/components/layout/DashboardSwitcher";
+import { AdminTour } from "@/components/onboarding/AdminTour";
 
 const navigation = [
-  { name: "Five9 Domains", href: "/admin/domains", icon: Globe },
-  { name: "Agents", href: "/admin/agents", icon: Users },
-  { name: "Tenants", href: "/admin", icon: Building2 },
-  { name: "Integrations", href: "/admin/integrations", icon: Plug },
-  { name: "Field Mappings", href: "/admin/mappings", icon: FileJson },
-  { name: "API Logs", href: "/admin/logs", icon: Activity },
-  { name: "Test Console", href: "/admin/test", icon: TestTube2 },
-  { name: "Notifications", href: "/admin/notifications", icon: Bell },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-  { name: "Build Outline", href: "/outline", icon: Map },
+  { name: "Five9 Domains", href: "/admin/domains", icon: Globe, permission: "domains" },
+  { name: "Agents", href: "/admin/agents", icon: Users, permission: "agents" },
+  { name: "Clients", href: "/admin", icon: Building2, permission: "tenants" },
+  { name: "Integrations", href: "/admin/integrations", icon: Plug, permission: "integrations" },
+  { name: "Field Mappings", href: "/admin/mappings", icon: FileJson, permission: "mappings" },
+  { name: "Call Flow Builder", href: "/admin/call-flow", icon: Workflow, permission: "call_flow" },
+  { name: "API Logs", href: "/admin/logs", icon: Activity, permission: "logs" },
+  { name: "Test Console", href: "/admin/test", icon: TestTube2, permission: "test_console" },
+  { name: "Notifications", href: "/admin/notifications", icon: Bell, permission: "notifications" },
+  { name: "Settings", href: "/admin/settings", icon: Settings, permission: "settings" },
+  { name: "Build Outline", href: "/outline", icon: Map, permission: null },
 ];
 
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { organization, organizations, switchOrganization, signOut, user, devMode, toggleDevMode, isMasterAdmin } = useAuth();
+  const navigate = useNavigate();
+  const { organization, organizations, switchOrganization, signOut, user, devMode, toggleDevMode, isMasterAdmin, hasPermission } = useAuth();
 
-  const currentPage = navigation.find((item) => 
-    location.pathname === item.href || 
+  // Filter nav by permissions (null permission = always visible)
+  const filteredNavigation = navigation.filter(
+    (item) => item.permission === null || hasPermission(item.permission)
+  );
+
+  const currentPage = filteredNavigation.find((item) =>
+    location.pathname === item.href ||
     (item.href !== "/admin" && location.pathname.startsWith(item.href))
   );
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AdminTour />
+
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -77,12 +88,8 @@ export function AdminLayout() {
           <div className="flex h-16 items-center gap-3 px-6 border-b border-sidebar-border">
             <Fabric59Icon size="md" className="glow-primary" />
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">
-                Fabric59
-              </span>
-              <span className="text-xs text-sidebar-foreground/60">
-                Integration Hub
-              </span>
+              <span className="text-sm font-semibold text-sidebar-foreground">Fabric59</span>
+              <span className="text-xs text-sidebar-foreground/60">Integration Hub</span>
             </div>
             <Button
               variant="ghost"
@@ -97,7 +104,7 @@ export function AdminLayout() {
           {/* Navigation */}
           <ScrollArea className="flex-1 px-3 py-4">
             <nav className="space-y-1">
-              {navigation.map((item) => {
+              {filteredNavigation.map((item) => {
                 const isActive = location.pathname === item.href;
                 return (
                   <Link
@@ -152,7 +159,10 @@ export function AdminLayout() {
               </DropdownMenu>
             )}
 
-            <div className="flex items-center gap-3 rounded-lg bg-sidebar-accent/50 p-3">
+            <div
+              className="flex items-center gap-3 rounded-lg bg-sidebar-accent/50 p-3 cursor-pointer hover:bg-sidebar-accent/70 transition-colors"
+              onClick={() => navigate("/admin/profile")}
+            >
               <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
                 <span className="text-xs font-medium text-primary">
                   {user?.email?.slice(0, 2).toUpperCase() || "U"}
@@ -170,7 +180,7 @@ export function AdminLayout() {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground"
-                onClick={() => signOut()}
+                onClick={(e) => { e.stopPropagation(); signOut(); }}
               >
                 <LogOut className="h-4 w-4" />
               </Button>
@@ -199,7 +209,6 @@ export function AdminLayout() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* DEV MODE toggle — only visible in development */}
             {import.meta.env.DEV && (
               <button
                 onClick={toggleDevMode}

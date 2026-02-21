@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { MasterLayout } from "@/components/layout/MasterLayout";
+import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
 import LoginPage from "@/pages/auth/LoginPage";
@@ -18,6 +19,8 @@ import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import OnboardingPage from "@/pages/onboarding/OnboardingPage";
 import OutlinePage from "@/pages/OutlinePage";
 import LandingPage from "@/pages/LandingPage";
+import TermsPage from "@/pages/TermsPage";
+import SecurityPage from "@/pages/SecurityPage";
 
 // Admin pages
 import TenantsPage from "@/pages/admin/TenantsPage";
@@ -31,6 +34,8 @@ import TestConsolePage from "@/pages/admin/TestConsolePage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import AgentsPage from "@/pages/admin/AgentsPage";
 import IntegrationsPage from "@/pages/admin/IntegrationsPage";
+import ProfilePage from "@/pages/admin/ProfilePage";
+import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import NotFound from "./pages/NotFound";
 
 // Master admin pages
@@ -46,6 +51,7 @@ const App = () => (
       <Toaster />
       <Sonner position="top-right" theme="dark" />
       <BrowserRouter>
+        <ScrollToTop />
         <AuthProvider>
           <Routes>
             {/* Public routes */}
@@ -55,6 +61,8 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/outline" element={<OutlinePage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/security" element={<SecurityPage />} />
 
             {/* Master admin routes - hidden, only accessible via /system-access */}
             <Route element={<MasterProtectedRoute />}>
@@ -81,8 +89,10 @@ const App = () => (
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="agents" element={<AgentsPage />} />
                 <Route path="integrations" element={<IntegrationsPage />} />
+                <Route path="call-flow" element={<CallFlowBuilderPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="profile" element={<ProfilePage />} />
               </Route>
             </Route>
 
