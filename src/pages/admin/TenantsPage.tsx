@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTenants, useDeleteTenant } from "@/hooks/useTenants";
 import { useApiLogStats } from "@/hooks/useApiLogs";
 import { useFive9Sync } from "@/hooks/useFive9Sync";
@@ -8,6 +9,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -50,17 +52,44 @@ const crmLabels: Record<CrmType, string> = {
   other: "Other",
 };
 
+const INTEGRATION_ICONS: { field: keyof Tenant; id: string; label: string; logo: string }[] = [
+  { field: "slack_webhook_url", id: "slack", label: "Slack", logo: "/integration-logos/slack.svg" },
+  { field: "zapier_webhook_url", id: "zapier", label: "Zapier", logo: "/integration-logos/zapier.svg" },
+  { field: "make_webhook_url", id: "make", label: "Make", logo: "/integration-logos/make.svg" },
+  { field: "n8n_webhook_url", id: "n8n", label: "n8n", logo: "" },
+  { field: "pabbly_webhook_url", id: "pabbly", label: "Pabbly", logo: "" },
+];
+
+const CRM_LOGOS: Record<string, string> = {
+  clio: "/integration-logos/clio.svg",
+  workiz: "/integration-logos/workiz.svg",
+  salesforce: "/integration-logos/salesforce.svg",
+};
+
 export default function TenantsPage() {
   const { data: tenants = [], isLoading } = useTenants();
   const { data: stats } = useApiLogStats();
   const deleteTenant = useDeleteTenant();
   const { syncFromFive9, isSyncing } = useFive9Sync();
   const { organization } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [deletingTenant, setDeletingTenant] = useState<Tenant | null>(null);
+
+  // Auto-open edit dialog from ?edit= query param
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (editId && tenants.length > 0) {
+      const tenant = tenants.find((t) => t.id === editId);
+      if (tenant) {
+        setEditingTenant(tenant);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, tenants, setSearchParams]);
 
   const filteredTenants = tenants
     .filter(
@@ -116,6 +145,48 @@ export default function TenantsPage() {
           {tenant.crm_api_url ? new URL(tenant.crm_api_url).host : "—"}
         </span>
       ),
+    },
+    {
+      key: "integrations",
+      header: "Integrations",
+      render: (tenant: Tenant) => {
+        const badges: { label: string; logo: string }[] = [];
+
+        // CRM badge
+        if (tenant.crm_type && tenant.crm_type !== "other" && tenant.crm_type !== "generic_rest") {
+          badges.push({ label: crmLabels[tenant.crm_type], logo: CRM_LOGOS[tenant.crm_type] || "" });
+        }
+
+        // Webhook badges
+        for (const int of INTEGRATION_ICONS) {
+          if (tenant[int.field]) {
+            badges.push({ label: int.label, logo: int.logo });
+          }
+        }
+
+        if (badges.length === 0) return <span className="text-muted-foreground">—</span>;
+
+        return (
+          <TooltipProvider>
+            <div className="flex items-center gap-1 flex-wrap">
+              {badges.map((b) => (
+                <Tooltip key={b.label}>
+                  <TooltipTrigger asChild>
+                    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-muted border">
+                      {b.logo ? (
+                        <img src={b.logo} alt={b.label} className="h-3.5 w-3.5 object-contain dark:invert" />
+                      ) : (
+                        <span className="text-[9px] font-bold text-muted-foreground">{b.label.slice(0, 2)}</span>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">{b.label}</TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          </TooltipProvider>
+        );
+      },
     },
     {
       key: "updated_at",

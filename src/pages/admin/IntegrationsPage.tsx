@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Search, Plug } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { IntegrationCard } from "@/components/integrations/IntegrationCard";
@@ -81,18 +82,20 @@ export default function IntegrationsPage() {
 
       {/* Tabs + Grid */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex flex-wrap h-auto gap-1 bg-transparent p-0">
-          {[ALL_TAB, ...CATEGORIES].map((tab) => (
-            <TabsTrigger
-              key={tab}
-              value={tab}
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1.5 text-xs"
-            >
-              {tab === ALL_TAB ? "All" : tab.split(" / ")[0]}{" "}
-              <span className="ml-1 opacity-70">({counts[tab] ?? 0})</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <ScrollArea className="w-full whitespace-nowrap">
+          <TabsList className="inline-flex h-auto gap-1 bg-transparent p-0 pb-2">
+            {[ALL_TAB, ...CATEGORIES].map((tab) => (
+              <TabsTrigger
+                key={tab}
+                value={tab}
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full px-3 py-1.5 text-xs flex-shrink-0"
+              >
+                {tab === ALL_TAB ? "All" : tab.split(" / ")[0]}{" "}
+                <span className="ml-1 opacity-70">({counts[tab] ?? 0})</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </ScrollArea>
 
         {/* Single content area for all tabs since filtering is JS-driven */}
         <TabsContent value={activeTab} className="mt-4">

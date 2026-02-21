@@ -223,7 +223,7 @@ export function AdminLayout() {
         </header>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="overflow-y-auto h-[calc(100vh-4rem)] p-6">
           <Outlet />
         </main>
       </div>
