@@ -32,6 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Save, Trash2, Loader2, Eye, EyeOff, Plug, Unplug, CheckCircle2, XCircle, Clock, Info } from "lucide-react";
 import type { Five9DomainStatus, WorkflowSettings } from "@/types/database";
 import { format } from "date-fns";
+import { DispositionsTab } from "@/components/domains/DispositionsTab";
 
 export default function DomainDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -239,6 +240,7 @@ export default function DomainDetailPage() {
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="api">API Credentials</TabsTrigger>
           <TabsTrigger value="workflow">Workflow</TabsTrigger>
+          <TabsTrigger value="dispositions">Dispositions</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
         </TabsList>
 
@@ -528,6 +530,10 @@ export default function DomainDetailPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="dispositions">
+          <DispositionsTab domainId={id || ""} canManage={canManage} />
         </TabsContent>
 
         <TabsContent value="branding" className="space-y-4">

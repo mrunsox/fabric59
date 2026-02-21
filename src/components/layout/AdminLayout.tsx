@@ -68,7 +68,7 @@ export function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminTour />
+      {!isMasterAdmin && <AdminTour />}
 
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (

@@ -284,6 +284,91 @@ serve(async (req) => {
 
       responseData = { success: true, agentsAdded, tenantsAdded };
 
+    } else if (action === 'getCampaigns') {
+      const soapBody = `<ser:getCampaigns/>`;
+      const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getCampaigns', soapBody);
+      const campaigns = [...new Set(extractValues(xml, 'name').filter(Boolean))];
+      responseData = { success: true, campaigns };
+
+    } else if (action === 'getCampaignProfiles') {
+      const soapBody = `<ser:getCampaignProfiles/>`;
+      const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getCampaignProfiles', soapBody);
+      const profileBlocks = xml.match(/<return>(.*?)<\/return>/gs) || [];
+      const profiles = profileBlocks.map(block => extractFirst(block, 'name')).filter(Boolean);
+      responseData = { success: true, profiles };
+
+    } else if (action === 'createDispositions') {
+      const { dispositions } = payload as { dispositions: Array<{ name: string; type?: string; description?: string }> };
+      const results: Array<{ name: string; success: boolean; error?: string }> = [];
+
+      for (const dispo of dispositions) {
+        try {
+          const soapBody = `<ser:createDisposition>
+  <disposition>
+    <name>${escapeXml(dispo.name)}</name>
+    <description>${escapeXml(dispo.description || '')}</description>
+    <type>${escapeXml(dispo.type || 'FinalApplyToCampaigns')}</type>
+    <agentMustConfirm>false</agentMustConfirm>
+    <resetAttemptsCounter>false</resetAttemptsCounter>
+  </disposition>
+</ser:createDisposition>`;
+          await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'createDisposition', soapBody);
+          results.push({ name: dispo.name, success: true });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Unknown error';
+          // If it already exists, treat as success
+          if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('duplicate')) {
+            results.push({ name: dispo.name, success: true, error: 'Already exists (skipped)' });
+          } else {
+            results.push({ name: dispo.name, success: false, error: msg });
+          }
+        }
+      }
+      responseData = { success: true, results };
+
+    } else if (action === 'addDispositionsToCampaigns') {
+      const { dispositionNames, campaigns, campaignProfiles } = payload as {
+        dispositionNames: string[];
+        campaigns: string[];
+        campaignProfiles: string[];
+      };
+      const results: Array<{ target: string; targetType: string; success: boolean; error?: string }> = [];
+
+      // Add to campaigns
+      for (const campaign of (campaigns || [])) {
+        try {
+          const dispoXml = dispositionNames.map(d => `<dispositions>${escapeXml(d)}</dispositions>`).join('\n  ');
+          const soapBody = `<ser:addDispositionsToCampaign>
+  <campaignName>${escapeXml(campaign)}</campaignName>
+  ${dispoXml}
+</ser:addDispositionsToCampaign>`;
+          await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'addDispositionsToCampaign', soapBody);
+          results.push({ target: campaign, targetType: 'campaign', success: true });
+        } catch (err) {
+          results.push({ target: campaign, targetType: 'campaign', success: false, error: err instanceof Error ? err.message : 'Unknown error' });
+        }
+      }
+
+      // Add to campaign profiles
+      for (const profile of (campaignProfiles || [])) {
+        try {
+          const dispoCountsXml = dispositionNames.map(d => `<addDispositionCounts>
+    <disposition><name>${escapeXml(d)}</name></disposition>
+    <count>-1</count>
+  </addDispositionCounts>`).join('\n  ');
+          const soapBody = `<ser:modifyCampaignProfileDispositions>
+  <profileName>${escapeXml(profile)}</profileName>
+  ${dispoCountsXml}
+</ser:modifyCampaignProfileDispositions>`;
+          await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'modifyCampaignProfileDispositions', soapBody);
+          results.push({ target: profile, targetType: 'campaignProfile', success: true });
+        } catch (err) {
+          results.push({ target: profile, targetType: 'campaignProfile', success: false, error: err instanceof Error ? err.message : 'Unknown error' });
+        }
+      }
+
+      responseData = { success: true, results };
+
     } else {
       responseData = { success: false, error: `Unknown action: ${action}` };
     }
