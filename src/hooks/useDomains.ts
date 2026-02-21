@@ -108,7 +108,7 @@ export function useUpdateDomain() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Five9DomainFormData> & { status?: Five9DomainStatus } }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Five9DomainFormData> & { status?: Five9DomainStatus; api_connection_status?: string } }) => {
       const updateData: Record<string, unknown> = {};
 
       if (data.domain !== undefined) updateData.domain = data.domain;
@@ -118,6 +118,7 @@ export function useUpdateDomain() {
       if (data.five9_password !== undefined) updateData.five9_password_encrypted = data.five9_password || null;
       if (data.workflow_settings !== undefined) updateData.workflow_settings = data.workflow_settings as Json;
       if (data.status !== undefined) updateData.status = data.status;
+      if (data.api_connection_status !== undefined) updateData.api_connection_status = data.api_connection_status;
 
       const { error } = await supabase
         .from("five9_domains")

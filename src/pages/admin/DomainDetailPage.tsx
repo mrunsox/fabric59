@@ -29,7 +29,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Save, Trash2, Loader2, Eye, EyeOff, Plug, CheckCircle2, XCircle, Clock, Info } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Loader2, Eye, EyeOff, Plug, Unplug, CheckCircle2, XCircle, Clock, Info } from "lucide-react";
 import type { Five9DomainStatus, WorkflowSettings } from "@/types/database";
 import { format } from "date-fns";
 
@@ -443,6 +443,62 @@ export default function DomainDetailPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Disconnect Domain */}
+              {canManage && domain.api_connection_status === "connected" && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
+                        <Unplug className="h-4 w-4 text-destructive" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Disconnect Domain</p>
+                        <p className="text-xs text-muted-foreground">
+                          Remove API credentials and disconnect from Five9. The domain record and all other settings will be preserved.
+                        </p>
+                      </div>
+                    </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          Disconnect
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Disconnect Domain?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will clear the Five9 username and password and reset the connection status. Any active integrations relying on this connection will stop working until new credentials are provided.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={async () => {
+                              if (!id) return;
+                              await updateDomain.mutateAsync({
+                                id,
+                                data: {
+                                  five9_username: "",
+                                  five9_password: "",
+                                  api_connection_status: "pending",
+                                },
+                              });
+                              setFive9Username("");
+                              setFive9Password("");
+                              setCredentialsUnlocked(false);
+                            }}
+                          >
+                            Disconnect
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
