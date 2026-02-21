@@ -1,91 +1,61 @@
 
 
-# Role-Based User Dashboard
+# Real-Time User Dashboard Updates
 
 ## Current State
 
-The building blocks are already in place:
-- `user_permissions` table stores per-user, per-org permission grants
-- `hasPermission()` in AuthContext checks permissions (owners/admins get everything)
-- AdminLayout already filters the sidebar navigation based on permissions
-- Settings page has a Team Members grid where admins toggle permissions per user
+The User Dashboard loads data once on mount via `useEffect` and never refreshes. If someone adds an agent or client in another tab or another user adds one, the stats stay stale until a page reload.
 
-**What's missing**: A dedicated, simplified dashboard experience for non-admin members that adapts its landing view to their permissions (e.g., a supervisor sees agent stats front and center, a client manager sees client stats).
+## What Will Change
 
-## What Will Be Built
+### Add Realtime Subscriptions to UserDashboardPage
 
-### 1. User Dashboard Page
+**File: `src/pages/admin/UserDashboardPage.tsx`**
 
-A new page at `/admin/dashboard` that renders a personalized home screen based on the logged-in user's permissions:
+1. **Enable Realtime on `agents` and `tenants` tables** -- A database migration will add both tables to the `supabase_realtime` publication so Postgres changes are broadcast.
 
-- **Agents-only users**: See agent stats (Total, Active, Pending, Deprovisioned), recent agent activity, and a quick-action button to provision a new agent
-- **Clients-only users**: See client/tenant stats (Total, Active), recent client records, and a quick-action to add a new client
-- **Both permissions**: See a combined view with both stat sections
-- **Full admins/owners**: See everything (agents, clients, domains, integrations summary)
+2. **Subscribe to changes** -- After the initial data load, set up two Realtime channels:
+   - `dashboard-agents`: listens for INSERT, UPDATE, DELETE on the `agents` table. On any change, re-fetch agent stats and recent agents.
+   - `dashboard-tenants`: listens for INSERT, UPDATE, DELETE on the `tenants` table. On any change, re-fetch tenant stats and recent tenants.
 
-This page will query existing tables (`agents`, `tenants`) for stat counts and recent records.
+3. **Cleanup on unmount** -- Unsubscribe from both channels when the component unmounts.
 
-### 2. Smart Landing Page Redirect
+4. **Refactor data fetching** -- Extract the current fetch logic into reusable `fetchAgentData()` and `fetchTenantData()` functions so they can be called both on mount and when a realtime event fires.
 
-Update the admin index route so that:
-- **Owners/Admins/Master Admins**: Land on the full dashboard (same as today -- TenantsPage or the new dashboard)
-- **Members with limited permissions**: Land on `/admin/dashboard` which shows their personalized view
+### Database Migration
 
-### 3. Dashboard Switcher Update
+A single SQL migration to enable realtime:
 
-Update the DashboardSwitcher to show a "User Dashboard" option for non-admin members (instead of only showing the switcher for master admins). The switcher options become:
-- **System Admin** (master admins only)
-- **Admin Dashboard** (owners/admins)
-- **My Dashboard** (all members -- their personalized view)
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.agents;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.tenants;
+```
 
-### 4. Sidebar Highlight
+### No Other File Changes
 
-When a member lands on the User Dashboard, highlight it as the active item in the sidebar. Add a "My Dashboard" nav item at the top of the filtered navigation for non-admin members.
+The realtime subscription is self-contained within the dashboard page. No new components, hooks, or routes needed.
 
 ---
 
 ## Technical Details
 
-### New File: `src/pages/admin/UserDashboardPage.tsx`
+The realtime subscription pattern:
 
-A new React component that:
-- Uses `useAuth()` to get the current user's permissions
-- Conditionally renders stat cards and recent-record tables based on `hasPermission("agents")` and `hasPermission("tenants")`
-- Queries `agents` table for agent counts by status
-- Queries `tenants` table for client counts by status
-- Shows quick-action buttons that link to the relevant pages
+```typescript
+const channel = supabase
+  .channel('dashboard-agents')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, () => {
+    fetchAgentData();
+  })
+  .subscribe();
+```
 
-### Modified File: `src/App.tsx`
-
-- Add a new route: `<Route path="dashboard" element={<UserDashboardPage />} />`  inside the `/admin` layout
-
-### Modified File: `src/components/layout/AdminLayout.tsx`
-
-- Add a "My Dashboard" nav item at position 0 for non-admin members (permission: `null`, always visible)
-- The href will be `/admin/dashboard`
-
-### Modified File: `src/components/layout/DashboardSwitcher.tsx`
-
-- Show the switcher for all authenticated users (not just master admins)
-- For non-admin members: show "My Dashboard" (links to `/admin/dashboard`)
-- For admins/owners: show "Admin Dashboard" (links to `/admin`)
-- For master admins: keep existing "System Admin" + "Admin Dashboard" options
-
-### Modified File: `src/components/auth/ProtectedRoute.tsx`
-
-- Add logic: if a non-admin member navigates to `/admin` (the index), redirect them to `/admin/dashboard` instead
-
-### No Database Changes
-
-All data comes from existing `agents` and `tenants` tables with existing RLS policies.
+Both channels will be created inside the same `useEffect` that does the initial fetch, with cleanup via `supabase.removeChannel(channel)` in the effect's return function.
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/pages/admin/UserDashboardPage.tsx` | New -- personalized dashboard with permission-based stat cards |
-| `src/App.tsx` | Add `/admin/dashboard` route |
-| `src/components/layout/AdminLayout.tsx` | Add "My Dashboard" nav item for non-admin members |
-| `src/components/layout/DashboardSwitcher.tsx` | Show switcher for all users, add "My Dashboard" option |
-| `src/components/auth/ProtectedRoute.tsx` | Redirect non-admin members from `/admin` to `/admin/dashboard` |
+| `src/pages/admin/UserDashboardPage.tsx` | Add realtime subscriptions for agents and tenants tables, refactor fetch into reusable functions |
+| Database migration | `ALTER PUBLICATION supabase_realtime ADD TABLE public.agents, public.tenants` |
 
