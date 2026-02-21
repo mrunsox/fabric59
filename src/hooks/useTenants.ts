@@ -51,6 +51,7 @@ export function useTenants() {
         asana_api_key: (row as Record<string, unknown>).asana_api_key as string | null ?? null,
         openai_api_key: (row as Record<string, unknown>).openai_api_key as string | null ?? null,
         power_automate_webhook_url: (row as Record<string, unknown>).power_automate_webhook_url as string | null ?? null,
+        integration_configs: ((row as Record<string, unknown>).integration_configs as Record<string, string>) || {},
         notification_triggers: (row.notification_triggers as unknown as NotificationTriggers) || DEFAULT_NOTIFICATION_TRIGGERS,
         status: row.status as TenantStatus,
         created_at: row.created_at,
@@ -103,6 +104,7 @@ export function useTenant(id: string) {
         asana_api_key: (data as Record<string, unknown>).asana_api_key as string | null ?? null,
         openai_api_key: (data as Record<string, unknown>).openai_api_key as string | null ?? null,
         power_automate_webhook_url: (data as Record<string, unknown>).power_automate_webhook_url as string | null ?? null,
+        integration_configs: ((data as Record<string, unknown>).integration_configs as Record<string, string>) || {},
         notification_triggers: (data.notification_triggers as unknown as NotificationTriggers) || DEFAULT_NOTIFICATION_TRIGGERS,
         status: data.status as TenantStatus,
         created_at: data.created_at,
@@ -145,6 +147,7 @@ export function useCreateTenant() {
           asana_api_key: (data as any).asana_api_key || null,
           openai_api_key: (data as any).openai_api_key || null,
           power_automate_webhook_url: (data as any).power_automate_webhook_url || null,
+          integration_configs: (data as any).integration_configs || {},
           notification_triggers: data.notification_triggers as unknown as Record<string, boolean>,
           status: data.status,
         },
@@ -194,6 +197,7 @@ export function useUpdateTenant() {
       if ((data as any).asana_api_key !== undefined) updateData.asana_api_key = (data as any).asana_api_key || null;
       if ((data as any).openai_api_key !== undefined) updateData.openai_api_key = (data as any).openai_api_key || null;
       if ((data as any).power_automate_webhook_url !== undefined) updateData.power_automate_webhook_url = (data as any).power_automate_webhook_url || null;
+      if ((data as any).integration_configs !== undefined) updateData.integration_configs = (data as any).integration_configs || {};
       if (data.notification_triggers !== undefined) updateData.notification_triggers = data.notification_triggers as unknown as Record<string, boolean>;
       if (data.status !== undefined) updateData.status = data.status;
 

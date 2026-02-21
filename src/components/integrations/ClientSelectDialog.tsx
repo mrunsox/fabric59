@@ -40,6 +40,41 @@ const INTEGRATION_FIELD_MAP: Record<string, string> = {
   openai: "openai_api_key",
   "power-automate": "power_automate_webhook_url",
   "google-drive": "google_calendar_id",
+  // JSONB-based integrations (stored in integration_configs)
+  jobber: "integration_configs.jobber_api_key",
+  "housecall-pro": "integration_configs.housecall_pro_api_key",
+  smokeball: "integration_configs.smokeball_api_key",
+  mycase: "integration_configs.mycase_api_key",
+  practicepanther: "integration_configs.practicepanther_api_key",
+  filevine: "integration_configs.filevine_api_key",
+  cosmolex: "integration_configs.cosmolex_api_key",
+  "zoho-crm": "integration_configs.zoho_crm_api_key",
+  "dynamics-365": "integration_configs.dynamics365_api_key",
+  quoteiq: "integration_configs.quoteiq_api_key",
+  fieldpulse: "integration_configs.fieldpulse_api_key",
+  zenmaid: "integration_configs.zenmaid_api_key",
+  leap: "integration_configs.leap_api_key",
+  actionstep: "integration_configs.actionstep_api_key",
+  abacuslaw: "integration_configs.abacuslaw_api_key",
+  ringcentral: "integration_configs.ringcentral_api_key",
+  "google-chat": "integration_configs.google_chat_webhook_url",
+  oncehub: "integration_configs.oncehub_api_key",
+  monday: "integration_configs.monday_api_key",
+  onedrive: "integration_configs.onedrive_api_key",
+  "adobe-sign": "integration_configs.adobe_sign_api_key",
+  hellosign: "integration_configs.hellosign_api_key",
+  netdocuments: "integration_configs.netdocuments_api_key",
+  lawpay: "integration_configs.lawpay_api_key",
+  casetext: "integration_configs.casetext_api_key",
+  spellbook: "integration_configs.spellbook_api_key",
+  "harvey-ai": "integration_configs.harvey_ai_api_key",
+  "lexis-ai": "integration_configs.lexis_ai_api_key",
+  "darrow-ai": "integration_configs.darrow_ai_api_key",
+  diligen: "integration_configs.diligen_api_key",
+  westlaw: "integration_configs.westlaw_api_key",
+  fastcase: "integration_configs.fastcase_api_key",
+  lastpass: "integration_configs.lastpass_api_key",
+  nordpass: "integration_configs.nordpass_api_key",
 };
 
 export function ClientSelectDialog({ integration, open, onOpenChange, onCloseAll }: Props) {
@@ -70,6 +105,11 @@ export function ClientSelectDialog({ integration, open, onOpenChange, onCloseAll
     // Webhook match
     const field = INTEGRATION_FIELD_MAP[integration.id];
     if (field) {
+      if (field.startsWith("integration_configs.")) {
+        const configKey = field.replace("integration_configs.", "");
+        const configs = (tenant as any).integration_configs;
+        return !!(configs && configs[configKey]);
+      }
       return !!(tenant as any)[field];
     }
 

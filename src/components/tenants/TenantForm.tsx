@@ -19,7 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Loader2, ChevronDown, Bell, Zap, Workflow, Phone, Video, Calendar, MessageCircle, CreditCard, FileText, Brain } from "lucide-react";
+import { Loader2, ChevronDown, Bell, Zap, Workflow, Phone, Video, Calendar, MessageCircle, CreditCard, FileText, Brain, Building2, Key, Globe, Shield } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -58,6 +58,7 @@ const formSchema = z.object({
   asana_api_key: z.string().optional().or(z.literal("")),
   openai_api_key: z.string().optional().or(z.literal("")),
   power_automate_webhook_url: z.string().url().optional().or(z.literal("")),
+  integration_configs: z.record(z.string()).optional(),
   notification_triggers: z.object({
     intake_created: z.boolean(),
     call_ended: z.boolean(),
@@ -134,6 +135,13 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
   const [aiOpen, setAiOpen] = useState(
     !!((tenant as any)?.openai_api_key)
   );
+  const [additionalCrmsOpen, setAdditionalCrmsOpen] = useState(false);
+  const [additionalCommsOpen, setAdditionalCommsOpen] = useState(false);
+  const [additionalSchedulingOpen, setAdditionalSchedulingOpen] = useState(false);
+  const [additionalDocsOpen, setAdditionalDocsOpen] = useState(false);
+  const [legalBillingOpen, setLegalBillingOpen] = useState(false);
+  const [legalAiOpen, setLegalAiOpen] = useState(false);
+  const [securityOpen, setSecurityOpen] = useState(false);
 
   // Load organizations (white-label partners) for the dropdown
   const { data: organizations = [] } = useQuery({
@@ -178,6 +186,7 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
       asana_api_key: (tenant as any)?.asana_api_key || "",
       openai_api_key: (tenant as any)?.openai_api_key || "",
       power_automate_webhook_url: (tenant as any)?.power_automate_webhook_url || "",
+      integration_configs: (tenant as any)?.integration_configs || {},
       notification_triggers: tenant?.notification_triggers || DEFAULT_NOTIFICATION_TRIGGERS,
       status: tenant?.status || "pending",
     },
@@ -752,6 +761,233 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
             <Input id="microsoft365_api_key" type="password" placeholder="••••••••" {...form.register("microsoft365_api_key")} />
             <p className="text-xs text-muted-foreground">App registration client secret from Azure AD portal</p>
           </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Additional CRMs Section */}
+      <Collapsible open={additionalCrmsOpen} onOpenChange={setAdditionalCrmsOpen} className="rounded-lg border border-border">
+        <CollapsibleTrigger asChild>
+          <button type="button" className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Additional CRMs</span>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", additionalCrmsOpen && "rotate-180")} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          <p className="text-sm text-muted-foreground">API keys for additional CRM and practice management platforms.</p>
+          {[
+            { key: "jobber_api_key", label: "Jobber API Key" },
+            { key: "housecall_pro_api_key", label: "Housecall Pro API Key" },
+            { key: "smokeball_api_key", label: "Smokeball API Key" },
+            { key: "mycase_api_key", label: "MyCase API Key" },
+            { key: "practicepanther_api_key", label: "PracticePanther API Key" },
+            { key: "filevine_api_key", label: "Filevine API Key" },
+            { key: "cosmolex_api_key", label: "CosmoLex API Key" },
+            { key: "zoho_crm_api_key", label: "Zoho CRM API Key" },
+            { key: "dynamics365_api_key", label: "Dynamics 365 API Key" },
+            { key: "quoteiq_api_key", label: "QuoteIQ API Key" },
+            { key: "fieldpulse_api_key", label: "FieldPulse API Key" },
+            { key: "zenmaid_api_key", label: "ZenMaid API Key" },
+            { key: "leap_api_key", label: "LEAP API Key" },
+            { key: "actionstep_api_key", label: "Actionstep API Key" },
+            { key: "abacuslaw_api_key", label: "AbacusLaw API Key" },
+          ].map((item) => (
+            <div key={item.key} className="space-y-2">
+              <Label htmlFor={`ic_${item.key}`}>{item.label}</Label>
+              <Input id={`ic_${item.key}`} type="password" placeholder="••••••••"
+                value={form.watch("integration_configs")?.[item.key] || ""}
+                onChange={(e) => {
+                  const current = form.getValues("integration_configs") || {};
+                  form.setValue("integration_configs", { ...current, [item.key]: e.target.value });
+                }}
+              />
+            </div>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Additional Communication Section */}
+      <Collapsible open={additionalCommsOpen} onOpenChange={setAdditionalCommsOpen} className="rounded-lg border border-border">
+        <CollapsibleTrigger asChild>
+          <button type="button" className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Additional Communication</span>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", additionalCommsOpen && "rotate-180")} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          {[
+            { key: "ringcentral_api_key", label: "RingCentral API Key" },
+            { key: "google_chat_webhook_url", label: "Google Chat Webhook URL" },
+          ].map((item) => (
+            <div key={item.key} className="space-y-2">
+              <Label htmlFor={`ic_${item.key}`}>{item.label}</Label>
+              <Input id={`ic_${item.key}`} type="password" placeholder="••••••••"
+                value={form.watch("integration_configs")?.[item.key] || ""}
+                onChange={(e) => {
+                  const current = form.getValues("integration_configs") || {};
+                  form.setValue("integration_configs", { ...current, [item.key]: e.target.value });
+                }}
+              />
+            </div>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Additional Scheduling Section */}
+      <Collapsible open={additionalSchedulingOpen} onOpenChange={setAdditionalSchedulingOpen} className="rounded-lg border border-border">
+        <CollapsibleTrigger asChild>
+          <button type="button" className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Additional Scheduling</span>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", additionalSchedulingOpen && "rotate-180")} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          {[
+            { key: "oncehub_api_key", label: "OnceHub API Key" },
+            { key: "monday_api_key", label: "Monday.com API Key" },
+          ].map((item) => (
+            <div key={item.key} className="space-y-2">
+              <Label htmlFor={`ic_${item.key}`}>{item.label}</Label>
+              <Input id={`ic_${item.key}`} type="password" placeholder="••••••••"
+                value={form.watch("integration_configs")?.[item.key] || ""}
+                onChange={(e) => {
+                  const current = form.getValues("integration_configs") || {};
+                  form.setValue("integration_configs", { ...current, [item.key]: e.target.value });
+                }}
+              />
+            </div>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Additional Documents Section */}
+      <Collapsible open={additionalDocsOpen} onOpenChange={setAdditionalDocsOpen} className="rounded-lg border border-border">
+        <CollapsibleTrigger asChild>
+          <button type="button" className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Additional Documents</span>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", additionalDocsOpen && "rotate-180")} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          {[
+            { key: "onedrive_api_key", label: "OneDrive API Key" },
+            { key: "adobe_sign_api_key", label: "Adobe Sign API Key" },
+            { key: "hellosign_api_key", label: "HelloSign API Key" },
+            { key: "netdocuments_api_key", label: "NetDocuments API Key" },
+          ].map((item) => (
+            <div key={item.key} className="space-y-2">
+              <Label htmlFor={`ic_${item.key}`}>{item.label}</Label>
+              <Input id={`ic_${item.key}`} type="password" placeholder="••••••••"
+                value={form.watch("integration_configs")?.[item.key] || ""}
+                onChange={(e) => {
+                  const current = form.getValues("integration_configs") || {};
+                  form.setValue("integration_configs", { ...current, [item.key]: e.target.value });
+                }}
+              />
+            </div>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Legal Billing Section */}
+      <Collapsible open={legalBillingOpen} onOpenChange={setLegalBillingOpen} className="rounded-lg border border-border">
+        <CollapsibleTrigger asChild>
+          <button type="button" className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Legal Billing</span>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", legalBillingOpen && "rotate-180")} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="ic_lawpay_api_key">LawPay API Key</Label>
+            <Input id="ic_lawpay_api_key" type="password" placeholder="••••••••"
+              value={form.watch("integration_configs")?.lawpay_api_key || ""}
+              onChange={(e) => {
+                const current = form.getValues("integration_configs") || {};
+                form.setValue("integration_configs", { ...current, lawpay_api_key: e.target.value });
+              }}
+            />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* AI / Legal Research Section */}
+      <Collapsible open={legalAiOpen} onOpenChange={setLegalAiOpen} className="rounded-lg border border-border">
+        <CollapsibleTrigger asChild>
+          <button type="button" className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">AI / Legal Research</span>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", legalAiOpen && "rotate-180")} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          {[
+            { key: "casetext_api_key", label: "Casetext API Key" },
+            { key: "spellbook_api_key", label: "Spellbook API Key" },
+            { key: "harvey_ai_api_key", label: "Harvey AI API Key" },
+            { key: "lexis_ai_api_key", label: "Lexis+ AI API Key" },
+            { key: "darrow_ai_api_key", label: "Darrow AI API Key" },
+            { key: "diligen_api_key", label: "Diligen API Key" },
+            { key: "westlaw_api_key", label: "Westlaw API Key" },
+            { key: "fastcase_api_key", label: "Fastcase API Key" },
+          ].map((item) => (
+            <div key={item.key} className="space-y-2">
+              <Label htmlFor={`ic_${item.key}`}>{item.label}</Label>
+              <Input id={`ic_${item.key}`} type="password" placeholder="••••••••"
+                value={form.watch("integration_configs")?.[item.key] || ""}
+                onChange={(e) => {
+                  const current = form.getValues("integration_configs") || {};
+                  form.setValue("integration_configs", { ...current, [item.key]: e.target.value });
+                }}
+              />
+            </div>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Security / Passwords Section */}
+      <Collapsible open={securityOpen} onOpenChange={setSecurityOpen} className="rounded-lg border border-border">
+        <CollapsibleTrigger asChild>
+          <button type="button" className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <Key className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Security / Passwords</span>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", securityOpen && "rotate-180")} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          {[
+            { key: "lastpass_api_key", label: "LastPass API Key" },
+            { key: "nordpass_api_key", label: "NordPass API Key" },
+          ].map((item) => (
+            <div key={item.key} className="space-y-2">
+              <Label htmlFor={`ic_${item.key}`}>{item.label}</Label>
+              <Input id={`ic_${item.key}`} type="password" placeholder="••••••••"
+                value={form.watch("integration_configs")?.[item.key] || ""}
+                onChange={(e) => {
+                  const current = form.getValues("integration_configs") || {};
+                  form.setValue("integration_configs", { ...current, [item.key]: e.target.value });
+                }}
+              />
+            </div>
+          ))}
         </CollapsibleContent>
       </Collapsible>
 

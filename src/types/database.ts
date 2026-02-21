@@ -112,6 +112,7 @@ export interface Tenant {
   asana_api_key: string | null;
   openai_api_key: string | null;
   power_automate_webhook_url: string | null;
+  integration_configs: Record<string, string>;
   notification_triggers: NotificationTriggers;
   status: TenantStatus;
   created_at: string;
@@ -213,6 +214,7 @@ export interface TenantFormData {
   asana_api_key: string;
   openai_api_key: string;
   power_automate_webhook_url: string;
+  integration_configs: Record<string, string>;
   notification_triggers: NotificationTriggers;
   status: TenantStatus;
 }

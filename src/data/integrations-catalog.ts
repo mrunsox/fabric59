@@ -192,7 +192,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developer.getjobber.com/",
     icon: Home,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "housecall-pro",
@@ -211,7 +211,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://docs.housecallpro.com/",
     icon: Home,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "smokeball",
@@ -230,7 +230,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.smokeball.com/",
     icon: Scale,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "mycase",
@@ -249,7 +249,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.mycase.com/",
     icon: Briefcase,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "practicepanther",
@@ -268,7 +268,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.practicepanther.com/",
     icon: Scale,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "filevine",
@@ -287,7 +287,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developer.filevine.io/",
     icon: FolderOpen,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "cosmolex",
@@ -306,7 +306,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.cosmolex.com/",
     icon: Scale,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "hubspot",
@@ -346,7 +346,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.zoho.com/crm/developer/docs/api/v2/",
     icon: Users,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "dynamics-365",
@@ -365,7 +365,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://learn.microsoft.com/en-us/dynamics365/",
     icon: Building2,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "zendesk",
@@ -403,7 +403,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://quoteiq.com/",
     icon: PaintBucket,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "fieldpulse",
@@ -421,7 +421,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.fieldpulse.com/",
     icon: Wrench,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "zenmaid",
@@ -439,7 +439,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.zenmaid.com/",
     icon: Home,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "leap",
@@ -457,7 +457,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.leap.us/",
     icon: Scale,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "actionstep",
@@ -475,7 +475,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.actionstep.com/",
     icon: Workflow,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "abacuslaw",
@@ -493,7 +493,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.abacusnext.com/",
     icon: Briefcase,
-    status: "coming_soon",
+    status: "available",
   },
 
   // ── Communication / Messaging ──
@@ -571,7 +571,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developers.ringcentral.com/api-reference",
     icon: Phone,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "zoom",
@@ -608,7 +608,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developers.google.com/chat/api/reference/rest",
     icon: MessageCircle,
-    status: "coming_soon",
+    status: "available",
   },
 
   // ── Productivity / Scheduling ──
@@ -648,7 +648,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://learn.microsoft.com/en-us/graph/api/resources/mail-api-overview",
     icon: Mail,
     logoUrl: "/integration-logos/microsoft.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "calendly",
@@ -685,7 +685,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developers.oncehub.com/",
     icon: CalendarCheck,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "asana",
@@ -722,7 +722,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developer.monday.com/api-reference/reference",
     icon: LayoutDashboard,
-    status: "coming_soon",
+    status: "available",
   },
 
   // ── Document / Storage ──
@@ -781,7 +781,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://learn.microsoft.com/en-us/onedrive/developer/",
     icon: Cloud,
     logoUrl: "/integration-logos/onedrive.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "docusign",
@@ -816,7 +816,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developer.adobe.com/document-services/docs/overview/",
     icon: Stamp,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "hellosign",
@@ -833,7 +833,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://developers.hellosign.com/",
     icon: FileSignature,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "netdocuments",
@@ -851,7 +851,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://api.netdocuments.com/",
     icon: Archive,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "evernote",
@@ -905,7 +905,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.lawpay.com/",
     icon: DollarSign,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "timesolv",
@@ -1051,7 +1051,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://casetext.com/",
     icon: BookMarked,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "spellbook",
@@ -1068,7 +1068,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.spellbook.legal/",
     icon: Sparkles,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "harvey-ai",
@@ -1085,7 +1085,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.harvey.ai/",
     icon: Brain,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "lexis-ai",
@@ -1102,7 +1102,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.lexisnexis.com/",
     icon: BookMarked,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "darrow-ai",
@@ -1119,7 +1119,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.darrow.ai/",
     icon: Shield,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "diligen",
@@ -1136,7 +1136,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.diligen.com/",
     icon: FileText,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "westlaw",
@@ -1153,7 +1153,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://legal.thomsonreuters.com/en/products/westlaw",
     icon: Globe,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "fastcase",
@@ -1170,7 +1170,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.fastcase.com/",
     icon: BookOpen,
-    status: "coming_soon",
+    status: "available",
   },
 
   // ── Password / Security (bonus) ──
@@ -1189,7 +1189,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://support.lastpass.com/",
     icon: Key,
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "nordpass",
@@ -1206,6 +1206,6 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://nordpass.com/",
     icon: Key,
-    status: "coming_soon",
+    status: "available",
   },
 ];

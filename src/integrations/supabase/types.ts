@@ -562,6 +562,7 @@ export type Database = {
           five9_domain_id: string | null
           google_calendar_id: string | null
           id: string
+          integration_configs: Json | null
           make_webhook_url: string | null
           microsoft365_api_key: string | null
           n8n_webhook_url: string | null
@@ -597,6 +598,7 @@ export type Database = {
           five9_domain_id?: string | null
           google_calendar_id?: string | null
           id?: string
+          integration_configs?: Json | null
           make_webhook_url?: string | null
           microsoft365_api_key?: string | null
           n8n_webhook_url?: string | null
@@ -632,6 +634,7 @@ export type Database = {
           five9_domain_id?: string | null
           google_calendar_id?: string | null
           id?: string
+          integration_configs?: Json | null
           make_webhook_url?: string | null
           microsoft365_api_key?: string | null
           n8n_webhook_url?: string | null
