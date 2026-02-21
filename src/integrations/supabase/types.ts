@@ -550,22 +550,31 @@ export type Database = {
       }
       tenants: {
         Row: {
+          asana_api_key: string | null
+          calendly_api_key: string | null
           created_at: string
           crm_api_key: string | null
           crm_api_url: string | null
           crm_type: Database["public"]["Enums"]["crm_type"]
           custom_mappings: Json | null
+          docusign_api_key: string | null
+          dropbox_api_key: string | null
           five9_domain_id: string | null
           google_calendar_id: string | null
           id: string
           make_webhook_url: string | null
+          microsoft365_api_key: string | null
           n8n_webhook_url: string | null
           name: string
           notification_triggers: Json | null
+          openai_api_key: string | null
           organization_id: string | null
           pabbly_webhook_url: string | null
+          power_automate_webhook_url: string | null
+          quickbooks_api_key: string | null
           slack_webhook_url: string | null
           status: string
+          stripe_api_key: string | null
           teams_webhook_url: string | null
           twilio_account_sid: string | null
           twilio_auth_token: string | null
@@ -576,22 +585,31 @@ export type Database = {
           zoom_api_key: string | null
         }
         Insert: {
+          asana_api_key?: string | null
+          calendly_api_key?: string | null
           created_at?: string
           crm_api_key?: string | null
           crm_api_url?: string | null
           crm_type?: Database["public"]["Enums"]["crm_type"]
           custom_mappings?: Json | null
+          docusign_api_key?: string | null
+          dropbox_api_key?: string | null
           five9_domain_id?: string | null
           google_calendar_id?: string | null
           id?: string
           make_webhook_url?: string | null
+          microsoft365_api_key?: string | null
           n8n_webhook_url?: string | null
           name: string
           notification_triggers?: Json | null
+          openai_api_key?: string | null
           organization_id?: string | null
           pabbly_webhook_url?: string | null
+          power_automate_webhook_url?: string | null
+          quickbooks_api_key?: string | null
           slack_webhook_url?: string | null
           status?: string
+          stripe_api_key?: string | null
           teams_webhook_url?: string | null
           twilio_account_sid?: string | null
           twilio_auth_token?: string | null
@@ -602,22 +620,31 @@ export type Database = {
           zoom_api_key?: string | null
         }
         Update: {
+          asana_api_key?: string | null
+          calendly_api_key?: string | null
           created_at?: string
           crm_api_key?: string | null
           crm_api_url?: string | null
           crm_type?: Database["public"]["Enums"]["crm_type"]
           custom_mappings?: Json | null
+          docusign_api_key?: string | null
+          dropbox_api_key?: string | null
           five9_domain_id?: string | null
           google_calendar_id?: string | null
           id?: string
           make_webhook_url?: string | null
+          microsoft365_api_key?: string | null
           n8n_webhook_url?: string | null
           name?: string
           notification_triggers?: Json | null
+          openai_api_key?: string | null
           organization_id?: string | null
           pabbly_webhook_url?: string | null
+          power_automate_webhook_url?: string | null
+          quickbooks_api_key?: string | null
           slack_webhook_url?: string | null
           status?: string
+          stripe_api_key?: string | null
           teams_webhook_url?: string | null
           twilio_account_sid?: string | null
           twilio_auth_token?: string | null

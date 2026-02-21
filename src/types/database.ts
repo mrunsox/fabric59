@@ -103,6 +103,15 @@ export interface Tenant {
   twilio_from_number: string | null;
   zoom_api_key: string | null;
   google_calendar_id: string | null;
+  stripe_api_key: string | null;
+  quickbooks_api_key: string | null;
+  calendly_api_key: string | null;
+  docusign_api_key: string | null;
+  dropbox_api_key: string | null;
+  microsoft365_api_key: string | null;
+  asana_api_key: string | null;
+  openai_api_key: string | null;
+  power_automate_webhook_url: string | null;
   notification_triggers: NotificationTriggers;
   status: TenantStatus;
   created_at: string;
@@ -195,6 +204,15 @@ export interface TenantFormData {
   twilio_from_number: string;
   zoom_api_key: string;
   google_calendar_id: string;
+  stripe_api_key: string;
+  quickbooks_api_key: string;
+  calendly_api_key: string;
+  docusign_api_key: string;
+  dropbox_api_key: string;
+  microsoft365_api_key: string;
+  asana_api_key: string;
+  openai_api_key: string;
+  power_automate_webhook_url: string;
   notification_triggers: NotificationTriggers;
   status: TenantStatus;
 }

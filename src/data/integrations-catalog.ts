@@ -667,7 +667,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://developer.calendly.com/api-docs",
     icon: CalendarCheck,
     logoUrl: "/integration-logos/calendly.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "oncehub",
@@ -704,7 +704,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://developers.asana.com/docs",
     icon: ListTodo,
     logoUrl: "/integration-logos/asana.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "monday",
@@ -743,7 +743,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://developers.google.com/drive/api",
     icon: HardDrive,
     logoUrl: "/integration-logos/google-drive.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "dropbox",
@@ -762,7 +762,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://www.dropbox.com/developers/documentation",
     icon: CloudUpload,
     logoUrl: "/integration-logos/dropbox.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "onedrive",
@@ -799,7 +799,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://developers.docusign.com/docs/esign-rest-api/",
     icon: PenTool,
     logoUrl: "/integration-logos/docusign.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "adobe-sign",
@@ -868,28 +868,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://dev.evernote.com/doc/",
     icon: BookOpen,
-    status: "coming_soon",
-  },
-
-  // ── Billing / Payments ──
-  {
-    id: "stripe",
-    name: "Stripe",
-    slug: "stripe",
-    category: "Billing / Payments",
-    description: "Create payment links and process payments from calls.",
-    longDescription:
-      "Stripe is the leading payment processing platform. Integration creates payment links and processes payments from Five9 call interactions for immediate collection.",
-    apiType: "REST",
-    authMethod: "API Key",
-    actions: [
-      { name: "Create Payment Link", description: "Generate a payment link for the caller", direction: "outbound" },
-      { name: "Process Payment", description: "Charge a card on file", direction: "outbound" },
-    ],
-    docsUrl: "https://stripe.com/docs/api",
-    icon: CreditCard,
-    logoUrl: "/integration-logos/stripe.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "quickbooks",
@@ -908,7 +887,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://developer.intuit.com/app/developer/qbo/docs/develop",
     icon: Receipt,
     logoUrl: "/integration-logos/quickbooks.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "lawpay",
@@ -944,7 +923,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://www.timesolv.com/",
     icon: Clock,
-    status: "coming_soon",
+    status: "available",
   },
 
   // ── Workflow Automation ──
@@ -1033,7 +1012,7 @@ export const integrationsCatalog: Integration[] = [
     ],
     docsUrl: "https://learn.microsoft.com/en-us/power-automate/",
     icon: Workflow,
-    status: "coming_soon",
+    status: "available",
   },
 
   // ── AI / Legal Tech ──
@@ -1055,7 +1034,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://platform.openai.com/docs/api-reference",
     icon: Bot,
     logoUrl: "/integration-logos/openai.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "casetext",

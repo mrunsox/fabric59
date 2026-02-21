@@ -27,7 +27,7 @@ const directionConfig: Record<ActionDirection, { icon: typeof ArrowUpRight; labe
   bidirectional: { icon: ArrowLeftRight, label: "Bidirectional", className: "text-amber-500" },
 };
 
-const LINKED_INTEGRATIONS = ["clio", "workiz", "salesforce", "slack", "zapier", "make", "n8n", "pabbly", "hubspot", "zendesk", "ms-teams", "twilio", "zoom", "google-calendar"];
+const LINKED_INTEGRATIONS = ["clio", "workiz", "salesforce", "slack", "zapier", "make", "n8n", "pabbly", "hubspot", "zendesk", "ms-teams", "twilio", "zoom", "google-calendar", "stripe", "quickbooks", "calendly", "docusign", "google-drive", "dropbox", "microsoft-365", "asana", "openai", "power-automate"];
 
 export function IntegrationDetailDialog({ integration, open, onOpenChange }: Props) {
   const [clientSelectOpen, setClientSelectOpen] = useState(false);

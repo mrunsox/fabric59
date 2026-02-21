@@ -42,6 +42,15 @@ export function useTenants() {
         twilio_from_number: (row as Record<string, unknown>).twilio_from_number as string | null ?? null,
         zoom_api_key: (row as Record<string, unknown>).zoom_api_key as string | null ?? null,
         google_calendar_id: (row as Record<string, unknown>).google_calendar_id as string | null ?? null,
+        stripe_api_key: (row as Record<string, unknown>).stripe_api_key as string | null ?? null,
+        quickbooks_api_key: (row as Record<string, unknown>).quickbooks_api_key as string | null ?? null,
+        calendly_api_key: (row as Record<string, unknown>).calendly_api_key as string | null ?? null,
+        docusign_api_key: (row as Record<string, unknown>).docusign_api_key as string | null ?? null,
+        dropbox_api_key: (row as Record<string, unknown>).dropbox_api_key as string | null ?? null,
+        microsoft365_api_key: (row as Record<string, unknown>).microsoft365_api_key as string | null ?? null,
+        asana_api_key: (row as Record<string, unknown>).asana_api_key as string | null ?? null,
+        openai_api_key: (row as Record<string, unknown>).openai_api_key as string | null ?? null,
+        power_automate_webhook_url: (row as Record<string, unknown>).power_automate_webhook_url as string | null ?? null,
         notification_triggers: (row.notification_triggers as unknown as NotificationTriggers) || DEFAULT_NOTIFICATION_TRIGGERS,
         status: row.status as TenantStatus,
         created_at: row.created_at,
@@ -85,6 +94,15 @@ export function useTenant(id: string) {
         twilio_from_number: (data as Record<string, unknown>).twilio_from_number as string | null ?? null,
         zoom_api_key: (data as Record<string, unknown>).zoom_api_key as string | null ?? null,
         google_calendar_id: (data as Record<string, unknown>).google_calendar_id as string | null ?? null,
+        stripe_api_key: (data as Record<string, unknown>).stripe_api_key as string | null ?? null,
+        quickbooks_api_key: (data as Record<string, unknown>).quickbooks_api_key as string | null ?? null,
+        calendly_api_key: (data as Record<string, unknown>).calendly_api_key as string | null ?? null,
+        docusign_api_key: (data as Record<string, unknown>).docusign_api_key as string | null ?? null,
+        dropbox_api_key: (data as Record<string, unknown>).dropbox_api_key as string | null ?? null,
+        microsoft365_api_key: (data as Record<string, unknown>).microsoft365_api_key as string | null ?? null,
+        asana_api_key: (data as Record<string, unknown>).asana_api_key as string | null ?? null,
+        openai_api_key: (data as Record<string, unknown>).openai_api_key as string | null ?? null,
+        power_automate_webhook_url: (data as Record<string, unknown>).power_automate_webhook_url as string | null ?? null,
         notification_triggers: (data.notification_triggers as unknown as NotificationTriggers) || DEFAULT_NOTIFICATION_TRIGGERS,
         status: data.status as TenantStatus,
         created_at: data.created_at,
@@ -118,6 +136,15 @@ export function useCreateTenant() {
           twilio_from_number: data.twilio_from_number || null,
           zoom_api_key: data.zoom_api_key || null,
           google_calendar_id: data.google_calendar_id || null,
+          stripe_api_key: (data as any).stripe_api_key || null,
+          quickbooks_api_key: (data as any).quickbooks_api_key || null,
+          calendly_api_key: (data as any).calendly_api_key || null,
+          docusign_api_key: (data as any).docusign_api_key || null,
+          dropbox_api_key: (data as any).dropbox_api_key || null,
+          microsoft365_api_key: (data as any).microsoft365_api_key || null,
+          asana_api_key: (data as any).asana_api_key || null,
+          openai_api_key: (data as any).openai_api_key || null,
+          power_automate_webhook_url: (data as any).power_automate_webhook_url || null,
           notification_triggers: data.notification_triggers as unknown as Record<string, boolean>,
           status: data.status,
         },
@@ -158,6 +185,15 @@ export function useUpdateTenant() {
       if (data.twilio_from_number !== undefined) updateData.twilio_from_number = data.twilio_from_number || null;
       if (data.zoom_api_key !== undefined) updateData.zoom_api_key = data.zoom_api_key || null;
       if (data.google_calendar_id !== undefined) updateData.google_calendar_id = data.google_calendar_id || null;
+      if ((data as any).stripe_api_key !== undefined) updateData.stripe_api_key = (data as any).stripe_api_key || null;
+      if ((data as any).quickbooks_api_key !== undefined) updateData.quickbooks_api_key = (data as any).quickbooks_api_key || null;
+      if ((data as any).calendly_api_key !== undefined) updateData.calendly_api_key = (data as any).calendly_api_key || null;
+      if ((data as any).docusign_api_key !== undefined) updateData.docusign_api_key = (data as any).docusign_api_key || null;
+      if ((data as any).dropbox_api_key !== undefined) updateData.dropbox_api_key = (data as any).dropbox_api_key || null;
+      if ((data as any).microsoft365_api_key !== undefined) updateData.microsoft365_api_key = (data as any).microsoft365_api_key || null;
+      if ((data as any).asana_api_key !== undefined) updateData.asana_api_key = (data as any).asana_api_key || null;
+      if ((data as any).openai_api_key !== undefined) updateData.openai_api_key = (data as any).openai_api_key || null;
+      if ((data as any).power_automate_webhook_url !== undefined) updateData.power_automate_webhook_url = (data as any).power_automate_webhook_url || null;
       if (data.notification_triggers !== undefined) updateData.notification_triggers = data.notification_triggers as unknown as Record<string, boolean>;
       if (data.status !== undefined) updateData.status = data.status;
 
