@@ -35,11 +35,13 @@ export function ClientSelectDialog({ integration, open, onOpenChange, onCloseAll
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return tenants.filter(
-      (t) =>
-        t.name.toLowerCase().includes(q) ||
-        t.crm_type.toLowerCase().includes(q)
-    );
+    return tenants
+      .filter(
+        (t) =>
+          t.name.toLowerCase().includes(q) ||
+          t.crm_type.toLowerCase().includes(q)
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [tenants, search]);
 
   const isConfiguredForTenant = (tenantId: string) => {
