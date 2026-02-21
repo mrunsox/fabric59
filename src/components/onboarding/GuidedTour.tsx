@@ -24,6 +24,9 @@ export function GuidedTour({ tourKey, steps }: GuidedTourProps) {
 
   useEffect(() => {
     if (!user) return;
+    // Check localStorage first for instant dismissal
+    if (localStorage.getItem(`tour_completed_${tourKey}`)) return;
+
     const checkOnboarding = async () => {
       const { data } = await supabase
         .from("profiles")
@@ -50,6 +53,8 @@ export function GuidedTour({ tourKey, steps }: GuidedTourProps) {
   const handleComplete = async () => {
     setDismissed(true);
     setVisible(false);
+    // Persist to localStorage immediately for reliable dismissal
+    localStorage.setItem(`tour_completed_${tourKey}`, "true");
     if (!user) return;
 
     const { data } = await supabase
@@ -61,8 +66,7 @@ export function GuidedTour({ tourKey, steps }: GuidedTourProps) {
     const completed = (data?.onboarding_completed as Record<string, boolean>) || {};
     await supabase
       .from("profiles")
-      .update({ onboarding_completed: { ...completed, [tourKey]: true } })
-      .eq("id", user.id);
+      .upsert({ id: user.id, onboarding_completed: { ...completed, [tourKey]: true } });
   };
 
   if (!visible || dismissed) return null;
