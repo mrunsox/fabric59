@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 export function ProtectedRoute() {
-  const { isAuthenticated, isLoading, organization, isMasterAdmin } = useAuth();
+  const { isAuthenticated, isLoading, organization, isMasterAdmin, orgRole } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -22,6 +22,12 @@ export function ProtectedRoute() {
   // Master admins are exempt — they can access /admin without an org
   if (!organization && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
+  }
+
+  // Non-admin members landing on /admin index → redirect to personalized dashboard
+  const isLimitedMember = orgRole === "member" && !isMasterAdmin;
+  if (isLimitedMember && location.pathname === "/admin") {
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   return <Outlet />;

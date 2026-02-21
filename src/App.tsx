@@ -36,6 +36,7 @@ import AgentsPage from "@/pages/admin/AgentsPage";
 import IntegrationsPage from "@/pages/admin/IntegrationsPage";
 import ProfilePage from "@/pages/admin/ProfilePage";
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
+import UserDashboardPage from "@/pages/admin/UserDashboardPage";
 import NotFound from "./pages/NotFound";
 
 // Master admin pages
@@ -80,6 +81,7 @@ const App = () => (
               {/* Admin routes */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<TenantsPage />} />
+                <Route path="dashboard" element={<UserDashboardPage />} />
                 <Route path="domains" element={<DomainsPage />} />
                 <Route path="domains/:id" element={<DomainDetailPage />} />
                 <Route path="mappings" element={<MappingsPage />} />

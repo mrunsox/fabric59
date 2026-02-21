@@ -20,6 +20,7 @@ import {
   Plug,
   Workflow,
   User,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,6 +36,7 @@ import { DashboardSwitcher } from "@/components/layout/DashboardSwitcher";
 import { AdminTour } from "@/components/onboarding/AdminTour";
 
 const navigation = [
+  { name: "My Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, permission: null },
   { name: "Five9 Domains", href: "/admin/domains", icon: Globe, permission: "domains" },
   { name: "Agents", href: "/admin/agents", icon: Users, permission: "agents" },
   { name: "Clients", href: "/admin", icon: Building2, permission: "tenants" },
