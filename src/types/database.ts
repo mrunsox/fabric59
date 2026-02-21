@@ -1,7 +1,7 @@
 // Database types for the Five9 Integration Fabric
 
 // Existing enums
-export type CrmType = 'clio' | 'workiz' | 'salesforce' | 'generic_rest' | 'other';
+export type CrmType = 'clio' | 'workiz' | 'salesforce' | 'hubspot' | 'zendesk' | 'generic_rest' | 'other';
 export type AppRole = 'master_admin' | 'admin' | 'ops_team' | 'viewer';
 export type TenantStatus = 'active' | 'inactive' | 'pending';
 export type ApiLogStatus = 'success' | 'error' | 'pending';
@@ -97,6 +97,12 @@ export interface Tenant {
   make_webhook_url: string | null;
   pabbly_webhook_url: string | null;
   n8n_webhook_url: string | null;
+  teams_webhook_url: string | null;
+  twilio_account_sid: string | null;
+  twilio_auth_token: string | null;
+  twilio_from_number: string | null;
+  zoom_api_key: string | null;
+  google_calendar_id: string | null;
   notification_triggers: NotificationTriggers;
   status: TenantStatus;
   created_at: string;
@@ -183,6 +189,12 @@ export interface TenantFormData {
   make_webhook_url: string;
   pabbly_webhook_url: string;
   n8n_webhook_url: string;
+  teams_webhook_url: string;
+  twilio_account_sid: string;
+  twilio_auth_token: string;
+  twilio_from_number: string;
+  zoom_api_key: string;
+  google_calendar_id: string;
   notification_triggers: NotificationTriggers;
   status: TenantStatus;
 }

@@ -556,6 +556,7 @@ export type Database = {
           crm_type: Database["public"]["Enums"]["crm_type"]
           custom_mappings: Json | null
           five9_domain_id: string | null
+          google_calendar_id: string | null
           id: string
           make_webhook_url: string | null
           n8n_webhook_url: string | null
@@ -565,9 +566,14 @@ export type Database = {
           pabbly_webhook_url: string | null
           slack_webhook_url: string | null
           status: string
+          teams_webhook_url: string | null
+          twilio_account_sid: string | null
+          twilio_auth_token: string | null
+          twilio_from_number: string | null
           updated_at: string
           webhook_url: string | null
           zapier_webhook_url: string | null
+          zoom_api_key: string | null
         }
         Insert: {
           created_at?: string
@@ -576,6 +582,7 @@ export type Database = {
           crm_type?: Database["public"]["Enums"]["crm_type"]
           custom_mappings?: Json | null
           five9_domain_id?: string | null
+          google_calendar_id?: string | null
           id?: string
           make_webhook_url?: string | null
           n8n_webhook_url?: string | null
@@ -585,9 +592,14 @@ export type Database = {
           pabbly_webhook_url?: string | null
           slack_webhook_url?: string | null
           status?: string
+          teams_webhook_url?: string | null
+          twilio_account_sid?: string | null
+          twilio_auth_token?: string | null
+          twilio_from_number?: string | null
           updated_at?: string
           webhook_url?: string | null
           zapier_webhook_url?: string | null
+          zoom_api_key?: string | null
         }
         Update: {
           created_at?: string
@@ -596,6 +608,7 @@ export type Database = {
           crm_type?: Database["public"]["Enums"]["crm_type"]
           custom_mappings?: Json | null
           five9_domain_id?: string | null
+          google_calendar_id?: string | null
           id?: string
           make_webhook_url?: string | null
           n8n_webhook_url?: string | null
@@ -605,9 +618,14 @@ export type Database = {
           pabbly_webhook_url?: string | null
           slack_webhook_url?: string | null
           status?: string
+          teams_webhook_url?: string | null
+          twilio_account_sid?: string | null
+          twilio_auth_token?: string | null
+          twilio_from_number?: string | null
           updated_at?: string
           webhook_url?: string | null
           zapier_webhook_url?: string | null
+          zoom_api_key?: string | null
         }
         Relationships: [
           {
@@ -747,7 +765,14 @@ export type Database = {
     }
     Enums: {
       app_role: "master_admin" | "admin" | "ops_team" | "viewer"
-      crm_type: "clio" | "workiz" | "salesforce" | "generic_rest" | "other"
+      crm_type:
+        | "clio"
+        | "workiz"
+        | "salesforce"
+        | "generic_rest"
+        | "other"
+        | "hubspot"
+        | "zendesk"
       five9_domain_status: "active" | "inactive" | "pending_verification"
       notification_channel:
         | "slack"
@@ -890,7 +915,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["master_admin", "admin", "ops_team", "viewer"],
-      crm_type: ["clio", "workiz", "salesforce", "generic_rest", "other"],
+      crm_type: [
+        "clio",
+        "workiz",
+        "salesforce",
+        "generic_rest",
+        "other",
+        "hubspot",
+        "zendesk",
+      ],
       five9_domain_status: ["active", "inactive", "pending_verification"],
       notification_channel: [
         "slack",
