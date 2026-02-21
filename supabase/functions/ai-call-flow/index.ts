@@ -18,10 +18,10 @@ INTERVIEW FLOW (follow this order):
 
 1. **Industry** — Ask their industry. Options: Legal, Home Services, Healthcare, Insurance, Other.
 2. **CRM** — Ask which CRM. Options: Clio, Workiz, Salesforce, HubSpot, Other/None.
-3. **Pre-Call** — What happens when a call comes in. Options: CRM lookup, Screen pop, Priority routing, Queue announcement, Other.
-4. **During Call** — Data to capture. Options: Contact info, Case/job details, Disposition codes, Custom fields, Notes.
-5. **Post-Call** — What happens after. Options: Create CRM record, Slack notification, Book follow-up, Email summary, Trigger webhook.
-6. **Notifications** — Channels. Options: Slack, Email, SMS, Calendar invite, None.
+3. **Pre-Call** — What happens when a call comes in (select all that apply). Options: CRM lookup, Screen pop, Priority routing, Queue announcement, Other.
+4. **During Call** — Data to capture (select all that apply). Options: Contact info, Case/job details, Disposition codes, Custom fields, Notes.
+5. **Post-Call** — What happens after (select all that apply). Options: Create CRM record, Slack notification, Book follow-up, Email summary, Trigger webhook.
+6. **Notifications** — Channels (select all that apply). Options: Slack, Email, SMS, Calendar invite, None.
 
 After all answers, generate the complete call flow config in structured markdown with Pre-Call, During Call, Post-Call sections, field mappings, notification triggers, and a summary.
 
