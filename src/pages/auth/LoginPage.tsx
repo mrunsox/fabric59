@@ -42,7 +42,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-4">
         {/* Back button */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/")}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />

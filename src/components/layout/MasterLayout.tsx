@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { DashboardSwitcher } from "@/components/layout/DashboardSwitcher";
+import { MasterTour } from "@/components/onboarding/MasterTour";
 
 export function MasterLayout() {
   const { signOut, user } = useAuth();
@@ -28,6 +29,8 @@ export function MasterLayout() {
 
   return (
     <div className="dark min-h-screen bg-background flex">
+      <MasterTour />
+
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card flex flex-col">
         <div className="p-4 border-b border-border">
