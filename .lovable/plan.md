@@ -1,90 +1,84 @@
 
 
-# Fabric59 Landing Page + Bold New Logo/Icon/Favicon
+# Landing Page Overhaul
 
 ## Overview
 
-Build a targeted hero-style landing page at `/` and redesign the Fabric59 logo, icon, and favicon to be bolder and more impactful.
+Major update to the landing page covering: bigger logo icon, redesigned footer with UNSOX branding, updated hero content, revised feature cards and platform features to match Fabric59's actual services, and contact/legal links.
 
 ---
 
-## 1. Bold New Logo, Icon, and Favicon
+## 1. Make Logo Icon Bigger in Header
 
-The current icon is a PNG with a subtle "F" and small "59" text -- it lacks punch at small sizes. We will replace it with a bold, high-contrast SVG-based design.
-
-### New Icon Design
-- Bold geometric "F" letterform on a vibrant cyan (#0EA5E9) rounded-square background
-- Thicker strokes, higher contrast, no small text (the "59" is too small to read at favicon size)
-- Pure SVG so it stays crisp at every size
-
-### Files to Create/Modify
-
-| File | Change |
-|---|---|
-| `public/fabric59-icon.svg` | Replace with new bold SVG icon |
-| `public/favicon.ico` | Generate from the new SVG |
-| `index.html` | Update favicon link to use SVG: `<link rel="icon" type="image/svg+xml" href="/fabric59-icon.svg">` |
-| `src/components/brand/Fabric59Icon.tsx` | Switch from PNG import to SVG path (`/fabric59-icon.svg`) |
-| `src/components/brand/Fabric59Wordmark.tsx` | Keep PNG wordmark but ensure it pairs well with new icon |
-| `src/components/brand/Fabric59Logo.tsx` | No changes needed (composes Icon + Wordmark) |
+**File: `src/pages/LandingPage.tsx`**
+- Change `<Fabric59Logo iconSize="sm" />` to `iconSize="md"` so the icon renders at h-9/w-9 instead of h-6/w-6.
 
 ---
 
-## 2. Landing Page
+## 2. Redesigned Footer
 
-A public marketing page at `/` modeled after the reference image -- centered hero, bold heading, feature cards, and CTA buttons.
+**File: `src/pages/LandingPage.tsx`**
 
-### Page Structure
+Replace the current minimal footer with a richer layout:
 
-**Header**
-- Fabric59 logo (new bold icon + text) on the left
-- Nav links: Features, Build Outline
-- Login and "Get Started" buttons on the right
+- **Left side**: Fabric59 icon + "(c) 2026 Fabric59" + separator + "An UNSOX Digital Solution" text + animated orange heart emoji/icon
+  - The heart uses a CSS `pulse` animation by default and a `pop` (scale-up bounce) on hover
+  - The heart is wrapped in an `<a>` linking to `https://unsox.com`
+- **Center/Right nav links**: Login, Build Outline, Terms, Security, Contact (mailto:hi@fabric59.com)
+- Clean horizontal layout with responsive stacking on mobile
 
-**Hero Section**
-- Small pill badge: "Five9 Build and Managed Services"
-- Bold headline: **"Your Five9. Built Right. Delivered Fast."**
-- Subtitle paragraph about full-service Five9 setup
-- Two CTA buttons: "Get Started" (primary) and "View Build Outline" (outline)
-
-**Feature Cards (2-column grid)**
-- "Launch Your Call Center" -- description + CTA
-- "Scale Your Client Onboarding" -- description + CTA
-- Dark card backgrounds with subtle cyan border hover effects
-
-**Platform Features Grid**
-- 4 cards highlighting key capabilities pulled from the build outline categories:
-  - Agent Lifecycle Management
-  - Field Mapping Builder
-  - Integrations Library
-  - Monitoring and Logs
-
-**Footer**
-- Fabric59 branding, copyright, links to Login / Build Outline
-
-### Files
-
-| File | Change |
-|---|---|
-| `src/pages/LandingPage.tsx` | **New** -- full landing page component |
-| `src/App.tsx` | Change `/` route from `<Navigate to="/admin">` to render `<LandingPage />` |
+**File: `src/index.css`** (or inline Tailwind)
+- Add a `heart-pop` keyframe animation for the hover effect (scale 1 -> 1.3 -> 1 bounce)
 
 ---
 
-## 3. Build Outline Update
+## 3. Updated Hero Heading and Subtitle
 
-Add entries to track the landing page and branding work.
+**File: `src/pages/LandingPage.tsx`**
 
-| File | Change |
-|---|---|
-| `src/data/buildMap.ts` | Add "Branding and Landing" category with items for Landing Page, Bold Logo/Icon, and Favicon |
+Change the hero content from Five9-specific messaging to match the platform's broader capabilities:
+
+- **Badge**: "Five9 Integration Platform" (instead of "Build and Managed Services")
+- **Headline**: "Automate. Integrate. Scale." with "Integrate." in primary cyan
+- **Subtitle**: "The all-in-one platform for Five9 agent lifecycle management, CRM field mapping, and 55+ integrations -- built for BPOs and contact centers."
 
 ---
 
-## Technical Notes
+## 4. Revised Feature Cards (2-column)
 
-- The landing page is fully public (no auth required)
-- Uses existing design tokens (primary cyan, dark card backgrounds, border colors)
-- Responsive: single column on mobile, two columns for feature cards on desktop
-- "Get Started" links to `/signup`, "Login" links to `/login`, "Build Outline" links to `/outline`
-- SVG favicon provides crisp rendering across all browsers and sizes
+**File: `src/pages/LandingPage.tsx`**
+
+Replace the current "Launch Your Call Center" and "Scale Your Client Onboarding" cards with content that matches the actual platform features:
+
+| Card | Title | Description |
+|---|---|---|
+| 1 | Agent Onboarding and Offboarding | Provision agents across Five9, Google Workspace, and Slack in one click. Automate deprovisioning with grace periods, data transfers, and full audit trails. |
+| 2 | CRM Integration and Field Mapping | Visual drag-and-drop builder to map Five9 contact fields to any CRM. Support for Clio, Workiz, Salesforce, HubSpot, and more with transformation logic built in. |
+
+---
+
+## 5. Revised Platform Features Section (4-column)
+
+**File: `src/pages/LandingPage.tsx`**
+
+Update heading to: **"Built for Five9 teams that need to move fast"**
+
+Updated cards:
+
+| Card | Icon | Title | Description |
+|---|---|---|---|
+| 1 | UserCog | Agent Lifecycle | One-click provisioning and deprovisioning across Five9, Google Workspace, and Slack with automated credential delivery. |
+| 2 | GitBranch | Field Mapping Builder | Visual canvas to connect Five9 contact fields to any CRM with drag-and-drop simplicity and custom transforms. |
+| 3 | Plug | 55+ Integrations | Pre-built connectors for Salesforce, HubSpot, Slack, Twilio, Zapier, and dozens more -- ready to configure. |
+| 4 | BarChart3 | Monitoring and Alerts | Real-time API logs, error tracking, and a built-in test console for every integration request. |
+
+---
+
+## Technical Details
+
+- Orange heart icon uses lucide `Heart` icon with `fill="currentColor"` and `text-orange-500` styling
+- Heart animation: default `animate-pulse`, on hover switches to a custom `animate-heart-pop` keyframe (scale bounce 1 -> 1.4 -> 1)
+- Footer uses a responsive flex layout with `flex-wrap` for mobile
+- All content changes are in `src/pages/LandingPage.tsx` only (plus a small CSS addition for the heart pop animation)
+- No new files or dependencies needed
+
