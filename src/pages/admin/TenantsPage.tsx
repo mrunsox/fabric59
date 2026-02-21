@@ -260,7 +260,7 @@ export default function TenantsPage() {
                 Add Client
               </Button>
             </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Client</DialogTitle>
               <DialogDescription>
@@ -329,7 +329,7 @@ export default function TenantsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingTenant} onOpenChange={() => setEditingTenant(null)}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
           <DialogTitle>Edit Client</DialogTitle>
             <DialogDescription>
