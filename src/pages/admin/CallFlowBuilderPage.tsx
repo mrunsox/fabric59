@@ -5,12 +5,33 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CallFlowSimulator } from "@/components/call-flow/CallFlowSimulator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, Bot, User, Sparkles, RotateCcw } from "lucide-react";
+import { Send, Loader2, Bot, User, Sparkles, RotateCcw, ExternalLink, Map, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
+interface SaveConfig {
+  client_name: string;
+  crm_type: string;
+  crm_api_key?: string;
+  crm_api_url?: string;
+  slack_webhook_url?: string;
+  webhook_url?: string;
+  notification_triggers?: Record<string, boolean>;
+  custom_mappings?: Record<string, unknown>;
+}
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-call-flow`;
+
+const CRM_TYPE_MAP: Record<string, string> = {
+  clio: "clio",
+  workiz: "workiz",
+  salesforce: "salesforce",
+  other: "other",
+};
 
 /** Extract numbered options like "1. Legal" or "2. Home Services" from AI text */
 function extractQuickReplies(text: string): string[] {
@@ -25,17 +46,67 @@ function extractQuickReplies(text: string): string[] {
   return options.length >= 2 && options.length <= 8 ? options : [];
 }
 
+/** Extract save config JSON from AI message */
+function extractSaveConfig(text: string): SaveConfig | null {
+  const startMarker = ":::SAVE_CONFIG:::";
+  const endMarker = ":::END_CONFIG:::";
+  const startIdx = text.indexOf(startMarker);
+  const endIdx = text.indexOf(endMarker);
+  if (startIdx === -1 || endIdx === -1) return null;
+  const jsonStr = text.slice(startIdx + startMarker.length, endIdx).trim();
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    console.error("Failed to parse save config JSON:", jsonStr);
+    return null;
+  }
+}
+
+/** Strip the config block from displayed text */
+function stripConfigBlock(text: string): string {
+  return text.replace(/:::SAVE_CONFIG:::[\s\S]*?:::END_CONFIG:::/g, "").trim();
+}
+
 export default function CallFlowBuilderPage() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
   const [selectedChips, setSelectedChips] = useState<string[]>([]);
+  const [savedConfigIds, setSavedConfigIds] = useState<Set<number>>(new Set());
+  const [savingConfig, setSavingConfig] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleSaveConfig = useCallback(async (config: SaveConfig, messageIndex: number) => {
+    if (savedConfigIds.has(messageIndex)) return;
+    setSavingConfig(true);
+    try {
+      const crmType = CRM_TYPE_MAP[config.crm_type] || "other";
+      const { error } = await supabase.from("tenants").insert([{
+        name: config.client_name,
+        crm_type: crmType as "clio" | "workiz" | "salesforce" | "generic_rest" | "other",
+        crm_api_key: config.crm_api_key || null,
+        crm_api_url: config.crm_api_url || null,
+        slack_webhook_url: config.slack_webhook_url || null,
+        webhook_url: config.webhook_url || null,
+        notification_triggers: JSON.parse(JSON.stringify(config.notification_triggers || {})),
+        custom_mappings: JSON.parse(JSON.stringify(config.custom_mappings || {})),
+        status: "active",
+      }]);
+      if (error) throw error;
+      setSavedConfigIds((prev) => new Set(prev).add(messageIndex));
+      toast.success(`Configuration saved for ${config.client_name}`);
+    } catch (e) {
+      console.error("Save config error:", e);
+      toast.error("Failed to save configuration. Check permissions.");
+    }
+    setSavingConfig(false);
+  }, [savedConfigIds]);
 
   const streamMessage = useCallback(async (allMessages: Msg[]) => {
     setIsLoading(true);
@@ -96,6 +167,21 @@ export default function CallFlowBuilderPage() {
           }
         }
       }
+
+      // After streaming completes, check for save config
+      if (assistantSoFar.includes(":::SAVE_CONFIG:::")) {
+        const config = extractSaveConfig(assistantSoFar);
+        if (config) {
+          // Find the message index (it will be the last assistant message)
+          setMessages((prev) => {
+            const msgIndex = prev.length - 1;
+            if (msgIndex >= 0) {
+              handleSaveConfig(config, msgIndex);
+            }
+            return prev;
+          });
+        }
+      }
     } catch (e) {
       console.error(e);
       if (!assistantSoFar) {
@@ -103,14 +189,13 @@ export default function CallFlowBuilderPage() {
       }
     }
     setIsLoading(false);
-  }, []);
+  }, [handleSaveConfig]);
 
   // Auto-start conversation
   useEffect(() => {
     if (!hasAutoStarted && messages.length === 0) {
       setHasAutoStarted(true);
       const triggerMsg: Msg = { role: "user", content: "Start building a new call flow" };
-      // Don't show the trigger message in UI - just send it
       streamMessage([triggerMsg]);
     }
   }, [hasAutoStarted, messages.length, streamMessage]);
@@ -129,6 +214,7 @@ export default function CallFlowBuilderPage() {
   const handleStartOver = () => {
     setMessages([]);
     setHasAutoStarted(false);
+    setSavedConfigIds(new Set());
   };
 
   // Get quick replies from the last assistant message
@@ -148,6 +234,7 @@ export default function CallFlowBuilderPage() {
     sendMessage(selectedChips.join(", "));
     setSelectedChips([]);
   };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -198,31 +285,71 @@ export default function CallFlowBuilderPage() {
                       </div>
                     )}
 
-                    {messages.map((msg, i) => (
-                      <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                        {msg.role === "assistant" && (
-                          <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-                            <Bot className="h-4 w-4 text-primary" />
-                          </div>
-                        )}
-                        <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
-                          msg.role === "user"
-                            ? "bg-primary text-primary-foreground rounded-br-md"
-                            : "bg-muted rounded-bl-md"
-                        }`}>
-                          {msg.role === "assistant" ? (
-                            <div className="prose prose-sm prose-invert max-w-none">
-                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    {messages.map((msg, i) => {
+                      const displayContent = msg.role === "assistant" ? stripConfigBlock(msg.content) : msg.content;
+                      const isSaved = savedConfigIds.has(i);
+
+                      return (
+                        <div key={i}>
+                          <div className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                            {msg.role === "assistant" && (
+                              <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-1">
+                                <Bot className="h-4 w-4 text-primary" />
+                              </div>
+                            )}
+                            <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
+                              msg.role === "user"
+                                ? "bg-primary text-primary-foreground rounded-br-md"
+                                : "bg-muted rounded-bl-md"
+                            }`}>
+                              {msg.role === "assistant" ? (
+                                <div className="prose prose-sm prose-invert max-w-none">
+                                  <ReactMarkdown>{displayContent}</ReactMarkdown>
+                                </div>
+                              ) : msg.content}
                             </div>
-                          ) : msg.content}
-                        </div>
-                        {msg.role === "user" && (
-                          <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0 mt-1">
-                            <User className="h-4 w-4" />
+                            {msg.role === "user" && (
+                              <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0 mt-1">
+                                <User className="h-4 w-4" />
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    ))}
+
+                          {/* Post-save action buttons */}
+                          {isSaved && msg.role === "assistant" && (
+                            <div className="flex gap-2 pl-10 mt-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 text-xs"
+                                onClick={() => navigate("/admin/tenants")}
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                                View Client
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 text-xs"
+                                onClick={() => navigate("/admin/mappings")}
+                              >
+                                <Map className="h-3.5 w-3.5" />
+                                Edit Mappings
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2 text-xs"
+                                onClick={handleStartOver}
+                              >
+                                <RefreshCw className="h-3.5 w-3.5" />
+                                Build Another
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
 
                     {isLoading && messages.length > 0 && messages[messages.length - 1]?.role !== "assistant" && (
                       <div className="flex gap-3">
@@ -232,6 +359,14 @@ export default function CallFlowBuilderPage() {
                         <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                           <Loader2 className="h-4 w-4 animate-spin" />
                         </div>
+                      </div>
+                    )}
+
+                    {/* Saving indicator */}
+                    {savingConfig && (
+                      <div className="flex items-center gap-2 pl-10 text-sm text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Saving configuration...
                       </div>
                     )}
 
