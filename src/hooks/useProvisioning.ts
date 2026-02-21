@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ProvisioningInput, ProvisioningResult, ProvisioningStep, ProvisioningHistory, PROVISIONING_STEPS } from "@/types/provisioning";
+import { ProvisioningInput, ProvisioningResult, ProvisioningStep, ProvisioningHistory, PROVISIONING_STEPS, AgentRole } from "@/types/provisioning";
 import { useAuditLog } from "./useAuditLog";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -204,5 +204,35 @@ export function useProvisioning() {
     setLastResult(null);
   };
 
-  return { steps, isProvisioning, lastResult, history, provisionAgent, resetProvisioning, refreshAgents };
+  const findNextExtension = useCallback(async (role: AgentRole): Promise<number | null> => {
+    const { start, end } = { start: role.extensionRangeStart, end: role.extensionRangeEnd };
+    const usedSet = new Set<number>();
+
+    // Get extensions used in local agents table
+    const { data: localAgents } = await db.from('agents').select('extension').neq('status', 'deprovisioned');
+    if (localAgents) {
+      for (const a of localAgents) {
+        const ext = parseInt(String(a.extension || '0'), 10);
+        if (ext >= start && ext <= end) usedSet.add(ext);
+      }
+    }
+
+    // Get extensions used in Five9
+    try {
+      const { data } = await supabase.functions.invoke('five9-provisioning', { body: { action: 'getExtensions' } });
+      if (data?.success && Array.isArray(data.extensions)) {
+        for (const e of data.extensions) {
+          const ext = parseInt(String(e), 10);
+          if (ext >= start && ext <= end) usedSet.add(ext);
+        }
+      }
+    } catch { /* ignore */ }
+
+    for (let i = start; i <= end; i++) {
+      if (!usedSet.has(i)) return i;
+    }
+    return null;
+  }, []);
+
+  return { steps, isProvisioning, lastResult, history, provisionAgent, resetProvisioning, refreshAgents, findNextExtension };
 }

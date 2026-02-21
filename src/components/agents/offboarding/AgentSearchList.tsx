@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Search, UserMinus, X, RotateCcw } from "lucide-react";
+import { Search, UserMinus, X, RotateCcw, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { StatusBadge } from "@/components/agents/shared/StatusBadge";
 import { ProvisioningHistory } from "@/types/provisioning";
 import { cn } from "@/lib/utils";
@@ -14,15 +16,18 @@ interface AgentSearchListProps {
   onCancel: (agent: ProvisioningHistory) => void;
   onRestore: (agent: ProvisioningHistory) => void;
   onBatchOffboard?: (agents: ProvisioningHistory[]) => void;
+  onQuickOffboard?: (agent: ProvisioningHistory) => void;
 }
 
-export function AgentSearchList({ agents, onOffboard, onCancel, onRestore, onBatchOffboard }: AgentSearchListProps) {
+export function AgentSearchList({ agents, onOffboard, onCancel, onRestore, onBatchOffboard, onQuickOffboard }: AgentSearchListProps) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [quickOffboardOpen, setQuickOffboardOpen] = useState(false);
 
   const uniqueRoles = Array.from(new Set(agents.map(a => a.role).filter(Boolean)));
+  const activeAgents = agents.filter(a => a.status === 'active');
 
   const filtered = agents.filter(a => {
     const matchesSearch = `${a.agentName} ${a.email} ${a.role} ${a.extension}`.toLowerCase().includes(search.toLowerCase());
@@ -40,6 +45,15 @@ export function AgentSearchList({ agents, onOffboard, onCancel, onRestore, onBat
   };
 
   const selectedAgents = agents.filter(a => selected.has(a.id));
+
+  const handleQuickOffboard = (agent: ProvisioningHistory) => {
+    setQuickOffboardOpen(false);
+    if (onQuickOffboard) {
+      onQuickOffboard(agent);
+    } else {
+      onOffboard(agent);
+    }
+  };
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
@@ -90,6 +104,15 @@ export function AgentSearchList({ agents, onOffboard, onCancel, onRestore, onBat
               <SelectItem value="deprovisioned">Removed</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            size="sm"
+            variant="destructive"
+            className="h-8 text-xs gap-1.5 whitespace-nowrap"
+            onClick={() => setQuickOffboardOpen(true)}
+            disabled={activeAgents.length === 0}
+          >
+            <Zap className="h-3.5 w-3.5" /> Quick Offboard
+          </Button>
         </div>
       </div>
 
@@ -137,6 +160,41 @@ export function AgentSearchList({ agents, onOffboard, onCancel, onRestore, onBat
           </div>
         ))}
       </div>
+
+      {/* Quick Offboard Dialog */}
+      <Dialog open={quickOffboardOpen} onOpenChange={setQuickOffboardOpen}>
+        <DialogContent className="sm:max-w-md dark">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-destructive" />
+              Quick Offboard
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-2">Search and select an agent to immediately offboard with no grace period.</p>
+          <Command className="rounded-lg border border-border">
+            <CommandInput placeholder="Type agent name..." />
+            <CommandList>
+              <CommandEmpty>No active agents found.</CommandEmpty>
+              <CommandGroup>
+                {activeAgents.map(agent => (
+                  <CommandItem
+                    key={agent.id}
+                    value={agent.agentName}
+                    onSelect={() => handleQuickOffboard(agent)}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{agent.agentName}</p>
+                      <p className="text-xs text-muted-foreground">{agent.role} · Ext {agent.extension} · {agent.email}</p>
+                    </div>
+                    <UserMinus className="h-3.5 w-3.5 text-destructive shrink-0" />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

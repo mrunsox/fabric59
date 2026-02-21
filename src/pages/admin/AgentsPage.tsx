@@ -19,7 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function AgentsPage() {
   const { user, organization } = useAuth();
-  const { steps, isProvisioning, lastResult, history, provisionAgent, refreshAgents } = useProvisioning();
+  const { steps, isProvisioning, lastResult, history, provisionAgent, refreshAgents, findNextExtension } = useProvisioning();
   const { syncFromFive9, isSyncing } = useFive9Sync();
   const {
     steps: deprovSteps,
@@ -42,6 +42,12 @@ export default function AgentsPage() {
   const handleOffboard = (agent: ProvisioningHistory) => {
     setSelectedAgents([agent]);
     setModalOpen(true);
+  };
+
+  const handleQuickOffboard = (agent: ProvisioningHistory) => {
+    setSelectedAgents([agent]);
+    // Immediately confirm with defaults: no grace period, no data transfer
+    handleModalConfirm(0, { enabled: false, transferEmail: false, transferDrive: false }, 'Quick offboard');
   };
 
   const handleBatchOffboard = (agents: ProvisioningHistory[]) => {
@@ -132,7 +138,7 @@ export default function AgentsPage() {
         {/* Onboarding Tab */}
         <TabsContent value="onboarding" className="mt-6 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ProvisioningForm onSubmit={handleProvision} isLoading={isProvisioning} />
+            <ProvisioningForm onSubmit={handleProvision} isLoading={isProvisioning} findNextExtension={findNextExtension} />
             <WorkflowPanel steps={steps} result={lastResult} isProvisioning={isProvisioning} />
           </div>
           <Five9UsersTable />
@@ -147,6 +153,7 @@ export default function AgentsPage() {
               onCancel={handleCancel}
               onRestore={handleRestore}
               onBatchOffboard={handleBatchOffboard}
+              onQuickOffboard={handleQuickOffboard}
             />
             <DeprovisioningWorkflowPanel steps={deprovSteps} isRunning={isDeprovisioning} />
           </div>
