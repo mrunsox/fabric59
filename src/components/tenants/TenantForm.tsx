@@ -19,7 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Loader2, ChevronDown, Bell, Zap, Workflow, Phone, Video, Calendar, MessageCircle } from "lucide-react";
+import { Loader2, ChevronDown, Bell, Zap, Workflow, Phone, Video, Calendar, MessageCircle, CreditCard, FileText, Brain } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -49,6 +49,15 @@ const formSchema = z.object({
   twilio_from_number: z.string().optional().or(z.literal("")),
   zoom_api_key: z.string().optional().or(z.literal("")),
   google_calendar_id: z.string().optional().or(z.literal("")),
+  stripe_api_key: z.string().optional().or(z.literal("")),
+  quickbooks_api_key: z.string().optional().or(z.literal("")),
+  calendly_api_key: z.string().optional().or(z.literal("")),
+  docusign_api_key: z.string().optional().or(z.literal("")),
+  dropbox_api_key: z.string().optional().or(z.literal("")),
+  microsoft365_api_key: z.string().optional().or(z.literal("")),
+  asana_api_key: z.string().optional().or(z.literal("")),
+  openai_api_key: z.string().optional().or(z.literal("")),
+  power_automate_webhook_url: z.string().url().optional().or(z.literal("")),
   notification_triggers: z.object({
     intake_created: z.boolean(),
     call_ended: z.boolean(),
@@ -92,6 +101,13 @@ const AUTOMATION_PLATFORMS = [
     description: "Add a Webhook node to your workflow.",
     color: "text-green-500",
   },
+  {
+    key: "power_automate_webhook_url" as const,
+    name: "Power Automate",
+    placeholder: "https://prod-xx.westus.logic.azure.com/workflows/...",
+    description: "Create a flow with 'When a HTTP request is received' trigger.",
+    color: "text-blue-600",
+  },
 ] as const;
 
 export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
@@ -107,7 +123,16 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
     !!((tenant as any)?.twilio_account_sid)
   );
   const [schedulingOpen, setSchedulingOpen] = useState(
-    !!((tenant as any)?.zoom_api_key || (tenant as any)?.google_calendar_id)
+    !!((tenant as any)?.zoom_api_key || (tenant as any)?.google_calendar_id || (tenant as any)?.calendly_api_key || (tenant as any)?.microsoft365_api_key || (tenant as any)?.asana_api_key)
+  );
+  const [billingOpen, setBillingOpen] = useState(
+    !!((tenant as any)?.stripe_api_key || (tenant as any)?.quickbooks_api_key)
+  );
+  const [documentsOpen, setDocumentsOpen] = useState(
+    !!((tenant as any)?.docusign_api_key || (tenant as any)?.dropbox_api_key)
+  );
+  const [aiOpen, setAiOpen] = useState(
+    !!((tenant as any)?.openai_api_key)
   );
 
   // Load organizations (white-label partners) for the dropdown
@@ -144,6 +169,15 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
       twilio_from_number: (tenant as any)?.twilio_from_number || "",
       zoom_api_key: (tenant as any)?.zoom_api_key || "",
       google_calendar_id: (tenant as any)?.google_calendar_id || "",
+      stripe_api_key: (tenant as any)?.stripe_api_key || "",
+      quickbooks_api_key: (tenant as any)?.quickbooks_api_key || "",
+      calendly_api_key: (tenant as any)?.calendly_api_key || "",
+      docusign_api_key: (tenant as any)?.docusign_api_key || "",
+      dropbox_api_key: (tenant as any)?.dropbox_api_key || "",
+      microsoft365_api_key: (tenant as any)?.microsoft365_api_key || "",
+      asana_api_key: (tenant as any)?.asana_api_key || "",
+      openai_api_key: (tenant as any)?.openai_api_key || "",
+      power_automate_webhook_url: (tenant as any)?.power_automate_webhook_url || "",
       notification_triggers: tenant?.notification_triggers || DEFAULT_NOTIFICATION_TRIGGERS,
       status: tenant?.status || "pending",
     },
@@ -572,6 +606,151 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
             <Label htmlFor="google_calendar_id">Google Calendar ID</Label>
             <Input id="google_calendar_id" placeholder="primary or calendar-id@group.calendar.google.com" {...form.register("google_calendar_id")} />
             <p className="text-xs text-muted-foreground">Calendar ID to create events on (use "primary" for default calendar)</p>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Billing Section */}
+      <Collapsible
+        open={billingOpen}
+        onOpenChange={setBillingOpen}
+        className="rounded-lg border border-border"
+      >
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg"
+          >
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Billing & Payments</span>
+              {(!!form.watch("stripe_api_key") || !!form.watch("quickbooks_api_key")) && (
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                  Configured
+                </span>
+              )}
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform",
+                billingOpen && "rotate-180"
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Configure payment processing and invoicing integrations.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="stripe_api_key">Stripe API Key</Label>
+            <Input id="stripe_api_key" type="password" placeholder="sk_live_..." {...form.register("stripe_api_key")} />
+            <p className="text-xs text-muted-foreground">Secret key from Stripe Dashboard → Developers → API keys</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="quickbooks_api_key">QuickBooks API Key</Label>
+            <Input id="quickbooks_api_key" type="password" placeholder="••••••••" {...form.register("quickbooks_api_key")} />
+            <p className="text-xs text-muted-foreground">OAuth client credentials from Intuit Developer portal</p>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Documents & E-Signature Section */}
+      <Collapsible
+        open={documentsOpen}
+        onOpenChange={setDocumentsOpen}
+        className="rounded-lg border border-border"
+      >
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg"
+          >
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Documents & E-Signature</span>
+              {(!!form.watch("docusign_api_key") || !!form.watch("dropbox_api_key")) && (
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                  Configured
+                </span>
+              )}
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform",
+                documentsOpen && "rotate-180"
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Configure document storage and e-signature integrations.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="docusign_api_key">DocuSign API Key</Label>
+            <Input id="docusign_api_key" type="password" placeholder="••••••••" {...form.register("docusign_api_key")} />
+            <p className="text-xs text-muted-foreground">Integration key from DocuSign Admin → API and Keys</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dropbox_api_key">Dropbox API Key</Label>
+            <Input id="dropbox_api_key" type="password" placeholder="••••••••" {...form.register("dropbox_api_key")} />
+            <p className="text-xs text-muted-foreground">App key from Dropbox App Console</p>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* AI & Productivity Section */}
+      <Collapsible
+        open={aiOpen}
+        onOpenChange={setAiOpen}
+        className="rounded-lg border border-border"
+      >
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg"
+          >
+            <div className="flex items-center gap-2">
+              <Brain className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">AI & Productivity</span>
+              {(!!form.watch("openai_api_key") || !!form.watch("asana_api_key") || !!form.watch("calendly_api_key") || !!form.watch("microsoft365_api_key")) && (
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                  Configured
+                </span>
+              )}
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform",
+                aiOpen && "rotate-180"
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Configure AI assistance and productivity tool integrations.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="openai_api_key">OpenAI API Key</Label>
+            <Input id="openai_api_key" type="password" placeholder="sk-..." {...form.register("openai_api_key")} />
+            <p className="text-xs text-muted-foreground">API key from OpenAI Platform → API keys</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="asana_api_key">Asana API Key</Label>
+            <Input id="asana_api_key" type="password" placeholder="••••••••" {...form.register("asana_api_key")} />
+            <p className="text-xs text-muted-foreground">Personal access token from Asana Developer Console</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="calendly_api_key">Calendly API Key</Label>
+            <Input id="calendly_api_key" type="password" placeholder="••••••••" {...form.register("calendly_api_key")} />
+            <p className="text-xs text-muted-foreground">Personal access token from Calendly Integrations page</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="microsoft365_api_key">Microsoft 365 API Key</Label>
+            <Input id="microsoft365_api_key" type="password" placeholder="••••••••" {...form.register("microsoft365_api_key")} />
+            <p className="text-xs text-muted-foreground">App registration client secret from Azure AD portal</p>
           </div>
         </CollapsibleContent>
       </Collapsible>

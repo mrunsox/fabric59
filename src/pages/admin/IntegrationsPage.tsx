@@ -33,7 +33,16 @@ export default function IntegrationsPage() {
       if ((t as any).teams_webhook_url) ids.add("ms-teams");
       if ((t as any).twilio_account_sid) ids.add("twilio");
       if ((t as any).zoom_api_key) ids.add("zoom");
-      if ((t as any).google_calendar_id) ids.add("google-calendar");
+      if ((t as any).google_calendar_id) { ids.add("google-calendar"); ids.add("google-drive"); }
+      if ((t as any).stripe_api_key) ids.add("stripe");
+      if ((t as any).quickbooks_api_key) ids.add("quickbooks");
+      if ((t as any).calendly_api_key) ids.add("calendly");
+      if ((t as any).docusign_api_key) ids.add("docusign");
+      if ((t as any).dropbox_api_key) ids.add("dropbox");
+      if ((t as any).microsoft365_api_key) ids.add("microsoft-365");
+      if ((t as any).asana_api_key) ids.add("asana");
+      if ((t as any).openai_api_key) ids.add("openai");
+      if ((t as any).power_automate_webhook_url) ids.add("power-automate");
     }
     return ids;
   }, [tenants]);

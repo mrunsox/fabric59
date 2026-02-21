@@ -30,6 +30,16 @@ const INTEGRATION_FIELD_MAP: Record<string, string> = {
   twilio: "twilio_account_sid",
   zoom: "zoom_api_key",
   "google-calendar": "google_calendar_id",
+  stripe: "stripe_api_key",
+  quickbooks: "quickbooks_api_key",
+  calendly: "calendly_api_key",
+  docusign: "docusign_api_key",
+  dropbox: "dropbox_api_key",
+  "microsoft-365": "microsoft365_api_key",
+  asana: "asana_api_key",
+  openai: "openai_api_key",
+  "power-automate": "power_automate_webhook_url",
+  "google-drive": "google_calendar_id",
 };
 
 export function ClientSelectDialog({ integration, open, onOpenChange, onCloseAll }: Props) {
