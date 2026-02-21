@@ -327,8 +327,10 @@ serve(async (req) => {
       responseData = { success: true, results };
 
     } else if (action === 'addDispositionsToCampaigns') {
-      const { dispositionNames, campaigns, campaignProfiles } = payload as {
-        dispositionNames: string[];
+      const { campaignDispositions, profileDispositions, dispositionGroups, campaigns, campaignProfiles } = payload as {
+        campaignDispositions: string[];
+        profileDispositions: Array<{ name: string; group?: string }>;
+        dispositionGroups: string[];
         campaigns: string[];
         campaignProfiles: string[];
       };
@@ -336,8 +338,9 @@ serve(async (req) => {
 
       // Add to campaigns
       for (const campaign of (campaigns || [])) {
+        if (!campaignDispositions || campaignDispositions.length === 0) continue;
         try {
-          const dispoXml = dispositionNames.map(d => `<dispositions>${escapeXml(d)}</dispositions>`).join('\n  ');
+          const dispoXml = campaignDispositions.map(d => `<dispositions>${escapeXml(d)}</dispositions>`).join('\n  ');
           const soapBody = `<ser:addDispositionsToCampaign>
   <campaignName>${escapeXml(campaign)}</campaignName>
   ${dispoXml}
@@ -349,21 +352,47 @@ serve(async (req) => {
         }
       }
 
-      // Add to campaign profiles
+      // Add to campaign profiles: first create groups, then add dispositions
       for (const profile of (campaignProfiles || [])) {
-        try {
-          const dispoCountsXml = dispositionNames.map(d => `<addDispositionCounts>
-    <disposition><name>${escapeXml(d)}</name></disposition>
-    <count>-1</count>
-  </addDispositionCounts>`).join('\n  ');
-          const soapBody = `<ser:modifyCampaignProfileDispositions>
+        // Step A: Create disposition groups
+        if (dispositionGroups && dispositionGroups.length > 0) {
+          try {
+            const groupsXml = dispositionGroups.map(g => `<addDispositionGroups>${escapeXml(g)}</addDispositionGroups>`).join('\n  ');
+            const soapBody = `<ser:modifyCampaignProfileDispositions>
+  <profileName>${escapeXml(profile)}</profileName>
+  ${groupsXml}
+</ser:modifyCampaignProfileDispositions>`;
+            await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'modifyCampaignProfileDispositions', soapBody);
+            results.push({ target: `${profile} (groups)`, targetType: 'campaignProfileGroups', success: true });
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : 'Unknown error';
+            if (msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('duplicate')) {
+              results.push({ target: `${profile} (groups)`, targetType: 'campaignProfileGroups', success: true, error: 'Groups already exist (skipped)' });
+            } else {
+              results.push({ target: `${profile} (groups)`, targetType: 'campaignProfileGroups', success: false, error: msg });
+            }
+          }
+        }
+
+        // Step B: Add dispositions with optional group assignment
+        if (profileDispositions && profileDispositions.length > 0) {
+          try {
+            const dispoCountsXml = profileDispositions.map(d => {
+              const groupTag = d.group ? `\n    <groupName>${escapeXml(d.group)}</groupName>` : '';
+              return `<addDispositionCounts>
+    <disposition><name>${escapeXml(d.name)}</name></disposition>
+    <count>-1</count>${groupTag}
+  </addDispositionCounts>`;
+            }).join('\n  ');
+            const soapBody = `<ser:modifyCampaignProfileDispositions>
   <profileName>${escapeXml(profile)}</profileName>
   ${dispoCountsXml}
 </ser:modifyCampaignProfileDispositions>`;
-          await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'modifyCampaignProfileDispositions', soapBody);
-          results.push({ target: profile, targetType: 'campaignProfile', success: true });
-        } catch (err) {
-          results.push({ target: profile, targetType: 'campaignProfile', success: false, error: err instanceof Error ? err.message : 'Unknown error' });
+            await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'modifyCampaignProfileDispositions', soapBody);
+            results.push({ target: profile, targetType: 'campaignProfile', success: true });
+          } catch (err) {
+            results.push({ target: profile, targetType: 'campaignProfile', success: false, error: err instanceof Error ? err.message : 'Unknown error' });
+          }
         }
       }
 
