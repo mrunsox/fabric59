@@ -27,7 +27,7 @@ const directionConfig: Record<ActionDirection, { icon: typeof ArrowUpRight; labe
   bidirectional: { icon: ArrowLeftRight, label: "Bidirectional", className: "text-amber-500" },
 };
 
-const LINKED_INTEGRATIONS = ["clio", "workiz", "salesforce", "slack", "zapier", "make", "n8n", "pabbly", "hubspot", "zendesk", "ms-teams", "twilio", "zoom", "google-calendar", "stripe", "quickbooks", "calendly", "docusign", "google-drive", "dropbox", "microsoft-365", "asana", "openai", "power-automate"];
+const LINKED_INTEGRATIONS = ["clio", "workiz", "salesforce", "slack", "zapier", "make", "n8n", "pabbly", "hubspot", "zendesk", "ms-teams", "twilio", "zoom", "google-calendar", "stripe", "quickbooks", "calendly", "docusign", "google-drive", "dropbox", "microsoft-365", "asana", "openai", "power-automate", "jobber", "housecall-pro", "smokeball", "mycase", "practicepanther", "filevine", "cosmolex", "zoho-crm", "dynamics-365", "quoteiq", "fieldpulse", "zenmaid", "leap", "actionstep", "abacuslaw", "ringcentral", "google-chat", "oncehub", "monday", "onedrive", "adobe-sign", "hellosign", "netdocuments", "lawpay", "casetext", "spellbook", "harvey-ai", "lexis-ai", "darrow-ai", "diligen", "westlaw", "fastcase", "lastpass", "nordpass"];
 
 export function IntegrationDetailDialog({ integration, open, onOpenChange }: Props) {
   const [clientSelectOpen, setClientSelectOpen] = useState(false);

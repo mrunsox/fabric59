@@ -43,6 +43,28 @@ export default function IntegrationsPage() {
       if ((t as any).asana_api_key) ids.add("asana");
       if ((t as any).openai_api_key) ids.add("openai");
       if ((t as any).power_automate_webhook_url) ids.add("power-automate");
+      // Check JSONB integration_configs for remaining integrations
+      const configs = (t as any).integration_configs as Record<string, string> | null;
+      if (configs) {
+        const jsonbMap: Record<string, string> = {
+          jobber_api_key: "jobber", housecall_pro_api_key: "housecall-pro", smokeball_api_key: "smokeball",
+          mycase_api_key: "mycase", practicepanther_api_key: "practicepanther", filevine_api_key: "filevine",
+          cosmolex_api_key: "cosmolex", zoho_crm_api_key: "zoho-crm", dynamics365_api_key: "dynamics-365",
+          quoteiq_api_key: "quoteiq", fieldpulse_api_key: "fieldpulse", zenmaid_api_key: "zenmaid",
+          leap_api_key: "leap", actionstep_api_key: "actionstep", abacuslaw_api_key: "abacuslaw",
+          ringcentral_api_key: "ringcentral", google_chat_webhook_url: "google-chat",
+          oncehub_api_key: "oncehub", monday_api_key: "monday",
+          onedrive_api_key: "onedrive", adobe_sign_api_key: "adobe-sign", hellosign_api_key: "hellosign",
+          netdocuments_api_key: "netdocuments", lawpay_api_key: "lawpay",
+          casetext_api_key: "casetext", spellbook_api_key: "spellbook", harvey_ai_api_key: "harvey-ai",
+          lexis_ai_api_key: "lexis-ai", darrow_ai_api_key: "darrow-ai", diligen_api_key: "diligen",
+          westlaw_api_key: "westlaw", fastcase_api_key: "fastcase",
+          lastpass_api_key: "lastpass", nordpass_api_key: "nordpass",
+        };
+        for (const [key, integrationId] of Object.entries(jsonbMap)) {
+          if (configs[key]) ids.add(integrationId);
+        }
+      }
     }
     return ids;
   }, [tenants]);
