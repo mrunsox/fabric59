@@ -1,190 +1,125 @@
 
 
-# Finish All Remaining Planned Features
+# Smart Agent Provisioning: Auto-Generate Everything from a Name
 
 ## Overview
 
-There are 9 items still marked as "planned" in the build outline. This plan implements all of them and updates the build map to reflect completion.
+Replace the current manual-fill provisioning form with an intelligent "Quick Provision" mode. The user types just the agent's full name (e.g. "John Smith"), selects a role, and the system auto-derives every field using your company's naming conventions. The user reviews a pre-populated summary, picks skills, chooses where to send credentials, and hits go.
 
-## Planned Items
+## How It Works
 
-| # | Item | Category | Complexity |
-|---|------|----------|------------|
-| 1 | CRM Push Logic | API & Integrations | Medium |
-| 2 | Webhook Support | API & Integrations | Medium |
-| 3 | Error Alerting | Monitoring & Logs | Medium |
-| 4 | Integration Configure Flow | Integrations Library | Medium |
-| 5 | Live API Connection Testing | Integrations Library | Medium |
-| 6 | Slack Invite / Remove | Agent Lifecycle | Low (already done) |
-| 7 | Data Transfer Step | Agent Lifecycle | Medium |
-| 8 | HR Notification Email | Agent Lifecycle | Medium |
-| 9 | Cron Trigger for process-jobs | Agent Lifecycle | Low |
+**Step 1 -- Enter Name**
+A single input: "John Smith"
 
----
+**Step 2 -- Select Platforms**
+Checkboxes: Google Workspace, Five9, Slack (default: all checked)
 
-## Implementation Details
+**Step 3 -- Select Role**
+Dropdown from the existing AGENT_ROLES list
 
-### 1. CRM Push Logic
+**Step 4 -- System Auto-Generates Everything**
+Using your naming conventions:
+- **Email**: First name + last initial, lowercase = `johns@businessname.com`
+- **Five9 Username**: First name + space + last initial uppercase = `John S`
+- **Extension**: Finds the next available extension in the role's range by querying Five9 for used extensions
+- **Password**: Auto-generated (existing logic)
+- **Slack Channels**: Derived from the selected role's `slackChannels` array
 
-**New edge function:** `supabase/functions/crm-push/index.ts`
+**Step 5 -- Select Skills**
+Multi-select from live Five9 skills list (already fetched)
 
-This function reads a tenant's CRM type and credentials, then pushes mapped data to the appropriate CRM system. It will:
-- Accept a POST with `tenant_id`, `crm_action` (e.g. `create_contact`, `update_contact`, `log_call`), and `data` (the mapped fields)
-- Look up tenant CRM config from the database using service role
-- Route to the appropriate CRM adapter (Clio, Workiz, Salesforce, HubSpot, Zendesk, etc.)
-- Log the result to `api_logs`
-- Return success/failure with response details
+**Step 6 -- Review and Send**
+All fields shown in a summary card, fully editable if the user wants to override anything. External email field with:
+- Dropdown of recently used external emails
+- Manual entry option
+- The user confirms and clicks "Provision"
 
-Starts as a well-structured dispatcher with stub adapters per CRM type, ready for real API calls.
+## Similarly for Offboarding
 
-### 2. Webhook Support (Five9 Inbound Webhooks)
-
-**New edge function:** `supabase/functions/five9-webhook/index.ts`
-
-Receives real-time event POSTs from Five9 (call started, call ended, disposition set, etc.):
-- Validates a shared webhook secret from the `x-webhook-secret` header
-- Parses the Five9 event payload
-- Logs to `api_logs` table
-- Triggers downstream actions: calls `crm-push` for contact sync, calls `send-notification` for alerting
-- Returns 200 OK quickly
-
-**Database migration:** Add `webhook_secret` column to `five9_domains` table for per-domain secret validation.
-
-**Settings page update:** Add a "Webhook URL" display card showing the endpoint URL to copy/paste into Five9 admin, plus a "Regenerate Secret" button.
-
-### 3. Error Alerting
-
-**New edge function:** `supabase/functions/error-alert/index.ts`
-
-Monitors for critical failures and sends alerts:
-- Accepts POST with `error_type`, `message`, `details`, `tenant_id`
-- Looks up org-level alerting config from `app_config` (alert email, Slack webhook)
-- Sends alert email via Resend (reuses existing Resend key infrastructure)
-- Sends Slack notification via the existing `slack-agent` function's gateway
-- Logs alert to a new `error_alerts` table
-
-**Database migration:** Create `error_alerts` table (id, error_type, message, details, tenant_id, alerted_via, created_at).
-
-**Settings page update:** Add an "Error Alerting" card in Settings with fields for alert email address and toggle for Slack alerts, stored in `app_config`.
-
-**Notifications page update:** Add an "Alerts" tab alongside the existing notification logs showing error alerts.
-
-### 4. Integration Configure Flow
-
-**New component:** `src/components/integrations/IntegrationConfigWizard.tsx`
-
-A step-by-step dialog wizard that guides users through:
-1. **Select Client** -- pick which tenant to configure (reuses existing ClientSelectDialog)
-2. **Enter Credentials** -- dynamic form based on integration type (API key, OAuth, webhook URL)
-3. **Test Connection** -- calls the integration's edge function with a `test` action
-4. **Confirm & Save** -- saves to tenant record, shows success
-
-Updates `IntegrationDetailDialog.tsx` to open this wizard instead of the simple ClientSelectDialog for integrations that support it.
-
-### 5. Live API Connection Testing
-
-**Update all edge function stubs** to support a `test` action that validates credentials format and returns a structured test result. For example:
-- HubSpot: validates API key format starts with `pat-`
-- Slack: already has `test` action (auth.test)
-- Twilio: validates Account SID format starts with `AC`
-- Generic: returns `{ success: true, message: "Credentials format valid" }`
-
-**New component:** `src/components/integrations/ConnectionTestButton.tsx`
-
-A button component used in the configure wizard and tenant form that:
-- Calls the integration's edge function with `action: "test"`
-- Shows loading spinner, then green checkmark or red error
-- Displays the test result message
-
-### 6. Slack Invite / Remove
-
-The `slack-agent` edge function already fully implements both `inviteUser` and `removeUser` actions with real Slack API calls. The provisioning and deprovisioning hooks already call these.
-
-**Action:** Simply update `buildMap.ts` status from `"planned"` to `"done"` -- this feature is already complete.
-
-### 7. Data Transfer Step (Google Drive Transfer)
-
-**Update:** `supabase/functions/google-workspace/index.ts`
-
-Add a new `transferData` action that:
-- Calls Google Admin SDK's datatransfer API
-- Transfers ownership of Drive files and Gmail data from the departing agent to the target email
-- Returns transfer status
-
-**Update:** `useDeprovisioning.ts`
-
-Replace the simulated `delay(2000)` in Step 1 with an actual call to `google-workspace` with `action: "transferData"`:
-```
-body: {
-  action: 'transferData',
-  sourceUserKey: agentEmail,
-  targetUserKey: dataTransfer.targetEmail,
-  transferDrive: dataTransfer.transferDrive,
-  transferEmail: dataTransfer.transferEmail,
-}
-```
-
-### 8. HR Notification Email
-
-**Update:** `supabase/functions/send-credentials/index.ts` (or create a new `send-hr-notification/index.ts`)
-
-**New edge function:** `supabase/functions/send-hr-notification/index.ts`
-
-Sends a styled HTML email to HR confirming offboarding completion:
-- Agent name, email, role
-- Offboarding steps completed/failed
-- Data transfer summary (if enabled)
-- Timestamp of completion
-
-**Update:** `useDeprovisioning.ts`
-
-Replace the simulated `delay(800)` in Step 6 (HR Notification) with an actual call:
-```
-await supabase.functions.invoke('send-hr-notification', {
-  body: {
-    agentName: request.agentName,
-    email: request.email,
-    role: request.role,
-    steps: currentSteps,
-    dataTransfer: request.dataTransfer,
-    reason: request.reason,
-    organizationId: agentData?.organization_id,
-  },
-});
-```
-
-**Settings page update:** Add an "HR Notification Email" field in Settings (stored in `app_config` as `hr_notification_email`).
-
-### 9. Cron Trigger for process-jobs
-
-**Database migration:** Use `pg_cron` extension to schedule the `process-jobs` edge function every 30 minutes:
-
-```sql
-SELECT cron.schedule(
-  'process-pending-jobs',
-  '*/30 * * * *',
-  $$
-  SELECT net.http_post(
-    url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'supabase_url') || '/functions/v1/process-jobs',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'supabase_anon_key')
-    ),
-    body := '{}'::jsonb
-  );
-  $$
-);
-```
-
-This ensures scheduled deprovisionings execute automatically without manual intervention.
+Add a "Quick Offboard" button: user types or selects an agent name, system looks up all their accounts, shows a confirmation summary, and runs the full deprovisioning workflow with one click (defaulting to immediate, no grace period, no data transfer -- but overridable).
 
 ---
 
-## Build Map Update
+## Technical Changes
 
-**File:** `src/data/buildMap.ts`
+### 1. Update ProvisioningForm with Quick Mode
 
-Change all 9 items from `"planned"` to `"done"`, bringing the overall progress to 100%.
+**File: `src/components/agents/onboarding/ProvisioningForm.tsx`**
+
+Add a "Quick Provision" toggle at the top of the form:
+- **Quick Mode (default)**: Shows only Full Name, Role selector, Skills multi-select, and External Email
+- **Advanced Mode**: Shows all existing fields for manual override
+
+When Quick Mode is active:
+- On name input, auto-derive `emailHandle`, `five9Username` using naming convention functions
+- On role selection, auto-query Five9 for the next available extension in that role's range
+- Show a live preview card below the form with all derived values
+- User can click any derived value to override it
+
+### 2. Add Naming Convention Utilities
+
+**New file: `src/lib/agent-naming.ts`**
+
+```
+deriveEmailHandle(fullName: string): string
+  // "John Smith" -> "johns"
+  // "Mary Jane Watson" -> "maryjanew"  (first + middle + last initial)
+
+deriveFive9Username(fullName: string): string
+  // "John Smith" -> "John S"
+
+deriveDisplayName(fullName: string): string
+  // "John Smith" -> "John S." (for privacy)
+```
+
+### 3. Auto-Find Next Available Extension
+
+**Update: `src/hooks/useProvisioning.ts`**
+
+Add a `findNextExtension(role: AgentRole)` function that:
+1. Calls `five9-provisioning` with `action: 'getExtensions'` to get used extensions
+2. Also queries local `agents` table for extensions in the role's range
+3. Returns the first unused number in `extensionRangeStart..extensionRangeEnd`
+
+### 4. Skills Multi-Select Component
+
+**New file: `src/components/agents/onboarding/SkillsMultiSelect.tsx`**
+
+Replace the current comma-separated text input with a proper multi-select dropdown:
+- Fetches available skills from Five9
+- Shows checkboxes with search/filter
+- Selected skills shown as removable badges
+
+### 5. Derived Values Preview Card
+
+**New file: `src/components/agents/onboarding/DerivedValuesPreview.tsx`**
+
+Shows a summary card with all auto-generated values:
+- Email: `johns@businessname.com` (editable)
+- Five9 Username: `John S` (editable)
+- Extension: `1042` (auto-found, editable)
+- Password: `xK9#mP2...` (regeneratable)
+- Slack Channels: `#english-support, #all-agents`
+
+Each value has an edit icon to allow override.
+
+### 6. Quick Offboard Mode
+
+**Update: `src/components/agents/offboarding/AgentSearchList.tsx`**
+
+Add a "Quick Offboard" button at the top that:
+- Opens a name search/autocomplete against the agents list
+- Selecting an agent immediately opens the DeprovisioningModal pre-filled with that agent's data
+- Defaults to "Offboard Now" with no grace period
+
+### 7. External Email Dropdown
+
+**Update: `src/components/agents/onboarding/ProvisioningForm.tsx`**
+
+Replace the plain text input with a combobox that:
+- Shows recently used external emails (from previous provisions in the `agents` table -- not stored, but could query audit logs)
+- Allows manual entry
+- Validates email format
 
 ---
 
@@ -192,18 +127,11 @@ Change all 9 items from `"planned"` to `"done"`, bringing the overall progress t
 
 | File | Change |
 |------|--------|
-| Database migration | Create `error_alerts` table, add `webhook_secret` to `five9_domains`, add pg_cron job |
-| `src/data/buildMap.ts` | All 9 planned items to "done" |
-| `supabase/functions/crm-push/index.ts` | New -- CRM push dispatcher |
-| `supabase/functions/five9-webhook/index.ts` | New -- inbound webhook receiver |
-| `supabase/functions/error-alert/index.ts` | New -- error alerting via email/Slack |
-| `supabase/functions/send-hr-notification/index.ts` | New -- HR offboarding confirmation email |
-| `supabase/functions/google-workspace/index.ts` | Add `transferData` action |
-| `src/hooks/useDeprovisioning.ts` | Wire real data transfer + HR notification calls |
-| `src/components/integrations/IntegrationConfigWizard.tsx` | New -- step-by-step configure wizard |
-| `src/components/integrations/ConnectionTestButton.tsx` | New -- test connection button |
-| `src/components/integrations/IntegrationDetailDialog.tsx` | Open wizard for linked integrations |
-| `src/pages/admin/SettingsPage.tsx` | Add webhook URL display, error alerting config, HR email field |
-| `src/pages/admin/NotificationsPage.tsx` | Add error alerts tab |
-| Multiple edge function stubs | Add `test` action support |
+| `src/lib/agent-naming.ts` | New -- naming convention utilities |
+| `src/components/agents/onboarding/ProvisioningForm.tsx` | Add Quick/Advanced mode toggle, auto-derive fields, preview card |
+| `src/components/agents/onboarding/SkillsMultiSelect.tsx` | New -- multi-select skills component |
+| `src/components/agents/onboarding/DerivedValuesPreview.tsx` | New -- auto-generated values preview with edit |
+| `src/hooks/useProvisioning.ts` | Add `findNextExtension()` helper |
+| `src/components/agents/offboarding/AgentSearchList.tsx` | Add Quick Offboard button with name search |
+| `src/types/provisioning.ts` | No changes needed (existing types sufficient) |
 
