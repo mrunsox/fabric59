@@ -33,6 +33,7 @@ import NotificationsPage from "@/pages/admin/NotificationsPage";
 import TestConsolePage from "@/pages/admin/TestConsolePage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import AgentsPage from "@/pages/admin/AgentsPage";
+import DispositionsPage from "@/pages/admin/DispositionsPage";
 import IntegrationsPage from "@/pages/admin/IntegrationsPage";
 import ProfilePage from "@/pages/admin/ProfilePage";
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
@@ -90,6 +91,7 @@ const App = () => (
                 <Route path="logs" element={<ApiLogsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="agents" element={<AgentsPage />} />
+                <Route path="dispositions" element={<DispositionsPage />} />
                 <Route path="integrations" element={<IntegrationsPage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
                 <Route path="test" element={<TestConsolePage />} />
