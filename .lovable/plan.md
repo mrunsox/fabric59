@@ -1,101 +1,85 @@
 
 
-# Post-Interview Implementation Phase for Alex
+# Industry-Specific Interview Questions for Alex
 
-## Problem
+## Overview
 
-After Alex finishes the 6-step interview and generates the call flow config summary, nothing happens. The conversation dead-ends. Alex should transition into an **implementation phase** where it saves the config and asks the user for any missing credentials (CRM API keys, Slack webhook URLs, etc.).
+Currently Alex asks the same generic questions (CRM, Pre-Call, During Call, Post-Call, Notifications) regardless of the industry selected. This update makes each question curated to the chosen industry, so a Legal firm sees case-related options while a Home Services company sees job/dispatch options.
 
----
+## What Changes
 
-## Solution
-
-### 1. Extend System Prompt with Implementation Phase
+### System Prompt Update
 
 **File: `supabase/functions/ai-call-flow/index.ts`**
 
-After the summary generation step, add a new phase to the prompt:
+Replace the static steps 2-6 with industry-branched question sets. After the user picks their industry in step 1, Alex tailors every subsequent question.
 
-- **Step 7: Save Config** -- Alex presents the summary and asks: "Ready to save this configuration? Provide a client name or select an existing one." with options: 1. Create new client, 2. Apply to existing client
-- **Step 8: Collect Credentials** -- Based on the chosen CRM and notification channels, Alex asks for the specific credentials needed:
-  - If CRM is Clio: "I need your Clio API key and API URL."
-  - If CRM is Workiz: "I need your Workiz API token and base URL."
-  - If Salesforce/HubSpot: respective credentials
-  - If Slack notifications selected: "I need your Slack webhook URL."
-  - If webhook selected: "I need the webhook endpoint URL."
-  - Alex asks for ONE credential at a time, not all at once
-- **Step 9: Confirmation** -- Alex confirms everything is saved and provides a summary of what was configured, with a link/suggestion to go to the Mappings page to fine-tune field mappings
+#### Industry-Specific Options
 
-The prompt will instruct Alex to output a special JSON block (wrapped in a code fence tagged `:::SAVE_CONFIG:::`) when the user confirms saving. This block contains the structured config data the frontend can parse and save to the database.
+**Step 2 -- CRM** (varies by industry):
+- Legal: Clio, MyCase, PracticePanther, Salesforce, Other/None
+- Home Services: Workiz, ServiceTitan, Housecall Pro, Jobber, Other/None
+- Healthcare: Athenahealth, Epic, Salesforce Health Cloud, Other/None
+- Insurance: Applied Epic, HawkSoft, Salesforce, AgencyZoom, Other/None
+- Other: Salesforce, HubSpot, Zoho, Other/None
 
-### 2. Frontend: Detect and Handle Save Actions
+**Step 3 -- Pre-Call** (varies by industry):
+- Legal: CRM lookup, Conflict check, Case type routing, VIP client flag, Queue announcement
+- Home Services: CRM lookup, Job status check, Technician availability, Priority routing, Queue announcement
+- Healthcare: Patient record lookup, Insurance verification, Provider routing, HIPAA greeting, Queue announcement
+- Insurance: Policy lookup, Claims status check, Agent routing, Priority flag, Queue announcement
+- Other: CRM lookup, Screen pop, Priority routing, Queue announcement, Other
 
-**File: `src/pages/admin/CallFlowBuilderPage.tsx`**
+**Step 4 -- During Call** (varies by industry):
+- Legal: Contact info, Case type/practice area, Opposing party, Court dates, Consultation notes
+- Home Services: Contact info, Job type/trade, Address/service area, Scheduling preference, Dispatch notes
+- Healthcare: Patient demographics, Insurance info, Symptoms/reason, Preferred provider, Appointment notes
+- Insurance: Policy number, Claim details, Coverage type, Incident date, Agent notes
+- Other: Contact info, Case/job details, Disposition codes, Custom fields, Notes
 
-- Add a detection function that scans each streamed assistant message for the `:::SAVE_CONFIG:::` marker
-- When detected, parse the JSON payload containing: `{ client_name, crm_type, crm_api_key, crm_api_url, slack_webhook_url, webhook_url, notification_triggers, custom_mappings }`
-- Call a save function that either:
-  - Creates a new tenant row via `supabase.from('tenants').insert(...)` 
-  - Or updates an existing tenant via `supabase.from('tenants').update(...)`
-- Show a success toast: "Configuration saved for [client name]"
-- After saving, render an inline action bar below the message with buttons: "View Client", "Edit Mappings", "Start Over"
+**Step 5 -- Post-Call** (varies by industry):
+- Legal: Create CRM record, Conflict check alert, Schedule consultation, Email intake summary, Trigger webhook
+- Home Services: Create job/ticket, Dispatch technician, Schedule estimate, SMS confirmation, Trigger webhook
+- Healthcare: Update patient record, Schedule appointment, Referral notification, Secure email summary, Trigger webhook
+- Insurance: Create/update claim, Assign adjuster, Policy document request, Email summary, Trigger webhook
+- Other: Create CRM record, Slack notification, Book follow-up, Email summary, Trigger webhook
 
-### 3. Credential Input Security
+**Step 6 -- Notifications** remains the same across all industries (Slack, Email, SMS, Calendar invite, None).
 
-- Credentials typed into the chat (API keys, webhook URLs) are sent to the AI but are only used for saving to the database -- they are NOT stored in the AI conversation history beyond the current session
-- The save operation writes directly to the `tenants` table which has RLS policies
-- No new edge function needed -- the frontend handles the DB write using the existing Supabase client
+### No Frontend Changes
 
-### 4. Action Buttons After Save
+The frontend chip detection and multi-select logic remain unchanged. The chips are dynamically extracted from whatever options Alex presents, so industry-specific options will automatically appear as clickable chips.
 
-**File: `src/pages/admin/CallFlowBuilderPage.tsx`**
+### No Database Changes
 
-- Detect when a message contains "Configuration saved" or the save confirmation pattern
-- Render action buttons below that message:
-  - "View Client" -- navigates to `/admin/tenants`
-  - "Edit Mappings" -- navigates to `/admin/mappings`
-  - "Build Another" -- triggers `handleStartOver()`
-
----
+The tenants table schema stays the same. The industry-specific options are stored in `custom_mappings` as arrays, which already supports arbitrary values.
 
 ## Technical Details
 
-### Save Config JSON Format (emitted by AI in code fence)
+The system prompt will use a structured format like:
 
-```text
-:::SAVE_CONFIG:::
-{
-  "client_name": "Smith & Associates",
-  "crm_type": "clio",
-  "pre_call": ["CRM lookup", "Screen pop"],
-  "during_call": ["Contact info", "Case details", "Disposition codes"],
-  "post_call": ["Create CRM record", "Slack notification", "Email summary"],
-  "notifications": ["Slack", "Email"],
-  "crm_api_key": "...",
-  "crm_api_url": "...",
-  "slack_webhook_url": "...",
-  "webhook_url": "..."
-}
-:::END_CONFIG:::
+```
+After the user selects their industry, tailor steps 2-6 based on it:
+
+IF Legal:
+  Step 2 CRM options: Clio, MyCase, PracticePanther, Salesforce, Other/None
+  Step 3 Pre-Call options: CRM lookup, Conflict check, Case type routing, VIP client flag, Queue announcement
+  ...
+
+IF Home Services:
+  Step 2 CRM options: Workiz, ServiceTitan, Housecall Pro, Jobber, Other/None
+  ...
 ```
 
-### CRM Type Mapping
+The CRM type mapping for the save config will be extended:
+- MyCase, PracticePanther, Athenahealth, Applied Epic, HawkSoft, AgencyZoom, ServiceTitan, Housecall Pro, Jobber, Zoho -> `other`
+- Clio -> `clio`, Workiz -> `workiz`, Salesforce -> `salesforce`
 
-The tenants table uses an enum `crm_type`. Alex's CRM options map to:
-- Clio -> `clio`
-- Workiz -> `workiz`
-- Salesforce -> `salesforce`
-- HubSpot -> `hubspot`
-- Other/None -> `other`
+The credential collection in step 8 will also be industry-aware -- Alex only asks for credentials relevant to the selected CRM (e.g., if they picked ServiceTitan, Alex asks for a ServiceTitan API key and tenant ID).
 
-### Files Changed
+## Files Changed
 
 | File | Change |
 |------|--------|
-| `supabase/functions/ai-call-flow/index.ts` | Add steps 7-9 to system prompt (implementation phase) |
-| `src/pages/admin/CallFlowBuilderPage.tsx` | Add config save detection, DB write logic, post-save action buttons |
-
-### No New Tables or Migrations
-
-All data saves to the existing `tenants` table which already has `crm_type`, `crm_api_key`, `crm_api_url`, `slack_webhook_url`, `webhook_url`, `notification_triggers`, and `custom_mappings` columns.
+| `supabase/functions/ai-call-flow/index.ts` | Replace static steps 2-6 with industry-branched question sets in the system prompt |
 
