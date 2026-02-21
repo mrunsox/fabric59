@@ -30,6 +30,7 @@ export default function CallFlowBuilderPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
+  const [selectedChips, setSelectedChips] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -134,7 +135,19 @@ export default function CallFlowBuilderPage() {
   const lastAssistantMsg = messages.length > 0 && messages[messages.length - 1]?.role === "assistant"
     ? messages[messages.length - 1] : null;
   const quickReplies = lastAssistantMsg && !isLoading ? extractQuickReplies(lastAssistantMsg.content) : [];
+  const isMultiSelect = lastAssistantMsg?.content.toLowerCase().includes("select all that apply") ?? false;
 
+  const toggleChip = (option: string) => {
+    setSelectedChips((prev) =>
+      prev.includes(option) ? prev.filter((c) => c !== option) : [...prev, option]
+    );
+  };
+
+  const handleContinue = () => {
+    if (selectedChips.length === 0) return;
+    sendMessage(selectedChips.join(", "));
+    setSelectedChips([]);
+  };
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -228,14 +241,22 @@ export default function CallFlowBuilderPage() {
                         {quickReplies.map((option) => (
                           <Button
                             key={option}
-                            variant="outline"
+                            variant={isMultiSelect && selectedChips.includes(option) ? "default" : "outline"}
                             size="sm"
                             className="text-xs"
-                            onClick={() => sendMessage(option)}
+                            onClick={() => isMultiSelect ? toggleChip(option) : sendMessage(option)}
                           >
                             {option}
                           </Button>
                         ))}
+                      </div>
+                    )}
+                    {isMultiSelect && selectedChips.length > 0 && (
+                      <div className="pl-10">
+                        <Button size="sm" onClick={handleContinue} className="gap-2">
+                          <Send className="h-3.5 w-3.5" />
+                          Continue ({selectedChips.length} selected)
+                        </Button>
                       </div>
                     )}
 
