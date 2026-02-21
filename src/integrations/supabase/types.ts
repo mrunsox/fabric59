@@ -225,6 +225,44 @@ export type Database = {
         }
         Relationships: []
       }
+      error_alerts: {
+        Row: {
+          alerted_via: string[] | null
+          created_at: string
+          details: Json | null
+          error_type: string
+          id: string
+          message: string
+          tenant_id: string | null
+        }
+        Insert: {
+          alerted_via?: string[] | null
+          created_at?: string
+          details?: Json | null
+          error_type: string
+          id?: string
+          message: string
+          tenant_id?: string | null
+        }
+        Update: {
+          alerted_via?: string[] | null
+          created_at?: string
+          details?: Json | null
+          error_type?: string
+          id?: string
+          message?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_alerts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       field_mappings: {
         Row: {
           created_at: string
@@ -299,6 +337,7 @@ export type Database = {
           organization_id: string
           status: Database["public"]["Enums"]["five9_domain_status"]
           updated_at: string
+          webhook_secret: string | null
           workflow_settings: Json | null
         }
         Insert: {
@@ -314,6 +353,7 @@ export type Database = {
           organization_id: string
           status?: Database["public"]["Enums"]["five9_domain_status"]
           updated_at?: string
+          webhook_secret?: string | null
           workflow_settings?: Json | null
         }
         Update: {
@@ -329,6 +369,7 @@ export type Database = {
           organization_id?: string
           status?: Database["public"]["Enums"]["five9_domain_status"]
           updated_at?: string
+          webhook_secret?: string | null
           workflow_settings?: Json | null
         }
         Relationships: [

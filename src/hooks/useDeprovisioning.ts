@@ -113,11 +113,26 @@ export function useDeprovisioning() {
 
     const { data: agentData } = await db.from('agents').select('*').eq('id', request.agentId).single();
 
-    // Step 1 — Data transfer
+    // Step 1 — Data transfer (real Google Drive/Gmail transfer)
     updateStep('data-transfer', { status: request.dataTransfer.enabled ? 'active' : 'skipped' });
     if (request.dataTransfer.enabled) {
-      await delay(2000);
-      updateStep('data-transfer', { status: 'complete' });
+      try {
+        const { data: transferResult } = await supabase.functions.invoke('google-workspace', {
+          body: {
+            action: 'transferData',
+            sourceUserKey: agentData?.google_user_id || agentData?.email || request.email,
+            targetUserKey: request.dataTransfer.targetEmail,
+            transferDrive: request.dataTransfer.transferDrive,
+            transferEmail: request.dataTransfer.transferEmail,
+          },
+        });
+        updateStep('data-transfer', {
+          status: transferResult?.success ? 'complete' : 'error',
+          errorMessage: transferResult?.error,
+        });
+      } catch {
+        updateStep('data-transfer', { status: 'error', errorMessage: 'Data transfer service unavailable' });
+      }
     }
 
     // Step 2 — Five9 deactivate
@@ -192,10 +207,27 @@ export function useDeprovisioning() {
       updateStep('google-deletion', { status: 'error', errorMessage: 'Google Workspace unavailable' });
     }
 
-    // Step 6 — HR Notification
+    // Step 6 — HR Notification (real email via send-hr-notification)
     updateStep('notification', { status: 'active' });
-    await delay(800);
-    updateStep('notification', { status: 'complete' });
+    try {
+      const currentSteps = initSteps(); // get latest step state
+      const { data: hrResult } = await supabase.functions.invoke('send-hr-notification', {
+        body: {
+          agentName: request.agentName,
+          email: request.email,
+          role: request.role,
+          steps: currentSteps,
+          dataTransfer: request.dataTransfer,
+          reason: request.reason,
+        },
+      });
+      updateStep('notification', {
+        status: (hrResult?.success || hrResult?.skipped) ? 'complete' : 'error',
+        errorMessage: hrResult?.error,
+      });
+    } catch {
+      updateStep('notification', { status: 'error', errorMessage: 'HR notification service unavailable' });
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
     await db.from('agents').update({
