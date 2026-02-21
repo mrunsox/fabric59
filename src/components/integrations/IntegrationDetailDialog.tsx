@@ -6,6 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { IntegrationConfigWizard } from "./IntegrationConfigWizard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -31,7 +32,7 @@ const LINKED_INTEGRATIONS = ["clio", "workiz", "salesforce", "slack", "zapier", 
 
 export function IntegrationDetailDialog({ integration, open, onOpenChange }: Props) {
   const [clientSelectOpen, setClientSelectOpen] = useState(false);
-
+  const [wizardOpen, setWizardOpen] = useState(false);
   if (!integration) return null;
 
   const Icon = integration.icon;
@@ -39,7 +40,7 @@ export function IntegrationDetailDialog({ integration, open, onOpenChange }: Pro
 
   const handleConfigure = () => {
     if (isLinked) {
-      setClientSelectOpen(true);
+      setWizardOpen(true);
     } else {
       toast({
         title: "Coming Soon",
@@ -135,7 +136,16 @@ export function IntegrationDetailDialog({ integration, open, onOpenChange }: Pro
         </DialogContent>
       </Dialog>
 
-      {/* Client selection dialog */}
+      {/* Config wizard */}
+      {integration && (
+        <IntegrationConfigWizard
+          integration={integration}
+          open={wizardOpen}
+          onOpenChange={setWizardOpen}
+        />
+      )}
+
+      {/* Client selection dialog (legacy fallback) */}
       {integration && (
         <ClientSelectDialog
           integration={integration}

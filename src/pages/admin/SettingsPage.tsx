@@ -619,7 +619,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Notifications */}
+      {/* Notifications & Alerting */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -627,8 +627,8 @@ export default function SettingsPage() {
               <Bell className="h-5 w-5 text-warning" />
             </div>
             <div>
-              <CardTitle>Notifications</CardTitle>
-              <CardDescription>Configure alerts and webhooks</CardDescription>
+              <CardTitle>Notifications & Alerting</CardTitle>
+              <CardDescription>Configure alerts, webhooks, and HR notifications</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -644,10 +644,36 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label htmlFor="alert-email">Alert Email</Label>
             <Input id="alert-email" type="email" placeholder="ops@yourcompany.com" />
+            <p className="text-xs text-muted-foreground">Receives error alerts from the error-alert system</p>
           </div>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Slack Error Alerts</Label>
+              <p className="text-sm text-muted-foreground">Send critical errors to #alerts channel</p>
+            </div>
+            <Switch defaultChecked />
+          </div>
+          <Separator />
           <div className="space-y-2">
-            <Label htmlFor="slack-webhook">Slack Webhook URL</Label>
-            <Input id="slack-webhook" type="url" placeholder="https://hooks.slack.com/services/..." />
+            <Label htmlFor="hr-email">HR Notification Email</Label>
+            <Input id="hr-email" type="email" placeholder="hr@yourcompany.com" />
+            <p className="text-xs text-muted-foreground">Receives automated offboarding completion summaries</p>
+          </div>
+          <Separator />
+          <div className="space-y-2">
+            <Label>Webhook Endpoint URL</Label>
+            <div className="flex gap-2">
+              <Input
+                readOnly
+                value={`https://lxwalsgqrnstjclafaka.supabase.co/functions/v1/five9-webhook`}
+                className="font-mono text-xs"
+              />
+              <Button variant="outline" size="sm" onClick={() => {
+                navigator.clipboard.writeText(`https://lxwalsgqrnstjclafaka.supabase.co/functions/v1/five9-webhook`);
+                toast.success("Webhook URL copied");
+              }}>Copy</Button>
+            </div>
+            <p className="text-xs text-muted-foreground">Paste this URL into your Five9 admin webhook settings</p>
           </div>
         </CardContent>
       </Card>

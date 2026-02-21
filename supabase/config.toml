@@ -17,3 +17,15 @@ verify_jwt = false
 
 [functions.ai-call-flow]
 verify_jwt = false
+
+[functions.crm-push]
+verify_jwt = false
+
+[functions.five9-webhook]
+verify_jwt = false
+
+[functions.error-alert]
+verify_jwt = false
+
+[functions.send-hr-notification]
+verify_jwt = false

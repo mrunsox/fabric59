@@ -147,6 +147,52 @@ serve(async (req) => {
       });
     }
 
+    } else if (action === 'transferData') {
+      const { sourceUserKey, targetUserKey, transferDrive, transferEmail } = payload;
+      // Google Data Transfer API
+      const transferUrl = 'https://admin.googleapis.com/admin/datatransfer/v1/transfers';
+      const applications: Array<{ applicationId: string; transferParams: Array<{ key: string; value: string[] }> }> = [];
+
+      // Google Drive application ID: 55656082996
+      if (transferDrive) {
+        applications.push({
+          applicationId: '55656082996',
+          transferParams: [{ key: 'PRIVACY_LEVEL', value: ['SHARED', 'PRIVATE'] }],
+        });
+      }
+
+      // Gmail application ID: 1054922436 (calendar + mail)
+      if (transferEmail) {
+        applications.push({
+          applicationId: '1054922436',
+          transferParams: [{ key: 'PRIVACY_LEVEL', value: ['SHARED', 'PRIVATE'] }],
+        });
+      }
+
+      if (applications.length === 0) {
+        return new Response(JSON.stringify({ success: true, message: 'No transfer types selected' }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const res = await fetch(transferUrl, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          oldOwnerUserId: sourceUserKey,
+          newOwnerUserId: targetUserKey,
+          applicationDataTransfers: applications,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(`Google Transfer API error [${res.status}]: ${JSON.stringify(data)}`);
+      return new Response(JSON.stringify({ success: true, transferId: data.id, status: data.overallTransferStatusCode }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(JSON.stringify({ success: false, error: `Unknown action: ${action}` }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
