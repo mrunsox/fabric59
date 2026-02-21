@@ -61,46 +61,49 @@ export default function UserDashboardPage() {
   const [domainCount, setDomainCount] = useState(0);
   const [integrationCount, setIntegrationCount] = useState(0);
 
-  useEffect(() => {
-    if (showAgents) {
-      supabase.from("agents").select("id, status").then(({ data }) => {
-        if (data) {
-          setAgentStats({
-            total: data.length,
-            active: data.filter((a) => a.status === "active").length,
-            pending: data.filter((a) => a.status === "pending").length,
-            deprovisioned: data.filter((a) => a.status === "deprovisioned").length,
-          });
-        }
-      });
-      supabase
-        .from("agents")
-        .select("id, first_name, last_name, email, status, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5)
-        .then(({ data }) => {
-          if (data) setRecentAgents(data);
+  const fetchAgentData = () => {
+    supabase.from("agents").select("id, status").then(({ data }) => {
+      if (data) {
+        setAgentStats({
+          total: data.length,
+          active: data.filter((a) => a.status === "active").length,
+          pending: data.filter((a) => a.status === "pending").length,
+          deprovisioned: data.filter((a) => a.status === "deprovisioned").length,
         });
-    }
+      }
+    });
+    supabase
+      .from("agents")
+      .select("id, first_name, last_name, email, status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        if (data) setRecentAgents(data);
+      });
+  };
 
-    if (showClients) {
-      supabase.from("tenants").select("id, status").then(({ data }) => {
-        if (data) {
-          setTenantStats({
-            total: data.length,
-            active: data.filter((t) => t.status === "active").length,
-          });
-        }
-      });
-      supabase
-        .from("tenants")
-        .select("id, name, status, crm_type, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5)
-        .then(({ data }) => {
-          if (data) setRecentTenants(data);
+  const fetchTenantData = () => {
+    supabase.from("tenants").select("id, status").then(({ data }) => {
+      if (data) {
+        setTenantStats({
+          total: data.length,
+          active: data.filter((t) => t.status === "active").length,
         });
-    }
+      }
+    });
+    supabase
+      .from("tenants")
+      .select("id, name, status, crm_type, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        if (data) setRecentTenants(data);
+      });
+  };
+
+  useEffect(() => {
+    if (showAgents) fetchAgentData();
+    if (showClients) fetchTenantData();
 
     if (isFullAdmin && showDomains) {
       supabase.from("five9_domains").select("id", { count: "exact", head: true }).then(({ count }) => {
@@ -113,6 +116,33 @@ export default function UserDashboardPage() {
         setIntegrationCount(count ?? 0);
       });
     }
+
+    // Realtime subscriptions
+    const channels: ReturnType<typeof supabase.channel>[] = [];
+
+    if (showAgents) {
+      const agentChannel = supabase
+        .channel('dashboard-agents')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, () => {
+          fetchAgentData();
+        })
+        .subscribe();
+      channels.push(agentChannel);
+    }
+
+    if (showClients) {
+      const tenantChannel = supabase
+        .channel('dashboard-tenants')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tenants' }, () => {
+          fetchTenantData();
+        })
+        .subscribe();
+      channels.push(tenantChannel);
+    }
+
+    return () => {
+      channels.forEach((ch) => supabase.removeChannel(ch));
+    };
   }, [showAgents, showClients, showDomains, showIntegrations, isFullAdmin]);
 
   const statusColor = (status: string) => {
