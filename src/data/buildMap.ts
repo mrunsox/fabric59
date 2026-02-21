@@ -25,6 +25,27 @@ export const buildMap: BuildCategory[] = [
     ],
   },
   {
+    name: "User Access Control",
+    items: [
+      { name: "Granular Permissions Table", description: "Per-user permission keys stored in user_permissions", status: "done" },
+      { name: "Permission-Based Sidebar", description: "Nav items filtered by user permissions", status: "done" },
+      { name: "Team Members Manager", description: "Admin UI to toggle permissions per org member", status: "done" },
+      { name: "Security Definer Check", description: "user_has_permission() function for RLS", status: "done" },
+    ],
+  },
+  {
+    name: "Profile & Onboarding",
+    items: [
+      { name: "Profiles Table", description: "User profile with display name, phone, timezone", status: "done" },
+      { name: "Profile Settings Page", description: "Edit profile, change password, avatar", status: "done" },
+      { name: "Guided Tour Component", description: "Step-by-step onboarding overlay with framer-motion", status: "done" },
+      { name: "Admin Dashboard Tour", description: "Highlight sidebar sections for new admin users", status: "done" },
+      { name: "Master Dashboard Tour", description: "Tour for system-level admin features", status: "done" },
+      { name: "Scroll to Top", description: "Auto-scroll on route navigation", status: "done" },
+      { name: "Landing Page Animations", description: "Framer-motion entrance and scroll-reveal effects", status: "done" },
+    ],
+  },
+  {
     name: "Tenant Management",
     items: [
       { name: "Tenants List", description: "View and manage all tenants/clients", status: "done" },
@@ -53,6 +74,10 @@ export const buildMap: BuildCategory[] = [
       { name: "Target Fields Panel", description: "CRM destination fields", status: "done" },
       { name: "Transform Dialog", description: "Add transformation logic to field mappings", status: "done" },
       { name: "Live Five9 Schema", description: "Dynamically fetch real fields from connected Five9 domain", status: "done" },
+      { name: "Call Phase Tabs", description: "Pre-Call, During Call, Post-Call mapping sections", status: "done" },
+      { name: "Mapping Templates", description: "Quick-start templates for Clio, Workiz, Salesforce", status: "done" },
+      { name: "Import/Export JSON", description: "Download and upload mapping configurations", status: "done" },
+      { name: "Validation Preview Panel", description: "Test mappings against sample data", status: "done" },
     ],
   },
   {
@@ -71,6 +96,12 @@ export const buildMap: BuildCategory[] = [
       { name: "API Logs Page", description: "View inbound/outbound API request history", status: "done" },
       { name: "Notifications Page", description: "System alerts and event notifications", status: "done" },
       { name: "Test Console", description: "Send test API requests and view responses", status: "done" },
+      { name: "Date Range Filters", description: "Filter logs by date with calendar picker", status: "done" },
+      { name: "Latency Chart", description: "Recharts area chart showing response times", status: "done" },
+      { name: "Log Export CSV", description: "Download filtered logs as CSV file", status: "done" },
+      { name: "Summary Stat Cards", description: "Total requests, success rate, avg latency, errors", status: "done" },
+      { name: "Call Phase Simulation", description: "Pre-call, during-call, post-call test tabs", status: "done" },
+      { name: "Request History", description: "Local storage history with replay", status: "done" },
       { name: "Real-time Log Streaming", description: "Live log updates via websockets", status: "planned" },
       { name: "Error Alerting", description: "Email/Slack alerts for critical failures", status: "planned" },
     ],
@@ -96,14 +127,25 @@ export const buildMap: BuildCategory[] = [
     ],
   },
   {
+    name: "Call Flow Builder",
+    items: [
+      { name: "AI Chat Edge Function", description: "Gemini-powered call flow configuration generator", status: "done" },
+      { name: "Call Flow Builder Page", description: "Split-panel AI chat + visual preview", status: "done" },
+      { name: "Interactive Simulator", description: "Step-through call scenario with live integration triggers", status: "done" },
+      { name: "Practice Area Scenarios", description: "Legal, home services, healthcare, insurance templates", status: "done" },
+      { name: "Integration Status Indicators", description: "Real-time status for CRM, calendar, Slack during simulation", status: "done" },
+    ],
+  },
+  {
     name: "Settings & UX",
     items: [
       { name: "Settings Page", description: "Organization-level configuration", status: "done" },
-      { name: "Integration Credentials UI", description: "Admin UI to configure Five9, Resend, and Google Workspace keys via app_config table", status: "done" },
+      { name: "Integration Credentials UI", description: "Admin UI to configure Five9, Resend, and Google Workspace keys", status: "done" },
       { name: "Dark Mode UI", description: "Consistent dark theme throughout the app", status: "done" },
       { name: "Responsive Sidebar", description: "Mobile-friendly collapsible navigation", status: "done" },
       { name: "Onboarding Flow", description: "New user org creation wizard", status: "done" },
       { name: "Build Outline Page", description: "Living build map showing feature progress", status: "done" },
+      { name: "Profile Page", description: "User profile settings with password change", status: "done" },
     ],
   },
   {
@@ -136,6 +178,8 @@ export const buildMap: BuildCategory[] = [
       { name: "Landing Page", description: "Public hero-style marketing page at /", status: "done" },
       { name: "Bold Logo / Icon", description: "High-contrast SVG icon with geometric F letterform", status: "done" },
       { name: "SVG Favicon", description: "Crisp favicon from new SVG icon", status: "done" },
+      { name: "Terms Page", description: "Placeholder legal terms page", status: "done" },
+      { name: "Security Page", description: "Data security and compliance overview", status: "done" },
     ],
   },
 ];

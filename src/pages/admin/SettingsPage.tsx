@@ -7,9 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw, Activity } from "lucide-react";
+import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw, Activity, Users } from "lucide-react";
 import { useAppConfig } from "@/hooks/useAppConfig";
+import { useTeamPermissions, PERMISSION_KEYS } from "@/hooks/useTeamPermissions";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_ROLES } from "@/types/provisioning";
 
@@ -94,6 +98,9 @@ function MaskedTextarea({
 
 export default function SettingsPage() {
   const { configValues, saveIntegrationCredentials, loading } = useAppConfig();
+  const { organization, membership } = useAuth();
+  const { members, isLoading: membersLoading, togglePermission } = useTeamPermissions(organization?.id);
+  const isOrgAdmin = membership?.role === "owner" || membership?.role === "admin";
   const [saving, setSaving] = useState(false);
   const [slackTesting, setSlackTesting] = useState(false);
   const [slackStatus, setSlackStatus] = useState<{ connected: boolean; workspace?: string; botName?: string } | null>(null);
@@ -261,6 +268,80 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Team Members Permission Manager */}
+      {isOrgAdmin && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Team Members</CardTitle>
+                <CardDescription>Manage feature access permissions for organization members</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {membersLoading ? (
+              <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            ) : members.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No team members yet. Invite members from the organization settings.</p>
+            ) : (
+              <div className="rounded-lg border overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider min-w-[140px]">Member</th>
+                      <th className="text-left px-3 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</th>
+                      <TooltipProvider>
+                        {PERMISSION_KEYS.map((perm) => (
+                          <th key={perm.key} className="text-center px-2 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="cursor-help">{perm.label}</span>
+                              </TooltipTrigger>
+                              <TooltipContent><p className="text-xs">{perm.description}</p></TooltipContent>
+                            </Tooltip>
+                          </th>
+                        ))}
+                      </TooltipProvider>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {members.map((member) => {
+                      const isAdmin = member.role === "owner" || member.role === "admin";
+                      return (
+                        <tr key={member.userId} className="hover:bg-muted/20 transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-sm truncate max-w-[160px]">{member.displayName || member.email}</p>
+                          </td>
+                          <td className="px-3 py-3">
+                            <Badge variant="outline" className="text-xs capitalize">{member.role}</Badge>
+                          </td>
+                          {PERMISSION_KEYS.map((perm) => (
+                            <td key={perm.key} className="text-center px-2 py-3">
+                              <Checkbox
+                                checked={isAdmin || member.permissions.includes(perm.key)}
+                                disabled={isAdmin}
+                                onCheckedChange={(checked) => {
+                                  togglePermission.mutate({ userId: member.userId, permission: perm.key, grant: !!checked });
+                                }}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
