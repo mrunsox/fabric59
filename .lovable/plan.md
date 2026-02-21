@@ -1,79 +1,82 @@
 
-
-# Integrations Page Enhancements + Build Outline Update
+# Fix Integrations Page Scroll, Tenant Integration Badges, and Configure Flow
 
 ## Overview
 
-Three enhancements to the Integrations Library, plus updating the Build Outline to track all integration-related work.
+Three fixes for the Integrations page and Tenants page:
 
-## 1. Test the Integrations Page
+1. Fix the category tabs and grid overflowing the screen -- make the page scrollable within the main content area
+2. Show active integrations as badges on each tenant row in the Tenants table
+3. Change "Configure in Clients" button to open a client selection dialog, then navigate to that specific client in the Tenants tab
 
-Manual verification of search, category tabs, and detail dialog. No code changes needed -- this is a QA step after implementation.
+---
 
-## 2. Real Brand Logos for Integration Cards
+## 1. Fix Scroll Overflow on Integrations Page
 
-Replace generic Lucide icons with actual brand SVG logos for recognizable integrations.
+**Problem**: When all category tabs are visible plus the grid of cards, the content extends beyond the viewport with no scroll.
 
-### Approach
-- Download official SVG logos for ~20 well-known brands (Salesforce, Slack, HubSpot, Clio, etc.) and save them to `public/integration-logos/`
-- Add an optional `logoUrl` field to the `Integration` interface in `integrations-catalog.ts`
-- Update `IntegrationCard.tsx` and `IntegrationDetailDialog.tsx` to render `<img>` when `logoUrl` is present, falling back to the existing Lucide icon otherwise
-- Logos will be sized to 20x20px on cards and 24x24px in the detail dialog
+**Root cause**: The `TabsList` uses `flex flex-wrap` which can grow tall, and the outer `div` has no height constraint. The `main` element in `AdminLayout.tsx` has no overflow handling.
 
-### Files to Modify
+**Fix** (two files):
+
+### `src/pages/admin/IntegrationsPage.tsx`
+- Wrap the `TabsList` in a horizontal `ScrollArea` so tabs scroll horizontally instead of wrapping and pushing everything down
+- Change `flex flex-wrap` to `inline-flex` so tabs stay in a single row
+- The page itself will naturally scroll via the browser since the main content area already allows it
+
+### `src/components/layout/AdminLayout.tsx`
+- Add `overflow-y-auto` to the `<main>` element and give it a calculated height (`h-[calc(100vh-4rem)]`) so it scrolls independently of the header
+
+---
+
+## 2. Show Active Integrations on Tenant Rows
+
+**Problem**: The tenant table currently shows CRM type, status, API endpoint, and last updated -- but does not show which integrations (Slack, Zapier, Make, etc.) are active for each tenant.
+
+**Fix**: Add a new column "Integrations" to the Tenants table between "API Endpoint" and "Last Updated".
+
+### `src/pages/admin/TenantsPage.tsx`
+- Add a new column called "Integrations" that renders small icon badges for each active integration:
+  - Show CRM type badge (Clio, Workiz, Salesforce) if set and not "other"
+  - Show Slack icon if `slack_webhook_url` is set
+  - Show Zapier icon if `zapier_webhook_url` is set
+  - Show Make icon if `make_webhook_url` is set
+  - Show n8n icon if `n8n_webhook_url` is set
+  - Show Pabbly icon if `pabbly_webhook_url` is set
+  - Show a dash if none are active
+- Each badge will be a small pill with the integration logo (from `public/integration-logos/`) or a text label
+
+---
+
+## 3. "Configure" Button Opens Client Selection Dialog
+
+**Problem**: Clicking "Configure in Clients" on an integration detail dialog navigates directly to `/admin` without letting the user choose which client to configure.
+
+**Fix**: Replace the direct navigation with a two-step flow:
+
+### New Component: `src/components/integrations/ClientSelectDialog.tsx`
+- A dialog/sheet that shows a searchable list of all tenants (clients)
+- Each row shows the client name, CRM type, and whether this integration is already configured for them
+- Clicking a client closes both dialogs and navigates to `/admin` with the tenant ID as a query param (e.g., `/admin?edit=<tenant-id>`)
+
+### `src/components/integrations/IntegrationDetailDialog.tsx`
+- Change `handleConfigure` for linked integrations to open the `ClientSelectDialog` instead of navigating directly
+- Add state to track whether the client selection dialog is open
+- Pass the current integration info to the client select dialog for context
+
+### `src/pages/admin/TenantsPage.tsx`
+- On mount, check for `?edit=<tenant-id>` query param
+- If present, find that tenant and auto-open the edit dialog for it
+- Clear the query param after opening
+
+---
+
+## Files Summary
+
 | File | Change |
 |---|---|
-| `src/data/integrations-catalog.ts` | Add optional `logoUrl?: string` to `Integration` interface; set logo paths for ~20 entries |
-| `src/components/integrations/IntegrationCard.tsx` | Render `<img>` when `logoUrl` exists, else render Lucide icon |
-| `src/components/integrations/IntegrationDetailDialog.tsx` | Same logo rendering logic |
-
-### New Files
-| File | Description |
-|---|---|
-| `public/integration-logos/*.svg` | ~20 brand SVG logos (Salesforce, Slack, HubSpot, Clio, Workiz, ServiceTitan, Zoom, Teams, Google Drive, Dropbox, DocuSign, Stripe, QuickBooks, Zapier, Make, Asana, Zendesk, Twilio, OpenAI, Monday.com) |
-
-## 3. "Connected" Status on Integration Cards
-
-Show which integrations are already active based on tenant data (CRM type and webhook URLs).
-
-### Approach
-- In `IntegrationsPage.tsx`, fetch tenants using the existing `useTenants` hook
-- Build a `Set<string>` of connected integration IDs by checking:
-  - `tenant.crm_type` matches an integration slug (e.g., `clio`, `workiz`, `salesforce`)
-  - `tenant.slack_webhook_url` is set -> mark `slack` as connected
-  - `tenant.zapier_webhook_url` is set -> mark `zapier` as connected
-  - Same for `make_webhook_url`, `n8n_webhook_url`, `pabbly_webhook_url`
-- Pass `isConnected` boolean to `IntegrationCard`
-- Display a green "Connected" badge on the card when active, replacing or supplementing the existing status badge
-
-### Files to Modify
-| File | Change |
-|---|---|
-| `src/pages/admin/IntegrationsPage.tsx` | Import `useTenants`, compute connected set, pass `isConnected` prop |
-| `src/components/integrations/IntegrationCard.tsx` | Accept `isConnected` prop, show green "Connected" badge |
-
-## 4. Update Build Outline
-
-Add an "Integrations Library" category to `buildMap.ts` tracking all integration features.
-
-### File to Modify
-| File | Change |
-|---|---|
-| `src/data/buildMap.ts` | Add new "Integrations Library" category with items for catalog page, search/filter, detail dialog, brand logos, connected status, and future configure flows |
-
-### New entries:
-
-- **Integrations Catalog Page** -- Marketplace-style grid of 55+ integrations (done)
-- **Search and Category Filters** -- Real-time search and tab-based category filtering (done)
-- **Integration Detail Dialog** -- Full details with supported actions and docs links (done)
-- **Brand Logos** -- Real SVG logos for recognizable integrations (in-progress)
-- **Connected Status Badges** -- Show which integrations are active per tenant (in-progress)
-- **Integration Configure Flow** -- End-to-end setup wizard for each integration (planned)
-- **Live API Connection Testing** -- Test integration credentials before saving (planned)
-
-## Technical Notes
-
-- The `logoUrl` field is optional so integrations without a downloaded logo gracefully fall back to the Lucide icon
-- The connected status check runs client-side against already-fetched tenant data (no new API calls)
-- SVG logos will be stored in `public/` for direct URL access without bundling overhead
-
+| `src/components/layout/AdminLayout.tsx` | Add scroll to main content area |
+| `src/pages/admin/IntegrationsPage.tsx` | Horizontal scroll for tabs instead of wrapping |
+| `src/pages/admin/TenantsPage.tsx` | Add "Integrations" column to table; handle `?edit=` query param to auto-open edit dialog |
+| `src/components/integrations/IntegrationDetailDialog.tsx` | Open client selection dialog on "Configure" click |
+| `src/components/integrations/ClientSelectDialog.tsx` | **New** -- searchable client list dialog for selecting which tenant to configure |
