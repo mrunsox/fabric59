@@ -327,7 +327,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://developers.hubspot.com/docs/api/overview",
     icon: BarChart3,
     logoUrl: "/integration-logos/hubspot.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "zoho-crm",
@@ -385,7 +385,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://developer.zendesk.com/api-reference/",
     icon: Headphones,
     logoUrl: "/integration-logos/zendesk.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "quoteiq",
@@ -534,7 +534,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://learn.microsoft.com/en-us/graph/api/resources/teams-api-overview",
     icon: MessageCircle,
     logoUrl: "/integration-logos/teams.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "twilio",
@@ -553,7 +553,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://www.twilio.com/docs/sms",
     icon: Send,
     logoUrl: "/integration-logos/twilio.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "ringcentral",
@@ -590,7 +590,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://developers.zoom.us/docs/api/",
     icon: Video,
     logoUrl: "/integration-logos/zoom.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "google-chat",
@@ -629,7 +629,7 @@ export const integrationsCatalog: Integration[] = [
     docsUrl: "https://developers.google.com/calendar/api",
     icon: Calendar,
     logoUrl: "/integration-logos/google.svg",
-    status: "coming_soon",
+    status: "available",
   },
   {
     id: "microsoft-365",

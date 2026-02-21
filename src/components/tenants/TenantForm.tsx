@@ -19,7 +19,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Loader2, ChevronDown, Bell, Zap, Workflow } from "lucide-react";
+import { Loader2, ChevronDown, Bell, Zap, Workflow, Phone, Video, Calendar, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -34,7 +34,7 @@ const DEFAULT_NOTIFICATION_TRIGGERS: NotificationTriggers = {
 const formSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   organization_id: z.string().optional(),
-  crm_type: z.enum(["clio", "workiz", "salesforce", "generic_rest", "other"]),
+  crm_type: z.enum(["clio", "workiz", "salesforce", "hubspot", "zendesk", "generic_rest", "other"]),
   crm_api_url: z.string().url().optional().or(z.literal("")),
   crm_api_key: z.string().optional(),
   webhook_url: z.string().url().optional().or(z.literal("")),
@@ -43,6 +43,12 @@ const formSchema = z.object({
   make_webhook_url: z.string().url().optional().or(z.literal("")),
   pabbly_webhook_url: z.string().url().optional().or(z.literal("")),
   n8n_webhook_url: z.string().url().optional().or(z.literal("")),
+  teams_webhook_url: z.string().url().optional().or(z.literal("")),
+  twilio_account_sid: z.string().optional().or(z.literal("")),
+  twilio_auth_token: z.string().optional().or(z.literal("")),
+  twilio_from_number: z.string().optional().or(z.literal("")),
+  zoom_api_key: z.string().optional().or(z.literal("")),
+  google_calendar_id: z.string().optional().or(z.literal("")),
   notification_triggers: z.object({
     intake_created: z.boolean(),
     call_ended: z.boolean(),
@@ -92,10 +98,16 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
   const createTenant = useCreateTenant();
   const updateTenant = useUpdateTenant();
   const [notificationsOpen, setNotificationsOpen] = useState(
-    !!(tenant?.slack_webhook_url)
+    !!(tenant?.slack_webhook_url || (tenant as any)?.teams_webhook_url)
   );
   const [automationsOpen, setAutomationsOpen] = useState(
     !!(tenant?.zapier_webhook_url || tenant?.make_webhook_url || tenant?.pabbly_webhook_url || tenant?.n8n_webhook_url)
+  );
+  const [communicationOpen, setCommunicationOpen] = useState(
+    !!((tenant as any)?.twilio_account_sid)
+  );
+  const [schedulingOpen, setSchedulingOpen] = useState(
+    !!((tenant as any)?.zoom_api_key || (tenant as any)?.google_calendar_id)
   );
 
   // Load organizations (white-label partners) for the dropdown
@@ -126,6 +138,12 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
       make_webhook_url: tenant?.make_webhook_url || "",
       pabbly_webhook_url: tenant?.pabbly_webhook_url || "",
       n8n_webhook_url: tenant?.n8n_webhook_url || "",
+      teams_webhook_url: (tenant as any)?.teams_webhook_url || "",
+      twilio_account_sid: (tenant as any)?.twilio_account_sid || "",
+      twilio_auth_token: (tenant as any)?.twilio_auth_token || "",
+      twilio_from_number: (tenant as any)?.twilio_from_number || "",
+      zoom_api_key: (tenant as any)?.zoom_api_key || "",
+      google_calendar_id: (tenant as any)?.google_calendar_id || "",
       notification_triggers: tenant?.notification_triggers || DEFAULT_NOTIFICATION_TRIGGERS,
       status: tenant?.status || "pending",
     },
@@ -217,6 +235,8 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
               <SelectItem value="clio">Clio</SelectItem>
               <SelectItem value="workiz">Workiz</SelectItem>
               <SelectItem value="salesforce">Salesforce</SelectItem>
+              <SelectItem value="hubspot">HubSpot</SelectItem>
+              <SelectItem value="zendesk">Zendesk</SelectItem>
               <SelectItem value="generic_rest">Generic REST</SelectItem>
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
@@ -290,8 +310,8 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
           >
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Slack Notifications</span>
-              {hasSlackConfigured && (
+              <span className="font-medium">Notifications</span>
+              {(hasSlackConfigured || !!form.watch("teams_webhook_url")) && (
                 <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                   Configured
                 </span>
@@ -321,6 +341,18 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
                 {form.formState.errors.slack_webhook_url.message}
               </p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="teams_webhook_url">Microsoft Teams Webhook URL</Label>
+            <Input
+              id="teams_webhook_url"
+              placeholder="https://outlook.office.com/webhook/..."
+              {...form.register("teams_webhook_url")}
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave empty if this client doesn't use Teams notifications
+            </p>
           </div>
 
           {hasSlackConfigured && (
@@ -448,6 +480,98 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
               (intake created, call ended, contact updated). Make sure to enable the appropriate triggers 
               in the Slack Notifications section above, or the webhook URL if Slack isn't configured.
             </p>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Communication Section */}
+      <Collapsible
+        open={communicationOpen}
+        onOpenChange={setCommunicationOpen}
+        className="rounded-lg border border-border"
+      >
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg"
+          >
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Communication (Twilio SMS)</span>
+              {!!form.watch("twilio_account_sid") && (
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                  Configured
+                </span>
+              )}
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform",
+                communicationOpen && "rotate-180"
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Configure Twilio to send SMS confirmations and follow-up texts after calls.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="twilio_account_sid">Twilio Account SID</Label>
+            <Input id="twilio_account_sid" placeholder="AC..." {...form.register("twilio_account_sid")} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="twilio_auth_token">Twilio Auth Token</Label>
+            <Input id="twilio_auth_token" type="password" placeholder="••••••••" {...form.register("twilio_auth_token")} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="twilio_from_number">Twilio From Number</Label>
+            <Input id="twilio_from_number" placeholder="+1234567890" {...form.register("twilio_from_number")} />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Scheduling Section */}
+      <Collapsible
+        open={schedulingOpen}
+        onOpenChange={setSchedulingOpen}
+        className="rounded-lg border border-border"
+      >
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg"
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">Scheduling (Zoom & Google Calendar)</span>
+              {(!!form.watch("zoom_api_key") || !!form.watch("google_calendar_id")) && (
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                  Configured
+                </span>
+              )}
+            </div>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform",
+                schedulingOpen && "rotate-180"
+              )}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Configure Zoom and Google Calendar for meeting scheduling and appointment booking.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="zoom_api_key">Zoom API Key</Label>
+            <Input id="zoom_api_key" type="password" placeholder="••••••••" {...form.register("zoom_api_key")} />
+            <p className="text-xs text-muted-foreground">Server-to-server OAuth or JWT app key from Zoom Marketplace</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="google_calendar_id">Google Calendar ID</Label>
+            <Input id="google_calendar_id" placeholder="primary or calendar-id@group.calendar.google.com" {...form.register("google_calendar_id")} />
+            <p className="text-xs text-muted-foreground">Calendar ID to create events on (use "primary" for default calendar)</p>
           </div>
         </CollapsibleContent>
       </Collapsible>

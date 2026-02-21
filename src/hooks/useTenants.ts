@@ -36,6 +36,12 @@ export function useTenants() {
         make_webhook_url: (row as Record<string, unknown>).make_webhook_url as string | null ?? null,
         pabbly_webhook_url: (row as Record<string, unknown>).pabbly_webhook_url as string | null ?? null,
         n8n_webhook_url: (row as Record<string, unknown>).n8n_webhook_url as string | null ?? null,
+        teams_webhook_url: (row as Record<string, unknown>).teams_webhook_url as string | null ?? null,
+        twilio_account_sid: (row as Record<string, unknown>).twilio_account_sid as string | null ?? null,
+        twilio_auth_token: (row as Record<string, unknown>).twilio_auth_token as string | null ?? null,
+        twilio_from_number: (row as Record<string, unknown>).twilio_from_number as string | null ?? null,
+        zoom_api_key: (row as Record<string, unknown>).zoom_api_key as string | null ?? null,
+        google_calendar_id: (row as Record<string, unknown>).google_calendar_id as string | null ?? null,
         notification_triggers: (row.notification_triggers as unknown as NotificationTriggers) || DEFAULT_NOTIFICATION_TRIGGERS,
         status: row.status as TenantStatus,
         created_at: row.created_at,
@@ -73,6 +79,12 @@ export function useTenant(id: string) {
         make_webhook_url: (data as Record<string, unknown>).make_webhook_url as string | null ?? null,
         pabbly_webhook_url: (data as Record<string, unknown>).pabbly_webhook_url as string | null ?? null,
         n8n_webhook_url: (data as Record<string, unknown>).n8n_webhook_url as string | null ?? null,
+        teams_webhook_url: (data as Record<string, unknown>).teams_webhook_url as string | null ?? null,
+        twilio_account_sid: (data as Record<string, unknown>).twilio_account_sid as string | null ?? null,
+        twilio_auth_token: (data as Record<string, unknown>).twilio_auth_token as string | null ?? null,
+        twilio_from_number: (data as Record<string, unknown>).twilio_from_number as string | null ?? null,
+        zoom_api_key: (data as Record<string, unknown>).zoom_api_key as string | null ?? null,
+        google_calendar_id: (data as Record<string, unknown>).google_calendar_id as string | null ?? null,
         notification_triggers: (data.notification_triggers as unknown as NotificationTriggers) || DEFAULT_NOTIFICATION_TRIGGERS,
         status: data.status as TenantStatus,
         created_at: data.created_at,
@@ -100,6 +112,12 @@ export function useCreateTenant() {
           make_webhook_url: data.make_webhook_url || null,
           pabbly_webhook_url: data.pabbly_webhook_url || null,
           n8n_webhook_url: data.n8n_webhook_url || null,
+          teams_webhook_url: data.teams_webhook_url || null,
+          twilio_account_sid: data.twilio_account_sid || null,
+          twilio_auth_token: data.twilio_auth_token || null,
+          twilio_from_number: data.twilio_from_number || null,
+          zoom_api_key: data.zoom_api_key || null,
+          google_calendar_id: data.google_calendar_id || null,
           notification_triggers: data.notification_triggers as unknown as Record<string, boolean>,
           status: data.status,
         },
@@ -134,6 +152,12 @@ export function useUpdateTenant() {
       if (data.make_webhook_url !== undefined) updateData.make_webhook_url = data.make_webhook_url || null;
       if (data.pabbly_webhook_url !== undefined) updateData.pabbly_webhook_url = data.pabbly_webhook_url || null;
       if (data.n8n_webhook_url !== undefined) updateData.n8n_webhook_url = data.n8n_webhook_url || null;
+      if (data.teams_webhook_url !== undefined) updateData.teams_webhook_url = data.teams_webhook_url || null;
+      if (data.twilio_account_sid !== undefined) updateData.twilio_account_sid = data.twilio_account_sid || null;
+      if (data.twilio_auth_token !== undefined) updateData.twilio_auth_token = data.twilio_auth_token || null;
+      if (data.twilio_from_number !== undefined) updateData.twilio_from_number = data.twilio_from_number || null;
+      if (data.zoom_api_key !== undefined) updateData.zoom_api_key = data.zoom_api_key || null;
+      if (data.google_calendar_id !== undefined) updateData.google_calendar_id = data.google_calendar_id || null;
       if (data.notification_triggers !== undefined) updateData.notification_triggers = data.notification_triggers as unknown as Record<string, boolean>;
       if (data.status !== undefined) updateData.status = data.status;
 

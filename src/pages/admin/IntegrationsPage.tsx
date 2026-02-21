@@ -30,6 +30,10 @@ export default function IntegrationsPage() {
       if (t.make_webhook_url) ids.add("make");
       if (t.n8n_webhook_url) ids.add("n8n");
       if (t.pabbly_webhook_url) ids.add("pabbly");
+      if ((t as any).teams_webhook_url) ids.add("ms-teams");
+      if ((t as any).twilio_account_sid) ids.add("twilio");
+      if ((t as any).zoom_api_key) ids.add("zoom");
+      if ((t as any).google_calendar_id) ids.add("google-calendar");
     }
     return ids;
   }, [tenants]);

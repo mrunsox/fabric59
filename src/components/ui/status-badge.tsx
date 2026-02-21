@@ -18,6 +18,8 @@ const statusBadgeVariants = cva(
         clio: "bg-blue-500/15 text-blue-400 border-blue-500/30",
         workiz: "bg-orange-500/15 text-orange-400 border-orange-500/30",
         salesforce: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+        hubspot: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+        zendesk: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
         generic_rest: "bg-purple-500/15 text-purple-400 border-purple-500/30",
         other: "bg-muted text-muted-foreground border-border",
       },

@@ -26,6 +26,10 @@ const INTEGRATION_FIELD_MAP: Record<string, string> = {
   make: "make_webhook_url",
   n8n: "n8n_webhook_url",
   pabbly: "pabbly_webhook_url",
+  "ms-teams": "teams_webhook_url",
+  twilio: "twilio_account_sid",
+  zoom: "zoom_api_key",
+  "google-calendar": "google_calendar_id",
 };
 
 export function ClientSelectDialog({ integration, open, onOpenChange, onCloseAll }: Props) {
@@ -49,7 +53,7 @@ export function ClientSelectDialog({ integration, open, onOpenChange, onCloseAll
     if (!tenant) return false;
 
     // CRM type match
-    if (["clio", "workiz", "salesforce"].includes(integration.id)) {
+    if (["clio", "workiz", "salesforce", "hubspot", "zendesk"].includes(integration.id)) {
       return tenant.crm_type === integration.id;
     }
 

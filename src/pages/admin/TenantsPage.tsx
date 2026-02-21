@@ -48,6 +48,8 @@ const crmLabels: Record<CrmType, string> = {
   clio: "Clio",
   workiz: "Workiz",
   salesforce: "Salesforce",
+  hubspot: "HubSpot",
+  zendesk: "Zendesk",
   generic_rest: "Generic REST",
   other: "Other",
 };
