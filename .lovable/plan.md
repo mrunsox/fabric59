@@ -1,154 +1,98 @@
 
 
-# Phase 7 Implementation: Enhanced Pages, Team Permissions, and Build Outline
+# Real-Time Log Streaming + AI-Led Call Flow Builder
 
 ## Overview
 
-Three areas of work: (1) enrich Mappings, API Logs, and Test Console with call-phase awareness and richer tooling, (2) add a Team Members permission manager to Settings, and (3) update the build outline with all new features.
+Two enhancements: (1) replace the 5-second polling on API Logs with true real-time streaming via Postgres changes, and (2) redesign the Call Flow Builder so the AI drives the conversation proactively, asking the user targeted questions step-by-step rather than waiting for open-ended input.
 
 ---
 
-## 1. Field Mappings Page -- Call Phase Tabs
+## 1. Real-Time Log Streaming for API Logs
 
-**File: `src/pages/admin/MappingsPage.tsx`**
+### 1.1 Enable Realtime on api_logs Table
 
-Add a top-level `Tabs` component wrapping the entire page content with three tabs:
+**New migration:**
+```text
+ALTER PUBLICATION supabase_realtime ADD TABLE public.api_logs;
+```
 
-- **Pre-Call**: Contact lookup rules, CRM data pull configuration, screen pop field selection. Show a card with configurable lookup fields (phone, email, case ID) and which CRM fields to pull back for screen pop display.
-- **During Call**: Real-time data capture rules -- disposition mapping, call variable sync configuration. Show a card listing Five9 call variables and which unified fields they map to during the call.
-- **Post-Call**: The existing mapping editor and visual builder (current page content moves here). This is where intake/job creation mappings, notification triggers, and CRM record creation live.
+### 1.2 Update useApiLogs Hook
 
-Each tab will show contextual guidance text explaining the phase. The existing visual mapping builder and JSON editor remain under Post-Call. Pre-Call and During Call tabs get new card-based configuration UIs with sample field lists and toggle switches.
+**File: `src/hooks/useApiLogs.ts`**
 
-Also add:
-- **Mapping Templates** dropdown: Quick-start buttons for "Clio Legal Intake", "Workiz Job Dispatch", "Salesforce Lead" that pre-populate the JSON editor
-- **Import/Export** buttons in the header: Export current mappings as JSON file download, Import from JSON file upload
-- **Validation Panel**: A collapsible card at the bottom with a sample payload textarea and "Test Mapping" button that shows the transformed output preview
+- Keep the initial `useQuery` fetch for loading existing logs
+- Remove `refetchInterval: 5000` (no more polling)
+- Add a `useEffect` that subscribes to `supabase.channel('api-logs-realtime')` listening for `postgres_changes` (INSERT events on `api_logs`)
+- On each new row, prepend it to the React Query cache via `queryClient.setQueryData`
+- Clean up the subscription on unmount
+- Add a live indicator state (`isLive: boolean`) exported from the hook
+- Also invalidate `api-log-stats` query on new inserts
 
----
-
-## 2. API Logs Page -- Date Filters, Stats, and Latency Chart
+### 1.3 Update API Logs Page UI
 
 **File: `src/pages/admin/ApiLogsPage.tsx`**
 
-Add these enhancements:
+- Replace the "Refresh" button with a live/paused toggle
+- Add a pulsing green dot indicator next to the page title when live streaming is active ("Live" badge)
+- When paused, fall back to manual refresh
+- New logs animate in with a brief highlight flash on the table row
 
-- **Summary Stat Cards** (top of page, 4-column grid): Total Requests, Success Rate (%), Avg Latency (ms), Error Count. Use the existing `useApiLogStats` hook (already in `useApiLogs.ts`) plus compute avg latency from the logs array.
-
-- **Date Range Filter**: Add two date picker buttons (From / To) using the Popover+Calendar pattern from shadcn. Filter logs client-side by `created_at` range. Place alongside existing search and status filters.
-
-- **Latency Chart**: A small `recharts` AreaChart below the stat cards showing response time over the last 24 hours. X-axis = time, Y-axis = response_time_ms. Use the existing `recharts` dependency. Chart height ~150px with gradient fill.
-
-- **Export Button**: Add a "Download CSV" button in the header that converts filtered logs to CSV and triggers browser download.
-
-- **Replay Button**: In the log detail dialog, add a "Replay Request" button that re-sends the same request payload to the same endpoint and shows the new response inline.
-
----
-
-## 3. Test Console -- Call Phase Simulation Tabs
-
-**File: `src/pages/admin/TestConsolePage.tsx`**
-
-Add a top-level tab bar with three simulation modes:
-
-- **Pre-Call Lookup**: Simplified form with phone/email input. Sends a GET to `/contacts?phone=...`. Shows the screen pop data that would be returned (contact name, CRM ID, open matters/jobs).
-
-- **During Call Capture**: Form with call variable fields (disposition, call duration, agent notes, custom variables). Sends a simulated capture payload showing what would be synced in real-time.
-
-- **Post-Call Intake**: The existing full request builder (current content moves here). Full payload editor with intake and contact sections.
-
-Also add:
-- **Request History Panel**: A collapsible sidebar or bottom panel showing recent test requests stored in `localStorage`. Each entry shows timestamp, method, endpoint, status. Clicking replays the request.
-- **Save as Template**: Button next to the payload editor that saves the current config (method, endpoint, payload) to `localStorage` with a user-provided name. Templates appear as quick-load buttons.
-- **Headers Editor**: An expandable section with key-value inputs for custom headers (e.g., `X-Tenant-Id`, `Authorization`).
-
----
-
-## 4. Team Members Permission Manager in Settings
-
-**File: `src/pages/admin/SettingsPage.tsx`**
-
-Add a new `Card` section titled "Team Members" between the Integration Status card and API Configuration card. Only visible to org owners/admins.
-
-Content:
-- **Hook**: Create `src/hooks/useTeamPermissions.ts` that:
-  - Fetches `organization_members` for the current org (with user email from profiles)
-  - Fetches `user_permissions` for each member
-  - Provides `togglePermission(userId, permission)` mutation that inserts or deletes from `user_permissions`
-
-- **UI Layout**:
-  - A table with columns: Member (email/name), Role badge (owner/admin/member), then a checkbox column for each permission key
-  - Permission keys: `agents`, `tenants`, `domains`, `integrations`, `mappings`, `logs`, `test_console`, `notifications`, `settings`, `call_flow`
-  - Owner/admin rows show all checkboxes checked and disabled (they have all permissions by default)
-  - Member rows have interactive checkboxes that toggle permissions via the hook
-  - Each permission column header has a tooltip explaining what it grants access to
-  - Changes save immediately on toggle (optimistic update with toast confirmation)
-
-- **Empty State**: "No team members yet. Invite members from the organization settings."
-
-**New file: `src/hooks/useTeamPermissions.ts`**
-
----
-
-## 5. Build Outline Update
+### 1.4 Build Outline Update
 
 **File: `src/data/buildMap.ts`**
 
-Add three new categories and update existing ones:
+- Change "Real-time Log Streaming" status from `planned` to `done`
 
-**New: "User Access Control"**
-- Granular Permissions Table -- done
-- Permission-Based Sidebar Navigation -- done
-- Team Members Permission Manager -- done (after this implementation)
-- Security Definer Permission Check -- done
+---
 
-**New: "Profile and Onboarding"**
-- Profiles Table -- done
-- Profile Settings Page -- done
-- Guided Tour Component -- done
-- Admin Dashboard Tour -- done
-- Master Dashboard Tour -- done
-- Scroll to Top on Navigation -- done
-- Framer Motion Landing Animations -- done
+## 2. AI-Led Call Flow Builder
 
-**New: "Call Flow Builder"**
-- AI Chat Edge Function -- done
-- Call Flow Builder Page -- done
-- Interactive Call Flow Simulator -- done
-- Practice Area Scenarios -- done
-- Integration Status Indicators -- done
+### 2.1 Redesigned System Prompt
 
-**Update "Branding and Landing"** -- add:
-- Terms Page -- done
-- Security Page -- done
-- Footer with UNSOX Branding -- done
-- Heart Animation Link -- done
+**File: `supabase/functions/ai-call-flow/index.ts`**
 
-**Update "Monitoring and Logs"** -- add:
-- Date Range Filters -- done (after implementation)
-- Latency Chart -- done
-- Log Export CSV -- done
-- Replay Request -- done
+Update the system prompt so the AI takes the lead:
 
-**Update "Field Mapping Builder"** -- add:
-- Call Phase Tabs -- done
-- Mapping Templates -- done
-- Import/Export JSON -- done
-- Validation Preview Panel -- done
+- On first message (or when conversation starts), AI introduces itself and asks the first question: "What industry or practice area is this call flow for?" with suggested options
+- AI follows a structured interview flow:
+  1. Industry/practice area
+  2. What CRM they use (or want to use)
+  3. What should happen when a call comes in (pre-call)
+  4. What data needs to be captured during the call
+  5. What should happen after the call ends (post-call)
+  6. Which notification channels (Slack, email, calendar)
+- After gathering enough info, AI generates the complete call flow configuration
+- AI always provides clear options/suggestions the user can pick from rather than requiring free-form answers
+- Uses a conversational, guided tone: "Great choice! Now let me ask about..."
 
-**Update "Settings and UX"** -- add:
-- Profile Page -- done
+### 2.2 Auto-Start Conversation
+
+**File: `src/pages/admin/CallFlowBuilderPage.tsx`**
+
+- When the AI Builder tab loads and messages are empty, automatically send an initial empty message (or a "start" trigger) so the AI greets and asks the first question
+- Remove the suggestion buttons from the empty state (AI will provide its own suggestions inline)
+- Replace the empty state with a brief loading animation while the AI's greeting streams in
+- Add quick-reply buttons: when the AI asks a question with clear options, parse them and render as clickable chips below the message (user can click instead of typing)
+- Add a "Start Over" button in the header to reset the conversation
+
+### 2.3 Quick-Reply Chip Detection
+
+**File: `src/pages/admin/CallFlowBuilderPage.tsx`**
+
+- After AI finishes streaming a message, scan the content for patterns like numbered lists or bullet options
+- If detected, render them as clickable `Button` chips below the message bubble
+- Clicking a chip sends that option as the user's next message automatically
+- This makes the experience feel more like a guided wizard than a blank chat
 
 ---
 
 ## Technical Details
 
-- No new database tables or migrations needed -- all permission infrastructure already exists
-- `useTeamPermissions` hook queries `organization_members` joined with `profiles` and `user_permissions`
-- Date pickers use the shadcn Popover+Calendar pattern with `pointer-events-auto` on the Calendar
-- Latency chart uses existing `recharts` dependency (AreaChart with gradient)
-- Request history and templates in Test Console use `localStorage` (no backend needed)
-- CSV export builds a Blob URL client-side from the filtered logs array
-- All new UI follows existing dark theme tokens and card patterns
-- Checkboxes use the existing `@radix-ui/react-checkbox` component
+- Realtime subscription uses the Supabase JS client's `.channel()` API with `postgres_changes` event type
+- The realtime subscription respects existing RLS policies on `api_logs`
+- Quick-reply parsing uses a simple regex to detect numbered/bulleted option patterns (e.g., "1. Legal" or "- Legal intake")
+- The AI auto-start sends `[{ role: "user", content: "Start building a new call flow" }]` as the initial trigger, but the user message is hidden from the UI
+- No new database tables or migrations needed beyond the realtime publication
+- The system prompt update is the only change to the edge function
 
