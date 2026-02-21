@@ -17,6 +17,7 @@ import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import OnboardingPage from "@/pages/onboarding/OnboardingPage";
 import OutlinePage from "@/pages/OutlinePage";
+import LandingPage from "@/pages/LandingPage";
 
 // Admin pages
 import TenantsPage from "@/pages/admin/TenantsPage";
@@ -86,7 +87,7 @@ const App = () => (
             </Route>
 
             {/* Redirect root to admin */}
-            <Route path="/" element={<Navigate to="/admin" replace />} />
+            <Route path="/" element={<LandingPage />} />
 
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />

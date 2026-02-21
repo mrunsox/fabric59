@@ -130,4 +130,12 @@ export const buildMap: BuildCategory[] = [
       { name: "Cron Trigger for process-jobs", description: "pg_cron scheduled job every 30 minutes", status: "planned" },
     ],
   },
+  {
+    name: "Branding & Landing",
+    items: [
+      { name: "Landing Page", description: "Public hero-style marketing page at /", status: "done" },
+      { name: "Bold Logo / Icon", description: "High-contrast SVG icon with geometric F letterform", status: "done" },
+      { name: "SVG Favicon", description: "Crisp favicon from new SVG icon", status: "done" },
+    ],
+  },
 ];
