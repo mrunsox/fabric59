@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Fabric59Logo } from "@/components/brand/Fabric59Logo";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import {
-  Phone,
   Users,
   UserCog,
   GitBranch,
@@ -13,47 +12,49 @@ import {
   BarChart3,
   ArrowRight,
   ChevronRight,
+  Heart,
+  MapPin,
 } from "lucide-react";
 
 const featureCards = [
   {
-    icon: Phone,
-    title: "Launch Your Call Center",
+    icon: Users,
+    title: "Agent Onboarding & Offboarding",
     description:
-      "We build your entire Five9 environment from scratch — IVR trees, skills, campaigns, dispositions, and agent provisioning — so you're live in days, not months.",
+      "Provision agents across Five9, Google Workspace, and Slack in one click. Automate deprovisioning with grace periods, data transfers, and full audit trails.",
   },
   {
-    icon: Users,
-    title: "Scale Your Client Onboarding",
+    icon: MapPin,
+    title: "CRM Integration & Field Mapping",
     description:
-      "For BPOs and outsourcers adding new clients fast. We configure dedicated domains, map CRM fields, and automate agent lifecycle — all through one platform.",
+      "Visual drag-and-drop builder to map Five9 contact fields to any CRM. Support for Clio, Workiz, Salesforce, HubSpot, and more with transformation logic built in.",
   },
 ];
 
 const platformFeatures = [
   {
     icon: UserCog,
-    title: "Agent Lifecycle Management",
+    title: "Agent Lifecycle",
     description:
-      "Provision and deprovision agents across Five9, Google Workspace, and Slack with one click.",
+      "One-click provisioning and deprovisioning across Five9, Google Workspace, and Slack with automated credential delivery.",
   },
   {
     icon: GitBranch,
     title: "Field Mapping Builder",
     description:
-      "Visual drag-and-drop canvas to map Five9 contact fields to any CRM with transformation logic.",
+      "Visual canvas to connect Five9 contact fields to any CRM with drag-and-drop simplicity and custom transforms.",
   },
   {
     icon: Plug,
-    title: "Integrations Library",
+    title: "55+ Integrations",
     description:
-      "55+ pre-built connectors for CRMs, helpdesks, communication tools, and automation platforms.",
+      "Pre-built connectors for Salesforce, HubSpot, Slack, Twilio, Zapier, and dozens more — ready to configure.",
   },
   {
     icon: BarChart3,
-    title: "Monitoring & Logs",
+    title: "Monitoring & Alerts",
     description:
-      "Real-time API logs, error alerting, and a test console for every inbound and outbound request.",
+      "Real-time API logs, error tracking, and a built-in test console for every integration request.",
   },
 ];
 
@@ -63,7 +64,7 @@ export default function LandingPage() {
       {/* Header */}
       <header className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-          <Fabric59Logo iconSize="sm" />
+          <Fabric59Logo iconSize="md" />
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#features" className="hover:text-foreground transition-colors">
               Features
@@ -89,19 +90,20 @@ export default function LandingPage() {
           variant="secondary"
           className="mb-6 px-4 py-1.5 text-xs tracking-wide uppercase border border-primary/30 bg-primary/10 text-primary"
         >
-          Five9 Build &amp; Managed Services
+          Five9 Integration Platform
         </Badge>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6">
-          Your Five9.{" "}
-          <span className="text-primary">Built Right.</span>
+          Automate.{" "}
+          <span className="text-primary">Integrate.</span>
           <br />
-          Delivered Fast.
+          Scale.
         </h1>
 
         <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-          Full-service Five9 implementation, CRM integration, and agent
-          lifecycle management — from first IVR to production launch.
+          The all-in-one platform for Five9 agent lifecycle management, CRM
+          field mapping, and 55+ integrations — built for BPOs and contact
+          centers.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -156,7 +158,7 @@ export default function LandingPage() {
       {/* Platform Features */}
       <section id="features" className="max-w-5xl mx-auto px-6 pb-24">
         <h2 className="text-2xl font-bold text-center mb-12">
-          Everything you need to run Five9 at scale
+          Built for Five9 teams that need to move fast
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {platformFeatures.map((f) => (
@@ -177,20 +179,44 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-border/40 py-10">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
             <Fabric59Icon size="sm" />
             <span className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Fabric59
             </span>
+            <span className="text-border">|</span>
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              An UNSOX Digital Solution
+              <a
+                href="https://unsox.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex group/heart"
+              >
+                <Heart
+                  className="h-4 w-4 text-orange-500 animate-pulse group-hover/heart:animate-heart-pop"
+                  fill="currentColor"
+                />
+              </a>
+            </span>
           </div>
-          <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+          <nav className="flex items-center gap-5 flex-wrap justify-center text-sm text-muted-foreground">
             <Link to="/login" className="hover:text-foreground transition-colors">
               Login
             </Link>
             <Link to="/outline" className="hover:text-foreground transition-colors">
               Build Outline
             </Link>
+            <a href="#" className="hover:text-foreground transition-colors">
+              Terms
+            </a>
+            <a href="#" className="hover:text-foreground transition-colors">
+              Security
+            </a>
+            <a href="mailto:hi@fabric59.com" className="hover:text-foreground transition-colors">
+              Contact
+            </a>
           </nav>
         </div>
       </footer>
