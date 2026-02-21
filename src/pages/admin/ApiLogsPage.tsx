@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ApiLog } from "@/types/database";
-import { Search, RefreshCw, Clock, ExternalLink, CalendarIcon, Download, Activity, CheckCircle2, AlertCircle, Timer } from "lucide-react";
+import { Search, RefreshCw, Clock, ExternalLink, CalendarIcon, Download, Activity, CheckCircle2, AlertCircle, Timer, Radio } from "lucide-react";
 import { format, formatDistanceToNow, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
@@ -53,7 +53,7 @@ export default function ApiLogsPage() {
   const [dateTo, setDateTo] = useState<Date | undefined>();
 
   const { data: tenants = [] } = useTenants();
-  const { data: logs = [], isLoading, refetch, isFetching } = useApiLogs({
+  const { data: logs = [], isLoading, refetch, isFetching, isLive, toggleLive } = useApiLogs({
     tenantId: tenantFilter === "all" ? undefined : tenantFilter,
     status: statusFilter === "all" ? undefined : (statusFilter as "success" | "error" | "pending"),
   });
@@ -173,17 +173,39 @@ export default function ApiLogsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">API Logs</h1>
-          <p className="text-muted-foreground">Real-time monitoring of all CRM API calls</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">API Logs</h1>
+            <p className="text-muted-foreground">Real-time monitoring of all CRM API calls</p>
+          </div>
+          {isLive && (
+            <span className="flex items-center gap-1.5 rounded-full bg-success/15 border border-success/30 px-2.5 py-0.5 text-xs font-medium text-success">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+              </span>
+              Live
+            </span>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-2">
             <Download className="h-4 w-4" />CSV
           </Button>
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="gap-2">
-            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />Refresh
+          <Button
+            variant={isLive ? "default" : "outline"}
+            size="sm"
+            onClick={toggleLive}
+            className="gap-2"
+          >
+            <Radio className="h-4 w-4" />
+            {isLive ? "Pause" : "Resume"}
           </Button>
+          {!isLive && (
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching} className="gap-2">
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />Refresh
+            </Button>
+          )}
         </div>
       </div>
 
