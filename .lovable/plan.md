@@ -1,42 +1,102 @@
 
-# Add Domain Disconnect Option
+
+# Dispositions Tab + Stop Master Admin Tour Popup
 
 ## Overview
 
-Add a "Disconnect Domain" action below the API credentials section on the Domain Detail page. This clears the stored Five9 credentials and resets the connection status back to "Not Connected" without deleting the domain itself.
+Two changes:
+1. Add a **Dispositions** tab to the Domain Detail page for bulk-creating Five9 dispositions and assigning them to campaigns/profiles
+2. Stop showing the Admin tour popup to System Admin (master_admin) users
 
-## What It Does
+---
 
-When clicked, shows a confirmation dialog explaining the action will:
-- Clear the Five9 username and password
-- Reset the connection status to "pending"
-- Keep the domain record and all other settings intact
+## 1. Dispositions Tab
 
-## Technical Changes
+### User Flow
 
-### File: `src/pages/admin/DomainDetailPage.tsx`
+1. Navigate to a domain's detail page and click the new **Dispositions** tab
+2. Select a tenant from the dropdown (tenants linked to this domain's organization)
+3. Paste dispositions in pipe-delimited format, one per line:
+   ```
+   Appointment Set | FinalApplyToCampaigns | Caller scheduled an appointment
+   Not Interested | FinalApplyToCampaigns | Caller declined services
+   Wrong Number | FinalApplyToContact | Invalid phone number
+   ```
+4. System parses and previews them in a table with validation
+5. Select target campaigns and/or campaign profiles (fetched live from Five9)
+6. Click **Create & Assign** to execute
+7. Results panel shows success/failure per disposition
 
-1. Add a `handleDisconnect` function that calls `updateDomain.mutateAsync` with:
-   - `five9_username: ""`
-   - `five9_password: ""`
-   - And resets `api_connection_status` to `"pending"` via a separate update or by clearing the credential fields (the status column needs updating too)
+### Supported Disposition Types
+- `FinalApplyToCampaigns` (default)
+- `FinalApplyToContact`
+- `AddActiveNumber`
+- `DoNotDial`
+- `NoneApplyToCampaigns`
+- `NoneApplyToContact`
 
-2. Add a new section after the Help Text block (around line 445), inside the API tab content, wrapped in an `AlertDialog` for confirmation:
-   - A destructive-styled card with an `Unplug` icon
-   - Title: "Disconnect Domain"
-   - Description: "Remove API credentials and disconnect from Five9. The domain record and all other settings will be preserved."
-   - A "Disconnect" button that triggers the confirmation dialog
-   - Only visible when `canManage` is true and `api_connection_status === "connected"`
+### Technical Changes
 
-3. The confirmation dialog warns that active integrations relying on this connection will stop working.
+#### Edge Function: `supabase/functions/five9-provisioning/index.ts`
 
-### File: `src/hooks/useDomains.ts`
+Add four new actions using Five9 Admin Web Services SOAP API:
 
-Update `useUpdateDomain` to also support setting `api_connection_status` in the update payload (add it to the `updateData` mapping if `data.api_connection_status` is provided). This requires adding `api_connection_status` to the accepted data shape.
+- **`getCampaigns`**: Calls `<ser:getCampaigns/>` and returns campaign names
+- **`getCampaignProfiles`**: Calls `<ser:getCampaignProfiles/>` and returns profile names
+- **`createDispositions`**: For each disposition, calls `<ser:createDisposition>` with name, type, description. Processes sequentially, collects successes/failures (skips already-existing ones gracefully)
+- **`addDispositionsToCampaigns`**: For each selected campaign, calls `<ser:addDispositionsToCampaign>` with the disposition names. For each selected profile, calls `<ser:modifyCampaignProfileDispositions>` with `addDispositionCounts`
 
-## Files Changed
+#### New Hook: `src/hooks/useFive9Dispositions.ts`
+
+- `useFive9Campaigns(domainId)` -- fetches campaigns via the edge function
+- `useFive9CampaignProfiles(domainId)` -- fetches campaign profiles
+- `useCreateDispositions()` -- mutation that creates dispositions and assigns to targets
+
+#### New Component: `src/components/domains/DispositionsTab.tsx`
+
+Self-contained tab with:
+- Tenant selector dropdown
+- Textarea for pasting dispositions in pipe-delimited format with format guide
+- Parse preview table showing name, type, description with validation indicators
+- Campaign multi-select checkboxes (fetched from Five9)
+- Campaign Profile multi-select checkboxes (fetched from Five9)
+- "Create & Assign" button
+- Results summary panel showing per-disposition success/error status
+
+#### Update: `src/pages/admin/DomainDetailPage.tsx`
+
+- Add "Dispositions" TabsTrigger alongside existing tabs
+- Add TabsContent rendering the DispositionsTab component
+- Pass `domainId`, `canManage`, and organization ID as props
+
+---
+
+## 2. Stop Admin Tour for Master Admin
+
+### Problem
+When a master admin navigates to the Admin Dashboard (via the Dashboard Switcher), the AdminTour popup appears even though they don't need onboarding -- they are system-level operators.
+
+### Fix
+
+**File: `src/components/layout/AdminLayout.tsx`**
+
+Conditionally render `<AdminTour />` only when the user is NOT a master admin. Import `useAuth` and check `isMasterAdmin`:
+
+```
+const { isMasterAdmin } = useAuth();
+...
+{!isMasterAdmin && <AdminTour />}
+```
+
+---
+
+## Files Changed Summary
 
 | File | Change |
 |------|--------|
-| `src/pages/admin/DomainDetailPage.tsx` | Add Disconnect card + confirmation dialog in API tab |
-| `src/hooks/useDomains.ts` | Allow `api_connection_status` in update mutation |
+| `supabase/functions/five9-provisioning/index.ts` | Add `getCampaigns`, `getCampaignProfiles`, `createDispositions`, `addDispositionsToCampaigns` actions |
+| `src/hooks/useFive9Dispositions.ts` | New -- hooks for campaigns, profiles, and disposition creation |
+| `src/components/domains/DispositionsTab.tsx` | New -- full dispositions management UI |
+| `src/pages/admin/DomainDetailPage.tsx` | Add Dispositions tab |
+| `src/components/layout/AdminLayout.tsx` | Conditionally hide AdminTour for master admins |
+
