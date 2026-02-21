@@ -1,85 +1,91 @@
 
 
-# Industry-Specific Interview Questions for Alex
+# Role-Based User Dashboard
 
-## Overview
+## Current State
 
-Currently Alex asks the same generic questions (CRM, Pre-Call, During Call, Post-Call, Notifications) regardless of the industry selected. This update makes each question curated to the chosen industry, so a Legal firm sees case-related options while a Home Services company sees job/dispatch options.
+The building blocks are already in place:
+- `user_permissions` table stores per-user, per-org permission grants
+- `hasPermission()` in AuthContext checks permissions (owners/admins get everything)
+- AdminLayout already filters the sidebar navigation based on permissions
+- Settings page has a Team Members grid where admins toggle permissions per user
 
-## What Changes
+**What's missing**: A dedicated, simplified dashboard experience for non-admin members that adapts its landing view to their permissions (e.g., a supervisor sees agent stats front and center, a client manager sees client stats).
 
-### System Prompt Update
+## What Will Be Built
 
-**File: `supabase/functions/ai-call-flow/index.ts`**
+### 1. User Dashboard Page
 
-Replace the static steps 2-6 with industry-branched question sets. After the user picks their industry in step 1, Alex tailors every subsequent question.
+A new page at `/admin/dashboard` that renders a personalized home screen based on the logged-in user's permissions:
 
-#### Industry-Specific Options
+- **Agents-only users**: See agent stats (Total, Active, Pending, Deprovisioned), recent agent activity, and a quick-action button to provision a new agent
+- **Clients-only users**: See client/tenant stats (Total, Active), recent client records, and a quick-action to add a new client
+- **Both permissions**: See a combined view with both stat sections
+- **Full admins/owners**: See everything (agents, clients, domains, integrations summary)
 
-**Step 2 -- CRM** (varies by industry):
-- Legal: Clio, MyCase, PracticePanther, Salesforce, Other/None
-- Home Services: Workiz, ServiceTitan, Housecall Pro, Jobber, Other/None
-- Healthcare: Athenahealth, Epic, Salesforce Health Cloud, Other/None
-- Insurance: Applied Epic, HawkSoft, Salesforce, AgencyZoom, Other/None
-- Other: Salesforce, HubSpot, Zoho, Other/None
+This page will query existing tables (`agents`, `tenants`) for stat counts and recent records.
 
-**Step 3 -- Pre-Call** (varies by industry):
-- Legal: CRM lookup, Conflict check, Case type routing, VIP client flag, Queue announcement
-- Home Services: CRM lookup, Job status check, Technician availability, Priority routing, Queue announcement
-- Healthcare: Patient record lookup, Insurance verification, Provider routing, HIPAA greeting, Queue announcement
-- Insurance: Policy lookup, Claims status check, Agent routing, Priority flag, Queue announcement
-- Other: CRM lookup, Screen pop, Priority routing, Queue announcement, Other
+### 2. Smart Landing Page Redirect
 
-**Step 4 -- During Call** (varies by industry):
-- Legal: Contact info, Case type/practice area, Opposing party, Court dates, Consultation notes
-- Home Services: Contact info, Job type/trade, Address/service area, Scheduling preference, Dispatch notes
-- Healthcare: Patient demographics, Insurance info, Symptoms/reason, Preferred provider, Appointment notes
-- Insurance: Policy number, Claim details, Coverage type, Incident date, Agent notes
-- Other: Contact info, Case/job details, Disposition codes, Custom fields, Notes
+Update the admin index route so that:
+- **Owners/Admins/Master Admins**: Land on the full dashboard (same as today -- TenantsPage or the new dashboard)
+- **Members with limited permissions**: Land on `/admin/dashboard` which shows their personalized view
 
-**Step 5 -- Post-Call** (varies by industry):
-- Legal: Create CRM record, Conflict check alert, Schedule consultation, Email intake summary, Trigger webhook
-- Home Services: Create job/ticket, Dispatch technician, Schedule estimate, SMS confirmation, Trigger webhook
-- Healthcare: Update patient record, Schedule appointment, Referral notification, Secure email summary, Trigger webhook
-- Insurance: Create/update claim, Assign adjuster, Policy document request, Email summary, Trigger webhook
-- Other: Create CRM record, Slack notification, Book follow-up, Email summary, Trigger webhook
+### 3. Dashboard Switcher Update
 
-**Step 6 -- Notifications** remains the same across all industries (Slack, Email, SMS, Calendar invite, None).
+Update the DashboardSwitcher to show a "User Dashboard" option for non-admin members (instead of only showing the switcher for master admins). The switcher options become:
+- **System Admin** (master admins only)
+- **Admin Dashboard** (owners/admins)
+- **My Dashboard** (all members -- their personalized view)
 
-### No Frontend Changes
+### 4. Sidebar Highlight
 
-The frontend chip detection and multi-select logic remain unchanged. The chips are dynamically extracted from whatever options Alex presents, so industry-specific options will automatically appear as clickable chips.
+When a member lands on the User Dashboard, highlight it as the active item in the sidebar. Add a "My Dashboard" nav item at the top of the filtered navigation for non-admin members.
 
-### No Database Changes
-
-The tenants table schema stays the same. The industry-specific options are stored in `custom_mappings` as arrays, which already supports arbitrary values.
+---
 
 ## Technical Details
 
-The system prompt will use a structured format like:
+### New File: `src/pages/admin/UserDashboardPage.tsx`
 
-```
-After the user selects their industry, tailor steps 2-6 based on it:
+A new React component that:
+- Uses `useAuth()` to get the current user's permissions
+- Conditionally renders stat cards and recent-record tables based on `hasPermission("agents")` and `hasPermission("tenants")`
+- Queries `agents` table for agent counts by status
+- Queries `tenants` table for client counts by status
+- Shows quick-action buttons that link to the relevant pages
 
-IF Legal:
-  Step 2 CRM options: Clio, MyCase, PracticePanther, Salesforce, Other/None
-  Step 3 Pre-Call options: CRM lookup, Conflict check, Case type routing, VIP client flag, Queue announcement
-  ...
+### Modified File: `src/App.tsx`
 
-IF Home Services:
-  Step 2 CRM options: Workiz, ServiceTitan, Housecall Pro, Jobber, Other/None
-  ...
-```
+- Add a new route: `<Route path="dashboard" element={<UserDashboardPage />} />`  inside the `/admin` layout
 
-The CRM type mapping for the save config will be extended:
-- MyCase, PracticePanther, Athenahealth, Applied Epic, HawkSoft, AgencyZoom, ServiceTitan, Housecall Pro, Jobber, Zoho -> `other`
-- Clio -> `clio`, Workiz -> `workiz`, Salesforce -> `salesforce`
+### Modified File: `src/components/layout/AdminLayout.tsx`
 
-The credential collection in step 8 will also be industry-aware -- Alex only asks for credentials relevant to the selected CRM (e.g., if they picked ServiceTitan, Alex asks for a ServiceTitan API key and tenant ID).
+- Add a "My Dashboard" nav item at position 0 for non-admin members (permission: `null`, always visible)
+- The href will be `/admin/dashboard`
 
-## Files Changed
+### Modified File: `src/components/layout/DashboardSwitcher.tsx`
+
+- Show the switcher for all authenticated users (not just master admins)
+- For non-admin members: show "My Dashboard" (links to `/admin/dashboard`)
+- For admins/owners: show "Admin Dashboard" (links to `/admin`)
+- For master admins: keep existing "System Admin" + "Admin Dashboard" options
+
+### Modified File: `src/components/auth/ProtectedRoute.tsx`
+
+- Add logic: if a non-admin member navigates to `/admin` (the index), redirect them to `/admin/dashboard` instead
+
+### No Database Changes
+
+All data comes from existing `agents` and `tenants` tables with existing RLS policies.
+
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `supabase/functions/ai-call-flow/index.ts` | Replace static steps 2-6 with industry-branched question sets in the system prompt |
+| `src/pages/admin/UserDashboardPage.tsx` | New -- personalized dashboard with permission-based stat cards |
+| `src/App.tsx` | Add `/admin/dashboard` route |
+| `src/components/layout/AdminLayout.tsx` | Add "My Dashboard" nav item for non-admin members |
+| `src/components/layout/DashboardSwitcher.tsx` | Show switcher for all users, add "My Dashboard" option |
+| `src/components/auth/ProtectedRoute.tsx` | Redirect non-admin members from `/admin` to `/admin/dashboard` |
 
