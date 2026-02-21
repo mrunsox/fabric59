@@ -1,8 +1,25 @@
 
-# Fix Integrations Page Scroll, Tenant Integration Badges, and Configure Flow — DONE
+# Fix Tenant Edit Dialog Scroll + Alphabetical Client Selection
 
-All three fixes implemented:
+## Issues
 
-1. ✅ **Scroll Overflow**: `<main>` in AdminLayout now has `overflow-y-auto h-[calc(100vh-4rem)]`; IntegrationsPage tabs use horizontal `ScrollArea` with `inline-flex`
-2. ✅ **Tenant Integration Badges**: New "Integrations" column shows icon badges for CRM type + webhook integrations (Slack, Zapier, Make, n8n, Pabbly)
-3. ✅ **Configure Client Flow**: "Configure in Clients" opens `ClientSelectDialog` → select a client → navigates to `/admin?edit=<id>` → auto-opens edit dialog
+1. The tenant edit dialog content overflows the screen when Slack Notifications and Workflow Automations sections are expanded. The dialog needs internal scrolling.
+2. The client selection list in `ClientSelectDialog.tsx` is unsorted -- needs alphabetical ordering.
+
+## Changes
+
+### 1. Fix Tenant Edit Dialog Overflow
+
+**File: `src/pages/admin/TenantsPage.tsx`**
+- Add `max-h-[85vh]` and `overflow-y-auto` to both the Create and Edit `DialogContent` elements so the form scrolls within the dialog when content is tall.
+
+### 2. Alphabetical Client Selection
+
+**File: `src/components/integrations/ClientSelectDialog.tsx`**
+- Add `.sort((a, b) => a.name.localeCompare(b.name))` to the `filtered` memo so clients are always listed A-Z.
+
+## Technical Details
+
+- The `DialogContent` max-height ensures the dialog never exceeds 85% of the viewport, with overflow scroll for the form content
+- The alphabetical sort runs after filtering so the sorted order is maintained regardless of search input
+- No new dependencies or files needed
