@@ -102,7 +102,7 @@ export const buildMap: BuildCategory[] = [
       { name: "Summary Stat Cards", description: "Total requests, success rate, avg latency, errors", status: "done" },
       { name: "Call Phase Simulation", description: "Pre-call, during-call, post-call test tabs", status: "done" },
       { name: "Request History", description: "Local storage history with replay", status: "done" },
-      { name: "Real-time Log Streaming", description: "Live log updates via websockets", status: "planned" },
+      { name: "Real-time Log Streaming", description: "Live log updates via Postgres realtime", status: "done" },
       { name: "Error Alerting", description: "Email/Slack alerts for critical failures", status: "planned" },
     ],
   },
