@@ -17,7 +17,7 @@ export function Fabric59Wordmark({ className, size = "md" }: Fabric59WordmarkPro
   return (
     <div className={cn("flex items-center", className)}>
       <span className={cn(
-        "font-bold tracking-tighter text-foreground",
+        "font-black tracking-tighter text-foreground",
         size === "sm" && "text-xl",
         size === "md" && "text-2xl",
         size === "lg" && "text-4xl",

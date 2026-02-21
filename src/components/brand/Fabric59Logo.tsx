@@ -27,7 +27,7 @@ export function Fabric59Logo({
     <div className={cn("flex items-center gap-3", className)}>
       {showIcon && <Fabric59Icon size={iconSize} />}
       <div className="flex flex-col">
-        <span className="text-sm font-bold tracking-tight text-foreground">
+        <span className="text-base font-extrabold tracking-tight text-foreground">
           Fabric59
         </span>
         <span className="text-xs text-muted-foreground">
