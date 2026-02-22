@@ -14,8 +14,11 @@ Fabric59 is an all-in-one platform that automates Five9 agent onboarding, offboa
 - **Agent Provisioning & Deprovisioning**: One-click onboarding and offboarding across Five9, Google Workspace, and Slack with automated credential delivery and grace periods.
 - **Visual CRM Field Mapping Builder**: Drag-and-drop canvas to connect Five9 contact fields to any CRM with custom transformation logic.
 - **55+ Pre-built Integrations**: Connectors for Salesforce, HubSpot, Slack, Twilio, Zapier, Zoom, DocuSign, QuickBooks, and many more.
+- **AI Call Flow Builder**: Design call flows with AI chat assistance. Chat-driven configuration with an interactive step-through simulator for legal, home services, healthcare, and insurance scenarios.
+- **Five9 Domain Management**: Manage multiple Five9 domains with per-domain credentials, branding, IVR settings, and real-time connection testing.
+- **Role-Based Access Control**: Granular permission system with per-user tab access, organization-level isolation, and row-level security at the database layer.
+- **Multi-Tenant Platform**: Manage multiple clients from a single dashboard. Tag tenants by CRM type, configure per-client integrations, and oversee all organizations from the master admin console.
 - **Real-time API Monitoring**: Live API logs, error tracking, and a built-in test console for every integration request.
-- **Multi-tenant Architecture**: Organization-level data isolation with role-based access control (RBAC) and row-level security.
 - **Audit Logging**: Immutable logs tracking every agent provisioning event, data access, and configuration change.
 
 ## How It Works

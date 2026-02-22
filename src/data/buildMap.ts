@@ -182,4 +182,18 @@ export const buildMap: BuildCategory[] = [
       { name: "Security Page", description: "Data security and compliance overview", status: "done" },
     ],
   },
+  {
+    name: "SEO & AI Visibility",
+    items: [
+      { name: "SEOHead Component", description: "Reusable per-page meta tags, canonical, Open Graph", status: "done" },
+      { name: "JSON-LD Structured Data", description: "Organization, SoftwareApplication, FAQPage schemas", status: "done" },
+      { name: "sitemap.xml", description: "Static sitemap for all public routes", status: "done" },
+      { name: "llms.txt", description: "LLM-readable product summary for AI crawlers", status: "done" },
+      { name: "ai.txt", description: "AI agent discoverability file with capabilities", status: "done" },
+      { name: "robots.txt AI Directives", description: "GPTBot, PerplexityBot, ClaudeBot crawler access", status: "done" },
+      { name: "FAQ Section", description: "Accordion FAQ for AEO snippet extraction", status: "done" },
+      { name: "How It Works Section", description: "3-step process for LLMO citability", status: "done" },
+      { name: "Semantic HTML Landmarks", description: "Main, nav, section aria-labels for AXO/VLM", status: "done" },
+    ],
+  },
 ];
