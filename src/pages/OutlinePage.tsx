@@ -22,9 +22,18 @@ function StatusIcon({ status }: { status: ItemStatus }) {
 
 export default function OutlinePage() {
   const [tested, setTested] = useState<Record<string, boolean>>(() => {
+    const defaults: Record<string, boolean> = {};
+    buildMap.forEach(cat =>
+      cat.items.forEach(item => {
+        if (item.tested) defaults[`${cat.name}:${item.name}`] = true;
+      })
+    );
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    } catch { return {}; }
+      const overrides = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      return { ...defaults, ...overrides };
+    } catch {
+      return defaults;
+    }
   });
 
   const toggleTested = useCallback((key: string) => {
