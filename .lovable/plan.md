@@ -1,166 +1,81 @@
 
 
-# Maximum Visibility: SEO, AEO, GEO, LLMO, AXO, VLM & AI-Era Optimization
+# Update Landing Page with All Built Features
 
-## What These Mean for Your App
+## What's Missing
 
-| Acronym | What It Does |
-|---------|-------------|
-| **SEO** | Traditional search engine ranking (Google, Bing) |
-| **AEO** | Answer Engine Optimization -- getting featured in AI answer boxes, snippets, People Also Ask |
-| **GEO** | Generative Engine Optimization -- appearing in AI-generated search results (Google AI Overviews, Bing Copilot) |
-| **LLMO** | Large Language Model Optimization -- being cited by ChatGPT, Claude, Perplexity |
-| **AXO** | AI Experience Optimization -- ensuring AI agents can navigate and understand your content |
-| **VLM** | Vision Language Model -- making your pages parseable by screenshot-based AI models |
-| **AI-Era** | Future-proofing for emerging AI discovery channels |
+The landing page currently showcases only 4 platform features and 2 hero cards. The build map has 14 categories of completed features. Key omissions:
 
-## Current Gaps
+| Missing Feature | Impact |
+|----------------|--------|
+| AI Call Flow Builder | Major differentiator -- AI-powered, interactive simulator |
+| Five9 Domain Management | Core product capability (multi-domain) |
+| RBAC / Granular Permissions | Enterprise selling point |
+| Multi-Tenant Management | BPO-critical feature |
+| Master Admin Platform | Multi-org oversight for platform operators |
+| Google Workspace + Slack Automation | Part of agent lifecycle but not called out |
 
-- Title tag is truncated ("...Agent Lifecycle M")
-- No sitemap.xml
-- No JSON-LD structured data
-- No FAQ section (critical for AEO/GEO snippet extraction)
-- No canonical URLs
-- No semantic HTML landmarks (`<main>`, `<article>`, `<nav aria-label>`)
-- No `llms.txt` or `ai.txt` for LLM crawlers
-- robots.txt missing sitemap reference and AI bot directives
-- No alt text strategy for VLM
-- No "How It Works" or "Use Cases" content for LLMO citability
+## Changes
 
----
+### 1. Expand `platformFeatures` array (4 to 8 features)
 
-## Implementation Plan
+Add four new feature cards to the grid:
 
-### 1. Fix `index.html` -- Core Meta Tags
+- **AI Call Flow Builder** -- "Design call flows with AI assistance. Chat-driven configuration with an interactive step-through simulator for legal, home services, healthcare, and insurance scenarios."
+- **Five9 Domain Management** -- "Manage multiple Five9 domains with per-domain credentials, branding, IVR settings, and real-time connection testing."
+- **Role-Based Access Control** -- "Granular permission system with per-user tab access, organization-level isolation, and row-level security at the database layer."
+- **Multi-Tenant Platform** -- "Manage multiple clients from a single dashboard. Tag tenants by CRM type, configure per-client integrations, and oversee all organizations from the master admin console."
 
-- Fix truncated title: "Fabric59 | Five9 Integration Hub for CRM & Agent Lifecycle Management"
-- Add canonical link tag
-- Add `robots` meta tag with `index, follow`
-- Add proper `og:url`
-- Add keywords meta (still used by some engines)
-- Add `application-name` and `theme-color` meta
+### 2. Update `featureCards` hero section (2 to 3 cards)
 
-### 2. Create `public/sitemap.xml`
+Add a third hero card:
 
-Static sitemap listing all public routes with priorities:
+- **AI-Powered Call Flow Design** -- "Build intelligent call flows with AI chat assistance and test them with an interactive simulator. Pre-built templates for legal, home services, healthcare, and insurance."
 
-```text
-/              priority 1.0
-/outline       priority 0.7
-/terms         priority 0.3
-/security      priority 0.4
-/login         priority 0.5
-/signup        priority 0.6
-```
+Switch to a 3-column grid on desktop.
 
-### 3. Create `public/llms.txt` -- LLM Optimization
+### 3. Update FAQ items
 
-A plain-text file that AI crawlers (Perplexity, ChatGPT browse, etc.) read to understand your product. This is the LLMO equivalent of robots.txt:
+Add two new FAQ entries:
 
-```text
-# Fabric59
-> Five9 integration platform for agent lifecycle management and CRM field mapping
+- **"What is the AI Call Flow Builder?"** -- Explains the Gemini-powered chat interface, interactive simulator, and practice area templates.
+- **"Can I manage multiple Five9 domains and clients?"** -- Explains multi-domain support, multi-tenant management, and the master admin console.
 
-## What is Fabric59?
-Fabric59 automates agent onboarding/offboarding across Five9, Google Workspace, and Slack...
+### 4. Update JSON-LD structured data
 
-## Key Features
-- Agent Provisioning & Deprovisioning
-- Visual CRM Field Mapping Builder
-- 55+ Pre-built Integrations
-- Real-time API Monitoring
+- Add "AI Call Flow Builder", "Role-Based Access Control", and "Multi-Tenant Management" as `featureList` items in the `SoftwareApplication` schema.
+- Add the two new FAQ entries to the `FAQPage` schema.
 
-## Use Cases
-- BPO contact centers managing hundreds of agents
-- Companies integrating Five9 with Salesforce, HubSpot, Clio, Workiz
-...
-```
+### 5. Update `llms.txt` and `ai.txt`
 
-### 4. Create `public/ai.txt` -- AI Agent Discoverability
+Add the missing features to the Key Features and capabilities sections so LLM crawlers surface accurate, complete information.
 
-Tells AI agents what this site is, what it can do, and how to interact:
+### 6. Update `buildMap.ts`
 
-```text
-User-agent: *
-Sitemap: https://fabric59.lovable.app/sitemap.xml
-Description: Fabric59 is a Five9 integration platform...
-Contact: hi@fabric59.com
-```
+Add a new category for the SEO/AEO/GEO/LLMO work we just completed:
 
-### 5. Update `public/robots.txt` -- AI-Era Directives
-
-- Add Sitemap reference
-- Add AI crawler directives (GPTBot, PerplexityBot, ClaudeBot, Google-Extended)
-- Keep everything allowed for maximum visibility
-
-### 6. Add JSON-LD Structured Data to Landing Page
-
-Inject structured data into `LandingPage.tsx` using a `<script type="application/ld+json">` via React Helmet pattern (or inline). Three schemas:
-
-- **Organization** -- name, logo, URL, contact, sameAs
-- **WebApplication** (SoftwareApplication) -- name, description, category, offers
-- **FAQPage** -- question/answer pairs (critical for AEO)
-
-### 7. Add FAQ Section to Landing Page (AEO/GEO Critical)
-
-Add a visible FAQ section with 5-6 questions that directly answer common queries. This is the single most impactful change for AEO -- answer engines pull directly from FAQ content:
-
-- "What is Fabric59?"
-- "How does Fabric59 integrate with Five9?"
-- "What CRMs does Fabric59 support?"
-- "How does agent onboarding work?"
-- "Is Fabric59 secure?"
-- "How much does Fabric59 cost?"
-
-Each answer uses clear, concise language optimized for snippet extraction.
-
-### 8. Add "How It Works" Section to Landing Page (LLMO/GEO)
-
-A 3-step process section that LLMs can cite as a clear explanation:
-
-1. Connect your Five9 account
-2. Configure integrations and map fields
-3. Automate agent lifecycle and sync data
-
-### 9. Semantic HTML & Accessibility (AXO/VLM)
-
-Update `LandingPage.tsx` with proper semantic landmarks:
-
-- Wrap hero in `<main>`
-- Add `aria-label` to all `<nav>` elements
-- Add `aria-label` to `<section>` elements
-- Add `role="banner"` to header, `role="contentinfo"` to footer
-- Ensure all images have descriptive `alt` text
-- Add `aria-describedby` where appropriate
-
-### 10. Create SEO Head Component
-
-A reusable `<SEOHead>` component that other pages (Outline, Terms, Security) can use to set per-page:
-
-- `<title>`
-- `<meta name="description">`
-- `<link rel="canonical">`
-- Open Graph tags
-- JSON-LD structured data
-
-Uses `document.title` and DOM manipulation (or `react-helmet-async` if available, but we'll keep it dependency-free).
-
----
+- **"SEO & AI Visibility"** category with items: SEOHead component, JSON-LD structured data, sitemap.xml, llms.txt, ai.txt, robots.txt AI directives, FAQ section, How It Works section, semantic HTML landmarks.
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `index.html` | Fix title, add canonical, robots meta, theme-color, keywords, og:url |
-| `public/robots.txt` | Add Sitemap, AI bot directives |
-| `public/sitemap.xml` | New -- static sitemap for all public routes |
-| `public/llms.txt` | New -- LLM-readable product summary |
-| `public/ai.txt` | New -- AI agent discoverability file |
-| `src/components/seo/SEOHead.tsx` | New -- reusable per-page SEO component |
-| `src/components/seo/StructuredData.tsx` | New -- JSON-LD structured data component |
-| `src/pages/LandingPage.tsx` | Add FAQ section, How It Works section, semantic HTML, structured data, SEOHead |
-| `src/pages/OutlinePage.tsx` | Add SEOHead with page-specific meta |
-| `src/pages/TermsPage.tsx` | Add SEOHead with page-specific meta |
-| `src/pages/SecurityPage.tsx` | Add SEOHead with page-specific meta |
-| `src/pages/NotFound.tsx` | Add proper 404 meta (noindex) |
+| `src/pages/LandingPage.tsx` | Add 4 new platform features, 1 new hero card, 2 new FAQ items, update structured data |
+| `public/llms.txt` | Add missing features (Call Flow Builder, RBAC, Multi-Tenant, Domain Management) |
+| `public/ai.txt` | Add missing capabilities |
+| `src/data/buildMap.ts` | Add "SEO & AI Visibility" category with all new items |
+
+## Technical Details
+
+### LandingPage.tsx Changes
+
+- `featureCards` array: add 3rd card for AI Call Flow, change grid to `md:grid-cols-3`
+- `platformFeatures` array: add 4 entries (AI Call Flow Builder, Domain Management, RBAC, Multi-Tenant Platform), change grid to `lg:grid-cols-4` (stays 4-col but with 8 items = 2 rows)
+- `faqItems` array: append 2 new Q&A entries
+- `softwareLD`: add `featureList` property with all 8 platform features listed
+- `faqLD`: automatically picks up new FAQ items (already maps from `faqItems`)
+
+### Import additions
+
+- Add `Bot`, `Shield`, `Building2`, `Globe` icons from lucide-react for the new feature cards
 
