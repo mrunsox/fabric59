@@ -1,81 +1,83 @@
 
 
-# Reorganize Settings Page with Tabbed Navigation + Embed Profile
+# Fix Member Names + Add Permission Selection to Invite Dialog
 
-## Overview
+## Problem 1: Alphanumeric Member Names
 
-Replace the long scrolling Settings page with a horizontal tab bar at the top. Move the Profile page content into a "Profile" tab within Settings, and remove the standalone `/admin/profile` route.
+The Team Members table shows "d06a7151" because:
+- The `profiles` table has no `email` column
+- The `handle_new_user` trigger only inserts the user ID, not their email
+- The hook falls back to `user_id.slice(0, 8)` when `display_name` is null
 
-## Tab Structure
+### Fix
 
-The Settings page will have these tabs:
+1. **Add `email` column to `profiles` table** via migration
+2. **Update the `handle_new_user` trigger** to copy `NEW.email` into the profiles row
+3. **Backfill existing profiles** with emails from `auth.users` (one-time migration)
+4. **Update `useTeamPermissions`** to read `email` from profiles and display it properly (show `display_name` if set, otherwise show `email`)
+5. **Update `invite-member` edge function** to set the email on the profile when creating/adding a user
 
-| Tab | Contents |
-|-----|----------|
-| **Profile** | Personal info (name, phone, timezone, avatar) + Change Password (moved from ProfilePage) |
-| **Team** | Integration Status card + Team Members table with Invite button (admin-only) |
-| **Credentials** | API Configuration + Integration Credentials (Five9, Resend, Google, Slack) |
-| **Security** | Security toggles (API key auth, encryption, CORS) |
-| **Notifications** | Email/Slack alerting, HR notifications, webhook URL |
-| **Data** | Data Retention settings |
+## Problem 2: No Permission Selection During Invite
 
-## Changes
+The Invite Member dialog currently only captures email and role. It needs checkboxes for each tab/feature permission so the admin can pre-assign access.
 
-### 1. Settings Page Rewrite (`src/pages/admin/SettingsPage.tsx`)
+### Fix
 
-- Wrap entire content in a `<Tabs>` component with a horizontal `<TabsList>` at the top
-- Each current card section becomes a `<TabsContent>` panel
-- The "Profile" tab renders the profile form inline (display name, phone, timezone, avatar, password change) -- same logic currently in `ProfilePage.tsx`
-- Default active tab: "Profile"
-- Remove the standalone "Save All Settings" button at the bottom (each section saves independently)
+1. **Update `InviteMemberDialog`** to include a checkbox grid for all permissions (from `PERMISSION_KEYS`). When role is "admin", all are checked and disabled (admins get full access). When role is "member", the admin picks which tabs to grant.
+2. **Update `invite-member` edge function** to accept a `permissions` array and insert rows into `user_permissions` for each selected permission.
 
-### 2. Remove Standalone Profile Route
-
-- **`src/App.tsx`**: Remove the `/admin/profile` route since profile is now under Settings
-- **`src/components/layout/AdminLayout.tsx`**: Update the sidebar footer avatar click to navigate to `/admin/settings` instead of `/admin/profile`
-- **`src/pages/admin/ProfilePage.tsx`**: Can be deleted or kept as a redirect
-
-### 3. Sidebar Navigation Update
-
-- The sidebar "Settings" link already exists at `/admin/settings` -- no change needed there
-- The avatar click in the sidebar footer changes from `/admin/profile` to `/admin/settings`
-
-## Technical Details
-
-### Tabs Implementation
-
-Uses the existing `@radix-ui/react-tabs` component already in the project at `src/components/ui/tabs.tsx`.
-
-```
-Tabs (defaultValue="profile")
-  TabsList (horizontal, sticky below header)
-    TabsTrigger value="profile" -- Profile
-    TabsTrigger value="team" -- Team (admin only)
-    TabsTrigger value="credentials" -- Credentials
-    TabsTrigger value="security" -- Security
-    TabsTrigger value="notifications" -- Notifications
-    TabsTrigger value="data" -- Data
-  TabsContent value="profile" -- profile form + password
-  TabsContent value="team" -- status card + members table
-  TabsContent value="credentials" -- API config + creds
-  TabsContent value="security" -- security toggles
-  TabsContent value="notifications" -- alerting config
-  TabsContent value="data" -- retention settings
-```
-
-### Profile Tab Content
-
-Inline the profile loading/saving logic from `ProfilePage.tsx` directly into the Settings component:
-- `useEffect` to load profile from `profiles` table
-- `handleSaveProfile` using `supabase.from("profiles").upsert(...)`
-- `handleChangePassword` using `supabase.auth.updateUser(...)`
-- Same form fields: email (disabled), display name, phone, timezone select, avatar URL, password change
-
-### Files Changed
+## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/pages/admin/SettingsPage.tsx` | Reorganize into tabbed layout, embed profile form |
-| `src/App.tsx` | Remove `/admin/profile` route |
-| `src/components/layout/AdminLayout.tsx` | Change avatar click to navigate to `/admin/settings` |
+| Database migration | Add `email` column to `profiles`, update `handle_new_user` trigger to copy email, backfill existing rows |
+| `supabase/functions/invite-member/index.ts` | Accept `permissions` array, insert into `user_permissions`, set email on profile |
+| `src/components/settings/InviteMemberDialog.tsx` | Add permission checkboxes grid, pass selected permissions to edge function |
+| `src/hooks/useTeamPermissions.ts` | Read `email` from profiles, display email or display_name instead of truncated UUID |
+
+## Technical Details
+
+### Migration SQL
+
+```sql
+ALTER TABLE public.profiles ADD COLUMN email text;
+
+-- Update trigger to copy email
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email)
+  VALUES (NEW.id, NEW.email)
+  ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
+  RETURN NEW;
+END;
+$$;
+
+-- Backfill existing profiles
+UPDATE public.profiles p
+SET email = u.email
+FROM auth.users u
+WHERE p.id = u.id AND p.email IS NULL;
+```
+
+### Edge Function Changes
+
+The `invite-member` function will:
+- Accept an additional `permissions: string[]` parameter
+- After inserting the org membership, insert one `user_permissions` row per selected permission
+- Upsert the profile with the invited email address
+
+### InviteMemberDialog Changes
+
+- Import `PERMISSION_KEYS` from `useTeamPermissions`
+- Add state: `selectedPermissions: string[]`
+- Render a checkbox grid below the Role selector
+- When role is "admin", auto-check all and disable toggles (admins have full access)
+- When role is "member", let the admin toggle each permission
+- Pass `permissions` array in the edge function call body
+
+### useTeamPermissions Changes
+
+- Query `profiles` with `select("id, display_name, email")`
+- Display logic: show `display_name` if available, otherwise show `email`, otherwise show truncated ID as last resort
 
