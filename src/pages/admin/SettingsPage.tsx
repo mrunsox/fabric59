@@ -117,9 +117,9 @@ function MaskedTextarea({
 
 export default function SettingsPage() {
   const { configValues, saveIntegrationCredentials, loading } = useAppConfig();
-  const { organization, membership, user } = useAuth();
+  const { organization, membership, user, isMasterAdmin } = useAuth();
   const { members, isLoading: membersLoading, togglePermission } = useTeamPermissions(organization?.id);
-  const isOrgAdmin = membership?.role === "owner" || membership?.role === "admin";
+  const isOrgAdmin = isMasterAdmin || membership?.role === "owner" || membership?.role === "admin";
   const [inviteOpen, setInviteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [slackTesting, setSlackTesting] = useState(false);
