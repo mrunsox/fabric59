@@ -174,6 +174,28 @@ export const buildMap: BuildCategory[] = [
     ],
   },
   {
+    name: "Campaign Setup",
+    items: [
+      { name: "Campaigns Nav Item", description: "Megaphone icon in sidebar navigation", status: "done", tested: true },
+      { name: "Campaigns List Page", description: "Table with status, progress, go-live date", status: "done", tested: true },
+      { name: "Campaign Intake Form", description: "9-section collapsible intake with zod validation", status: "done", tested: true },
+      { name: "Campaign Detail Page", description: "Read-only summary + live checklist sidebar", status: "done", tested: true },
+      { name: "Phone Numbers Section", description: "ANI/DNIS multi-input with add/remove rows", status: "done", tested: true },
+      { name: "Schedule and Coverage", description: "24/7 vs scheduled with after-hours handling", status: "done", tested: true },
+      { name: "Prompt Selector", description: "Dropdown populated from Five9 getPrompts API", status: "done", tested: true },
+      { name: "Dispositions Section", description: "Multi-select existing + create new dispositions", status: "done", tested: true },
+      { name: "Connectors Section", description: "Backend document, website, script connector inputs", status: "done", tested: true },
+      { name: "Decision Tree Builder", description: "Nested Q&A script editor with branching logic", status: "done", tested: true },
+      { name: "Skill and User Assignment", description: "Auto-suggested skill name + Five9 user multi-select", status: "done", tested: true },
+      { name: "Campaign Checklist", description: "40-item grouped checklist with auto/manual/blocked states", status: "done", tested: true },
+      { name: "Database Table", description: "campaign_setups with JSONB intake_data and checklist_state", status: "done", tested: true },
+      { name: "Five9 Campaign SOAP Actions", description: "createInboundCampaign, createSkill, createCampaignProfile, addDNIS", status: "done", tested: true },
+      { name: "Auto-Provisioning on Submit", description: "Sequential Five9 API calls with checklist updates", status: "planned" },
+      { name: "Custom VM Greeting Upload", description: "Audio file upload to campaign-assets bucket", status: "planned" },
+      { name: "Auto-Save Drafts", description: "Debounced save on section change", status: "planned" },
+    ],
+  },
+  {
     name: "Branding & Landing",
     items: [
       { name: "Landing Page", description: "Public hero-style marketing page at /", status: "done", tested: true },
