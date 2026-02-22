@@ -1,91 +1,81 @@
 
 
-# Add "Invite Team Member" Flow for Admins
+# Reorganize Settings Page with Tabbed Navigation + Embed Profile
 
 ## Overview
 
-Add an "Invite Member" button to the Team Members section in Settings that lets admins invite new users by email. The invited user receives a signup link, and upon signup they are automatically added to the organization.
+Replace the long scrolling Settings page with a horizontal tab bar at the top. Move the Profile page content into a "Profile" tab within Settings, and remove the standalone `/admin/profile` route.
 
-## Current State
+## Tab Structure
 
-- The Team Members table in Settings shows existing org members with permission checkboxes
-- `useInviteMember` hook exists but requires a pre-existing `userId` -- no way to invite by email
-- No invite UI exists anywhere in the app
-- Profile Settings page already exists at `/admin/profile` (accessible via sidebar avatar) -- no changes needed there
+The Settings page will have these tabs:
+
+| Tab | Contents |
+|-----|----------|
+| **Profile** | Personal info (name, phone, timezone, avatar) + Change Password (moved from ProfilePage) |
+| **Team** | Integration Status card + Team Members table with Invite button (admin-only) |
+| **Credentials** | API Configuration + Integration Credentials (Five9, Resend, Google, Slack) |
+| **Security** | Security toggles (API key auth, encryption, CORS) |
+| **Notifications** | Email/Slack alerting, HR notifications, webhook URL |
+| **Data** | Data Retention settings |
 
 ## Changes
 
-### 1. New: Invite Member Dialog Component
+### 1. Settings Page Rewrite (`src/pages/admin/SettingsPage.tsx`)
 
-**File: `src/components/settings/InviteMemberDialog.tsx`**
+- Wrap entire content in a `<Tabs>` component with a horizontal `<TabsList>` at the top
+- Each current card section becomes a `<TabsContent>` panel
+- The "Profile" tab renders the profile form inline (display name, phone, timezone, avatar, password change) -- same logic currently in `ProfilePage.tsx`
+- Default active tab: "Profile"
+- Remove the standalone "Save All Settings" button at the bottom (each section saves independently)
 
-A dialog with:
-- Email input field
-- Role selector (member, admin)
-- "Send Invite" button
+### 2. Remove Standalone Profile Route
 
-On submit:
-- Calls a new edge function that uses Supabase Admin API to create an invite (or create the user with a temporary password and send a password reset email)
-- Inserts a row into `organization_members` linking the new user to the current org
-- Shows success/error toast
+- **`src/App.tsx`**: Remove the `/admin/profile` route since profile is now under Settings
+- **`src/components/layout/AdminLayout.tsx`**: Update the sidebar footer avatar click to navigate to `/admin/settings` instead of `/admin/profile`
+- **`src/pages/admin/ProfilePage.tsx`**: Can be deleted or kept as a redirect
 
-### 2. New: Edge Function for Admin User Creation
+### 3. Sidebar Navigation Update
 
-**File: `supabase/functions/invite-member/index.ts`**
-
-- Accepts: `email`, `role`, `organizationId`
-- Validates the caller is an org admin (checks JWT)
-- Uses `supabase.auth.admin.inviteUserByEmail(email)` to create the user and send a magic link
-- Inserts the user into `organization_members` with the specified role
-- Returns success/error
-
-### 3. Update: Settings Page Team Members Section
-
-**File: `src/pages/admin/SettingsPage.tsx`**
-
-- Add an "Invite Member" button next to the Team Members card title
-- Wire it to open the `InviteMemberDialog`
-- After successful invite, refresh the members list
-
-### 4. Profile Settings Visibility (already done)
-
-The Profile page at `/admin/profile` is already accessible to all authenticated users via the sidebar footer avatar click. No changes needed -- but worth noting this path for your awareness:
-
-**Sidebar footer (avatar area) -> clicks through to `/admin/profile`**
-
-This page lets users update: display name, phone, timezone, avatar URL, and password.
-
----
+- The sidebar "Settings" link already exists at `/admin/settings` -- no change needed there
+- The avatar click in the sidebar footer changes from `/admin/profile` to `/admin/settings`
 
 ## Technical Details
 
-### Edge Function: `invite-member`
+### Tabs Implementation
 
-```typescript
-// Validates caller is org admin
-// Uses SUPABASE_SERVICE_ROLE_KEY for admin operations
-// supabase.auth.admin.inviteUserByEmail(email) creates user + sends email
-// Then inserts organization_members row
+Uses the existing `@radix-ui/react-tabs` component already in the project at `src/components/ui/tabs.tsx`.
+
+```
+Tabs (defaultValue="profile")
+  TabsList (horizontal, sticky below header)
+    TabsTrigger value="profile" -- Profile
+    TabsTrigger value="team" -- Team (admin only)
+    TabsTrigger value="credentials" -- Credentials
+    TabsTrigger value="security" -- Security
+    TabsTrigger value="notifications" -- Notifications
+    TabsTrigger value="data" -- Data
+  TabsContent value="profile" -- profile form + password
+  TabsContent value="team" -- status card + members table
+  TabsContent value="credentials" -- API config + creds
+  TabsContent value="security" -- security toggles
+  TabsContent value="notifications" -- alerting config
+  TabsContent value="data" -- retention settings
 ```
 
-### InviteMemberDialog Component
+### Profile Tab Content
 
-- Uses existing `Dialog` UI component
-- Email validation with basic regex
-- Role selection: `<Select>` with "Member" and "Admin" options
-- Calls the edge function via `supabase.functions.invoke('invite-member', ...)`
-- On success: closes dialog, invalidates team members query, shows toast
+Inline the profile loading/saving logic from `ProfilePage.tsx` directly into the Settings component:
+- `useEffect` to load profile from `profiles` table
+- `handleSaveProfile` using `supabase.from("profiles").upsert(...)`
+- `handleChangePassword` using `supabase.auth.updateUser(...)`
+- Same form fields: email (disabled), display name, phone, timezone select, avatar URL, password change
 
-### Settings Page Update
-
-- "Invite Member" button added to the CardHeader of the Team Members card
-- Only visible to org owners/admins (already gated by `isOrgAdmin`)
-
-## Files Changed
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `supabase/functions/invite-member/index.ts` | New -- edge function to invite users via admin API |
-| `src/components/settings/InviteMemberDialog.tsx` | New -- dialog component for inviting team members |
-| `src/pages/admin/SettingsPage.tsx` | Add "Invite Member" button to Team Members card |
+| `src/pages/admin/SettingsPage.tsx` | Reorganize into tabbed layout, embed profile form |
+| `src/App.tsx` | Remove `/admin/profile` route |
+| `src/components/layout/AdminLayout.tsx` | Change avatar click to navigate to `/admin/settings` |
 
