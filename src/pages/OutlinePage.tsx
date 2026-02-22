@@ -1,10 +1,14 @@
+import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, CheckCircle2, Circle, LayoutDashboard, Loader2, Map } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { buildMap, type ItemStatus } from "@/data/buildMap";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { SEOHead } from "@/components/seo/SEOHead";
+
+const STORAGE_KEY = "fabric59_tested_features";
 
 function StatusIcon({ status }: { status: ItemStatus }) {
   if (status === "done") {
@@ -17,6 +21,20 @@ function StatusIcon({ status }: { status: ItemStatus }) {
 }
 
 export default function OutlinePage() {
+  const [tested, setTested] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    } catch { return {}; }
+  });
+
+  const toggleTested = useCallback((key: string) => {
+    setTested((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   const allItems = buildMap.flatMap((c) => c.items);
   const total = allItems.length;
   const done = allItems.filter((i) => i.status === "done").length;
@@ -109,8 +127,10 @@ export default function OutlinePage() {
 
               {/* Items */}
               <div className="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
-                {category.items.map((item) => (
-                  <div key={item.name} className="flex items-start gap-3 px-4 py-3">
+                {category.items.map((item) => {
+                  const testedKey = `${category.name}:${item.name}`;
+                  return (
+                  <div key={item.name} className="flex items-center gap-3 px-4 py-3">
                     <StatusIcon status={item.status} />
                     <div className="flex-1 min-w-0">
                       <p
@@ -137,8 +157,17 @@ export default function OutlinePage() {
                     >
                       {item.status === "in-progress" ? "in progress" : item.status}
                     </span>
+                    <div className="flex items-center gap-1.5 pl-3 border-l border-border flex-shrink-0">
+                      <Checkbox
+                        checked={!!tested[testedKey]}
+                        onCheckedChange={() => toggleTested(testedKey)}
+                        aria-label={`Mark ${item.name} as tested`}
+                      />
+                      <span className="text-xs text-muted-foreground hidden sm:inline">Tested</span>
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );
