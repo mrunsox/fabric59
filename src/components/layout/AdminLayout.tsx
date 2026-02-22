@@ -20,6 +20,7 @@ import {
   Plug,
   ListPlus,
   Workflow,
+  Megaphone,
   User,
   LayoutDashboard,
 } from "lucide-react";
@@ -42,6 +43,7 @@ const navigation = [
   { name: "Agents", href: "/admin/agents", icon: Users, permission: "agents" },
   { name: "Clients", href: "/admin", icon: Building2, permission: "tenants" },
   { name: "Dispositions", href: "/admin/dispositions", icon: ListPlus, permission: "domains" },
+  { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone, permission: "domains" },
   { name: "Integrations", href: "/admin/integrations", icon: Plug, permission: "integrations" },
   { name: "Field Mappings", href: "/admin/mappings", icon: FileJson, permission: "mappings" },
   { name: "Call Flow Builder", href: "/admin/call-flow", icon: Workflow, permission: "call_flow" },

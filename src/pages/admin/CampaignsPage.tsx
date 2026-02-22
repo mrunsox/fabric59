@@ -1,0 +1,82 @@
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useCampaignSetups } from "@/hooks/useCampaignSetup";
+import { Plus, Megaphone } from "lucide-react";
+import { DEFAULT_CHECKLIST } from "@/types/campaign";
+import { format } from "date-fns";
+
+const statusColors: Record<string, string> = {
+  draft: "bg-muted text-muted-foreground",
+  submitted: "bg-primary/10 text-primary",
+  provisioning: "bg-warning/10 text-warning",
+  live: "bg-success/10 text-success",
+  archived: "bg-muted text-muted-foreground",
+};
+
+export default function CampaignsPage() {
+  const { data: campaigns = [], isLoading } = useCampaignSetups();
+
+  const getProgress = (checklist: Record<string, { done: boolean }>) => {
+    const total = DEFAULT_CHECKLIST.length;
+    const done = Object.values(checklist).filter((v) => v.done).length;
+    return `${done}/${total}`;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Megaphone className="h-6 w-6" /> Campaigns
+          </h1>
+          <p className="text-sm text-muted-foreground">Manage inbound campaign setups and provisioning</p>
+        </div>
+        <Button asChild className="gap-2">
+          <Link to="/admin/campaigns/new"><Plus className="h-4 w-4" /> New Campaign</Link>
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading campaigns...</p>
+      ) : campaigns.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-30" />
+          <p className="text-lg font-medium">No campaigns yet</p>
+          <p className="text-sm mb-4">Create your first campaign setup to get started.</p>
+          <Button asChild><Link to="/admin/campaigns/new">Create Campaign</Link></Button>
+        </div>
+      ) : (
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Campaign</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Progress</TableHead>
+                <TableHead>Go-Live</TableHead>
+                <TableHead>Created</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {campaigns.map((c) => (
+                <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => window.location.href = `/admin/campaigns/${c.id}`}>
+                  <TableCell className="font-medium">{c.campaign_name}</TableCell>
+                  <TableCell>{c.client_name}</TableCell>
+                  <TableCell>
+                    <Badge className={statusColors[c.status] || ""} variant="secondary">{c.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-sm">{getProgress(c.checklist_state as any || {})}</TableCell>
+                  <TableCell className="text-sm">{c.target_go_live ? format(new Date(c.target_go_live), "MMM d, yyyy") : "—"}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{format(new Date(c.created_at), "MMM d, yyyy")}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+}

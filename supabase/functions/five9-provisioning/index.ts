@@ -398,6 +398,80 @@ serve(async (req) => {
 
       responseData = { success: true, results };
 
+    } else if (action === 'getPrompts') {
+      const soapBody = `<ser:getPrompts/>`;
+      const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getPrompts', soapBody);
+      const prompts = [...new Set(extractValues(xml, 'name').filter(Boolean))];
+      responseData = { success: true, prompts };
+
+    } else if (action === 'getDispositions') {
+      const soapBody = `<ser:getDispositions/>`;
+      const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getDispositions', soapBody);
+      const dispositions = [...new Set(extractValues(xml, 'name').filter(Boolean))];
+      responseData = { success: true, dispositions };
+
+    } else if (action === 'createInboundCampaign') {
+      const { campaignName, description } = payload;
+      const soapBody = `<ser:createInboundCampaign>
+  <campaign>
+    <name>${escapeXml(campaignName)}</name>
+    <description>${escapeXml(description || '')}</description>
+    <state>NOT_RUNNING</state>
+  </campaign>
+</ser:createInboundCampaign>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'createInboundCampaign', soapBody);
+      responseData = { success: true };
+
+    } else if (action === 'createSkill') {
+      const { skillName } = payload;
+      const soapBody = `<ser:createSkill>
+  <skill>
+    <name>${escapeXml(skillName)}</name>
+  </skill>
+</ser:createSkill>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'createSkill', soapBody);
+      responseData = { success: true };
+
+    } else if (action === 'createCampaignProfile') {
+      const { profileName } = payload;
+      const soapBody = `<ser:createCampaignProfile>
+  <profile>
+    <name>${escapeXml(profileName)}</name>
+  </profile>
+</ser:createCampaignProfile>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'createCampaignProfile', soapBody);
+      responseData = { success: true };
+
+    } else if (action === 'addSkillsToCampaign') {
+      const { campaignName, skills } = payload;
+      const skillsXml = (skills as string[]).map(s => `<skills>${escapeXml(s)}</skills>`).join('\n  ');
+      const soapBody = `<ser:addSkillsToCampaign>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+  ${skillsXml}
+</ser:addSkillsToCampaign>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'addSkillsToCampaign', soapBody);
+      responseData = { success: true };
+
+    } else if (action === 'addDNISToCampaign') {
+      const { campaignName, dnisList } = payload;
+      const results: Array<{ dnis: string; success: boolean; error?: string }> = [];
+      for (const dnis of (dnisList as string[])) {
+        try {
+          const soapBody = `<ser:addDNISToCampaign>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+  <DNISList>
+    <number>${escapeXml(dnis)}</number>
+  </DNISList>
+</ser:addDNISToCampaign>`;
+          await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'addDNISToCampaign', soapBody);
+          results.push({ dnis, success: true });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Unknown error';
+          results.push({ dnis, success: false, error: msg });
+        }
+      }
+      responseData = { success: true, results };
+
     } else {
       responseData = { success: false, error: `Unknown action: ${action}` };
     }

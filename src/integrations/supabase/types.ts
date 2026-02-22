@@ -225,6 +225,60 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_setups: {
+        Row: {
+          campaign_name: string
+          campaign_type: string
+          checklist_state: Json
+          client_name: string
+          created_at: string
+          created_by: string | null
+          five9_domain_id: string | null
+          id: string
+          intake_data: Json
+          notes: string | null
+          organization_id: string
+          priority: string
+          status: string
+          target_go_live: string | null
+          updated_at: string
+        }
+        Insert: {
+          campaign_name: string
+          campaign_type?: string
+          checklist_state?: Json
+          client_name: string
+          created_at?: string
+          created_by?: string | null
+          five9_domain_id?: string | null
+          id?: string
+          intake_data?: Json
+          notes?: string | null
+          organization_id: string
+          priority?: string
+          status?: string
+          target_go_live?: string | null
+          updated_at?: string
+        }
+        Update: {
+          campaign_name?: string
+          campaign_type?: string
+          checklist_state?: Json
+          client_name?: string
+          created_at?: string
+          created_by?: string | null
+          five9_domain_id?: string | null
+          id?: string
+          intake_data?: Json
+          notes?: string | null
+          organization_id?: string
+          priority?: string
+          status?: string
+          target_go_live?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       error_alerts: {
         Row: {
           alerted_via: string[] | null
