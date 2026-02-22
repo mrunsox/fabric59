@@ -507,6 +507,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           display_name: string | null
+          email: string | null
           id: string
           onboarding_completed: Json | null
           phone: string | null
@@ -516,6 +517,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           display_name?: string | null
+          email?: string | null
           id: string
           onboarding_completed?: Json | null
           phone?: string | null
@@ -525,6 +527,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           display_name?: string | null
+          email?: string | null
           id?: string
           onboarding_completed?: Json | null
           phone?: string | null

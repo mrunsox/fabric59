@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify caller
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -37,7 +36,7 @@ Deno.serve(async (req) => {
     }
     const callerId = claimsData.claims.sub as string;
 
-    const { email, role, organizationId } = await req.json();
+    const { email, role, organizationId, permissions } = await req.json();
 
     if (!email || !organizationId) {
       return new Response(JSON.stringify({ error: "email and organizationId are required" }), {
@@ -47,8 +46,8 @@ Deno.serve(async (req) => {
     }
 
     const memberRole = role === "admin" ? "admin" : "member";
+    const permList: string[] = Array.isArray(permissions) ? permissions : [];
 
-    // Service-role client for admin operations
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -69,16 +68,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Invite user by email (creates user + sends magic link)
+    // Helper to insert permissions for a user
+    const insertPermissions = async (userId: string) => {
+      if (permList.length === 0) return;
+      const rows = permList.map((p) => ({
+        user_id: userId,
+        organization_id: organizationId,
+        permission: p,
+        granted_by: callerId,
+      }));
+      await adminClient.from("user_permissions").insert(rows);
+    };
+
+    // Helper to upsert profile email
+    const upsertProfileEmail = async (userId: string, userEmail: string) => {
+      await adminClient
+        .from("profiles")
+        .upsert({ id: userId, email: userEmail }, { onConflict: "id" });
+    };
+
+    // Invite user by email
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email);
 
     if (inviteError) {
-      // If user already exists, try to look them up
       if (inviteError.message?.includes("already been registered") || inviteError.status === 422) {
         const { data: listData } = await adminClient.auth.admin.listUsers();
         const existingUser = listData?.users?.find((u: { email?: string }) => u.email === email);
         if (existingUser) {
-          // Check if already a member
           const { data: existing } = await adminClient
             .from("organization_members")
             .select("id")
@@ -93,12 +109,13 @@ Deno.serve(async (req) => {
             });
           }
 
-          // Add existing user to org
           const { error: memberError } = await adminClient
             .from("organization_members")
             .insert({ user_id: existingUser.id, organization_id: organizationId, role: memberRole });
-
           if (memberError) throw memberError;
+
+          await upsertProfileEmail(existingUser.id, email);
+          await insertPermissions(existingUser.id);
 
           return new Response(JSON.stringify({ success: true, message: "Existing user added to organization" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -110,12 +127,13 @@ Deno.serve(async (req) => {
 
     const newUserId = inviteData.user.id;
 
-    // Add new user to organization
     const { error: memberError } = await adminClient
       .from("organization_members")
       .insert({ user_id: newUserId, organization_id: organizationId, role: memberRole });
-
     if (memberError) throw memberError;
+
+    await upsertProfileEmail(newUserId, email);
+    await insertPermissions(newUserId);
 
     return new Response(JSON.stringify({ success: true, message: "Invitation sent successfully" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

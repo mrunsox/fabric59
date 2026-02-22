@@ -43,10 +43,10 @@ export function useTeamPermissions(orgId: string | undefined) {
 
       const userIds = members.map((m) => m.user_id);
 
-      // Get profiles for display names
+      // Get profiles for display names and emails
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, display_name")
+        .select("id, display_name, email")
         .in("id", userIds);
 
       // Get permissions
@@ -61,7 +61,7 @@ export function useTeamPermissions(orgId: string | undefined) {
         const memberPerms = permissions?.filter((p) => p.user_id === m.user_id).map((p) => p.permission) || [];
         return {
           userId: m.user_id,
-          email: profile?.display_name || m.user_id.slice(0, 8),
+          email: profile?.display_name || (profile as any)?.email || m.user_id.slice(0, 8),
           displayName: profile?.display_name || null,
           role: m.role,
           permissions: memberPerms,
