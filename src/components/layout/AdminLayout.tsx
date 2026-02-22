@@ -165,7 +165,7 @@ export function AdminLayout() {
 
             <div
               className="flex items-center gap-3 rounded-lg bg-sidebar-accent/50 p-3 cursor-pointer hover:bg-sidebar-accent/70 transition-colors"
-              onClick={() => navigate("/admin/profile")}
+              onClick={() => navigate("/admin/settings")}
             >
               <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
                 <span className="text-xs font-medium text-primary">

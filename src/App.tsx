@@ -35,7 +35,7 @@ import SettingsPage from "@/pages/admin/SettingsPage";
 import AgentsPage from "@/pages/admin/AgentsPage";
 import DispositionsPage from "@/pages/admin/DispositionsPage";
 import IntegrationsPage from "@/pages/admin/IntegrationsPage";
-import ProfilePage from "@/pages/admin/ProfilePage";
+
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
 import NotFound from "./pages/NotFound";
@@ -96,7 +96,6 @@ const App = () => (
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
-                <Route path="profile" element={<ProfilePage />} />
               </Route>
             </Route>
 
