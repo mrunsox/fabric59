@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw, Activity, Users } from "lucide-react";
+import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw, Activity, Users, UserPlus } from "lucide-react";
+import { InviteMemberDialog } from "@/components/settings/InviteMemberDialog";
 import { useAppConfig } from "@/hooks/useAppConfig";
 import { useTeamPermissions, PERMISSION_KEYS } from "@/hooks/useTeamPermissions";
 import { useAuth } from "@/contexts/AuthContext";
@@ -101,6 +102,7 @@ export default function SettingsPage() {
   const { organization, membership } = useAuth();
   const { members, isLoading: membersLoading, togglePermission } = useTeamPermissions(organization?.id);
   const isOrgAdmin = membership?.role === "owner" || membership?.role === "admin";
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [slackTesting, setSlackTesting] = useState(false);
   const [slackStatus, setSlackStatus] = useState<{ connected: boolean; workspace?: string; botName?: string } | null>(null);
@@ -277,12 +279,17 @@ export default function SettingsPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                 <Users className="h-5 w-5 text-primary" />
               </div>
-              <div>
+              <div className="flex-1">
                 <CardTitle>Team Members</CardTitle>
                 <CardDescription>Manage feature access permissions for organization members</CardDescription>
               </div>
+              <Button size="sm" onClick={() => setInviteOpen(true)} className="gap-1.5">
+                <UserPlus className="h-4 w-4" />
+                Invite Member
+              </Button>
             </div>
           </CardHeader>
+          <InviteMemberDialog open={inviteOpen} onOpenChange={setInviteOpen} />
           <CardContent>
             {membersLoading ? (
               <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
