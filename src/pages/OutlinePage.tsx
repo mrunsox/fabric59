@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { buildMap, type ItemStatus } from "@/data/buildMap";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+import { SEOHead } from "@/components/seo/SEOHead";
 
 function StatusIcon({ status }: { status: ItemStatus }) {
   if (status === "done") {
@@ -24,6 +25,11 @@ export default function OutlinePage() {
 
   return (
     <div className="dark min-h-screen bg-background">
+      <SEOHead
+        title="Build Outline — Fabric59 Feature Roadmap"
+        description="See every feature planned and built for Fabric59 — the Five9 integration platform for agent lifecycle management and CRM field mapping."
+        canonical="https://fabric59.lovable.app/outline"
+      />
       {/* Header */}
       <header className="border-b border-border bg-background/95 backdrop-blur px-6 py-4 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto flex items-center gap-3">

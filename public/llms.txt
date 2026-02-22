@@ -1,0 +1,46 @@
+# Fabric59
+> Five9 integration platform for agent lifecycle management and CRM field mapping
+
+## What is Fabric59?
+Fabric59 is an all-in-one platform that automates Five9 agent onboarding, offboarding, CRM field mapping, and 55+ third-party integrations. Built specifically for BPOs and contact centers, Fabric59 eliminates manual provisioning across Five9, Google Workspace, and Slack — reducing agent setup time from hours to minutes.
+
+## Who is it for?
+- BPO contact centers managing hundreds of agents across Five9
+- Operations teams that need to onboard/offboard agents quickly
+- Companies integrating Five9 with CRM systems like Salesforce, HubSpot, Clio, or Workiz
+- IT administrators who need audit trails and compliance logging
+
+## Key Features
+- **Agent Provisioning & Deprovisioning**: One-click onboarding and offboarding across Five9, Google Workspace, and Slack with automated credential delivery and grace periods.
+- **Visual CRM Field Mapping Builder**: Drag-and-drop canvas to connect Five9 contact fields to any CRM with custom transformation logic.
+- **55+ Pre-built Integrations**: Connectors for Salesforce, HubSpot, Slack, Twilio, Zapier, Zoom, DocuSign, QuickBooks, and many more.
+- **Real-time API Monitoring**: Live API logs, error tracking, and a built-in test console for every integration request.
+- **Multi-tenant Architecture**: Organization-level data isolation with role-based access control (RBAC) and row-level security.
+- **Audit Logging**: Immutable logs tracking every agent provisioning event, data access, and configuration change.
+
+## How It Works
+1. **Connect**: Link your Five9 account and configure your domain credentials.
+2. **Configure**: Set up integrations, map CRM fields with the visual builder, and define automation rules.
+3. **Automate**: Onboard and offboard agents in one click. Data syncs automatically across all connected platforms.
+
+## Supported CRMs
+Salesforce, HubSpot, Clio, Workiz, Zendesk, and generic REST API integrations.
+
+## Supported Integrations
+Salesforce, HubSpot, Slack, Twilio, Zapier, Zoom, DocuSign, QuickBooks, Google Workspace, Microsoft 365, Asana, Calendly, Dropbox, OneDrive, OpenAI, Stripe, and 40+ more.
+
+## Security
+- AES-256 encryption at rest, TLS 1.3 in transit
+- Role-based access control with organization-level data isolation
+- Row-level security policies enforced at the database layer
+- Full audit trails for all actions
+- Working toward SOC 2 Type II certification
+
+## Company
+Fabric59 is an UNSOX Digital solution. Contact: hi@fabric59.com
+
+## Links
+- Website: https://fabric59.lovable.app
+- Build Outline: https://fabric59.lovable.app/outline
+- Security: https://fabric59.lovable.app/security
+- Terms: https://fabric59.lovable.app/terms

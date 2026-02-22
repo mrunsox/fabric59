@@ -1,10 +1,16 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+import { SEOHead } from "@/components/seo/SEOHead";
 
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEOHead
+        title="Terms of Service — Fabric59"
+        description="Terms of service for Fabric59, the Five9 integration platform by UNSOX Digital."
+        canonical="https://fabric59.lovable.app/terms"
+      />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link
           to="/"
