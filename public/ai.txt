@@ -1,0 +1,31 @@
+# AI Agent Discoverability — Fabric59
+
+User-agent: *
+Sitemap: https://fabric59.lovable.app/sitemap.xml
+
+Name: Fabric59
+Description: Five9 integration platform for agent lifecycle management, CRM field mapping, and 55+ pre-built integrations. Built for BPOs and contact centers.
+Category: SaaS, Contact Center Software, Integration Platform
+Contact: hi@fabric59.com
+Website: https://fabric59.lovable.app
+
+## Capabilities
+- Automate Five9 agent onboarding and offboarding
+- Visual drag-and-drop CRM field mapping
+- Connect Five9 to Salesforce, HubSpot, Clio, Workiz, and 50+ other platforms
+- Real-time API monitoring and error alerts
+- Multi-tenant organization management with RBAC
+
+## Public Pages
+- / — Landing page with product overview, features, FAQ
+- /outline — Build outline showing all features and development status
+- /security — Security practices and compliance information
+- /terms — Terms of service
+- /login — User login
+- /signup — New account registration
+
+## Structured Data
+This site provides JSON-LD structured data (Organization, SoftwareApplication, FAQPage) on the landing page for machine-readable product information.
+
+## LLM-Friendly Content
+See /llms.txt for a comprehensive plain-text product summary optimized for large language models.

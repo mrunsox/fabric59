@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Shield, Lock, Server, Eye } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { Card, CardContent } from "@/components/ui/card";
+import { SEOHead } from "@/components/seo/SEOHead";
 
 const securityFeatures = [
   {
@@ -33,6 +34,11 @@ const securityFeatures = [
 export default function SecurityPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEOHead
+        title="Security — Fabric59"
+        description="Learn how Fabric59 protects your data with AES-256 encryption, RBAC, row-level security, and full audit logging."
+        canonical="https://fabric59.lovable.app/security"
+      />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link
           to="/"
