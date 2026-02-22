@@ -21,6 +21,10 @@ import {
   Settings,
   Zap,
   HelpCircle,
+  Bot,
+  Shield,
+  Building2,
+  Globe,
 } from "lucide-react";
 import {
   Accordion,
@@ -43,6 +47,12 @@ const featureCards = [
     title: "CRM Integration & Field Mapping",
     description:
       "Visual drag-and-drop builder to map Five9 contact fields to any CRM. Support for Clio, Workiz, Salesforce, HubSpot, and more with transformation logic built in.",
+  },
+  {
+    icon: Bot,
+    title: "AI-Powered Call Flow Design",
+    description:
+      "Build intelligent call flows with AI chat assistance and test them with an interactive simulator. Pre-built templates for legal, home services, healthcare, and insurance.",
   },
 ];
 
@@ -70,6 +80,30 @@ const platformFeatures = [
     title: "Monitoring & Alerts",
     description:
       "Real-time API logs, error tracking, and a built-in test console for every integration request.",
+  },
+  {
+    icon: Bot,
+    title: "AI Call Flow Builder",
+    description:
+      "Design call flows with AI assistance. Chat-driven configuration with an interactive step-through simulator for legal, home services, healthcare, and insurance.",
+  },
+  {
+    icon: Globe,
+    title: "Five9 Domain Management",
+    description:
+      "Manage multiple Five9 domains with per-domain credentials, branding, IVR settings, and real-time connection testing.",
+  },
+  {
+    icon: Shield,
+    title: "Role-Based Access Control",
+    description:
+      "Granular permission system with per-user tab access, organization-level isolation, and row-level security at the database layer.",
+  },
+  {
+    icon: Building2,
+    title: "Multi-Tenant Platform",
+    description:
+      "Manage multiple clients from a single dashboard. Tag tenants by CRM type, configure per-client integrations, and oversee all organizations from the master admin console.",
   },
 ];
 
@@ -127,6 +161,16 @@ const faqItems = [
     answer:
       "Fabric59 offers flexible plans for teams of all sizes, from free starter plans to enterprise tiers with custom integrations and dedicated support. Contact us at hi@fabric59.com for pricing details.",
   },
+  {
+    question: "What is the AI Call Flow Builder?",
+    answer:
+      "The AI Call Flow Builder lets you design call flows through a chat-driven interface powered by AI. Describe your requirements in plain language, and the system generates a complete call flow configuration. You can test it with an interactive step-through simulator that includes pre-built templates for legal, home services, healthcare, and insurance scenarios.",
+  },
+  {
+    question: "Can I manage multiple Five9 domains and clients?",
+    answer:
+      "Yes. Fabric59 supports multi-domain management, allowing you to connect multiple Five9 domains with separate credentials, branding, and IVR settings. The multi-tenant system lets you manage multiple clients from a single dashboard, and the master admin console provides platform-wide oversight across all organizations.",
+  },
 ];
 
 // --- Structured Data ---
@@ -159,6 +203,16 @@ const softwareLD = {
   operatingSystem: "Web",
   description:
     "All-in-one platform for Five9 agent lifecycle management, CRM field mapping, and 55+ integrations — built for BPOs and contact centers.",
+  featureList: [
+    "Agent Lifecycle Management",
+    "Visual Field Mapping Builder",
+    "55+ Pre-built Integrations",
+    "Real-time Monitoring & Alerts",
+    "AI Call Flow Builder",
+    "Five9 Domain Management",
+    "Role-Based Access Control",
+    "Multi-Tenant Platform",
+  ],
   offers: {
     "@type": "Offer",
     price: "0",
@@ -301,7 +355,7 @@ export default function LandingPage() {
 
         {/* Feature Cards */}
         <section aria-label="Key features" className="max-w-5xl mx-auto px-6 pb-20">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {featureCards.map((card, i) => (
               <motion.div
                 key={card.title}

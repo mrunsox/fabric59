@@ -13,8 +13,11 @@ Website: https://fabric59.lovable.app
 - Automate Five9 agent onboarding and offboarding
 - Visual drag-and-drop CRM field mapping
 - Connect Five9 to Salesforce, HubSpot, Clio, Workiz, and 50+ other platforms
+- AI-powered call flow builder with interactive simulator
+- Multi-domain Five9 management with per-domain credentials and branding
+- Role-based access control with granular per-user permissions
+- Multi-tenant client management with master admin console
 - Real-time API monitoring and error alerts
-- Multi-tenant organization management with RBAC
 
 ## Public Pages
 - / — Landing page with product overview, features, FAQ
