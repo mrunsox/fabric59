@@ -1,35 +1,35 @@
 
 
-# Add 8th Platform Feature Card for Even Grid
+# Replace Duplicate "55+ Integrations" Card
 
-## Overview
+## Problem
 
-The platform features grid currently has 7 cards (4 + 3), leaving the second row uneven. Add one more card to create a clean 4x2 layout.
+The platform features grid has two cards covering integrations: "55+ Integrations" (card #3) and "Integration Hub" (card #12). They are redundant. The user wants to remove "55+ Integrations" and replace it with a different feature card.
 
-## New Card
+## Replacement Card
 
-**Integration Hub** (Plug icon)
-> "Connect to 55+ tools including Salesforce, HubSpot, Slack, QuickBooks, and more. Pre-built connectors with OAuth flows and real-time sync status monitoring."
+**Disposition Email Engine** (Mail icon)
+> "Route branded emails per disposition outcome. Configure per-disposition recipients, templates, and reply-to addresses with a built-in HTML email template depository."
 
-This card highlights the integrations catalog -- a major feature already built into the app (IntegrationsPage, integrations-catalog.ts) but not yet represented in the feature grid.
+This highlights the disposition email routing and email template management features that are already built (DispositionEmailTable, EmailTemplatesSection, WhiteLabelPartnerSelector) but not yet represented in the feature grid.
 
 ## Technical Details
 
 ### File: `src/pages/LandingPage.tsx`
 
-1. Add `Plug` to the lucide-react import (line ~17-30).
-2. Append one new entry to the `platformFeatures` array (after the Multi-Department Campaigns card at line 137):
+1. Replace the `Plug` import usage for the "55+ Integrations" card with `Mail` from lucide-react (add `Mail` to the import).
+2. Replace the "55+ Integrations" card (lines 84-89) with:
 
 ```ts
 {
-  icon: Plug,
-  title: "Integration Hub",
+  icon: Mail,
+  title: "Disposition Email Engine",
   description:
-    "Connect to 55+ tools including Salesforce, HubSpot, Slack, QuickBooks, and more. Pre-built connectors with OAuth flows and real-time sync status monitoring.",
+    "Route branded emails per disposition outcome. Configure per-disposition recipients, templates, and reply-to addresses with a built-in HTML email template depository.",
 },
 ```
 
-3. Update `softwareLD.featureList` to include "Integration Hub".
+3. Update `softwareLD.featureList`: replace "55+ Integrations" with "Disposition Email Engine" (if it exists in the list).
 
-No other files, dependencies, or database changes needed.
+No other files, dependencies, or database changes needed. Grid stays at 12 cards (4x3).
 
