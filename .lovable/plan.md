@@ -1,35 +1,66 @@
 
 
-# Replace Duplicate "55+ Integrations" Card
+# Redesign Footer with Multi-Column Layout
 
-## Problem
+## Overview
 
-The platform features grid has two cards covering integrations: "55+ Integrations" (card #3) and "Integration Hub" (card #12). They are redundant. The user wants to remove "55+ Integrations" and replace it with a different feature card.
+Replace the current single-row footer with a richer, multi-column footer inspired by the provided code. The footer will feature the Fabric59 brand, organized link sections, social links, and the existing UNSOX Digital attribution with the heart animation.
 
-## Replacement Card
+## New Footer Structure
 
-**Disposition Email Engine** (Mail icon)
-> "Route branded emails per disposition outcome. Configure per-disposition recipients, templates, and reply-to addresses with a built-in HTML email template depository."
-
-This highlights the disposition email routing and email template management features that are already built (DispositionEmailTable, EmailTemplatesSection, WhiteLabelPartnerSelector) but not yet represented in the feature grid.
+```text
++---------------------------------------------------------------+
+| Fabric59 Logo + Tagline  | Platform     | Legal    | Connect  |
+| "Integration Hub"        | Pricing      | Terms    | Email    |
+|                           | Build Outline| Security | LinkedIn |
+|                           | Login        | Privacy  | Twitter  |
+|                           | Sign Up      |          |          |
++---------------------------------------------------------------+
+| (c) 2026 Fabric59. All rights reserved.                       |
+| An UNSOX Digital Solution [heart]                              |
++---------------------------------------------------------------+
+```
 
 ## Technical Details
 
-### File: `src/pages/LandingPage.tsx`
+### File: `src/pages/LandingPage.tsx` (lines 721-768)
 
-1. Replace the `Plug` import usage for the "55+ Integrations" card with `Mail` from lucide-react (add `Mail` to the import).
-2. Replace the "55+ Integrations" card (lines 84-89) with:
+Replace the current footer with a new multi-column layout:
 
-```ts
-{
-  icon: Mail,
-  title: "Disposition Email Engine",
-  description:
-    "Route branded emails per disposition outcome. Configure per-disposition recipients, templates, and reply-to addresses with a built-in HTML email template depository.",
-},
+**Top section** -- 4 columns on desktop, stacked on mobile:
+1. **Brand column**: Fabric59Icon + "Fabric59" name + "Integration Hub" subtitle
+2. **Platform column**: Pricing (#pricing anchor), Build Outline (/outline), Login (/login), Sign Up (/signup)
+3. **Legal column**: Terms (/terms), Security (/security), Contact (mailto:hi@fabric59.com)
+4. **Connect column**: Email (mailto:hi@fabric59.com with Mail icon), LinkedIn (placeholder URL), Twitter/X (placeholder URL)
+
+**Bottom section** -- horizontal divider, then:
+- Left: "(c) 2026 Fabric59. All rights reserved."
+- Right: "An UNSOX Digital Solution" with the existing orange heart link to unsox.com
+
+### File: `src/index.css`
+
+Add `heartPulse` keyframe animation to support the hover effect from the provided code:
+
+```css
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+}
 ```
 
-3. Update `softwareLD.featureList`: replace "55+ Integrations" with "Disposition Email Engine" (if it exists in the list).
+### Icons
 
-No other files, dependencies, or database changes needed. Grid stays at 12 cards (4x3).
+Already imported: `Mail`, `Heart`. Will add `Linkedin` and `Twitter` (or `ExternalLink`) from lucide-react for social links.
+
+### Notes
+- Social link URLs will use placeholder hrefs (e.g., `https://linkedin.com/company/fabric59`) -- the user can update these later.
+- The existing heart animation classes (`animate-pulse`, `animate-heart-pop`) will remain; the CSS keyframe is added as a fallback for the inline style approach from the provided code.
+- The footer keeps the existing `role="contentinfo"` and `aria-label` accessibility attributes.
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `src/pages/LandingPage.tsx` | Replace footer section (lines 721-768) with multi-column layout |
+| `src/index.css` | Add `heartPulse` keyframe animation |
 
