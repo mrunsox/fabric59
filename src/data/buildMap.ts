@@ -193,6 +193,10 @@ export const buildMap: BuildCategory[] = [
       { name: "Auto-Provisioning on Submit", description: "Sequential Five9 API calls with checklist updates", status: "done", tested: true },
       { name: "Custom VM Greeting Upload", description: "Audio file upload to campaign-assets bucket", status: "done", tested: true },
       { name: "Auto-Save Drafts", description: "Debounced save on section change", status: "done", tested: true },
+      { name: "Per-Disposition Email Routing", description: "Each disposition gets its own recipients, subject template, reply-to, and from", status: "done", tested: false },
+      { name: "Multiple Connectors", description: "Dynamic list of typed connectors (backend doc, website, script, custom)", status: "done", tested: false },
+      { name: "Decision Tree Skip/Jump Logic", description: "Skip-to-Q, end-call actions, conditions, required gates, closing scripts", status: "done", tested: false },
+      { name: "Multi-Department Campaigns", description: "Tabbed department editor with per-department worksheets and dispatch", status: "done", tested: false },
     ],
   },
   {

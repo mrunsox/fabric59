@@ -2,8 +2,12 @@
 export interface DecisionTreeOption {
   label: string;
   nextNodeId: string | null; // null = endpoint
-  action?: "transfer" | "disposition" | "escalate" | null;
+  action?: "transfer" | "disposition" | "escalate" | "end_call" | "skip" | null;
   actionValue?: string; // e.g. disposition name, transfer number
+  condition?: string; // e.g. "before 3:30pm EST", "caller in rep list"
+  skipToNodeId?: string | null; // for skip/jump action
+  isRequired?: boolean; // gate: must collect data before proceeding
+  fallbackScript?: string; // optional script for the agent if caller persists
 }
 
 export interface DecisionTreeNode {
@@ -12,6 +16,42 @@ export interface DecisionTreeNode {
   notes?: string;
   dataToCapture?: string;
   options: DecisionTreeOption[];
+  isGate?: boolean; // If true, data must be collected to proceed
+  gateFailMessage?: string; // Script to read if data not provided
+  closingScript?: string; // Closing statement for this node
+  conditionalClosings?: Array<{
+    condition: string;
+    script: string;
+  }>;
+}
+
+// Per-disposition email configuration
+export interface DispositionEmailConfig {
+  dispositionName: string;
+  emailRecipients: string; // comma-separated
+  emailReplyTo?: string;
+  emailFrom?: string;
+  emailSubjectTemplate?: string; // e.g. "CALL from CUSTOMER: NEW CLAIM - {caller_name}"
+}
+
+// Campaign connector entry
+export interface CampaignConnector {
+  id: string;
+  type: "backend_doc" | "website" | "script" | "custom";
+  name: string;
+  url: string;
+}
+
+// Department within a multi-department campaign
+export interface CampaignDepartment {
+  id: string;
+  name: string; // e.g. "New Claim", "Dealership", "Sales Rep"
+  ivrPromptNumber: number; // IVR menu number (1, 2, 3...)
+  ivrGreeting?: string; // Department-specific greeting
+  skillName?: string; // Optional separate skill per department
+  decisionTree: DecisionTreeNode[];
+  dispositionEmailConfigs: DispositionEmailConfig[];
+  dispatchInstructions?: string; // Free-text dispatch notes
 }
 
 // Intake form data stored in campaign_setups.intake_data
@@ -21,6 +61,8 @@ export interface CampaignIntakeData {
   clientName: string;
   campaignDescription?: string;
   whiteLabel: boolean;
+  isMultiDepartment?: boolean;
+  departments?: CampaignDepartment[];
 
   // Section 2: Phone Numbers
   aniNumbers: string[];
@@ -50,17 +92,22 @@ export interface CampaignIntakeData {
   existingDispositions: string[];
   newDispositions: string[];
   enableDispositionEmail: boolean;
+  // Legacy flat fields (kept for backward compat)
   emailTemplateName?: string;
   emailRecipients?: string;
   emailReplyTo?: string;
   emailFrom?: string;
   dispositionMenuGrouping?: string;
+  // New per-disposition email configs
+  dispositionEmailConfigs?: DispositionEmailConfig[];
 
-  // Section 6: Connectors
+  // Section 6: Connectors (legacy flat fields kept for backward compat)
   backendDocConnector: boolean;
   backendDocUrl?: string;
   websiteConnectorUrl?: string;
   scriptConnectorName?: string;
+  // New dynamic connectors
+  connectors?: CampaignConnector[];
 
   // Section 7: Decision Tree
   decisionTree: DecisionTreeNode[];
