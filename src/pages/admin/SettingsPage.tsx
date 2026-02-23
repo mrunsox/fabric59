@@ -12,13 +12,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw, Activity, Users, UserPlus, User, Lock } from "lucide-react";
+import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw, Activity, Users, UserPlus, User, Lock, FileText, Plus, Trash2 } from "lucide-react";
 import { InviteMemberDialog } from "@/components/settings/InviteMemberDialog";
 import { useAppConfig } from "@/hooks/useAppConfig";
 import { useTeamPermissions, PERMISSION_KEYS } from "@/hooks/useTeamPermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_ROLES } from "@/types/provisioning";
+import { useOrganizations } from "@/hooks/useOrganizations";
+import { useEmailTemplates, useAllEmailTemplates, useSaveEmailTemplate, useDeleteEmailTemplate } from "@/hooks/useEmailTemplates";
 
 const timezones = [
   "America/New_York",
@@ -112,6 +114,173 @@ function MaskedTextarea({
         className="font-mono text-xs resize-none"
       />
     </div>
+  );
+}
+
+function EmailTemplatesSection() {
+  const { data: orgs = [] } = useOrganizations();
+  const { user } = useAuth();
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
+  const { data: templates = [], isLoading } = useEmailTemplates(selectedOrgId || undefined);
+  const saveMutation = useSaveEmailTemplate();
+  const deleteMutation = useDeleteEmailTemplate();
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formName, setFormName] = useState("");
+  const [formHtml, setFormHtml] = useState("");
+  const [formIsDefault, setFormIsDefault] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const startNew = () => {
+    setEditingId("new");
+    setFormName("");
+    setFormHtml("");
+    setFormIsDefault(false);
+  };
+
+  const startEdit = (t: any) => {
+    setEditingId(t.id);
+    setFormName(t.name);
+    setFormHtml(t.html_content);
+    setFormIsDefault(t.is_default);
+  };
+
+  const handleSave = async () => {
+    if (!formName.trim() || !selectedOrgId) return;
+    await saveMutation.mutateAsync({
+      id: editingId === "new" ? undefined : editingId!,
+      organization_id: selectedOrgId,
+      name: formName,
+      html_content: formHtml,
+      is_default: formIsDefault,
+      created_by: user?.id,
+    });
+    setEditingId(null);
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <FileText className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle>Email Template Depository</CardTitle>
+              <CardDescription>Manage HTML disposition email templates per partner organization</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Org Selector */}
+          <div className="space-y-1.5">
+            <Label>Organization</Label>
+            <Select value={selectedOrgId || "__none__"} onValueChange={(v) => { setSelectedOrgId(v === "__none__" ? "" : v); setEditingId(null); }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select organization" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— Select —</SelectItem>
+                {orgs.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>{o.brand_name || o.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedOrgId && (
+            <>
+              {isLoading ? (
+                <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+              ) : (
+                <div className="space-y-2">
+                  {templates.map((t) => (
+                    <div key={t.id} className="flex items-center justify-between border rounded-md p-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{t.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t.is_default && <Badge variant="secondary" className="mr-1 text-xs">Default</Badge>}
+                          {t.html_content.length} chars
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => startEdit(t)}>Edit</Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMutation.mutate(t.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {templates.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No templates yet for this organization.</p>
+                  )}
+                </div>
+              )}
+
+              <Button variant="outline" onClick={startNew} className="gap-2">
+                <Plus className="h-4 w-4" /> Add Template
+              </Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Editor */}
+      {editingId && selectedOrgId && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{editingId === "new" ? "New Template" : "Edit Template"}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Template Name</Label>
+              <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="e.g. Default Disposition Email" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch checked={formIsDefault} onCheckedChange={setFormIsDefault} />
+              <Label>Default template for this org</Label>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label>HTML Content</Label>
+                <Button variant="ghost" size="sm" onClick={() => setShowPreview(!showPreview)}>
+                  {showPreview ? "Edit" : "Preview"}
+                </Button>
+              </div>
+              {showPreview ? (
+                <div className="border rounded-md p-4 min-h-[200px] bg-background">
+                  <iframe
+                    srcDoc={formHtml}
+                    title="Template Preview"
+                    className="w-full min-h-[200px] border-0"
+                    sandbox=""
+                  />
+                </div>
+              ) : (
+                <Textarea
+                  value={formHtml}
+                  onChange={(e) => setFormHtml(e.target.value)}
+                  placeholder="Paste HTML template here..."
+                  rows={12}
+                  className="font-mono text-xs"
+                />
+              )}
+              <p className="text-xs text-muted-foreground">
+                Use placeholders: {"{{brand_name}}, {{brand_logo_url}}, {{brand_primary_color}}, {{caller_name}}, {{disposition}}, {{notes}}"}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSave} disabled={saveMutation.isPending || !formName.trim()} className="gap-2">
+                {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Save Template
+              </Button>
+              <Button variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 }
 
@@ -279,6 +448,7 @@ export default function SettingsPage() {
           <TabsTrigger value="credentials">Credentials</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          {isOrgAdmin && <TabsTrigger value="email-templates">Email Templates</TabsTrigger>}
           <TabsTrigger value="data">Data</TabsTrigger>
         </TabsList>
 
@@ -855,6 +1025,13 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ── Email Templates Tab ── */}
+        {isOrgAdmin && (
+          <TabsContent value="email-templates" className="space-y-6">
+            <EmailTemplatesSection />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
