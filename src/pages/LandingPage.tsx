@@ -27,7 +27,8 @@ import {
   Building2,
   Globe,
   Megaphone,
-  
+  Linkedin,
+  Twitter,
   GitFork,
   Layers,
   Check,
@@ -719,14 +720,62 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer role="contentinfo" className="border-t border-border/40 py-10">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
-            <Fabric59Icon size="sm" />
+      <footer role="contentinfo" aria-label="Site footer" className="border-t border-border/40 pt-16 pb-10">
+        <div className="max-w-6xl mx-auto px-6">
+          {/* Top: 4-column grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+            {/* Brand */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2.5">
+                <Fabric59Icon size="sm" />
+                <span className="text-base font-extrabold tracking-tight text-foreground">Fabric59</span>
+              </div>
+              <span className="text-sm text-muted-foreground">Integration Hub</span>
+            </div>
+
+            {/* Platform */}
+            <div className="flex flex-col gap-3">
+              <h4 className="text-sm font-semibold text-foreground">Platform</h4>
+              <nav aria-label="Platform links" className="flex flex-col gap-2 text-sm text-muted-foreground">
+                <a href="#pricing" className="hover:text-foreground transition-colors w-fit">Pricing</a>
+                <Link to="/outline" className="hover:text-foreground transition-colors w-fit">Build Outline</Link>
+                <Link to="/login" className="hover:text-foreground transition-colors w-fit">Login</Link>
+                <Link to="/signup" className="hover:text-foreground transition-colors w-fit">Sign Up</Link>
+              </nav>
+            </div>
+
+            {/* Legal */}
+            <div className="flex flex-col gap-3">
+              <h4 className="text-sm font-semibold text-foreground">Legal</h4>
+              <nav aria-label="Legal links" className="flex flex-col gap-2 text-sm text-muted-foreground">
+                <Link to="/terms" className="hover:text-foreground transition-colors w-fit">Terms</Link>
+                <Link to="/security" className="hover:text-foreground transition-colors w-fit">Security</Link>
+                <a href="mailto:hi@fabric59.com" className="hover:text-foreground transition-colors w-fit">Contact</a>
+              </nav>
+            </div>
+
+            {/* Connect */}
+            <div className="flex flex-col gap-3">
+              <h4 className="text-sm font-semibold text-foreground">Connect</h4>
+              <nav aria-label="Social links" className="flex flex-col gap-2 text-sm text-muted-foreground">
+                <a href="mailto:hi@fabric59.com" className="hover:text-foreground transition-colors w-fit flex items-center gap-1.5">
+                  <Mail className="h-4 w-4" /> Email
+                </a>
+                <a href="https://linkedin.com/company/fabric59" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors w-fit flex items-center gap-1.5">
+                  <Linkedin className="h-4 w-4" /> LinkedIn
+                </a>
+                <a href="https://x.com/fabric59" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors w-fit flex items-center gap-1.5">
+                  <Twitter className="h-4 w-4" /> Twitter / X
+                </a>
+              </nav>
+            </div>
+          </div>
+
+          {/* Divider + Bottom */}
+          <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <span className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Fabric59
+              © {new Date().getFullYear()} Fabric59. All rights reserved.
             </span>
-            <span className="text-border">|</span>
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
               An UNSOX Digital Solution
               <a
@@ -740,30 +789,17 @@ export default function LandingPage() {
                   className="h-4 w-4 text-orange-500 animate-pulse group-hover/heart:animate-heart-pop"
                   fill="currentColor"
                   aria-hidden="true"
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as unknown as HTMLElement).style.animation = "heartPulse 0.6s ease-in-out infinite";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as unknown as HTMLElement).style.animation = "none";
+                    (e.currentTarget as unknown as HTMLElement).style.transform = "scale(1)";
+                  }}
                 />
               </a>
             </span>
           </div>
-          <nav aria-label="Footer navigation" className="flex items-center gap-5 flex-wrap justify-center text-sm text-muted-foreground">
-            <Link to="/login" className="hover:text-foreground transition-colors">
-              Login
-            </Link>
-            <a href="#pricing" className="hover:text-foreground transition-colors">
-              Pricing
-            </a>
-            <Link to="/outline" className="hover:text-foreground transition-colors">
-              Build Outline
-            </Link>
-            <Link to="/terms" className="hover:text-foreground transition-colors">
-              Terms
-            </Link>
-            <Link to="/security" className="hover:text-foreground transition-colors">
-              Security
-            </Link>
-            <a href="mailto:hi@fabric59.com" className="hover:text-foreground transition-colors">
-              Contact
-            </a>
-          </nav>
         </div>
       </footer>
     </div>
