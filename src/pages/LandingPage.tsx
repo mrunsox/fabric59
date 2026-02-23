@@ -25,6 +25,12 @@ import {
   Shield,
   Building2,
   Globe,
+  Megaphone,
+  Palette,
+  GitFork,
+  Layers,
+  Check,
+  Star,
 } from "lucide-react";
 import {
   Accordion,
@@ -53,6 +59,12 @@ const featureCards = [
     title: "AI-Powered Call Flow Design",
     description:
       "Build intelligent call flows with AI chat assistance and test them with an interactive simulator. Pre-built templates for legal, home services, healthcare, and insurance.",
+  },
+  {
+    icon: Megaphone,
+    title: "Campaign Automation",
+    description:
+      "Build multi-department campaigns with per-disposition email routing, decision tree scripting with skip/jump logic, and white-label partner branding — all from a single intake form.",
   },
 ];
 
@@ -105,6 +117,30 @@ const platformFeatures = [
     description:
       "Manage multiple clients from a single dashboard. Tag tenants by CRM type, configure per-client integrations, and oversee all organizations from the master admin console.",
   },
+  {
+    icon: Megaphone,
+    title: "Campaign Automation",
+    description:
+      "Multi-section intake form with auto-provisioning. Create campaigns, skills, profiles, and DNIS in Five9 with one click.",
+  },
+  {
+    icon: Palette,
+    title: "White-Label Branding",
+    description:
+      "Run campaigns under your client's brand. Per-partner logos, colors, from/reply-to emails, and HTML email templates from a built-in depository.",
+  },
+  {
+    icon: GitFork,
+    title: "Decision Tree Scripting",
+    description:
+      "Build agent call scripts with conditional branching, skip/jump logic, required data gates, time-based closings, and fallback persistence scripts.",
+  },
+  {
+    icon: Layers,
+    title: "Multi-Department Campaigns",
+    description:
+      "One campaign, multiple departments. Tabbed configuration with per-department IVR routing, decision trees, and disposition email rules.",
+  },
 ];
 
 const howItWorksSteps = [
@@ -127,6 +163,59 @@ const howItWorksSteps = [
     title: "Automate & Scale",
     description:
       "Onboard and offboard agents in one click. Data syncs automatically across all connected platforms.",
+  },
+];
+
+const pricingTiers = [
+  {
+    name: "Starter",
+    price: "$197",
+    period: "/mo",
+    description: "For small teams getting started with Five9 automation.",
+    features: [
+      "1 Five9 domain",
+      "Up to 25 agents",
+      "CRM field mapping",
+      "10 integrations",
+      "Email support",
+    ],
+    cta: "Get Started",
+    ctaLink: "/signup",
+    highlighted: false,
+  },
+  {
+    name: "Professional",
+    price: "$497",
+    period: "/mo",
+    description: "For growing contact centers that need full automation.",
+    features: [
+      "Up to 5 Five9 domains",
+      "Unlimited agents",
+      "AI Call Flow Builder",
+      "Campaign automation",
+      "White-label branding",
+      "55+ integrations",
+      "Priority support",
+    ],
+    cta: "Get Started",
+    ctaLink: "/signup",
+    highlighted: true,
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    period: "",
+    description: "For BPOs and large organizations with custom needs.",
+    features: [
+      "Unlimited domains",
+      "Multi-tenant management",
+      "Custom integrations",
+      "Dedicated onboarding",
+      "SLA and SSO",
+    ],
+    cta: "Contact Sales",
+    ctaLink: "mailto:hi@fabric59.com",
+    highlighted: false,
   },
 ];
 
@@ -159,7 +248,7 @@ const faqItems = [
   {
     question: "How much does Fabric59 cost?",
     answer:
-      "Fabric59 offers flexible plans for teams of all sizes, from free starter plans to enterprise tiers with custom integrations and dedicated support. Contact us at hi@fabric59.com for pricing details.",
+      "Fabric59 offers three plans: Starter at $197/mo for small teams (1 domain, up to 25 agents, 10 integrations), Professional at $497/mo for growing contact centers (up to 5 domains, unlimited agents, AI Call Flow Builder, campaign automation, white-label branding, 55+ integrations), and Enterprise with custom pricing for large BPOs (unlimited domains, multi-tenant management, dedicated onboarding, SLA and SSO). Contact hi@fabric59.com for Enterprise pricing.",
   },
   {
     question: "What is the AI Call Flow Builder?",
@@ -170,6 +259,16 @@ const faqItems = [
     question: "Can I manage multiple Five9 domains and clients?",
     answer:
       "Yes. Fabric59 supports multi-domain management, allowing you to connect multiple Five9 domains with separate credentials, branding, and IVR settings. The multi-tenant system lets you manage multiple clients from a single dashboard, and the master admin console provides platform-wide oversight across all organizations.",
+  },
+  {
+    question: "What is Campaign Automation?",
+    answer:
+      "Campaign Automation lets you build and launch multi-department campaigns from a single intake form. It includes per-disposition email routing, decision tree scripting with conditional branching and skip/jump logic, white-label partner branding, and auto-provisioning of campaigns, skills, profiles, and DNIS directly in Five9.",
+  },
+  {
+    question: "What does White-Label Branding include?",
+    answer:
+      "White-Label Branding lets you run campaigns under your client's brand. Configure per-partner logos, brand colors, custom from and reply-to email addresses, and select from a built-in HTML email template depository. Disposition emails are automatically sent with the partner's branding, so your clients' customers see a seamless experience.",
   },
 ];
 
@@ -212,13 +311,37 @@ const softwareLD = {
     "Five9 Domain Management",
     "Role-Based Access Control",
     "Multi-Tenant Platform",
+    "Campaign Automation",
+    "White-Label Branding",
+    "Decision Tree Scripting",
+    "Multi-Department Campaigns",
   ],
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-    description: "Free tier available. Enterprise plans available.",
-  },
+  offers: [
+    {
+      "@type": "Offer",
+      name: "Starter",
+      price: "197",
+      priceCurrency: "USD",
+      description: "1 Five9 domain, up to 25 agents, 10 integrations, email support.",
+      url: "https://fabric59.lovable.app/#pricing",
+    },
+    {
+      "@type": "Offer",
+      name: "Professional",
+      price: "497",
+      priceCurrency: "USD",
+      description: "Up to 5 Five9 domains, unlimited agents, AI Call Flow Builder, campaign automation, white-label branding, 55+ integrations, priority support.",
+      url: "https://fabric59.lovable.app/#pricing",
+    },
+    {
+      "@type": "Offer",
+      name: "Enterprise",
+      price: "0",
+      priceCurrency: "USD",
+      description: "Custom pricing. Unlimited domains, multi-tenant management, custom integrations, dedicated onboarding, SLA and SSO.",
+      url: "https://fabric59.lovable.app/#pricing",
+    },
+  ],
   url: "https://fabric59.lovable.app",
 };
 
@@ -277,6 +400,9 @@ export default function LandingPage() {
             </a>
             <a href="#how-it-works" className="hover:text-foreground transition-colors">
               How It Works
+            </a>
+            <a href="#pricing" className="hover:text-foreground transition-colors">
+              Pricing
             </a>
             <a href="#faq" className="hover:text-foreground transition-colors">
               FAQ
@@ -354,8 +480,8 @@ export default function LandingPage() {
         </section>
 
         {/* Feature Cards */}
-        <section aria-label="Key features" className="max-w-5xl mx-auto px-6 pb-20">
-          <div className="grid md:grid-cols-3 gap-6">
+        <section aria-label="Key features" className="max-w-6xl mx-auto px-6 pb-20">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {featureCards.map((card, i) => (
               <motion.div
                 key={card.title}
@@ -402,7 +528,7 @@ export default function LandingPage() {
         </motion.section>
 
         {/* Platform Features */}
-        <section id="features" aria-label="Platform features" className="max-w-5xl mx-auto px-6 pb-24">
+        <section id="features" aria-label="Platform features" className="max-w-6xl mx-auto px-6 pb-24">
           <motion.h2
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -482,6 +608,85 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Pricing */}
+        <section id="pricing" aria-label="Pricing" className="max-w-5xl mx-auto px-6 pb-24">
+          <motion.h2
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-2xl font-bold text-center mb-4"
+          >
+            Simple, Transparent Pricing
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-muted-foreground text-center mb-12 max-w-xl mx-auto"
+          >
+            Choose the plan that fits your contact center. No hidden fees.
+          </motion.p>
+          <div className="grid md:grid-cols-3 gap-6">
+            {pricingTiers.map((tier, i) => (
+              <motion.div
+                key={tier.name}
+                custom={i}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-30px" }}
+                variants={cardReveal}
+              >
+                <Card
+                  className={`h-full relative ${
+                    tier.highlighted
+                      ? "border-primary shadow-lg shadow-primary/10"
+                      : "border-border/60"
+                  }`}
+                >
+                  {tier.highlighted && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="gap-1 bg-primary text-primary-foreground">
+                        <Star className="h-3 w-3" fill="currentColor" /> Most Popular
+                      </Badge>
+                    </div>
+                  )}
+                  <CardContent className="p-8 flex flex-col h-full">
+                    <h3 className="text-lg font-semibold mb-1">{tier.name}</h3>
+                    <div className="flex items-baseline gap-1 mb-2">
+                      <span className="text-3xl font-extrabold">{tier.price}</span>
+                      {tier.period && (
+                        <span className="text-muted-foreground text-sm">{tier.period}</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-6">{tier.description}</p>
+                    <ul className="space-y-3 mb-8 flex-1">
+                      {tier.features.map((feature) => (
+                        <li key={feature} className="flex items-start gap-2 text-sm">
+                          <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      className="w-full"
+                      variant={tier.highlighted ? "default" : "outline"}
+                      asChild
+                    >
+                      {tier.ctaLink.startsWith("mailto:") ? (
+                        <a href={tier.ctaLink}>{tier.cta}</a>
+                      ) : (
+                        <Link to={tier.ctaLink}>{tier.cta}</Link>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
         {/* FAQ */}
         <section id="faq" aria-label="Frequently asked questions" className="max-w-3xl mx-auto px-6 pb-24">
           <motion.div
@@ -546,6 +751,9 @@ export default function LandingPage() {
             <Link to="/login" className="hover:text-foreground transition-colors">
               Login
             </Link>
+            <a href="#pricing" className="hover:text-foreground transition-colors">
+              Pricing
+            </a>
             <Link to="/outline" className="hover:text-foreground transition-colors">
               Build Outline
             </Link>
