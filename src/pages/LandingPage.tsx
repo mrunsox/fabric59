@@ -26,7 +26,7 @@ import {
   Building2,
   Globe,
   Megaphone,
-  Palette,
+  
   GitFork,
   Layers,
   Check,
@@ -64,7 +64,7 @@ const featureCards = [
     icon: Megaphone,
     title: "Campaign Automation",
     description:
-      "Build multi-department campaigns with per-disposition email routing, decision tree scripting with skip/jump logic, and white-label partner branding — all from a single intake form.",
+      "Build multi-department campaigns with per-disposition email routing and decision tree scripting with skip/jump logic — all from a single intake form.",
   },
 ];
 
@@ -122,12 +122,6 @@ const platformFeatures = [
     title: "Campaign Automation",
     description:
       "Multi-section intake form with auto-provisioning. Create campaigns, skills, profiles, and DNIS in Five9 with one click.",
-  },
-  {
-    icon: Palette,
-    title: "White-Label Branding",
-    description:
-      "Run campaigns under your client's brand. Per-partner logos, colors, from/reply-to emails, and HTML email templates from a built-in depository.",
   },
   {
     icon: GitFork,
@@ -193,7 +187,7 @@ const pricingTiers = [
       "Unlimited agents",
       "AI Call Flow Builder",
       "Campaign automation",
-      "White-label branding",
+      
       "55+ integrations",
       "Priority support",
     ],
@@ -248,7 +242,7 @@ const faqItems = [
   {
     question: "How much does Fabric59 cost?",
     answer:
-      "Fabric59 offers three plans: Starter at $197/mo for small teams (1 domain, up to 25 agents, 10 integrations), Professional at $497/mo for growing contact centers (up to 5 domains, unlimited agents, AI Call Flow Builder, campaign automation, white-label branding, 55+ integrations), and Enterprise with custom pricing for large BPOs (unlimited domains, multi-tenant management, dedicated onboarding, SLA and SSO). Contact hi@fabric59.com for Enterprise pricing.",
+      "Fabric59 offers three plans: Starter at $197/mo for small teams (1 domain, up to 25 agents, 10 integrations), Professional at $497/mo for growing contact centers (up to 5 domains, unlimited agents, AI Call Flow Builder, campaign automation, 55+ integrations), and Enterprise with custom pricing for large BPOs (unlimited domains, multi-tenant management, dedicated onboarding, SLA and SSO). Contact hi@fabric59.com for Enterprise pricing.",
   },
   {
     question: "What is the AI Call Flow Builder?",
@@ -263,12 +257,7 @@ const faqItems = [
   {
     question: "What is Campaign Automation?",
     answer:
-      "Campaign Automation lets you build and launch multi-department campaigns from a single intake form. It includes per-disposition email routing, decision tree scripting with conditional branching and skip/jump logic, white-label partner branding, and auto-provisioning of campaigns, skills, profiles, and DNIS directly in Five9.",
-  },
-  {
-    question: "What does White-Label Branding include?",
-    answer:
-      "White-Label Branding lets you run campaigns under your client's brand. Configure per-partner logos, brand colors, custom from and reply-to email addresses, and select from a built-in HTML email template depository. Disposition emails are automatically sent with the partner's branding, so your clients' customers see a seamless experience.",
+      "Campaign Automation lets you build and launch multi-department campaigns from a single intake form. It includes per-disposition email routing, decision tree scripting with conditional branching and skip/jump logic, and auto-provisioning of campaigns, skills, profiles, and DNIS directly in Five9.",
   },
 ];
 
@@ -312,7 +301,7 @@ const softwareLD = {
     "Role-Based Access Control",
     "Multi-Tenant Platform",
     "Campaign Automation",
-    "White-Label Branding",
+    
     "Decision Tree Scripting",
     "Multi-Department Campaigns",
   ],
@@ -330,7 +319,7 @@ const softwareLD = {
       name: "Professional",
       price: "497",
       priceCurrency: "USD",
-      description: "Up to 5 Five9 domains, unlimited agents, AI Call Flow Builder, campaign automation, white-label branding, 55+ integrations, priority support.",
+      description: "Up to 5 Five9 domains, unlimited agents, AI Call Flow Builder, campaign automation, 55+ integrations, priority support.",
       url: "https://fabric59.lovable.app/#pricing",
     },
     {
