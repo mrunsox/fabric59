@@ -1,40 +1,35 @@
 
 
-# Remove White-Label Branding from Landing Page
+# Add 8th Platform Feature Card for Even Grid
 
 ## Overview
 
-Strip all references to white-label branding from the public landing page. The feature exists in the backend but should not be marketed or shown to visitors.
+The platform features grid currently has 7 cards (4 + 3), leaving the second row uneven. Add one more card to create a clean 4x2 layout.
 
-## Changes (all in `src/pages/LandingPage.tsx`)
+## New Card
 
-### 1. Hero Feature Card -- "Campaign Automation" description
-Remove the phrase "white-label partner branding" from the description. Updated text:
-> "Build multi-department campaigns with per-disposition email routing and decision tree scripting with skip/jump logic -- all from a single intake form."
+**Integration Hub** (Plug icon)
+> "Connect to 55+ tools including Salesforce, HubSpot, Slack, QuickBooks, and more. Pre-built connectors with OAuth flows and real-time sync status monitoring."
 
-### 2. Platform Features Grid
-Remove the entire "White-Label Branding" card (Palette icon, lines 127-131). The grid goes from 12 cards back to 11.
+This card highlights the integrations catalog -- a major feature already built into the app (IntegrationsPage, integrations-catalog.ts) but not yet represented in the feature grid.
 
-### 3. Pricing -- Professional Tier
-Remove "White-label branding" from the Professional features list.
+## Technical Details
 
-### 4. FAQ Updates
-- **"What is Campaign Automation?"** -- Remove "white-label partner branding" from the answer.
-- **"What does White-Label Branding include?"** -- Remove this entire FAQ item.
-- **"How much does Fabric59 cost?"** -- Remove "white-label branding" from the Professional description.
+### File: `src/pages/LandingPage.tsx`
 
-### 5. Structured Data
-- Remove "White-Label Branding" from `softwareLD.featureList`.
-- Remove "white-label branding" from the Professional offer description in `softwareLD.offers`.
+1. Add `Plug` to the lucide-react import (line ~17-30).
+2. Append one new entry to the `platformFeatures` array (after the Multi-Department Campaigns card at line 137):
 
-### 6. Cleanup
-Remove unused `Palette` import from lucide-react (if no other card uses it).
+```ts
+{
+  icon: Plug,
+  title: "Integration Hub",
+  description:
+    "Connect to 55+ tools including Salesforce, HubSpot, Slack, QuickBooks, and more. Pre-built connectors with OAuth flows and real-time sync status monitoring.",
+},
+```
 
-## Files Modified
+3. Update `softwareLD.featureList` to include "Integration Hub".
 
-| File | Change |
-|------|--------|
-| `src/pages/LandingPage.tsx` | Remove all white-label references from feature cards, pricing, FAQ, and structured data |
-
-No database or backend changes needed.
+No other files, dependencies, or database changes needed.
 
