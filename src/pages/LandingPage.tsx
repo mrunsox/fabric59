@@ -12,6 +12,7 @@ import {
   UserCog,
   GitBranch,
   Plug,
+  Mail,
   BarChart3,
   ArrowRight,
   ChevronRight,
@@ -82,10 +83,10 @@ const platformFeatures = [
       "Visual canvas to connect Five9 contact fields to any CRM with drag-and-drop simplicity and custom transforms.",
   },
   {
-    icon: Plug,
-    title: "55+ Integrations",
+    icon: Mail,
+    title: "Disposition Email Engine",
     description:
-      "Pre-built connectors for Salesforce, HubSpot, Slack, Twilio, Zapier, and dozens more — ready to configure.",
+      "Route branded emails per disposition outcome. Configure per-disposition recipients, templates, and reply-to addresses with a built-in HTML email template depository.",
   },
   {
     icon: BarChart3,
@@ -300,7 +301,7 @@ const softwareLD = {
   featureList: [
     "Agent Lifecycle Management",
     "Visual Field Mapping Builder",
-    "55+ Pre-built Integrations",
+    "Disposition Email Engine",
     "Real-time Monitoring & Alerts",
     "AI Call Flow Builder",
     "Five9 Domain Management",
