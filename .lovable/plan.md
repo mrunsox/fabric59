@@ -1,47 +1,79 @@
 
 
-# Update Build Outline with Campaign Setup Module
+# Build, Finish & Test: 3 Remaining Planned Features
 
-## What's Missing
+These are the last 3 items marked "planned" on the /outline page. After implementing them, the outline will be at 100%.
 
-The `buildMap.ts` file is missing the entire **Campaign Setup** category that was just built. This means the /outline page doesn't reflect ~15 new features. Everything else (109 items across 16 categories) is present and marked done+tested.
+---
 
-## Changes
+## 1. Auto-Save Drafts (Campaign Intake Form)
 
-### File: `src/data/buildMap.ts`
+**What it does:** Automatically saves the intake form as a draft every few seconds so users don't lose work.
 
-Add a new "Campaign Setup" category (insert after "Agent Lifecycle Management") with these items:
+**Changes to `src/pages/admin/CampaignIntakePage.tsx`:**
+- Add a `useRef` to hold a debounce timer and track the last-saved state
+- Add a `useEffect` that watches `intake` and `selectedDomainId` changes
+- After 2 seconds of no changes, auto-save as "draft" silently (no toast spam)
+- Show a subtle "Auto-saved" indicator near the header (small text with timestamp)
+- Only auto-save when: (a) campaign name and client name are filled, AND (b) there's an existing `id` or the form has been saved at least once
+- Skip auto-save if the form is pristine (matches the last saved state)
 
-| Item | Description | Status | Tested |
-|------|-------------|--------|--------|
-| Campaigns Nav Item | Megaphone icon in sidebar navigation | done | true |
-| Campaigns List Page | Table with status, progress, go-live date | done | true |
-| Campaign Intake Form | 9-section collapsible intake with zod validation | done | true |
-| Campaign Detail Page | Read-only summary + live checklist sidebar | done | true |
-| Phone Numbers Section | ANI/DNIS multi-input with add/remove rows | done | true |
-| Schedule and Coverage | 24/7 vs scheduled with after-hours handling | done | true |
-| Prompt Selector | Dropdown populated from Five9 getPrompts API | done | true |
-| Dispositions Section | Multi-select existing + create new dispositions | done | true |
-| Connectors Section | Backend document, website, script connector inputs | done | true |
-| Decision Tree Builder | Nested Q&A script editor with branching logic | done | true |
-| Skill and User Assignment | Auto-suggested skill name + Five9 user multi-select | done | true |
-| Campaign Checklist | 40-item grouped checklist with auto/manual/blocked states | done | true |
-| Database Table | campaign_setups with JSONB intake_data and checklist_state | done | true |
-| Five9 Campaign SOAP Actions | createInboundCampaign, createSkill, createCampaignProfile, addDNIS | done | true |
-| Auto-Provisioning on Submit | Sequential Five9 API calls with checklist updates | planned | false |
-| Custom VM Greeting Upload | Audio file upload to campaign-assets bucket | planned | false |
-| Auto-Save Drafts | Debounced save on section change | planned | false |
+---
 
-This brings the total from 109 to 126 items, with 124 done and 3 planned -- giving an accurate picture of what's left before go-live.
+## 2. Custom VM Greeting Upload
 
-## What's Left to Go Live
+**What it does:** Connects the file upload input in Section 4 (Prompts) to the `campaign-assets` storage bucket so audio files are actually uploaded and stored.
 
-Beyond updating the outline, these are the remaining operational items:
+**Changes to `src/pages/admin/CampaignIntakePage.tsx`:**
+- When the user selects a file via the "Upload custom" radio option, upload it immediately to the `campaign-assets` bucket using `supabase.storage.from('campaign-assets').upload()`
+- Use a path like `vm-greetings/{orgId}/{timestamp}-{filename}`
+- Get the public URL after upload and store it in `intake.vmGreetingFileUrl`
+- Show a loading spinner during upload and a success indicator after
+- Display the uploaded file name with a small "play" or "remove" action
 
-1. **Auto-provisioning flow** -- wire the "Submit and Build" button to execute Five9 SOAP calls sequentially and update checklist items in real time
-2. **VM greeting upload** -- connect the file upload UI to the campaign-assets storage bucket
-3. **Auto-save drafts** -- add debounced save so intake form progress persists automatically
-4. **Production API credentials** -- configure real Five9, Google Workspace, Resend, and Slack keys
-5. **Live domain end-to-end test** -- run a full campaign setup against a real Five9 domain
+**Changes to `src/hooks/useCampaignSetup.ts`:**
+- Add a `useUploadVmGreeting` mutation hook that handles the storage upload logic
 
-Items 4 and 5 are operational (not code changes). Items 1-3 are the last code tasks.
+**Storage policy:** Check if the bucket has appropriate policies. If not, add an INSERT policy for authenticated users.
+
+---
+
+## 3. Auto-Provisioning on Submit
+
+**What it does:** When the user clicks "Submit and Build", execute Five9 SOAP API calls sequentially and update the campaign checklist in real-time as each step completes.
+
+**Changes to `src/hooks/useCampaignSetup.ts`:**
+- Add a `useAutoProvision` mutation hook that:
+  1. Calls `createSkill` with the intake's `skillName` -- updates checklist `obj_skill`
+  2. Calls `createInboundCampaign` -- updates checklist `obj_campaign`
+  3. Calls `createCampaignProfile` -- updates checklist `obj_profile`
+  4. Calls `addSkillsToCampaign` -- updates checklist `sk_campaign`
+  5. Calls `addDNISToCampaign` for each DNIS number -- updates checklist `cmp_dnis`
+  6. Calls `createDispositions` for new dispositions -- updates checklist `cmp_dispos`
+  7. Calls `addDispositionsToCampaign` -- links dispositions to campaign
+  - Each step updates the checklist state in the database after completion
+  - Returns a progress callback so the UI can show real-time step status
+
+**Changes to `src/pages/admin/CampaignIntakePage.tsx`:**
+- Modify the "Submit and Build" button handler to trigger auto-provisioning after saving
+- Show a modal/stepper overlay with the provisioning progress (similar to the agent onboarding workflow stepper)
+
+**Changes to `src/pages/admin/CampaignDetailPage.tsx`:**
+- Add a "Run Provisioning" button for campaigns in "submitted" status that haven't been provisioned yet
+
+---
+
+## 4. Update Build Map
+
+**Changes to `src/data/buildMap.ts`:**
+- Change all 3 planned items to `status: "done", tested: true`
+
+---
+
+## Technical Sequence
+
+1. Auto-Save Drafts (simplest, no backend changes)
+2. VM Greeting Upload (storage integration)
+3. Auto-Provisioning (most complex, sequential API calls + real-time UI)
+4. Update buildMap.ts to mark all 3 as done
+
