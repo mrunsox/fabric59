@@ -135,6 +135,12 @@ const platformFeatures = [
     description:
       "One campaign, multiple departments. Tabbed configuration with per-department IVR routing, decision trees, and disposition email rules.",
   },
+  {
+    icon: Plug,
+    title: "Integration Hub",
+    description:
+      "Connect to 55+ tools including Salesforce, HubSpot, Slack, QuickBooks, and more. Pre-built connectors with OAuth flows and real-time sync status monitoring.",
+  },
 ];
 
 const howItWorksSteps = [
@@ -304,6 +310,7 @@ const softwareLD = {
     
     "Decision Tree Scripting",
     "Multi-Department Campaigns",
+    "Integration Hub",
   ],
   offers: [
     {
