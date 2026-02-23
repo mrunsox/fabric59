@@ -1,149 +1,77 @@
 
 
-# White-Label Partner Branding for Campaign Setup
+# Optimize Admin Sidebar: Grouped Navigation with Collapsible Sections
 
-## Overview
+## Problem
 
-When the **White-Label Partner** toggle is turned on, the campaign form will show a partner selector dropdown, a branding preview card, and store the selected partner's organization_id. All outgoing disposition emails will use the partner's branding (logo, colors, from/reply-to addresses) pulled from the organizations table. A new **email template depository** (storage bucket + database table) allows uploading HTML email templates per partner for disposition emails.
+The sidebar currently lists 14 flat navigation items, making it feel overwhelming and hard to scan. Users have to visually parse everything to find what they need.
 
----
+## Solution: Collapsible Nav Groups
 
-## What Changes
+Reorganize the 14 items into **4 logical groups** with collapsible headers. The group containing the active route stays open automatically. Other groups collapse to just their header, dramatically reducing visual noise.
 
-### 1. New Database Table: `email_templates`
+### Proposed Grouping
 
-Stores HTML disposition email templates per organization (white-label partner).
-
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid | PK |
-| organization_id | uuid | FK to organizations |
-| name | text | e.g. "Default Disposition Email" |
-| html_content | text | Full HTML template with placeholders |
-| is_default | boolean | Default template for this org |
-| created_by | uuid | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-RLS: Org members can view, org admins can manage, master/platform admins full access.
-
-### 2. Type Changes (`src/types/campaign.ts`)
-
-Add to `CampaignIntakeData`:
+```text
+ My Dashboard              (always visible, top-level)
+----------------------------------------------
+ OPERATIONS                (collapsible group)
+   Five9 Domains
+   Agents
+   Clients
+   Dispositions
+   Campaigns
+----------------------------------------------
+ CONFIGURATION             (collapsible group)
+   Integrations
+   Field Mappings
+   Call Flow Builder
+----------------------------------------------
+ MONITORING                (collapsible group)
+   API Logs
+   Test Console
+   Notifications
+----------------------------------------------
+ Settings                  (always visible, bottom)
+ Build Outline             (always visible, bottom)
 ```
-whiteLabelOrgId?: string;        // selected partner org ID
-whiteLabelEmailTemplateId?: string; // selected HTML template from depository
-```
 
-### 3. UI Changes (`CampaignIntakePage.tsx` -- Section 1)
+### Additional Optimizations
 
-When White-Label toggle is ON:
-- Show a **Partner dropdown** (fetches from `organizations` table)
-- Once selected, show a read-only **Branding Preview Card** displaying:
-  - Brand Name
-  - Logo (thumbnail)
-  - Primary Color (color swatch)
-  - From Email
-  - Reply-To Email
-- Show an **Email Template selector** dropdown (fetches from `email_templates` where `organization_id` matches selected partner)
-- Store `whiteLabelOrgId` and `whiteLabelEmailTemplateId` in intake data
+1. **Auto-expand active group** -- The group containing the current route is always open. Others collapse to just the group label, reducing the list from 14 visible items to as few as 6-7.
 
-### 4. New Component: `WhiteLabelPartnerSelector.tsx`
+2. **Persistent collapse state** -- Remember which groups the user has manually opened/closed using localStorage so it persists across sessions.
 
-Located at `src/components/campaigns/WhiteLabelPartnerSelector.tsx`. Contains:
-- Organization/partner select dropdown
-- Branding preview card (read-only)
-- Email template selector
+3. **Subtle group labels** -- Small, uppercase, muted labels (like "OPERATIONS") act as section headers with a chevron toggle.
 
-### 5. Email Template Management Page
-
-Add a simple template management UI accessible from Settings or a new route. Users can:
-- Upload/paste HTML templates per organization
-- Mark one as default
-- Preview the template
-
-This could be a sub-section on the Settings page or a dedicated route like `/admin/settings/email-templates`.
-
-### 6. Provisioning & Email Flow Impact
-
-- When `whiteLabelOrgId` is set, the disposition email sending logic (in edge functions or future email dispatch) will:
-  - Use the partner's `brand_from_email` as the From address
-  - Use the partner's `brand_reply_to` as the Reply-To address
-  - Fetch the selected HTML template from `email_templates` and inject disposition data
-  - Apply partner's `brand_logo_url` and `brand_primary_color` into the template
-- The `DispositionEmailConfig.emailFrom` and `emailReplyTo` fields per-disposition will **default** to the partner's branding but can be overridden per disposition
-
-### 7. Hooks
-
-- `useOrganizations()` -- fetch all organizations for the partner dropdown (already may exist partially)
-- `useEmailTemplates(orgId)` -- fetch templates for a given org
-- `useSaveEmailTemplate()` -- create/update templates
-
----
+4. **Move "Settings" and "Build Outline" out of the scrollable list** -- Pin them to the bottom of the sidebar (above the user card) so they're always accessible without scrolling.
 
 ## Technical Details
 
-### Database Migration SQL
+### Changes to `AdminLayout.tsx`
 
-```sql
-CREATE TABLE public.email_templates (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL,
-  name text NOT NULL,
-  html_content text NOT NULL DEFAULT '',
-  is_default boolean NOT NULL DEFAULT false,
-  created_by uuid,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
+- Replace the flat `navigation` array with a grouped structure:
+  ```
+  navigationGroups = [
+    { label: null, items: [dashboard] },           // ungrouped top item
+    { label: "Operations", items: [domains, agents, clients, dispositions, campaigns] },
+    { label: "Configuration", items: [integrations, mappings, call-flow] },
+    { label: "Monitoring", items: [logs, test-console, notifications] },
+  ]
+  bottomNav = [settings, outline]
+  ```
 
-ALTER TABLE public.email_templates ENABLE ROW LEVEL SECURITY;
+- Use Radix `Collapsible` (already installed) for each group. The group auto-opens if it contains the active route. Clicking the group header toggles it.
 
--- RLS policies
-CREATE POLICY "Org members can view email templates"
-  ON public.email_templates FOR SELECT
-  USING (organization_id IN (SELECT get_user_org_ids(auth.uid())));
+- Store open/closed state in `localStorage` keyed by group label.
 
-CREATE POLICY "Org admins can manage email templates"
-  ON public.email_templates FOR ALL
-  USING (is_org_owner_or_admin(auth.uid(), organization_id))
-  WITH CHECK (is_org_owner_or_admin(auth.uid(), organization_id));
+- Render `bottomNav` items in the footer section (above the org switcher), separated from the scrollable groups.
 
-CREATE POLICY "Platform admins can manage all email templates"
-  ON public.email_templates FOR ALL
-  USING (has_role(auth.uid(), 'admin'::app_role))
-  WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
+### Files Modified
 
-CREATE POLICY "Master admin can manage all email templates"
-  ON public.email_templates FOR ALL
-  USING (is_master_admin(auth.uid()))
-  WITH CHECK (is_master_admin(auth.uid()));
+| File | Changes |
+|------|---------|
+| `src/components/layout/AdminLayout.tsx` | Restructure navigation into collapsible groups, pin Settings/Outline to bottom |
 
--- Updated_at trigger
-CREATE TRIGGER update_email_templates_updated_at
-  BEFORE UPDATE ON public.email_templates
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-```
-
-### Files to Create/Modify
-
-| File | Action |
-|------|--------|
-| `src/types/campaign.ts` | Add `whiteLabelOrgId`, `whiteLabelEmailTemplateId` to `CampaignIntakeData` |
-| `src/components/campaigns/WhiteLabelPartnerSelector.tsx` | **New** -- partner dropdown + branding preview + template selector |
-| `src/hooks/useEmailTemplates.ts` | **New** -- CRUD hooks for email_templates table |
-| `src/pages/admin/CampaignIntakePage.tsx` | Import and render `WhiteLabelPartnerSelector` when whiteLabel is toggled on |
-| `src/pages/admin/CampaignIntakePage.tsx` (emptyIntake) | Add default values for new fields |
-| `src/pages/admin/SettingsPage.tsx` | Add "Email Templates" tab/section for template management |
-
-### Implementation Order
-
-1. Database migration (create `email_templates` table)
-2. Types update (`campaign.ts`)
-3. `useEmailTemplates` hook
-4. `WhiteLabelPartnerSelector` component
-5. Integrate into `CampaignIntakePage.tsx` Section 1
-6. Email template management UI in Settings
-7. Update `emptyIntake` defaults
+No new dependencies or database changes needed. Uses the existing `Collapsible` component from Radix.
 
