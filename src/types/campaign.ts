@@ -121,6 +121,10 @@ export interface CampaignIntakeData {
   additionalNotes?: string;
   priority: "normal" | "urgent";
   targetGoLive?: string;
+
+  // White-Label Partner Branding
+  whiteLabelOrgId?: string;
+  whiteLabelEmailTemplateId?: string;
 }
 
 // Checklist

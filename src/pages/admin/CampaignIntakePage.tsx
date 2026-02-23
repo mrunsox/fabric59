@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ChevronDown, ChevronRight, CheckCircle2, CalendarIcon, Save, Rocket, Loader2, Upload, X, FileAudio, CloudOff, Building2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { WhiteLabelPartnerSelector } from "@/components/campaigns/WhiteLabelPartnerSelector";
 
 const emptyIntake: CampaignIntakeData = {
   campaignName: "",
@@ -77,6 +78,8 @@ const emptyIntake: CampaignIntakeData = {
   additionalNotes: "",
   priority: "normal",
   targetGoLive: "",
+  whiteLabelOrgId: undefined,
+  whiteLabelEmailTemplateId: undefined,
 };
 
 export default function CampaignIntakePage() {
@@ -333,9 +336,17 @@ export default function CampaignIntakePage() {
                 <Textarea value={intake.campaignDescription} onChange={(e) => update({ campaignDescription: e.target.value })} placeholder="Brief description of the campaign" rows={2} />
               </div>
               <div className="flex items-center gap-3">
-                <Switch checked={intake.whiteLabel} onCheckedChange={(v) => update({ whiteLabel: v })} />
+                <Switch checked={intake.whiteLabel} onCheckedChange={(v) => update({ whiteLabel: v, ...(!v && { whiteLabelOrgId: undefined, whiteLabelEmailTemplateId: undefined }) })} />
                 <Label className="cursor-pointer">White-Label Partner</Label>
               </div>
+              {intake.whiteLabel && (
+                <WhiteLabelPartnerSelector
+                  selectedOrgId={intake.whiteLabelOrgId}
+                  selectedTemplateId={intake.whiteLabelEmailTemplateId}
+                  onOrgChange={(orgId) => update({ whiteLabelOrgId: orgId || undefined, whiteLabelEmailTemplateId: undefined })}
+                  onTemplateChange={(templateId) => update({ whiteLabelEmailTemplateId: templateId || undefined })}
+                />
+              )}
               <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/30">
                 <Building2 className="h-4 w-4 text-primary shrink-0" />
                 <div className="flex-1">
