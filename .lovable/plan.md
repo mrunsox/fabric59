@@ -1,77 +1,100 @@
 
 
-# Optimize Admin Sidebar: Grouped Navigation with Collapsible Sections
+# Landing Page Sync: New Features, Campaign Setup, White-Label, and Pricing Section
 
 ## Problem
 
-The sidebar currently lists 14 flat navigation items, making it feel overwhelming and hard to scan. Users have to visually parse everything to find what they need.
+The landing page was written before Campaign Setup, White-Label Partner Branding, Per-Disposition Email Routing, Multi-Department Campaigns, Decision Tree Skip/Jump Logic, and the Email Template Depository were built. None of these appear on the landing page. There is also no pricing section.
 
-## Solution: Collapsible Nav Groups
+---
 
-Reorganize the 14 items into **4 logical groups** with collapsible headers. The group containing the active route stays open automatically. Other groups collapse to just their header, dramatically reducing visual noise.
+## Changes
 
-### Proposed Grouping
+### 1. Add "Campaign Automation" to the Top 3 Feature Cards
 
-```text
- My Dashboard              (always visible, top-level)
-----------------------------------------------
- OPERATIONS                (collapsible group)
-   Five9 Domains
-   Agents
-   Clients
-   Dispositions
-   Campaigns
-----------------------------------------------
- CONFIGURATION             (collapsible group)
-   Integrations
-   Field Mappings
-   Call Flow Builder
-----------------------------------------------
- MONITORING                (collapsible group)
-   API Logs
-   Test Console
-   Notifications
-----------------------------------------------
- Settings                  (always visible, bottom)
- Build Outline             (always visible, bottom)
-```
+Replace one of the existing hero cards or expand to 4 cards. The new card:
 
-### Additional Optimizations
+- **Title:** Campaign Automation
+- **Icon:** Megaphone (from lucide)
+- **Description:** "Build multi-department campaigns with per-disposition email routing, decision tree scripting with skip/jump logic, and white-label partner branding -- all from a single intake form."
 
-1. **Auto-expand active group** -- The group containing the current route is always open. Others collapse to just the group label, reducing the list from 14 visible items to as few as 6-7.
+The current 3 cards (Agent Onboarding, CRM Mapping, AI Call Flow) remain. This becomes a 4th card, changing the grid to `md:grid-cols-2 lg:grid-cols-4` for the hero cards.
 
-2. **Persistent collapse state** -- Remember which groups the user has manually opened/closed using localStorage so it persists across sessions.
+### 2. Add New Platform Feature Cards
 
-3. **Subtle group labels** -- Small, uppercase, muted labels (like "OPERATIONS") act as section headers with a chevron toggle.
+Add 4 new cards to the "Built for Five9 teams" grid (currently 8 cards, becomes 12 in a 4-column grid):
 
-4. **Move "Settings" and "Build Outline" out of the scrollable list** -- Pin them to the bottom of the sidebar (above the user card) so they're always accessible without scrolling.
+| Title | Icon | Description |
+|-------|------|-------------|
+| Campaign Automation | Megaphone | Multi-section intake form with auto-provisioning. Create campaigns, skills, profiles, and DNIS in Five9 with one click. |
+| White-Label Branding | Palette | Run campaigns under your client's brand. Per-partner logos, colors, from/reply-to emails, and HTML email templates from a built-in depository. |
+| Decision Tree Scripting | GitFork | Build agent call scripts with conditional branching, skip/jump logic, required data gates, time-based closings, and fallback persistence scripts. |
+| Multi-Department Campaigns | Layers | One campaign, multiple departments. Tabbed configuration with per-department IVR routing, decision trees, and disposition email rules. |
+
+### 3. Add Pricing Section
+
+New section between "How It Works" and "FAQ" with anchor `#pricing`. Three-column card layout:
+
+**Starter -- $197/mo**
+- 1 Five9 domain
+- Up to 25 agents
+- CRM field mapping
+- 10 integrations
+- Email support
+- CTA: "Get Started"
+
+**Professional -- $497/mo** (highlighted/recommended)
+- Up to 5 Five9 domains
+- Unlimited agents
+- AI Call Flow Builder
+- Campaign automation
+- White-label branding
+- 55+ integrations
+- Priority support
+- CTA: "Get Started"
+
+**Enterprise -- Custom**
+- Unlimited domains
+- Multi-tenant management
+- Custom integrations
+- Dedicated onboarding
+- SLA and SSO
+- CTA: "Contact Sales" (mailto:hi@fabric59.com)
+
+### 4. Update FAQ
+
+Add 2 new FAQ items:
+
+- **"What is Campaign Automation?"** -- Explains multi-department campaigns, per-disposition email routing, decision tree scripting, and white-label branding.
+- **"What does White-Label Branding include?"** -- Explains partner-branded disposition emails with custom logos, colors, from/reply-to addresses, and HTML template depository.
+
+Update the existing pricing FAQ answer to reference the three tiers with actual prices instead of the current vague "flexible plans" language.
+
+### 5. Update Header Navigation
+
+Add a "Pricing" anchor link in the header nav between "How It Works" and "FAQ".
+
+### 6. Update Structured Data
+
+- Add pricing tiers to the `softwareLD` offers array (Starter $197, Professional $497, Enterprise contact)
+- Add new features to the `featureList` array: "Campaign Automation", "White-Label Branding", "Decision Tree Scripting", "Multi-Department Campaigns"
+- Add new FAQ items to `faqLD`
+
+### 7. Update Footer
+
+Add a "Pricing" link in the footer nav.
+
+---
 
 ## Technical Details
-
-### Changes to `AdminLayout.tsx`
-
-- Replace the flat `navigation` array with a grouped structure:
-  ```
-  navigationGroups = [
-    { label: null, items: [dashboard] },           // ungrouped top item
-    { label: "Operations", items: [domains, agents, clients, dispositions, campaigns] },
-    { label: "Configuration", items: [integrations, mappings, call-flow] },
-    { label: "Monitoring", items: [logs, test-console, notifications] },
-  ]
-  bottomNav = [settings, outline]
-  ```
-
-- Use Radix `Collapsible` (already installed) for each group. The group auto-opens if it contains the active route. Clicking the group header toggles it.
-
-- Store open/closed state in `localStorage` keyed by group label.
-
-- Render `bottomNav` items in the footer section (above the org switcher), separated from the scrollable groups.
 
 ### Files Modified
 
 | File | Changes |
 |------|---------|
-| `src/components/layout/AdminLayout.tsx` | Restructure navigation into collapsible groups, pin Settings/Outline to bottom |
+| `src/pages/LandingPage.tsx` | Add campaign/white-label feature cards, pricing section, new FAQ items, nav links, structured data updates |
 
-No new dependencies or database changes needed. Uses the existing `Collapsible` component from Radix.
+### No new files, no database changes, no new dependencies.
+
+All changes are within the single `LandingPage.tsx` file -- updating data arrays and adding the pricing section JSX.
 
