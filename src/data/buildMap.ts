@@ -190,9 +190,9 @@ export const buildMap: BuildCategory[] = [
       { name: "Campaign Checklist", description: "40-item grouped checklist with auto/manual/blocked states", status: "done", tested: true },
       { name: "Database Table", description: "campaign_setups with JSONB intake_data and checklist_state", status: "done", tested: true },
       { name: "Five9 Campaign SOAP Actions", description: "createInboundCampaign, createSkill, createCampaignProfile, addDNIS", status: "done", tested: true },
-      { name: "Auto-Provisioning on Submit", description: "Sequential Five9 API calls with checklist updates", status: "planned" },
-      { name: "Custom VM Greeting Upload", description: "Audio file upload to campaign-assets bucket", status: "planned" },
-      { name: "Auto-Save Drafts", description: "Debounced save on section change", status: "planned" },
+      { name: "Auto-Provisioning on Submit", description: "Sequential Five9 API calls with checklist updates", status: "done", tested: true },
+      { name: "Custom VM Greeting Upload", description: "Audio file upload to campaign-assets bucket", status: "done", tested: true },
+      { name: "Auto-Save Drafts", description: "Debounced save on section change", status: "done", tested: true },
     ],
   },
   {

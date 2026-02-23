@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,17 +12,20 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { MultiInput } from "@/components/campaigns/MultiInput";
 import { PromptSelector } from "@/components/campaigns/PromptSelector";
 import { DecisionTreeBuilder } from "@/components/campaigns/DecisionTreeBuilder";
-import { useSaveCampaignSetup, useCampaignSetup, useFive9Prompts, useFive9Dispositions } from "@/hooks/useCampaignSetup";
+import { useSaveCampaignSetup, useCampaignSetup, useFive9Prompts, useFive9Dispositions, useUploadVmGreeting, useAutoProvision } from "@/hooks/useCampaignSetup";
+import type { ProvisioningStep } from "@/hooks/useCampaignSetup";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDomains } from "@/hooks/useDomains";
 import { DEFAULT_CHECKLIST } from "@/types/campaign";
 import type { CampaignIntakeData } from "@/types/campaign";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ChevronDown, ChevronRight, CheckCircle2, CalendarIcon, Save, Rocket } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, CalendarIcon, Save, Rocket, Loader2, Upload, X, FileAudio, CloudOff } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const emptyIntake: CampaignIntakeData = {
@@ -78,6 +81,8 @@ export default function CampaignIntakePage() {
   const { data: dispositions = [], isLoading: dispoLoading } = useFive9Dispositions();
   const { data: domains = [] } = useDomains();
   const saveMutation = useSaveCampaignSetup();
+  const uploadMutation = useUploadVmGreeting();
+  const provisionMutation = useAutoProvision();
 
   const [intake, setIntake] = useState<CampaignIntakeData>(emptyIntake);
   const [selectedDomainId, setSelectedDomainId] = useState<string>("");
@@ -85,10 +90,27 @@ export default function CampaignIntakePage() {
     1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true,
   });
 
+  // Auto-save state
+  const [savedId, setSavedId] = useState<string | undefined>(id);
+  const [autoSaveTime, setAutoSaveTime] = useState<string | null>(null);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedRef = useRef<string>("");
+  const [vmFileName, setVmFileName] = useState<string>("");
+
+  // Provisioning modal
+  const [showProvisionModal, setShowProvisionModal] = useState(false);
+  const [provisionSteps, setProvisionSteps] = useState<ProvisioningStep[]>([]);
+
   useEffect(() => {
     if (existing) {
       setIntake(existing.intake_data);
       setSelectedDomainId(existing.five9_domain_id || "");
+      setSavedId(existing.id);
+      lastSavedRef.current = JSON.stringify(existing.intake_data);
+      if (existing.intake_data.vmGreetingFileUrl) {
+        const parts = existing.intake_data.vmGreetingFileUrl.split("/");
+        setVmFileName(parts[parts.length - 1]?.replace(/^\d+-/, "") || "");
+      }
     }
   }, [existing]);
 
@@ -98,6 +120,41 @@ export default function CampaignIntakePage() {
       setIntake((prev) => ({ ...prev, skillName: prev.campaignName }));
     }
   }, [intake.campaignName]);
+
+  // --- Auto-Save Drafts ---
+  useEffect(() => {
+    if (!savedId) return; // Only auto-save after first manual save
+    if (!intake.campaignName || !intake.clientName) return;
+
+    const currentState = JSON.stringify(intake) + selectedDomainId;
+    if (currentState === lastSavedRef.current) return; // No changes
+
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      try {
+        await saveMutation.mutateAsync({
+          id: savedId,
+          campaignName: intake.campaignName,
+          clientName: intake.clientName,
+          intakeData: intake,
+          checklistState: buildChecklist(),
+          status: "draft",
+          notes: intake.additionalNotes,
+          priority: intake.priority,
+          targetGoLive: intake.targetGoLive || undefined,
+          fiveDomainId: selectedDomainId || undefined,
+        });
+        lastSavedRef.current = currentState;
+        setAutoSaveTime(format(new Date(), "h:mm:ss a"));
+      } catch {
+        // Silently fail — user can still manually save
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, [intake, selectedDomainId, savedId]);
 
   const update = useCallback((patch: Partial<CampaignIntakeData>) => {
     setIntake((prev) => ({ ...prev, ...patch }));
@@ -127,10 +184,21 @@ export default function CampaignIntakePage() {
     DEFAULT_CHECKLIST.forEach((item) => {
       state[item.id] = { done: item.done, blocked: item.blocked };
     });
-    // Pre-fill from intake
     if (intake.whiteLabel) state["imp_wl"] = { done: true };
     if (intake.vmGreetingPrompt || intake.vmGreetingFileUrl) state["imp_vm"] = { done: true };
     return state;
+  };
+
+  const handleVmFileUpload = async (file: File) => {
+    if (!organization?.id) return;
+    try {
+      const result = await uploadMutation.mutateAsync({ file, orgId: organization.id });
+      update({ vmGreetingFileUrl: result.publicUrl });
+      setVmFileName(file.name);
+      toast.success("VM greeting uploaded!");
+    } catch {
+      // Error handled by hook
+    }
   };
 
   const handleSave = async (status: "draft" | "submitted") => {
@@ -140,7 +208,7 @@ export default function CampaignIntakePage() {
     }
     try {
       const result = await saveMutation.mutateAsync({
-        id: id,
+        id: savedId,
         campaignName: intake.campaignName,
         clientName: intake.clientName,
         intakeData: intake,
@@ -151,9 +219,31 @@ export default function CampaignIntakePage() {
         targetGoLive: intake.targetGoLive || undefined,
         fiveDomainId: selectedDomainId || undefined,
       });
-      toast.success(status === "draft" ? "Draft saved!" : "Campaign submitted!");
-      navigate(`/admin/campaigns/${(result as any).id}`);
-    } catch (e) {
+      const newId = (result as any).id;
+      setSavedId(newId);
+      lastSavedRef.current = JSON.stringify(intake) + selectedDomainId;
+
+      if (status === "submitted") {
+        // Trigger auto-provisioning
+        toast.success("Campaign submitted! Starting provisioning...");
+        setShowProvisionModal(true);
+        try {
+          await provisionMutation.mutateAsync({
+            campaignId: newId,
+            intake,
+            checklistState: buildChecklist(),
+            onProgress: setProvisionSteps,
+          });
+          toast.success("Provisioning complete!");
+        } catch (e: any) {
+          toast.error("Provisioning failed at a step. Check the progress below.");
+        }
+        // Navigate after modal is closed
+      } else {
+        toast.success("Draft saved!");
+        if (!id) navigate(`/admin/campaigns/edit/${newId}`, { replace: true });
+      }
+    } catch {
       // toast handled by hook
     }
   };
@@ -171,12 +261,24 @@ export default function CampaignIntakePage() {
     </CollapsibleTrigger>
   );
 
+  const provisioningComplete = provisionSteps.length > 0 && provisionSteps.every((s) => s.status === "done" || s.status === "error");
+  const provisioningProgress = provisionSteps.length > 0
+    ? Math.round((provisionSteps.filter((s) => s.status === "done").length / provisionSteps.length) * 100)
+    : 0;
+
   return (
     <div className="max-w-3xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{id ? "Edit Campaign Setup" : "New Campaign Setup"}</h1>
-          <p className="text-sm text-muted-foreground">Fill out each section to build the campaign. Save as draft anytime.</p>
+          <p className="text-sm text-muted-foreground">
+            Fill out each section to build the campaign. Save as draft anytime.
+            {autoSaveTime && (
+              <span className="ml-2 text-xs text-muted-foreground/70">
+                Auto-saved at {autoSaveTime}
+              </span>
+            )}
+          </p>
         </div>
       </div>
 
@@ -336,11 +438,43 @@ export default function CampaignIntakePage() {
                 {intake.vmGreetingType === "existing" ? (
                   <PromptSelector value={intake.vmGreetingPrompt || ""} onChange={(v) => update({ vmGreetingPrompt: v })} prompts={prompts} loading={promptsLoading} />
                 ) : (
-                  <Input type="file" accept="audio/*" onChange={(e) => {
-                    // File upload handled on save
-                    const file = e.target.files?.[0];
-                    if (file) update({ vmGreetingFileUrl: file.name });
-                  }} />
+                  <div className="space-y-2">
+                    {vmFileName ? (
+                      <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/50">
+                        <FileAudio className="h-4 w-4 text-primary shrink-0" />
+                        <span className="text-sm truncate flex-1">{vmFileName}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            update({ vmGreetingFileUrl: "" });
+                            setVmFileName("");
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <Input
+                          type="file"
+                          accept="audio/*"
+                          disabled={uploadMutation.isPending}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleVmFileUpload(file);
+                          }}
+                        />
+                        {uploadMutation.isPending && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-md">
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                            <span className="ml-2 text-xs">Uploading...</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -509,10 +643,53 @@ export default function CampaignIntakePage() {
         <Button variant="outline" onClick={() => handleSave("draft")} disabled={saveMutation.isPending} className="gap-2">
           <Save className="h-4 w-4" /> Save as Draft
         </Button>
-        <Button onClick={() => handleSave("submitted")} disabled={saveMutation.isPending} className="gap-2">
+        <Button onClick={() => handleSave("submitted")} disabled={saveMutation.isPending || provisionMutation.isPending} className="gap-2">
           <Rocket className="h-4 w-4" /> Submit & Build
         </Button>
       </div>
+
+      {/* Provisioning Modal */}
+      <Dialog open={showProvisionModal} onOpenChange={(open) => {
+        if (!open && provisioningComplete) {
+          setShowProvisionModal(false);
+          if (savedId) navigate(`/admin/campaigns/${savedId}`);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Rocket className="h-5 w-5 text-primary" />
+              Campaign Provisioning
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Progress value={provisioningProgress} className="h-2" />
+            <p className="text-xs text-muted-foreground text-center">{provisioningProgress}% complete</p>
+            <div className="space-y-2">
+              {provisionSteps.map((step) => (
+                <div key={step.id} className="flex items-center gap-3 text-sm">
+                  {step.status === "pending" && <div className="h-4 w-4 rounded-full border-2 border-muted shrink-0" />}
+                  {step.status === "running" && <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />}
+                  {step.status === "done" && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
+                  {step.status === "error" && <CloudOff className="h-4 w-4 text-destructive shrink-0" />}
+                  <div className="flex-1 min-w-0">
+                    <span className={step.status === "error" ? "text-destructive" : ""}>{step.label}</span>
+                    {step.error && <p className="text-xs text-destructive truncate">{step.error}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {provisioningComplete && (
+              <Button className="w-full" onClick={() => {
+                setShowProvisionModal(false);
+                if (savedId) navigate(`/admin/campaigns/${savedId}`);
+              }}>
+                View Campaign
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

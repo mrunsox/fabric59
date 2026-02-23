@@ -1,16 +1,24 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useCampaignSetup, useUpdateChecklist } from "@/hooks/useCampaignSetup";
+import { useCampaignSetup, useUpdateChecklist, useAutoProvision } from "@/hooks/useCampaignSetup";
+import type { ProvisioningStep } from "@/hooks/useCampaignSetup";
 import { CampaignChecklist } from "@/components/campaigns/CampaignChecklist";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Pencil, ArrowLeft, Rocket, Loader2, CheckCircle2, CloudOff } from "lucide-react";
 import type { CampaignIntakeData } from "@/types/campaign";
 
 export default function CampaignDetailPage() {
   const { id } = useParams();
   const { data: campaign, isLoading } = useCampaignSetup(id);
   const updateChecklist = useUpdateChecklist();
+  const provisionMutation = useAutoProvision();
+
+  const [showProvisionModal, setShowProvisionModal] = useState(false);
+  const [provisionSteps, setProvisionSteps] = useState<ProvisioningStep[]>([]);
 
   if (isLoading) return <p className="text-muted-foreground p-6">Loading...</p>;
   if (!campaign) return <p className="text-muted-foreground p-6">Campaign not found.</p>;
@@ -22,6 +30,25 @@ export default function CampaignDetailPage() {
     const updated = { ...checklist, [itemId]: { ...checklist[itemId], done } };
     updateChecklist.mutate({ id: campaign.id, checklistState: updated });
   };
+
+  const handleRunProvisioning = async () => {
+    setShowProvisionModal(true);
+    try {
+      await provisionMutation.mutateAsync({
+        campaignId: campaign.id,
+        intake,
+        checklistState: { ...checklist },
+        onProgress: setProvisionSteps,
+      });
+    } catch {
+      // Error shown in modal
+    }
+  };
+
+  const provisioningComplete = provisionSteps.length > 0 && provisionSteps.every((s) => s.status === "done" || s.status === "error");
+  const provisioningProgress = provisionSteps.length > 0
+    ? Math.round((provisionSteps.filter((s) => s.status === "done").length / provisionSteps.length) * 100)
+    : 0;
 
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div className="space-y-1">
@@ -37,6 +64,8 @@ export default function CampaignDetailPage() {
     );
   };
 
+  const canProvision = campaign.status === "submitted" || campaign.status === "draft";
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -46,6 +75,11 @@ export default function CampaignDetailPage() {
           <p className="text-sm text-muted-foreground">{campaign.client_name}</p>
         </div>
         <Badge variant="secondary">{campaign.status}</Badge>
+        {canProvision && (
+          <Button size="sm" onClick={handleRunProvisioning} disabled={provisionMutation.isPending} className="gap-1.5">
+            <Rocket className="h-3.5 w-3.5" /> Provision
+          </Button>
+        )}
         <Button variant="outline" size="sm" asChild className="gap-1.5">
           <Link to={`/admin/campaigns/edit/${campaign.id}`}><Pencil className="h-3.5 w-3.5" /> Edit</Link>
         </Button>
@@ -165,6 +199,43 @@ export default function CampaignDetailPage() {
           <CampaignChecklist checklistState={checklist} onToggle={handleToggle} />
         </div>
       </div>
+
+      {/* Provisioning Modal */}
+      <Dialog open={showProvisionModal} onOpenChange={(open) => {
+        if (!open && provisioningComplete) setShowProvisionModal(false);
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Rocket className="h-5 w-5 text-primary" />
+              Campaign Provisioning
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Progress value={provisioningProgress} className="h-2" />
+            <p className="text-xs text-muted-foreground text-center">{provisioningProgress}% complete</p>
+            <div className="space-y-2">
+              {provisionSteps.map((step) => (
+                <div key={step.id} className="flex items-center gap-3 text-sm">
+                  {step.status === "pending" && <div className="h-4 w-4 rounded-full border-2 border-muted shrink-0" />}
+                  {step.status === "running" && <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />}
+                  {step.status === "done" && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
+                  {step.status === "error" && <CloudOff className="h-4 w-4 text-destructive shrink-0" />}
+                  <div className="flex-1 min-w-0">
+                    <span className={step.status === "error" ? "text-destructive" : ""}>{step.label}</span>
+                    {step.error && <p className="text-xs text-destructive truncate">{step.error}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {provisioningComplete && (
+              <Button className="w-full" onClick={() => setShowProvisionModal(false)}>
+                Done
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
