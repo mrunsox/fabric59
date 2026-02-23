@@ -17,6 +17,9 @@ import { Progress } from "@/components/ui/progress";
 import { MultiInput } from "@/components/campaigns/MultiInput";
 import { PromptSelector } from "@/components/campaigns/PromptSelector";
 import { DecisionTreeBuilder } from "@/components/campaigns/DecisionTreeBuilder";
+import { DispositionEmailTable } from "@/components/campaigns/DispositionEmailTable";
+import { ConnectorList } from "@/components/campaigns/ConnectorList";
+import { DepartmentTabs } from "@/components/campaigns/DepartmentTabs";
 import { useSaveCampaignSetup, useCampaignSetup, useFive9Prompts, useFive9Dispositions, useUploadVmGreeting, useAutoProvision } from "@/hooks/useCampaignSetup";
 import type { ProvisioningStep } from "@/hooks/useCampaignSetup";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,7 +28,7 @@ import { DEFAULT_CHECKLIST } from "@/types/campaign";
 import type { CampaignIntakeData } from "@/types/campaign";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ChevronDown, ChevronRight, CheckCircle2, CalendarIcon, Save, Rocket, Loader2, Upload, X, FileAudio, CloudOff } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, CalendarIcon, Save, Rocket, Loader2, Upload, X, FileAudio, CloudOff, Building2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const emptyIntake: CampaignIntakeData = {
@@ -33,6 +36,8 @@ const emptyIntake: CampaignIntakeData = {
   clientName: "",
   campaignDescription: "",
   whiteLabel: false,
+  isMultiDepartment: false,
+  departments: [],
   aniNumbers: [""],
   dnisNumbers: [""],
   transferDisplayNumber: "",
@@ -59,10 +64,12 @@ const emptyIntake: CampaignIntakeData = {
   emailReplyTo: "",
   emailFrom: "",
   dispositionMenuGrouping: "",
+  dispositionEmailConfigs: [],
   backendDocConnector: false,
   backendDocUrl: "",
   websiteConnectorUrl: "",
   scriptConnectorName: "",
+  connectors: [],
   decisionTree: [],
   skillName: "",
   assignedUsers: [],
@@ -87,7 +94,7 @@ export default function CampaignIntakePage() {
   const [intake, setIntake] = useState<CampaignIntakeData>(emptyIntake);
   const [selectedDomainId, setSelectedDomainId] = useState<string>("");
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({
-    1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true,
+    1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 10: true,
   });
 
   // Auto-save state
@@ -101,9 +108,13 @@ export default function CampaignIntakePage() {
   const [showProvisionModal, setShowProvisionModal] = useState(false);
   const [provisionSteps, setProvisionSteps] = useState<ProvisioningStep[]>([]);
 
+  // Combined dispositions for email routing
+  const allDispositions = [...intake.existingDispositions, ...intake.newDispositions];
+
   useEffect(() => {
     if (existing) {
-      setIntake(existing.intake_data);
+      // Merge with defaults for backward compat
+      setIntake({ ...emptyIntake, ...existing.intake_data });
       setSelectedDomainId(existing.five9_domain_id || "");
       setSavedId(existing.id);
       lastSavedRef.current = JSON.stringify(existing.intake_data);
@@ -123,11 +134,11 @@ export default function CampaignIntakePage() {
 
   // --- Auto-Save Drafts ---
   useEffect(() => {
-    if (!savedId) return; // Only auto-save after first manual save
+    if (!savedId) return;
     if (!intake.campaignName || !intake.clientName) return;
 
     const currentState = JSON.stringify(intake) + selectedDomainId;
-    if (currentState === lastSavedRef.current) return; // No changes
+    if (currentState === lastSavedRef.current) return;
 
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
@@ -147,7 +158,7 @@ export default function CampaignIntakePage() {
         lastSavedRef.current = currentState;
         setAutoSaveTime(format(new Date(), "h:mm:ss a"));
       } catch {
-        // Silently fail — user can still manually save
+        // Silently fail
       }
     }, 2000);
 
@@ -175,6 +186,7 @@ export default function CampaignIntakePage() {
       case 7: return true;
       case 8: return !!intake.skillName;
       case 9: return true;
+      case 10: return true;
       default: return false;
     }
   };
@@ -224,7 +236,6 @@ export default function CampaignIntakePage() {
       lastSavedRef.current = JSON.stringify(intake) + selectedDomainId;
 
       if (status === "submitted") {
-        // Trigger auto-provisioning
         toast.success("Campaign submitted! Starting provisioning...");
         setShowProvisionModal(true);
         try {
@@ -238,7 +249,6 @@ export default function CampaignIntakePage() {
         } catch (e: any) {
           toast.error("Provisioning failed at a step. Check the progress below.");
         }
-        // Navigate after modal is closed
       } else {
         toast.success("Draft saved!");
         if (!id) navigate(`/admin/campaigns/edit/${newId}`, { replace: true });
@@ -304,7 +314,7 @@ export default function CampaignIntakePage() {
       <Card>
         <Collapsible open={openSections[1]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={1} title="Campaign Basics" desc="Name, client, and type" />
+            <SectionHeader num={1} title="Campaign Basics" desc="Name, client, type, and department structure" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">
@@ -325,6 +335,14 @@ export default function CampaignIntakePage() {
               <div className="flex items-center gap-3">
                 <Switch checked={intake.whiteLabel} onCheckedChange={(v) => update({ whiteLabel: v })} />
                 <Label className="cursor-pointer">White-Label Partner</Label>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-md border bg-muted/30">
+                <Building2 className="h-4 w-4 text-primary shrink-0" />
+                <div className="flex-1">
+                  <Label className="cursor-pointer text-sm font-medium">Multi-Department Campaign</Label>
+                  <p className="text-xs text-muted-foreground">Enable if this business has multiple departments with different worksheets and dispatch rules.</p>
+                </div>
+                <Switch checked={intake.isMultiDepartment || false} onCheckedChange={(v) => update({ isMultiDepartment: v })} />
               </div>
             </CardContent>
           </CollapsibleContent>
@@ -524,13 +542,19 @@ export default function CampaignIntakePage() {
                 <Switch checked={intake.enableDispositionEmail} onCheckedChange={(v) => update({ enableDispositionEmail: v })} />
                 <Label>Enable Disposition Email</Label>
               </div>
-              {intake.enableDispositionEmail && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-4 border-l-2 border-muted">
-                  <div className="space-y-1.5"><Label>Email Template</Label><Input value={intake.emailTemplateName} onChange={(e) => update({ emailTemplateName: e.target.value })} /></div>
-                  <div className="space-y-1.5"><Label>Recipients</Label><Input value={intake.emailRecipients} onChange={(e) => update({ emailRecipients: e.target.value })} /></div>
-                  <div className="space-y-1.5"><Label>Reply-To</Label><Input value={intake.emailReplyTo} onChange={(e) => update({ emailReplyTo: e.target.value })} /></div>
-                  <div className="space-y-1.5"><Label>From</Label><Input value={intake.emailFrom} onChange={(e) => update({ emailFrom: e.target.value })} /></div>
+              {intake.enableDispositionEmail && !intake.isMultiDepartment && (
+                <div className="pl-4 border-l-2 border-muted">
+                  <DispositionEmailTable
+                    dispositions={allDispositions}
+                    configs={intake.dispositionEmailConfigs || []}
+                    onChange={(configs) => update({ dispositionEmailConfigs: configs })}
+                  />
                 </div>
+              )}
+              {intake.enableDispositionEmail && intake.isMultiDepartment && (
+                <p className="text-xs text-muted-foreground pl-4 border-l-2 border-muted">
+                  Email routing is configured per department in the Departments section below.
+                </p>
               )}
               <div className="space-y-1.5">
                 <Label>Disposition Menu Grouping</Label>
@@ -548,41 +572,51 @@ export default function CampaignIntakePage() {
             <SectionHeader num={6} title="Connectors & Scripts" desc="Link external resources to the campaign" />
           </CardHeader>
           <CollapsibleContent>
-            <CardContent className="space-y-4">
-              <p className="text-xs text-muted-foreground">Connectors link external resources to the campaign for agent reference.</p>
-              <div className="flex items-center gap-3">
-                <Switch checked={intake.backendDocConnector} onCheckedChange={(v) => update({ backendDocConnector: v })} />
-                <Label>Backend Document Connector</Label>
-              </div>
-              {intake.backendDocConnector && (
-                <Input value={intake.backendDocUrl} onChange={(e) => update({ backendDocUrl: e.target.value })} placeholder="Document connector URL" />
-              )}
-              <div className="space-y-1.5">
-                <Label>Website Connector URL</Label>
-                <Input value={intake.websiteConnectorUrl} onChange={(e) => update({ websiteConnectorUrl: e.target.value })} placeholder="https://..." />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Script Connector</Label>
-                <Input value={intake.scriptConnectorName} onChange={(e) => update({ scriptConnectorName: e.target.value })} placeholder="Script name or URL" />
-              </div>
+            <CardContent>
+              <ConnectorList
+                connectors={intake.connectors || []}
+                onChange={(connectors) => update({ connectors })}
+              />
             </CardContent>
           </CollapsibleContent>
         </Collapsible>
       </Card>
 
-      {/* Section 7: Decision Tree */}
-      <Card>
-        <Collapsible open={openSections[7]}>
-          <CardHeader className="pb-2">
-            <SectionHeader num={7} title="Agent Decision Tree" desc="Build the step-by-step script for agents" />
-          </CardHeader>
-          <CollapsibleContent>
-            <CardContent>
-              <DecisionTreeBuilder nodes={intake.decisionTree} onChange={(nodes) => update({ decisionTree: nodes })} />
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
+      {/* Section 7: Decision Tree (only when NOT multi-department) */}
+      {!intake.isMultiDepartment && (
+        <Card>
+          <Collapsible open={openSections[7]}>
+            <CardHeader className="pb-2">
+              <SectionHeader num={7} title="Agent Decision Tree" desc="Build the step-by-step script for agents" />
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent>
+                <DecisionTreeBuilder nodes={intake.decisionTree} onChange={(nodes) => update({ decisionTree: nodes })} />
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+      )}
+
+      {/* Section 7b: Departments (only when multi-department) */}
+      {intake.isMultiDepartment && (
+        <Card>
+          <Collapsible open={openSections[7]}>
+            <CardHeader className="pb-2">
+              <SectionHeader num={7} title="Departments" desc="Configure worksheets and dispatch per department" />
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent>
+                <DepartmentTabs
+                  departments={intake.departments || []}
+                  onChange={(departments) => update({ departments })}
+                  allDispositions={allDispositions}
+                />
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+      )}
 
       {/* Section 8: Skill & Users */}
       <Card>
