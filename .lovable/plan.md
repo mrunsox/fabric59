@@ -1,223 +1,149 @@
 
 
-# Campaign Setup Enhancements: Per-Disposition Email, Multi-Connectors, Skip Logic, and Multi-Department Support
+# White-Label Partner Branding for Campaign Setup
 
-## Context: The AssureWay Pattern
+## Overview
 
-The uploaded AssureWay worksheets reveal a common real-world pattern: **one business with multiple departments**, each needing its own IVR prompt, decision tree/worksheet, and dispatch (email) rules. Currently, this requires building 5 separate campaigns in Five9 with 5 different DIDs. The enhancements below aim to handle this more elegantly.
-
-AssureWay's structure:
-- **Prompt 1:1** -- New Claim (complex branching: YES/NO, policy number validation, claim vs. non-claim paths)
-- **Prompt 1:3** -- Other Coverage Request (similar branching with policy number gate)
-- **Prompt 2** -- Dealership (simpler: dealership YES/NO, collect info, dispatch)
-- **Prompt 3** -- Sales Rep (dropdown-based: rep found vs. not found, different closings based on time of day)
-- **Prompt 4** -- General Inquiry (linear: collect name, phone, email, message)
-
-Each has different dispatch instructions (different email recipients, subject line formats, and data fields).
+When the **White-Label Partner** toggle is turned on, the campaign form will show a partner selector dropdown, a branding preview card, and store the selected partner's organization_id. All outgoing disposition emails will use the partner's branding (logo, colors, from/reply-to addresses) pulled from the organizations table. A new **email template depository** (storage bucket + database table) allows uploading HTML email templates per partner for disposition emails.
 
 ---
 
-## Enhancement 1: Per-Disposition Email Routing
+## What Changes
 
-**Problem:** Currently there's one global set of email fields (template, recipients, reply-to, from) for the entire campaign. In reality, different dispositions need to go to different people/departments.
+### 1. New Database Table: `email_templates`
 
-**Solution:** Replace the single email config with a per-disposition email mapping table.
+Stores HTML disposition email templates per organization (white-label partner).
 
-### Type Changes (`src/types/campaign.ts`)
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| organization_id | uuid | FK to organizations |
+| name | text | e.g. "Default Disposition Email" |
+| html_content | text | Full HTML template with placeholders |
+| is_default | boolean | Default template for this org |
+| created_by | uuid | |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
 
-Add a new interface and update `CampaignIntakeData`:
+RLS: Org members can view, org admins can manage, master/platform admins full access.
 
+### 2. Type Changes (`src/types/campaign.ts`)
+
+Add to `CampaignIntakeData`:
 ```
-interface DispositionEmailConfig {
-  dispositionName: string;
-  emailRecipients: string;   // comma-separated
-  emailReplyTo?: string;
-  emailFrom?: string;
-  emailSubjectTemplate?: string;  // e.g. "CALL from CUSTOMER: NEW CLAIM - {caller_name}"
-}
+whiteLabelOrgId?: string;        // selected partner org ID
+whiteLabelEmailTemplateId?: string; // selected HTML template from depository
 ```
 
-Replace the flat email fields with:
-```
-dispositionEmailConfigs: DispositionEmailConfig[];
-```
+### 3. UI Changes (`CampaignIntakePage.tsx` -- Section 1)
 
-Keep `enableDispositionEmail` as a master toggle.
+When White-Label toggle is ON:
+- Show a **Partner dropdown** (fetches from `organizations` table)
+- Once selected, show a read-only **Branding Preview Card** displaying:
+  - Brand Name
+  - Logo (thumbnail)
+  - Primary Color (color swatch)
+  - From Email
+  - Reply-To Email
+- Show an **Email Template selector** dropdown (fetches from `email_templates` where `organization_id` matches selected partner)
+- Store `whiteLabelOrgId` and `whiteLabelEmailTemplateId` in intake data
 
-### UI Changes (`CampaignIntakePage.tsx` -- Section 5)
+### 4. New Component: `WhiteLabelPartnerSelector.tsx`
 
-When "Enable Disposition Email" is toggled on, show a table/card list where each selected disposition (both existing and new) gets its own row with Recipients, Reply-To, From, and Subject Template fields. A "Copy settings to all" button lets users apply one disposition's email config to all others for the common case.
+Located at `src/components/campaigns/WhiteLabelPartnerSelector.tsx`. Contains:
+- Organization/partner select dropdown
+- Branding preview card (read-only)
+- Email template selector
+
+### 5. Email Template Management Page
+
+Add a simple template management UI accessible from Settings or a new route. Users can:
+- Upload/paste HTML templates per organization
+- Mark one as default
+- Preview the template
+
+This could be a sub-section on the Settings page or a dedicated route like `/admin/settings/email-templates`.
+
+### 6. Provisioning & Email Flow Impact
+
+- When `whiteLabelOrgId` is set, the disposition email sending logic (in edge functions or future email dispatch) will:
+  - Use the partner's `brand_from_email` as the From address
+  - Use the partner's `brand_reply_to` as the Reply-To address
+  - Fetch the selected HTML template from `email_templates` and inject disposition data
+  - Apply partner's `brand_logo_url` and `brand_primary_color` into the template
+- The `DispositionEmailConfig.emailFrom` and `emailReplyTo` fields per-disposition will **default** to the partner's branding but can be overridden per disposition
+
+### 7. Hooks
+
+- `useOrganizations()` -- fetch all organizations for the partner dropdown (already may exist partially)
+- `useEmailTemplates(orgId)` -- fetch templates for a given org
+- `useSaveEmailTemplate()` -- create/update templates
 
 ---
 
-## Enhancement 2: Multiple Connectors
+## Technical Details
 
-**Problem:** Currently there are only 3 fixed connector slots (backend doc, website, script). Real campaigns often need multiple connectors of the same type.
+### Database Migration SQL
 
-**Solution:** Replace the 3 fixed fields with a dynamic list of connector entries.
+```sql
+CREATE TABLE public.email_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  name text NOT NULL,
+  html_content text NOT NULL DEFAULT '',
+  is_default boolean NOT NULL DEFAULT false,
+  created_by uuid,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 
-### Type Changes (`src/types/campaign.ts`)
+ALTER TABLE public.email_templates ENABLE ROW LEVEL SECURITY;
 
-Add:
-```
-interface CampaignConnector {
-  id: string;
-  type: "backend_doc" | "website" | "script" | "custom";
-  name: string;
-  url: string;
-}
-```
+-- RLS policies
+CREATE POLICY "Org members can view email templates"
+  ON public.email_templates FOR SELECT
+  USING (organization_id IN (SELECT get_user_org_ids(auth.uid())));
 
-Replace the flat connector fields in `CampaignIntakeData` with:
-```
-connectors: CampaignConnector[];
-```
+CREATE POLICY "Org admins can manage email templates"
+  ON public.email_templates FOR ALL
+  USING (is_org_owner_or_admin(auth.uid(), organization_id))
+  WITH CHECK (is_org_owner_or_admin(auth.uid(), organization_id));
 
-### UI Changes (`CampaignIntakePage.tsx` -- Section 6)
+CREATE POLICY "Platform admins can manage all email templates"
+  ON public.email_templates FOR ALL
+  USING (has_role(auth.uid(), 'admin'::app_role))
+  WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
 
-Replace the 3 fixed inputs with a dynamic list. Each row has:
-- Type dropdown (Backend Document, Website, Script, Custom)
-- Name input
-- URL input
-- Remove button
+CREATE POLICY "Master admin can manage all email templates"
+  ON public.email_templates FOR ALL
+  USING (is_master_admin(auth.uid()))
+  WITH CHECK (is_master_admin(auth.uid()));
 
-"Add Connector" button at the bottom. Similar pattern to the existing `MultiInput` component but with structured rows.
-
----
-
-## Enhancement 3: Decision Tree Skip/Jump Logic
-
-**Problem:** The current decision tree only supports linear "Go to Q" routing. The AssureWay worksheets show patterns like:
-- "If YES go to 3:1, if NO skip to 3:2" (conditional branching)
-- "If Mon-Fri before 3:30pm say X, after 3:30pm say Y" (time-based conditions)
-- "If caller is in the list go to 3:1, if not go to 3:2" (data-dependent routing)
-- Required field gates ("MUST HAVE a number -- if not provided, end call")
-
-**Solution:** Enhance `DecisionTreeOption` with richer routing capabilities.
-
-### Type Changes (`src/types/campaign.ts`)
-
-Expand `DecisionTreeOption`:
-```
-interface DecisionTreeOption {
-  label: string;
-  nextNodeId: string | null;
-  action?: "transfer" | "disposition" | "escalate" | "end_call" | "skip" | null;
-  actionValue?: string;
-  condition?: string;          // e.g. "before 3:30pm EST", "caller in rep list"
-  skipToNodeId?: string | null; // for skip/jump action
-  isRequired?: boolean;         // gate: must collect data before proceeding
-  fallbackScript?: string;      // optional script for the agent if caller persists
-}
+-- Updated_at trigger
+CREATE TRIGGER update_email_templates_updated_at
+  BEFORE UPDATE ON public.email_templates
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
 ```
 
-Add `isGate` and `gateFailMessage` to `DecisionTreeNode` for required-field validation gates:
-```
-interface DecisionTreeNode {
-  id: string;
-  question: string;
-  notes?: string;
-  dataToCapture?: string;
-  options: DecisionTreeOption[];
-  isGate?: boolean;               // If true, data must be collected to proceed
-  gateFailMessage?: string;       // Script to read if data not provided
-  closingScript?: string;         // Closing statement for this node
-  conditionalClosings?: Array<{   // Time/condition-based closings
-    condition: string;
-    script: string;
-  }>;
-}
-```
+### Files to Create/Modify
 
-### UI Changes (`DecisionTreeBuilder.tsx`)
+| File | Action |
+|------|--------|
+| `src/types/campaign.ts` | Add `whiteLabelOrgId`, `whiteLabelEmailTemplateId` to `CampaignIntakeData` |
+| `src/components/campaigns/WhiteLabelPartnerSelector.tsx` | **New** -- partner dropdown + branding preview + template selector |
+| `src/hooks/useEmailTemplates.ts` | **New** -- CRUD hooks for email_templates table |
+| `src/pages/admin/CampaignIntakePage.tsx` | Import and render `WhiteLabelPartnerSelector` when whiteLabel is toggled on |
+| `src/pages/admin/CampaignIntakePage.tsx` (emptyIntake) | Add default values for new fields |
+| `src/pages/admin/SettingsPage.tsx` | Add "Email Templates" tab/section for template management |
 
-- Add new action types in the dropdown: "End Call" and "Skip to Q" (skip jumps to a node further ahead, unlike "Go to Q" which is sequential)
-- Add a "Condition" text input next to options that appears when any routing is selected -- lets the user describe the condition (e.g., "caller found in rep list", "before 3:30pm EST")
-- Add a "Required Gate" toggle on each question node -- when enabled, shows a "Fail message" textarea (the script to read if data isn't provided)
-- Add a "Closing Script" textarea on each node for closing statements
-- Add a "Conditional Closings" section: add multiple condition+script pairs (e.g., "before 3:30pm" -> one script, "after 3:30pm" -> another)
-- Add a "Fallback/Persistence Script" textarea on options for "if caller persists" scripts
+### Implementation Order
 
----
-
-## Enhancement 4: Multi-Department Campaign Support
-
-**Problem:** Businesses like AssureWay have one main phone number but multiple departments. Currently, this requires creating 5 separate campaigns with 5 separate DIDs. The IVR menu ("Press 1 for claims, 2 for dealerships...") routes to different worksheets and dispatch rules.
-
-**Solution:** Add a "Departments" concept within a single campaign setup that groups IVR prompts, decision trees, and disposition email configs by department.
-
-### Type Changes (`src/types/campaign.ts`)
-
-Add:
-```
-interface CampaignDepartment {
-  id: string;
-  name: string;              // e.g. "New Claim", "Dealership", "Sales Rep"
-  ivrPromptNumber: number;   // IVR menu number (1, 2, 3...)
-  ivrGreeting?: string;      // Department-specific greeting
-  skillName?: string;        // Optional separate skill per department
-  decisionTree: DecisionTreeNode[];
-  dispositionEmailConfigs: DispositionEmailConfig[];
-  dispatchInstructions?: string;  // Free-text dispatch notes
-}
-```
-
-Update `CampaignIntakeData`:
-```
-isMultiDepartment: boolean;
-departments: CampaignDepartment[];
-```
-
-When `isMultiDepartment` is false, the form works exactly as it does today (single decision tree, single set of dispositions). When true, Section 7 (Decision Tree) and Section 5 (Dispositions) become department-scoped with tabs.
-
-### UI Changes
-
-**Section 1 (Basics):** Add a "Multi-Department Campaign" toggle.
-
-**When multi-department is ON:**
-- A new "Departments" section appears (between Prompts and Dispositions)
-- Shows a tabbed interface where each tab is a department
-- "Add Department" button creates new tabs
-- Each department tab has: Name, IVR Prompt Number, optional Skill override, its own Decision Tree Builder, its own Disposition Email configs, and free-text Dispatch Instructions
-- The shared campaign config (phone numbers, schedule, connectors, prompts) remains at the top level since those are common across departments
-- Section 7 (Decision Tree) and Section 5 (Dispositions) are hidden at the top level and moved into each department tab
-
-**When multi-department is OFF:**
-- Everything works as it does today -- no changes
-
-### Five9 Provisioning Impact
-
-For multi-department campaigns, the auto-provisioning flow would:
-1. Create one main campaign (shared)
-2. Create one skill per department (or one shared skill)
-3. Create one campaign profile
-4. The IVR routing (which maps IVR prompt numbers to skills) remains a manual configuration step in Five9
-
----
-
-## Files to Change
-
-| File | Changes |
-|------|---------|
-| `src/types/campaign.ts` | Add `DispositionEmailConfig`, `CampaignConnector`, `CampaignDepartment` interfaces. Update `DecisionTreeOption`, `DecisionTreeNode`, and `CampaignIntakeData` |
-| `src/components/campaigns/DecisionTreeBuilder.tsx` | Add skip/jump actions, condition inputs, gate toggles, closing scripts, conditional closings, fallback scripts |
-| `src/pages/admin/CampaignIntakePage.tsx` | Section 5: per-disposition email table. Section 6: dynamic connector list. Section 1: multi-department toggle. New department tabs UI |
-| `src/components/campaigns/ConnectorList.tsx` | New component: dynamic list of typed connectors with add/remove |
-| `src/components/campaigns/DispositionEmailTable.tsx` | New component: per-disposition email config table |
-| `src/components/campaigns/DepartmentTabs.tsx` | New component: tabbed department editor wrapping decision tree + disposition email configs |
-| `src/pages/admin/CampaignIntakePage.tsx` (emptyIntake) | Update defaults for new fields |
-| `src/data/buildMap.ts` | Add new items for these 4 enhancements |
-
----
-
-## Implementation Order
-
-1. **Types first** -- update all interfaces in `campaign.ts` (backward-compatible with defaults)
-2. **Per-Disposition Email** -- new `DispositionEmailTable` component + Section 5 UI update
-3. **Multiple Connectors** -- new `ConnectorList` component + Section 6 UI update
-4. **Skip/Jump Logic** -- enhance `DecisionTreeBuilder` with new fields
-5. **Multi-Department** -- new `DepartmentTabs` component + Section 1 toggle + conditional rendering
-6. **Build Map** -- update outline with new items
-
-All changes are backward-compatible: existing campaign data (which has the old flat fields) will still load correctly since new fields default to empty arrays/false.
+1. Database migration (create `email_templates` table)
+2. Types update (`campaign.ts`)
+3. `useEmailTemplates` hook
+4. `WhiteLabelPartnerSelector` component
+5. Integrate into `CampaignIntakePage.tsx` Section 1
+6. Email template management UI in Settings
+7. Update `emptyIntake` defaults
 
