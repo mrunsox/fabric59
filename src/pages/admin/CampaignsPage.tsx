@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCampaignSetups } from "@/hooks/useCampaignSetup";
-import { Plus, Megaphone } from "lucide-react";
+import { Plus, Megaphone, Archive } from "lucide-react";
 import { DEFAULT_CHECKLIST } from "@/types/campaign";
 import { format } from "date-fns";
 
@@ -33,9 +33,14 @@ export default function CampaignsPage() {
           </h1>
           <p className="text-sm text-muted-foreground">Manage inbound campaign setups and provisioning</p>
         </div>
-        <Button asChild className="gap-2">
-          <Link to="/admin/campaigns/new"><Plus className="h-4 w-4" /> New Campaign</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild className="gap-2">
+            <Link to="/admin/campaigns/archived"><Archive className="h-4 w-4" /> Archived</Link>
+          </Button>
+          <Button asChild className="gap-2">
+            <Link to="/admin/campaigns/new"><Plus className="h-4 w-4" /> New Campaign</Link>
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (

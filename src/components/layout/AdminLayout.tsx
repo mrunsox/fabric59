@@ -22,6 +22,7 @@ import {
   Workflow,
   Megaphone,
   LayoutDashboard,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -61,6 +62,7 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Clients", href: "/admin", icon: Building2, permission: "tenants" },
       { name: "Dispositions", href: "/admin/dispositions", icon: ListPlus, permission: "domains" },
       { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone, permission: "domains" },
+      { name: "Reports", href: "/admin/reports", icon: BarChart3, permission: "domains" },
     ],
   },
   {

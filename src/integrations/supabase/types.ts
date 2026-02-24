@@ -225,6 +225,78 @@ export type Database = {
         }
         Relationships: []
       }
+      call_log_cache: {
+        Row: {
+          call_data: Json
+          call_timestamp: string
+          fetched_at: string
+          five9_domain_id: string | null
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          call_data?: Json
+          call_timestamp: string
+          fetched_at?: string
+          five9_domain_id?: string | null
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          call_data?: Json
+          call_timestamp?: string
+          fetched_at?: string
+          five9_domain_id?: string | null
+          id?: string
+          organization_id?: string
+        }
+        Relationships: []
+      }
+      campaign_archives: {
+        Row: {
+          archived_at: string
+          archived_by: string | null
+          campaign_name: string
+          campaign_setup_id: string | null
+          client_name: string | null
+          config_snapshot: Json
+          deprovisioning_log: Json
+          five9_domain_id: string | null
+          id: string
+          organization_id: string
+          restore_notes: string | null
+          status: string
+        }
+        Insert: {
+          archived_at?: string
+          archived_by?: string | null
+          campaign_name: string
+          campaign_setup_id?: string | null
+          client_name?: string | null
+          config_snapshot?: Json
+          deprovisioning_log?: Json
+          five9_domain_id?: string | null
+          id?: string
+          organization_id: string
+          restore_notes?: string | null
+          status?: string
+        }
+        Update: {
+          archived_at?: string
+          archived_by?: string | null
+          campaign_name?: string
+          campaign_setup_id?: string | null
+          client_name?: string | null
+          config_snapshot?: Json
+          deprovisioning_log?: Json
+          five9_domain_id?: string | null
+          id?: string
+          organization_id?: string
+          restore_notes?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       campaign_setups: {
         Row: {
           campaign_name: string
@@ -276,6 +348,30 @@ export type Database = {
           status?: string
           target_go_live?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      disposition_access: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          disposition_name: string
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          disposition_name: string
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          disposition_name?: string
+          id?: string
+          organization_id?: string
         }
         Relationships: []
       }
@@ -686,6 +782,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      scheduled_reports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date_range_type: string
+          export_format: string
+          filters: Json
+          five9_report_id: string | null
+          frequency: string
+          id: string
+          last_run_at: string | null
+          organization_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date_range_type?: string
+          export_format?: string
+          filters?: Json
+          five9_report_id?: string | null
+          frequency?: string
+          id?: string
+          last_run_at?: string | null
+          organization_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date_range_type?: string
+          export_format?: string
+          filters?: Json
+          five9_report_id?: string | null
+          frequency?: string
+          id?: string
+          last_run_at?: string | null
+          organization_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       tenants: {
         Row: {

@@ -38,6 +38,8 @@ import IntegrationsPage from "@/pages/admin/IntegrationsPage";
 import CampaignsPage from "@/pages/admin/CampaignsPage";
 import CampaignIntakePage from "@/pages/admin/CampaignIntakePage";
 import CampaignDetailPage from "@/pages/admin/CampaignDetailPage";
+import ArchivedCampaignsPage from "@/pages/admin/ArchivedCampaignsPage";
+import ReportsPage from "@/pages/admin/ReportsPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
@@ -100,6 +102,8 @@ const App = () => (
                 <Route path="campaigns/new" element={<CampaignIntakePage />} />
                 <Route path="campaigns/edit/:id" element={<CampaignIntakePage />} />
                 <Route path="campaigns/:id" element={<CampaignDetailPage />} />
+                <Route path="campaigns/archived" element={<ArchivedCampaignsPage />} />
+                <Route path="reports" element={<ReportsPage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
