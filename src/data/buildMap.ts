@@ -223,4 +223,83 @@ export const buildMap: BuildCategory[] = [
       { name: "Semantic HTML Landmarks", description: "Main, nav, section aria-labels for AXO/VLM", status: "done", tested: true },
     ],
   },
+  {
+    name: "Report59 — Advanced Reporting",
+    items: [
+      { name: "CSV/XLSX Upload Parser", description: "Drag-drop file upload with column detection and preview", status: "planned" },
+      { name: "Column Exclusion Editor", description: "Select/deselect columns before import with saved presets", status: "planned" },
+      { name: "KPI Dashboard Cards", description: "Real-time stat cards for call volume, handle time, SLA, abandonment", status: "planned" },
+      { name: "Automation Status Monitor", description: "Visual status of post-call automations (email, CRM push, SMS)", status: "planned" },
+      { name: "Report Charts", description: "Recharts visualizations (bar, line, pie) for uploaded/live data", status: "planned" },
+      { name: "Report Templates", description: "Saved report configurations with one-click regeneration", status: "planned" },
+    ],
+  },
+  {
+    name: "Scripter Runtime",
+    items: [
+      { name: "Script Preview Console", description: "Retro monospace terminal-style script viewer for active calls", status: "planned" },
+      { name: "Script Wizard Mode", description: "Step-by-step guided script flow with branching navigation", status: "planned" },
+      { name: "Call Timer Widget", description: "Live call duration timer with hold/transfer/ACW phase tracking", status: "planned" },
+      { name: "Knowledge Base Sidebar", description: "Collapsible sidebar with searchable KB articles during calls", status: "planned" },
+      { name: "After-Call Work (ACW) Panel", description: "Post-call disposition entry, notes, and wrap-up form", status: "planned" },
+      { name: "Callback Scheduler", description: "Schedule follow-up callbacks with date/time and notes", status: "planned" },
+      { name: "Script Variable Injection", description: "Auto-populate script fields from Five9 call variables", status: "planned" },
+    ],
+  },
+  {
+    name: "Agent Dashboard",
+    items: [
+      { name: "Agent Task Queue", description: "Personal task list with priority, due dates, and status", status: "planned" },
+      { name: "Call History Table", description: "Agent's own call log with disposition, duration, timestamps", status: "planned" },
+      { name: "Training Widget", description: "Embedded training modules with progress tracking", status: "planned" },
+      { name: "Performance Stats Cards", description: "Personal metrics: calls handled, avg handle time, adherence", status: "planned" },
+      { name: "Retro Bento Grid Layout", description: "Responsive bento-style grid with monospace/terminal aesthetic", status: "planned" },
+    ],
+  },
+  {
+    name: "Supervisor Views",
+    items: [
+      { name: "Live Agent Status Board", description: "Real-time view of agent states (available, on-call, ACW, break)", status: "planned" },
+      { name: "Script Management Panel", description: "View/edit/assign scripts to campaigns from supervisor view", status: "planned" },
+      { name: "Disposition Stats Dashboard", description: "Real-time disposition breakdown charts per campaign", status: "planned" },
+      { name: "Agent Performance Rankings", description: "Leaderboard with key metrics and trend indicators", status: "planned" },
+      { name: "Queue Monitor", description: "Live queue depth, wait times, and service level indicators", status: "planned" },
+    ],
+  },
+  {
+    name: "QA & Analytics",
+    items: [
+      { name: "Script Path Analysis", description: "Visualize which script branches agents follow most", status: "planned" },
+      { name: "Script Completion Rates", description: "Track percentage of scripts completed vs. abandoned", status: "planned" },
+      { name: "Call Quality Scoring", description: "Configurable scoring rubric for call evaluations", status: "planned" },
+      { name: "QA Review Queue", description: "Flagged calls for supervisor review with annotation tools", status: "planned" },
+    ],
+  },
+  {
+    name: "Billing Module",
+    items: [
+      { name: "Per-Minute Rate Config", description: "Set billing rates per client/partner with tier support", status: "planned" },
+      { name: "Invoice Generator", description: "Auto-generate invoices from call duration data", status: "planned" },
+      { name: "Invoice History", description: "Searchable list of all invoices with status and PDF download", status: "planned" },
+      { name: "Partner Billing Rollup", description: "Aggregate billing across a partner's clients", status: "planned" },
+      { name: "Stripe Integration", description: "Connect Stripe for payment processing and subscription management", status: "planned" },
+    ],
+  },
+  {
+    name: "Post-Call Automations",
+    items: [
+      { name: "AI Email Summary", description: "Generate and send AI-powered call summary emails post-call", status: "planned" },
+      { name: "SMS Notifications", description: "Trigger SMS alerts via Twilio on specific dispositions", status: "planned" },
+      { name: "Push Notifications", description: "Browser/mobile push for urgent call outcomes", status: "planned" },
+      { name: "Automation Rules Engine", description: "Configure trigger conditions and action chains per campaign", status: "planned" },
+    ],
+  },
+  {
+    name: "Platform Utilities",
+    items: [
+      { name: "AI59 Import Tool", description: "Import scripts, templates, and configs from AI59 exports", status: "planned" },
+      { name: "Pabbly Five9 Auth Bridge", description: "Proxy Five9 admin login via Pabbly for restricted API access", status: "planned" },
+      { name: "Role-Based View Switcher", description: "Sidebar role switcher (Agent/Supervisor/Admin/Client views)", status: "planned" },
+    ],
+  },
 ];
