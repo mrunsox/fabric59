@@ -472,6 +472,109 @@ serve(async (req) => {
       }
       responseData = { success: true, results };
 
+    } else if (action === 'getCampaignConfig') {
+      // Fetch full campaign configuration for archiving snapshot
+      const { campaignName } = payload;
+      const config: Record<string, unknown> = {};
+
+      // Get campaign DNIS
+      try {
+        const dnisBody = `<ser:getCampaignDNISList>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+</ser:getCampaignDNISList>`;
+        const dnisXml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getCampaignDNISList', dnisBody);
+        config.dnisList = extractValues(dnisXml, 'number');
+      } catch { config.dnisList = []; }
+
+      // Get campaign skills
+      try {
+        const skillsBody = `<ser:getInboundCampaign>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+</ser:getInboundCampaign>`;
+        const skillsXml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getInboundCampaign', skillsBody);
+        config.skills = extractValues(skillsXml, 'skillName');
+        config.state = extractFirst(skillsXml, 'state');
+        config.profileName = extractFirst(skillsXml, 'profileName');
+        config.description = extractFirst(skillsXml, 'description');
+      } catch { config.skills = []; }
+
+      // Get campaign dispositions
+      try {
+        const dispoBody = `<ser:getCampaignDispositions>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+</ser:getCampaignDispositions>`;
+        const dispoXml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getCampaignDispositions', dispoBody);
+        config.dispositions = extractValues(dispoXml, 'name');
+      } catch { config.dispositions = []; }
+
+      responseData = { success: true, config };
+
+    } else if (action === 'removeDNISFromCampaign') {
+      const { campaignName, dnisList } = payload;
+      const results: Array<{ dnis: string; success: boolean; error?: string }> = [];
+      for (const dnis of (dnisList as string[])) {
+        try {
+          const soapBody = `<ser:removeDNISFromCampaign>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+  <DNISList>
+    <number>${escapeXml(dnis)}</number>
+  </DNISList>
+</ser:removeDNISFromCampaign>`;
+          await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'removeDNISFromCampaign', soapBody);
+          results.push({ dnis, success: true });
+        } catch (err) {
+          results.push({ dnis, success: false, error: err instanceof Error ? err.message : 'Unknown error' });
+        }
+      }
+      responseData = { success: true, results };
+
+    } else if (action === 'removeSkillsFromCampaign') {
+      const { campaignName, skills } = payload;
+      const skillsXml = (skills as string[]).map(s => `<skills>${escapeXml(s)}</skills>`).join('\n  ');
+      const soapBody = `<ser:removeSkillsFromCampaign>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+  ${skillsXml}
+</ser:removeSkillsFromCampaign>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'removeSkillsFromCampaign', soapBody);
+      responseData = { success: true };
+
+    } else if (action === 'removeUsersFromSkill') {
+      const { skillName, usernames } = payload;
+      const results: Array<{ username: string; success: boolean; error?: string }> = [];
+      for (const username of (usernames as string[])) {
+        try {
+          const soapBody = `<ser:removeSkillsFromUser>
+  <username>${escapeXml(username)}</username>
+  <skills>
+    <skillName>${escapeXml(skillName)}</skillName>
+  </skills>
+</ser:removeSkillsFromUser>`;
+          await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'removeSkillsFromUser', soapBody);
+          results.push({ username, success: true });
+        } catch (err) {
+          results.push({ username, success: false, error: err instanceof Error ? err.message : 'Unknown error' });
+        }
+      }
+      responseData = { success: true, results };
+
+    } else if (action === 'stopCampaign') {
+      const { campaignName } = payload;
+      const soapBody = `<ser:stopCampaign>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+</ser:stopCampaign>`;
+      try {
+        await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'stopCampaign', soapBody);
+        responseData = { success: true };
+      } catch (err) {
+        // Campaign might already be stopped
+        const msg = err instanceof Error ? err.message : '';
+        if (msg.toLowerCase().includes('not running') || msg.toLowerCase().includes('already')) {
+          responseData = { success: true, note: 'Campaign was already stopped' };
+        } else {
+          throw err;
+        }
+      }
+
     } else {
       responseData = { success: false, error: `Unknown action: ${action}` };
     }

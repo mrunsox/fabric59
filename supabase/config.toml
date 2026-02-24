@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.invite-member]
 verify_jwt = false
+
+[functions.five9-reporting]
+verify_jwt = false
+
+[functions.report-export]
+verify_jwt = false

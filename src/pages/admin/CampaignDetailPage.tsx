@@ -2,13 +2,16 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useCampaignSetup, useUpdateChecklist, useAutoProvision } from "@/hooks/useCampaignSetup";
 import type { ProvisioningStep } from "@/hooks/useCampaignSetup";
+import { useArchiveCampaign, type ArchiveStep } from "@/hooks/useCampaignArchive";
 import { CampaignChecklist } from "@/components/campaigns/CampaignChecklist";
+import { ArchiveConfirmDialog } from "@/components/campaigns/ArchiveConfirmDialog";
+import { ArchiveWorkflowModal } from "@/components/campaigns/ArchiveWorkflowModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Pencil, ArrowLeft, Rocket, Loader2, CheckCircle2, CloudOff } from "lucide-react";
+import { Pencil, ArrowLeft, Rocket, Loader2, CheckCircle2, CloudOff, Archive } from "lucide-react";
 import type { CampaignIntakeData } from "@/types/campaign";
 
 export default function CampaignDetailPage() {
@@ -16,8 +19,12 @@ export default function CampaignDetailPage() {
   const { data: campaign, isLoading } = useCampaignSetup(id);
   const updateChecklist = useUpdateChecklist();
   const provisionMutation = useAutoProvision();
+  const archiveMutation = useArchiveCampaign();
 
   const [showProvisionModal, setShowProvisionModal] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [showArchiveWorkflow, setShowArchiveWorkflow] = useState(false);
+  const [archiveSteps, setArchiveSteps] = useState<ArchiveStep[]>([]);
   const [provisionSteps, setProvisionSteps] = useState<ProvisioningStep[]>([]);
 
   if (isLoading) return <p className="text-muted-foreground p-6">Loading...</p>;
@@ -65,6 +72,21 @@ export default function CampaignDetailPage() {
   };
 
   const canProvision = campaign.status === "submitted" || campaign.status === "draft";
+  const canArchive = campaign.status === "live" || campaign.status === "provisioned" || campaign.status === "submitted" || campaign.status === "draft";
+
+  const handleArchive = async () => {
+    setShowArchiveConfirm(false);
+    setShowArchiveWorkflow(true);
+    await archiveMutation.mutateAsync({
+      campaignId: campaign.id,
+      campaignName: campaign.campaign_name,
+      clientName: campaign.client_name,
+      organizationId: campaign.organization_id,
+      fiveDomainId: campaign.five9_domain_id,
+      intakeData: intake as unknown as Record<string, unknown>,
+      onProgress: setArchiveSteps,
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -78,6 +100,11 @@ export default function CampaignDetailPage() {
         {canProvision && (
           <Button size="sm" onClick={handleRunProvisioning} disabled={provisionMutation.isPending} className="gap-1.5">
             <Rocket className="h-3.5 w-3.5" /> Provision
+          </Button>
+        )}
+        {canArchive && campaign.status !== "archived" && (
+          <Button variant="outline" size="sm" onClick={() => setShowArchiveConfirm(true)} className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10">
+            <Archive className="h-3.5 w-3.5" /> Archive
           </Button>
         )}
         <Button variant="outline" size="sm" asChild className="gap-1.5">
@@ -236,6 +263,19 @@ export default function CampaignDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Archive Confirm & Workflow */}
+      <ArchiveConfirmDialog
+        open={showArchiveConfirm}
+        onOpenChange={setShowArchiveConfirm}
+        campaignName={campaign.campaign_name}
+        onConfirm={handleArchive}
+      />
+      <ArchiveWorkflowModal
+        open={showArchiveWorkflow}
+        onOpenChange={setShowArchiveWorkflow}
+        steps={archiveSteps}
+      />
     </div>
   );
 }
