@@ -292,6 +292,10 @@ export const buildMap: BuildCategory[] = [
       { name: "SMS Notifications", description: "Trigger SMS alerts via Twilio on specific dispositions", status: "planned" },
       { name: "Push Notifications", description: "Browser/mobile push for urgent call outcomes", status: "planned" },
       { name: "Automation Rules Engine", description: "Configure trigger conditions and action chains per campaign", status: "planned" },
+      { name: "Urgency-Based Channel Routing", description: "Add urgency level (LOW/NORMAL/HIGH) to notification payloads; HIGH prefers real-time channels (SMS/Slack), LOW uses email only", status: "planned" },
+      { name: "Quiet Hours per Organization", description: "Per-org quiet hours window (start/end time + timezone); non-HIGH notifications delayed until window ends", status: "planned" },
+      { name: "Channel Preference & Fallback", description: "Primary/secondary channel selection per org with automatic fallback when primary fails (Slack → SMS → Email)", status: "planned" },
+      { name: "Disposition-to-Channel Mapping", description: "Extend disposition email engine so each disposition can trigger specific notification channels beyond email", status: "planned" },
     ],
   },
   {
