@@ -1,128 +1,74 @@
 
 
-# Add SaaS Feature Roadmap to Build Outline
+# Notification Hub Enhancements -- Add to Build Outline
 
-## Overview
+## Analysis Summary
 
-After analyzing the prompt against the current build map (15 categories, ~130 items), I identified 8 major new feature areas to add. Everything else in the prompt is already built or covered by existing categories.
+The provided prompt contains a full multi-channel notification routing engine. After comparing against our existing code, most of the infrastructure is already built or not applicable to our stack. However, 5 specific enhancements would meaningfully improve our existing `send-notification` flow and integrate cleanly with our disposition email engine.
 
-## New Build Map Categories
+## What We Already Have (No Action Needed)
 
-### 1. Report59 -- Advanced Reporting (6 items)
+- `send-notification` edge function dispatching to Slack, Zapier, Make, Pabbly, n8n
+- `five9-webhook` receiving events and triggering downstream notifications
+- `twilio-sms` edge function (stub, ready for wiring)
+- Per-tenant `notification_triggers` boolean toggles
+- `notifications` table logging all attempts
 
-Extends the existing Reports page with upload-based reporting, KPI dashboards, and automation monitoring.
+## What We Discard (Not Logical for Our Flow)
 
-| Item | Description | Status |
-|------|-------------|--------|
-| CSV/XLSX Upload Parser | Drag-drop file upload with column detection and preview | planned |
-| Column Exclusion Editor | Select/deselect columns before import with saved presets | planned |
-| KPI Dashboard Cards | Real-time stat cards for call volume, handle time, SLA, abandonment | planned |
-| Automation Status Monitor | Visual status of post-call automations (email, CRM push, SMS) | planned |
-| Report Charts | Recharts visualizations (bar, line, pie) for uploaded/live data | planned |
-| Report Templates | Saved report configurations with one-click regeneration | planned |
+- WhatsApp channel (no Five9 Digital Engagement integration)
+- WEB_PUSH and MOBILE_PUSH (no PWA or native app)
+- Five9 Automated Messaging Service actions (we use webhooks, not Five9's messaging stack)
+- User-level `has_mobile_app`, `whatsapp_number` fields
+- The complex JSON routing decision output format (our `send-notification` already handles dispatch internally)
+- "Virtual receptionist" entity model (Client/User/NotificationPreference as separate tables -- our tenant/org model already covers this)
 
-### 2. Scripter Runtime (7 items)
+## What to Add to `/outline` (5 Items)
 
-An agent-facing call script console -- the core tool agents use during live calls.
+These integrate into the existing **"Post-Call Automations"** category in the build map, replacing the generic items with more specific, actionable ones:
 
-| Item | Description | Status |
-|------|-------------|--------|
-| Script Preview Console | Retro monospace terminal-style script viewer for active calls | planned |
-| Script Wizard Mode | Step-by-step guided script flow with branching navigation | planned |
-| Call Timer Widget | Live call duration timer with hold/transfer/ACW phase tracking | planned |
-| Knowledge Base Sidebar | Collapsible sidebar with searchable KB articles during calls | planned |
-| After-Call Work (ACW) Panel | Post-call disposition entry, notes, and wrap-up form | planned |
-| Callback Scheduler | Schedule follow-up callbacks with date/time and notes | planned |
-| Script Variable Injection | Auto-populate script fields from Five9 call variables | planned |
-
-### 3. Agent Dashboard (5 items)
-
-A personalized retro-styled dashboard for individual agents (extends the existing User Dashboard).
+### New Items for "Post-Call Automations" Category
 
 | Item | Description | Status |
 |------|-------------|--------|
-| Agent Task Queue | Personal task list with priority, due dates, and status | planned |
-| Call History Table | Agent's own call log with disposition, duration, timestamps | planned |
-| Training Widget | Embedded training modules with progress tracking | planned |
-| Performance Stats Cards | Personal metrics: calls handled, avg handle time, adherence | planned |
-| Retro Bento Grid Layout | Responsive bento-style grid with monospace/terminal aesthetic | planned |
+| Urgency-Based Channel Routing | Add urgency level (LOW/NORMAL/HIGH) to notification payloads; HIGH-urgency events prefer real-time channels (SMS/Slack), LOW uses email only | planned |
+| Quiet Hours per Organization | Per-org quiet hours window (start/end time + timezone); non-HIGH notifications are delayed until window ends | planned |
+| Channel Preference & Fallback | Primary/secondary channel selection per org with automatic fallback when primary fails (Slack -> SMS -> Email) | planned |
+| Disposition-to-Channel Mapping | Extend disposition email engine so each disposition can trigger specific notification channels beyond email | planned |
 
-### 4. Supervisor Views (5 items)
-
-Real-time monitoring dashboards for team leads and supervisors.
-
-| Item | Description | Status |
-|------|-------------|--------|
-| Live Agent Status Board | Real-time view of agent states (available, on-call, ACW, break) | planned |
-| Script Management Panel | View/edit/assign scripts to campaigns from supervisor view | planned |
-| Disposition Stats Dashboard | Real-time disposition breakdown charts per campaign | planned |
-| Agent Performance Rankings | Leaderboard with key metrics and trend indicators | planned |
-| Queue Monitor | Live queue depth, wait times, and service level indicators | planned |
-
-### 5. QA & Analytics (4 items)
-
-Quality assurance tools for analyzing script adherence and call outcomes.
-
-| Item | Description | Status |
-|------|-------------|--------|
-| Script Path Analysis | Visualize which script branches agents follow most | planned |
-| Script Completion Rates | Track percentage of scripts completed vs. abandoned | planned |
-| Call Quality Scoring | Configurable scoring rubric for call evaluations | planned |
-| QA Review Queue | Flagged calls for supervisor review with annotation tools | planned |
-
-### 6. Billing Module (5 items)
-
-Per-minute billing and invoice management, Stripe-ready.
-
-| Item | Description | Status |
-|------|-------------|--------|
-| Per-Minute Rate Config | Set billing rates per client/partner with tier support | planned |
-| Invoice Generator | Auto-generate invoices from call duration data | planned |
-| Invoice History | Searchable list of all invoices with status and PDF download | planned |
-| Partner Billing Rollup | Aggregate billing across a partner's clients | planned |
-| Stripe Integration | Connect Stripe for payment processing and subscription management | planned |
-
-### 7. Post-Call Automations (4 items)
-
-Automated actions triggered after call completion.
-
-| Item | Description | Status |
-|------|-------------|--------|
-| AI Email Summary | Generate and send AI-powered call summary emails post-call | planned |
-| SMS Notifications | Trigger SMS alerts via Twilio on specific dispositions | planned |
-| Push Notifications | Browser/mobile push for urgent call outcomes | planned |
-| Automation Rules Engine | Configure trigger conditions and action chains per campaign | planned |
-
-### 8. Platform Utilities (3 items)
-
-Cross-cutting infrastructure features.
-
-| Item | Description | Status |
-|------|-------------|--------|
-| AI59 Import Tool | Import scripts, templates, and configs from AI59 exports | planned |
-| Pabbly Five9 Auth Bridge | Proxy Five9 admin login via Pabbly for restricted API access | planned |
-| Role-Based View Switcher | Sidebar role switcher (Agent/Supervisor/Admin/Client views) | planned |
+The existing items "SMS Notifications", "Push Notifications", and "Automation Rules Engine" remain as-is since they cover different scope (Twilio wiring, browser push, and rule builder UI respectively). "AI Email Summary" also stays.
 
 ## Technical Details
 
 ### File: `src/data/buildMap.ts`
 
-Append 8 new `BuildCategory` entries to the `buildMap` array, adding 39 new planned items. All items will have `status: "planned"`. No existing categories or items will be modified.
+Update the "Post-Call Automations" category (lines 288-295) to insert the 4 new items alongside the existing 4, bringing the category to 8 items total.
 
-### No Other Changes
+### No Other File Changes
 
-- No database changes
+- No database migrations (those come when we build these features)
 - No edge function changes
-- No route changes
-- Only the build map data file is updated
+- No UI changes
+- This is strictly a build outline update
 
-## Summary
+## Updated Category After Change
+
+```text
+Post-Call Automations (8 items)
+  [planned] AI Email Summary
+  [planned] SMS Notifications
+  [planned] Push Notifications
+  [planned] Automation Rules Engine
+  [planned] Urgency-Based Channel Routing      <-- NEW
+  [planned] Quiet Hours per Organization        <-- NEW
+  [planned] Channel Preference & Fallback       <-- NEW
+  [planned] Disposition-to-Channel Mapping      <-- NEW
+```
+
+## Impact on Outline Totals
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Categories | 15 | 23 |
-| Total Items | ~130 | ~169 |
-| Done | ~130 | ~130 |
-| Planned | 0 | 39 |
-| Progress | ~100% | ~77% |
+| Total Items | ~169 | ~173 |
+| Planned | 39 | 43 |
 
