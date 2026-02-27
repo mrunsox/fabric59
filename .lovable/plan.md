@@ -1,74 +1,79 @@
 
 
-# Notification Hub Enhancements -- Add to Build Outline
+# Five9 File Upload and Parsing Engine -- Refine Report59 Outline Items
 
-## Analysis Summary
+## Analysis
 
-The provided prompt contains a full multi-channel notification routing engine. After comparing against our existing code, most of the infrastructure is already built or not applicable to our stack. However, 5 specific enhancements would meaningfully improve our existing `send-notification` flow and integrate cleanly with our disposition email engine.
+The prompt provides implementation details for features already planned under the **Report59 -- Advanced Reporting** category. After cross-referencing with existing code, here is what overlaps and what is new.
 
-## What We Already Have (No Action Needed)
+### Already Built (Discard from prompt)
 
-- `send-notification` edge function dispatching to Slack, Zapier, Make, Pabbly, n8n
-- `five9-webhook` receiving events and triggering downstream notifications
-- `twilio-sms` edge function (stub, ready for wiring)
-- Per-tenant `notification_triggers` boolean toggles
-- `notifications` table logging all attempts
+| Prompt Feature | Existing Code |
+|---|---|
+| `CallRecord` type with 7 fields | `CallLogRecord` in `src/hooks/useCallLogs.ts` (7 fields) |
+| CSV/XLSX/PDF export | `report-export` edge function + `exportCallLogs()` |
+| Searchable, filterable, paginated table | `ReportsPage.tsx` + `CallLogTable.tsx` + `ReportFilters.tsx` |
+| Disposition filtering | Already in `ReportsPage.tsx` with gating config |
+| Route and sidebar nav for reports | `/admin/reports` route + sidebar "Reports" link |
 
-## What We Discard (Not Logical for Our Flow)
+### Genuinely New (Keep from prompt)
 
-- WhatsApp channel (no Five9 Digital Engagement integration)
-- WEB_PUSH and MOBILE_PUSH (no PWA or native app)
-- Five9 Automated Messaging Service actions (we use webhooks, not Five9's messaging stack)
-- User-level `has_mobile_app`, `whatsapp_number` fields
-- The complex JSON routing decision output format (our `send-notification` already handles dispatch internally)
-- "Virtual receptionist" entity model (Client/User/NotificationPreference as separate tables -- our tenant/org model already covers this)
+| Feature | Maps To Existing Planned Item |
+|---|---|
+| Drag-drop file upload zone with progress bar | "CSV/XLSX Upload Parser" (refine description) |
+| Five9 column mapper (30+ mappings, header auto-detect, metadata extraction) | "CSV/XLSX Upload Parser" (refine description) |
+| Disposition exclusion toggle (click to exclude, shows count) | "Column Exclusion Editor" (refine description) |
+| Analytics tab with summary cards + bar chart + caller frequency | "KPI Dashboard Cards" + "Report Charts" (refine descriptions) |
+| Upload history tracking | New item to add |
+| Upload page as separate route | New item to add |
 
-## What to Add to `/outline` (5 Items)
+### Dependencies
 
-These integrate into the existing **"Post-Call Automations"** category in the build map, replacing the generic items with more specific, actionable ones:
+The prompt calls for `papaparse`, `xlsx`, and `zustand` as new npm dependencies. These are all client-side libraries that are reasonable additions:
+- `papaparse` for CSV parsing
+- `xlsx` (SheetJS) for Excel file parsing  
+- `zustand` for lightweight upload history state (alternative: use existing React Query + database persistence)
 
-### New Items for "Post-Call Automations" Category
+## Proposed Changes to Build Outline
 
-| Item | Description | Status |
-|------|-------------|--------|
-| Urgency-Based Channel Routing | Add urgency level (LOW/NORMAL/HIGH) to notification payloads; HIGH-urgency events prefer real-time channels (SMS/Slack), LOW uses email only | planned |
-| Quiet Hours per Organization | Per-org quiet hours window (start/end time + timezone); non-HIGH notifications are delayed until window ends | planned |
-| Channel Preference & Fallback | Primary/secondary channel selection per org with automatic fallback when primary fails (Slack -> SMS -> Email) | planned |
-| Disposition-to-Channel Mapping | Extend disposition email engine so each disposition can trigger specific notification channels beyond email | planned |
+Update the **Report59 -- Advanced Reporting** category in `src/data/buildMap.ts` to refine existing items and add 2 new items, bringing the category from 6 to 8 items.
 
-The existing items "SMS Notifications", "Push Notifications", and "Automation Rules Engine" remain as-is since they cover different scope (Twilio wiring, browser push, and rule builder UI respectively). "AI Email Summary" also stays.
+### Updated Category
 
-## Technical Details
+```text
+Report59 -- Advanced Reporting (8 items)
+  [planned] Five9 CSV/XLSX Upload Parser        <-- REFINED (was generic "CSV/XLSX Upload Parser")
+  [planned] Disposition Exclusion Manager        <-- REFINED (was "Column Exclusion Editor")  
+  [planned] Upload Analytics Dashboard           <-- REFINED (was "KPI Dashboard Cards")
+  [planned] Automation Status Monitor            <-- UNCHANGED
+  [planned] Report Charts                        <-- UNCHANGED
+  [planned] Report Templates                     <-- UNCHANGED
+  [planned] Upload Page & Route                  <-- NEW
+  [planned] Upload History Tracker               <-- NEW
+```
 
-### File: `src/data/buildMap.ts`
+### Item Details
 
-Update the "Post-Call Automations" category (lines 288-295) to insert the 4 new items alongside the existing 4, bringing the category to 8 items total.
+| Item | Description (updated) |
+|---|---|
+| Five9 CSV/XLSX Upload Parser | Drag-drop file upload with Five9 column mapping (30+ fields), auto header detection, metadata extraction, and progress bar |
+| Disposition Exclusion Manager | Toggle dispositions to exclude from analysis with count display and before/after comparison |
+| Upload Analytics Dashboard | Summary cards (total calls, minutes, avg duration, unique agents) with Recharts bar chart and caller frequency table |
+| Upload Page & Route | Dedicated /admin/upload page with drag-drop zone, data table tab, and analytics tab |
+| Upload History Tracker | Track upload events (file name, campaign, date range, totals) with Zustand or DB persistence |
 
 ### No Other File Changes
 
-- No database migrations (those come when we build these features)
+- No database migrations
 - No edge function changes
-- No UI changes
-- This is strictly a build outline update
-
-## Updated Category After Change
-
-```text
-Post-Call Automations (8 items)
-  [planned] AI Email Summary
-  [planned] SMS Notifications
-  [planned] Push Notifications
-  [planned] Automation Rules Engine
-  [planned] Urgency-Based Channel Routing      <-- NEW
-  [planned] Quiet Hours per Organization        <-- NEW
-  [planned] Channel Preference & Fallback       <-- NEW
-  [planned] Disposition-to-Channel Mapping      <-- NEW
-```
+- No route changes yet (those come during implementation)
+- Only the build map data file is updated
 
 ## Impact on Outline Totals
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Total Items | ~169 | ~173 |
-| Planned | 39 | 43 |
+| Report59 Items | 6 | 8 |
+| Total Items | ~173 | ~175 |
+| Planned | 43 | 45 |
 
