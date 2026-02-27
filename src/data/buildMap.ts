@@ -226,12 +226,14 @@ export const buildMap: BuildCategory[] = [
   {
     name: "Report59 — Advanced Reporting",
     items: [
-      { name: "CSV/XLSX Upload Parser", description: "Drag-drop file upload with column detection and preview", status: "planned" },
-      { name: "Column Exclusion Editor", description: "Select/deselect columns before import with saved presets", status: "planned" },
-      { name: "KPI Dashboard Cards", description: "Real-time stat cards for call volume, handle time, SLA, abandonment", status: "planned" },
+      { name: "Five9 CSV/XLSX Upload Parser", description: "Drag-drop file upload with Five9 column mapping (30+ fields), auto header detection, metadata extraction, and progress bar", status: "planned" },
+      { name: "Disposition Exclusion Manager", description: "Toggle dispositions to exclude from analysis with count display and before/after comparison", status: "planned" },
+      { name: "Upload Analytics Dashboard", description: "Summary cards (total calls, minutes, avg duration, unique agents) with Recharts bar chart and caller frequency table", status: "planned" },
       { name: "Automation Status Monitor", description: "Visual status of post-call automations (email, CRM push, SMS)", status: "planned" },
       { name: "Report Charts", description: "Recharts visualizations (bar, line, pie) for uploaded/live data", status: "planned" },
       { name: "Report Templates", description: "Saved report configurations with one-click regeneration", status: "planned" },
+      { name: "Upload Page & Route", description: "Dedicated /admin/upload page with drag-drop zone, data table tab, and analytics tab", status: "planned" },
+      { name: "Upload History Tracker", description: "Track upload events (file name, campaign, date range, totals) with Zustand or DB persistence", status: "planned" },
     ],
   },
   {
