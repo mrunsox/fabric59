@@ -301,6 +301,15 @@ export const buildMap: BuildCategory[] = [
     ],
   },
   {
+    name: "ANI Block List",
+    items: [
+      { name: "ANI Block SOAP Action", description: "New modifyCampaignProfile call in five9-provisioning to add/remove ANI filtering rules (REJECT action, EQUALS operator) with E.164 formatting", status: "planned" },
+      { name: "Disposition-Triggered Auto-Block", description: "five9-webhook detects 'Block Caller' disposition and auto-invokes the block SOAP action for that ANI against the campaign profile", status: "planned" },
+      { name: "Block List Management UI", description: "Admin page showing blocked ANIs per campaign profile with search, unblock button, and audit trail", status: "planned" },
+      { name: "Block Confirmation Notification", description: "Send Slack/email notification confirming 'Number [ANI] blocked on [Campaign Profile] by [Agent]' via existing send-notification", status: "planned" },
+    ],
+  },
+  {
     name: "Platform Utilities",
     items: [
       { name: "AI59 Import Tool", description: "Import scripts, templates, and configs from AI59 exports", status: "planned" },
