@@ -310,6 +310,25 @@ export const buildMap: BuildCategory[] = [
     ],
   },
   {
+    name: "Queue Callback Automation",
+    items: [
+      { name: "Callback Queue SOAP Setup", description: "Five9 SOAP calls to enable callback on skill groups, create callback IVR modules, and configure callback-to-skill routing", status: "planned" },
+      { name: "High-Volume IVR Logic Builder", description: "UI to configure IVR If/Then logic comparing Calls_In_Queue or Longest_Wait_Time against thresholds, with menu branching for hold vs. callback", status: "planned" },
+      { name: "Dynamic Queue Threshold Manager", description: "Admin UI + Five9 modifyUserVariable API to adjust high-volume thresholds (gv_MaxQueueThreshold) without editing IVR scripts directly", status: "planned" },
+      { name: "Callback Announcement Config", description: "Configure Skill Transfer announcement sequences including estimated wait time, repeat intervals, and mid-hold callback reminders via digit mapping", status: "planned" },
+    ],
+  },
+  {
+    name: "Abandon Rate Reduction Engine",
+    items: [
+      { name: "Skill Callback Audit Scanner", description: "Edge function calling getSkillsInfo via SOAP, checks every active skill for enableCallback status, flags non-compliant skills", status: "planned" },
+      { name: "IVR Optimization Analyzer", description: "AI-assisted (Gemini) analysis of IVR script definitions via getIVRScripts — checks for high-volume branching, callback modules, wait-time announcements", status: "planned" },
+      { name: "Auto-Remediation Engine", description: "Automated SOAP calls (modifySkill, modifyIVRScript) to enable callback on flagged skills and inject missing IVR modules", status: "planned" },
+      { name: "Generic Callback Template", description: "Pre-built IVR callback flow template (high-volume If/Then, announcement, menu, digit mapping) applied by auto-remediation to deficient campaigns", status: "planned" },
+      { name: "Abandon Rate Dashboard", description: "Admin UI showing per-skill callback audit status, IVR compliance scores, remediation history, and before/after abandon rate metrics", status: "planned" },
+    ],
+  },
+  {
     name: "Platform Utilities",
     items: [
       { name: "AI59 Import Tool", description: "Import scripts, templates, and configs from AI59 exports", status: "planned" },
