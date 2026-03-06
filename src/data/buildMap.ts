@@ -329,6 +329,24 @@ export const buildMap: BuildCategory[] = [
     ],
   },
   {
+    name: "Data Plane Views",
+    items: [
+      { name: "Call Usage Summary View", description: "fabric59_call_usage_summary — per tenant/org/period: total_minutes, total_calls, skill breakdown, billable flags. Sourced from call_log_cache", status: "planned" },
+      { name: "Agent Activity Summary View", description: "fabric59_agent_activity_summary — per agent/period: talk_time, ready_time, logged_in_time, call_count. Sourced from call_log_cache + agents", status: "planned" },
+      { name: "CRM Push Leads View", description: "fabric59_crm_push_leads — normalized lead events from api_logs where endpoint matches crm-push/*: org_id, tenant_id, crm_type, object_type, object_id, contact fields, timestamps", status: "planned" },
+      { name: "Agents Identity View", description: "fabric59_agents_identity — unified agent directory joining agents table with five9/slack/google IDs, scoped by org", status: "planned" },
+      { name: "Customers Identity View", description: "fabric59_customers_identity — unified client directory from tenants with CRM refs, Stripe refs, integration_configs keys", status: "planned" },
+      { name: "Lifecycle Audit View", description: "fabric59_lifecycle_audit — filtered audit_logs for entity_type in (agent, provisioning, deprovisioning) with structured details", status: "planned" },
+    ],
+  },
+  {
+    name: "Identity Resolution",
+    items: [
+      { name: "Identity Cross-Reference Table", description: "identity_xrefs table: org_id, person_type (agent/client), internal_id, external_system (five9/slack/google/stripe/crm), external_id, synced_at. With RLS by org_id", status: "planned" },
+      { name: "Identity Sync Edge Function", description: "Edge function that reads agents + tenants + integration_configs and upserts identity_xrefs rows, callable on-demand or via pg_cron", status: "planned" },
+    ],
+  },
+  {
     name: "Platform Utilities",
     items: [
       { name: "AI59 Import Tool", description: "Import scripts, templates, and configs from AI59 exports", status: "planned" },
