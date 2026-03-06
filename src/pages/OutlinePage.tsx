@@ -112,8 +112,13 @@ export default function OutlinePage() {
           </div>
         </div>
 
-        {/* Categories */}
-        {buildMap.map((category) => {
+        {/* Categories — unfinished first */}
+        {[...buildMap].sort((a, b) => {
+          const aComplete = a.items.every(i => i.status === "done");
+          const bComplete = b.items.every(i => i.status === "done");
+          if (aComplete === bComplete) return 0;
+          return aComplete ? 1 : -1;
+        }).map((category) => {
           const catDone = category.items.filter((i) => i.status === "done").length;
           const catTotal = category.items.length;
           const catPct = Math.round((catDone / catTotal) * 100);
