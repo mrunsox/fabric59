@@ -266,6 +266,70 @@ export type Database = {
         }
         Relationships: []
       }
+      callback_routing_configs: {
+        Row: {
+          created_at: string
+          five9_campaign_id: string | null
+          five9_domain_id: string | null
+          five9_list_name: string | null
+          id: string
+          is_active: boolean
+          mode: string
+          organization_id: string
+          queue_name: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          five9_campaign_id?: string | null
+          five9_domain_id?: string | null
+          five9_list_name?: string | null
+          id?: string
+          is_active?: boolean
+          mode?: string
+          organization_id: string
+          queue_name: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          five9_campaign_id?: string | null
+          five9_domain_id?: string | null
+          five9_list_name?: string | null
+          id?: string
+          is_active?: boolean
+          mode?: string
+          organization_id?: string
+          queue_name?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "callback_routing_configs_five9_domain_id_fkey"
+            columns: ["five9_domain_id"]
+            isOneToOne: false
+            referencedRelation: "five9_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "callback_routing_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "callback_routing_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_archives: {
         Row: {
           archived_at: string
@@ -1131,6 +1195,115 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      web_callbacks: {
+        Row: {
+          call_disposition: string | null
+          call_duration_seconds: number | null
+          callback_time: string | null
+          callback_type: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string
+          created_at: string
+          error_message: string | null
+          five9_call_id: string | null
+          five9_domain_id: string | null
+          id: string
+          mode: string
+          organization_id: string
+          priority: string
+          queue: string
+          reason: string
+          recording_url: string | null
+          source_channel: string | null
+          source_url: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          call_disposition?: string | null
+          call_duration_seconds?: number | null
+          callback_time?: string | null
+          callback_type?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone: string
+          created_at?: string
+          error_message?: string | null
+          five9_call_id?: string | null
+          five9_domain_id?: string | null
+          id?: string
+          mode?: string
+          organization_id: string
+          priority?: string
+          queue?: string
+          reason?: string
+          recording_url?: string | null
+          source_channel?: string | null
+          source_url?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          call_disposition?: string | null
+          call_duration_seconds?: number | null
+          callback_time?: string | null
+          callback_type?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string
+          created_at?: string
+          error_message?: string | null
+          five9_call_id?: string | null
+          five9_domain_id?: string | null
+          id?: string
+          mode?: string
+          organization_id?: string
+          priority?: string
+          queue?: string
+          reason?: string
+          recording_url?: string | null
+          source_channel?: string | null
+          source_url?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_callbacks_five9_domain_id_fkey"
+            columns: ["five9_domain_id"]
+            isOneToOne: false
+            referencedRelation: "five9_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "web_callbacks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "web_callbacks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

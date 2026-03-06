@@ -52,6 +52,48 @@ serve(async (req) => {
       response_time_ms: 0,
     });
 
+    // --- Web callback outcome writeback ---
+    if (event_type === 'call_ended' || event_type === 'disposition_set' || event_type === 'web_callback_result') {
+      const callbackId = data?.callback_id;
+      const five9CallId = data?.call_id || data?.five9_call_id;
+      const phone = data?.phone || data?.ani;
+
+      if (callbackId || five9CallId || phone) {
+        // Try to match a web_callbacks row
+        let query = supabase.from('web_callbacks').select('id').eq('organization_id', domain.organization_id);
+        if (callbackId) {
+          query = query.eq('id', callbackId);
+        } else if (five9CallId) {
+          query = query.eq('five9_call_id', five9CallId);
+        } else if (phone) {
+          query = query.eq('contact_phone', phone).in('status', ['pending', 'dialing']);
+        }
+
+        const { data: callbacks } = await query.limit(1);
+        if (callbacks && callbacks.length > 0) {
+          const updateData: Record<string, unknown> = {};
+          if (data?.disposition) updateData.call_disposition = data.disposition;
+          if (data?.duration || data?.call_duration_seconds) updateData.call_duration_seconds = data.duration || data.call_duration_seconds;
+          if (data?.recording_url) updateData.recording_url = data.recording_url;
+          if (five9CallId) updateData.five9_call_id = five9CallId;
+
+          // Map status
+          const callStatus = data?.call_status || data?.status;
+          if (callStatus === 'completed' || data?.disposition) {
+            updateData.status = 'completed';
+          } else if (callStatus === 'no_answer') {
+            updateData.status = 'no_answer';
+          } else if (callStatus === 'failed' || callStatus === 'error') {
+            updateData.status = 'failed';
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            await supabase.from('web_callbacks').update(updateData).eq('id', callbacks[0].id);
+          }
+        }
+      }
+    }
+
     // Trigger downstream actions based on event type
     if (event_type === 'call_ended' || event_type === 'disposition_set') {
       // Find tenant for this domain and trigger CRM push if configured
