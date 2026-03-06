@@ -575,6 +575,29 @@ serve(async (req) => {
         }
       }
 
+    } else if (action === 'addRecordToList') {
+      const { listName, record } = payload as {
+        listName: string;
+        record: Record<string, string>;
+      };
+
+      if (!listName || !record) {
+        responseData = { success: false, error: 'listName and record are required for addRecordToList' };
+      } else {
+        const fieldsXml = Object.entries(record)
+          .map(([name, value]) => `<fields><name>${escapeXml(name)}</name><value>${escapeXml(String(value))}</value></fields>`)
+          .join('\n      ');
+
+        const soapBody = `<ser:addRecordToList>
+  <listName>${escapeXml(listName)}</listName>
+  <record>
+      ${fieldsXml}
+  </record>
+</ser:addRecordToList>`;
+        await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'addRecordToList', soapBody);
+        responseData = { success: true };
+      }
+
     } else {
       responseData = { success: false, error: `Unknown action: ${action}` };
     }

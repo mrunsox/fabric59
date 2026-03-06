@@ -329,6 +329,17 @@ export const buildMap: BuildCategory[] = [
     ],
   },
   {
+    name: "Web Callback Orchestration",
+    items: [
+      { name: "Web Callbacks Table", description: "web_callbacks table with org/tenant scoping, contact fields, routing intent, call outcome tracking, RLS", status: "complete" },
+      { name: "Callback Routing Configs", description: "Per-tenant queue→Five9 campaign mapping table with mode (human/ai) support", status: "complete" },
+      { name: "Web Callback Edge Function", description: "Receives callback requests, validates phone, normalizes defaults, stores record, triggers Five9 dial", status: "complete" },
+      { name: "Five9 addRecordToList Action", description: "New SOAP action in five9-provisioning to inject contacts into outbound lists for immediate dialing", status: "complete" },
+      { name: "Callback Outcome Writeback", description: "Extend five9-webhook to match call results back to web_callbacks and update status/disposition", status: "complete" },
+      { name: "QR Code Inbound Routing", description: "Map inbound QR DIDs to tenant callback routing configs for source_channel=qr_code tracking", status: "planned" },
+    ],
+  },
+  {
     name: "Data Plane Views",
     items: [
       { name: "Call Usage Summary View", description: "fabric59_call_usage_summary — per tenant/org/period: total_minutes, total_calls, skill breakdown, billable flags. Sourced from call_log_cache", status: "planned" },
