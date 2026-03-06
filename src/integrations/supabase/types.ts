@@ -113,6 +113,13 @@ export type Database = {
             foreignKeyName: "api_keys_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "api_keys_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -153,6 +160,13 @@ export type Database = {
           tenant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "api_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
           {
             foreignKeyName: "api_logs_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -449,6 +463,13 @@ export type Database = {
             foreignKeyName: "error_alerts_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "error_alerts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -504,6 +525,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "five9_domains"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "field_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
           },
           {
             foreignKeyName: "field_mappings_tenant_id_fkey"
@@ -646,6 +674,13 @@ export type Database = {
           trigger_event?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
           {
             foreignKeyName: "notifications_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -818,6 +853,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "agents"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_jobs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_agents_identity"
+            referencedColumns: ["fabric59_agent_id"]
           },
         ]
       }
@@ -1022,6 +1064,13 @@ export type Database = {
             foreignKeyName: "unified_schema_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "unified_schema_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -1085,7 +1134,211 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      fabric59_agent_activity_summary: {
+        Row: {
+          agent_name: string | null
+          external_agent_id: string | null
+          five9_domain_id: string | null
+          org_id: string | null
+          period_start: string | null
+          total_calls: number | null
+          total_duration_seconds: number | null
+          total_hold_seconds: number | null
+          total_talk_seconds: number | null
+          total_wrap_seconds: number | null
+        }
+        Relationships: []
+      }
+      fabric59_agents_identity: {
+        Row: {
+          deprovisioned_at: string | null
+          email: string | null
+          extension: string | null
+          fabric59_agent_id: string | null
+          first_name: string | null
+          five9_user_id: string | null
+          five9_username: string | null
+          google_user_id: string | null
+          last_name: string | null
+          provisioned_at: string | null
+          role: string | null
+          slack_user_id: string | null
+          status: string | null
+        }
+        Insert: {
+          deprovisioned_at?: string | null
+          email?: string | null
+          extension?: string | null
+          fabric59_agent_id?: string | null
+          first_name?: string | null
+          five9_user_id?: string | null
+          five9_username?: string | null
+          google_user_id?: string | null
+          last_name?: string | null
+          provisioned_at?: string | null
+          role?: string | null
+          slack_user_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          deprovisioned_at?: string | null
+          email?: string | null
+          extension?: string | null
+          fabric59_agent_id?: string | null
+          first_name?: string | null
+          five9_user_id?: string | null
+          five9_username?: string | null
+          google_user_id?: string | null
+          last_name?: string | null
+          provisioned_at?: string | null
+          role?: string | null
+          slack_user_id?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      fabric59_call_usage_summary: {
+        Row: {
+          campaign: string | null
+          disposition: string | null
+          five9_domain_id: string | null
+          org_id: string | null
+          period_start: string | null
+          skill: string | null
+          total_calls: number | null
+          total_seconds: number | null
+        }
+        Relationships: []
+      }
+      fabric59_crm_push_leads: {
+        Row: {
+          contact_company: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string | null
+          crm_action: string | null
+          crm_type: Database["public"]["Enums"]["crm_type"] | null
+          log_id: string | null
+          org_id: string | null
+          response: Json | null
+          status: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "api_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenants_organization_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fabric59_customers_identity: {
+        Row: {
+          client_name: string | null
+          created_at: string | null
+          crm_api_url: string | null
+          crm_type: Database["public"]["Enums"]["crm_type"] | null
+          fabric59_client_id: string | null
+          five9_domain_id: string | null
+          has_quickbooks: boolean | null
+          has_stripe: boolean | null
+          integration_configs: Json | null
+          org_id: string | null
+          status: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string | null
+          crm_api_url?: string | null
+          crm_type?: Database["public"]["Enums"]["crm_type"] | null
+          fabric59_client_id?: string | null
+          five9_domain_id?: string | null
+          has_quickbooks?: never
+          has_stripe?: never
+          integration_configs?: Json | null
+          org_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string | null
+          crm_api_url?: string | null
+          crm_type?: Database["public"]["Enums"]["crm_type"] | null
+          fabric59_client_id?: string | null
+          five9_domain_id?: string | null
+          has_quickbooks?: never
+          has_stripe?: never
+          integration_configs?: Json | null
+          org_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_five9_domain_id_fkey"
+            columns: ["five9_domain_id"]
+            isOneToOne: false
+            referencedRelation: "five9_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenants_organization_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fabric59_lifecycle_audit: {
+        Row: {
+          action: string | null
+          created_at: string | null
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string | null
+          ip_address: string | null
+          performed_by: string | null
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string | null
+          ip_address?: string | null
+          performed_by?: string | null
+        }
+        Update: {
+          action?: string | null
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string | null
+          ip_address?: string | null
+          performed_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_org_ids: { Args: { _user_id: string }; Returns: string[] }
