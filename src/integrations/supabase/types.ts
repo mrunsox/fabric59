@@ -573,6 +573,44 @@ export type Database = {
           },
         ]
       }
+      identity_xrefs: {
+        Row: {
+          external_id: string
+          external_system: string
+          id: string
+          internal_id: string
+          organization_id: string
+          person_type: string
+          synced_at: string | null
+        }
+        Insert: {
+          external_id: string
+          external_system: string
+          id?: string
+          internal_id: string
+          organization_id: string
+          person_type: string
+          synced_at?: string | null
+        }
+        Update: {
+          external_id?: string
+          external_system?: string
+          id?: string
+          internal_id?: string
+          organization_id?: string
+          person_type?: string
+          synced_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "identity_xrefs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           channel: Database["public"]["Enums"]["notification_channel"]
