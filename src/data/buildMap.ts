@@ -358,6 +358,19 @@ export const buildMap: BuildCategory[] = [
     ],
   },
   {
+    name: "CRM Integration Engine",
+    items: [
+      { name: "OAuth Tokens Table", description: "oauth_tokens table for Clio OAuth2 access/refresh tokens with org-scoped RLS and encryption", status: "done" },
+      { name: "Clio Mappings Table", description: "clio_mappings table: phone → contact_id + matter_id per tenant, unique on (tenant_id, phone)", status: "done" },
+      { name: "MyCase Mappings Table", description: "mycase_mappings table: phone → contact_id + case_id per tenant, unique on (tenant_id, phone)", status: "done" },
+      { name: "Five9-Main Edge Function", description: "Hub entrypoint for all tenants — normalizes CallEvent, dispatches to Clio/MyCase handlers based on integration_configs rules", status: "done" },
+      { name: "Clio Handler", description: "Contact search/create, matter resolution, Communication + Activity creation via Clio API v4 with per-queue rule overrides", status: "done" },
+      { name: "MyCase Handler", description: "Contact search/create, case resolution, Note creation via MyCase API with per-queue rule overrides", status: "done" },
+      { name: "Clio OAuth Callback", description: "Edge function handling Clio OAuth2 authorization code exchange, token storage, and tenant config update", status: "done" },
+      { name: "Integration Rules Admin UI", description: "Collapsible panel in TenantForm for toggling Clio/MyCase, configuring Five9ToCrmRules per tenant", status: "done" },
+    ],
+  },
+  {
     name: "Platform Utilities",
     items: [
       { name: "AI59 Import Tool", description: "Import scripts, templates, and configs from AI59 exports", status: "planned" },
