@@ -145,7 +145,6 @@ serve(async (req) => {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-    }
 
     } else if (action === 'transferData') {
       const { sourceUserKey, targetUserKey, transferDrive, transferEmail } = payload;
