@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  PhoneCallback, Settings2, Gauge, BarChart3, Repeat, Volume2,
+  PhoneCall, Settings2, Gauge, BarChart3, Repeat, Volume2,
   Clock, AlertTriangle, CheckCircle2, Activity, Wrench, RefreshCw
 } from "lucide-react";
 
@@ -51,7 +51,7 @@ export default function CallbackQueuePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <PhoneCallback className="h-6 w-6" /> Queue Callback
+            <PhoneCall className="h-6 w-6" /> Queue Callback
           </h1>
           <p className="text-sm text-muted-foreground">Configure callback automation, IVR logic, and queue thresholds</p>
         </div>
