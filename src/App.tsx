@@ -40,6 +40,7 @@ import CampaignIntakePage from "@/pages/admin/CampaignIntakePage";
 import CampaignDetailPage from "@/pages/admin/CampaignDetailPage";
 import ArchivedCampaignsPage from "@/pages/admin/ArchivedCampaignsPage";
 import ReportsPage from "@/pages/admin/ReportsPage";
+import ClientOverviewPage from "@/pages/admin/ClientOverviewPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
@@ -87,6 +88,7 @@ const App = () => (
               {/* Admin routes */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<TenantsPage />} />
+                <Route path="clients/:id" element={<ClientOverviewPage />} />
                 <Route path="dashboard" element={<UserDashboardPage />} />
                 <Route path="domains" element={<DomainsPage />} />
                 <Route path="domains/:id" element={<DomainDetailPage />} />
