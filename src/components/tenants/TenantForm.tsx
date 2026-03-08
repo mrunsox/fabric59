@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { usePartners } from "@/hooks/usePartners";
 
 const DEFAULT_NOTIFICATION_TRIGGERS: NotificationTriggers = {
   intake_created: false,
@@ -37,6 +38,7 @@ const DEFAULT_NOTIFICATION_TRIGGERS: NotificationTriggers = {
 const formSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   organization_id: z.string().optional(),
+  partner_id: z.string().optional(),
   crm_type: z.enum(["clio", "workiz", "salesforce", "hubspot", "zendesk", "generic_rest", "other"]),
   crm_api_url: z.string().url().optional().or(z.literal("")),
   crm_api_key: z.string().optional(),
@@ -165,6 +167,7 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
     defaultValues: {
       name: tenant?.name || "",
       organization_id: tenant?.organization_id || "",
+      partner_id: tenant?.partner_id || "",
       crm_type: tenant?.crm_type || "other",
       crm_api_url: tenant?.crm_api_url || "",
       crm_api_key: tenant?.crm_api_key || "",
