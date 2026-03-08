@@ -144,6 +144,85 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
   const [legalBillingOpen, setLegalBillingOpen] = useState(false);
   const [legalAiOpen, setLegalAiOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
+  const [crmIntegrationOpen, setCrmIntegrationOpen] = useState(
+    !!((tenant as any)?.integration_configs?.clio?.enabled || (tenant as any)?.integration_configs?.mycase?.enabled)
+  );
+
+  // CRM Integration Rules helpers
+  const getIntegrationConfig = (key: string) => {
+    const configs = form.getValues("integration_configs") || {};
+    try {
+      const parsed = configs as any;
+      return parsed?.[key];
+    } catch { return undefined; }
+  };
+
+  const setIntegrationConfigValue = (path: string, value: any) => {
+    const configs = form.getValues("integration_configs") || {};
+    const parsed = typeof configs === 'object' ? { ...configs } : {};
+    
+    // Parse nested path like "clio.rules.autoCreateContact"
+    const keys = path.split('.');
+    let current: any = parsed;
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (!current[keys[i]] || typeof current[keys[i]] !== 'object') {
+        current[keys[i]] = {};
+      }
+      // Clone to avoid mutation
+      current[keys[i]] = { ...current[keys[i]] };
+      current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+    
+    // Flatten back to Record<string, string> for form compatibility
+    // Store as JSON string in a special key
+    form.setValue("integration_configs", { ...parsed, __raw: JSON.stringify(parsed) } as any);
+  };
+
+  const getCrmRuleValue = (crm: 'clio' | 'mycase', rule: string): boolean => {
+    const configs = form.getValues("integration_configs") as any || {};
+    return !!configs?.[crm]?.rules?.[rule];
+  };
+
+  const setCrmRuleValue = (crm: 'clio' | 'mycase', rule: string, value: boolean) => {
+    const configs = form.getValues("integration_configs") as any || {};
+    const updated = {
+      ...configs,
+      [crm]: {
+        ...(configs[crm] || {}),
+        rules: {
+          ...(configs[crm]?.rules || {}),
+          [rule]: value,
+        },
+      },
+    };
+    form.setValue("integration_configs", updated);
+  };
+
+  const isCrmEnabled = (crm: 'clio' | 'mycase'): boolean => {
+    const configs = form.getValues("integration_configs") as any || {};
+    return !!configs?.[crm]?.enabled;
+  };
+
+  const setCrmEnabled = (crm: 'clio' | 'mycase', enabled: boolean) => {
+    const configs = form.getValues("integration_configs") as any || {};
+    const updated = {
+      ...configs,
+      [crm]: {
+        ...(configs[crm] || {}),
+        enabled,
+        rules: configs[crm]?.rules || {
+          enabled: true,
+          autoCreateContact: false,
+          autoCreateMatterOrCase: false,
+          attachToLatestOpenOnly: true,
+          fallbackToContactOnly: true,
+          createTimeEntryForBillable: false,
+        },
+      },
+    };
+    form.setValue("integration_configs", updated);
+  };
 
   // Load organizations (white-label partners) for the dropdown
   const { data: organizations = [] } = useQuery({
