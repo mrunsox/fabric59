@@ -41,6 +41,8 @@ import CampaignDetailPage from "@/pages/admin/CampaignDetailPage";
 import ArchivedCampaignsPage from "@/pages/admin/ArchivedCampaignsPage";
 import ReportsPage from "@/pages/admin/ReportsPage";
 import ClientOverviewPage from "@/pages/admin/ClientOverviewPage";
+import PartnersPage from "@/pages/admin/PartnersPage";
+import PartnerOverviewPage from "@/pages/admin/PartnerOverviewPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
@@ -89,6 +91,8 @@ const App = () => (
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<TenantsPage />} />
                 <Route path="clients/:id" element={<ClientOverviewPage />} />
+                <Route path="partners" element={<PartnersPage />} />
+                <Route path="partners/:id" element={<PartnerOverviewPage />} />
                 <Route path="dashboard" element={<UserDashboardPage />} />
                 <Route path="domains" element={<DomainsPage />} />
                 <Route path="domains/:id" element={<DomainDetailPage />} />
