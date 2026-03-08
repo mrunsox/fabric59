@@ -25,6 +25,7 @@ export function useTenants() {
         id: row.id,
         name: row.name,
         organization_id: row.organization_id ?? null,
+        partner_id: (row as Record<string, unknown>).partner_id as string | null ?? null,
         five9_domain_id: row.five9_domain_id ?? null,
         crm_type: row.crm_type as CrmType,
         crm_api_url: row.crm_api_url,
@@ -78,6 +79,7 @@ export function useTenant(id: string) {
         id: data.id,
         name: data.name,
         organization_id: data.organization_id ?? null,
+        partner_id: (data as Record<string, unknown>).partner_id as string | null ?? null,
         five9_domain_id: data.five9_domain_id ?? null,
         crm_type: data.crm_type as CrmType,
         crm_api_url: data.crm_api_url,
@@ -123,6 +125,7 @@ export function useCreateTenant() {
       const { error } = await supabase.from("tenants").insert([
         {
           name: data.name,
+          partner_id: (data as any).partner_id || null,
           crm_type: data.crm_type,
           crm_api_url: data.crm_api_url || null,
           crm_api_key: data.crm_api_key || null,
@@ -173,6 +176,7 @@ export function useUpdateTenant() {
       const updateData: Record<string, unknown> = {};
       
       if (data.name !== undefined) updateData.name = data.name;
+      if ((data as any).partner_id !== undefined) updateData.partner_id = (data as any).partner_id || null;
       if (data.crm_type !== undefined) updateData.crm_type = data.crm_type;
       if (data.crm_api_url !== undefined) updateData.crm_api_url = data.crm_api_url || null;
       if (data.crm_api_key !== undefined) updateData.crm_api_key = data.crm_api_key || null;

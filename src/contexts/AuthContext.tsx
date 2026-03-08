@@ -17,6 +17,7 @@ const DEV_ORG: Organization = {
   brand_primary_color: null,
   brand_from_email: null,
   brand_reply_to: null,
+  integration_configs: {},
 };
 const DEV_MEMBERSHIP: OrganizationMember = {
   id: "dev-membership",
@@ -121,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const isMaster = await checkMasterAdmin(userId);
         if (isMaster) {
           const { data: allOrgs } = await supabase.from("organizations").select("*");
-          const typedAllOrgs: Organization[] = (allOrgs || []).map((o) => ({
+      const typedAllOrgs: Organization[] = (allOrgs || []).map((o) => ({
             id: o.id, name: o.name, billing_email: o.billing_email,
             plan: o.plan as Organization["plan"], status: o.status as Organization["status"],
             created_at: o.created_at, updated_at: o.updated_at,
@@ -130,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             brand_primary_color: (o as Record<string, unknown>).brand_primary_color as string | null ?? null,
             brand_from_email: (o as Record<string, unknown>).brand_from_email as string | null ?? null,
             brand_reply_to: (o as Record<string, unknown>).brand_reply_to as string | null ?? null,
+            integration_configs: ((o as Record<string, unknown>).integration_configs as Record<string, unknown>) || {},
           }));
           setOrganizations(typedAllOrgs);
           const savedOrgId = localStorage.getItem("currentOrgId");
@@ -159,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         brand_primary_color: (o as Record<string, unknown>).brand_primary_color as string | null ?? null,
         brand_from_email: (o as Record<string, unknown>).brand_from_email as string | null ?? null,
         brand_reply_to: (o as Record<string, unknown>).brand_reply_to as string | null ?? null,
+        integration_configs: ((o as Record<string, unknown>).integration_configs as Record<string, unknown>) || {},
       }));
 
       setOrganizations(typedOrgs);

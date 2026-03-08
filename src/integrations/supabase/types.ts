@@ -967,6 +967,7 @@ export type Database = {
           brand_reply_to: string | null
           created_at: string
           id: string
+          integration_configs: Json | null
           name: string
           plan: Database["public"]["Enums"]["org_plan"]
           status: Database["public"]["Enums"]["org_status"]
@@ -981,6 +982,7 @@ export type Database = {
           brand_reply_to?: string | null
           created_at?: string
           id?: string
+          integration_configs?: Json | null
           name: string
           plan?: Database["public"]["Enums"]["org_plan"]
           status?: Database["public"]["Enums"]["org_status"]
@@ -995,12 +997,54 @@ export type Database = {
           brand_reply_to?: string | null
           created_at?: string
           id?: string
+          integration_configs?: Json | null
           name?: string
           plan?: Database["public"]["Enums"]["org_plan"]
           status?: Database["public"]["Enums"]["org_status"]
           updated_at?: string
         }
         Relationships: []
+      }
+      partners: {
+        Row: {
+          created_at: string
+          id: string
+          integration_configs: Json | null
+          name: string
+          organization_id: string
+          slug: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          integration_configs?: Json | null
+          name: string
+          organization_id: string
+          slug: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          integration_configs?: Json | null
+          name?: string
+          organization_id?: string
+          slug?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partners_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1166,6 +1210,7 @@ export type Database = {
           openai_api_key: string | null
           organization_id: string | null
           pabbly_webhook_url: string | null
+          partner_id: string | null
           power_automate_webhook_url: string | null
           quickbooks_api_key: string | null
           slack_webhook_url: string | null
@@ -1202,6 +1247,7 @@ export type Database = {
           openai_api_key?: string | null
           organization_id?: string | null
           pabbly_webhook_url?: string | null
+          partner_id?: string | null
           power_automate_webhook_url?: string | null
           quickbooks_api_key?: string | null
           slack_webhook_url?: string | null
@@ -1238,6 +1284,7 @@ export type Database = {
           openai_api_key?: string | null
           organization_id?: string | null
           pabbly_webhook_url?: string | null
+          partner_id?: string | null
           power_automate_webhook_url?: string | null
           quickbooks_api_key?: string | null
           slack_webhook_url?: string | null
@@ -1265,6 +1312,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenants_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]

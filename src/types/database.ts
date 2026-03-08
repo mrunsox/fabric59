@@ -15,6 +15,7 @@ export type OrgRole = 'owner' | 'admin' | 'member';
 export type OrgStatus = 'active' | 'suspended' | 'cancelled';
 export type OrgPlan = 'free' | 'starter' | 'pro' | 'enterprise';
 export type Five9DomainStatus = 'active' | 'inactive' | 'pending_verification';
+export type PartnerStatus = 'active' | 'suspended';
 
 export interface NotificationTriggers {
   intake_created: boolean;
@@ -37,6 +38,8 @@ export interface Organization {
   brand_primary_color: string | null;
   brand_from_email: string | null;
   brand_reply_to: string | null;
+  // Org-level integration defaults
+  integration_configs: Record<string, unknown>;
 }
 
 export interface OrganizationMember {
@@ -45,6 +48,17 @@ export interface OrganizationMember {
   user_id: string;
   role: OrgRole;
   created_at: string;
+}
+
+export interface Partner {
+  id: string;
+  organization_id: string;
+  name: string;
+  slug: string;
+  status: PartnerStatus;
+  integration_configs: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Five9Domain {
@@ -86,6 +100,7 @@ export interface Tenant {
   id: string;
   name: string;
   organization_id: string | null;
+  partner_id: string | null;
   five9_domain_id: string | null;
   crm_type: CrmType;
   crm_api_url: string | null;
@@ -177,6 +192,13 @@ export interface OrganizationFormData {
   plan: OrgPlan;
 }
 
+export interface PartnerFormData {
+  name: string;
+  slug: string;
+  status: PartnerStatus;
+  integration_configs?: Record<string, unknown>;
+}
+
 export interface Five9DomainFormData {
   domain: string;
   display_name: string;
@@ -189,6 +211,7 @@ export interface Five9DomainFormData {
 export interface TenantFormData {
   name: string;
   organization_id?: string;
+  partner_id?: string;
   five9_domain_id?: string;
   crm_type: CrmType;
   crm_api_url: string;
