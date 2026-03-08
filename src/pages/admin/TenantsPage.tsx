@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTenants, useDeleteTenant } from "@/hooks/useTenants";
+import { usePartners } from "@/hooks/usePartners";
 import { useApiLogStats } from "@/hooks/useApiLogs";
 import { useFive9Sync } from "@/hooks/useFive9Sync";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,6 +71,7 @@ const CRM_LOGOS: Record<string, string> = {
 
 export default function TenantsPage() {
   const { data: tenants = [], isLoading } = useTenants();
+  const { data: partners = [] } = usePartners();
   const { data: stats } = useApiLogStats();
   const deleteTenant = useDeleteTenant();
   const { syncFromFive9, isSyncing } = useFive9Sync();
@@ -130,6 +132,16 @@ export default function TenantsPage() {
           {crmLabels[tenant.crm_type]}
         </StatusBadge>
       ),
+    },
+    {
+      key: "partner",
+      header: "Partner",
+      render: (tenant: Tenant) => {
+        const partner = partners.find((p) => p.id === tenant.partner_id);
+        return (
+          <span className="text-sm text-muted-foreground">{partner?.name || "—"}</span>
+        );
+      },
     },
     {
       key: "status",

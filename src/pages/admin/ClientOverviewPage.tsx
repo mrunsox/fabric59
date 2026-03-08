@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useTenant, useUpdateTenant } from "@/hooks/useTenants";
+import { usePartner } from "@/hooks/usePartners";
 import { useApiLogs, useApiLogStats } from "@/hooks/useApiLogs";
 import { useClientIntegrationConfigs } from "@/hooks/useClientIntegrationConfigs";
 import { StatCard } from "@/components/ui/stat-card";
@@ -50,6 +51,7 @@ export default function ClientOverviewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: tenant, isLoading } = useTenant(id || "");
+  const { data: partner } = usePartner(tenant?.partner_id || "");
   const { data: logs = [] } = useApiLogs({ tenantId: id, limit: 10 });
   const { data: stats } = useApiLogStats();
   const { configs, saveConfigs, isSaving } = useClientIntegrationConfigs(id || "");
@@ -126,6 +128,13 @@ export default function ClientOverviewPage() {
               </StatusBadge>
             </div>
             <p className="text-xs text-muted-foreground font-mono">{tenant.id}</p>
+            {partner && (
+              <Link to={`/admin/partners/${partner.id}`} className="mt-1">
+                <Badge variant="outline" className="text-xs cursor-pointer hover:bg-accent">
+                  Partner: {partner.name}
+                </Badge>
+              </Link>
+            )}
           </div>
         </div>
       </div>
