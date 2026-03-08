@@ -368,6 +368,9 @@ export const buildMap: BuildCategory[] = [
       { name: "MyCase Handler", description: "Contact search/create, case resolution, Note creation via MyCase API with per-queue rule overrides", status: "done" },
       { name: "Clio OAuth Callback", description: "Edge function handling Clio OAuth2 authorization code exchange, token storage, and tenant config update", status: "done" },
       { name: "Integration Rules Admin UI", description: "Collapsible panel in TenantForm for toggling Clio/MyCase, configuring Five9ToCrmRules per tenant", status: "done" },
+      { name: "CRM Profile Presets", description: "6 Clio + 6 MyCase behavior profiles with auto-detect and one-click application", status: "done" },
+      { name: "CRM Integration Wizard", description: "3-card plug-and-play wizard: Five9 webhook setup, Clio OAuth connect, MyCase API key connect with profile dropdowns", status: "done" },
+      { name: "Five9 Webhook Setup Card", description: "Read-only webhook URL, tenant ID, and auto-generated webhook secret with copy-to-clipboard and setup instructions", status: "done" },
     ],
   },
   {
