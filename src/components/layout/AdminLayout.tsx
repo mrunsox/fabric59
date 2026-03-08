@@ -24,6 +24,15 @@ import {
   Megaphone,
   LayoutDashboard,
   BarChart3,
+  FileSpreadsheet,
+  Terminal,
+  Zap as AgentZap,
+  Eye,
+  Search,
+  DollarSign,
+  Zap,
+  Ban,
+  PhoneCall,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -65,6 +74,16 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Dispositions", href: "/admin/dispositions", icon: ListPlus, permission: "domains" },
       { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone, permission: "domains" },
       { name: "Reports", href: "/admin/reports", icon: BarChart3, permission: "domains" },
+      { name: "Report59 Upload", href: "/admin/upload", icon: FileSpreadsheet, permission: "domains" },
+    ],
+  },
+  {
+    label: "Agent Tools",
+    items: [
+      { name: "Scripter", href: "/admin/scripter", icon: Terminal, permission: null },
+      { name: "Agent Dashboard", href: "/admin/agent-dashboard", icon: AgentZap, permission: null },
+      { name: "Supervisor", href: "/admin/supervisor", icon: Eye, permission: "domains" },
+      { name: "QA & Analytics", href: "/admin/qa", icon: Search, permission: "domains" },
     ],
   },
   {
@@ -73,6 +92,10 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Integrations", href: "/admin/integrations", icon: Plug, permission: "integrations" },
       { name: "Field Mappings", href: "/admin/mappings", icon: FileJson, permission: "mappings" },
       { name: "Call Flow Builder", href: "/admin/call-flow", icon: Workflow, permission: "call_flow" },
+      { name: "Automations", href: "/admin/automations", icon: Zap, permission: "domains" },
+      { name: "ANI Block List", href: "/admin/ani-blocklist", icon: Ban, permission: "domains" },
+      { name: "Callback Queue", href: "/admin/callback-queue", icon: PhoneCall, permission: "domains" },
+      { name: "Billing", href: "/admin/billing", icon: DollarSign, permission: "settings" },
     ],
   },
   {

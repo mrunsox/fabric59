@@ -43,6 +43,15 @@ import ReportsPage from "@/pages/admin/ReportsPage";
 import ClientOverviewPage from "@/pages/admin/ClientOverviewPage";
 import PartnersPage from "@/pages/admin/PartnersPage";
 import PartnerOverviewPage from "@/pages/admin/PartnerOverviewPage";
+import Report59UploadPage from "@/pages/admin/Report59UploadPage";
+import ScripterPage from "@/pages/admin/ScripterPage";
+import AgentDashboardPage from "@/pages/admin/AgentDashboardPage";
+import SupervisorPage from "@/pages/admin/SupervisorPage";
+import QAAnalyticsPage from "@/pages/admin/QAAnalyticsPage";
+import BillingPage from "@/pages/admin/BillingPage";
+import PostCallAutomationsPage from "@/pages/admin/PostCallAutomationsPage";
+import ANIBlockListPage from "@/pages/admin/ANIBlockListPage";
+import CallbackQueuePage from "@/pages/admin/CallbackQueuePage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
@@ -110,6 +119,15 @@ const App = () => (
                 <Route path="campaigns/:id" element={<CampaignDetailPage />} />
                 <Route path="campaigns/archived" element={<ArchivedCampaignsPage />} />
                 <Route path="reports" element={<ReportsPage />} />
+                <Route path="upload" element={<Report59UploadPage />} />
+                <Route path="scripter" element={<ScripterPage />} />
+                <Route path="agent-dashboard" element={<AgentDashboardPage />} />
+                <Route path="supervisor" element={<SupervisorPage />} />
+                <Route path="qa" element={<QAAnalyticsPage />} />
+                <Route path="billing" element={<BillingPage />} />
+                <Route path="automations" element={<PostCallAutomationsPage />} />
+                <Route path="ani-blocklist" element={<ANIBlockListPage />} />
+                <Route path="callback-queue" element={<CallbackQueuePage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
