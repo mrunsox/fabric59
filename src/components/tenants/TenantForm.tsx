@@ -119,6 +119,7 @@ const AUTOMATION_PLATFORMS = [
 export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
   const createTenant = useCreateTenant();
   const updateTenant = useUpdateTenant();
+  const { data: partnersList = [] } = usePartners();
   const [notificationsOpen, setNotificationsOpen] = useState(
     !!(tenant?.slack_webhook_url || (tenant as any)?.teams_webhook_url)
   );
@@ -212,6 +213,7 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
     const finalData = {
       ...data,
       organization_id: data.organization_id || undefined,
+      partner_id: data.partner_id || undefined,
       notification_triggers: data.slack_webhook_url
         ? data.notification_triggers
         : DEFAULT_NOTIFICATION_TRIGGERS,
@@ -248,16 +250,16 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
 
       {/* White-Label Partner dropdown */}
       <div className="space-y-2">
-        <Label htmlFor="organization_id">White-Label Partner</Label>
+        <Label htmlFor="organization_id">Organization</Label>
         <Select
           value={form.watch("organization_id") || "none"}
           onValueChange={(val) => form.setValue("organization_id", val === "none" ? "" : val)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select a partner..." />
+            <SelectValue placeholder="Select an organization..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">— No partner (direct client) —</SelectItem>
+            <SelectItem value="none">— No organization —</SelectItem>
             {organizations.map((org) => (
               <SelectItem key={org.id} value={org.id}>
                 {org.name}
@@ -265,8 +267,29 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Partner dropdown */}
+      <div className="space-y-2">
+        <Label htmlFor="partner_id">Partner</Label>
+        <Select
+          value={form.watch("partner_id") || "none"}
+          onValueChange={(val) => form.setValue("partner_id", val === "none" ? "" : val)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a partner..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">— No partner —</SelectItem>
+            {partnersList.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <p className="text-xs text-muted-foreground">
-          Which white-label partner does this client belong to?
+          Which partner does this client belong to?
         </p>
       </div>
 
