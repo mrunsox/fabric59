@@ -19,8 +19,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Loader2, ChevronDown, Bell, Zap, Workflow, Phone, Video, Calendar, MessageCircle, CreditCard, FileText, Brain, Building2, Key, Globe, Shield } from "lucide-react";
+import { Loader2, ChevronDown, Bell, Zap, Workflow, Phone, Video, Calendar, MessageCircle, CreditCard, FileText, Brain, Building2, Key, Globe, Shield, Scale } from "lucide-react";
 import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,6 +144,85 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
   const [legalBillingOpen, setLegalBillingOpen] = useState(false);
   const [legalAiOpen, setLegalAiOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
+  const [crmIntegrationOpen, setCrmIntegrationOpen] = useState(
+    !!((tenant as any)?.integration_configs?.clio?.enabled || (tenant as any)?.integration_configs?.mycase?.enabled)
+  );
+
+  // CRM Integration Rules helpers
+  const getIntegrationConfig = (key: string) => {
+    const configs = form.getValues("integration_configs") || {};
+    try {
+      const parsed = configs as any;
+      return parsed?.[key];
+    } catch { return undefined; }
+  };
+
+  const setIntegrationConfigValue = (path: string, value: any) => {
+    const configs = form.getValues("integration_configs") || {};
+    const parsed = typeof configs === 'object' ? { ...configs } : {};
+    
+    // Parse nested path like "clio.rules.autoCreateContact"
+    const keys = path.split('.');
+    let current: any = parsed;
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (!current[keys[i]] || typeof current[keys[i]] !== 'object') {
+        current[keys[i]] = {};
+      }
+      // Clone to avoid mutation
+      current[keys[i]] = { ...current[keys[i]] };
+      current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+    
+    // Flatten back to Record<string, string> for form compatibility
+    // Store as JSON string in a special key
+    form.setValue("integration_configs", { ...parsed, __raw: JSON.stringify(parsed) } as any);
+  };
+
+  const getCrmRuleValue = (crm: 'clio' | 'mycase', rule: string): boolean => {
+    const configs = form.getValues("integration_configs") as any || {};
+    return !!configs?.[crm]?.rules?.[rule];
+  };
+
+  const setCrmRuleValue = (crm: 'clio' | 'mycase', rule: string, value: boolean) => {
+    const configs = form.getValues("integration_configs") as any || {};
+    const updated = {
+      ...configs,
+      [crm]: {
+        ...(configs[crm] || {}),
+        rules: {
+          ...(configs[crm]?.rules || {}),
+          [rule]: value,
+        },
+      },
+    };
+    form.setValue("integration_configs", updated);
+  };
+
+  const isCrmEnabled = (crm: 'clio' | 'mycase'): boolean => {
+    const configs = form.getValues("integration_configs") as any || {};
+    return !!configs?.[crm]?.enabled;
+  };
+
+  const setCrmEnabled = (crm: 'clio' | 'mycase', enabled: boolean) => {
+    const configs = form.getValues("integration_configs") as any || {};
+    const updated = {
+      ...configs,
+      [crm]: {
+        ...(configs[crm] || {}),
+        enabled,
+        rules: configs[crm]?.rules || {
+          enabled: true,
+          autoCreateContact: false,
+          autoCreateMatterOrCase: false,
+          attachToLatestOpenOnly: true,
+          fallbackToContactOnly: true,
+          createTimeEntryForBillable: false,
+        },
+      },
+    };
+    form.setValue("integration_configs", updated);
+  };
 
   // Load organizations (white-label partners) for the dropdown
   const { data: organizations = [] } = useQuery({
@@ -988,6 +1069,99 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
               />
             </div>
           ))}
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* CRM Integration Rules Section */}
+      <Collapsible open={crmIntegrationOpen} onOpenChange={setCrmIntegrationOpen} className="rounded-lg border border-border">
+        <CollapsibleTrigger asChild>
+          <button type="button" className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <Scale className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">CRM Integration Rules</span>
+              {(isCrmEnabled('clio') || isCrmEnabled('mycase')) && (
+                <Badge variant="secondary" className="text-xs">
+                  {[isCrmEnabled('clio') && 'Clio', isCrmEnabled('mycase') && 'MyCase'].filter(Boolean).join(' + ')}
+                </Badge>
+              )}
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", crmIntegrationOpen && "rotate-180")} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-6">
+          <p className="text-sm text-muted-foreground">
+            Configure how Five9 call events are routed to Clio and/or MyCase for this client.
+            Rules control auto-creation of contacts, matters/cases, and call logging behavior.
+          </p>
+
+          {/* Clio Toggle + Rules */}
+          <div className="space-y-4 rounded-md border border-border p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-sm font-medium">Clio Manage Integration</span>
+                <p className="text-xs text-muted-foreground">Route Five9 calls to Clio as Communications</p>
+              </div>
+              <Switch checked={isCrmEnabled('clio')} onCheckedChange={(v) => setCrmEnabled('clio', v)} />
+            </div>
+
+            {isCrmEnabled('clio') && (
+              <div className="space-y-3 pt-2 border-t border-border">
+                {[
+                  { key: 'autoCreateContact', label: 'Auto-create contacts', desc: 'Create a new Clio contact if phone number is not found' },
+                  { key: 'autoCreateMatterOrCase', label: 'Auto-create matters', desc: 'Create a new matter when no open matter exists for the contact' },
+                  { key: 'attachToLatestOpenOnly', label: 'Attach to latest open matter', desc: 'When multiple matters exist, pick the most recently opened' },
+                  { key: 'fallbackToContactOnly', label: 'Fallback to contact-only logging', desc: 'Log the call on the contact if no matter is available' },
+                  { key: 'createTimeEntryForBillable', label: 'Create time entries', desc: 'Auto-create Activity/TimeEntry for calls with a linked matter' },
+                ].map((rule) => (
+                  <div key={rule.key} className="flex items-start gap-3">
+                    <Checkbox
+                      checked={getCrmRuleValue('clio', rule.key)}
+                      onCheckedChange={(v) => setCrmRuleValue('clio', rule.key, !!v)}
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-0.5">
+                      <span className="text-sm font-medium">{rule.label}</span>
+                      <p className="text-xs text-muted-foreground">{rule.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* MyCase Toggle + Rules */}
+          <div className="space-y-4 rounded-md border border-border p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-sm font-medium">MyCase Integration</span>
+                <p className="text-xs text-muted-foreground">Route Five9 calls to MyCase as Notes</p>
+              </div>
+              <Switch checked={isCrmEnabled('mycase')} onCheckedChange={(v) => setCrmEnabled('mycase', v)} />
+            </div>
+
+            {isCrmEnabled('mycase') && (
+              <div className="space-y-3 pt-2 border-t border-border">
+                {[
+                  { key: 'autoCreateContact', label: 'Auto-create contacts', desc: 'Create a new MyCase contact if phone number is not found' },
+                  { key: 'autoCreateMatterOrCase', label: 'Auto-create cases', desc: 'Create a new case when no open case exists for the contact' },
+                  { key: 'attachToLatestOpenOnly', label: 'Attach to latest open case', desc: 'When multiple cases exist, pick the most recently opened' },
+                  { key: 'fallbackToContactOnly', label: 'Fallback to contact-only logging', desc: 'Log the note on the contact if no case is available' },
+                ].map((rule) => (
+                  <div key={rule.key} className="flex items-start gap-3">
+                    <Checkbox
+                      checked={getCrmRuleValue('mycase', rule.key)}
+                      onCheckedChange={(v) => setCrmRuleValue('mycase', rule.key, !!v)}
+                      className="mt-0.5"
+                    />
+                    <div className="space-y-0.5">
+                      <span className="text-sm font-medium">{rule.label}</span>
+                      <p className="text-xs text-muted-foreground">{rule.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </CollapsibleContent>
       </Collapsible>
 
