@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTenants, useDeleteTenant } from "@/hooks/useTenants";
 import { useApiLogStats } from "@/hooks/useApiLogs";
 import { useFive9Sync } from "@/hooks/useFive9Sync";
@@ -75,6 +75,7 @@ export default function TenantsPage() {
   const { syncFromFive9, isSyncing } = useFive9Sync();
   const { organization } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -325,6 +326,7 @@ export default function TenantsPage() {
         columns={columns}
         data={filteredTenants}
         keyExtractor={(t) => t.id}
+        onRowClick={(t) => navigate(`/admin/clients/${t.id}`)}
         isLoading={isLoading}
         emptyMessage="No clients found. Create your first client to get started."
       />
