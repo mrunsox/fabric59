@@ -92,15 +92,7 @@ export function CrmConnectionCard({ crm, tenantId, config, onConfigChange }: Crm
     onConfigChange({
       ...(config || {}),
       enabled: v,
-      rules: config?.rules || {
-        enabled: true,
-        autoCreateContact: false,
-        autoCreateMatterOrCase: false,
-        autoCreateOnlyForQueues: [],
-        attachToLatestOpenOnly: true,
-        fallbackToContactOnly: true,
-        createTimeEntryForBillable: false,
-      },
+      rules: config?.rules || defaultRules,
     });
   };
 
