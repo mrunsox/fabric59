@@ -125,6 +125,7 @@ export function useCreateTenant() {
       const { error } = await supabase.from("tenants").insert([
         {
           name: data.name,
+          partner_id: (data as any).partner_id || null,
           crm_type: data.crm_type,
           crm_api_url: data.crm_api_url || null,
           crm_api_key: data.crm_api_key || null,
@@ -175,6 +176,7 @@ export function useUpdateTenant() {
       const updateData: Record<string, unknown> = {};
       
       if (data.name !== undefined) updateData.name = data.name;
+      if ((data as any).partner_id !== undefined) updateData.partner_id = (data as any).partner_id || null;
       if (data.crm_type !== undefined) updateData.crm_type = data.crm_type;
       if (data.crm_api_url !== undefined) updateData.crm_api_url = data.crm_api_url || null;
       if (data.crm_api_key !== undefined) updateData.crm_api_key = data.crm_api_key || null;
