@@ -185,14 +185,14 @@ export default function ClientOverviewPage() {
           <CrmConnectionCard
             crm="clio"
             tenantId={tenant.id}
-            config={configs?.clio as Record<string, unknown> | undefined}
+            config={configs?.clio as unknown as Record<string, unknown> | undefined}
             onConfigChange={(c) => handleCrmConfigChange("clio", c)}
           />
 
           <CrmConnectionCard
             crm="mycase"
             tenantId={tenant.id}
-            config={configs?.mycase as Record<string, unknown> | undefined}
+            config={configs?.mycase as unknown as Record<string, unknown> | undefined}
             onConfigChange={(c) => handleCrmConfigChange("mycase", c)}
           />
 

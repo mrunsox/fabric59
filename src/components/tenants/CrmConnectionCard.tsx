@@ -71,7 +71,16 @@ export function CrmConnectionCard({ crm, tenantId, config, onConfigChange }: Crm
 
   const enabled = !!config?.enabled;
   const connected = isClio ? !!config?.oauthTokenId : !!config?.apiKeyId;
-  const rules = (config?.rules as Five9ToCrmRules) || {};
+  const defaultRules: Five9ToCrmRules = {
+    enabled: true,
+    autoCreateContact: false,
+    autoCreateMatterOrCase: false,
+    autoCreateOnlyForQueues: [],
+    attachToLatestOpenOnly: true,
+    fallbackToContactOnly: true,
+    createTimeEntryForBillable: false,
+  };
+  const rules: Five9ToCrmRules = { ...defaultRules, ...((config?.rules as Partial<Five9ToCrmRules>) || {}) };
 
   useEffect(() => {
     if (config?.rules) {
