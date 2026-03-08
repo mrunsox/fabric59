@@ -52,6 +52,10 @@ import BillingPage from "@/pages/admin/BillingPage";
 import PostCallAutomationsPage from "@/pages/admin/PostCallAutomationsPage";
 import ANIBlockListPage from "@/pages/admin/ANIBlockListPage";
 import CallbackQueuePage from "@/pages/admin/CallbackQueuePage";
+import AbandonRatePage from "@/pages/admin/AbandonRatePage";
+import DataPlanePage from "@/pages/admin/DataPlanePage";
+import IdentityResolutionPage from "@/pages/admin/IdentityResolutionPage";
+import PlatformUtilitiesPage from "@/pages/admin/PlatformUtilitiesPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
@@ -128,6 +132,10 @@ const App = () => (
                 <Route path="automations" element={<PostCallAutomationsPage />} />
                 <Route path="ani-blocklist" element={<ANIBlockListPage />} />
                 <Route path="callback-queue" element={<CallbackQueuePage />} />
+                <Route path="abandon-rate" element={<AbandonRatePage />} />
+                <Route path="data-plane" element={<DataPlanePage />} />
+                <Route path="identity" element={<IdentityResolutionPage />} />
+                <Route path="utilities" element={<PlatformUtilitiesPage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />

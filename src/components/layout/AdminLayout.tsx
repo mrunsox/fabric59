@@ -33,6 +33,10 @@ import {
   Zap,
   Ban,
   PhoneCall,
+  ShieldAlert,
+  Database,
+  Link2,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -95,7 +99,16 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Automations", href: "/admin/automations", icon: Zap, permission: "domains" },
       { name: "ANI Block List", href: "/admin/ani-blocklist", icon: Ban, permission: "domains" },
       { name: "Callback Queue", href: "/admin/callback-queue", icon: PhoneCall, permission: "domains" },
+      { name: "Abandon Rate", href: "/admin/abandon-rate", icon: ShieldAlert, permission: "domains" },
       { name: "Billing", href: "/admin/billing", icon: DollarSign, permission: "settings" },
+    ],
+  },
+  {
+    label: "Platform",
+    items: [
+      { name: "Data Plane", href: "/admin/data-plane", icon: Database, permission: "domains" },
+      { name: "Identity Resolution", href: "/admin/identity", icon: Link2, permission: "domains" },
+      { name: "Utilities", href: "/admin/utilities", icon: Wrench, permission: "settings" },
     ],
   },
   {
