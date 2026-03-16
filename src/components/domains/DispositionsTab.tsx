@@ -64,6 +64,7 @@ export function DispositionsTab({ domainId, canManage }: DispositionsTabProps) {
   const [groupAssignments, setGroupAssignments] = useState<Record<string, string>>({});
   const [manualGroups, setManualGroups] = useState<string[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
+  const [worksheetFlags, setWorksheetFlags] = useState<Record<string, boolean>>({});
 
   const campaignsQuery = useFive9Campaigns(domainId);
   const profilesQuery = useFive9CampaignProfiles(domainId);
