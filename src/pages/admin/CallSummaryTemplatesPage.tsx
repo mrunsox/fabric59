@@ -125,3 +125,7 @@ export function CallSummaryTemplatesContent() {
     </div>
   );
 }
+
+export default function CallSummaryTemplatesPage() {
+  return <CallSummaryTemplatesContent />;
+}

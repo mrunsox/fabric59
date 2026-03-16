@@ -43,3 +43,7 @@ export function DispositionsContent() {
     </div>
   );
 }
+
+export default function DispositionsPage() {
+  return <DispositionsContent />;
+}

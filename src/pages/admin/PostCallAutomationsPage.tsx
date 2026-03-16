@@ -201,3 +201,7 @@ export function PostCallAutomationsContent() {
     </div>
   );
 }
+
+export default function PostCallAutomationsPage() {
+  return <PostCallAutomationsContent />;
+}

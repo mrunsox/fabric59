@@ -153,6 +153,8 @@ const App = () => (
                 <Route path="script-routing" element={<ScriptRoutingPage />} />
                 <Route path="goals" element={<GoalsPage />} />
                 <Route path="summary-templates" element={<CallSummaryTemplatesPage />} />
+                <Route path="scriptflow" element={<ScriptFlowHubPage />} />
+                <Route path="email-templates" element={<EmailTemplatesPage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />

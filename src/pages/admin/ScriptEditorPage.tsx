@@ -144,3 +144,7 @@ export function ScriptEditorContent() {
     </div>
   );
 }
+
+export default function ScriptEditorPage() {
+  return <ScriptEditorContent />;
+}

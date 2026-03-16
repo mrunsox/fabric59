@@ -127,3 +127,7 @@ export function ScriptRoutingContent() {
     </div>
   );
 }
+
+export default function ScriptRoutingPage() {
+  return <ScriptRoutingContent />;
+}
