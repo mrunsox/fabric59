@@ -242,6 +242,10 @@ export default function ReportsPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="report59">
+          <Report59Content />
+        </TabsContent>
+
         {isMasterAdmin && (
           <TabsContent value="gating">
             <DispositionGatingConfig />

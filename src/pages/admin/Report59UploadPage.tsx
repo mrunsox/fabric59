@@ -241,19 +241,13 @@ export function Report59Content() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileSpreadsheet className="h-6 w-6" /> Report59
-          </h1>
-          <p className="text-sm text-muted-foreground">Upload Five9 reports for analysis, billing, and visualization</p>
-        </div>
-        {file && (
+      {file && (
+        <div className="flex justify-end">
           <Button variant="outline" size="sm" onClick={clearUpload} className="gap-1.5">
             <X className="h-3.5 w-3.5" /> Clear Upload
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {!file ? (
         <div className="space-y-6">
