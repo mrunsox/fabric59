@@ -2325,45 +2325,92 @@ export type Database = {
           },
         ]
       }
+      script_versions: {
+        Row: {
+          content: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          script_id: string
+          version: number
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          script_id: string
+          version?: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          script_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "script_versions_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scripts: {
         Row: {
           created_at: string
           created_by: string | null
           definition: Json
           description: string | null
+          dnis: string | null
           id: string
+          is_live: boolean
+          is_template: boolean
           name: string
           organization_id: string
           partner_id: string | null
           status: string
           tenant_id: string | null
           updated_at: string
+          version: number
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           definition?: Json
           description?: string | null
+          dnis?: string | null
           id?: string
+          is_live?: boolean
+          is_template?: boolean
           name: string
           organization_id: string
           partner_id?: string | null
           status?: string
           tenant_id?: string | null
           updated_at?: string
+          version?: number
         }
         Update: {
           created_at?: string
           created_by?: string | null
           definition?: Json
           description?: string | null
+          dnis?: string | null
           id?: string
+          is_live?: boolean
+          is_template?: boolean
           name?: string
           organization_id?: string
           partner_id?: string | null
           status?: string
           tenant_id?: string | null
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
