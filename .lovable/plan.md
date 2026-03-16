@@ -59,8 +59,11 @@
 - Wired into `AgentDashboardPage` with tabs: Overview, Tasks, Notes, Callbacks, AI Assist
 - Wired into `SupervisorPage` with tabs: Live Monitor, Analytics
 
-## Remaining
+### Phase 2: CRM Push Consolidation ✅
+- Updated `crm-push` to read CRM config from `integration_configs.crm` JSONB with flat-column fallback
+- Removed duplicate Clio adapter from `crm-push` (Clio handled by `five9-main`)
+- Wired `five9-main` Route A and Route B to call `dispatchToGenericCrm` for non-legal CRM tenants
+- Added `GenericCrmConfig` type to `five9-main`'s `IntegrationConfigs` interface
+- Browser-tested Tree Editor, Agent Dashboard, and Supervisor pages — all render correctly
 
-### Phase 2: CRM Push Consolidation
-- `crm-push` remains as standalone generic dispatcher
-- `five9-main` calls it for non-Legal CRM tenants via `dispatchToGenericCrm`
+## Status: All phases complete ✅
