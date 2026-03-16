@@ -36,7 +36,7 @@ export interface InvoiceLineItem {
 }
 
 export function useInvoices(statusFilter?: string) {
-  const { organization } = useOrganization();
+  const { organization } = useAuth();
   const orgId = organization?.id;
 
   return useQuery({
