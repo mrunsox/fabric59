@@ -300,7 +300,7 @@ serve(async (req) => {
       responseData = { success: true, profiles };
 
     } else if (action === 'createDispositions') {
-      const { dispositions } = payload as { dispositions: Array<{ name: string; type?: string; description?: string }> };
+      const { dispositions } = payload as { dispositions: Array<{ name: string; type?: string; description?: string; agentMustCompleteWorksheet?: boolean }> };
       const results: Array<{ name: string; success: boolean; error?: string }> = [];
 
       for (const dispo of dispositions) {

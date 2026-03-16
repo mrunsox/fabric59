@@ -135,15 +135,25 @@ export function useDeprovisioning() {
       }
     }
 
-    // Step 2 — Five9 deactivate
+    // Step 2 — Five9 deactivate (or hard-delete if requested)
+    const hardDelete = request.dataTransfer?.hardDeleteFive9 === true;
     updateStep('five9-deletion', { status: 'active' });
     try {
       const username = agentData?.five9_username || agentData?.email;
       if (username) {
+        // First deactivate
         const { data } = await supabase.functions.invoke('five9-provisioning', {
           body: { action: 'deactivate', username },
         });
-        updateStep('five9-deletion', { status: data?.success ? 'complete' : 'error', errorMessage: data?.error });
+        if (data?.success && hardDelete) {
+          // Then hard-delete from Five9
+          const { data: delData } = await supabase.functions.invoke('five9-provisioning', {
+            body: { action: 'deleteUser', username },
+          });
+          updateStep('five9-deletion', { status: delData?.success ? 'complete' : 'error', errorMessage: delData?.error });
+        } else {
+          updateStep('five9-deletion', { status: data?.success ? 'complete' : 'error', errorMessage: data?.error });
+        }
       } else {
         updateStep('five9-deletion', { status: 'skipped' });
       }
