@@ -128,6 +128,7 @@ export function DispositionsTab({ domainId, canManage }: DispositionsTabProps) {
           name: d.name,
           type: d.type,
           description: d.description,
+          agentMustCompleteWorksheet: worksheetFlags[d.name] || false,
         })),
         campaigns: selectedCampaigns,
         campaignProfiles: selectedProfiles,
