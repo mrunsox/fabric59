@@ -201,6 +201,10 @@ export interface PartnerFormData {
   slug: string;
   status: PartnerStatus;
   integration_configs?: Record<string, unknown>;
+  brand_logo_url?: string;
+  brand_primary_color?: string;
+  brand_from_email?: string;
+  portal_domain?: string;
 }
 
 export interface Five9DomainFormData {
