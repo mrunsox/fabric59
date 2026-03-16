@@ -1,11 +1,10 @@
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ReactFlow,
   Background,
   Controls,
   MiniMap,
-  Panel,
   useNodesState,
   useEdgesState,
   addEdge,
@@ -16,19 +15,16 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Save, Upload, Undo2, Redo2,
-  Play as PlayIcon, HelpCircle, Zap, GitFork, Mail, Webhook, FileText, ExternalLink, Layers,
-  CircleDot, CircleX,
+  ArrowLeft, Save, Upload, Undo2,
+  HelpCircle, Zap, GitFork, Mail, Webhook, FileText, ExternalLink, Layers,
+  CircleDot, CircleX, Download,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useScripts, useUpdateScript } from "@/hooks/useScripts";
 import { useScriptVersioning } from "@/hooks/useScriptVersioning";
 
-// Node components
 import { StartNode } from "@/components/script-builder/StartNode";
 import { EndNode } from "@/components/script-builder/EndNode";
 import { QuestionNode } from "@/components/script-builder/QuestionNode";
@@ -40,16 +36,15 @@ import { DocumentNode } from "@/components/script-builder/DocumentNode";
 import { LinkNode } from "@/components/script-builder/LinkNode";
 import { SubTreeNode } from "@/components/script-builder/SubTreeNode";
 
-// Builder utilities
 import { NodePropertyEditors } from "@/components/script-builder/NodePropertyEditors";
 import { AIScriptGenerator } from "@/components/script-builder/AIScriptGenerator";
 import { ScriptTestMode } from "@/components/script-builder/ScriptTestMode";
 import { TemplateGallery } from "@/components/script-builder/TemplateGallery";
 import { SaveAsTemplateDialog } from "@/components/script-builder/SaveAsTemplateDialog";
-import { ScriptImportExport } from "@/components/script-builder/ScriptImportExport";
-import { ScriptValidation } from "@/components/script-builder/ScriptValidation";
-import { VersionHistoryPanel } from "@/components/script-builder/VersionHistoryPanel";
+import { ScriptImportDialog, downloadScriptJSON } from "@/components/script-builder/ScriptImportExport";
+import { ScriptValidationDialog, validateScript } from "@/components/script-builder/ScriptValidation";
 import { ScriptStatusBadge } from "@/components/script-builder/ScriptStatusBadge";
+import { VersionHistoryPanel } from "@/components/script-builder/VersionHistoryPanel";
 
 const nodeTypes = {
   start: StartNode,
@@ -88,11 +83,15 @@ export default function ScriptBuilderPage() {
   const orgId = organization?.id;
   const { data: scripts = [] } = useScripts();
   const updateScript = useUpdateScript();
-  const { publishVersion } = useScriptVersioning(scriptId);
+  const versioning = useScriptVersioning({ scriptId });
 
   const script = useMemo(() => scripts.find(s => s.id === scriptId), [scripts, scriptId]);
 
-  // Load initial definition from script
+  // Load script into versioning hook
+  useEffect(() => {
+    if (scriptId) versioning.fetchScript(scriptId);
+  }, [scriptId]);
+
   const initialData = useMemo(() => {
     if (script?.definition) {
       const def = script.definition as { nodes?: Node[]; edges?: Edge[] };
@@ -105,7 +104,18 @@ export default function ScriptBuilderPage() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialData.edges);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showVersions, setShowVersions] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
   const nodeIdCounter = useRef(1);
+
+  // Sync when script loads
+  useEffect(() => {
+    if (script?.definition) {
+      const def = script.definition as { nodes?: Node[]; edges?: Edge[] };
+      if (def.nodes) setNodes(def.nodes);
+      if (def.edges) setEdges(def.edges);
+    }
+  }, [script?.id]);
 
   const onConnect = useCallback((connection: Connection) => {
     setEdges(eds => addEdge({
@@ -115,17 +125,12 @@ export default function ScriptBuilderPage() {
     }, eds));
   }, [setEdges]);
 
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
-    setSelectedNode(node);
-  }, []);
-
-  const onPaneClick = useCallback(() => {
-    setSelectedNode(null);
-  }, []);
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => setSelectedNode(node), []);
+  const onPaneClick = useCallback(() => setSelectedNode(null), []);
 
   const addNode = useCallback((type: string) => {
     nodeIdCounter.current += 1;
-    const id = `${type}-${nodeIdCounter.current}`;
+    const id = `${type}-${nodeIdCounter.current}-${Date.now()}`;
     const label = NODE_PALETTE.find(n => n.type === type)?.label || type;
     const newNode: Node = {
       id,
@@ -141,34 +146,30 @@ export default function ScriptBuilderPage() {
     setSelectedNode(prev => prev?.id === nodeId ? { ...prev, data } : prev);
   }, [setNodes]);
 
-  const handleSave = useCallback(() => {
-    if (!scriptId || !orgId) return;
-    const definition = { nodes, edges };
-    updateScript.mutate({ id: scriptId, definition });
-    toast.success("Script saved");
-  }, [scriptId, orgId, nodes, edges, updateScript]);
-
-  const handlePublish = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (!scriptId) return;
-    publishVersion.mutate(
-      { definition: { nodes, edges } },
-      { onSuccess: () => toast.success("Version published") }
-    );
-  }, [scriptId, nodes, edges, publishVersion]);
+    await versioning.saveDraft({ nodes, edges });
+  }, [scriptId, nodes, edges, versioning]);
+
+  const handlePublish = useCallback(async () => {
+    if (!scriptId) return;
+    await versioning.publish({ nodes, edges });
+  }, [scriptId, nodes, edges, versioning]);
 
   const handleAIGenerated = useCallback((newNodes: Node[], newEdges: Edge[]) => {
     setNodes(newNodes);
     setEdges(newEdges);
   }, [setNodes, setEdges]);
 
-  const handleTemplateSelect = useCallback((templateNodes: Node[], templateEdges: Edge[]) => {
-    setNodes(templateNodes);
-    setEdges(templateEdges);
+  const handleTemplateSelect = useCallback((tNodes: Node[], tEdges: Edge[]) => {
+    setNodes(tNodes);
+    setEdges(tEdges);
   }, [setNodes, setEdges]);
 
-  const handleImport = useCallback((data: { nodes: Node[]; edges: Edge[] }) => {
-    setNodes(data.nodes);
-    setEdges(data.edges);
+  const handleImport = useCallback((importedNodes: Node[], importedEdges: Edge[]) => {
+    setNodes(importedNodes);
+    setEdges(importedEdges);
+    setShowImport(false);
   }, [setNodes, setEdges]);
 
   return (
@@ -180,19 +181,27 @@ export default function ScriptBuilderPage() {
         </Button>
         <div className="h-5 w-px bg-border" />
         <h2 className="text-sm font-medium truncate max-w-[200px]">{script?.name || "Script Builder"}</h2>
-        {script && <ScriptStatusBadge status={script.status} />}
+        {versioning.script && (
+          <ScriptStatusBadge
+            isLive={!!versioning.script.is_live}
+            hasUnsavedChanges={versioning.hasUnsavedChanges}
+            version={versioning.script.version || 1}
+          />
+        )}
         <div className="flex-1" />
 
         <AIScriptGenerator onGenerated={handleAIGenerated} />
         <TemplateGallery onSelect={handleTemplateSelect} />
         <ScriptTestMode nodes={nodes} edges={edges} />
-        <ScriptValidation nodes={nodes} edges={edges} />
-        <ScriptImportExport
-          nodes={nodes}
-          edges={edges}
-          scriptName={script?.name || "script"}
-          onImport={handleImport}
-        />
+        <Button variant="outline" size="sm" onClick={() => setShowValidation(true)} className="gap-1.5">
+          Validate
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setShowImport(true)} className="gap-1.5">
+          Import
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => downloadScriptJSON(nodes, edges, { name: script?.name, version: versioning.script?.version })} className="gap-1.5">
+          <Download className="h-3.5 w-3.5" /> Export
+        </Button>
         <SaveAsTemplateDialog nodes={nodes} edges={edges} />
 
         <div className="h-5 w-px bg-border" />
@@ -200,10 +209,10 @@ export default function ScriptBuilderPage() {
         <Button variant="outline" size="sm" onClick={() => setShowVersions(!showVersions)} className="gap-1.5">
           <Undo2 className="h-3.5 w-3.5" /> Versions
         </Button>
-        <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
+        <Button variant="outline" size="sm" onClick={handleSave} disabled={versioning.isSaving} className="gap-1.5">
           <Save className="h-3.5 w-3.5" /> Save Draft
         </Button>
-        <Button size="sm" onClick={handlePublish} className="gap-1.5">
+        <Button size="sm" onClick={handlePublish} disabled={versioning.isPublishing} className="gap-1.5">
           <Upload className="h-3.5 w-3.5" /> Publish
         </Button>
       </div>
@@ -260,21 +269,31 @@ export default function ScriptBuilderPage() {
         )}
 
         {/* Version History */}
-        {showVersions && scriptId && (
-          <div className="w-80 border-l border-border shrink-0">
-            <VersionHistoryPanel
-              scriptId={scriptId}
-              onRestore={(content) => {
-                const def = content as { nodes?: Node[]; edges?: Edge[] };
-                if (def?.nodes) {
-                  setNodes(def.nodes);
-                  setEdges(def.edges || []);
-                }
-              }}
-            />
-          </div>
+        {showVersions && (
+          <VersionHistoryPanel
+            versions={versioning.versions}
+            currentVersion={versioning.script?.version || 1}
+            isOpen={showVersions}
+            onClose={() => setShowVersions(false)}
+            onRollback={async (v) => { await versioning.rollbackToVersion(v); }}
+          />
         )}
       </div>
+
+      {/* Dialogs */}
+      <ScriptImportDialog isOpen={showImport} onClose={() => setShowImport(false)} onImport={handleImport} />
+      <ScriptValidationDialog
+        isOpen={showValidation}
+        onClose={() => setShowValidation(false)}
+        nodes={nodes}
+        edges={edges}
+        onNodeSelect={(nodeId) => {
+          const n = nodes.find(nd => nd.id === nodeId);
+          if (n) setSelectedNode(n);
+          setShowValidation(false);
+        }}
+        onPublish={handlePublish}
+      />
     </div>
   );
 }
