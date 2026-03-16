@@ -32,7 +32,7 @@ export function useCreatePostCallAutomation() {
       name: string;
       disposition_match: string;
       action_type: string;
-      config?: Record<string, unknown>;
+      config?: Json;
       script_id?: string;
       tenant_id?: string;
       enabled?: boolean;
