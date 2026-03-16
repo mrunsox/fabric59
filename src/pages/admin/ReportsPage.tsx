@@ -38,7 +38,15 @@ export default function ReportsPage() {
   const { data: callLogs = [], isLoading, refetch } = useCallLogs(startDate, endDate, fetchEnabled);
   const { data: dispositionAccess = [] } = useDispositionAccessList();
   const { data: scheduledReports = [] } = useScheduledReports();
+  const { data: partners = [] } = usePartners();
+  const { data: tenants = [] } = useTenants();
   const updateStatus = useUpdateScheduledReportStatus();
+
+  const filteredClients = useMemo(() => {
+    if (partnerFilter === "all") return tenants;
+    if (partnerFilter === "direct") return tenants.filter((t) => !t.partner_id);
+    return tenants.filter((t) => t.partner_id === partnerFilter);
+  }, [tenants, partnerFilter]);
 
   const allowedDispositions = useMemo(
     () => dispositionAccess.map((d) => d.disposition_name),
