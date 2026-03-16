@@ -6,14 +6,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import {
-  Phone, Clock, TrendingUp, Target, CheckCircle2, Circle, BookOpen,
-  ListChecks, BarChart3, Award, Zap
+  Phone, Clock, Target, Circle, BookOpen,
+  ListChecks, Award, Zap, StickyNote
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTasks, useUpdateTask } from "@/hooks/useTasks";
 import { useScriptSessions } from "@/hooks/useScriptSessions";
 import { useTrainingModules, useTrainingProgress } from "@/hooks/useTraining";
+import { usePerformanceGoals } from "@/hooks/usePerformanceGoals";
 
 const priorityColor = (p: string) => {
   if (p === "high") return "text-destructive";
@@ -27,6 +28,7 @@ export default function AgentDashboardPage() {
   const { data: sessions = [] } = useScriptSessions(20);
   const { data: modules = [] } = useTrainingModules();
   const { data: progress = [] } = useTrainingProgress();
+  const { data: goals = [] } = usePerformanceGoals("active");
   const updateTask = useUpdateTask();
 
   const toggleTask = (id: string, currentStatus: string) => {
@@ -35,7 +37,6 @@ export default function AgentDashboardPage() {
 
   const pendingTasks = tasks.filter(t => t.status === "pending").length;
 
-  // Derive stats from sessions
   const todaySessions = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
     return sessions.filter(s => s.started_at.slice(0, 10) === today);
@@ -48,10 +49,9 @@ export default function AgentDashboardPage() {
     return `${Math.floor(avg / 60)}:${(avg % 60).toString().padStart(2, "0")}`;
   }, [todaySessions]);
 
-  // Mock hourly/weekly (would need aggregation in real app — keeping charts visual)
   const MOCK_HOURLY = Array.from({ length: 8 }, (_, i) => ({
     hour: `${9 + i}:00`,
-    calls: todaySessions.filter(s => new Date(s.started_at).getHours() === 9 + i).length || Math.floor(Math.random() * 4),
+    calls: todaySessions.filter(s => new Date(s.started_at).getHours() === 9 + i).length || 0,
   }));
 
   const moduleProgress = useMemo(() => {
@@ -67,7 +67,7 @@ export default function AgentDashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2"><Zap className="h-6 w-6" /> Agent Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Your personal workspace — tasks, calls, and performance</p>
+        <p className="text-sm text-muted-foreground">Your personal workspace — tasks, calls, goals, and performance</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -124,7 +124,7 @@ export default function AgentDashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Call History from script_sessions */}
+        {/* Recent Sessions */}
         <Card className="lg:col-span-2">
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Recent Sessions</CardTitle></CardHeader>
           <CardContent>
@@ -154,8 +154,9 @@ export default function AgentDashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Calls by Hour */}
+        <Card className="lg:col-span-1">
           <CardHeader><CardTitle className="text-base">Calls by Hour</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -170,6 +171,27 @@ export default function AgentDashboardPage() {
           </CardContent>
         </Card>
 
+        {/* My Goals */}
+        <Card className="lg:col-span-1">
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Target className="h-4 w-4" /> My Goals</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {goals.length === 0 && <p className="text-sm text-muted-foreground">No active goals assigned.</p>}
+              {goals.slice(0, 4).map(goal => (
+                <div key={goal.id} className="rounded-lg border border-border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">{goal.name}</h4>
+                    <span className="text-xs font-mono text-muted-foreground">0 / {goal.target_value}</span>
+                  </div>
+                  <Progress value={0} className="h-2" />
+                  <p className="text-xs text-muted-foreground capitalize">{goal.metric} · {goal.timeframe}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Training Modules */}
         <Card className="lg:col-span-1">
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><BookOpen className="h-4 w-4" /> Training Modules</CardTitle></CardHeader>
           <CardContent>
