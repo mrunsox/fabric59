@@ -32,7 +32,7 @@ export function useCreateQAReview() {
       script_session_id?: string;
       agent_id?: string;
       reviewer_id?: string;
-      scores?: Record<string, unknown>;
+      scores?: Json;
       total_score?: number;
       status?: string;
       notes?: string;
