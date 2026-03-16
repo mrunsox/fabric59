@@ -13,6 +13,7 @@ export interface DataTransferConfig {
   targetEmail?: string;
   transferEmail: boolean;
   transferDrive: boolean;
+  hardDeleteFive9?: boolean;
 }
 
 export interface DeprovisioningRequest {
