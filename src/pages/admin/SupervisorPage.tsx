@@ -5,7 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import {
-  Eye, Users, Phone, Signal, Award, Gauge, Route, Target
+  Eye, Users, Phone, Signal, Award, Gauge, Route, Target,
+  Activity, BarChart3
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,12 @@ import { useCampaignScripts } from "@/hooks/useCampaignScripts";
 import { usePerformanceGoals } from "@/hooks/usePerformanceGoals";
 import { useScripts } from "@/hooks/useScripts";
 import { useTenants } from "@/hooks/useTenants";
+
+// Analytics components
+import { LiveMonitoringPanel } from "@/components/analytics/LiveMonitoringPanel";
+import { CallSessionAnalytics } from "@/components/analytics/CallSessionAnalytics";
+import { OutcomeAnalyticsDashboard } from "@/components/analytics/OutcomeAnalyticsDashboard";
+import { PathAnalyticsDashboard } from "@/components/analytics/PathAnalyticsDashboard";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(var(--warning))"];
 const formatDuration = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
@@ -88,8 +95,10 @@ export default function SupervisorPage() {
       </div>
 
       <Tabs defaultValue="agents">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="agents">Agent Board</TabsTrigger>
+          <TabsTrigger value="live-monitor"><Activity className="h-3 w-3 mr-1" /> Live Monitor</TabsTrigger>
+          <TabsTrigger value="analytics"><BarChart3 className="h-3 w-3 mr-1" /> Analytics</TabsTrigger>
           <TabsTrigger value="dispositions">Dispositions</TabsTrigger>
           <TabsTrigger value="rankings">Rankings</TabsTrigger>
           <TabsTrigger value="routing">Scripts & Routing</TabsTrigger>
@@ -121,6 +130,16 @@ export default function SupervisorPage() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="live-monitor" className="space-y-4">
+          <LiveMonitoringPanel />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <CallSessionAnalytics />
+          <OutcomeAnalyticsDashboard />
+          <PathAnalyticsDashboard />
         </TabsContent>
 
         <TabsContent value="dispositions" className="space-y-4">
@@ -193,7 +212,7 @@ export default function SupervisorPage() {
           <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><Route className="h-4 w-4" /> Active Script Routing</CardTitle></CardHeader>
             <CardContent>
-              {routes.length === 0 ? <p className="text-sm text-muted-foreground">No script routing configured. Go to Script Routing to add mappings.</p> : (
+              {routes.length === 0 ? <p className="text-sm text-muted-foreground">No script routing configured.</p> : (
                 <Table>
                   <TableHeader>
                     <TableRow>
