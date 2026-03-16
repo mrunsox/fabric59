@@ -38,7 +38,7 @@ export function useCreateScriptTemplate() {
     }) => {
       const { data, error } = await supabase
         .from("script_templates")
-        .insert(payload)
+        .insert([payload])
         .select()
         .single();
       if (error) throw error;
