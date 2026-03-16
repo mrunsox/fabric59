@@ -190,6 +190,7 @@ export function DispositionsTab({ domainId, canManage }: DispositionsTabProps) {
                       <th className="text-left px-3 py-2 font-medium">Name</th>
                       <th className="text-left px-3 py-2 font-medium">Type</th>
                       <th className="text-left px-3 py-2 font-medium">Description</th>
+                      <th className="text-left px-3 py-2 font-medium">Worksheet</th>
                       <th className="text-left px-3 py-2 font-medium">Assign To</th>
                       <th className="text-left px-3 py-2 font-medium">Group</th>
                       <th className="text-left px-3 py-2 font-medium w-8"></th>
