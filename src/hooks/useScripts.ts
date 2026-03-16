@@ -60,7 +60,7 @@ export function useCreateScript() {
 export function useUpdateScript() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...values }: { id: string; name?: string; description?: string; status?: string; definition?: Record<string, unknown> }) => {
+    mutationFn: async ({ id, ...values }: { id: string; name?: string; description?: string; status?: string; definition?: Json }) => {
       const { data, error } = await supabase.from("scripts").update(values).eq("id", id).select().single();
       if (error) throw error;
       return data;

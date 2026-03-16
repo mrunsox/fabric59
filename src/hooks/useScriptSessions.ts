@@ -53,7 +53,7 @@ export function useCompleteScriptSession() {
       id: string;
       ended_at?: string;
       duration_seconds?: number;
-      variables?: Record<string, unknown>;
+      variables?: Json;
       disposition?: string;
       post_call_status?: string;
     }) => {

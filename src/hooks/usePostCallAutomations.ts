@@ -57,7 +57,7 @@ export function useUpdatePostCallAutomation() {
       name?: string;
       disposition_match?: string;
       action_type?: string;
-      config?: Record<string, unknown>;
+      config?: Json;
       enabled?: boolean;
     }) => {
       const { data, error } = await supabase.from("post_call_automations").update(values).eq("id", id).select().single();

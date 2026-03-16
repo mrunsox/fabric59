@@ -54,7 +54,7 @@ export function useUpdateQAReview() {
   return useMutation({
     mutationFn: async ({ id, ...values }: {
       id: string;
-      scores?: Record<string, unknown>;
+      scores?: Json;
       total_score?: number;
       status?: string;
       notes?: string;
