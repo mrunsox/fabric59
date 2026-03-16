@@ -172,7 +172,7 @@ function parseDispositionsResponse(xml: string): Five9Field[] {
 }
 
 async function makeFive9Request(username: string, password: string, operation: string): Promise<string> {
-  const response = await fetch("https://api.five9.com/wsadmin/v2/AdminWebService", {
+  const response = await fetch("https://api.five9.com/wsadmin/v13/AdminWebService", {
     method: "POST",
     headers: {
       "Content-Type": "text/xml;charset=UTF-8",

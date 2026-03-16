@@ -125,11 +125,13 @@ serve(async (req) => {
 
     } else if (action === 'deactivate') {
       const { username } = payload;
-      const soapBody = `<ser:setUserState>
-  <username>${escapeXml(username)}</username>
-  <active>false</active>
-</ser:setUserState>`;
-      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'setUserState', soapBody);
+      const soapBody = `<ser:modifyUser>
+  <userGeneralInfo>
+    <userName>${escapeXml(username)}</userName>
+    <active>false</active>
+  </userGeneralInfo>
+</ser:modifyUser>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'modifyUser', soapBody);
       responseData = { success: true };
 
     } else if (action === 'getExtensions') {
@@ -425,9 +427,9 @@ serve(async (req) => {
     } else if (action === 'createSkill') {
       const { skillName } = payload;
       const soapBody = `<ser:createSkill>
-  <skill>
+  <skillInfo>
     <name>${escapeXml(skillName)}</name>
-  </skill>
+  </skillInfo>
 </ser:createSkill>`;
       await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'createSkill', soapBody);
       responseData = { success: true };
@@ -435,9 +437,9 @@ serve(async (req) => {
     } else if (action === 'createCampaignProfile') {
       const { profileName } = payload;
       const soapBody = `<ser:createCampaignProfile>
-  <profile>
+  <campaignProfile>
     <name>${escapeXml(profileName)}</name>
-  </profile>
+  </campaignProfile>
 </ser:createCampaignProfile>`;
       await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'createCampaignProfile', soapBody);
       responseData = { success: true };
@@ -498,13 +500,18 @@ serve(async (req) => {
         config.description = extractFirst(skillsXml, 'description');
       } catch { config.skills = []; }
 
-      // Get campaign dispositions
+      // Get campaign dispositions via profile (getCampaignDispositions doesn't exist in Five9 API)
       try {
-        const dispoBody = `<ser:getCampaignDispositions>
-  <campaignName>${escapeXml(campaignName)}</campaignName>
-</ser:getCampaignDispositions>`;
-        const dispoXml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getCampaignDispositions', dispoBody);
-        config.dispositions = extractValues(dispoXml, 'name');
+        const profileName = config.profileName as string;
+        if (profileName) {
+          const dispoBody = `<ser:getCampaignProfileDispositions>
+  <profileName>${escapeXml(profileName)}</profileName>
+</ser:getCampaignProfileDispositions>`;
+          const dispoXml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getCampaignProfileDispositions', dispoBody);
+          config.dispositions = extractValues(dispoXml, 'name');
+        } else {
+          config.dispositions = [];
+        }
       } catch { config.dispositions = []; }
 
       responseData = { success: true, config };
@@ -588,8 +595,22 @@ serve(async (req) => {
           .map(([name, value]) => `<fields><name>${escapeXml(name)}</name><value>${escapeXml(String(value))}</value></fields>`)
           .join('\n      ');
 
+        // Build fieldsMapping from record keys for listUpdateSettings
+        const fieldsMappingXml = Object.keys(record)
+          .map((name, idx) => `<fieldsMapping>
+        <columnNumber>${idx}</columnNumber>
+        <fieldName>${escapeXml(name)}</fieldName>
+        <key>${name === 'number1' ? 'true' : 'false'}</key>
+      </fieldsMapping>`)
+          .join('\n      ');
+
         const soapBody = `<ser:addRecordToList>
   <listName>${escapeXml(listName)}</listName>
+  <listUpdateSettings>
+      ${fieldsMappingXml}
+      <skipHeaderLine>false</skipHeaderLine>
+      <cleanListBeforeUpdate>false</cleanListBeforeUpdate>
+  </listUpdateSettings>
   <record>
       ${fieldsXml}
   </record>
