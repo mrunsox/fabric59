@@ -140,6 +140,11 @@ const App = () => (
                 <Route path="data-plane" element={<DataPlanePage />} />
                 <Route path="identity" element={<IdentityResolutionPage />} />
                 <Route path="utilities" element={<PlatformUtilitiesPage />} />
+                <Route path="scripts" element={<ScriptEditorPage />} />
+                <Route path="scripts/:id" element={<ScriptEditorPage />} />
+                <Route path="kb" element={<KnowledgeBasePage />} />
+                <Route path="training" element={<TrainingPage />} />
+                <Route path="feedback" element={<FeedbackPage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
