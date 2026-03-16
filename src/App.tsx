@@ -159,6 +159,8 @@ const App = () => (
                 <Route path="scriptflow" element={<ScriptFlowHubPage />} />
                 <Route path="email-templates" element={<EmailTemplatesPage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
+                <Route path="tree-editor/:scriptId" element={<TreeEditorPage />} />
+                <Route path="tree-editor" element={<TreeEditorPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
