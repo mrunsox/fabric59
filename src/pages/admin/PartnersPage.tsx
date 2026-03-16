@@ -42,6 +42,9 @@ export default function PartnersPage() {
   const [deletingPartner, setDeletingPartner] = useState<Partner | null>(null);
   const [newName, setNewName] = useState("");
   const [newSlug, setNewSlug] = useState("");
+  const [newLogoUrl, setNewLogoUrl] = useState("");
+  const [newPrimaryColor, setNewPrimaryColor] = useState("");
+  const [newFromEmail, setNewFromEmail] = useState("");
 
   const filtered = partners.filter(
     (p) => p.name.toLowerCase().includes(search.toLowerCase()) || p.slug.toLowerCase().includes(search.toLowerCase())
