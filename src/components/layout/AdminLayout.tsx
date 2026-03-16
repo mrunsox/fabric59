@@ -40,6 +40,9 @@ import {
   BookOpen,
   GraduationCap,
   MessageSquare,
+  Route,
+  Target,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
