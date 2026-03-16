@@ -10,24 +10,6 @@ interface CrmAdapter {
   pushData(action: string, data: Record<string, unknown>, apiUrl: string, apiKey: string): Promise<{ success: boolean; response?: unknown; error?: string }>;
 }
 
-const clioAdapter: CrmAdapter = {
-  async pushData(action, data, apiUrl, apiKey) {
-    const endpoint = action === 'create_contact' ? '/contacts' : action === 'update_contact' ? `/contacts/${data.id}` : '/activities';
-    const method = action === 'update_contact' ? 'PATCH' : 'POST';
-    try {
-      const res = await fetch(`${apiUrl}${endpoint}`, {
-        method,
-        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data }),
-      });
-      const body = await res.json();
-      return { success: res.ok, response: body };
-    } catch (e) {
-      return { success: false, error: e instanceof Error ? e.message : 'Clio API error' };
-    }
-  }
-};
-
 const genericRestAdapter: CrmAdapter = {
   async pushData(action, data, apiUrl, apiKey) {
     try {
@@ -45,7 +27,6 @@ const genericRestAdapter: CrmAdapter = {
 };
 
 const adapters: Record<string, CrmAdapter> = {
-  clio: clioAdapter,
   workiz: genericRestAdapter,
   salesforce: genericRestAdapter,
   hubspot: genericRestAdapter,
@@ -72,16 +53,26 @@ serve(async (req) => {
       });
     }
 
-    const { data: tenant, error: tErr } = await supabase.from('tenants').select('crm_type, crm_api_url, crm_api_key').eq('id', tenant_id).single();
+    const { data: tenant, error: tErr } = await supabase
+      .from('tenants')
+      .select('crm_type, crm_api_url, crm_api_key, integration_configs')
+      .eq('id', tenant_id)
+      .single();
+
     if (tErr || !tenant) {
       return new Response(JSON.stringify({ success: false, error: 'Tenant not found' }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // Read CRM config from integration_configs JSONB with flat-column fallback
+    const ic = (tenant.integration_configs as Record<string, any>) || {};
+    const apiUrl = ic.crm?.api_url || tenant.crm_api_url || '';
+    const apiKey = ic.crm?.api_key || tenant.crm_api_key || '';
+
     const adapter = adapters[tenant.crm_type] || adapters.other;
     const startTime = Date.now();
-    const result = await adapter.pushData(crm_action, data || {}, tenant.crm_api_url || '', tenant.crm_api_key || '');
+    const result = await adapter.pushData(crm_action, data || {}, apiUrl, apiKey);
     const elapsed = Date.now() - startTime;
 
     // Log to api_logs

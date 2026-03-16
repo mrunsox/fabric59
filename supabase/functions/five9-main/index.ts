@@ -55,9 +55,15 @@ interface MyCaseIntegrationConfig {
   rules: Five9ToCrmRules;
 }
 
+interface GenericCrmConfig {
+  api_url?: string;
+  api_key?: string;
+}
+
 interface IntegrationConfigs {
   clio?: ClioIntegrationConfig;
   mycase?: MyCaseIntegrationConfig;
+  crm?: GenericCrmConfig;
 }
 
 interface ResolvedContext {
@@ -717,6 +723,17 @@ serve(async (req) => {
               console.error(`MyCase error for tenant ${tenant.id}:`, e);
             }
           }
+
+          // Generic CRM dispatch for non-legal CRMs
+          const hasLegalCrm = configs.clio?.enabled || configs.mycase?.enabled;
+          if (!hasLegalCrm && configs.crm?.api_url) {
+            dispatchToGenericCrm(supabase, tenant.id, 'log_call', {
+              callId: call.id, direction: call.direction, fromNumber: call.fromNumber,
+              toNumber: call.toNumber, agentName: call.agentName, queue: call.queue,
+              campaign: call.campaign, disposition: call.disposition,
+              durationSeconds: call.durationSeconds,
+            });
+          }
         }
       }
 
@@ -750,6 +767,18 @@ serve(async (req) => {
         } catch (e) {
           results.mycase = { error: e instanceof Error ? e.message : 'MyCase handler error' };
         }
+      }
+
+      // Generic CRM dispatch for non-legal CRMs
+      const hasLegalCrm = context.configs.clio?.enabled || context.configs.mycase?.enabled;
+      if (!hasLegalCrm && context.configs.crm?.api_url) {
+        dispatchToGenericCrm(supabase, context.tenantId, 'log_call', {
+          callId: call.id, direction: call.direction, fromNumber: call.fromNumber,
+          toNumber: call.toNumber, agentName: call.agentName, queue: call.queue,
+          campaign: call.campaign, disposition: call.disposition,
+          durationSeconds: call.durationSeconds,
+        });
+        results.genericCrm = { dispatched: true };
       }
 
       const elapsed = Date.now() - startTime;
