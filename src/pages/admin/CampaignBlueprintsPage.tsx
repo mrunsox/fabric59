@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, ArrowLeft, Save, FileText, Copy } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Save, FileText, Download } from "lucide-react";
 import { useCampaignBlueprints, useCreateBlueprint, useUpdateBlueprint, useDeleteBlueprint, CampaignBlueprint } from "@/hooks/useCampaignBlueprints";
+import { BlueprintFileUpload } from "@/components/campaigns/BlueprintFileUpload";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const emptyBlueprint: Omit<CampaignBlueprint, "id" | "organization_id" | "created_by" | "created_at" | "updated_at"> = {
@@ -23,6 +25,7 @@ const emptyBlueprint: Omit<CampaignBlueprint, "id" | "organization_id" | "create
   connectors: [],
   notes: "",
   tags: [],
+  documents: [],
 };
 
 export default function CampaignBlueprintsPage() {
@@ -125,6 +128,27 @@ export default function CampaignBlueprintsPage() {
     setEditing({ ...editing, connectors: (editing.connectors || []).filter((_, idx) => idx !== i) });
   };
 
+  const addDocument = (doc: { name: string; path: string; uploaded_at: string }) => {
+    if (!editing) return;
+    setEditing({ ...editing, documents: [...(editing.documents || []), doc] });
+  };
+
+  const removeDocument = (i: number) => {
+    if (!editing) return;
+    setEditing({ ...editing, documents: (editing.documents || []).filter((_, idx) => idx !== i) });
+  };
+
+  const downloadDocument = async (path: string, name: string) => {
+    const { data, error } = await supabase.storage.from("blueprint-documents").download(path);
+    if (error || !data) { toast.error("Download failed"); return; }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // ── LIST VIEW ──
   if (!editing) {
     return (
@@ -161,6 +185,12 @@ export default function CampaignBlueprintsPage() {
                     <span>{(bp.departments || []).length} dept(s)</span>
                     <span>·</span>
                     <span>{(bp.dispositions || []).length} dispo(s)</span>
+                    {(bp.documents || []).length > 0 && (
+                      <>
+                        <span>·</span>
+                        <span>{bp.documents.length} doc(s)</span>
+                      </>
+                    )}
                   </div>
                   {bp.tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1">
@@ -204,6 +234,7 @@ export default function CampaignBlueprintsPage() {
           <TabsTrigger value="ivr">IVR Flow</TabsTrigger>
           <TabsTrigger value="phones">Phone Numbers</TabsTrigger>
           <TabsTrigger value="connectors">Connectors</TabsTrigger>
+          <TabsTrigger value="documents">Documents ({(editing.documents || []).length})</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
         </TabsList>
 
@@ -228,6 +259,16 @@ export default function CampaignBlueprintsPage() {
                   </div>
                 )}
               </div>
+              <Separator />
+              <div>
+                <Label>Quick Upload</Label>
+                <p className="text-xs text-muted-foreground mb-2">Upload a document to auto-populate fields</p>
+                <BlueprintFileUpload
+                  onTextExtracted={(text) => setEditing({ ...editing, description: (editing.description || "") + "\n\n" + text })}
+                  onFileUploaded={addDocument}
+                  label="Drop a campaign overview document here"
+                />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -251,6 +292,11 @@ export default function CampaignBlueprintsPage() {
                   <div><Label>Skill</Label><Input value={dept.skill} onChange={(e) => updateDepartment(i, "skill", e.target.value)} placeholder="e.g. Legal_Intake" /></div>
                 </div>
                 <div><Label>Agent Script</Label><Textarea value={dept.script_text} onChange={(e) => updateDepartment(i, "script_text", e.target.value)} placeholder="Paste the full agent script for this department…" rows={10} className="font-mono text-xs" /></div>
+                <BlueprintFileUpload
+                  onTextExtracted={(text) => updateDepartment(i, "script_text", text)}
+                  onFileUploaded={addDocument}
+                  label={`Upload script for Department ${i + 1}`}
+                />
               </CardContent>
             </Card>
           ))}
@@ -260,8 +306,13 @@ export default function CampaignBlueprintsPage() {
         {/* Agent Guide */}
         <TabsContent value="agent-guide">
           <Card>
-            <CardHeader><CardTitle>Agent Guide</CardTitle><CardDescription>Paste the full agent guide here. Supports plain text or markdown.</CardDescription></CardHeader>
-            <CardContent>
+            <CardHeader><CardTitle>Agent Guide</CardTitle><CardDescription>Paste the full agent guide or upload a document.</CardDescription></CardHeader>
+            <CardContent className="space-y-4">
+              <BlueprintFileUpload
+                onTextExtracted={(text) => setEditing({ ...editing, agent_guide: text })}
+                onFileUploaded={addDocument}
+                label="Upload agent guide (PDF, DOCX, or TXT)"
+              />
               <Textarea value={editing.agent_guide || ""} onChange={(e) => setEditing({ ...editing, agent_guide: e.target.value })} placeholder="Paste agent guide here…" rows={20} className="font-mono text-xs" />
             </CardContent>
           </Card>
@@ -338,11 +389,53 @@ export default function CampaignBlueprintsPage() {
           {(editing.connectors || []).length === 0 && <p className="text-muted-foreground text-center py-8">No connectors added yet.</p>}
         </TabsContent>
 
+        {/* Documents */}
+        <TabsContent value="documents" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-foreground">Uploaded Documents</h2>
+          </div>
+          <BlueprintFileUpload
+            onTextExtracted={() => {}}
+            onFileUploaded={addDocument}
+            label="Upload any reference document"
+          />
+          {(editing.documents || []).length > 0 ? (
+            <div className="space-y-2">
+              {(editing.documents || []).map((doc, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{doc.name}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(doc.uploaded_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => downloadDocument(doc.path, doc.name)}>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => removeDocument(i)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-center py-8">No documents uploaded yet.</p>
+          )}
+        </TabsContent>
+
         {/* Notes */}
         <TabsContent value="notes">
           <Card>
             <CardHeader><CardTitle>Notes</CardTitle></CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <BlueprintFileUpload
+                onTextExtracted={(text) => setEditing({ ...editing, notes: (editing.notes || "") + "\n\n" + text })}
+                onFileUploaded={addDocument}
+                label="Upload notes document"
+              />
               <Textarea value={editing.notes || ""} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} placeholder="Free-form notes about this campaign setup…" rows={10} />
             </CardContent>
           </Card>

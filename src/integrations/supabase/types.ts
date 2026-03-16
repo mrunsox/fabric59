@@ -674,6 +674,7 @@ export type Database = {
           departments: Json | null
           description: string | null
           dispositions: Json | null
+          documents: Json | null
           id: string
           ivr_flow: Json | null
           name: string
@@ -692,6 +693,7 @@ export type Database = {
           departments?: Json | null
           description?: string | null
           dispositions?: Json | null
+          documents?: Json | null
           id?: string
           ivr_flow?: Json | null
           name: string
@@ -710,6 +712,7 @@ export type Database = {
           departments?: Json | null
           description?: string | null
           dispositions?: Json | null
+          documents?: Json | null
           id?: string
           ivr_flow?: Json | null
           name?: string

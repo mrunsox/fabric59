@@ -17,6 +17,7 @@ export interface CampaignBlueprint {
   connectors: { name: string; type: string; url: string; notes: string }[];
   notes: string | null;
   tags: string[];
+  documents: { name: string; path: string; uploaded_at: string }[];
   created_by: string | null;
   created_at: string;
   updated_at: string;
