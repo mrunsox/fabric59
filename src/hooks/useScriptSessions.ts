@@ -34,7 +34,7 @@ export function useCreateScriptSession() {
       tenant_id?: string;
       agent_id?: string;
       five9_call_id?: string;
-      variables?: Record<string, unknown>;
+      variables?: Json;
       disposition?: string;
     }) => {
       const { data, error } = await supabase.from("script_sessions").insert(values).select().single();
