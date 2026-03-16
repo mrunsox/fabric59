@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, ArrowLeft, Save, FileText, Download } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Save, FileText, Download, Sparkles } from "lucide-react";
 import { useCampaignBlueprints, useCreateBlueprint, useUpdateBlueprint, useDeleteBlueprint, CampaignBlueprint } from "@/hooks/useCampaignBlueprints";
 import { BlueprintFileUpload } from "@/components/campaigns/BlueprintFileUpload";
 import { supabase } from "@/integrations/supabase/client";
