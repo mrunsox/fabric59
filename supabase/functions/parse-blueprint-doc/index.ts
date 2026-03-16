@@ -43,238 +43,104 @@ Deno.serve(async (req) => {
     } else if (ext === "docx") {
       extractedText = await extractDocxText(fileData);
     } else if (ext === "pdf") {
-      extractedText = await extractPdfText(fileData);
+      extractedText = extractPdfText(await fileData.arrayBuffer());
     } else {
       extractedText = await fileData.text();
     }
 
-    return new Response(JSON.stringify({ text: extractedText, fileName: filePath.split("/").pop() }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ text: extractedText, fileName: filePath.split("/").pop() }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
 
+/* ── DOCX extraction ─────────────────────────────────────────────── */
+
 async function extractDocxText(blob: Blob): Promise<string> {
-  // DOCX is a ZIP containing word/document.xml
-  // Use the built-in DecompressionStream approach
-  const arrayBuffer = await blob.arrayBuffer();
-  const uint8 = new Uint8Array(arrayBuffer);
-
-  // Simple ZIP parser to find word/document.xml
-  const entries = parseZipEntries(uint8);
-  const docEntry = entries.find(
-    (e) => e.name === "word/document.xml"
-  );
-
-  if (!docEntry) {
-    return "[Could not find document.xml in DOCX file]";
-  }
-
-  const xmlText = new TextDecoder().decode(docEntry.data);
-  // Strip XML tags, keeping text content from <w:t> elements
-  const textParts: string[] = [];
-  const regex = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
-  let match;
-  while ((match = regex.exec(xmlText)) !== null) {
-    textParts.push(match[1]);
-  }
-
-  // Also detect paragraph breaks
-  const fullXml = xmlText;
-  let result = "";
-  const paragraphs = fullXml.split(/<\/w:p>/);
-  for (const para of paragraphs) {
-    const parts: string[] = [];
-    const tRegex = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
-    let m;
-    while ((m = tRegex.exec(para)) !== null) {
-      parts.push(m[1]);
-    }
-    if (parts.length > 0) {
-      result += parts.join("") + "\n";
-    }
-  }
-
-  return result.trim() || "[No text content found in document]";
-}
-
-async function extractPdfText(blob: Blob): Promise<string> {
-  // Basic PDF text extraction - look for text between BT/ET operators
-  const arrayBuffer = await blob.arrayBuffer();
-  const bytes = new Uint8Array(arrayBuffer);
-  const rawText = new TextDecoder("latin1").decode(bytes);
-
-  const textParts: string[] = [];
-
-  // Extract text from Tj and TJ operators
-  const tjRegex = /\(([^)]*)\)\s*Tj/g;
-  let match;
-  while ((match = tjRegex.exec(rawText)) !== null) {
-    textParts.push(match[1]);
-  }
-
-  // Try TJ arrays
-  const tjArrayRegex = /\[([^\]]*)\]\s*TJ/g;
-  while ((match = tjArrayRegex.exec(rawText)) !== null) {
-    const inner = match[1];
-    const strRegex = /\(([^)]*)\)/g;
-    let m;
-    while ((m = strRegex.exec(inner)) !== null) {
-      textParts.push(m[1]);
-    }
-  }
-
-  if (textParts.length === 0) {
-    return "[Could not extract text from PDF. The file may be image-based or encrypted. Try a .docx or .txt file instead.]";
-  }
-
-  return textParts.join(" ").replace(/\\\\n/g, "\n").trim();
-}
-
-// Minimal ZIP parser for DOCX files
-interface ZipEntry {
-  name: string;
-  data: Uint8Array;
-}
-
-function parseZipEntries(data: Uint8Array): ZipEntry[] {
-  const entries: ZipEntry[] = [];
-  let offset = 0;
-
-  while (offset < data.length - 4) {
-    const sig =
-      data[offset] |
-      (data[offset + 1] << 8) |
-      (data[offset + 2] << 16) |
-      (data[offset + 3] << 24);
-
-    if (sig !== 0x04034b50) break; // Local file header signature
-
-    const compressionMethod = data[offset + 8] | (data[offset + 9] << 8);
-    const compressedSize =
-      data[offset + 18] |
-      (data[offset + 19] << 8) |
-      (data[offset + 20] << 16) |
-      (data[offset + 21] << 24);
-    const uncompressedSize =
-      data[offset + 22] |
-      (data[offset + 23] << 8) |
-      (data[offset + 24] << 16) |
-      (data[offset + 25] << 24);
-    const nameLength = data[offset + 26] | (data[offset + 27] << 8);
-    const extraLength = data[offset + 28] | (data[offset + 29] << 8);
-
-    const name = new TextDecoder().decode(
-      data.slice(offset + 30, offset + 30 + nameLength)
-    );
-    const dataStart = offset + 30 + nameLength + extraLength;
-    const rawData = data.slice(dataStart, dataStart + compressedSize);
-
-    if (compressionMethod === 0) {
-      // Stored (no compression)
-      entries.push({ name, data: rawData });
-    } else if (compressionMethod === 8) {
-      // Deflate
-      try {
-        const ds = new DecompressionStream("raw");
-        const writer = ds.writable.getWriter();
-        const reader = ds.readable.getReader();
-
-        // We need to handle this synchronously-ish, so collect via promise
-        const chunks: Uint8Array[] = [];
-        const readAll = async () => {
-          writer.write(rawData);
-          writer.close();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            chunks.push(value);
-          }
-          const totalLen = chunks.reduce((s, c) => s + c.length, 0);
-          const result = new Uint8Array(totalLen);
-          let pos = 0;
-          for (const chunk of chunks) {
-            result.set(chunk, pos);
-            pos += chunk.length;
-          }
-          return result;
-        };
-
-        // Since we're in an async context already, we can await
-        // But parseZipEntries is sync — we'll handle DOCX extraction differently
-        // For now, store compressed data and decompress later
-        entries.push({ name, data: rawData, compressed: true, uncompressedSize } as any);
-      } catch {
-        entries.push({ name, data: rawData });
-      }
-    }
-
-    offset = dataStart + compressedSize;
-  }
-
-  return entries;
-}
-
-// Override extractDocxText to handle async decompression
-const _origExtractDocx = extractDocxText;
-
-// Replace with async-aware version
-async function extractDocxTextAsync(blob: Blob): Promise<string> {
-  const arrayBuffer = await blob.arrayBuffer();
-  const uint8 = new Uint8Array(arrayBuffer);
-  const entries = parseZipEntries(uint8);
-
-  let docEntry = entries.find((e) => e.name === "word/document.xml");
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const entries = findZipEntries(bytes);
+  const docEntry = entries.find((e) => e.name === "word/document.xml");
   if (!docEntry) return "[Could not find document.xml in DOCX file]";
 
   let xmlBytes: Uint8Array;
-  if ((docEntry as any).compressed) {
-    // Decompress
-    const ds = new DecompressionStream("raw");
-    const writer = ds.writable.getWriter();
-    const reader = ds.readable.getReader();
-    writer.write(docEntry.data);
-    writer.close();
-
-    const chunks: Uint8Array[] = [];
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-    }
-    const totalLen = chunks.reduce((s, c) => s + c.length, 0);
-    xmlBytes = new Uint8Array(totalLen);
-    let pos = 0;
-    for (const chunk of chunks) {
-      xmlBytes.set(chunk, pos);
-      pos += chunk.length;
-    }
+  if (docEntry.compressed) {
+    xmlBytes = await inflate(docEntry.data);
   } else {
     xmlBytes = docEntry.data;
   }
 
-  const fullXml = new TextDecoder().decode(xmlBytes);
-  let result = "";
-  const paragraphs = fullXml.split(/<\/w:p>/);
-  for (const para of paragraphs) {
+  const xml = new TextDecoder().decode(xmlBytes);
+  const lines: string[] = [];
+  for (const para of xml.split(/<\/w:p>/)) {
     const parts: string[] = [];
-    const tRegex = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
+    const re = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g;
     let m;
-    while ((m = tRegex.exec(para)) !== null) {
-      parts.push(m[1]);
-    }
-    if (parts.length > 0) {
-      result += parts.join("") + "\n";
-    }
+    while ((m = re.exec(para)) !== null) parts.push(m[1]);
+    if (parts.length) lines.push(parts.join(""));
   }
-
-  return result.trim() || "[No text content found in document]";
+  return lines.join("\n").trim() || "[No text content found]";
 }
 
-// Monkey-patch
-(globalThis as any).__extractDocxText = extractDocxTextAsync;
+async function inflate(data: Uint8Array): Promise<Uint8Array> {
+  const ds = new DecompressionStream("raw");
+  const writer = ds.writable.getWriter();
+  const reader = ds.readable.getReader();
+  writer.write(data);
+  writer.close();
+  const chunks: Uint8Array[] = [];
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const total = chunks.reduce((s, c) => s + c.length, 0);
+  const out = new Uint8Array(total);
+  let pos = 0;
+  for (const c of chunks) { out.set(c, pos); pos += c.length; }
+  return out;
+}
+
+interface ZipEntry { name: string; data: Uint8Array; compressed: boolean }
+
+function findZipEntries(data: Uint8Array): ZipEntry[] {
+  const entries: ZipEntry[] = [];
+  let offset = 0;
+  while (offset < data.length - 4) {
+    const sig = data[offset] | (data[offset+1]<<8) | (data[offset+2]<<16) | (data[offset+3]<<24);
+    if (sig !== 0x04034b50) break;
+    const method = data[offset+8] | (data[offset+9]<<8);
+    const compSize = data[offset+18] | (data[offset+19]<<8) | (data[offset+20]<<16) | (data[offset+21]<<24);
+    const nameLen = data[offset+26] | (data[offset+27]<<8);
+    const extraLen = data[offset+28] | (data[offset+29]<<8);
+    const name = new TextDecoder().decode(data.slice(offset+30, offset+30+nameLen));
+    const dataStart = offset + 30 + nameLen + extraLen;
+    entries.push({ name, data: data.slice(dataStart, dataStart+compSize), compressed: method === 8 });
+    offset = dataStart + compSize;
+  }
+  return entries;
+}
+
+/* ── PDF extraction (basic) ──────────────────────────────────────── */
+
+function extractPdfText(buf: ArrayBuffer): string {
+  const raw = new TextDecoder("latin1").decode(new Uint8Array(buf));
+  const parts: string[] = [];
+  let m;
+  const tj = /\(([^)]*)\)\s*Tj/g;
+  while ((m = tj.exec(raw)) !== null) parts.push(m[1]);
+  const tja = /\[([^\]]*)\]\s*TJ/g;
+  while ((m = tja.exec(raw)) !== null) {
+    const inner = m[1];
+    const sr = /\(([^)]*)\)/g;
+    let s;
+    while ((s = sr.exec(inner)) !== null) parts.push(s[1]);
+  }
+  if (!parts.length) return "[Could not extract text from PDF. The file may be image-based or encrypted.]";
+  return parts.join(" ").replace(/\\n/g, "\n").trim();
+}
