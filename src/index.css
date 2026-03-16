@@ -61,6 +61,13 @@
     --chart-3: 262 83% 58%;
     --chart-4: 38 92% 50%;
     --chart-5: 0 84% 60%;
+
+    /* Script builder node colors */
+    --node-start: 280 75% 55%;
+    --node-question: 243 75% 59%;
+    --node-action: 187 92% 42%;
+    --node-condition: 38 100% 50%;
+    --node-end: 152 76% 44%;
   }
 
   .dark {
