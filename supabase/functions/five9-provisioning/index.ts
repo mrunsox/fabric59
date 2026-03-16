@@ -437,9 +437,9 @@ serve(async (req) => {
     } else if (action === 'createCampaignProfile') {
       const { profileName } = payload;
       const soapBody = `<ser:createCampaignProfile>
-  <profile>
+  <campaignProfile>
     <name>${escapeXml(profileName)}</name>
-  </profile>
+  </campaignProfile>
 </ser:createCampaignProfile>`;
       await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'createCampaignProfile', soapBody);
       responseData = { success: true };
