@@ -32,7 +32,7 @@ export function useCreateScriptTemplate() {
       organization_id: string;
       name: string;
       description?: string;
-      content: Record<string, unknown>;
+      content: Record<string, any>;
       category?: string;
       tenant_id?: string;
     }) => {
