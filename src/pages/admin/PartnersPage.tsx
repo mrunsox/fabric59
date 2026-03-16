@@ -160,6 +160,18 @@ export default function PartnersPage() {
                 <Input placeholder="e.g., partner-a (auto-generated if empty)" value={newSlug} onChange={(e) => setNewSlug(e.target.value)} />
                 <p className="text-xs text-muted-foreground">Used in routing headers and API references.</p>
               </div>
+              <div className="space-y-2">
+                <Label>Logo URL</Label>
+                <Input placeholder="https://..." value={newLogoUrl} onChange={(e) => setNewLogoUrl(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Primary Color</Label>
+                <Input placeholder="#0EA5E9" value={newPrimaryColor} onChange={(e) => setNewPrimaryColor(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>From Email Domain</Label>
+                <Input placeholder="e.g., partner.com" value={newFromEmail} onChange={(e) => setNewFromEmail(e.target.value)} />
+              </div>
               <Button onClick={handleCreate} disabled={createPartner.isPending || !newName.trim()} className="w-full">
                 {createPartner.isPending ? "Creating…" : "Create Partner"}
               </Button>
