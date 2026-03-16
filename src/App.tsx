@@ -56,6 +56,10 @@ import AbandonRatePage from "@/pages/admin/AbandonRatePage";
 import DataPlanePage from "@/pages/admin/DataPlanePage";
 import IdentityResolutionPage from "@/pages/admin/IdentityResolutionPage";
 import PlatformUtilitiesPage from "@/pages/admin/PlatformUtilitiesPage";
+import ScriptEditorPage from "@/pages/admin/ScriptEditorPage";
+import KnowledgeBasePage from "@/pages/admin/KnowledgeBasePage";
+import TrainingPage from "@/pages/admin/TrainingPage";
+import FeedbackPage from "@/pages/admin/FeedbackPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
@@ -136,6 +140,11 @@ const App = () => (
                 <Route path="data-plane" element={<DataPlanePage />} />
                 <Route path="identity" element={<IdentityResolutionPage />} />
                 <Route path="utilities" element={<PlatformUtilitiesPage />} />
+                <Route path="scripts" element={<ScriptEditorPage />} />
+                <Route path="scripts/:id" element={<ScriptEditorPage />} />
+                <Route path="kb" element={<KnowledgeBasePage />} />
+                <Route path="training" element={<TrainingPage />} />
+                <Route path="feedback" element={<FeedbackPage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />

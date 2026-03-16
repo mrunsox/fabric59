@@ -8,10 +8,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Terminal, Play, Pause, SkipForward, ChevronRight, ChevronDown, Clock,
+  Terminal, Play, Pause, SkipForward, ChevronRight, Clock,
   PhoneCall, PhoneOff, Search, BookOpen, Send, RotateCcw, Timer,
-  CheckSquare, ArrowRight, Mic, MicOff, Volume2
+  CheckSquare, ArrowRight, Mic, MicOff
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useScripts } from "@/hooks/useScripts";
+import { useCreateScriptSession, useCompleteScriptSession } from "@/hooks/useScriptSessions";
+import { useKBArticles } from "@/hooks/useKnowledgeBase";
+import type { Json } from "@/integrations/supabase/types";
 
 interface ScriptStep {
   id: string;
@@ -24,7 +29,7 @@ interface ScriptStep {
   next?: string;
 }
 
-const SAMPLE_SCRIPT: ScriptStep[] = [
+const FALLBACK_SCRIPT: ScriptStep[] = [
   { id: "greeting", question: "Thank you for calling [Company]. My name is [Agent]. How may I help you today?", type: "info", next: "caller_type" },
   { id: "caller_type", question: "Is this a new or existing client?", type: "yesno", nextOnYes: "existing_lookup", nextOnNo: "new_intake" },
   { id: "existing_lookup", question: "Can I have your name or case number?", type: "text", required: true, next: "verify_info" },
@@ -37,17 +42,34 @@ const SAMPLE_SCRIPT: ScriptStep[] = [
   { id: "end", question: "Have a great day. Goodbye!", type: "info" },
 ];
 
-const KB_ARTICLES = [
-  { title: "Greeting Protocols", content: "Always state the company name and your name. Ask permission before placing on hold." },
-  { title: "Transfer Procedures", content: "Warm transfer: brief the receiving party. Cold transfer: only for simple routing." },
-  { title: "Escalation Rules", content: "Escalate if caller is upset, legal emergency, or requests supervisor." },
-  { title: "After-Hours Script", content: "After 6pm, inform caller of next business day callback and take a message." },
-  { title: "HIPAA Compliance", content: "Never share patient information. Verify identity before discussing any records." },
-];
-
 type CallPhase = "idle" | "ringing" | "connected" | "hold" | "transfer" | "acw";
 
 export default function ScripterPage() {
+  const { organization } = useAuth();
+  const orgId = organization?.id;
+
+  // Load scripts from DB
+  const { data: scripts = [] } = useScripts();
+  const [selectedScriptId, setSelectedScriptId] = useState<string>("");
+  const selectedScript = scripts.find(s => s.id === selectedScriptId);
+
+  // Parse script definition or use fallback
+  const scriptSteps: ScriptStep[] = (() => {
+    if (selectedScript?.definition && typeof selectedScript.definition === "object" && !Array.isArray(selectedScript.definition)) {
+      const def = selectedScript.definition as { steps?: ScriptStep[] };
+      if (Array.isArray(def.steps) && def.steps.length > 0) return def.steps;
+    }
+    return FALLBACK_SCRIPT;
+  })();
+
+  // KB from DB
+  const { data: kbArticles = [] } = useKBArticles();
+
+  // Session management
+  const createSession = useCreateScriptSession();
+  const completeSession = useCompleteScriptSession();
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
   const [callPhase, setCallPhase] = useState<CallPhase>("idle");
   const [callSeconds, setCallSeconds] = useState(0);
   const [holdSeconds, setHoldSeconds] = useState(0);
@@ -57,7 +79,6 @@ export default function ScripterPage() {
   const [currentInput, setCurrentInput] = useState("");
   const [scriptHistory, setScriptHistory] = useState<string[]>(["greeting"]);
   const [kbSearch, setKbSearch] = useState("");
-  const [kbOpen, setKbOpen] = useState(false);
   const [disposition, setDisposition] = useState("");
   const [acwNotes, setAcwNotes] = useState("");
   const [callbackDate, setCallbackDate] = useState("");
@@ -81,41 +102,57 @@ export default function ScripterPage() {
   }, [callPhase]);
 
   const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
+  const currentStep = scriptSteps.find(s => s.id === currentStepId);
 
-  const currentStep = SAMPLE_SCRIPT.find(s => s.id === currentStepId);
-
-  const startCall = () => {
+  const startCall = async () => {
     setCallPhase("ringing");
     setTimeout(() => setCallPhase("connected"), 1500);
+    if (orgId) {
+      try {
+        const session = await createSession.mutateAsync({
+          script_id: selectedScriptId || undefined,
+          organization_id: orgId,
+        });
+        setSessionId(session.id);
+      } catch {}
+    }
   };
 
-  const endCall = () => {
-    setCallPhase("acw");
-  };
+  const endCall = () => setCallPhase("acw");
 
-  const finishACW = () => {
+  const finishACW = async () => {
+    if (sessionId) {
+      try {
+        await completeSession.mutateAsync({
+          id: sessionId,
+          duration_seconds: callSeconds,
+          variables: answers as unknown as Json,
+          disposition,
+          post_call_status: "completed",
+        });
+      } catch {}
+    }
     setCallPhase("idle");
     setCallSeconds(0);
     setHoldSeconds(0);
     setAcwSeconds(0);
-    setCurrentStepId("greeting");
+    setCurrentStepId(scriptSteps[0]?.id || "greeting");
     setAnswers({});
-    setScriptHistory(["greeting"]);
+    setScriptHistory([scriptSteps[0]?.id || "greeting"]);
     setDisposition("");
     setAcwNotes("");
+    setSessionId(null);
   };
 
   const advanceStep = (answer?: string) => {
     if (!currentStep) return;
     if (answer) setAnswers(prev => ({ ...prev, [currentStepId]: answer }));
-
     let nextId: string | undefined;
     if (currentStep.type === "yesno") {
       nextId = answer === "Yes" ? currentStep.nextOnYes : currentStep.nextOnNo;
     } else {
       nextId = currentStep.next;
     }
-
     if (nextId) {
       setCurrentStepId(nextId);
       setScriptHistory(prev => [...prev, nextId!]);
@@ -132,8 +169,8 @@ export default function ScripterPage() {
     }
   };
 
-  const filteredKB = KB_ARTICLES.filter(a =>
-    !kbSearch || a.title.toLowerCase().includes(kbSearch.toLowerCase()) || a.content.toLowerCase().includes(kbSearch.toLowerCase())
+  const filteredKB = kbArticles.filter(a =>
+    !kbSearch || a.title.toLowerCase().includes(kbSearch.toLowerCase()) || (a.content || "").toLowerCase().includes(kbSearch.toLowerCase())
   );
 
   const phaseColors: Record<CallPhase, string> = {
@@ -147,41 +184,38 @@ export default function ScripterPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header + Call Timer */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Terminal className="h-6 w-6" /> Scripter
-          </h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Terminal className="h-6 w-6" /> Scripter</h1>
           <p className="text-sm text-muted-foreground">Agent call script console with guided workflows</p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Script selector */}
+          {scripts.length > 0 && (
+            <Select value={selectedScriptId} onValueChange={setSelectedScriptId}>
+              <SelectTrigger className="w-48"><SelectValue placeholder="Select script…" /></SelectTrigger>
+              <SelectContent>
+                {scripts.filter(s => s.status === "active" || s.status === "draft").map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
           {callPhase !== "idle" && (
             <div className="flex items-center gap-4 rounded-lg border border-border bg-card px-4 py-2">
               <div className="flex items-center gap-1.5">
                 <Timer className={`h-4 w-4 ${phaseColors[callPhase]}`} />
                 <span className="font-mono text-lg font-bold">{formatTime(callSeconds)}</span>
               </div>
-              {holdSeconds > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  Hold: {formatTime(holdSeconds)}
-                </div>
-              )}
-              {callPhase === "acw" && (
-                <div className="text-xs text-destructive">
-                  ACW: {formatTime(acwSeconds)}
-                </div>
-              )}
-              <Badge className={phaseColors[callPhase]} variant="outline">
-                {callPhase.toUpperCase()}
-              </Badge>
+              {holdSeconds > 0 && <div className="text-xs text-muted-foreground">Hold: {formatTime(holdSeconds)}</div>}
+              {callPhase === "acw" && <div className="text-xs text-destructive">ACW: {formatTime(acwSeconds)}</div>}
+              <Badge className={phaseColors[callPhase]} variant="outline">{callPhase.toUpperCase()}</Badge>
             </div>
           )}
 
           {callPhase === "idle" && (
-            <Button onClick={startCall} className="gap-1.5">
-              <PhoneCall className="h-4 w-4" /> Start Call
-            </Button>
+            <Button onClick={startCall} className="gap-1.5"><PhoneCall className="h-4 w-4" /> Start Call</Button>
           )}
           {(callPhase === "connected" || callPhase === "hold") && (
             <div className="flex gap-2">
@@ -200,7 +234,6 @@ export default function ScripterPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4" style={{ height: "calc(100vh - 14rem)" }}>
-        {/* Script Wizard - Main Panel */}
         <div className="lg:col-span-3 flex flex-col">
           <Tabs defaultValue="wizard" className="flex-1 flex flex-col">
             <TabsList className="w-fit">
@@ -213,25 +246,18 @@ export default function ScripterPage() {
             <TabsContent value="wizard" className="flex-1">
               <Card className="h-full flex flex-col bg-zinc-950 border-zinc-800">
                 <CardContent className="flex-1 p-6 flex flex-col">
-                  {/* Step Progress */}
                   <div className="flex items-center gap-2 mb-6 flex-wrap">
                     {scriptHistory.map((sid, i) => (
                       <div key={i} className="flex items-center gap-1">
                         <button
-                          onClick={() => {
-                            setCurrentStepId(sid);
-                            setScriptHistory(scriptHistory.slice(0, i + 1));
-                          }}
+                          onClick={() => { setCurrentStepId(sid); setScriptHistory(scriptHistory.slice(0, i + 1)); }}
                           className={`text-xs px-2 py-1 rounded font-mono ${sid === currentStepId ? "bg-primary text-primary-foreground" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`}
-                        >
-                          {sid}
-                        </button>
+                        >{sid}</button>
                         {i < scriptHistory.length - 1 && <ChevronRight className="h-3 w-3 text-zinc-600" />}
                       </div>
                     ))}
                   </div>
 
-                  {/* Current Step */}
                   {currentStep && (
                     <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full">
                       <div className="space-y-6">
@@ -248,51 +274,32 @@ export default function ScripterPage() {
 
                         {currentStep.type === "text" && (
                           <div className="flex gap-2">
-                            <Input
-                              value={currentInput}
-                              onChange={e => setCurrentInput(e.target.value)}
-                              placeholder="Type response…"
+                            <Input value={currentInput} onChange={e => setCurrentInput(e.target.value)} placeholder="Type response…"
                               className="bg-zinc-900 border-zinc-700 text-zinc-100 font-mono"
-                              onKeyDown={e => { if (e.key === "Enter" && currentInput) advanceStep(currentInput); }}
-                            />
-                            <Button onClick={() => advanceStep(currentInput)} disabled={currentStep.required && !currentInput}>
-                              <ArrowRight className="h-4 w-4" />
-                            </Button>
+                              onKeyDown={e => { if (e.key === "Enter" && currentInput) advanceStep(currentInput); }} />
+                            <Button onClick={() => advanceStep(currentInput)} disabled={currentStep.required && !currentInput}><ArrowRight className="h-4 w-4" /></Button>
                           </div>
                         )}
-
                         {currentStep.type === "select" && (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {currentStep.options?.map(opt => (
-                              <Button
-                                key={opt}
-                                variant="outline"
-                                className="justify-start font-mono text-sm border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                                onClick={() => advanceStep(opt)}
-                              >
+                              <Button key={opt} variant="outline" className="justify-start font-mono text-sm border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={() => advanceStep(opt)}>
                                 <ChevronRight className="h-3.5 w-3.5 mr-2" /> {opt}
                               </Button>
                             ))}
                           </div>
                         )}
-
                         {currentStep.type === "yesno" && (
                           <div className="flex gap-3">
                             <Button variant="outline" className="flex-1 border-success text-success hover:bg-success/10 font-mono" onClick={() => advanceStep("Yes")}>Yes</Button>
                             <Button variant="outline" className="flex-1 border-destructive text-destructive hover:bg-destructive/10 font-mono" onClick={() => advanceStep("No")}>No</Button>
                           </div>
                         )}
-
                         {currentStep.type === "info" && (
-                          <Button onClick={() => advanceStep("acknowledged")} className="gap-1.5 font-mono">
-                            <SkipForward className="h-4 w-4" /> Continue
-                          </Button>
+                          <Button onClick={() => advanceStep("acknowledged")} className="gap-1.5 font-mono"><SkipForward className="h-4 w-4" /> Continue</Button>
                         )}
-
                         {scriptHistory.length > 1 && (
-                          <Button variant="ghost" size="sm" onClick={goBack} className="text-zinc-500 gap-1.5">
-                            <RotateCcw className="h-3.5 w-3.5" /> Back
-                          </Button>
+                          <Button variant="ghost" size="sm" onClick={goBack} className="text-zinc-500 gap-1.5"><RotateCcw className="h-3.5 w-3.5" /> Back</Button>
                         )}
                       </div>
                     </div>
@@ -301,7 +308,6 @@ export default function ScripterPage() {
               </Card>
             </TabsContent>
 
-            {/* Console View - Raw terminal style */}
             <TabsContent value="console" className="flex-1">
               <Card className="h-full bg-zinc-950 border-zinc-800">
                 <ScrollArea className="h-full p-6">
@@ -310,7 +316,7 @@ export default function ScripterPage() {
                     <p className="text-zinc-500">// Call session log</p>
                     <p className="text-zinc-500">---</p>
                     {scriptHistory.map((sid, i) => {
-                      const step = SAMPLE_SCRIPT.find(s => s.id === sid);
+                      const step = scriptSteps.find(s => s.id === sid);
                       const answer = answers[sid];
                       return (
                         <div key={i} className="space-y-1">
@@ -325,14 +331,9 @@ export default function ScripterPage() {
               </Card>
             </TabsContent>
 
-            {/* ACW Panel */}
             <TabsContent value="acw" className="flex-1">
               <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <CheckSquare className="h-4 w-4" /> After-Call Work
-                  </CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-base flex items-center gap-2"><CheckSquare className="h-4 w-4" /> After-Call Work</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Disposition</label>
@@ -354,61 +355,40 @@ export default function ScripterPage() {
                     <div className="rounded border border-border p-3 space-y-1">
                       {Object.entries(answers).map(([k, v]) => (
                         <div key={k} className="flex items-center gap-2 text-sm">
-                          <span className="font-mono text-muted-foreground">{k}:</span>
-                          <span>{v}</span>
+                          <span className="font-mono text-muted-foreground">{k}:</span><span>{v}</span>
                         </div>
                       ))}
                       {Object.keys(answers).length === 0 && <p className="text-sm text-muted-foreground">No answers captured yet.</p>}
                     </div>
                   </div>
                   {callPhase === "acw" && (
-                    <Button onClick={finishACW} disabled={!disposition} className="w-full gap-1.5">
-                      <Send className="h-4 w-4" /> Submit & End ACW
-                    </Button>
+                    <Button onClick={finishACW} disabled={!disposition} className="w-full gap-1.5"><Send className="h-4 w-4" /> Submit & End ACW</Button>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Callback Scheduler */}
             <TabsContent value="callback" className="flex-1">
               <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Clock className="h-4 w-4" /> Schedule Callback
-                  </CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-base flex items-center gap-2"><Clock className="h-4 w-4" /> Schedule Callback</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Date</label>
-                      <Input type="date" value={callbackDate} onChange={e => setCallbackDate(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Time</label>
-                      <Input type="time" value={callbackTime} onChange={e => setCallbackTime(e.target.value)} />
-                    </div>
+                    <div className="space-y-2"><label className="text-sm font-medium">Date</label><Input type="date" value={callbackDate} onChange={e => setCallbackDate(e.target.value)} /></div>
+                    <div className="space-y-2"><label className="text-sm font-medium">Time</label><Input type="time" value={callbackTime} onChange={e => setCallbackTime(e.target.value)} /></div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Notes</label>
-                    <Textarea value={callbackNotes} onChange={e => setCallbackNotes(e.target.value)} placeholder="Callback reason…" rows={3} />
-                  </div>
-                  <Button className="w-full gap-1.5" disabled={!callbackDate || !callbackTime}>
-                    <Clock className="h-4 w-4" /> Schedule Callback
-                  </Button>
+                  <div className="space-y-2"><label className="text-sm font-medium">Notes</label><Textarea value={callbackNotes} onChange={e => setCallbackNotes(e.target.value)} placeholder="Callback reason…" rows={3} /></div>
+                  <Button className="w-full gap-1.5" disabled={!callbackDate || !callbackTime}><Clock className="h-4 w-4" /> Schedule Callback</Button>
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
         </div>
 
-        {/* Knowledge Base Sidebar */}
+        {/* KB Sidebar - now from database */}
         <div className="lg:col-span-1">
           <Card className="h-full flex flex-col">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <BookOpen className="h-4 w-4" /> Knowledge Base
-              </CardTitle>
+              <CardTitle className="text-base flex items-center gap-2"><BookOpen className="h-4 w-4" /> Knowledge Base</CardTitle>
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input placeholder="Search KB…" value={kbSearch} onChange={e => setKbSearch(e.target.value)} className="pl-8 h-8 text-sm" />
@@ -416,10 +396,11 @@ export default function ScripterPage() {
             </CardHeader>
             <ScrollArea className="flex-1 px-4 pb-4">
               <div className="space-y-3">
-                {filteredKB.map((article, i) => (
-                  <div key={i} className="rounded-lg border border-border p-3 space-y-1">
+                {filteredKB.length === 0 && <p className="text-xs text-muted-foreground">No KB articles found. Add articles in Knowledge Base.</p>}
+                {filteredKB.map((article) => (
+                  <div key={article.id} className="rounded-lg border border-border p-3 space-y-1">
                     <h4 className="text-sm font-medium">{article.title}</h4>
-                    <p className="text-xs text-muted-foreground">{article.content}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-3">{article.content || "No content"}</p>
                   </div>
                 ))}
               </div>
