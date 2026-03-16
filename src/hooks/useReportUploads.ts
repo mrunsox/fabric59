@@ -21,7 +21,7 @@ export interface ReportUpload {
 }
 
 export function useReportUploads() {
-  const { organization } = useOrganization();
+  const { organization } = useAuth();
   const orgId = organization?.id;
 
   return useQuery({
