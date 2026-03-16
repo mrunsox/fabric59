@@ -1,66 +1,32 @@
 
 
-# Consolidation Refactor — Status
+# Phase 2: Consolidate CRM Push + Browser Testing
 
-## Completed
+## What needs to happen
 
-### Phase 3: Type Consolidation ✅
-- Refactored `database.ts` to add missing fields (`webhook_secret`, `billing_rate_per_minute`, `five9_campaign_identifier`)
-- Added doc header explaining it's a convenience layer over auto-gen types
-- Fixed `useDomains.ts` and `useTenants.ts` to map all fields
-- Installed `@tiptap/starter-kit` for RichTextEditor
+### 1. Update `crm-push` to read from `integration_configs` JSONB
+Currently `crm-push` queries `tenants` for flat columns `crm_type, crm_api_url, crm_api_key`. After Phase 6, these values live in `integration_configs.crm`. Update the edge function to:
+- Select `crm_type, integration_configs` from `tenants`
+- Read `api_url` and `api_key` from `integration_configs.crm` with fallback to flat columns
+- Remove the duplicate `clioAdapter` from `crm-push` (Clio is handled by `five9-main` directly)
 
-### Phase 4: Fix Disposition Stub ✅
-- Rewired `useDispositions.ts` to query real `disposition_access` table
-- Maps rows to `Disposition` interface tree editor expects
-- Wired `useCreateDisposition` and `useDeleteDisposition` to real CRUD
+### 2. Wire `five9-main` to call `crm-push` for non-legal CRMs
+`five9-main` already has `dispatchToGenericCrm()` (line 623) but never calls it. Add dispatch logic:
 
-### Phase 5: Session Hook Docs ✅
-- Added clarifying doc headers to `useCallSessions` (telephony) and `useScriptSessions` (script execution)
-- Documented the linkage: `call_sessions.script_session_id → script_sessions.id`
+**Route A** (line 729-770): After Clio/MyCase handling, check if tenant has a generic CRM configured (`crm_type` not in `clio/mycase`). If so, call `dispatchToGenericCrm()` with normalized call data.
 
-### Phase 7: Wire resolveEffectiveConfig ✅
-- Added `resolveEffectiveConfig` as a named export alias in `config-merge.ts`
-- Canonical function for org → partner → tenant config inheritance
+**Route B** (line 668-726): Same pattern — for each tenant under the domain, after Clio/MyCase, check for generic CRM and dispatch.
 
-### Phase 1: Merge Five9 Webhooks ✅
-- Merged `five9-webhook` logic into `five9-main` as Route B (x-five9-domain header)
-- `five9-main` now supports two routing paths
-- Deleted `five9-webhook/index.ts`
-- Added `dispatchToGenericCrm` helper
+### 3. Update `IntegrationConfigs` type in `five9-main`
+Add optional `crm?: { type: string; api_url: string; api_key: string }` to the `IntegrationConfigs` interface inside `five9-main` so it can read the generic CRM config from JSONB.
 
-### Phase 8: Dead Code Removal ✅
-- Deleted `five9-webhook/index.ts` (merged into five9-main)
+### 4. Browser testing
+Navigate to `/admin/tree-editor/new` to verify canvas renders. Navigate to `/admin/agent-dashboard` and `/admin/supervisor` to verify tabs render without errors.
 
-### Phase 6: Tenant Column Consolidation ✅
-- Ran data migration to copy all 20+ flat API key columns into `integration_configs` JSONB
-- Added `IntegrationConfigsUnified` type with categorized structure (webhooks, twilio, scheduling, billing, documents, ai, crm)
-- Updated `useTenants.ts` mapper to read from `integration_configs` with flat column fallback
-- Updated `useCreateTenant` and `useUpdateTenant` to always write `integration_configs`
-- Updated `send-notification` edge function to read webhooks from `integration_configs`
-- Flat columns retained for backward compatibility (no DROP)
+## Files changed
+- `supabase/functions/crm-push/index.ts` — Read from `integration_configs.crm`, remove duplicate Clio adapter
+- `supabase/functions/five9-main/index.ts` — Add generic CRM dispatch calls in Route A and Route B, extend `IntegrationConfigs` type
 
-### Batch 2: Agent Runtime & Analytics ✅
-- Created 5 agent runtime components:
-  - `AgentCallNotesInput` — real-time call notes with save to `call_notes` table
-  - `PostCallSummary` — post-call summary card with disposition, duration, captured data
-  - `TaskQueuePanel` — filterable task queue with priority sorting and inline completion
-  - `CallbackRemindersPanel` — upcoming callbacks with countdown timers
-  - `AINodeSuggestions` — AI-powered next-action suggestions via `ai-suggestions` edge function
-- Created 4 analytics components:
-  - `LiveMonitoringPanel` — real-time agent presence grid (10s refresh)
-  - `CallSessionAnalytics` — call volume by hour + AHT trend charts
-  - `OutcomeAnalyticsDashboard` — disposition pie chart + detail table
-  - `PathAnalyticsDashboard` — script node frequency analysis
-- Created 2 new hooks:
-  - `useCallbackReminders` — queries callback-type tasks with due dates
-  - `useAgentPresence` — derives agent status from active script_sessions
-- Created `ai-suggestions` edge function
-- Wired into `AgentDashboardPage` with tabs: Overview, Tasks, Notes, Callbacks, AI Assist
-- Wired into `SupervisorPage` with tabs: Live Monitor, Analytics
+## Risk
+Low — `dispatchToGenericCrm` is fire-and-forget, additive change only.
 
-## Remaining
-
-### Phase 2: CRM Push Consolidation
-- `crm-push` remains as standalone generic dispatcher
-- `five9-main` calls it for non-Legal CRM tenants via `dispatchToGenericCrm`
