@@ -130,6 +130,13 @@
     --node-action: 187 92% 42%;
     --node-condition: 38 100% 50%;
     --node-end: 152 76% 44%;
+    --node-content: 220 70% 55%;
+    --node-data: 45 90% 50%;
+    --node-logic: 280 70% 55%;
+    --node-integration: 200 80% 50%;
+    --node-call: 25 90% 55%;
+    --node-ai: 260 80% 60%;
+    --node-flow: 320 70% 55%;
   }
 }
 
