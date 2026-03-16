@@ -80,6 +80,7 @@ export default function TenantsPage() {
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
+  const [partnerFilter, setPartnerFilter] = useState("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [deletingTenant, setDeletingTenant] = useState<Tenant | null>(null);
@@ -102,6 +103,11 @@ export default function TenantsPage() {
         t.name.toLowerCase().includes(search.toLowerCase()) ||
         t.crm_type.toLowerCase().includes(search.toLowerCase())
     )
+    .filter((t) => {
+      if (partnerFilter === "all") return true;
+      if (partnerFilter === "direct") return !t.partner_id;
+      return t.partner_id === partnerFilter;
+    })
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const activeTenants = tenants.filter((t) => t.status === "active").length;
