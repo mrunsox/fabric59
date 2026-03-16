@@ -595,8 +595,22 @@ serve(async (req) => {
           .map(([name, value]) => `<fields><name>${escapeXml(name)}</name><value>${escapeXml(String(value))}</value></fields>`)
           .join('\n      ');
 
+        // Build fieldsMapping from record keys for listUpdateSettings
+        const fieldsMappingXml = Object.keys(record)
+          .map((name, idx) => `<fieldsMapping>
+        <columnNumber>${idx}</columnNumber>
+        <fieldName>${escapeXml(name)}</fieldName>
+        <key>${name === 'number1' ? 'true' : 'false'}</key>
+      </fieldsMapping>`)
+          .join('\n      ');
+
         const soapBody = `<ser:addRecordToList>
   <listName>${escapeXml(listName)}</listName>
+  <listUpdateSettings>
+      ${fieldsMappingXml}
+      <skipHeaderLine>false</skipHeaderLine>
+      <cleanListBeforeUpdate>false</cleanListBeforeUpdate>
+  </listUpdateSettings>
   <record>
       ${fieldsXml}
   </record>
