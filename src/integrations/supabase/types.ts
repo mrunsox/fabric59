@@ -758,6 +758,167 @@ export type Database = {
           },
         ]
       }
+      invoice_line_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          metadata: Json | null
+          quantity: number
+          rate: number
+          tenant_id: string | null
+          unit: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id: string
+          metadata?: Json | null
+          quantity?: number
+          rate?: number
+          tenant_id?: string | null
+          unit?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          metadata?: Json | null
+          quantity?: number
+          rate?: number
+          tenant_id?: string | null
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_line_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "invoice_line_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string
+          due_date: string | null
+          id: string
+          issue_date: string
+          notes: string | null
+          organization_id: string
+          partner_id: string | null
+          source_period_end: string | null
+          source_period_start: string | null
+          source_upload_id: string | null
+          status: string
+          tenant_id: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          organization_id: string
+          partner_id?: string | null
+          source_period_end?: string | null
+          source_period_start?: string | null
+          source_upload_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          organization_id?: string
+          partner_id?: string | null
+          source_period_end?: string | null
+          source_period_start?: string | null
+          source_upload_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_source_upload_id_fkey"
+            columns: ["source_upload_id"]
+            isOneToOne: false
+            referencedRelation: "report_uploads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mycase_mappings: {
         Row: {
           case_id: string | null
@@ -1007,6 +1168,8 @@ export type Database = {
       }
       partners: {
         Row: {
+          billing_currency: string | null
+          billing_default_rate_per_minute: number | null
           created_at: string
           id: string
           integration_configs: Json | null
@@ -1017,6 +1180,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billing_currency?: string | null
+          billing_default_rate_per_minute?: number | null
           created_at?: string
           id?: string
           integration_configs?: Json | null
@@ -1027,6 +1192,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billing_currency?: string | null
+          billing_default_rate_per_minute?: number | null
           created_at?: string
           id?: string
           integration_configs?: Json | null
@@ -1078,6 +1245,100 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      report_uploads: {
+        Row: {
+          created_at: string
+          exclusions_applied: string[] | null
+          file_size_bytes: number | null
+          file_type: string
+          five9_domain_id: string | null
+          id: string
+          organization_id: string
+          original_filename: string
+          parsed_summary: Json | null
+          partner_id: string | null
+          row_count: number | null
+          tenant_id: string | null
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          exclusions_applied?: string[] | null
+          file_size_bytes?: number | null
+          file_type?: string
+          five9_domain_id?: string | null
+          id?: string
+          organization_id: string
+          original_filename: string
+          parsed_summary?: Json | null
+          partner_id?: string | null
+          row_count?: number | null
+          tenant_id?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          exclusions_applied?: string[] | null
+          file_size_bytes?: number | null
+          file_type?: string
+          five9_domain_id?: string | null
+          id?: string
+          organization_id?: string
+          original_filename?: string
+          parsed_summary?: Json | null
+          partner_id?: string | null
+          row_count?: number | null
+          tenant_id?: string | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_uploads_five9_domain_id_fkey"
+            columns: ["five9_domain_id"]
+            isOneToOne: false
+            referencedRelation: "five9_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_uploads_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_uploads_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_uploads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "report_uploads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_uploads_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scheduled_jobs: {
         Row: {
@@ -1190,6 +1451,7 @@ export type Database = {
       tenants: {
         Row: {
           asana_api_key: string | null
+          billing_rate_per_minute: number | null
           calendly_api_key: string | null
           created_at: string
           crm_api_key: string | null
@@ -1198,6 +1460,7 @@ export type Database = {
           custom_mappings: Json | null
           docusign_api_key: string | null
           dropbox_api_key: string | null
+          five9_campaign_identifier: string | null
           five9_domain_id: string | null
           google_calendar_id: string | null
           id: string
@@ -1227,6 +1490,7 @@ export type Database = {
         }
         Insert: {
           asana_api_key?: string | null
+          billing_rate_per_minute?: number | null
           calendly_api_key?: string | null
           created_at?: string
           crm_api_key?: string | null
@@ -1235,6 +1499,7 @@ export type Database = {
           custom_mappings?: Json | null
           docusign_api_key?: string | null
           dropbox_api_key?: string | null
+          five9_campaign_identifier?: string | null
           five9_domain_id?: string | null
           google_calendar_id?: string | null
           id?: string
@@ -1264,6 +1529,7 @@ export type Database = {
         }
         Update: {
           asana_api_key?: string | null
+          billing_rate_per_minute?: number | null
           calendly_api_key?: string | null
           created_at?: string
           crm_api_key?: string | null
@@ -1272,6 +1538,7 @@ export type Database = {
           custom_mappings?: Json | null
           docusign_api_key?: string | null
           dropbox_api_key?: string | null
+          five9_campaign_identifier?: string | null
           five9_domain_id?: string | null
           google_calendar_id?: string | null
           id?: string
