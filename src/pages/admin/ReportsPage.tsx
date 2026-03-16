@@ -109,6 +109,31 @@ export default function ReportsPage() {
         </TabsList>
 
         <TabsContent value="logs" className="space-y-4">
+          {/* Partner / Client filters */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <select
+              value={partnerFilter}
+              onChange={(e) => { setPartnerFilter(e.target.value); setClientFilter("all"); }}
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="all">All Partners</option>
+              <option value="direct">Direct (no partner)</option>
+              {partners.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <select
+              value={clientFilter}
+              onChange={(e) => setClientFilter(e.target.value)}
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="all">All Clients</option>
+              {filteredClients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
           <ReportFilters
             startDate={startDate}
             endDate={endDate}
