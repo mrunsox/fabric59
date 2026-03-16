@@ -1,13 +1,12 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, Clock, Target, Circle, BookOpen,
-  ListChecks, Award, Zap, StickyNote
+  ListChecks, Award, Zap, StickyNote, BellRing, Sparkles
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +14,14 @@ import { useTasks, useUpdateTask } from "@/hooks/useTasks";
 import { useScriptSessions } from "@/hooks/useScriptSessions";
 import { useTrainingModules, useTrainingProgress } from "@/hooks/useTraining";
 import { usePerformanceGoals } from "@/hooks/usePerformanceGoals";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// Agent runtime components
+import { AgentCallNotesInput } from "@/components/agent/AgentCallNotesInput";
+import { PostCallSummary } from "@/components/agent/PostCallSummary";
+import { TaskQueuePanel } from "@/components/agent/TaskQueuePanel";
+import { CallbackRemindersPanel } from "@/components/agent/CallbackRemindersPanel";
+import { AINodeSuggestions } from "@/components/agent/AINodeSuggestions";
 
 const priorityColor = (p: string) => {
   if (p === "high") return "text-destructive";
@@ -63,6 +70,8 @@ export default function AgentDashboardPage() {
     });
   }, [modules, progress]);
 
+  const lastSession = sessions.length > 0 ? sessions[0] : null;
+
   return (
     <div className="space-y-6">
       <div>
@@ -97,121 +106,163 @@ export default function AgentDashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Task Queue */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <ListChecks className="h-4 w-4" /> Task Queue
-              {pendingTasks > 0 && <Badge variant="destructive" className="ml-auto">{pendingTasks}</Badge>}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {tasks.length === 0 && <p className="text-sm text-muted-foreground">No tasks assigned.</p>}
-            {[...tasks].sort((a, b) => {
-              const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
-              return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
-            }).map(task => (
-              <div key={task.id} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
-                <Checkbox checked={task.status === "completed"} onCheckedChange={() => toggleTask(task.id, task.status)} />
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>{task.title}</p>
-                  {task.due_date && <p className="text-xs text-muted-foreground">{task.due_date}</p>}
-                </div>
-                <Circle className={`h-3 w-3 fill-current ${priorityColor(task.priority)}`} />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="tasks">
+            <ListChecks className="h-3 w-3 mr-1" /> Tasks
+            {pendingTasks > 0 && <Badge variant="destructive" className="ml-1 h-4 text-[10px] px-1">{pendingTasks}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="notes"><StickyNote className="h-3 w-3 mr-1" /> Notes</TabsTrigger>
+          <TabsTrigger value="callbacks"><BellRing className="h-3 w-3 mr-1" /> Callbacks</TabsTrigger>
+          <TabsTrigger value="ai"><Sparkles className="h-3 w-3 mr-1" /> AI Assist</TabsTrigger>
+        </TabsList>
 
-        {/* Recent Sessions */}
-        <Card className="lg:col-span-2">
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Recent Sessions</CardTitle></CardHeader>
-          <CardContent>
-            {sessions.length === 0 ? <p className="text-sm text-muted-foreground">No call sessions recorded yet.</p> : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Disposition</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sessions.slice(0, 10).map(s => (
-                    <TableRow key={s.id}>
-                      <TableCell className="font-mono text-sm">{new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</TableCell>
-                      <TableCell className="font-mono text-sm">{s.duration_seconds ? `${Math.floor(s.duration_seconds / 60)}:${(s.duration_seconds % 60).toString().padStart(2, "0")}` : "—"}</TableCell>
-                      <TableCell className="text-sm">{s.disposition || "—"}</TableCell>
-                      <TableCell><Badge variant={s.post_call_status === "completed" ? "default" : "secondary"} className="text-xs">{s.post_call_status}</Badge></TableCell>
-                    </TableRow>
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Quick Task Queue */}
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ListChecks className="h-4 w-4" /> Task Queue
+                  {pendingTasks > 0 && <Badge variant="destructive" className="ml-auto">{pendingTasks}</Badge>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {tasks.length === 0 && <p className="text-sm text-muted-foreground">No tasks assigned.</p>}
+                {[...tasks].sort((a, b) => {
+                  const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+                  return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
+                }).slice(0, 5).map(task => (
+                  <div key={task.id} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+                    <Checkbox checked={task.status === "completed"} onCheckedChange={() => toggleTask(task.id, task.status)} />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}>{task.title}</p>
+                      {task.due_date && <p className="text-xs text-muted-foreground">{task.due_date}</p>}
+                    </div>
+                    <Circle className={`h-3 w-3 fill-current ${priorityColor(task.priority)}`} />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Recent Sessions */}
+            <Card className="lg:col-span-2">
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Phone className="h-4 w-4" /> Recent Sessions</CardTitle></CardHeader>
+              <CardContent>
+                {sessions.length === 0 ? <p className="text-sm text-muted-foreground">No call sessions recorded yet.</p> : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Disposition</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sessions.slice(0, 10).map(s => (
+                        <TableRow key={s.id}>
+                          <TableCell className="font-mono text-sm">{new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</TableCell>
+                          <TableCell className="font-mono text-sm">{s.duration_seconds ? `${Math.floor(s.duration_seconds / 60)}:${(s.duration_seconds % 60).toString().padStart(2, "0")}` : "—"}</TableCell>
+                          <TableCell className="text-sm">{s.disposition || "—"}</TableCell>
+                          <TableCell><Badge variant={s.post_call_status === "completed" ? "default" : "secondary"} className="text-xs">{s.post_call_status}</Badge></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Calls by Hour */}
+            <Card className="lg:col-span-1">
+              <CardHeader><CardTitle className="text-base">Calls by Hour</CardTitle></CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={MOCK_HOURLY}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="hour" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                    <Bar dataKey="calls" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* My Goals */}
+            <Card className="lg:col-span-1">
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Target className="h-4 w-4" /> My Goals</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {goals.length === 0 && <p className="text-sm text-muted-foreground">No active goals assigned.</p>}
+                  {goals.slice(0, 4).map(goal => (
+                    <div key={goal.id} className="rounded-lg border border-border p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium">{goal.name}</h4>
+                        <span className="text-xs font-mono text-muted-foreground">0 / {goal.target_value}</span>
+                      </div>
+                      <Progress value={0} className="h-2" />
+                      <p className="text-xs text-muted-foreground capitalize">{goal.metric} · {goal.timeframe}</p>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calls by Hour */}
-        <Card className="lg:col-span-1">
-          <CardHeader><CardTitle className="text-base">Calls by Hour</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={MOCK_HOURLY}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="hour" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-                <Bar dataKey="calls" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* My Goals */}
-        <Card className="lg:col-span-1">
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Target className="h-4 w-4" /> My Goals</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {goals.length === 0 && <p className="text-sm text-muted-foreground">No active goals assigned.</p>}
-              {goals.slice(0, 4).map(goal => (
-                <div key={goal.id} className="rounded-lg border border-border p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium">{goal.name}</h4>
-                    <span className="text-xs font-mono text-muted-foreground">0 / {goal.target_value}</span>
-                  </div>
-                  <Progress value={0} className="h-2" />
-                  <p className="text-xs text-muted-foreground capitalize">{goal.metric} · {goal.timeframe}</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* Training Modules */}
-        <Card className="lg:col-span-1">
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><BookOpen className="h-4 w-4" /> Training Modules</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {moduleProgress.length === 0 && <p className="text-sm text-muted-foreground">No training modules available.</p>}
-              {moduleProgress.map((t, i) => (
-                <div key={i} className="rounded-lg border border-border p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium">{t.name}</h4>
-                    <Badge variant={t.progress === 100 ? "default" : "secondary"}>
-                      {t.progress === 100 ? "Complete" : `${t.completed}/${t.total}`}
-                    </Badge>
-                  </div>
-                  <Progress value={t.progress} className="h-2" />
+            {/* Training Modules */}
+            <Card className="lg:col-span-1">
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><BookOpen className="h-4 w-4" /> Training Modules</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {moduleProgress.length === 0 && <p className="text-sm text-muted-foreground">No training modules available.</p>}
+                  {moduleProgress.map((t, i) => (
+                    <div key={i} className="rounded-lg border border-border p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium">{t.name}</h4>
+                        <Badge variant={t.progress === 100 ? "default" : "secondary"}>
+                          {t.progress === 100 ? "Complete" : `${t.completed}/${t.total}`}
+                        </Badge>
+                      </div>
+                      <Progress value={t.progress} className="h-2" />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="tasks">
+          <TaskQueuePanel />
+        </TabsContent>
+
+        <TabsContent value="notes" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <AgentCallNotesInput callSessionId={lastSession?.id} />
+            <PostCallSummary session={lastSession ? {
+              id: lastSession.id,
+              started_at: lastSession.started_at,
+              ended_at: lastSession.ended_at,
+              duration_seconds: lastSession.duration_seconds,
+              disposition: lastSession.disposition,
+              post_call_status: lastSession.post_call_status,
+              variables: lastSession.variables as Record<string, unknown> | null,
+            } : null} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="callbacks">
+          <CallbackRemindersPanel />
+        </TabsContent>
+
+        <TabsContent value="ai">
+          <AINodeSuggestions currentNodeType="question" />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
