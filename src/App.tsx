@@ -63,6 +63,8 @@ import FeedbackPage from "@/pages/admin/FeedbackPage";
 import ScriptRoutingPage from "@/pages/admin/ScriptRoutingPage";
 import GoalsPage from "@/pages/admin/GoalsPage";
 import CallSummaryTemplatesPage from "@/pages/admin/CallSummaryTemplatesPage";
+import ScriptFlowHubPage from "@/pages/admin/ScriptFlowHubPage";
+import EmailTemplatesPage from "@/pages/admin/EmailTemplatesPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
