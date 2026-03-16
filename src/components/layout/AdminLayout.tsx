@@ -85,10 +85,13 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Agent Tools",
     items: [
+      { name: "Scripts", href: "/admin/scripts", icon: FileJson, permission: "domains" },
       { name: "Scripter", href: "/admin/scripter", icon: Terminal, permission: null },
       { name: "Agent Dashboard", href: "/admin/agent-dashboard", icon: AgentZap, permission: null },
       { name: "Supervisor", href: "/admin/supervisor", icon: Eye, permission: "domains" },
       { name: "QA & Analytics", href: "/admin/qa", icon: Search, permission: "domains" },
+      { name: "Knowledge Base", href: "/admin/kb", icon: BookOpen, permission: null },
+      { name: "Training", href: "/admin/training", icon: GraduationCap, permission: null },
     ],
   },
   {
