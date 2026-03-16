@@ -78,7 +78,8 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Dispositions", href: "/admin/dispositions", icon: ListPlus, permission: "domains" },
       { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone, permission: "domains" },
       { name: "Reports", href: "/admin/reports", icon: BarChart3, permission: "domains" },
-      { name: "Report59 Upload", href: "/admin/upload", icon: FileSpreadsheet, permission: "domains" },
+      { name: "Report59", href: "/admin/upload", icon: FileSpreadsheet, permission: "domains" },
+      { name: "Billing & Invoices", href: "/admin/billing", icon: DollarSign, permission: "settings" },
     ],
   },
   {
@@ -100,7 +101,7 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "ANI Block List", href: "/admin/ani-blocklist", icon: Ban, permission: "domains" },
       { name: "Callback Queue", href: "/admin/callback-queue", icon: PhoneCall, permission: "domains" },
       { name: "Abandon Rate", href: "/admin/abandon-rate", icon: ShieldAlert, permission: "domains" },
-      { name: "Billing", href: "/admin/billing", icon: DollarSign, permission: "settings" },
+      
     ],
   },
   {

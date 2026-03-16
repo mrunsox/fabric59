@@ -7,32 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { Upload, FileSpreadsheet, BarChart3, X, Filter, Clock, Phone, Users, TrendingUp, Download, History, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Upload, FileSpreadsheet, X, Filter, Clock, Phone, Users, TrendingUp, History, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { useReportUploads, useCreateReportUpload, useDeleteReportUpload } from "@/hooks/useReportUploads";
+import { usePartners } from "@/hooks/usePartners";
+import { useTenants } from "@/hooks/useTenants";
 
 interface ParsedRow {
   [key: string]: string;
 }
-
-interface UploadHistory {
-  id: string;
-  fileName: string;
-  uploadedAt: string;
-  rowCount: number;
-  campaign: string;
-  dateRange: string;
-}
-
-const FIVE9_COLUMNS = [
-  "CALL ID", "TIMESTAMP", "CAMPAIGN", "SKILL", "AGENT", "ANI", "DNIS",
-  "DISPOSITION", "TALK TIME", "HOLD TIME", "AFTER CALL WORK", "HANDLE TIME",
-  "SPEED OF ANSWER", "ABANDON TIME", "QUEUE TIME", "CONFERENCE TIME",
-  "CUSTOMER NAME", "CALL TYPE", "TRANSFERS", "RECORDINGS", "COMMENTS",
-  "BILLING CODE", "SERVICE LEVEL", "WRAP UP CODE", "REASON CODE",
-  "CALL SEGMENT", "FIRST CALL RESOLUTION", "MEDIA TYPE", "DIRECTION",
-  "CONNECTED", "MONITORING"
-];
 
 const CHART_COLORS = [
   "hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))",
@@ -49,18 +34,23 @@ export default function Report59UploadPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
+  const [selectedTenantId, setSelectedTenantId] = useState<string>("");
   const pageSize = 50;
-  const [uploadHistory, setUploadHistory] = useState<UploadHistory[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("report59_upload_history") || "[]");
-    } catch { return []; }
-  });
+
+  const { data: uploads = [], isLoading: uploadsLoading } = useReportUploads();
+  const createUpload = useCreateReportUpload();
+  const deleteUpload = useDeleteReportUpload();
+  const { data: partners = [] } = usePartners();
+  const { data: tenants = [] } = useTenants();
+
+  const filteredTenants = selectedPartnerId
+    ? tenants.filter((t) => t.partner_id === selectedPartnerId)
+    : tenants;
 
   const parseCSV = useCallback((text: string) => {
     const lines = text.split("\n").filter(l => l.trim());
     if (lines.length < 2) return { headers: [], rows: [] };
-
-    // Auto-detect delimiter
     const delimiter = lines[0].includes("\t") ? "\t" : ",";
     const hdrs = lines[0].split(delimiter).map(h => h.replace(/^"|"$/g, "").trim());
     const rows = lines.slice(1).map(line => {
@@ -101,21 +91,48 @@ export default function Report59UploadPage() {
       setUploadProgress(100);
       setPage(1);
 
-      // Save to upload history
-      const campaign = rows[0]?.["CAMPAIGN"] || rows[0]?.["Campaign"] || "Unknown";
-      const timestamps = rows.map(r => r["TIMESTAMP"] || r["Timestamp"] || "").filter(Boolean);
-      const dateRange = timestamps.length > 0 ? `${timestamps[0]} — ${timestamps[timestamps.length - 1]}` : "N/A";
-      const entry: UploadHistory = {
-        id: crypto.randomUUID(),
-        fileName: f.name,
-        uploadedAt: new Date().toISOString(),
-        rowCount: rows.length,
-        campaign,
-        dateRange,
+      // Build parsed summary for DB persistence
+      const talkCol = hdrs.find(h => h.toUpperCase().includes("TALK TIME") || h.toUpperCase().includes("HANDLE TIME"));
+      const agentCol = hdrs.find(h => h.toUpperCase().includes("AGENT"));
+      const dispCol = hdrs.find(h => h.toUpperCase().includes("DISPOSITION"));
+      const campaignCol = hdrs.find(h => h.toUpperCase().includes("CAMPAIGN"));
+
+      const parseDuration = (val: string) => {
+        if (!val) return 0;
+        const parts = val.split(":").map(Number);
+        if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+        if (parts.length === 2) return parts[0] * 60 + parts[1];
+        return Number(val) || 0;
       };
-      const updated = [entry, ...uploadHistory].slice(0, 20);
-      setUploadHistory(updated);
-      localStorage.setItem("report59_upload_history", JSON.stringify(updated));
+
+      const totalSeconds = talkCol ? rows.reduce((s, r) => s + parseDuration(r[talkCol]), 0) : 0;
+      const dispBreakdown: Record<string, number> = {};
+      if (dispCol) rows.forEach(r => { const d = r[dispCol] || "Unknown"; dispBreakdown[d] = (dispBreakdown[d] || 0) + 1; });
+      const agentBreakdown: Record<string, number> = {};
+      if (agentCol) rows.forEach(r => { const a = r[agentCol]; if (a) agentBreakdown[a] = (agentBreakdown[a] || 0) + 1; });
+      const campaign = campaignCol ? rows[0]?.[campaignCol] || "Unknown" : "Unknown";
+
+      const parsedSummary = {
+        total_calls: rows.length,
+        total_minutes: Math.round(totalSeconds / 60),
+        total_seconds: totalSeconds,
+        campaign,
+        disposition_breakdown: dispBreakdown,
+        agent_breakdown: agentBreakdown,
+        unique_agents: Object.keys(agentBreakdown).length,
+      };
+
+      // Persist to database
+      createUpload.mutate({
+        original_filename: f.name,
+        file_size_bytes: f.size,
+        file_type: f.name.endsWith(".xlsx") || f.name.endsWith(".xls") ? "xlsx" : "csv",
+        partner_id: selectedPartnerId || null,
+        tenant_id: selectedTenantId || null,
+        parsed_summary: parsedSummary,
+        exclusions_applied: [],
+        row_count: rows.length,
+      });
 
       toast.success(`Parsed ${rows.length} rows from ${hdrs.length} columns`);
     };
@@ -151,12 +168,10 @@ export default function Report59UploadPage() {
 
   const filteredData = useMemo(() => {
     let data = parsedData;
-    // Filter excluded dispositions
     const dispCol = headers.find(h => h.toUpperCase().includes("DISPOSITION"));
     if (dispCol && excludedDispositions.size > 0) {
       data = data.filter(r => !excludedDispositions.has(r[dispCol]));
     }
-    // Search
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       data = data.filter(r => Object.values(r).some(v => v.toLowerCase().includes(q)));
@@ -164,7 +179,6 @@ export default function Report59UploadPage() {
     return data;
   }, [parsedData, excludedDispositions, searchQuery, headers]);
 
-  // Analytics
   const analytics = useMemo(() => {
     if (filteredData.length === 0) return null;
     const talkCol = headers.find(h => h.toUpperCase().includes("TALK TIME") || h.toUpperCase().includes("HANDLE TIME"));
@@ -188,32 +202,14 @@ export default function Report59UploadPage() {
     const uniqueAgents = agentCol ? new Set(filteredData.map(r => r[agentCol]).filter(Boolean)).size : 0;
     const uniqueCallers = aniCol ? new Set(filteredData.map(r => r[aniCol]).filter(Boolean)).size : 0;
 
-    // Disposition breakdown
     const dispBreakdown: Record<string, number> = {};
-    if (dispCol) {
-      filteredData.forEach(r => {
-        const d = r[dispCol] || "Unknown";
-        dispBreakdown[d] = (dispBreakdown[d] || 0) + 1;
-      });
-    }
-    const dispData = Object.entries(dispBreakdown)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([name, value]) => ({ name, value }));
+    if (dispCol) filteredData.forEach(r => { const d = r[dispCol] || "Unknown"; dispBreakdown[d] = (dispBreakdown[d] || 0) + 1; });
+    const dispData = Object.entries(dispBreakdown).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, value]) => ({ name, value }));
 
-    // Campaign breakdown
     const campBreakdown: Record<string, number> = {};
-    if (campaignCol) {
-      filteredData.forEach(r => {
-        const c = r[campaignCol] || "Unknown";
-        campBreakdown[c] = (campBreakdown[c] || 0) + 1;
-      });
-    }
-    const campData = Object.entries(campBreakdown)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ name, value }));
+    if (campaignCol) filteredData.forEach(r => { const c = r[campaignCol] || "Unknown"; campBreakdown[c] = (campBreakdown[c] || 0) + 1; });
+    const campData = Object.entries(campBreakdown).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
 
-    // Agent leaderboard
     const agentBreakdown: Record<string, { calls: number; totalSec: number }> = {};
     if (agentCol) {
       filteredData.forEach(r => {
@@ -223,37 +219,20 @@ export default function Report59UploadPage() {
         if (talkCol) agentBreakdown[a].totalSec += parseDuration(r[talkCol]);
       });
     }
-    const agentData = Object.entries(agentBreakdown)
-      .sort((a, b) => b[1].calls - a[1].calls)
-      .slice(0, 10)
-      .map(([name, { calls, totalSec }]) => ({ name, calls, avgSec: Math.round(totalSec / calls) }));
+    const agentData = Object.entries(agentBreakdown).sort((a, b) => b[1].calls - a[1].calls).slice(0, 10).map(([name, { calls, totalSec }]) => ({ name, calls, avgSec: Math.round(totalSec / calls) }));
 
-    // Caller frequency
     const callerFreq: Record<string, number> = {};
-    if (aniCol) {
-      filteredData.forEach(r => {
-        const a = r[aniCol];
-        if (a) callerFreq[a] = (callerFreq[a] || 0) + 1;
-      });
-    }
-    const repeatCallers = Object.entries(callerFreq)
-      .filter(([, count]) => count > 1)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 15)
-      .map(([phone, count]) => ({ phone, count }));
+    if (aniCol) filteredData.forEach(r => { const a = r[aniCol]; if (a) callerFreq[a] = (callerFreq[a] || 0) + 1; });
+    const repeatCallers = Object.entries(callerFreq).filter(([, count]) => count > 1).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([phone, count]) => ({ phone, count }));
 
     return { totalCalls, totalMinutes, avgDuration, uniqueAgents, uniqueCallers, dispData, campData, agentData, repeatCallers };
   }, [filteredData, headers]);
 
-  // All dispositions for exclusion manager
   const allDispositions = useMemo(() => {
     const dispCol = headers.find(h => h.toUpperCase().includes("DISPOSITION"));
     if (!dispCol) return [];
     const counts: Record<string, number> = {};
-    parsedData.forEach(r => {
-      const d = r[dispCol] || "Unknown";
-      counts[d] = (counts[d] || 0) + 1;
-    });
+    parsedData.forEach(r => { const d = r[dispCol] || "Unknown"; counts[d] = (counts[d] || 0) + 1; });
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, count }));
   }, [parsedData, headers]);
 
@@ -267,7 +246,7 @@ export default function Report59UploadPage() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <FileSpreadsheet className="h-6 w-6" /> Report59
           </h1>
-          <p className="text-sm text-muted-foreground">Upload Five9 reports for analysis and visualization</p>
+          <p className="text-sm text-muted-foreground">Upload Five9 reports for analysis, billing, and visualization</p>
         </div>
         {file && (
           <Button variant="outline" size="sm" onClick={clearUpload} className="gap-1.5">
@@ -278,6 +257,30 @@ export default function Report59UploadPage() {
 
       {!file ? (
         <div className="space-y-6">
+          {/* Partner/Client scope selectors */}
+          <div className="flex gap-4">
+            <div className="w-64">
+              <label className="text-xs text-muted-foreground mb-1 block">Partner (optional)</label>
+              <Select value={selectedPartnerId} onValueChange={(v) => { setSelectedPartnerId(v === "none" ? "" : v); setSelectedTenantId(""); }}>
+                <SelectTrigger><SelectValue placeholder="All partners" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">All partners</SelectItem>
+                  {partners.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-64">
+              <label className="text-xs text-muted-foreground mb-1 block">Client (optional)</label>
+              <Select value={selectedTenantId} onValueChange={(v) => setSelectedTenantId(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="All clients" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">All clients</SelectItem>
+                  {filteredTenants.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {/* Upload zone */}
           <Card>
             <CardContent className="pt-6">
@@ -289,25 +292,17 @@ export default function Report59UploadPage() {
               >
                 <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-1">Drop a Five9 report file here</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Supports CSV, TSV, and XLSX exports from Five9 Reporting
-                </p>
+                <p className="text-sm text-muted-foreground mb-4">Supports CSV, TSV, and XLSX exports from Five9 Reporting</p>
                 <Button variant="outline" className="gap-1.5">
                   <FileSpreadsheet className="h-4 w-4" /> Browse Files
                 </Button>
-                <input
-                  id="file-input"
-                  type="file"
-                  accept=".csv,.tsv,.xlsx,.xls"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
+                <input id="file-input" type="file" accept=".csv,.tsv,.xlsx,.xls" className="hidden" onChange={handleFileSelect} />
               </div>
             </CardContent>
           </Card>
 
-          {/* Upload History */}
-          {uploadHistory.length > 0 && (
+          {/* Upload History from DB */}
+          {uploads.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
@@ -321,32 +316,31 @@ export default function Report59UploadPage() {
                       <TableHead>File Name</TableHead>
                       <TableHead>Campaign</TableHead>
                       <TableHead>Rows</TableHead>
-                      <TableHead>Date Range</TableHead>
+                      <TableHead className="text-right">Minutes</TableHead>
                       <TableHead>Uploaded</TableHead>
                       <TableHead />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {uploadHistory.map(h => (
-                      <TableRow key={h.id}>
-                        <TableCell className="font-medium">{h.fileName}</TableCell>
-                        <TableCell>{h.campaign}</TableCell>
-                        <TableCell>{h.rowCount.toLocaleString()}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{h.dateRange}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(h.uploadedAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
-                            const updated = uploadHistory.filter(x => x.id !== h.id);
-                            setUploadHistory(updated);
-                            localStorage.setItem("report59_upload_history", JSON.stringify(updated));
-                          }}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {uploads.map(h => {
+                      const summary = h.parsed_summary as Record<string, any>;
+                      return (
+                        <TableRow key={h.id}>
+                          <TableCell className="font-medium">{h.original_filename}</TableCell>
+                          <TableCell>{summary?.campaign || "—"}</TableCell>
+                          <TableCell>{h.row_count.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-mono">{(summary?.total_minutes || 0).toLocaleString()}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(h.uploaded_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteUpload.mutate(h.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -355,7 +349,6 @@ export default function Report59UploadPage() {
         </div>
       ) : (
         <>
-          {/* Upload progress */}
           {isUploading && (
             <Card>
               <CardContent className="pt-6">
@@ -379,11 +372,9 @@ export default function Report59UploadPage() {
                 <TabsTrigger value="columns">Columns</TabsTrigger>
               </TabsList>
 
-              {/* Analytics Tab */}
               <TabsContent value="analytics" className="space-y-6">
                 {analytics && (
                   <>
-                    {/* Summary Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                       <Card><CardContent className="pt-4 pb-3">
                         <div className="flex items-center gap-2 text-muted-foreground mb-1"><Phone className="h-4 w-4" /><span className="text-xs">Total Calls</span></div>
@@ -407,9 +398,7 @@ export default function Report59UploadPage() {
                       </CardContent></Card>
                     </div>
 
-                    {/* Charts Row */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Campaign Breakdown */}
                       {analytics.campData.length > 0 && (
                         <Card>
                           <CardHeader><CardTitle className="text-base">Calls by Campaign</CardTitle></CardHeader>
@@ -426,8 +415,6 @@ export default function Report59UploadPage() {
                           </CardContent>
                         </Card>
                       )}
-
-                      {/* Disposition Pie */}
                       {analytics.dispData.length > 0 && (
                         <Card>
                           <CardHeader><CardTitle className="text-base">Disposition Breakdown</CardTitle></CardHeader>
@@ -447,20 +434,13 @@ export default function Report59UploadPage() {
                       )}
                     </div>
 
-                    {/* Agent Leaderboard + Repeat Callers */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       {analytics.agentData.length > 0 && (
                         <Card>
                           <CardHeader><CardTitle className="text-base">Agent Leaderboard</CardTitle></CardHeader>
                           <CardContent>
                             <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Agent</TableHead>
-                                  <TableHead className="text-right">Calls</TableHead>
-                                  <TableHead className="text-right">Avg Duration</TableHead>
-                                </TableRow>
-                              </TableHeader>
+                              <TableHeader><TableRow><TableHead>Agent</TableHead><TableHead className="text-right">Calls</TableHead><TableHead className="text-right">Avg Duration</TableHead></TableRow></TableHeader>
                               <TableBody>
                                 {analytics.agentData.map((a, i) => (
                                   <TableRow key={i}>
@@ -474,25 +454,17 @@ export default function Report59UploadPage() {
                           </CardContent>
                         </Card>
                       )}
-
                       {analytics.repeatCallers.length > 0 && (
                         <Card>
                           <CardHeader><CardTitle className="text-base">Repeat Callers</CardTitle></CardHeader>
                           <CardContent>
                             <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Phone Number</TableHead>
-                                  <TableHead className="text-right">Calls</TableHead>
-                                </TableRow>
-                              </TableHeader>
+                              <TableHeader><TableRow><TableHead>Phone Number</TableHead><TableHead className="text-right">Calls</TableHead></TableRow></TableHeader>
                               <TableBody>
                                 {analytics.repeatCallers.map((c, i) => (
                                   <TableRow key={i}>
                                     <TableCell className="font-mono text-sm">{c.phone}</TableCell>
-                                    <TableCell className="text-right">
-                                      <Badge variant="secondary">{c.count}</Badge>
-                                    </TableCell>
+                                    <TableCell className="text-right"><Badge variant="secondary">{c.count}</Badge></TableCell>
                                   </TableRow>
                                 ))}
                               </TableBody>
@@ -505,7 +477,6 @@ export default function Report59UploadPage() {
                 )}
               </TabsContent>
 
-              {/* Data Table Tab */}
               <TabsContent value="data" className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Input placeholder="Search all fields…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="max-w-sm" />
@@ -514,16 +485,10 @@ export default function Report59UploadPage() {
                 </div>
                 <div className="border rounded-lg overflow-auto max-h-[600px]">
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {activeHeaders.map(h => <TableHead key={h} className="whitespace-nowrap text-xs">{h}</TableHead>)}
-                      </TableRow>
-                    </TableHeader>
+                    <TableHeader><TableRow>{activeHeaders.map(h => <TableHead key={h} className="whitespace-nowrap text-xs">{h}</TableHead>)}</TableRow></TableHeader>
                     <TableBody>
                       {paginatedData.map((row, i) => (
-                        <TableRow key={i}>
-                          {activeHeaders.map(h => <TableCell key={h} className="text-xs whitespace-nowrap max-w-[200px] truncate">{row[h]}</TableCell>)}
-                        </TableRow>
+                        <TableRow key={i}>{activeHeaders.map(h => <TableCell key={h} className="text-xs whitespace-nowrap max-w-[200px] truncate">{row[h]}</TableCell>)}</TableRow>
                       ))}
                     </TableBody>
                   </Table>
@@ -539,18 +504,15 @@ export default function Report59UploadPage() {
                 )}
               </TabsContent>
 
-              {/* Dispositions Exclusion Tab */}
               <TabsContent value="dispositions" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Filter className="h-4 w-4" /> Disposition Exclusion Manager
-                    </CardTitle>
-                    <CardDescription>Toggle dispositions to exclude from analysis. Excluded dispositions are hidden from charts and data table.</CardDescription>
+                    <CardTitle className="text-base flex items-center gap-2"><Filter className="h-4 w-4" /> Disposition Exclusion Manager</CardTitle>
+                    <CardDescription>Toggle dispositions to exclude from analysis.</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {allDispositions.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No disposition column found in uploaded data.</p>
+                      <p className="text-sm text-muted-foreground">No disposition column found.</p>
                     ) : (
                       <div className="space-y-2">
                         <div className="flex gap-2 mb-4">
@@ -561,13 +523,8 @@ export default function Report59UploadPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {allDispositions.map(d => (
                             <div key={d.name} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
-                              <Checkbox
-                                checked={!excludedDispositions.has(d.name)}
-                                onCheckedChange={() => toggleDisposition(d.name)}
-                              />
-                              <span className={`text-sm flex-1 ${excludedDispositions.has(d.name) ? "line-through text-muted-foreground" : ""}`}>
-                                {d.name}
-                              </span>
+                              <Checkbox checked={!excludedDispositions.has(d.name)} onCheckedChange={() => toggleDisposition(d.name)} />
+                              <span className={`text-sm flex-1 ${excludedDispositions.has(d.name) ? "line-through text-muted-foreground" : ""}`}>{d.name}</span>
                               <Badge variant="secondary" className="text-xs">{d.count}</Badge>
                             </div>
                           ))}
@@ -578,12 +535,11 @@ export default function Report59UploadPage() {
                 </Card>
               </TabsContent>
 
-              {/* Columns Tab */}
               <TabsContent value="columns" className="space-y-4">
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Column Manager</CardTitle>
-                    <CardDescription>Toggle columns to show/hide in the data table. {activeHeaders.length} of {headers.length} visible.</CardDescription>
+                    <CardDescription>{activeHeaders.length} of {headers.length} visible.</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
