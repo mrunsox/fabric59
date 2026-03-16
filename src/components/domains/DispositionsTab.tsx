@@ -209,6 +209,18 @@ export function DispositionsTab({ domainId, canManage }: DispositionsTabProps) {
                           <td className="px-3 py-1.5 text-muted-foreground">{d.description || "—"}</td>
                           <td className="px-3 py-1.5">
                             {d.valid && (
+                              <Checkbox
+                                checked={worksheetFlags[d.name] || false}
+                                onCheckedChange={(checked) =>
+                                  setWorksheetFlags(prev => ({ ...prev, [d.name]: !!checked }))
+                                }
+                                disabled={!canManage}
+                                title="Require worksheet/ScriptFlow completion before dispositioning"
+                              />
+                            )}
+                          </td>
+                          <td className="px-3 py-1.5">
+                            {d.valid && (
                               <Select
                                 value={target}
                                 onValueChange={(v) =>
