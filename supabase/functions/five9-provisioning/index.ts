@@ -311,6 +311,7 @@ serve(async (req) => {
     <description>${escapeXml(dispo.description || '')}</description>
     <type>${escapeXml(dispo.type || 'FinalApplyToCampaigns')}</type>
     <agentMustConfirm>false</agentMustConfirm>
+    <agentMustCompleteWorksheet>${dispo.agentMustCompleteWorksheet ? 'true' : 'false'}</agentMustCompleteWorksheet>
     <resetAttemptsCounter>false</resetAttemptsCounter>
   </disposition>
 </ser:createDisposition>`;
