@@ -121,6 +121,7 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "API Logs", href: "/admin/logs", icon: Activity, permission: "logs" },
       { name: "Test Console", href: "/admin/test", icon: TestTube2, permission: "test_console" },
       { name: "Notifications", href: "/admin/notifications", icon: Bell, permission: "notifications" },
+      { name: "Feedback", href: "/admin/feedback", icon: MessageSquare, permission: null },
     ],
   },
 ];
