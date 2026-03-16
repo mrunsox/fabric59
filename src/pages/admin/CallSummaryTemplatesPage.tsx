@@ -19,7 +19,7 @@ const CHANNELS = [
 
 const VARIABLES = ["{{client_name}}", "{{agent_name}}", "{{disposition}}", "{{call_duration}}", "{{outcome}}", "{{date}}", "{{notes}}"];
 
-export default function CallSummaryTemplatesPage() {
+export function CallSummaryTemplatesContent() {
   const { data: templates = [], isLoading } = useCallSummaryTemplates();
   const createTemplate = useCreateCallSummaryTemplate();
   const updateTemplate = useUpdateCallSummaryTemplate();

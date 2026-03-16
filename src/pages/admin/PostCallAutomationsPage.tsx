@@ -23,7 +23,7 @@ const channelIcon = (ch: string) => {
   return Bell;
 };
 
-export default function PostCallAutomationsPage() {
+export function PostCallAutomationsContent() {
   const { organization } = useAuth();
   const orgId = organization?.id;
   const { data: rules = [], isLoading } = usePostCallAutomations();

@@ -13,7 +13,7 @@ import { useCampaignScripts, useCreateCampaignScript, useUpdateCampaignScript, u
 import { useScripts } from "@/hooks/useScripts";
 import { useTenants } from "@/hooks/useTenants";
 
-export default function ScriptRoutingPage() {
+export function ScriptRoutingContent() {
   const { data: routes = [], isLoading } = useCampaignScripts();
   const { data: scripts = [] } = useScripts();
   const { data: tenants = [] } = useTenants();
