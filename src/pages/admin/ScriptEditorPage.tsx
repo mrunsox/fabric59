@@ -12,7 +12,7 @@ import { FileCode, Plus, Pencil, Trash2, Play, Copy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useScripts, useCreateScript, useUpdateScript, useDeleteScript } from "@/hooks/useScripts";
 
-export default function ScriptEditorPage() {
+export function ScriptEditorContent() {
   const { organization } = useAuth();
   const orgId = organization?.id;
   const navigate = useNavigate();
@@ -143,4 +143,8 @@ export default function ScriptEditorPage() {
       </Card>
     </div>
   );
+}
+
+export default function ScriptEditorPage() {
+  return <ScriptEditorContent />;
 }

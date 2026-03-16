@@ -91,8 +91,8 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Agent Tools",
     items: [
+      { name: "ScriptFlow", href: "/admin/scriptflow", icon: Workflow, permission: "domains" },
       { name: "Scripts", href: "/admin/scripts", icon: FileJson, permission: "domains" },
-      { name: "Script Routing", href: "/admin/script-routing", icon: Route, permission: "domains" },
       { name: "Scripter", href: "/admin/scripter", icon: Terminal, permission: null },
       { name: "Agent Dashboard", href: "/admin/agent-dashboard", icon: AgentZap, permission: null },
       { name: "Supervisor", href: "/admin/supervisor", icon: Eye, permission: "domains" },
@@ -109,7 +109,6 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Field Mappings", href: "/admin/mappings", icon: FileJson, permission: "mappings" },
       { name: "Call Flow Builder", href: "/admin/call-flow", icon: Workflow, permission: "call_flow" },
       { name: "Automations", href: "/admin/automations", icon: Zap, permission: "domains" },
-      { name: "Summary Templates", href: "/admin/summary-templates", icon: FileText, permission: "domains" },
       { name: "ANI Block List", href: "/admin/ani-blocklist", icon: Ban, permission: "domains" },
       { name: "Callback Queue", href: "/admin/callback-queue", icon: PhoneCall, permission: "domains" },
       { name: "Abandon Rate", href: "/admin/abandon-rate", icon: ShieldAlert, permission: "domains" },

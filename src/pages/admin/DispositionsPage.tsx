@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { ListPlus } from "lucide-react";
 
-export default function DispositionsPage() {
+export function DispositionsContent() {
   const [selectedDomainId, setSelectedDomainId] = useState<string>("");
   const { data: domains = [], isLoading } = useDomains();
 
@@ -42,4 +42,8 @@ export default function DispositionsPage() {
       )}
     </div>
   );
+}
+
+export default function DispositionsPage() {
+  return <DispositionsContent />;
 }

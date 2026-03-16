@@ -1,76 +1,29 @@
 
 
-# Integrate ScriptFlow into Fabric59 — Consolidated Hub + Email Templates
+## Add Queue Callback Automation + Abandon Rate Reduction Engine to Outline
 
-## Assessment
+Insert two new categories into `src/data/buildMap.ts` between "ANI Block List" (line 311) and "Platform Utilities" (line 312).
 
-After reviewing every page in the codebase, Fabric59 **already has** nearly every ScriptFlow capability built as standalone pages:
+### New Categories (9 items total)
 
-- Scripts CRUD (`ScriptEditorPage`), Script Runtime (`ScripterPage`), Script Routing (`ScriptRoutingPage`)
-- Dispositions (`DispositionsPage`), Post-Call Automations (`PostCallAutomationsPage`)
-- Knowledge Base (`KnowledgeBasePage`), Training LMS (`TrainingPage`)
-- Feedback (`FeedbackPage`), Goals & Coaching (`GoalsPage`)
-- Agent Dashboard (`AgentDashboardPage`), Supervisor Console (`SupervisorPage`)
-- Call Summary Templates (`CallSummaryTemplatesPage`), Notifications (`NotificationsPage`)
-- Email Templates hooks exist (`useEmailTemplates`) but **no admin page**
-
-## What's Missing
-
-1. **Email Templates admin page** — hooks exist, no UI
-2. **Unified ScriptFlow hub** — these features are scattered across 10+ sidebar items; no single "command center" tab that ties scripts, dispositions, automations, email templates, and routing together
-3. The ScriptEditorPage has no visual builder (React Flow) — but that's a large standalone effort, out of scope here
-
-## Plan
-
-### 1. Create `EmailTemplatesPage.tsx` (`/admin/email-templates`)
-
-New page with full CRUD using existing `useEmailTemplates` hooks:
-- Table: Name, Default flag, Created date, Actions (edit/delete)
-- Create/Edit dialog: Name, HTML content (textarea), "Set as default" toggle
-- Empty state with CTA
-
-### 2. Create `ScriptFlowHubPage.tsx` (`/admin/scriptflow`)
-
-A new consolidated tab — a single page with tabs that embed the key ScriptFlow modules:
-
-**Tabs:**
-- **Scripts** — Embed ScriptEditorPage content (list of scripts with CRUD)
-- **Routing** — Embed ScriptRoutingPage content (DNIS/campaign → script mappings)
-- **Dispositions** — Embed DispositionsPage content (Five9 disposition management)
-- **Automations** — Embed PostCallAutomationsPage content (post-call rules)
-- **Email Templates** — Embed EmailTemplatesPage content
-- **Summary Templates** — Embed CallSummaryTemplatesPage content
-
-Each tab renders the existing page content as an embedded component (same pattern used for Report59 merge). Each existing standalone page exports a `*Content` component without the page header.
-
-### 3. Refactor existing pages to export embeddable content
-
-For each page that gets embedded in the hub, extract the inner content into a named export (e.g., `ScriptEditorContent`, `ScriptRoutingContent`, etc.) while keeping the default export as the standalone page.
-
-Pages to refactor:
-- `ScriptEditorPage.tsx` → export `ScriptEditorContent`
-- `ScriptRoutingPage.tsx` → export `ScriptRoutingContent`
-- `DispositionsPage.tsx` → export `DispositionsContent`
-- `PostCallAutomationsPage.tsx` → export `PostCallAutomationsContent`
-- `CallSummaryTemplatesPage.tsx` → export `CallSummaryTemplatesContent`
-
-### 4. Update navigation and routes
-
-**AdminLayout sidebar:** Add "ScriptFlow" entry under Agent Tools (with a Workflow icon). Remove individual entries for Script Routing, Summary Templates from the sidebar since they're now accessible via the hub (keep Scripts and Scripter as direct links for quick access).
-
-**App.tsx:** Add route `/admin/scriptflow` → `ScriptFlowHubPage`, add `/admin/email-templates` → `EmailTemplatesPage`.
-
-## File Changes
-
-| File | Change |
+**Queue Callback Automation (4 items)**
+| Item | Description |
 |---|---|
-| `src/pages/admin/EmailTemplatesPage.tsx` | New — Email template CRUD using existing hooks |
-| `src/pages/admin/ScriptFlowHubPage.tsx` | New — Tabbed hub consolidating 6 script-related modules |
-| `src/pages/admin/ScriptEditorPage.tsx` | Export `ScriptEditorContent` (content without header) |
-| `src/pages/admin/ScriptRoutingPage.tsx` | Export `ScriptRoutingContent` |
-| `src/pages/admin/DispositionsPage.tsx` | Export `DispositionsContent` |
-| `src/pages/admin/PostCallAutomationsPage.tsx` | Export `PostCallAutomationsContent` |
-| `src/pages/admin/CallSummaryTemplatesPage.tsx` | Export `CallSummaryTemplatesContent` |
-| `src/components/layout/AdminLayout.tsx` | Add ScriptFlow hub nav item, remove redundant entries |
-| `src/App.tsx` | Add 2 new routes |
+| Callback Queue SOAP Setup | Five9 SOAP calls to enable callback on skill groups, create callback IVR modules, and configure callback-to-skill routing |
+| High-Volume IVR Logic Builder | UI to configure IVR If/Then logic comparing Calls_In_Queue or Longest_Wait_Time against thresholds, with menu branching for hold vs. callback |
+| Dynamic Queue Threshold Manager | Admin UI + Five9 modifyUserVariable API to adjust high-volume thresholds (gv_MaxQueueThreshold) without editing IVR scripts directly |
+| Callback Announcement Config | Configure Skill Transfer announcement sequences including estimated wait time, repeat intervals, and mid-hold callback reminders via digit mapping |
+
+**Abandon Rate Reduction Engine (5 items)**
+| Item | Description |
+|---|---|
+| Skill Callback Audit Scanner | Edge function calling getSkillsInfo via SOAP, checks every active skill for enableCallback status, flags non-compliant skills |
+| IVR Optimization Analyzer | AI-assisted (Gemini) analysis of IVR script definitions via getIVRScripts -- checks for high-volume branching, callback modules, wait-time announcements |
+| Auto-Remediation Engine | Automated SOAP calls (modifySkill, modifyIVRScript) to enable callback on flagged skills and inject missing IVR modules |
+| Generic Callback Template | Pre-built IVR callback flow template (high-volume If/Then, announcement, menu, digit mapping) applied by auto-remediation to deficient campaigns |
+| Abandon Rate Dashboard | Admin UI showing per-skill callback audit status, IVR compliance scores, remediation history, and before/after abandon rate metrics |
+
+### File Change
+
+Single edit to `src/data/buildMap.ts` -- insert both category blocks at line 312, before the "Platform Utilities" block.
 

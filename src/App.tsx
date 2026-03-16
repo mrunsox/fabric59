@@ -63,6 +63,8 @@ import FeedbackPage from "@/pages/admin/FeedbackPage";
 import ScriptRoutingPage from "@/pages/admin/ScriptRoutingPage";
 import GoalsPage from "@/pages/admin/GoalsPage";
 import CallSummaryTemplatesPage from "@/pages/admin/CallSummaryTemplatesPage";
+import ScriptFlowHubPage from "@/pages/admin/ScriptFlowHubPage";
+import EmailTemplatesPage from "@/pages/admin/EmailTemplatesPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
@@ -151,6 +153,8 @@ const App = () => (
                 <Route path="script-routing" element={<ScriptRoutingPage />} />
                 <Route path="goals" element={<GoalsPage />} />
                 <Route path="summary-templates" element={<CallSummaryTemplatesPage />} />
+                <Route path="scriptflow" element={<ScriptFlowHubPage />} />
+                <Route path="email-templates" element={<EmailTemplatesPage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
