@@ -266,6 +266,295 @@ export type Database = {
         }
         Relationships: []
       }
+      call_notes: {
+        Row: {
+          agent_id: string
+          call_session_id: string
+          created_at: string
+          id: string
+          note_text: string
+        }
+        Insert: {
+          agent_id: string
+          call_session_id: string
+          created_at?: string
+          id?: string
+          note_text: string
+        }
+        Update: {
+          agent_id?: string
+          call_session_id?: string
+          created_at?: string
+          id?: string
+          note_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_notes_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_outcome_types: {
+        Row: {
+          category: string | null
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+        }
+        Insert: {
+          category?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+        }
+        Update: {
+          category?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_outcome_types_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_outcomes: {
+        Row: {
+          call_session_id: string
+          created_at: string
+          disposition: string | null
+          id: string
+          outcome_type_id: string
+          summary: string | null
+        }
+        Insert: {
+          call_session_id: string
+          created_at?: string
+          disposition?: string | null
+          id?: string
+          outcome_type_id: string
+          summary?: string | null
+        }
+        Update: {
+          call_session_id?: string
+          created_at?: string
+          disposition?: string | null
+          id?: string
+          outcome_type_id?: string
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_outcomes_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_outcomes_outcome_type_id_fkey"
+            columns: ["outcome_type_id"]
+            isOneToOne: false
+            referencedRelation: "call_outcome_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_session_events: {
+        Row: {
+          call_session_id: string
+          data: Json | null
+          event_type: string
+          id: string
+          node_id: string | null
+          timestamp: string
+        }
+        Insert: {
+          call_session_id: string
+          data?: Json | null
+          event_type: string
+          id?: string
+          node_id?: string | null
+          timestamp?: string
+        }
+        Update: {
+          call_session_id?: string
+          data?: Json | null
+          event_type?: string
+          id?: string
+          node_id?: string | null
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_session_events_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_sessions: {
+        Row: {
+          agent_id: string | null
+          ani: string | null
+          dnis: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          five9_call_id: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          partner_id: string | null
+          script_id: string | null
+          script_session_id: string | null
+          started_at: string
+          status: string
+          tenant_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          ani?: string | null
+          dnis?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          five9_call_id?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          partner_id?: string | null
+          script_id?: string | null
+          script_session_id?: string | null
+          started_at?: string
+          status?: string
+          tenant_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          ani?: string | null
+          dnis?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          five9_call_id?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          partner_id?: string | null
+          script_id?: string | null
+          script_session_id?: string | null
+          started_at?: string
+          status?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_sessions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_sessions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_agents_identity"
+            referencedColumns: ["fabric59_agent_id"]
+          },
+          {
+            foreignKeyName: "call_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_sessions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_sessions_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "scripts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_sessions_script_session_id_fkey"
+            columns: ["script_session_id"]
+            isOneToOne: false
+            referencedRelation: "script_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_summary_templates: {
+        Row: {
+          channel: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          organization_id: string
+          partner_id: string | null
+          template_body: string
+          tenant_id: string | null
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          partner_id?: string | null
+          template_body?: string
+          tenant_id?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          partner_id?: string | null
+          template_body?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_summary_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_summary_templates_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       callback_routing_configs: {
         Row: {
           created_at: string
@@ -374,6 +663,80 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      campaign_scripts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dnis: string | null
+          five9_campaign_id: string | null
+          five9_domain_id: string | null
+          id: string
+          is_active: boolean
+          organization_id: string
+          partner_id: string | null
+          script_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dnis?: string | null
+          five9_campaign_id?: string | null
+          five9_domain_id?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          partner_id?: string | null
+          script_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dnis?: string | null
+          five9_campaign_id?: string | null
+          five9_domain_id?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          partner_id?: string | null
+          script_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_scripts_five9_domain_id_fkey"
+            columns: ["five9_domain_id"]
+            isOneToOne: false
+            referencedRelation: "five9_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_scripts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_scripts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_scripts_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "scripts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       campaign_setups: {
         Row: {
@@ -1377,6 +1740,75 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      performance_goals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          metric: string
+          name: string
+          organization_id: string
+          partner_id: string | null
+          start_date: string | null
+          status: string
+          target_value: number
+          tenant_id: string | null
+          timeframe: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          metric: string
+          name: string
+          organization_id: string
+          partner_id?: string | null
+          start_date?: string | null
+          status?: string
+          target_value: number
+          tenant_id?: string | null
+          timeframe?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          metric?: string
+          name?: string
+          organization_id?: string
+          partner_id?: string | null
+          start_date?: string | null
+          status?: string
+          target_value?: number
+          tenant_id?: string | null
+          timeframe?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_goals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
