@@ -68,6 +68,7 @@ import ScriptFlowHubPage from "@/pages/admin/ScriptFlowHubPage";
 import EmailTemplatesPage from "@/pages/admin/EmailTemplatesPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
+import TreeEditorPage from "@/pages/admin/TreeEditorPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
 import NotFound from "./pages/NotFound";
 
