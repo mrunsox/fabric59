@@ -55,9 +55,15 @@ interface MyCaseIntegrationConfig {
   rules: Five9ToCrmRules;
 }
 
+interface GenericCrmConfig {
+  api_url?: string;
+  api_key?: string;
+}
+
 interface IntegrationConfigs {
   clio?: ClioIntegrationConfig;
   mycase?: MyCaseIntegrationConfig;
+  crm?: GenericCrmConfig;
 }
 
 interface ResolvedContext {
