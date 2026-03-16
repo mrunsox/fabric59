@@ -65,6 +65,7 @@ export function useDomain(id: string) {
         five9_password_encrypted: data.five9_password_encrypted,
         api_connection_status: data.api_connection_status as Five9Domain['api_connection_status'],
         last_connection_test: data.last_connection_test,
+        webhook_secret: data.webhook_secret ?? null,
         workflow_settings: (data.workflow_settings || {}) as WorkflowSettings,
         status: data.status as Five9DomainStatus,
         created_at: data.created_at,
