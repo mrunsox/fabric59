@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/popover';
 import { CheckCircle2, Plus, Trash2, Loader2, ChevronsUpDown, Check, Search } from 'lucide-react';
 import { useDispositions, useDeleteDisposition, Disposition } from '@/hooks/useDispositions';
-import { DispositionFormModal } from '@/components/editor/DispositionFormModal';
+import { DispositionFormModal } from '@/components/tree-editor/DispositionFormModal';
 import { cn } from '@/lib/utils';
 
 interface EndNodeConfigProps {

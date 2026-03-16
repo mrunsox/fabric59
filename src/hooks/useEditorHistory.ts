@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { FlowNode, FlowEdge } from '@/components/editor/flow/types';
+import { FlowNode, FlowEdge } from '@/components/tree-editor/flow/types';
 
 interface HistoryState {
   nodes: FlowNode[];

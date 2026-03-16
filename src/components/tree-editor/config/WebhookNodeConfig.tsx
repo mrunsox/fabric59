@@ -21,7 +21,7 @@ interface WebhookNodeConfigProps {
 export function WebhookNodeConfig({ node, onUpdate }: WebhookNodeConfigProps) {
   const config = node.webhookConfig || { url: '', method: 'POST', headers: {}, bodyTemplate: '' };
   const [headers, setHeaders] = useState<{ key: string; value: string }[]>(
-    Object.entries(config.headers || {}).map(([key, value]) => ({ key, value }))
+    Object.entries(config.headers || {}).map(([key, value]) => ({ key, value: String(value) }))
   );
 
   const updateConfig = (updates: Partial<WebhookConfig>) => {
