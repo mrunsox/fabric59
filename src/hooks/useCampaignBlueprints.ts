@@ -42,12 +42,12 @@ export function useCampaignBlueprints() {
 
 export function useCreateBlueprint() {
   const qc = useQueryClient();
-  const { organizationId, user } = useAuth();
+  const { organization, user } = useAuth();
   return useMutation({
     mutationFn: async (bp: Partial<CampaignBlueprint>) => {
       const { data, error } = await supabase
         .from("campaign_blueprints" as any)
-        .insert({ ...bp, organization_id: organizationId, created_by: user?.id } as any)
+        .insert({ ...bp, organization_id: organization?.id, created_by: user?.id } as any)
         .select()
         .single();
       if (error) throw error;
