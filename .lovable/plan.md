@@ -1,29 +1,32 @@
 
 
-## Add Queue Callback Automation + Abandon Rate Reduction Engine to Outline
+# Merge Report59 into Reports — Single "Reports" Page
 
-Insert two new categories into `src/data/buildMap.ts` between "ANI Block List" (line 311) and "Platform Utilities" (line 312).
+## What Changes
 
-### New Categories (9 items total)
+The standalone Report59 page (`/admin/upload`) gets absorbed into ReportsPage (`/admin/reports`) as a new tab called "Report59" alongside the existing Call Logs, Scheduled Reports, and Disposition Gating tabs.
 
-**Queue Callback Automation (4 items)**
-| Item | Description |
+The sidebar drops the separate "Report59" nav item — there's just one "Reports" entry.
+
+## File Changes
+
+| File | Change |
 |---|---|
-| Callback Queue SOAP Setup | Five9 SOAP calls to enable callback on skill groups, create callback IVR modules, and configure callback-to-skill routing |
-| High-Volume IVR Logic Builder | UI to configure IVR If/Then logic comparing Calls_In_Queue or Longest_Wait_Time against thresholds, with menu branching for hold vs. callback |
-| Dynamic Queue Threshold Manager | Admin UI + Five9 modifyUserVariable API to adjust high-volume thresholds (gv_MaxQueueThreshold) without editing IVR scripts directly |
-| Callback Announcement Config | Configure Skill Transfer announcement sequences including estimated wait time, repeat intervals, and mid-hold callback reminders via digit mapping |
+| `src/pages/admin/ReportsPage.tsx` | Add a "Report59" tab that renders the full Report59UploadPage content as an embedded component |
+| `src/pages/admin/Report59UploadPage.tsx` | Extract the inner content into a named export `Report59Content` (no page wrapper/header) so it can be embedded in the Reports tab |
+| `src/components/layout/AdminLayout.tsx` | Remove the "Report59" nav item (line 87) |
+| `src/App.tsx` | Remove the `/admin/upload` route (line 133); keep the import for now or remove it |
 
-**Abandon Rate Reduction Engine (5 items)**
-| Item | Description |
-|---|---|
-| Skill Callback Audit Scanner | Edge function calling getSkillsInfo via SOAP, checks every active skill for enableCallback status, flags non-compliant skills |
-| IVR Optimization Analyzer | AI-assisted (Gemini) analysis of IVR script definitions via getIVRScripts -- checks for high-volume branching, callback modules, wait-time announcements |
-| Auto-Remediation Engine | Automated SOAP calls (modifySkill, modifyIVRScript) to enable callback on flagged skills and inject missing IVR modules |
-| Generic Callback Template | Pre-built IVR callback flow template (high-volume If/Then, announcement, menu, digit mapping) applied by auto-remediation to deficient campaigns |
-| Abandon Rate Dashboard | Admin UI showing per-skill callback audit status, IVR compliance scores, remediation history, and before/after abandon rate metrics |
+## Implementation Detail
 
-### File Change
+**Report59UploadPage.tsx**: Add an exported `Report59Content` component that contains everything currently inside `Report59UploadPage` minus the outer `<div>` with the page title/header. The default export stays for backward compat but just wraps `Report59Content` with the header.
 
-Single edit to `src/data/buildMap.ts` -- insert both category blocks at line 312, before the "Platform Utilities" block.
+**ReportsPage.tsx**: 
+- Import `Report59Content` from `Report59UploadPage`
+- Add a `<TabsTrigger value="report59">Report59</TabsTrigger>` to the tabs list
+- Add `<TabsContent value="report59"><Report59Content /></TabsContent>`
+
+**AdminLayout.tsx**: Remove line 87 (`{ name: "Report59", href: "/admin/upload", ... }`).
+
+**App.tsx**: Remove the `/admin/upload` route.
 
