@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CallFlowSimulator } from "@/components/call-flow/CallFlowSimulator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, Bot, User, Sparkles, RotateCcw, ExternalLink, Map, RefreshCw } from "lucide-react";
+import { Send, Loader2, Bot, User, Sparkles, RotateCcw, ExternalLink, Map, RefreshCw, TreePine } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -249,6 +249,10 @@ export default function CallFlowBuilderPage() {
           <TabsTrigger value="ai-builder" className="gap-2">
             <Sparkles className="h-4 w-4" />
             AI Builder
+          </TabsTrigger>
+          <TabsTrigger value="tree-editor" className="gap-2" onClick={() => navigate('/admin/tree-editor/new')}>
+            <TreePine className="h-4 w-4" />
+            Tree Editor
           </TabsTrigger>
           <TabsTrigger value="simulator" className="gap-2">
             <Bot className="h-4 w-4" />

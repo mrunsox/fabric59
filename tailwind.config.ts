@@ -79,6 +79,13 @@ export default {
           action: "hsl(var(--node-action))",
           condition: "hsl(var(--node-condition))",
           end: "hsl(var(--node-end))",
+          content: "hsl(var(--node-content))",
+          data: "hsl(var(--node-data))",
+          logic: "hsl(var(--node-logic))",
+          integration: "hsl(var(--node-integration))",
+          call: "hsl(var(--node-call))",
+          ai: "hsl(var(--node-ai))",
+          flow: "hsl(var(--node-flow))",
         },
       },
       borderRadius: {

@@ -68,6 +68,7 @@ import ScriptFlowHubPage from "@/pages/admin/ScriptFlowHubPage";
 import EmailTemplatesPage from "@/pages/admin/EmailTemplatesPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
+import TreeEditorPage from "@/pages/admin/TreeEditorPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
 import NotFound from "./pages/NotFound";
 
@@ -158,6 +159,8 @@ const App = () => (
                 <Route path="scriptflow" element={<ScriptFlowHubPage />} />
                 <Route path="email-templates" element={<EmailTemplatesPage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
+                <Route path="tree-editor/:scriptId" element={<TreeEditorPage />} />
+                <Route path="tree-editor" element={<TreeEditorPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
