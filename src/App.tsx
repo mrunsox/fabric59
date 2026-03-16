@@ -56,6 +56,10 @@ import AbandonRatePage from "@/pages/admin/AbandonRatePage";
 import DataPlanePage from "@/pages/admin/DataPlanePage";
 import IdentityResolutionPage from "@/pages/admin/IdentityResolutionPage";
 import PlatformUtilitiesPage from "@/pages/admin/PlatformUtilitiesPage";
+import ScriptEditorPage from "@/pages/admin/ScriptEditorPage";
+import KnowledgeBasePage from "@/pages/admin/KnowledgeBasePage";
+import TrainingPage from "@/pages/admin/TrainingPage";
+import FeedbackPage from "@/pages/admin/FeedbackPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
