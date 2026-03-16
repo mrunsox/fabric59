@@ -10,6 +10,8 @@ import { DispositionGatingConfig } from "@/components/reports/DispositionGatingC
 import { useCallLogs, exportCallLogs, type CallLogRecord } from "@/hooks/useCallLogs";
 import { useDispositionAccessList } from "@/hooks/useDispositionAccess";
 import { useScheduledReports, useUpdateScheduledReportStatus } from "@/hooks/useScheduledReports";
+import { usePartners } from "@/hooks/usePartners";
+import { useTenants } from "@/hooks/useTenants";
 import { useAuth } from "@/contexts/AuthContext";
 import { BarChart3, Download, Clock, Shield, Pause, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -27,6 +29,8 @@ export default function ReportsPage() {
   const [agentFilter, setAgentFilter] = useState("");
   const [dispositionFilter, setDispositionFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [partnerFilter, setPartnerFilter] = useState("all");
+  const [clientFilter, setClientFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [fetchEnabled, setFetchEnabled] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -34,7 +38,15 @@ export default function ReportsPage() {
   const { data: callLogs = [], isLoading, refetch } = useCallLogs(startDate, endDate, fetchEnabled);
   const { data: dispositionAccess = [] } = useDispositionAccessList();
   const { data: scheduledReports = [] } = useScheduledReports();
+  const { data: partners = [] } = usePartners();
+  const { data: tenants = [] } = useTenants();
   const updateStatus = useUpdateScheduledReportStatus();
+
+  const filteredClients = useMemo(() => {
+    if (partnerFilter === "all") return tenants;
+    if (partnerFilter === "direct") return tenants.filter((t) => !t.partner_id);
+    return tenants.filter((t) => t.partner_id === partnerFilter);
+  }, [tenants, partnerFilter]);
 
   const allowedDispositions = useMemo(
     () => dispositionAccess.map((d) => d.disposition_name),
@@ -97,6 +109,31 @@ export default function ReportsPage() {
         </TabsList>
 
         <TabsContent value="logs" className="space-y-4">
+          {/* Partner / Client filters */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <select
+              value={partnerFilter}
+              onChange={(e) => { setPartnerFilter(e.target.value); setClientFilter("all"); }}
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="all">All Partners</option>
+              <option value="direct">Direct (no partner)</option>
+              {partners.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <select
+              value={clientFilter}
+              onChange={(e) => setClientFilter(e.target.value)}
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="all">All Clients</option>
+              {filteredClients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
           <ReportFilters
             startDate={startDate}
             endDate={endDate}

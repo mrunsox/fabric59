@@ -54,6 +54,10 @@ export function useCreatePartner() {
           slug: data.slug,
           status: data.status || "active",
           integration_configs: data.integration_configs || {},
+          brand_logo_url: data.brand_logo_url || null,
+          brand_primary_color: data.brand_primary_color || null,
+          brand_from_email: data.brand_from_email || null,
+          portal_domain: data.portal_domain || null,
         }]);
 
       if (error) throw error;
@@ -78,6 +82,10 @@ export function useUpdatePartner() {
       if (data.slug !== undefined) updateData.slug = data.slug;
       if (data.status !== undefined) updateData.status = data.status;
       if (data.integration_configs !== undefined) updateData.integration_configs = data.integration_configs;
+      if (data.brand_logo_url !== undefined) updateData.brand_logo_url = data.brand_logo_url;
+      if (data.brand_primary_color !== undefined) updateData.brand_primary_color = data.brand_primary_color;
+      if (data.brand_from_email !== undefined) updateData.brand_from_email = data.brand_from_email;
+      if (data.portal_domain !== undefined) updateData.portal_domain = data.portal_domain;
 
       const { error } = await supabase
         .from("partners" as any)

@@ -1988,6 +1988,50 @@ export type Database = {
           },
         ]
       }
+      report_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          field_config: Json
+          filter_config: Json
+          id: string
+          name: string
+          organization_id: string
+          report_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          field_config?: Json
+          filter_config?: Json
+          id?: string
+          name: string
+          organization_id: string
+          report_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          field_config?: Json
+          filter_config?: Json
+          id?: string
+          name?: string
+          organization_id?: string
+          report_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_uploads: {
         Row: {
           created_at: string

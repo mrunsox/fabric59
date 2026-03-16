@@ -57,6 +57,10 @@ export interface Partner {
   slug: string;
   status: PartnerStatus;
   integration_configs: Record<string, unknown>;
+  brand_logo_url: string | null;
+  brand_primary_color: string | null;
+  brand_from_email: string | null;
+  portal_domain: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -197,6 +201,10 @@ export interface PartnerFormData {
   slug: string;
   status: PartnerStatus;
   integration_configs?: Record<string, unknown>;
+  brand_logo_url?: string;
+  brand_primary_color?: string;
+  brand_from_email?: string;
+  portal_domain?: string;
 }
 
 export interface Five9DomainFormData {

@@ -3,6 +3,8 @@ import { useTenant, useUpdateTenant } from "@/hooks/useTenants";
 import { usePartner } from "@/hooks/usePartners";
 import { useApiLogs, useApiLogStats } from "@/hooks/useApiLogs";
 import { useClientIntegrationConfigs } from "@/hooks/useClientIntegrationConfigs";
+import { useInvoices } from "@/hooks/useInvoices";
+import { useCampaignScripts } from "@/hooks/useCampaignScripts";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -34,6 +36,8 @@ import {
   Building2,
   TestTube,
   FileText,
+  Receipt,
+  Route,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -56,6 +60,11 @@ export default function ClientOverviewPage() {
   const { data: stats } = useApiLogStats();
   const { configs, saveConfigs, isSaving } = useClientIntegrationConfigs(id || "");
   const updateTenant = useUpdateTenant();
+  const { data: allInvoices = [] } = useInvoices();
+  const { data: campaignScripts = [] } = useCampaignScripts();
+
+  const clientInvoices = allInvoices.filter((inv: any) => inv.tenant_id === id);
+  const clientScripts = campaignScripts.filter((cs: any) => cs.tenant_id === id);
 
   if (isLoading) {
     return (
@@ -171,46 +180,164 @@ export default function ClientOverviewPage() {
           variant={configs?.clio?.oauthTokenId || configs?.mycase?.apiKeyId ? "success" : "warning"}
         />
         <StatCard
-          title="Webhook Destinations"
-          value={webhookDestinations.length}
-          subtitle="Active automations"
-          icon={Workflow}
+          title="Script Mappings"
+          value={clientScripts.length}
+          subtitle="DNIS/campaign routes"
+          icon={Route}
           variant="primary"
         />
       </div>
 
-      {/* Three-column layout */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left: Connection & CRM */}
-        <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Connection & CRM</h2>
+      {/* Tabs */}
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="legal-connect">Legal Connect</TabsTrigger>
+          <TabsTrigger value="five9-scripts">Five9 & Scripts</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="billing">Billing</TabsTrigger>
+        </TabsList>
 
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-4 mt-4">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Behavior & Mappings */}
+            <div className="space-y-4">
+              <Card className="border-border">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Map className="h-4 w-4 text-primary" />
+                    <CardTitle className="text-base">Field Mappings</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" size="sm" asChild className="w-full">
+                    <Link to="/admin/mappings">
+                      <Map className="h-4 w-4 mr-2" /> Open Mapping Builder
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Workflow className="h-4 w-4 text-primary" />
+                    <CardTitle className="text-base">Workflow Automations</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {([
+                    { key: "intake_created" as const, label: "Send on intake created" },
+                    { key: "call_ended" as const, label: "Send on call ended" },
+                    { key: "contact_updated" as const, label: "Send on CRM update" },
+                  ] as const).map((trigger) => (
+                    <div key={trigger.key} className="flex items-center justify-between">
+                      <Label className="text-sm">{trigger.label}</Label>
+                      <Switch
+                        checked={!!tenant.notification_triggers?.[trigger.key]}
+                        onCheckedChange={(v) => handleNotificationToggle(trigger.key, v)}
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Activity & Quick Actions */}
+            <div className="space-y-4">
+              <Card className="border-border">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <CardTitle className="text-base">Recent API Logs</CardTitle>
+                    </div>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to={`/admin/logs?tenant=${tenant.id}`}>
+                        View All <ExternalLink className="h-3 w-3 ml-1" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {logs.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-6">No recent API activity.</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-border">
+                          <TableHead className="text-xs">Endpoint</TableHead>
+                          <TableHead className="text-xs">Status</TableHead>
+                          <TableHead className="text-xs">Time</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {logs.slice(0, 8).map((log) => (
+                          <TableRow key={log.id} className="border-border">
+                            <TableCell className="text-xs font-mono truncate max-w-[140px]">{log.endpoint}</TableCell>
+                            <TableCell>
+                              <StatusBadge variant={log.status === "success" ? "active" : "inactive"} dot>
+                                {log.status}
+                              </StatusBadge>
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {format(new Date(log.created_at), "HH:mm")}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button variant="outline" size="sm" asChild className="w-full justify-start">
+                    <Link to="/admin/test">
+                      <TestTube className="h-4 w-4 mr-2" /> Open Test Console
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm" asChild className="w-full justify-start">
+                    <Link to={`/admin/logs?tenant=${tenant.id}`}>
+                      <FileText className="h-4 w-4 mr-2" /> Open API Logs
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Legal Connect Tab */}
+        <TabsContent value="legal-connect" className="space-y-4 mt-4">
           <Five9WebhookCard
             tenantId={tenant.id}
             webhookSecret={webhookSecret}
             onWebhookSecretChange={handleWebhookSecretChange}
           />
-
-          <CrmConnectionCard
-            crm="clio"
-            tenantId={tenant.id}
-            config={configs?.clio as unknown as Record<string, unknown> | undefined}
-            onConfigChange={(c) => handleCrmConfigChange("clio", c)}
-          />
-
-          <CrmConnectionCard
-            crm="mycase"
-            tenantId={tenant.id}
-            config={configs?.mycase as unknown as Record<string, unknown> | undefined}
-            onConfigChange={(c) => handleCrmConfigChange("mycase", c)}
-          />
-
-          {/* Webhook destinations */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <CrmConnectionCard
+              crm="clio"
+              tenantId={tenant.id}
+              config={configs?.clio as unknown as Record<string, unknown> | undefined}
+              onConfigChange={(c) => handleCrmConfigChange("clio", c)}
+            />
+            <CrmConnectionCard
+              crm="mycase"
+              tenantId={tenant.id}
+              config={configs?.mycase as unknown as Record<string, unknown> | undefined}
+              onConfigChange={(c) => handleCrmConfigChange("mycase", c)}
+            />
+          </div>
           {webhookDestinations.length > 0 && (
             <Card className="border-border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Webhook Destinations</CardTitle>
-                <CardDescription>External automation endpoints for this client.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {webhookDestinations.map((d) => (
@@ -224,131 +351,103 @@ export default function ClientOverviewPage() {
               </CardContent>
             </Card>
           )}
-        </div>
+        </TabsContent>
 
-        {/* Center: Behavior & Mappings */}
-        <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Behavior & Mappings</h2>
-
-          {/* Field Mappings */}
-          <Card className="border-border">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Map className="h-4 w-4 text-primary" />
-                <CardTitle className="text-base">Field Mappings</CardTitle>
-              </div>
-              <CardDescription>Active field mapping configurations for this client.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" size="sm" asChild className="w-full">
-                <Link to="/admin/mappings">
-                  <Map className="h-4 w-4 mr-2" />
-                  Open Mapping Builder
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Workflow Automations */}
-          <Card className="border-border">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Workflow className="h-4 w-4 text-primary" />
-                <CardTitle className="text-base">Workflow Automations</CardTitle>
-              </div>
-              <CardDescription>Toggle event triggers for this client.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {([
-                { key: "intake_created" as const, label: "Send on intake created" },
-                { key: "call_ended" as const, label: "Send on call ended" },
-                { key: "contact_updated" as const, label: "Send on CRM update" },
-              ] as const).map((trigger) => (
-                <div key={trigger.key} className="flex items-center justify-between">
-                  <Label className="text-sm">{trigger.label}</Label>
-                  <Switch
-                    checked={!!tenant.notification_triggers?.[trigger.key]}
-                    onCheckedChange={(v) => handleNotificationToggle(trigger.key, v)}
-                  />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right: Activity & Debugging */}
-        <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Activity & Debugging</h2>
-
-          {/* Recent API Logs */}
-          <Card className="border-border">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-base">Recent API Logs</CardTitle>
-                </div>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to={`/admin/logs?tenant=${tenant.id}`}>
-                    View All <ExternalLink className="h-3 w-3 ml-1" />
-                  </Link>
+        {/* Five9 & Scripts Tab */}
+        <TabsContent value="five9-scripts" className="mt-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">DNIS / Campaign → Script Mappings</h2>
+            <Button size="sm" onClick={() => navigate("/admin/script-routing")}>
+              Manage All Routes
+            </Button>
+          </div>
+          {clientScripts.length === 0 ? (
+            <Card className="border-border">
+              <CardContent className="py-8 text-center">
+                <p className="text-muted-foreground">No script mappings for this client yet.</p>
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/admin/script-routing")}>
+                  Add Script Mapping
                 </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {logs.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">No recent API activity.</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border">
-                      <TableHead className="text-xs">Endpoint</TableHead>
-                      <TableHead className="text-xs">Status</TableHead>
-                      <TableHead className="text-xs">Time</TableHead>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>DNIS</TableHead>
+                    <TableHead>Campaign ID</TableHead>
+                    <TableHead>Script ID</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {clientScripts.map((cs: any) => (
+                    <TableRow key={cs.id}>
+                      <TableCell className="font-mono text-sm">{cs.dnis || "—"}</TableCell>
+                      <TableCell className="font-mono text-sm">{cs.five9_campaign_id || "—"}</TableCell>
+                      <TableCell className="font-mono text-sm">{cs.script_id?.slice(0, 8)}...</TableCell>
+                      <TableCell>
+                        <Badge variant={cs.is_active ? "default" : "secondary"}>
+                          {cs.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {logs.slice(0, 8).map((log) => (
-                      <TableRow key={log.id} className="border-border">
-                        <TableCell className="text-xs font-mono truncate max-w-[140px]">{log.endpoint}</TableCell>
-                        <TableCell>
-                          <StatusBadge variant={log.status === "success" ? "active" : "inactive"} dot>
-                            {log.status}
-                          </StatusBadge>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {format(new Date(log.created_at), "HH:mm")}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
 
-          {/* Quick Actions */}
+        {/* Reports Tab */}
+        <TabsContent value="reports" className="mt-4">
           <Card className="border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" size="sm" asChild className="w-full justify-start">
-                <Link to="/admin/test">
-                  <TestTube className="h-4 w-4 mr-2" />
-                  Open Test Console
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild className="w-full justify-start">
-                <Link to={`/admin/logs?tenant=${tenant.id}`}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Open API Logs
-                </Link>
+            <CardContent className="py-8 text-center">
+              <p className="text-muted-foreground">Reports filtered to this client are available on the main Reports page.</p>
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/admin/reports")}>
+                Open Reports
               </Button>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+
+        {/* Billing Tab */}
+        <TabsContent value="billing" className="mt-4 space-y-4">
+          {clientInvoices.length === 0 ? (
+            <Card className="border-border">
+              <CardContent className="py-8 text-center">
+                <p className="text-muted-foreground">No invoices for this client yet.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Issue Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {clientInvoices.map((inv: any) => (
+                    <TableRow key={inv.id}>
+                      <TableCell className="text-sm">{format(new Date(inv.issue_date), "MMM d, yyyy")}</TableCell>
+                      <TableCell>
+                        <Badge variant={inv.status === "paid" ? "default" : "secondary"}>{inv.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">
+                        ${Number(inv.total_amount).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
