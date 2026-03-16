@@ -24,7 +24,7 @@ const CHART_COLORS = [
   "hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(var(--warning))"
 ];
 
-export default function Report59UploadPage() {
+export function Report59Content() {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedRow[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
