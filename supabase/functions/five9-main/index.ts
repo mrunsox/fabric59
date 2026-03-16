@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-tenant-id, x-webhook-secret',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-tenant-id, x-webhook-secret, x-five9-domain, x-partner-id, x-client-id',
 };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -60,6 +60,14 @@ interface IntegrationConfigs {
   mycase?: MyCaseIntegrationConfig;
 }
 
+interface ResolvedContext {
+  tenantId: string;
+  orgId: string;
+  partnerId?: string;
+  domainId?: string;
+  configs: IntegrationConfigs;
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function normalizePhone(phone: string): string {
@@ -110,14 +118,12 @@ async function getClioAccessToken(
 
   if (!token) return null;
 
-  // Check if token is expired (with 5 min buffer)
   if (token.expires_at && new Date(token.expires_at).getTime() < Date.now() + 300_000) {
-    // Attempt refresh
     const clioClientId = Deno.env.get('CLIO_CLIENT_ID');
     const clioClientSecret = Deno.env.get('CLIO_CLIENT_SECRET');
     if (!clioClientId || !clioClientSecret || !token.refresh_token_encrypted) {
       console.error('Cannot refresh Clio token: missing credentials');
-      return token.access_token_encrypted; // try anyway
+      return token.access_token_encrypted;
     }
 
     try {
@@ -167,7 +173,6 @@ async function clioApiFetch(
   };
   if (body) opts.body = JSON.stringify(body);
 
-  // Retry logic for 429/5xx
   for (let attempt = 0; attempt < 3; attempt++) {
     const res = await fetch(`${baseUrl}${path}`, opts);
     if (res.status === 429 || res.status >= 500) {
@@ -199,7 +204,6 @@ async function handleCallForClio(params: {
   const clientPhone = call.direction === 'inbound' ? call.fromNumber : call.toNumber;
   const normalizedPhone = normalizePhone(clientPhone);
 
-  // 1. Resolve contact via mapping
   let contactId: string | undefined;
   let matterId: string | undefined;
 
@@ -214,7 +218,6 @@ async function handleCallForClio(params: {
     contactId = mapping.contact_id;
     matterId = mapping.matter_id;
   } else {
-    // Search Clio contacts by phone
     const searchRes = await clioApiFetch('GET', `/contacts.json?query=${encodeURIComponent(normalizedPhone)}&type=Person`, accessToken);
     if (searchRes.ok && searchRes.data?.data?.length > 0) {
       contactId = String(searchRes.data.data[0].id);
@@ -222,7 +225,6 @@ async function handleCallForClio(params: {
         tenant_id: tenantId, organization_id: orgId, phone: normalizedPhone, contact_id: contactId,
       });
     } else if (rules.autoCreateContact) {
-      // Create contact
       const createRes = await clioApiFetch('POST', '/contacts.json', accessToken, {
         data: {
           type: 'Person',
@@ -240,7 +242,6 @@ async function handleCallForClio(params: {
     }
   }
 
-  // 2. Resolve matter (if contact exists)
   if (contactId && !matterId) {
     const mattersRes = await clioApiFetch('GET', `/matters.json?contact_id=${contactId}&status=open&order=created_at(desc)`, accessToken);
     if (mattersRes.ok && mattersRes.data?.data?.length > 0) {
@@ -263,7 +264,6 @@ async function handleCallForClio(params: {
       }
     }
 
-    // Update mapping with matter
     if (matterId && mapping) {
       await supabase.from('clio_mappings').update({ matter_id: matterId }).eq('id', mapping.id);
     } else if (matterId) {
@@ -274,7 +274,6 @@ async function handleCallForClio(params: {
     }
   }
 
-  // 3. Create Communication (always)
   const commBody: any = {
     data: {
       type: 'PhoneCall',
@@ -300,7 +299,6 @@ async function handleCallForClio(params: {
   const commRes = await clioApiFetch('POST', '/communications.json', accessToken, commBody);
   const communicationId = commRes.ok ? String(commRes.data?.data?.id) : undefined;
 
-  // 4. Create time entry if applicable
   if (rules.createTimeEntryForBillable && matterId && call.durationSeconds) {
     await clioApiFetch('POST', '/activities.json', accessToken, {
       data: {
@@ -356,7 +354,6 @@ async function handleCallForMyCase(params: {
 }): Promise<{ contactId?: string; caseId?: string; noteId?: string; error?: string }> {
   const { tenantId, orgId, call, config, supabase } = params;
 
-  // Get API key
   let apiKey: string | null = null;
   if (config.apiKeyId) {
     const { data: keyRow } = await supabase
@@ -372,7 +369,6 @@ async function handleCallForMyCase(params: {
   const clientPhone = call.direction === 'inbound' ? call.fromNumber : call.toNumber;
   const normalizedPhone = normalizePhone(clientPhone);
 
-  // 1. Resolve contact
   let contactId: string | undefined;
   let caseId: string | undefined;
 
@@ -387,7 +383,6 @@ async function handleCallForMyCase(params: {
     contactId = mapping.contact_id;
     caseId = mapping.case_id;
   } else {
-    // Search MyCase contacts
     const searchRes = await mycaseApiFetch('GET', `/contacts?phone=${encodeURIComponent(normalizedPhone)}`, apiKey);
     if (searchRes.ok && searchRes.data?.contacts?.length > 0) {
       contactId = String(searchRes.data.contacts[0].id);
@@ -411,7 +406,6 @@ async function handleCallForMyCase(params: {
     }
   }
 
-  // 2. Resolve case
   if (contactId && !caseId) {
     const casesRes = await mycaseApiFetch('GET', `/cases?contact_id=${contactId}&status=open`, apiKey);
     if (casesRes.ok && casesRes.data?.cases?.length > 0) {
@@ -443,7 +437,6 @@ async function handleCallForMyCase(params: {
     }
   }
 
-  // 3. Create Note
   const noteBody = [
     `Direction: ${call.direction}`,
     `From: ${call.fromNumber} → To: ${call.toNumber}`,
@@ -470,6 +463,183 @@ async function handleCallForMyCase(params: {
   return { contactId, caseId, noteId };
 }
 
+// ─── Web Callback Writeback (from five9-webhook) ────────────────────────────
+
+async function handleWebCallbackWriteback(
+  supabase: any,
+  orgId: string,
+  eventType: string,
+  data: any
+): Promise<void> {
+  if (eventType !== 'call_ended' && eventType !== 'disposition_set' && eventType !== 'web_callback_result') {
+    return;
+  }
+
+  const callbackId = data?.callback_id;
+  const five9CallId = data?.call_id || data?.five9_call_id;
+  const phone = data?.phone || data?.ani;
+
+  if (!callbackId && !five9CallId && !phone) return;
+
+  let query = supabase.from('web_callbacks').select('id').eq('organization_id', orgId);
+  if (callbackId) {
+    query = query.eq('id', callbackId);
+  } else if (five9CallId) {
+    query = query.eq('five9_call_id', five9CallId);
+  } else if (phone) {
+    query = query.eq('contact_phone', phone).in('status', ['pending', 'dialing']);
+  }
+
+  const { data: callbacks } = await query.limit(1);
+  if (!callbacks || callbacks.length === 0) return;
+
+  const updateData: Record<string, unknown> = {};
+  if (data?.disposition) updateData.call_disposition = data.disposition;
+  if (data?.duration || data?.call_duration_seconds) updateData.call_duration_seconds = data.duration || data.call_duration_seconds;
+  if (data?.recording_url) updateData.recording_url = data.recording_url;
+  if (five9CallId) updateData.five9_call_id = five9CallId;
+
+  const callStatus = data?.call_status || data?.status;
+  if (callStatus === 'completed' || data?.disposition) {
+    updateData.status = 'completed';
+  } else if (callStatus === 'no_answer') {
+    updateData.status = 'no_answer';
+  } else if (callStatus === 'failed' || callStatus === 'error') {
+    updateData.status = 'failed';
+  }
+
+  if (Object.keys(updateData).length > 0) {
+    await supabase.from('web_callbacks').update(updateData).eq('id', callbacks[0].id);
+  }
+}
+
+// ─── Downstream Notification Triggering (from five9-webhook) ─────────────────
+
+async function handleDownstreamNotifications(
+  supabase: any,
+  domainId: string,
+  eventType: string,
+  data: any
+): Promise<void> {
+  if (eventType !== 'call_ended' && eventType !== 'disposition_set') return;
+
+  const { data: tenants } = await supabase
+    .from('tenants')
+    .select('id, notification_triggers')
+    .eq('five9_domain_id', domainId);
+
+  for (const tenant of (tenants || [])) {
+    const triggers = tenant.notification_triggers as Record<string, boolean> | null;
+    if (triggers?.[eventType]) {
+      fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+        },
+        body: JSON.stringify({ tenant_id: tenant.id, event_type: eventType, data }),
+      }).catch(e => console.error('Notification fire-and-forget error:', e));
+    }
+  }
+}
+
+// ─── Context Resolution ──────────────────────────────────────────────────────
+
+/**
+ * Resolves the request context using one of two routing paths:
+ *
+ * Route A: x-tenant-id header → direct tenant identification
+ * Route B: x-five9-domain header → domain-level, resolves org + tenants
+ */
+async function resolveContext(
+  req: Request,
+  supabase: any
+): Promise<{ context?: ResolvedContext; domainRoute?: { domainId: string; orgId: string }; error?: string; status?: number }> {
+  const tenantId = req.headers.get('x-tenant-id');
+  const domainHeader = req.headers.get('x-five9-domain');
+  const webhookSecret = req.headers.get('x-webhook-secret');
+
+  // Route A: Direct tenant identification
+  if (tenantId) {
+    const { data: tenant, error: tErr } = await supabase
+      .from('tenants')
+      .select('id, organization_id, integration_configs')
+      .eq('id', tenantId)
+      .single();
+
+    if (tErr || !tenant) {
+      return { error: 'Tenant not found', status: 404 };
+    }
+
+    const configs: IntegrationConfigs = (tenant.integration_configs as any) || {};
+
+    // Validate webhook secret against configured secrets
+    if (webhookSecret) {
+      const validClio = configs.clio?.webhookSecret === webhookSecret;
+      const validMycase = configs.mycase?.webhookSecret === webhookSecret;
+      if (!validClio && !validMycase) {
+        return { error: 'Invalid webhook secret', status: 403 };
+      }
+    }
+
+    return {
+      context: {
+        tenantId: tenant.id,
+        orgId: tenant.organization_id,
+        configs,
+      },
+    };
+  }
+
+  // Route B: Domain-level identification (merged from five9-webhook)
+  if (domainHeader) {
+    if (!webhookSecret) {
+      return { error: 'Missing x-webhook-secret header for domain routing', status: 401 };
+    }
+
+    const { data: domain, error: dErr } = await supabase
+      .from('five9_domains')
+      .select('id, organization_id, webhook_secret')
+      .eq('domain', domainHeader)
+      .single();
+
+    if (dErr || !domain || domain.webhook_secret !== webhookSecret) {
+      return { error: 'Invalid domain or webhook secret', status: 403 };
+    }
+
+    return {
+      domainRoute: {
+        domainId: domain.id,
+        orgId: domain.organization_id,
+      },
+    };
+  }
+
+  return { error: 'Missing x-tenant-id or x-five9-domain header', status: 400 };
+}
+
+// ─── CRM Dispatch to crm-push for non-Legal CRMs ────────────────────────────
+
+async function dispatchToGenericCrm(
+  supabase: any,
+  tenantId: string,
+  crmAction: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  try {
+    await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/crm-push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+      },
+      body: JSON.stringify({ tenant_id: tenantId, crm_action: crmAction, data }),
+    });
+  } catch (e) {
+    console.error('crm-push dispatch error:', e);
+  }
+}
+
 // ─── Main Server ─────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -483,86 +653,125 @@ serve(async (req) => {
   );
 
   try {
-    const tenantId = req.headers.get('x-tenant-id');
-    const webhookSecret = req.headers.get('x-webhook-secret');
+    const { context, domainRoute, error, status } = await resolveContext(req, supabase);
 
-    if (!tenantId) {
-      return new Response(JSON.stringify({ error: 'Missing x-tenant-id header' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (error) {
+      return new Response(JSON.stringify({ error }), {
+        status: status || 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Fetch tenant
-    const { data: tenant, error: tErr } = await supabase
-      .from('tenants')
-      .select('id, organization_id, integration_configs')
-      .eq('id', tenantId)
-      .single();
-
-    if (tErr || !tenant) {
-      return new Response(JSON.stringify({ error: 'Tenant not found' }), {
-        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const configs: IntegrationConfigs = (tenant.integration_configs as any) || {};
-    const orgId = tenant.organization_id;
-
-    // Validate webhook secret against at least one configured secret
-    if (webhookSecret) {
-      const validClio = configs.clio?.webhookSecret === webhookSecret;
-      const validMycase = configs.mycase?.webhookSecret === webhookSecret;
-      if (!validClio && !validMycase) {
-        return new Response(JSON.stringify({ error: 'Invalid webhook secret' }), {
-          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
-
-    // Parse and normalize call event
     const payload = await req.json();
-    const call = normalizeCallEvent(payload);
-
-    const results: any = { tenantId, callId: call.id };
     const startTime = Date.now();
 
-    // Handle Clio
-    if (configs.clio?.enabled && configs.clio.rules?.enabled) {
-      try {
-        results.clio = await handleCallForClio({
-          tenantId, orgId, call, config: configs.clio, supabase,
-        });
-      } catch (e) {
-        results.clio = { error: e instanceof Error ? e.message : 'Clio handler error' };
+    // ── Route B: Domain-level event processing ──
+    if (domainRoute) {
+      const { domainId, orgId } = domainRoute;
+      const eventType = payload.event_type;
+      const eventData = payload.data || payload;
+
+      // Log the webhook event
+      await supabase.from('api_logs').insert({
+        endpoint: `five9-main/domain/${eventType || 'unknown'}`,
+        method: 'POST',
+        status: 'success',
+        request_payload: payload,
+        response: { received: true },
+        response_time_ms: 0,
+      });
+
+      // Web callback writeback
+      await handleWebCallbackWriteback(supabase, orgId, eventType, eventData);
+
+      // Downstream notifications
+      await handleDownstreamNotifications(supabase, domainId, eventType, eventData);
+
+      // Also process CRM for tenants under this domain
+      if (eventType === 'call_ended' || eventType === 'disposition_set') {
+        const { data: tenants } = await supabase
+          .from('tenants')
+          .select('id, organization_id, integration_configs')
+          .eq('five9_domain_id', domainId);
+
+        const call = normalizeCallEvent(eventData);
+
+        for (const tenant of (tenants || [])) {
+          const configs: IntegrationConfigs = (tenant.integration_configs as any) || {};
+
+          if (configs.clio?.enabled && configs.clio.rules?.enabled) {
+            try {
+              await handleCallForClio({
+                tenantId: tenant.id, orgId, call, config: configs.clio, supabase,
+              });
+            } catch (e) {
+              console.error(`Clio error for tenant ${tenant.id}:`, e);
+            }
+          }
+
+          if (configs.mycase?.enabled && configs.mycase.rules?.enabled) {
+            try {
+              await handleCallForMyCase({
+                tenantId: tenant.id, orgId, call, config: configs.mycase, supabase,
+              });
+            } catch (e) {
+              console.error(`MyCase error for tenant ${tenant.id}:`, e);
+            }
+          }
+        }
       }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Handle MyCase
-    if (configs.mycase?.enabled && configs.mycase.rules?.enabled) {
-      try {
-        results.mycase = await handleCallForMyCase({
-          tenantId, orgId, call, config: configs.mycase, supabase,
-        });
-      } catch (e) {
-        results.mycase = { error: e instanceof Error ? e.message : 'MyCase handler error' };
+    // ── Route A: Direct tenant CRM processing ──
+    if (context) {
+      const call = normalizeCallEvent(payload);
+      const results: any = { tenantId: context.tenantId, callId: call.id };
+
+      // Handle Clio
+      if (context.configs.clio?.enabled && context.configs.clio.rules?.enabled) {
+        try {
+          results.clio = await handleCallForClio({
+            tenantId: context.tenantId, orgId: context.orgId, call, config: context.configs.clio, supabase,
+          });
+        } catch (e) {
+          results.clio = { error: e instanceof Error ? e.message : 'Clio handler error' };
+        }
       }
+
+      // Handle MyCase
+      if (context.configs.mycase?.enabled && context.configs.mycase.rules?.enabled) {
+        try {
+          results.mycase = await handleCallForMyCase({
+            tenantId: context.tenantId, orgId: context.orgId, call, config: context.configs.mycase, supabase,
+          });
+        } catch (e) {
+          results.mycase = { error: e instanceof Error ? e.message : 'MyCase handler error' };
+        }
+      }
+
+      const elapsed = Date.now() - startTime;
+
+      // Log to api_logs
+      await supabase.from('api_logs').insert({
+        tenant_id: context.tenantId,
+        endpoint: 'five9-main',
+        method: 'POST',
+        status: (results.clio?.error || results.mycase?.error) ? 'error' : 'success',
+        request_payload: { callId: call.id, direction: call.direction, queue: call.queue },
+        response: results,
+        response_time_ms: elapsed,
+      });
+
+      return new Response(JSON.stringify({ success: true, ...results }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const elapsed = Date.now() - startTime;
-
-    // Log to api_logs
-    await supabase.from('api_logs').insert({
-      tenant_id: tenantId,
-      endpoint: 'five9-main',
-      method: 'POST',
-      status: (results.clio?.error || results.mycase?.error) ? 'error' : 'success',
-      request_payload: { callId: call.id, direction: call.direction, queue: call.queue },
-      response: results,
-      response_time_ms: elapsed,
-    });
-
-    return new Response(JSON.stringify({ success: true, ...results }), {
-      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify({ error: 'No routing context resolved' }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('five9-main error:', error);
