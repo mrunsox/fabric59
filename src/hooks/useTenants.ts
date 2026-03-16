@@ -52,6 +52,8 @@ export function useTenants() {
         asana_api_key: (row as Record<string, unknown>).asana_api_key as string | null ?? null,
         openai_api_key: (row as Record<string, unknown>).openai_api_key as string | null ?? null,
         power_automate_webhook_url: (row as Record<string, unknown>).power_automate_webhook_url as string | null ?? null,
+        billing_rate_per_minute: (row as Record<string, unknown>).billing_rate_per_minute as number | null ?? null,
+        five9_campaign_identifier: (row as Record<string, unknown>).five9_campaign_identifier as string | null ?? null,
         integration_configs: ((row as Record<string, unknown>).integration_configs as Record<string, string>) || {},
         notification_triggers: (row.notification_triggers as unknown as NotificationTriggers) || DEFAULT_NOTIFICATION_TRIGGERS,
         status: row.status as TenantStatus,
