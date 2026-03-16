@@ -500,13 +500,18 @@ serve(async (req) => {
         config.description = extractFirst(skillsXml, 'description');
       } catch { config.skills = []; }
 
-      // Get campaign dispositions
+      // Get campaign dispositions via profile (getCampaignDispositions doesn't exist in Five9 API)
       try {
-        const dispoBody = `<ser:getCampaignDispositions>
-  <campaignName>${escapeXml(campaignName)}</campaignName>
-</ser:getCampaignDispositions>`;
-        const dispoXml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getCampaignDispositions', dispoBody);
-        config.dispositions = extractValues(dispoXml, 'name');
+        const profileName = config.profileName as string;
+        if (profileName) {
+          const dispoBody = `<ser:getCampaignProfileDispositions>
+  <profileName>${escapeXml(profileName)}</profileName>
+</ser:getCampaignProfileDispositions>`;
+          const dispoXml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getCampaignProfileDispositions', dispoBody);
+          config.dispositions = extractValues(dispoXml, 'name');
+        } else {
+          config.dispositions = [];
+        }
       } catch { config.dispositions = []; }
 
       responseData = { success: true, config };
