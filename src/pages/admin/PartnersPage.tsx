@@ -62,9 +62,19 @@ export default function PartnersPage() {
   const handleCreate = async () => {
     if (!newName.trim()) return;
     const slug = newSlug.trim() || newName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    await createPartner.mutateAsync({ name: newName.trim(), slug, status: "active" });
+    await createPartner.mutateAsync({
+      name: newName.trim(),
+      slug,
+      status: "active",
+      brand_logo_url: newLogoUrl.trim() || undefined,
+      brand_primary_color: newPrimaryColor.trim() || undefined,
+      brand_from_email: newFromEmail.trim() || undefined,
+    });
     setNewName("");
     setNewSlug("");
+    setNewLogoUrl("");
+    setNewPrimaryColor("");
+    setNewFromEmail("");
     setIsCreateOpen(false);
   };
 
