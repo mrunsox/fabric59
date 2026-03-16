@@ -723,6 +723,17 @@ serve(async (req) => {
               console.error(`MyCase error for tenant ${tenant.id}:`, e);
             }
           }
+
+          // Generic CRM dispatch for non-legal CRMs
+          const hasLegalCrm = configs.clio?.enabled || configs.mycase?.enabled;
+          if (!hasLegalCrm && configs.crm?.api_url) {
+            dispatchToGenericCrm(supabase, tenant.id, 'log_call', {
+              callId: call.id, direction: call.direction, fromNumber: call.fromNumber,
+              toNumber: call.toNumber, agentName: call.agentName, queue: call.queue,
+              campaign: call.campaign, disposition: call.disposition,
+              durationSeconds: call.durationSeconds,
+            });
+          }
         }
       }
 
