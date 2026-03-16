@@ -43,6 +43,7 @@ import {
   Route,
   Target,
   FileText,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -83,6 +84,7 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Partners", href: "/admin/partners", icon: Handshake, permission: "tenants" },
       { name: "Dispositions", href: "/admin/dispositions", icon: ListPlus, permission: "domains" },
       { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone, permission: "domains" },
+      { name: "Blueprints", href: "/admin/campaign-blueprints", icon: Copy, permission: "domains" },
       { name: "Reports", href: "/admin/reports", icon: BarChart3, permission: "domains" },
       
       { name: "Billing & Invoices", href: "/admin/billing", icon: DollarSign, permission: "settings" },

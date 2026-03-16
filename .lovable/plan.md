@@ -1,66 +1,69 @@
 
 
-# Campaign Blueprint Bin
+# Consolidation Refactor — Status
 
-## What We're Building
+## Completed
 
-A "Campaign Blueprints" feature — a place to upload/paste agent scripts, agent guides, IVR trees, disposition lists, and department configurations from existing Five9 campaigns. This serves as a reference library that can later be used to clone or auto-populate new campaign setups.
+### Phase 3: Type Consolidation ✅
+- Refactored `database.ts` to add missing fields (`webhook_secret`, `billing_rate_per_minute`, `five9_campaign_identifier`)
+- Added doc header explaining it's a convenience layer over auto-gen types
+- Fixed `useDomains.ts` and `useTenants.ts` to map all fields
+- Installed `@tiptap/starter-kit` for RichTextEditor
 
-## Why
+### Phase 4: Fix Disposition Stub ✅
+- Rewired `useDispositions.ts` to query real `disposition_access` table
+- Maps rows to `Disposition` interface tree editor expects
+- Wired `useCreateDisposition` and `useDeleteDisposition` to real CRUD
 
-You have a complex 5-department campaign already built on Five9. You want to document how it's structured so we can reverse-engineer the pattern and replicate it for future campaigns.
+### Phase 5: Session Hook Docs ✅
+- Added clarifying doc headers to `useCallSessions` (telephony) and `useScriptSessions` (script execution)
+- Documented the linkage: `call_sessions.script_session_id → script_sessions.id`
 
-## Database
+### Phase 7: Wire resolveEffectiveConfig ✅
+- Added `resolveEffectiveConfig` as a named export alias in `config-merge.ts`
+- Canonical function for org → partner → tenant config inheritance
 
-New table: `campaign_blueprints`
+### Phase 1: Merge Five9 Webhooks ✅
+- Merged `five9-webhook` logic into `five9-main` as Route B (x-five9-domain header)
+- `five9-main` now supports two routing paths
+- Deleted `five9-webhook/index.ts`
+- Added `dispatchToGenericCrm` helper
 
-| Column | Type | Notes |
-|---|---|---|
-| id | uuid PK | |
-| organization_id | uuid FK → organizations | |
-| name | text | e.g. "Client X - 5 Dept Inbound" |
-| description | text | Overview of the campaign |
-| departments | jsonb | Array of department configs (name, IVR #, skills, decision trees) |
-| agent_scripts | jsonb | Array of { department, script_text } entries |
-| agent_guide | text | Full agent guide markdown/text |
-| dispositions | jsonb | Array of disposition names + types + email configs |
-| ivr_flow | jsonb | IVR routing description (greeting, menu options, after-hours) |
-| phone_numbers | jsonb | ANI/DNIS lists |
-| connectors | jsonb | Web connectors, backend docs, websites |
-| notes | text | Free-form notes |
-| tags | text[] | Searchable tags like "legal", "5-dept", "complex" |
-| created_by | uuid | |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
+### Phase 8: Dead Code Removal ✅
+- Deleted `five9-webhook/index.ts` (merged into five9-main)
 
-RLS: org-scoped read/write for authenticated users.
+### Phase 6: Tenant Column Consolidation ✅
+- Ran data migration to copy all 20+ flat API key columns into `integration_configs` JSONB
+- Added `IntegrationConfigsUnified` type with categorized structure (webhooks, twilio, scheduling, billing, documents, ai, crm)
+- Updated `useTenants.ts` mapper to read from `integration_configs` with flat column fallback
+- Updated `useCreateTenant` and `useUpdateTenant` to always write `integration_configs`
+- Updated `send-notification` edge function to read webhooks from `integration_configs`
+- Flat columns retained for backward compatibility (no DROP)
 
-## New Page: `/admin/campaign-blueprints`
+### Batch 2: Agent Runtime & Analytics ✅
+- Created 5 agent runtime components:
+  - `AgentCallNotesInput` — real-time call notes with save to `call_notes` table
+  - `PostCallSummary` — post-call summary card with disposition, duration, captured data
+  - `TaskQueuePanel` — filterable task queue with priority sorting and inline completion
+  - `CallbackRemindersPanel` — upcoming callbacks with countdown timers
+  - `AINodeSuggestions` — AI-powered next-action suggestions via `ai-suggestions` edge function
+- Created 4 analytics components:
+  - `LiveMonitoringPanel` — real-time agent presence grid (10s refresh)
+  - `CallSessionAnalytics` — call volume by hour + AHT trend charts
+  - `OutcomeAnalyticsDashboard` — disposition pie chart + detail table
+  - `PathAnalyticsDashboard` — script node frequency analysis
+- Created 2 new hooks:
+  - `useCallbackReminders` — queries callback-type tasks with due dates
+  - `useAgentPresence` — derives agent status from active script_sessions
+- Created `ai-suggestions` edge function
+- Wired into `AgentDashboardPage` with tabs: Overview, Tasks, Notes, Callbacks, AI Assist
+- Wired into `SupervisorPage` with tabs: Live Monitor, Analytics
 
-A dedicated page with:
+### Phase 2: CRM Push Consolidation ✅
+- Updated `crm-push` to read CRM config from `integration_configs.crm` JSONB with flat-column fallback
+- Removed duplicate Clio adapter from `crm-push` (Clio handled by `five9-main`)
+- Wired `five9-main` Route A and Route B to call `dispatchToGenericCrm` for non-legal CRM tenants
+- Added `GenericCrmConfig` type to `five9-main`'s `IntegrationConfigs` interface
+- Browser-tested Tree Editor, Agent Dashboard, and Supervisor pages — all render correctly
 
-1. **Blueprint List** — Cards showing saved blueprints with tags, department count, description
-2. **Create/Edit Blueprint** — Multi-section form:
-   - **Overview**: Name, description, tags
-   - **Departments**: Add departments with name, IVR prompt #, skill, and a large text area for the agent script per department
-   - **Agent Guide**: Single large text area for the full agent guide (paste-friendly)
-   - **Dispositions**: List dispositions with type and email routing
-   - **IVR Flow**: Greeting text, menu structure, after-hours handling
-   - **Phone Numbers**: ANI/DNIS entries
-   - **Notes**: Free-form
-3. **"Use as Template" button** — Pre-fills the Campaign Intake form from a blueprint
-
-## Files to Create/Modify
-
-- **New**: `src/pages/admin/CampaignBlueprintsPage.tsx` — List + create/edit UI
-- **New**: `src/hooks/useCampaignBlueprints.ts` — CRUD hooks
-- **Modify**: `src/App.tsx` — Add route `/admin/campaign-blueprints`
-- **Modify**: `src/components/layout/AdminLayout.tsx` — Add nav link
-- **Migration**: Create `campaign_blueprints` table with RLS
-
-## Flow
-
-```text
-Paste scripts/guides → Save Blueprint → Review → "Use as Template" → Campaign Intake pre-filled
-```
-
+## Status: All phases complete ✅

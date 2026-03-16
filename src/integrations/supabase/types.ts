@@ -664,6 +664,71 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_blueprints: {
+        Row: {
+          agent_guide: string | null
+          agent_scripts: Json | null
+          connectors: Json | null
+          created_at: string
+          created_by: string | null
+          departments: Json | null
+          description: string | null
+          dispositions: Json | null
+          id: string
+          ivr_flow: Json | null
+          name: string
+          notes: string | null
+          organization_id: string
+          phone_numbers: Json | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          agent_guide?: string | null
+          agent_scripts?: Json | null
+          connectors?: Json | null
+          created_at?: string
+          created_by?: string | null
+          departments?: Json | null
+          description?: string | null
+          dispositions?: Json | null
+          id?: string
+          ivr_flow?: Json | null
+          name: string
+          notes?: string | null
+          organization_id: string
+          phone_numbers?: Json | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          agent_guide?: string | null
+          agent_scripts?: Json | null
+          connectors?: Json | null
+          created_at?: string
+          created_by?: string | null
+          departments?: Json | null
+          description?: string | null
+          dispositions?: Json | null
+          id?: string
+          ivr_flow?: Json | null
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          phone_numbers?: Json | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_blueprints_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_scripts: {
         Row: {
           created_at: string
