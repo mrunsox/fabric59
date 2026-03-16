@@ -116,6 +116,13 @@
     --sidebar-accent-foreground: 210 40% 96%;
     --sidebar-border: 217 33% 12%;
     --sidebar-ring: 199 89% 48%;
+
+    /* Script builder node colors - dark mode */
+    --node-start: 280 75% 55%;
+    --node-question: 243 75% 59%;
+    --node-action: 187 92% 42%;
+    --node-condition: 38 100% 50%;
+    --node-end: 152 76% 44%;
   }
 }
 
