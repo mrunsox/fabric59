@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CallFlowSimulator } from "@/components/call-flow/CallFlowSimulator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, Bot, User, Sparkles, RotateCcw, ExternalLink, Map, RefreshCw } from "lucide-react";
+import { Send, Loader2, Bot, User, Sparkles, RotateCcw, ExternalLink, Map, RefreshCw, TreePine } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
