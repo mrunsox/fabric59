@@ -151,6 +151,15 @@ export default function CampaignBlueprintsPage() {
     URL.revokeObjectURL(url);
   };
 
+  // ── AI BUILDER MODE ──
+  if (aiBuilderMode) {
+    return (
+      <div className="space-y-6">
+        <AIBlueprintBuilder onClose={() => setAiBuilderMode(false)} />
+      </div>
+    );
+  }
+
   // ── LIST VIEW ──
   if (!editing) {
     return (
@@ -160,7 +169,12 @@ export default function CampaignBlueprintsPage() {
             <h1 className="text-2xl font-bold text-foreground">Campaign Blueprints</h1>
             <p className="text-muted-foreground">Reference library of campaign configurations from Five9</p>
           </div>
-          <Button onClick={startNew}><Plus className="mr-2 h-4 w-4" /> New Blueprint</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setAiBuilderMode(true)}>
+              <Sparkles className="mr-2 h-4 w-4" /> AI Build from Documents
+            </Button>
+            <Button onClick={startNew}><Plus className="mr-2 h-4 w-4" /> New Blueprint</Button>
+          </div>
         </div>
 
         {isLoading ? (
