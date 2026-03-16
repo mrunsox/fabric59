@@ -1,81 +1,69 @@
 
 
-# AI-Powered Campaign Builder from Documents
+# Consolidation Refactor — Status
 
-## What We're Building
+## Completed
 
-A new "AI Campaign Builder" workflow where you drop multiple documents (agent scripts, FAQ docs, department guides, etc.) and AI automatically parses them to generate a complete campaign setup — departments, skills, dispositions, IVR flow, connectors, decision trees, phone numbers, and everything needed to provision on Five9.
+### Phase 3: Type Consolidation ✅
+- Refactored `database.ts` to add missing fields (`webhook_secret`, `billing_rate_per_minute`, `five9_campaign_identifier`)
+- Added doc header explaining it's a convenience layer over auto-gen types
+- Fixed `useDomains.ts` and `useTenants.ts` to map all fields
+- Installed `@tiptap/starter-kit` for RichTextEditor
 
-## Flow
+### Phase 4: Fix Disposition Stub ✅
+- Rewired `useDispositions.ts` to query real `disposition_access` table
+- Maps rows to `Disposition` interface tree editor expects
+- Wired `useCreateDisposition` and `useDeleteDisposition` to real CRUD
 
-```text
-Drop 5+ documents → AI extracts & classifies each doc
-  → AI generates structured CampaignIntakeData JSON
-  → Review/edit in a structured preview
-  → "Create Campaign" → pre-fills Campaign Intake form
-```
+### Phase 5: Session Hook Docs ✅
+- Added clarifying doc headers to `useCallSessions` (telephony) and `useScriptSessions` (script execution)
+- Documented the linkage: `call_sessions.script_session_id → script_sessions.id`
 
-## Components
+### Phase 7: Wire resolveEffectiveConfig ✅
+- Added `resolveEffectiveConfig` as a named export alias in `config-merge.ts`
+- Canonical function for org → partner → tenant config inheritance
 
-### 1. New Edge Function: `ai-blueprint-builder`
+### Phase 1: Merge Five9 Webhooks ✅
+- Merged `five9-webhook` logic into `five9-main` as Route B (x-five9-domain header)
+- `five9-main` now supports two routing paths
+- Deleted `five9-webhook/index.ts`
+- Added `dispatchToGenericCrm` helper
 
-- Receives: array of `{ fileName, text }` (extracted text from uploaded docs)
-- Sends all extracted text to Lovable AI (Gemini) with a detailed system prompt that instructs it to:
-  - Identify departments, their IVR routing numbers, and agent scripts
-  - Extract dispositions and email routing rules
-  - Build decision trees per department
-  - Identify phone numbers (ANI/DNIS)
-  - Identify external connectors (websites, FAQ URLs, backend docs)
-  - Identify IVR greetings, whisper prompts, hold music references
-  - Output a complete `CampaignIntakeData` JSON via tool calling
-- Uses `LOVABLE_API_KEY` — already configured
-- Returns structured campaign data
+### Phase 8: Dead Code Removal ✅
+- Deleted `five9-webhook/index.ts` (merged into five9-main)
 
-### 2. New Component: `AIBlueprintBuilder.tsx`
+### Phase 6: Tenant Column Consolidation ✅
+- Ran data migration to copy all 20+ flat API key columns into `integration_configs` JSONB
+- Added `IntegrationConfigsUnified` type with categorized structure (webhooks, twilio, scheduling, billing, documents, ai, crm)
+- Updated `useTenants.ts` mapper to read from `integration_configs` with flat column fallback
+- Updated `useCreateTenant` and `useUpdateTenant` to always write `integration_configs`
+- Updated `send-notification` edge function to read webhooks from `integration_configs`
+- Flat columns retained for backward compatibility (no DROP)
 
-- Multi-file drag-and-drop zone (reuses `BlueprintFileUpload` pattern but accepts multiple files)
-- Progress indicator: "Uploading... → Extracting text... → AI analyzing... → Done"
-- After AI completes: shows a structured preview with expandable sections:
-  - Campaign basics (name, client, description)
-  - Departments (count, names, IVR numbers, scripts)
-  - Dispositions list
-  - IVR flow summary
-  - Phone numbers
-  - Connectors
-  - Decision trees per department
-- Each section is editable before finalizing
-- "Create Campaign Setup" button → navigates to Campaign Intake pre-filled
+### Batch 2: Agent Runtime & Analytics ✅
+- Created 5 agent runtime components:
+  - `AgentCallNotesInput` — real-time call notes with save to `call_notes` table
+  - `PostCallSummary` — post-call summary card with disposition, duration, captured data
+  - `TaskQueuePanel` — filterable task queue with priority sorting and inline completion
+  - `CallbackRemindersPanel` — upcoming callbacks with countdown timers
+  - `AINodeSuggestions` — AI-powered next-action suggestions via `ai-suggestions` edge function
+- Created 4 analytics components:
+  - `LiveMonitoringPanel` — real-time agent presence grid (10s refresh)
+  - `CallSessionAnalytics` — call volume by hour + AHT trend charts
+  - `OutcomeAnalyticsDashboard` — disposition pie chart + detail table
+  - `PathAnalyticsDashboard` — script node frequency analysis
+- Created 2 new hooks:
+  - `useCallbackReminders` — queries callback-type tasks with due dates
+  - `useAgentPresence` — derives agent status from active script_sessions
+- Created `ai-suggestions` edge function
+- Wired into `AgentDashboardPage` with tabs: Overview, Tasks, Notes, Callbacks, AI Assist
+- Wired into `SupervisorPage` with tabs: Live Monitor, Analytics
 
-### 3. Update `CampaignBlueprintsPage.tsx`
+### Phase 2: CRM Push Consolidation ✅
+- Updated `crm-push` to read CRM config from `integration_configs.crm` JSONB with flat-column fallback
+- Removed duplicate Clio adapter from `crm-push` (Clio handled by `five9-main`)
+- Wired `five9-main` Route A and Route B to call `dispatchToGenericCrm` for non-legal CRM tenants
+- Added `GenericCrmConfig` type to `five9-main`'s `IntegrationConfigs` interface
+- Browser-tested Tree Editor, Agent Dashboard, and Supervisor pages — all render correctly
 
-- Add an "AI Build from Documents" button at the top alongside "New Blueprint"
-- Opens the `AIBlueprintBuilder` component in a full-page editor view
-
-### 4. Update Routing
-
-- No new route needed — the AI builder lives within the Blueprints page as an alternate editing mode
-
-## Edge Function Design
-
-The edge function uses Lovable AI with tool calling to extract structured output matching the `CampaignIntakeData` schema. The system prompt will include:
-
-- The complete `CampaignIntakeData` type definition so AI knows the target shape
-- Instructions for multi-department detection (look for IVR menu numbers, department names)
-- Instructions for disposition extraction (look for disposition lists, email templates)
-- Instructions for decision tree construction from scripted Q&A flows
-
-## Files
-
-| File | Action |
-|------|--------|
-| `supabase/functions/ai-blueprint-builder/index.ts` | Create — AI extraction edge function |
-| `src/components/campaigns/AIBlueprintBuilder.tsx` | Create — multi-file upload + AI preview UI |
-| `src/pages/admin/CampaignBlueprintsPage.tsx` | Modify — add "AI Build" button and mode |
-
-## Technical Notes
-
-- Multi-file upload reuses existing `blueprint-documents` bucket and `parse-blueprint-doc` edge function for text extraction
-- AI structured output via tool calling ensures reliable JSON shape
-- Default model: `google/gemini-3-flash-preview` (fast, good at structured extraction)
-- The extracted `CampaignIntakeData` can be passed directly to the Campaign Intake page via React Router state
-
+## Status: All phases complete ✅
