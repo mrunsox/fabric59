@@ -44,7 +44,7 @@ export function useScript(id: string | undefined) {
 export function useCreateScript() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (values: { name: string; description?: string; organization_id: string; tenant_id?: string; definition?: Record<string, unknown> }) => {
+    mutationFn: async (values: { name: string; description?: string; organization_id: string; tenant_id?: string; definition?: Json }) => {
       const { data, error } = await supabase.from("scripts").insert(values).select().single();
       if (error) throw error;
       return data;
