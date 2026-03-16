@@ -39,6 +39,7 @@ import CampaignsPage from "@/pages/admin/CampaignsPage";
 import CampaignIntakePage from "@/pages/admin/CampaignIntakePage";
 import CampaignDetailPage from "@/pages/admin/CampaignDetailPage";
 import ArchivedCampaignsPage from "@/pages/admin/ArchivedCampaignsPage";
+import CampaignBlueprintsPage from "@/pages/admin/CampaignBlueprintsPage";
 import ReportsPage from "@/pages/admin/ReportsPage";
 import ClientOverviewPage from "@/pages/admin/ClientOverviewPage";
 import PartnersPage from "@/pages/admin/PartnersPage";
