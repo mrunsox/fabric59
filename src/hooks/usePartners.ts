@@ -54,6 +54,10 @@ export function useCreatePartner() {
           slug: data.slug,
           status: data.status || "active",
           integration_configs: data.integration_configs || {},
+          brand_logo_url: data.brand_logo_url || null,
+          brand_primary_color: data.brand_primary_color || null,
+          brand_from_email: data.brand_from_email || null,
+          portal_domain: data.portal_domain || null,
         }]);
 
       if (error) throw error;
