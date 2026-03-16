@@ -125,11 +125,13 @@ serve(async (req) => {
 
     } else if (action === 'deactivate') {
       const { username } = payload;
-      const soapBody = `<ser:setUserState>
-  <username>${escapeXml(username)}</username>
-  <active>false</active>
-</ser:setUserState>`;
-      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'setUserState', soapBody);
+      const soapBody = `<ser:modifyUser>
+  <userGeneralInfo>
+    <userName>${escapeXml(username)}</userName>
+    <active>false</active>
+  </userGeneralInfo>
+</ser:modifyUser>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'modifyUser', soapBody);
       responseData = { success: true };
 
     } else if (action === 'getExtensions') {
