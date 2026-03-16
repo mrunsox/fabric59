@@ -23,15 +23,16 @@ export interface CampaignBlueprint {
 }
 
 export function useCampaignBlueprints() {
-  const { organizationId } = useAuth();
+  const { organization } = useAuth();
+  const orgId = organization?.id;
   return useQuery({
-    queryKey: ["campaign-blueprints", organizationId],
-    enabled: !!organizationId,
+    queryKey: ["campaign-blueprints", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaign_blueprints" as any)
         .select("*")
-        .eq("organization_id", organizationId!)
+        .eq("organization_id", orgId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as CampaignBlueprint[];
