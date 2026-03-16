@@ -1,3 +1,13 @@
+/**
+ * useScriptSessions — Agent script-execution tracking.
+ *
+ * Queries the `script_sessions` table which stores what the agent did
+ * inside the script UI: variables collected, disposition set, post-call status.
+ *
+ * NOT the same as useCallSessions, which tracks the telephony-level call
+ * (ANI/DNIS, Five9 call ID, duration). The two are linked via
+ * `call_sessions.script_session_id → script_sessions.id`.
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";

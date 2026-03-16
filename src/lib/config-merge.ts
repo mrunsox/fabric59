@@ -34,6 +34,18 @@ function deepMergeTwo(
  * Merges integration configs from org → partner → client.
  * Client-level values take highest precedence.
  */
+export function resolveEffectiveConfig(
+  org: IntegrationConfigs | null | undefined,
+  partner: IntegrationConfigs | null | undefined,
+  client: IntegrationConfigs | null | undefined
+): IntegrationConfigs {
+  return mergeIntegrationConfigs(org, partner, client);
+}
+
+/**
+ * Merges integration configs from org → partner → client.
+ * Client-level values take highest precedence.
+ */
 export function mergeIntegrationConfigs(
   org: IntegrationConfigs | null | undefined,
   partner: IntegrationConfigs | null | undefined,

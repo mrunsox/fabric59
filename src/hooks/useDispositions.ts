@@ -1,8 +1,14 @@
-// Dispositions stub adapted for Fabric59's architecture
-// Fabric59 uses five9_dispositions / disposition_access tables instead of a user-scoped dispositions table
-import { useQuery } from '@tanstack/react-query';
+/**
+ * Dispositions hook — queries the disposition_access table,
+ * which is Fabric59's canonical source for disposition names.
+ *
+ * The tree editor expects a Disposition interface with richer fields;
+ * we map disposition_access rows to that shape with sensible defaults.
+ */
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export interface Disposition {
   id: string;
@@ -22,32 +28,88 @@ export interface Disposition {
 }
 
 export function useDispositions(_scriptId?: string) {
-  const { session } = useAuth();
+  const { organization } = useAuth();
 
   return useQuery({
-    queryKey: ['tree-dispositions', session?.user?.id],
+    queryKey: ['dispositions', organization?.id],
     queryFn: async (): Promise<Disposition[]> => {
-      // Return empty array — Fabric59 manages dispositions through disposition_access table
-      return [];
+      if (!organization?.id) return [];
+
+      const { data, error } = await supabase
+        .from('disposition_access')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .order('disposition_name', { ascending: true });
+
+      if (error) throw error;
+
+      return (data || []).map((row, idx) => ({
+        id: row.id,
+        name: row.disposition_name,
+        email_subject: null,
+        recipient_emails: [],
+        is_active: true,
+        sort_order: idx,
+        script_id: null,
+        email_template_id: null,
+        auto_send_email: false,
+        auto_send_sms: false,
+        sms_template: null,
+        callback_delay_minutes: null,
+        created_at: row.created_at,
+        updated_at: row.created_at,
+      }));
     },
-    enabled: !!session,
+    enabled: !!organization?.id,
   });
 }
 
 export function useCreateDisposition() {
+  const queryClient = useQueryClient();
+  const { organization, session } = useAuth();
+
   return {
-    mutateAsync: async (_data: any) => {
-      console.warn('useCreateDisposition stub: Fabric59 uses disposition_access table');
-      return null;
+    mutateAsync: async (data: { name: string }) => {
+      if (!organization?.id) throw new Error('No organization');
+
+      const { data: row, error } = await supabase
+        .from('disposition_access')
+        .insert({
+          organization_id: organization.id,
+          disposition_name: data.name,
+          created_by: session?.user?.id ?? null,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        toast.error('Failed to create disposition');
+        throw error;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['dispositions'] });
+      return row;
     },
     isPending: false,
   };
 }
 
 export function useDeleteDisposition() {
+  const queryClient = useQueryClient();
+
   return {
-    mutateAsync: async (_id: string) => {
-      console.warn('useDeleteDisposition stub');
+    mutateAsync: async (id: string) => {
+      const { error } = await supabase
+        .from('disposition_access')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        toast.error('Failed to delete disposition');
+        throw error;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['dispositions'] });
     },
     isPending: false,
   };
