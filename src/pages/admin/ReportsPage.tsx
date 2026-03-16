@@ -105,6 +105,7 @@ export default function ReportsPage() {
       <Tabs defaultValue="logs">
         <TabsList>
           <TabsTrigger value="logs">Call Logs</TabsTrigger>
+          <TabsTrigger value="report59" className="gap-1.5"><FileSpreadsheet className="h-3.5 w-3.5" /> Report59</TabsTrigger>
           <TabsTrigger value="scheduled">Scheduled Reports</TabsTrigger>
           {isMasterAdmin && <TabsTrigger value="gating">Disposition Gating</TabsTrigger>}
         </TabsList>
