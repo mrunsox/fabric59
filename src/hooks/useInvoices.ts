@@ -78,8 +78,7 @@ export function useInvoiceLineItems(invoiceId: string | null) {
 
 export function useCreateInvoice() {
   const qc = useQueryClient();
-  const { organization } = useOrganization();
-  const { user } = useAuth();
+  const { organization, user } = useAuth();
 
   return useMutation({
     mutationFn: async (input: {

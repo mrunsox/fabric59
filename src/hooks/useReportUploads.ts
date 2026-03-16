@@ -42,8 +42,7 @@ export function useReportUploads() {
 
 export function useCreateReportUpload() {
   const qc = useQueryClient();
-  const { organization } = useOrganization();
-  const { user } = useAuth();
+  const { organization, user } = useAuth();
 
   return useMutation({
     mutationFn: async (input: {
