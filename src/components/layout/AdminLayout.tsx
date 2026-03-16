@@ -40,6 +40,9 @@ import {
   BookOpen,
   GraduationCap,
   MessageSquare,
+  Route,
+  Target,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -89,10 +92,12 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
     label: "Agent Tools",
     items: [
       { name: "Scripts", href: "/admin/scripts", icon: FileJson, permission: "domains" },
+      { name: "Script Routing", href: "/admin/script-routing", icon: Route, permission: "domains" },
       { name: "Scripter", href: "/admin/scripter", icon: Terminal, permission: null },
       { name: "Agent Dashboard", href: "/admin/agent-dashboard", icon: AgentZap, permission: null },
       { name: "Supervisor", href: "/admin/supervisor", icon: Eye, permission: "domains" },
       { name: "QA & Analytics", href: "/admin/qa", icon: Search, permission: "domains" },
+      { name: "Goals & Coaching", href: "/admin/goals", icon: Target, permission: "domains" },
       { name: "Knowledge Base", href: "/admin/kb", icon: BookOpen, permission: null },
       { name: "Training", href: "/admin/training", icon: GraduationCap, permission: null },
     ],
@@ -104,6 +109,7 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Field Mappings", href: "/admin/mappings", icon: FileJson, permission: "mappings" },
       { name: "Call Flow Builder", href: "/admin/call-flow", icon: Workflow, permission: "call_flow" },
       { name: "Automations", href: "/admin/automations", icon: Zap, permission: "domains" },
+      { name: "Summary Templates", href: "/admin/summary-templates", icon: FileText, permission: "domains" },
       { name: "ANI Block List", href: "/admin/ani-blocklist", icon: Ban, permission: "domains" },
       { name: "Callback Queue", href: "/admin/callback-queue", icon: PhoneCall, permission: "domains" },
       { name: "Abandon Rate", href: "/admin/abandon-rate", icon: ShieldAlert, permission: "domains" },

@@ -5,78 +5,62 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import {
-  Eye, Users, Phone, Signal, AlertTriangle, Award, Gauge
+  Eye, Users, Phone, Signal, Award, Gauge, Route, Target
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useScriptSessions } from "@/hooks/useScriptSessions";
-
-type AgentState = "available" | "on-call" | "acw" | "break" | "offline";
-
-const stateColors: Record<AgentState, string> = {
-  available: "bg-success",
-  "on-call": "bg-primary",
-  acw: "bg-warning",
-  break: "bg-muted-foreground",
-  offline: "bg-destructive",
-};
-
-const stateBadgeVariant: Record<AgentState, "default" | "secondary" | "destructive" | "outline"> = {
-  available: "default",
-  "on-call": "default",
-  acw: "secondary",
-  break: "outline",
-  offline: "destructive",
-};
+import { useCampaignScripts } from "@/hooks/useCampaignScripts";
+import { usePerformanceGoals } from "@/hooks/usePerformanceGoals";
+import { useScripts } from "@/hooks/useScripts";
+import { useTenants } from "@/hooks/useTenants";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(var(--warning))"];
 const formatDuration = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
+type AgentRow = { id: string; first_name: string; last_name: string; role: string; status: string };
+
 export default function SupervisorPage() {
-  const [agents, setAgents] = useState<any[]>([]);
+  const [agents, setAgents] = useState<AgentRow[]>([]);
   const { data: sessions = [] } = useScriptSessions(100);
+  const { data: routes = [] } = useCampaignScripts();
+  const { data: goals = [] } = usePerformanceGoals("active");
+  const { data: scripts = [] } = useScripts();
+  const { data: tenants = [] } = useTenants();
 
   useEffect(() => {
     supabase.from("agents").select("*").eq("status", "active").then(({ data }) => {
-      if (data) setAgents(data);
+      if (data) setAgents(data as AgentRow[]);
     });
   }, []);
 
-  // Derive disposition stats from sessions
   const dispStats = useMemo(() => {
     const counts: Record<string, number> = {};
-    sessions.forEach(s => {
-      if (s.disposition) counts[s.disposition] = (counts[s.disposition] || 0) + 1;
-    });
+    sessions.forEach(s => { if (s.disposition) counts[s.disposition] = (counts[s.disposition] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [sessions]);
 
-  // Agents with session counts
   const agentStats = useMemo(() => {
     return agents.map(a => {
       const agentSessions = sessions.filter(s => s.agent_id === a.id);
       const today = new Date().toISOString().slice(0, 10);
       const todaySessions = agentSessions.filter(s => s.started_at.slice(0, 10) === today);
       const avgHandle = todaySessions.length > 0
-        ? Math.round(todaySessions.reduce((s, c) => s + (c.duration_seconds || 0), 0) / todaySessions.length)
-        : 0;
-      return {
-        ...a,
-        callsToday: todaySessions.length,
-        avgHandle,
-        state: "available" as AgentState, // Real-time state requires Five9 supervisor API
-      };
+        ? Math.round(todaySessions.reduce((s, c) => s + (c.duration_seconds || 0), 0) / todaySessions.length) : 0;
+      return { ...a, callsToday: todaySessions.length, avgHandle };
     });
   }, [agents, sessions]);
 
   const leaderboard = [...agentStats].filter(a => a.callsToday > 0).sort((a, b) => b.callsToday - a.callsToday);
+  const scriptName = (id: string) => scripts.find(s => s.id === id)?.name || "—";
+  const tenantName = (id: string) => tenants.find(t => t.id === id)?.name || "—";
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2"><Eye className="h-6 w-6" /> Supervisor Console</h1>
-          <p className="text-sm text-muted-foreground">Agent monitoring and session analytics</p>
+          <p className="text-sm text-muted-foreground">Agent monitoring, routing, and session analytics</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
@@ -108,19 +92,21 @@ export default function SupervisorPage() {
           <TabsTrigger value="agents">Agent Board</TabsTrigger>
           <TabsTrigger value="dispositions">Dispositions</TabsTrigger>
           <TabsTrigger value="rankings">Rankings</TabsTrigger>
+          <TabsTrigger value="routing">Scripts & Routing</TabsTrigger>
+          <TabsTrigger value="goals">Goals</TabsTrigger>
         </TabsList>
 
         <TabsContent value="agents" className="space-y-4">
           {agents.length === 0 ? (
             <Card><CardContent className="py-12 text-center text-muted-foreground">
               <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>No active agents found. Agent state requires Five9 supervisor API integration.</p>
+              <p>No active agents found.</p>
             </CardContent></Card>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {agentStats.map(agent => (
                 <Card key={agent.id} className="relative overflow-hidden">
-                  <div className={`absolute top-0 left-0 right-0 h-1 ${stateColors[agent.state]}`} />
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-success" />
                   <CardContent className="pt-5 pb-3">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-sm font-medium truncate">{agent.first_name} {agent.last_name}</h4>
@@ -201,6 +187,64 @@ export default function SupervisorPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="routing" className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Route className="h-4 w-4" /> Active Script Routing</CardTitle></CardHeader>
+            <CardContent>
+              {routes.length === 0 ? <p className="text-sm text-muted-foreground">No script routing configured. Go to Script Routing to add mappings.</p> : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Client</TableHead>
+                      <TableHead>DNIS</TableHead>
+                      <TableHead>Campaign</TableHead>
+                      <TableHead>Script</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {routes.filter(r => r.is_active).slice(0, 10).map(r => (
+                      <TableRow key={r.id}>
+                        <TableCell>{tenantName(r.tenant_id)}</TableCell>
+                        <TableCell className="font-mono text-sm">{r.dnis || "—"}</TableCell>
+                        <TableCell className="font-mono text-sm">{r.five9_campaign_id || "—"}</TableCell>
+                        <TableCell><Badge variant="secondary">{scriptName(r.script_id)}</Badge></TableCell>
+                        <TableCell><Badge variant="default">Active</Badge></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="goals" className="space-y-4">
+          {goals.length === 0 ? (
+            <Card><CardContent className="py-12 text-center text-muted-foreground">
+              <Target className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>No active goals. Go to Goals & Coaching to create targets.</p>
+            </CardContent></Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {goals.slice(0, 6).map(goal => (
+                <Card key={goal.id}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">{goal.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                      <span className="capitalize">{goal.metric}</span>
+                      <span className="font-mono">0 / {goal.target_value}</span>
+                    </div>
+                    <Progress value={0} className="h-2" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
