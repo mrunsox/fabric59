@@ -427,9 +427,9 @@ serve(async (req) => {
     } else if (action === 'createSkill') {
       const { skillName } = payload;
       const soapBody = `<ser:createSkill>
-  <skill>
+  <skillInfo>
     <name>${escapeXml(skillName)}</name>
-  </skill>
+  </skillInfo>
 </ser:createSkill>`;
       await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'createSkill', soapBody);
       responseData = { success: true };
