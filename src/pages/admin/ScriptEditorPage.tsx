@@ -119,14 +119,17 @@ export function ScriptEditorContent() {
                     <TableCell className="text-sm">{new Date(script.updated_at).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit details" onClick={() => {
                           setEditingId(script.id);
                           setForm({ name: script.name, description: script.description || "", status: script.status });
                           setOpen(true);
                         }}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/admin/scripter`)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Visual Builder" onClick={() => navigate(`/admin/scripts/${script.id}/builder`)}>
+                          <PenTool className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Preview" onClick={() => navigate(`/admin/scripter`)}>
                           <Play className="h-3.5 w-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteScript.mutate(script.id)}>

@@ -148,6 +148,7 @@ const App = () => (
                 <Route path="utilities" element={<PlatformUtilitiesPage />} />
                 <Route path="scripts" element={<ScriptEditorPage />} />
                 <Route path="scripts/:id" element={<ScriptEditorPage />} />
+                <Route path="scripts/:scriptId/builder" element={<ScriptBuilderPage />} />
                 <Route path="kb" element={<KnowledgeBasePage />} />
                 <Route path="training" element={<TrainingPage />} />
                 <Route path="feedback" element={<FeedbackPage />} />
