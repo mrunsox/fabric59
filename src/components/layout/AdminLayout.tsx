@@ -84,7 +84,7 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Dispositions", href: "/admin/dispositions", icon: ListPlus, permission: "domains" },
       { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone, permission: "domains" },
       { name: "Reports", href: "/admin/reports", icon: BarChart3, permission: "domains" },
-      { name: "Report59", href: "/admin/upload", icon: FileSpreadsheet, permission: "domains" },
+      
       { name: "Billing & Invoices", href: "/admin/billing", icon: DollarSign, permission: "settings" },
     ],
   },

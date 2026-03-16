@@ -130,7 +130,7 @@ const App = () => (
                 <Route path="campaigns/:id" element={<CampaignDetailPage />} />
                 <Route path="campaigns/archived" element={<ArchivedCampaignsPage />} />
                 <Route path="reports" element={<ReportsPage />} />
-                <Route path="upload" element={<Report59UploadPage />} />
+                
                 <Route path="scripter" element={<ScripterPage />} />
                 <Route path="agent-dashboard" element={<AgentDashboardPage />} />
                 <Route path="supervisor" element={<SupervisorPage />} />

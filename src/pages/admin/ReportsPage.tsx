@@ -13,7 +13,8 @@ import { useScheduledReports, useUpdateScheduledReportStatus } from "@/hooks/use
 import { usePartners } from "@/hooks/usePartners";
 import { useTenants } from "@/hooks/useTenants";
 import { useAuth } from "@/contexts/AuthContext";
-import { BarChart3, Download, Clock, Shield, Pause, Play, Trash2 } from "lucide-react";
+import { BarChart3, Download, Clock, Shield, Pause, Play, Trash2, FileSpreadsheet } from "lucide-react";
+import { Report59Content } from "@/pages/admin/Report59UploadPage";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -104,6 +105,7 @@ export default function ReportsPage() {
       <Tabs defaultValue="logs">
         <TabsList>
           <TabsTrigger value="logs">Call Logs</TabsTrigger>
+          <TabsTrigger value="report59" className="gap-1.5"><FileSpreadsheet className="h-3.5 w-3.5" /> Report59</TabsTrigger>
           <TabsTrigger value="scheduled">Scheduled Reports</TabsTrigger>
           {isMasterAdmin && <TabsTrigger value="gating">Disposition Gating</TabsTrigger>}
         </TabsList>
@@ -238,6 +240,10 @@ export default function ReportsPage() {
               </TableBody>
             </Table>
           </div>
+        </TabsContent>
+
+        <TabsContent value="report59">
+          <Report59Content />
         </TabsContent>
 
         {isMasterAdmin && (
