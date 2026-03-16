@@ -60,6 +60,9 @@ import ScriptEditorPage from "@/pages/admin/ScriptEditorPage";
 import KnowledgeBasePage from "@/pages/admin/KnowledgeBasePage";
 import TrainingPage from "@/pages/admin/TrainingPage";
 import FeedbackPage from "@/pages/admin/FeedbackPage";
+import ScriptRoutingPage from "@/pages/admin/ScriptRoutingPage";
+import GoalsPage from "@/pages/admin/GoalsPage";
+import CallSummaryTemplatesPage from "@/pages/admin/CallSummaryTemplatesPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
