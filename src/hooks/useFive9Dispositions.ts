@@ -35,6 +35,7 @@ interface DispositionInput {
   name: string;
   type: string;
   description: string;
+  agentMustCompleteWorksheet?: boolean;
 }
 
 export type AssignTarget = "both" | "campaigns" | "profiles";

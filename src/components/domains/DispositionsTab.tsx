@@ -64,6 +64,7 @@ export function DispositionsTab({ domainId, canManage }: DispositionsTabProps) {
   const [groupAssignments, setGroupAssignments] = useState<Record<string, string>>({});
   const [manualGroups, setManualGroups] = useState<string[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
+  const [worksheetFlags, setWorksheetFlags] = useState<Record<string, boolean>>({});
 
   const campaignsQuery = useFive9Campaigns(domainId);
   const profilesQuery = useFive9CampaignProfiles(domainId);
@@ -127,6 +128,7 @@ export function DispositionsTab({ domainId, canManage }: DispositionsTabProps) {
           name: d.name,
           type: d.type,
           description: d.description,
+          agentMustCompleteWorksheet: worksheetFlags[d.name] || false,
         })),
         campaigns: selectedCampaigns,
         campaignProfiles: selectedProfiles,
@@ -189,6 +191,7 @@ export function DispositionsTab({ domainId, canManage }: DispositionsTabProps) {
                       <th className="text-left px-3 py-2 font-medium">Name</th>
                       <th className="text-left px-3 py-2 font-medium">Type</th>
                       <th className="text-left px-3 py-2 font-medium">Description</th>
+                      <th className="text-left px-3 py-2 font-medium">Worksheet</th>
                       <th className="text-left px-3 py-2 font-medium">Assign To</th>
                       <th className="text-left px-3 py-2 font-medium">Group</th>
                       <th className="text-left px-3 py-2 font-medium w-8"></th>
@@ -205,6 +208,18 @@ export function DispositionsTab({ domainId, canManage }: DispositionsTabProps) {
                             <code className="text-xs bg-muted px-1 rounded">{d.type}</code>
                           </td>
                           <td className="px-3 py-1.5 text-muted-foreground">{d.description || "—"}</td>
+                          <td className="px-3 py-1.5">
+                            {d.valid && (
+                              <Checkbox
+                                checked={worksheetFlags[d.name] || false}
+                                onCheckedChange={(checked) =>
+                                  setWorksheetFlags(prev => ({ ...prev, [d.name]: !!checked }))
+                                }
+                                disabled={!canManage}
+                                title="Require worksheet/ScriptFlow completion before dispositioning"
+                              />
+                            )}
+                          </td>
                           <td className="px-3 py-1.5">
                             {d.valid && (
                               <Select

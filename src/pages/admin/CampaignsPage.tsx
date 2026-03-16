@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCampaignSetups } from "@/hooks/useCampaignSetup";
-import { Plus, Megaphone, Archive } from "lucide-react";
+import { Plus, Megaphone, Archive, Play, Square, Loader2 } from "lucide-react";
 import { DEFAULT_CHECKLIST } from "@/types/campaign";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -17,11 +20,29 @@ const statusColors: Record<string, string> = {
 
 export default function CampaignsPage() {
   const { data: campaigns = [], isLoading } = useCampaignSetups();
+  const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
 
   const getProgress = (checklist: Record<string, { done: boolean }>) => {
     const total = DEFAULT_CHECKLIST.length;
     const done = Object.values(checklist).filter((v) => v.done).length;
     return `${done}/${total}`;
+  };
+
+  const handleCampaignAction = async (campaignName: string, action: 'startCampaign' | 'stopCampaign' | 'forceStopCampaign', e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActionLoading(prev => ({ ...prev, [campaignName]: action }));
+    try {
+      const { data, error } = await supabase.functions.invoke('five9-provisioning', {
+        body: { action, campaignName },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Action failed');
+      toast.success(`${action === 'startCampaign' ? 'Started' : 'Stopped'} campaign: ${campaignName}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Campaign action failed');
+    } finally {
+      setActionLoading(prev => { const n = { ...prev }; delete n[campaignName]; return n; });
+    }
   };
 
   return (
@@ -63,21 +84,50 @@ export default function CampaignsPage() {
                 <TableHead>Progress</TableHead>
                 <TableHead>Go-Live</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {campaigns.map((c) => (
-                <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => window.location.href = `/admin/campaigns/${c.id}`}>
-                  <TableCell className="font-medium">{c.campaign_name}</TableCell>
-                  <TableCell>{c.client_name}</TableCell>
-                  <TableCell>
-                    <Badge className={statusColors[c.status] || ""} variant="secondary">{c.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-sm">{getProgress(c.checklist_state as any || {})}</TableCell>
-                  <TableCell className="text-sm">{c.target_go_live ? format(new Date(c.target_go_live), "MMM d, yyyy") : "—"}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{format(new Date(c.created_at), "MMM d, yyyy")}</TableCell>
-                </TableRow>
-              ))}
+              {campaigns.map((c) => {
+                const name = c.campaign_name;
+                const loading = actionLoading[name];
+                return (
+                  <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => window.location.href = `/admin/campaigns/${c.id}`}>
+                    <TableCell className="font-medium">{name}</TableCell>
+                    <TableCell>{c.client_name}</TableCell>
+                    <TableCell>
+                      <Badge className={statusColors[c.status] || ""} variant="secondary">{c.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">{getProgress(c.checklist_state as any || {})}</TableCell>
+                    <TableCell className="text-sm">{c.target_go_live ? format(new Date(c.target_go_live), "MMM d, yyyy") : "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{format(new Date(c.created_at), "MMM d, yyyy")}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Start Campaign"
+                          disabled={!!loading}
+                          onClick={(e) => handleCampaignAction(name, 'startCampaign', e)}
+                        >
+                          {loading === 'startCampaign' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 text-success" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          title="Stop Campaign"
+                          disabled={!!loading}
+                          onClick={(e) => handleCampaignAction(name, 'stopCampaign', e)}
+                        >
+                          {loading === 'stopCampaign' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4 text-destructive" />}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

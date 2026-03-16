@@ -300,7 +300,7 @@ serve(async (req) => {
       responseData = { success: true, profiles };
 
     } else if (action === 'createDispositions') {
-      const { dispositions } = payload as { dispositions: Array<{ name: string; type?: string; description?: string }> };
+      const { dispositions } = payload as { dispositions: Array<{ name: string; type?: string; description?: string; agentMustCompleteWorksheet?: boolean }> };
       const results: Array<{ name: string; success: boolean; error?: string }> = [];
 
       for (const dispo of dispositions) {
@@ -311,6 +311,7 @@ serve(async (req) => {
     <description>${escapeXml(dispo.description || '')}</description>
     <type>${escapeXml(dispo.type || 'FinalApplyToCampaigns')}</type>
     <agentMustConfirm>false</agentMustConfirm>
+    <agentMustCompleteWorksheet>${dispo.agentMustCompleteWorksheet ? 'true' : 'false'}</agentMustCompleteWorksheet>
     <resetAttemptsCounter>false</resetAttemptsCounter>
   </disposition>
 </ser:createDisposition>`;
@@ -618,6 +619,192 @@ serve(async (req) => {
         await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'addRecordToList', soapBody);
         responseData = { success: true };
       }
+
+    // ==================== Web Connector Management ====================
+    } else if (action === 'createWebConnector') {
+      const { connectorName, url, trigger, variables, constants, addWorksheet, triggerDispositions } = payload as {
+        connectorName: string;
+        url: string;
+        trigger?: string;
+        variables?: Array<{ key: string; value: string }>;
+        constants?: Array<{ key: string; value: string }>;
+        addWorksheet?: boolean;
+        triggerDispositions?: string[];
+      };
+      const varsXml = (variables || []).map(v =>
+        `<variables><key>${escapeXml(v.key)}</key><value>${escapeXml(v.value)}</value></variables>`
+      ).join('\n    ');
+      const constsXml = (constants || []).map(c =>
+        `<constants><key>${escapeXml(c.key)}</key><value>${escapeXml(c.value)}</value></constants>`
+      ).join('\n    ');
+      const triggerDispoXml = (triggerDispositions || []).map(d =>
+        `<triggerDispositions><name>${escapeXml(d)}</name></triggerDispositions>`
+      ).join('\n    ');
+      const soapBody = `<ser:createWebConnector>
+  <connector>
+    <name>${escapeXml(connectorName)}</name>
+    <url>${escapeXml(url)}</url>
+    <trigger>${escapeXml(trigger || 'OnCallDispositioned')}</trigger>
+    <postMethod>true</postMethod>
+    <executeInBrowser>false</executeInBrowser>
+    <addWorksheet>${addWorksheet !== false ? 'true' : 'false'}</addWorksheet>
+    ${varsXml}
+    ${constsXml}
+    ${triggerDispoXml}
+  </connector>
+</ser:createWebConnector>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'createWebConnector', soapBody);
+      responseData = { success: true };
+
+    } else if (action === 'getWebConnectors') {
+      const soapBody = `<ser:getWebConnectors/>`;
+      const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getWebConnectors', soapBody);
+      const connectorBlocks = xml.match(/<return>(.*?)<\/return>/gs) || [];
+      const connectors = connectorBlocks.map(block => ({
+        name: extractFirst(block, 'name'),
+        url: extractFirst(block, 'url'),
+        trigger: extractFirst(block, 'trigger'),
+        postMethod: extractFirst(block, 'postMethod') === 'true',
+        executeInBrowser: extractFirst(block, 'executeInBrowser') === 'true',
+        addWorksheet: extractFirst(block, 'addWorksheet') === 'true',
+      }));
+      responseData = { success: true, connectors };
+
+    } else if (action === 'modifyWebConnector') {
+      const { connectorName, url, trigger, variables, constants, addWorksheet } = payload as {
+        connectorName: string;
+        url?: string;
+        trigger?: string;
+        variables?: Array<{ key: string; value: string }>;
+        constants?: Array<{ key: string; value: string }>;
+        addWorksheet?: boolean;
+      };
+      const parts: string[] = [`<name>${escapeXml(connectorName)}</name>`];
+      if (url) parts.push(`<url>${escapeXml(url)}</url>`);
+      if (trigger) parts.push(`<trigger>${escapeXml(trigger)}</trigger>`);
+      if (addWorksheet !== undefined) parts.push(`<addWorksheet>${addWorksheet}</addWorksheet>`);
+      if (variables) {
+        variables.forEach(v => parts.push(`<variables><key>${escapeXml(v.key)}</key><value>${escapeXml(v.value)}</value></variables>`));
+      }
+      if (constants) {
+        constants.forEach(c => parts.push(`<constants><key>${escapeXml(c.key)}</key><value>${escapeXml(c.value)}</value></constants>`));
+      }
+      const soapBody = `<ser:modifyWebConnector>
+  <connector>
+    ${parts.join('\n    ')}
+  </connector>
+</ser:modifyWebConnector>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'modifyWebConnector', soapBody);
+      responseData = { success: true };
+
+    } else if (action === 'deleteWebConnector') {
+      const { connectorName } = payload;
+      const soapBody = `<ser:deleteWebConnector>
+  <name>${escapeXml(connectorName)}</name>
+</ser:deleteWebConnector>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'deleteWebConnector', soapBody);
+      responseData = { success: true };
+
+    // ==================== Campaign Lifecycle ====================
+    } else if (action === 'startCampaign') {
+      const { campaignName } = payload;
+      const soapBody = `<ser:startCampaign>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+</ser:startCampaign>`;
+      try {
+        await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'startCampaign', soapBody);
+        responseData = { success: true };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (msg.toLowerCase().includes('already running')) {
+          responseData = { success: true, note: 'Campaign is already running' };
+        } else { throw err; }
+      }
+
+    } else if (action === 'forceStopCampaign') {
+      const { campaignName } = payload;
+      const soapBody = `<ser:forceStopCampaign>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+</ser:forceStopCampaign>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'forceStopCampaign', soapBody);
+      responseData = { success: true };
+
+    } else if (action === 'getCampaignState') {
+      const { campaignName } = payload;
+      const soapBody = `<ser:getInboundCampaign>
+  <campaignName>${escapeXml(campaignName)}</campaignName>
+</ser:getInboundCampaign>`;
+      const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getInboundCampaign', soapBody);
+      responseData = { success: true, state: extractFirst(xml, 'state') };
+
+    // ==================== User Management ====================
+    } else if (action === 'modifyUser') {
+      const { username, updates } = payload as {
+        username: string;
+        updates: { firstName?: string; lastName?: string; email?: string; extension?: string; active?: boolean; userProfileName?: string };
+      };
+      const fields: string[] = [`<userName>${escapeXml(username)}</userName>`];
+      if (updates.firstName) fields.push(`<firstName>${escapeXml(updates.firstName)}</firstName>`);
+      if (updates.lastName) fields.push(`<lastName>${escapeXml(updates.lastName)}</lastName>`);
+      if (updates.email) fields.push(`<EMail>${escapeXml(updates.email)}</EMail>`);
+      if (updates.extension) fields.push(`<extension>${escapeXml(updates.extension)}</extension>`);
+      if (updates.active !== undefined) fields.push(`<active>${updates.active}</active>`);
+      if (updates.userProfileName) fields.push(`<userProfileName>${escapeXml(updates.userProfileName)}</userProfileName>`);
+      const soapBody = `<ser:modifyUser>
+  <userGeneralInfo>
+    ${fields.join('\n    ')}
+  </userGeneralInfo>
+</ser:modifyUser>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'modifyUser', soapBody);
+      responseData = { success: true };
+
+    } else if (action === 'deleteUser') {
+      const { username } = payload;
+      const soapBody = `<ser:deleteUser>
+  <userName>${escapeXml(username)}</userName>
+</ser:deleteUser>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'deleteUser', soapBody);
+      responseData = { success: true };
+
+    // ==================== Disposition Management ====================
+    } else if (action === 'modifyDisposition') {
+      const { dispositionName, updates } = payload as {
+        dispositionName: string;
+        updates: { agentMustCompleteWorksheet?: boolean; sendEmailNotification?: boolean; resetAttemptsCounter?: boolean; trackAsFirstCallResolution?: boolean; description?: string };
+      };
+      const fields: string[] = [`<name>${escapeXml(dispositionName)}</name>`];
+      if (updates.description !== undefined) fields.push(`<description>${escapeXml(updates.description)}</description>`);
+      if (updates.agentMustCompleteWorksheet !== undefined) fields.push(`<agentMustCompleteWorksheet>${updates.agentMustCompleteWorksheet}</agentMustCompleteWorksheet>`);
+      if (updates.sendEmailNotification !== undefined) fields.push(`<sendEmailNotification>${updates.sendEmailNotification}</sendEmailNotification>`);
+      if (updates.resetAttemptsCounter !== undefined) fields.push(`<resetAttemptsCounter>${updates.resetAttemptsCounter}</resetAttemptsCounter>`);
+      if (updates.trackAsFirstCallResolution !== undefined) fields.push(`<trackAsFirstCallResolution>${updates.trackAsFirstCallResolution}</trackAsFirstCallResolution>`);
+      const soapBody = `<ser:modifyDisposition>
+  <disposition>
+    ${fields.join('\n    ')}
+  </disposition>
+</ser:modifyDisposition>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'modifyDisposition', soapBody);
+      responseData = { success: true };
+
+    // ==================== List & DNIS Discovery ====================
+    } else if (action === 'getListsInfo') {
+      const soapBody = `<ser:getListsInfo/>`;
+      const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getListsInfo', soapBody);
+      const listBlocks = xml.match(/<return>(.*?)<\/return>/gs) || [];
+      const lists = listBlocks.map(block => ({
+        name: extractFirst(block, 'name'),
+        size: parseInt(extractFirst(block, 'size') || '0', 10),
+      }));
+      responseData = { success: true, lists };
+
+    } else if (action === 'getDNISList') {
+      const { selectUnassigned } = payload as { selectUnassigned?: boolean };
+      const soapBody = selectUnassigned
+        ? `<ser:getDNISList><selectUnassigned>true</selectUnassigned></ser:getDNISList>`
+        : `<ser:getDNISList/>`;
+      const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getDNISList', soapBody);
+      const dnisList = extractValues(xml, 'number');
+      responseData = { success: true, dnisList };
 
     } else {
       responseData = { success: false, error: `Unknown action: ${action}` };
