@@ -101,7 +101,7 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "ANI Block List", href: "/admin/ani-blocklist", icon: Ban, permission: "domains" },
       { name: "Callback Queue", href: "/admin/callback-queue", icon: PhoneCall, permission: "domains" },
       { name: "Abandon Rate", href: "/admin/abandon-rate", icon: ShieldAlert, permission: "domains" },
-      { name: "Billing", href: "/admin/billing", icon: DollarSign, permission: "settings" },
+      
     ],
   },
   {
