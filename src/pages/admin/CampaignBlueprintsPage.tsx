@@ -30,6 +30,7 @@ const emptyBlueprint: Omit<CampaignBlueprint, "id" | "organization_id" | "create
 };
 
 export default function CampaignBlueprintsPage() {
+  const [aiBuilderMode, setAiBuilderMode] = useState(false);
   const { data: blueprints = [], isLoading } = useCampaignBlueprints();
   const createMut = useCreateBlueprint();
   const updateMut = useUpdateBlueprint();
