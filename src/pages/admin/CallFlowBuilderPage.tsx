@@ -250,6 +250,10 @@ export default function CallFlowBuilderPage() {
             <Sparkles className="h-4 w-4" />
             AI Builder
           </TabsTrigger>
+          <TabsTrigger value="tree-editor" className="gap-2" onClick={() => navigate('/admin/tree-editor/new')}>
+            <TreePine className="h-4 w-4" />
+            Tree Editor
+          </TabsTrigger>
           <TabsTrigger value="simulator" className="gap-2">
             <Bot className="h-4 w-4" />
             Interactive Demo
