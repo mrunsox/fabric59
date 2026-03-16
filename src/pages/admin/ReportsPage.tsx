@@ -10,6 +10,8 @@ import { DispositionGatingConfig } from "@/components/reports/DispositionGatingC
 import { useCallLogs, exportCallLogs, type CallLogRecord } from "@/hooks/useCallLogs";
 import { useDispositionAccessList } from "@/hooks/useDispositionAccess";
 import { useScheduledReports, useUpdateScheduledReportStatus } from "@/hooks/useScheduledReports";
+import { usePartners } from "@/hooks/usePartners";
+import { useTenants } from "@/hooks/useTenants";
 import { useAuth } from "@/contexts/AuthContext";
 import { BarChart3, Download, Clock, Shield, Pause, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
