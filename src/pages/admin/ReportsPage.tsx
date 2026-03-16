@@ -29,6 +29,8 @@ export default function ReportsPage() {
   const [agentFilter, setAgentFilter] = useState("");
   const [dispositionFilter, setDispositionFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [partnerFilter, setPartnerFilter] = useState("all");
+  const [clientFilter, setClientFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [fetchEnabled, setFetchEnabled] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
