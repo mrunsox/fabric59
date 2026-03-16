@@ -91,8 +91,8 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Agent Tools",
     items: [
+      { name: "ScriptFlow", href: "/admin/scriptflow", icon: Workflow, permission: "domains" },
       { name: "Scripts", href: "/admin/scripts", icon: FileJson, permission: "domains" },
-      { name: "Script Routing", href: "/admin/script-routing", icon: Route, permission: "domains" },
       { name: "Scripter", href: "/admin/scripter", icon: Terminal, permission: null },
       { name: "Agent Dashboard", href: "/admin/agent-dashboard", icon: AgentZap, permission: null },
       { name: "Supervisor", href: "/admin/supervisor", icon: Eye, permission: "domains" },
