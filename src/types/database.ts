@@ -1,6 +1,13 @@
-// Database types for the Five9 Integration Fabric
+/**
+ * Convenience type aliases for database entities.
+ *
+ * These are hand-written for ergonomic use in the UI layer.
+ * The canonical auto-generated types live in src/integrations/supabase/types.ts.
+ * Supabase queries return auto-gen types; these aliases cast JSON fields to
+ * Record<string, unknown> for easier manipulation in components.
+ */
 
-// Existing enums
+// ─── Enum aliases ────────────────────────────────────────────────────────────
 export type CrmType = 'clio' | 'workiz' | 'salesforce' | 'hubspot' | 'zendesk' | 'generic_rest' | 'other';
 export type AppRole = 'master_admin' | 'admin' | 'ops_team' | 'viewer';
 export type TenantStatus = 'active' | 'inactive' | 'pending';
@@ -10,12 +17,13 @@ export type NotificationChannel = 'slack' | 'email' | 'sms';
 export type NotificationStatus = 'sent' | 'failed' | 'pending';
 export type NotificationTrigger = 'intake_created' | 'call_ended' | 'contact_updated';
 
-// New SaaS architecture enums
 export type OrgRole = 'owner' | 'admin' | 'member';
 export type OrgStatus = 'active' | 'suspended' | 'cancelled';
 export type OrgPlan = 'free' | 'starter' | 'pro' | 'enterprise';
 export type Five9DomainStatus = 'active' | 'inactive' | 'pending_verification';
 export type PartnerStatus = 'active' | 'suspended';
+
+// ─── Interfaces ──────────────────────────────────────────────────────────────
 
 export interface NotificationTriggers {
   intake_created: boolean;
@@ -23,7 +31,6 @@ export interface NotificationTriggers {
   contact_updated: boolean;
 }
 
-// SaaS entity interfaces
 export interface Organization {
   id: string;
   name: string;
@@ -32,13 +39,11 @@ export interface Organization {
   status: OrgStatus;
   created_at: string;
   updated_at: string;
-  // White-label branding fields
   brand_name: string | null;
   brand_logo_url: string | null;
   brand_primary_color: string | null;
   brand_from_email: string | null;
   brand_reply_to: string | null;
-  // Org-level integration defaults
   integration_configs: Record<string, unknown>;
 }
 
@@ -75,6 +80,7 @@ export interface Five9Domain {
   five9_password_encrypted: string | null;
   api_connection_status: 'pending' | 'connected' | 'failed' | null;
   last_connection_test: string | null;
+  webhook_secret: string | null;
   workflow_settings: WorkflowSettings;
   status: Five9DomainStatus;
   created_at: string;
@@ -131,6 +137,8 @@ export interface Tenant {
   asana_api_key: string | null;
   openai_api_key: string | null;
   power_automate_webhook_url: string | null;
+  billing_rate_per_minute: number | null;
+  five9_campaign_identifier: string | null;
   integration_configs: Record<string, string>;
   notification_triggers: NotificationTriggers;
   status: TenantStatus;
@@ -150,15 +158,6 @@ export interface Notification {
   created_at: string;
 }
 
-export interface UnifiedSchema {
-  id: string;
-  tenant_id: string;
-  entity: EntityType;
-  fields: Record<string, string>;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface ApiLog {
   id: string;
   tenant_id: string | null;
@@ -168,13 +167,6 @@ export interface ApiLog {
   response: Record<string, unknown> | null;
   status: ApiLogStatus;
   response_time_ms: number | null;
-  created_at: string;
-}
-
-export interface UserRole {
-  id: string;
-  user_id: string;
-  role: AppRole;
   created_at: string;
 }
 
@@ -189,7 +181,15 @@ export interface ApiKey {
   expires_at: string | null;
 }
 
-// Form types
+export interface UserRole {
+  id: string;
+  user_id: string;
+  role: AppRole;
+  created_at: string;
+}
+
+// ─── Form types ──────────────────────────────────────────────────────────────
+
 export interface OrganizationFormData {
   name: string;
   billing_email: string;
@@ -250,7 +250,6 @@ export interface TenantFormData {
   status: TenantStatus;
 }
 
-// Unified intake payload
 export interface UnifiedIntakePayload {
   contact: {
     name: string;

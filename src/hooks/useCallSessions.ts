@@ -1,3 +1,13 @@
+/**
+ * useCallSessions — Telephony-level call tracking.
+ *
+ * Queries the `call_sessions` table which stores Five9 phone-call metadata:
+ * ANI, DNIS, Five9 call ID, agent, duration, etc.
+ *
+ * NOT the same as useScriptSessions, which tracks what the agent did
+ * inside the script UI during a call. The two are linked via
+ * `call_sessions.script_session_id → script_sessions.id`.
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
