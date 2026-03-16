@@ -554,3 +554,5 @@ export function Report59Content() {
     </div>
   );
 }
+
+export default Report59Content;
