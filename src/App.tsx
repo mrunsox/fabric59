@@ -57,6 +57,7 @@ import DataPlanePage from "@/pages/admin/DataPlanePage";
 import IdentityResolutionPage from "@/pages/admin/IdentityResolutionPage";
 import PlatformUtilitiesPage from "@/pages/admin/PlatformUtilitiesPage";
 import ScriptEditorPage from "@/pages/admin/ScriptEditorPage";
+import ScriptBuilderPage from "@/pages/admin/ScriptBuilderPage";
 import KnowledgeBasePage from "@/pages/admin/KnowledgeBasePage";
 import TrainingPage from "@/pages/admin/TrainingPage";
 import FeedbackPage from "@/pages/admin/FeedbackPage";
