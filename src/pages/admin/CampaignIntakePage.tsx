@@ -85,6 +85,7 @@ const emptyIntake: CampaignIntakeData = {
 export default function CampaignIntakePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { organization } = useAuth();
   const { data: existing } = useCampaignSetup(id);
   const { data: prompts = [], isLoading: promptsLoading } = useFive9Prompts();
