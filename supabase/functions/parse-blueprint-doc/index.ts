@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     } else if (ext === "docx") {
       extractedText = await extractDocxText(fileData);
     } else if (ext === "pdf") {
-      extractedText = extractPdfText(await fileData.arrayBuffer());
+      extractedText = await extractPdfWithAI(fileData);
     } else {
       extractedText = await fileData.text();
     }
@@ -59,6 +59,88 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+/* ── PDF extraction via Lovable AI (multimodal) ──────────────────── */
+
+async function extractPdfWithAI(blob: Blob): Promise<string> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) {
+    return "[PDF extraction unavailable: LOVABLE_API_KEY not configured]";
+  }
+
+  // Convert PDF blob to base64 for multimodal input
+  const arrayBuffer = await blob.arrayBuffer();
+  const base64 = btoa(
+    new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+  );
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a document text extractor. Extract ALL text content from the provided PDF document. " +
+            "Preserve the structure: headings, bullet points, numbered lists, tables (as markdown tables), and paragraphs. " +
+            "Do NOT summarize or interpret — output the raw text content exactly as it appears. " +
+            "If there are multiple pages, separate them with a blank line.",
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "file",
+              file: {
+                filename: "document.pdf",
+                file_data: `data:application/pdf;base64,${base64}`,
+              },
+            },
+            {
+              type: "text",
+              text: "Extract all text content from this PDF document. Return only the extracted text, no commentary.",
+            },
+          ],
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("AI PDF extraction failed:", response.status, errText);
+    // Fall back to basic regex extraction
+    return extractPdfTextBasic(await blob.arrayBuffer());
+  }
+
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content || "";
+  return text.trim() || "[No text content extracted from PDF]";
+}
+
+/* ── Basic PDF extraction (fallback) ─────────────────────────────── */
+
+function extractPdfTextBasic(buf: ArrayBuffer): string {
+  const raw = new TextDecoder("latin1").decode(new Uint8Array(buf));
+  const parts: string[] = [];
+  let m;
+  const tj = /\(([^)]*)\)\s*Tj/g;
+  while ((m = tj.exec(raw)) !== null) parts.push(m[1]);
+  const tja = /\[([^\]]*)\]\s*TJ/g;
+  while ((m = tja.exec(raw)) !== null) {
+    const inner = m[1];
+    const sr = /\(([^)]*)\)/g;
+    let s;
+    while ((s = sr.exec(inner)) !== null) parts.push(s[1]);
+  }
+  if (!parts.length) return "[Could not extract text from PDF. The file may be image-based or encrypted.]";
+  return parts.join(" ").replace(/\\n/g, "\n").trim();
+}
 
 /* ── DOCX extraction ─────────────────────────────────────────────── */
 
@@ -124,23 +206,4 @@ function findZipEntries(data: Uint8Array): ZipEntry[] {
     offset = dataStart + compSize;
   }
   return entries;
-}
-
-/* ── PDF extraction (basic) ──────────────────────────────────────── */
-
-function extractPdfText(buf: ArrayBuffer): string {
-  const raw = new TextDecoder("latin1").decode(new Uint8Array(buf));
-  const parts: string[] = [];
-  let m;
-  const tj = /\(([^)]*)\)\s*Tj/g;
-  while ((m = tj.exec(raw)) !== null) parts.push(m[1]);
-  const tja = /\[([^\]]*)\]\s*TJ/g;
-  while ((m = tja.exec(raw)) !== null) {
-    const inner = m[1];
-    const sr = /\(([^)]*)\)/g;
-    let s;
-    while ((s = sr.exec(inner)) !== null) parts.push(s[1]);
-  }
-  if (!parts.length) return "[Could not extract text from PDF. The file may be image-based or encrypted.]";
-  return parts.join(" ").replace(/\\n/g, "\n").trim();
 }

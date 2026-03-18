@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,6 +85,7 @@ const emptyIntake: CampaignIntakeData = {
 export default function CampaignIntakePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { organization } = useAuth();
   const { data: existing } = useCampaignSetup(id);
   const { data: prompts = [], isLoading: promptsLoading } = useFive9Prompts();
@@ -94,7 +95,10 @@ export default function CampaignIntakePage() {
   const uploadMutation = useUploadVmGreeting();
   const provisionMutation = useAutoProvision();
 
-  const [intake, setIntake] = useState<CampaignIntakeData>(emptyIntake);
+  const prefill = (location.state as any)?.prefill as Partial<CampaignIntakeData> | undefined;
+  const [intake, setIntake] = useState<CampaignIntakeData>(() => 
+    prefill ? { ...emptyIntake, ...prefill } : emptyIntake
+  );
   const [selectedDomainId, setSelectedDomainId] = useState<string>("");
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({
     1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 10: true,

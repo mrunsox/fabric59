@@ -162,7 +162,7 @@ export function AIBlueprintBuilder({ onClose }: AIBlueprintBuilderProps) {
 
   const createCampaign = () => {
     if (!campaignData) return;
-    navigate("/admin/campaign-intake", { state: { prefill: campaignData } });
+    navigate("/admin/campaigns/new", { state: { prefill: campaignData } });
   };
 
   const updateField = (field: string, value: any) => {

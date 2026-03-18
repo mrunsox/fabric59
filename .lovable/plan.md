@@ -1,32 +1,69 @@
 
 
-# Fix AI Campaign Builder — Two Critical Issues
+# Consolidation Refactor — Status
 
-There are two problems causing the AI builder to fail:
+## Completed
 
-## Issue 1: Wrong Route (404)
+### Phase 3: Type Consolidation ✅
+- Refactored `database.ts` to add missing fields (`webhook_secret`, `billing_rate_per_minute`, `five9_campaign_identifier`)
+- Added doc header explaining it's a convenience layer over auto-gen types
+- Fixed `useDomains.ts` and `useTenants.ts` to map all fields
+- Installed `@tiptap/starter-kit` for RichTextEditor
 
-The "Create Campaign Setup" button navigates to `/admin/campaign-intake`, but the actual route is `/admin/campaigns/new`. This is the 404 error in the console logs.
+### Phase 4: Fix Disposition Stub ✅
+- Rewired `useDispositions.ts` to query real `disposition_access` table
+- Maps rows to `Disposition` interface tree editor expects
+- Wired `useCreateDisposition` and `useDeleteDisposition` to real CRUD
 
-**Fix**: Update `AIBlueprintBuilder.tsx` line 165 to navigate to `/admin/campaigns/new`.
+### Phase 5: Session Hook Docs ✅
+- Added clarifying doc headers to `useCallSessions` (telephony) and `useScriptSessions` (script execution)
+- Documented the linkage: `call_sessions.script_session_id → script_sessions.id`
 
-## Issue 2: No Prefill Support in Campaign Intake Page
+### Phase 7: Wire resolveEffectiveConfig ✅
+- Added `resolveEffectiveConfig` as a named export alias in `config-merge.ts`
+- Canonical function for org → partner → tenant config inheritance
 
-`CampaignIntakePage` never reads `location.state.prefill`, so even if the route was correct, the AI-generated data would be lost.
+### Phase 1: Merge Five9 Webhooks ✅
+- Merged `five9-webhook` logic into `five9-main` as Route B (x-five9-domain header)
+- `five9-main` now supports two routing paths
+- Deleted `five9-webhook/index.ts`
+- Added `dispatchToGenericCrm` helper
 
-**Fix**: Add `useLocation()` to `CampaignIntakePage` and merge `location.state?.prefill` into the initial intake state so the form is pre-populated.
+### Phase 8: Dead Code Removal ✅
+- Deleted `five9-webhook/index.ts` (merged into five9-main)
 
-## Issue 3: Weak PDF Text Extraction
+### Phase 6: Tenant Column Consolidation ✅
+- Ran data migration to copy all 20+ flat API key columns into `integration_configs` JSONB
+- Added `IntegrationConfigsUnified` type with categorized structure (webhooks, twilio, scheduling, billing, documents, ai, crm)
+- Updated `useTenants.ts` mapper to read from `integration_configs` with flat column fallback
+- Updated `useCreateTenant` and `useUpdateTenant` to always write `integration_configs`
+- Updated `send-notification` edge function to read webhooks from `integration_configs`
+- Flat columns retained for backward compatibility (no DROP)
 
-The `parse-blueprint-doc` edge function uses a naive regex parser for PDFs (`Tj`/`TJ` operator matching), which fails on most modern PDFs (compressed streams, CIDFont text, etc.). This means uploaded PDFs likely extract as `[Could not extract text from PDF...]`, giving the AI nothing to work with.
+### Batch 2: Agent Runtime & Analytics ✅
+- Created 5 agent runtime components:
+  - `AgentCallNotesInput` — real-time call notes with save to `call_notes` table
+  - `PostCallSummary` — post-call summary card with disposition, duration, captured data
+  - `TaskQueuePanel` — filterable task queue with priority sorting and inline completion
+  - `CallbackRemindersPanel` — upcoming callbacks with countdown timers
+  - `AINodeSuggestions` — AI-powered next-action suggestions via `ai-suggestions` edge function
+- Created 4 analytics components:
+  - `LiveMonitoringPanel` — real-time agent presence grid (10s refresh)
+  - `CallSessionAnalytics` — call volume by hour + AHT trend charts
+  - `OutcomeAnalyticsDashboard` — disposition pie chart + detail table
+  - `PathAnalyticsDashboard` — script node frequency analysis
+- Created 2 new hooks:
+  - `useCallbackReminders` — queries callback-type tasks with due dates
+  - `useAgentPresence` — derives agent status from active script_sessions
+- Created `ai-suggestions` edge function
+- Wired into `AgentDashboardPage` with tabs: Overview, Tasks, Notes, Callbacks, AI Assist
+- Wired into `SupervisorPage` with tabs: Live Monitor, Analytics
 
-**Fix**: Replace the basic regex parser with Lovable AI vision — upload the PDF pages as images and use Gemini to extract text. Alternatively, use a proper PDF parsing library. The simplest reliable approach is to send PDF content to the AI gateway for OCR-based extraction using multimodal capabilities.
+### Phase 2: CRM Push Consolidation ✅
+- Updated `crm-push` to read CRM config from `integration_configs.crm` JSONB with flat-column fallback
+- Removed duplicate Clio adapter from `crm-push` (Clio handled by `five9-main`)
+- Wired `five9-main` Route A and Route B to call `dispatchToGenericCrm` for non-legal CRM tenants
+- Added `GenericCrmConfig` type to `five9-main`'s `IntegrationConfigs` interface
+- Browser-tested Tree Editor, Agent Dashboard, and Supervisor pages — all render correctly
 
-## Files to Change
-
-| File | Change |
-|------|--------|
-| `src/components/campaigns/AIBlueprintBuilder.tsx` | Fix navigation path to `/admin/campaigns/new` |
-| `src/pages/admin/CampaignIntakePage.tsx` | Add `useLocation()` and merge `prefill` state into intake |
-| `supabase/functions/parse-blueprint-doc/index.ts` | Improve PDF extraction using a more robust approach |
-
+## Status: All phases complete ✅
