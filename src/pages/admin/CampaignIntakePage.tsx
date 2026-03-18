@@ -95,7 +95,10 @@ export default function CampaignIntakePage() {
   const uploadMutation = useUploadVmGreeting();
   const provisionMutation = useAutoProvision();
 
-  const [intake, setIntake] = useState<CampaignIntakeData>(emptyIntake);
+  const prefill = (location.state as any)?.prefill as Partial<CampaignIntakeData> | undefined;
+  const [intake, setIntake] = useState<CampaignIntakeData>(() => 
+    prefill ? { ...emptyIntake, ...prefill } : emptyIntake
+  );
   const [selectedDomainId, setSelectedDomainId] = useState<string>("");
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({
     1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 10: true,
