@@ -36,7 +36,7 @@ export function useCreateLegalConnection() {
     mutationFn: async (payload: Record<string, unknown>) => {
       const { error } = await supabase
         .from("legal_connect_connections")
-        .insert([{ ...payload, organization_id: orgId }]);
+        .insert([{ ...payload, organization_id: orgId } as any]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -144,7 +144,7 @@ export function useCreateLegalCampaign() {
     mutationFn: async (payload: Record<string, unknown>) => {
       const { error } = await supabase
         .from("legal_connect_campaigns")
-        .insert([{ ...payload, organization_id: orgId }]);
+        .insert([{ ...payload, organization_id: orgId } as any]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -218,7 +218,7 @@ export function useCreateLegalDispositionMapping() {
     mutationFn: async (payload: Record<string, unknown>) => {
       const { error } = await supabase
         .from("legal_connect_disposition_mappings")
-        .insert([{ ...payload, organization_id: orgId }]);
+        .insert([{ ...payload, organization_id: orgId } as any]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -275,7 +275,7 @@ export function useCreateLegalPolicyProfile() {
     mutationFn: async (payload: Record<string, unknown>) => {
       const { error } = await supabase
         .from("legal_connect_policy_profiles")
-        .insert([{ ...payload, organization_id: orgId }]);
+        .insert([{ ...payload, organization_id: orgId } as any]);
       if (error) throw error;
     },
     onSuccess: () => {
