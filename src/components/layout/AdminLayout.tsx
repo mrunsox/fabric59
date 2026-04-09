@@ -44,6 +44,7 @@ import {
   Target,
   FileText,
   Copy,
+  Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -88,6 +89,7 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Reports", href: "/admin/reports", icon: BarChart3, permission: "domains" },
       
       { name: "Billing & Invoices", href: "/admin/billing", icon: DollarSign, permission: "settings" },
+      { name: "Legal Connect", href: "/admin/legal-connect", icon: Scale, permission: "integrations" },
     ],
   },
   {
