@@ -208,7 +208,50 @@
 
   /* Card hover effect */
   .card-hover {
-    @apply transition-all duration-200 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5;
+    @apply transition-all duration-200 hover:border-border/80 hover:shadow-md hover:shadow-black/5;
+  }
+
+  /* Premium elevated card */
+  .card-elevated {
+    @apply rounded-xl border border-border bg-card shadow-sm;
+    border-top: 2px solid hsl(var(--primary) / 0.4);
+  }
+
+  /* Glass morphism card */
+  .card-glass {
+    @apply bg-card/60 backdrop-blur-xl border border-border/40 rounded-xl;
+    box-shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.04), inset 0 1px 0 0 hsl(0 0% 100% / 0.03);
+  }
+
+  /* Hero metric card */
+  .metric-hero {
+    @apply rounded-xl border border-border bg-card p-6 relative overflow-hidden;
+    border-top: 3px solid hsl(var(--primary) / 0.6);
+    box-shadow: 0 4px 24px -4px hsl(var(--primary) / 0.08);
+  }
+
+  /* Surface raised */
+  .surface-raised {
+    @apply rounded-xl border border-border bg-card;
+    box-shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.04), 0 2px 8px -2px hsl(0 0% 0% / 0.06);
+  }
+
+  /* Header gradient accent */
+  .header-gradient {
+    border-top: 2px solid transparent;
+    border-image: linear-gradient(90deg, hsl(var(--primary) / 0.5), hsl(var(--accent) / 0.3), transparent) 1;
+  }
+
+  /* Premium skeleton */
+  .skeleton-premium {
+    @apply rounded-lg bg-muted/60;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.5; }
   }
 
   /* Data table row */

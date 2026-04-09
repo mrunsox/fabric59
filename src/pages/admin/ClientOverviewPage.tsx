@@ -5,7 +5,8 @@ import { useApiLogs, useApiLogStats } from "@/hooks/useApiLogs";
 import { useClientIntegrationConfigs } from "@/hooks/useClientIntegrationConfigs";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useCampaignScripts } from "@/hooks/useCampaignScripts";
-import { StatCard } from "@/components/ui/stat-card";
+import { PremiumStatCard } from "@/components/ui/premium-stat-card";
+import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -150,21 +151,21 @@ export default function ClientOverviewPage() {
 
       {/* Stats Row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
+        <PremiumStatCard
           title="API Calls (24h)"
           value={stats?.total || 0}
           subtitle={`${stats?.successRate || 100}% success rate`}
           icon={Activity}
           variant="default"
         />
-        <StatCard
+        <PremiumStatCard
           title="Errors (24h)"
           value={stats?.errors || 0}
           subtitle="Requires attention"
           icon={AlertCircle}
           variant={stats?.errors ? "destructive" : "default"}
         />
-        <StatCard
+        <PremiumStatCard
           title="CRM Connection"
           value={
             (configs?.clio?.enabled ? "Clio" : "") ||
@@ -179,7 +180,7 @@ export default function ClientOverviewPage() {
           icon={Link2}
           variant={configs?.clio?.oauthTokenId || configs?.mycase?.apiKeyId ? "success" : "warning"}
         />
-        <StatCard
+        <PremiumStatCard
           title="Script Mappings"
           value={clientScripts.length}
           subtitle="DNIS/campaign routes"

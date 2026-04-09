@@ -1,18 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Users, Building2, Globe, Plug, UserPlus, Plus } from "lucide-react";
+import { Users, Building2, Globe, Plug, UserPlus, Plus, Activity, AlertTriangle, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { StatCard } from "@/components/ui/stat-card";
+import { PremiumStatCard } from "@/components/ui/premium-stat-card";
+import { PageHeader } from "@/components/ui/page-header";
+import { PremiumTable } from "@/components/ui/premium-table";
+import { HealthIndicator } from "@/components/ui/health-indicator";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
@@ -46,7 +41,7 @@ interface RecentTenant {
 }
 
 export default function UserDashboardPage() {
-  const { hasPermission, orgRole, isMasterAdmin } = useAuth();
+  const { hasPermission, orgRole, isMasterAdmin, organization } = useAuth();
 
   const showAgents = hasPermission("agents");
   const showClients = hasPermission("tenants");
@@ -117,15 +112,12 @@ export default function UserDashboardPage() {
       });
     }
 
-    // Realtime subscriptions
     const channels: ReturnType<typeof supabase.channel>[] = [];
 
     if (showAgents) {
       const agentChannel = supabase
         .channel('dashboard-agents')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, () => {
-          fetchAgentData();
-        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, () => fetchAgentData())
         .subscribe();
       channels.push(agentChannel);
     }
@@ -133,19 +125,15 @@ export default function UserDashboardPage() {
     if (showClients) {
       const tenantChannel = supabase
         .channel('dashboard-tenants')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'tenants' }, () => {
-          fetchTenantData();
-        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tenants' }, () => fetchTenantData())
         .subscribe();
       channels.push(tenantChannel);
     }
 
-    return () => {
-      channels.forEach((ch) => supabase.removeChannel(ch));
-    };
+    return () => { channels.forEach((ch) => supabase.removeChannel(ch)); };
   }, [showAgents, showClients, showDomains, showIntegrations, isFullAdmin]);
 
-  const statusColor = (status: string) => {
+  const statusVariant = (status: string) => {
     switch (status) {
       case "active": return "default";
       case "pending": return "secondary";
@@ -154,136 +142,126 @@ export default function UserDashboardPage() {
     }
   };
 
+  const agentColumns = [
+    {
+      key: "name",
+      header: "Name",
+      render: (a: RecentAgent) => (
+        <div className="flex items-center gap-3">
+          <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold text-primary">
+            {a.first_name[0]}{a.last_name[0]}
+          </div>
+          <span className="font-medium text-foreground">{a.first_name} {a.last_name}</span>
+        </div>
+      ),
+    },
+    { key: "email", header: "Email", render: (a: RecentAgent) => <span className="text-muted-foreground text-sm">{a.email}</span> },
+    { key: "status", header: "Status", render: (a: RecentAgent) => <Badge variant={statusVariant(a.status)}>{a.status}</Badge> },
+    { key: "added", header: "Added", render: (a: RecentAgent) => <span className="text-muted-foreground text-sm">{format(new Date(a.created_at), "MMM d, yyyy")}</span> },
+  ];
+
+  const tenantColumns = [
+    { key: "name", header: "Name", render: (t: RecentTenant) => <span className="font-medium text-foreground">{t.name}</span> },
+    { key: "crm", header: "CRM", render: (t: RecentTenant) => <span className="text-muted-foreground capitalize text-sm">{t.crm_type}</span> },
+    { key: "status", header: "Status", render: (t: RecentTenant) => <Badge variant={statusVariant(t.status)}>{t.status}</Badge> },
+    { key: "added", header: "Added", render: (t: RecentTenant) => <span className="text-muted-foreground text-sm">{format(new Date(t.created_at), "MMM d, yyyy")}</span> },
+  ];
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">My Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          Your personalized overview based on your access level.
-        </p>
-      </div>
+      <PageHeader
+        title={organization?.name || "My Dashboard"}
+        subtitle="Your personalized command center — monitor agents, clients, and platform health."
+        icon={<div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Shield className="h-5 w-5 text-primary" /></div>}
+      >
+        <HealthIndicator status="healthy" />
+      </PageHeader>
 
-      {/* Agent Stats */}
+      {/* Hero + Secondary Metrics */}
+      {(showAgents || showClients) && (
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          {showAgents && (
+            <PremiumStatCard
+              title="Integration Health"
+              value={`${agentStats.active + tenantStats.active}`}
+              subtitle="Active agents & clients combined"
+              icon={Activity}
+              tier="hero"
+              variant="primary"
+            />
+          )}
+          {showAgents && (
+            <PremiumStatCard title="Active Agents" value={agentStats.active} subtitle={`${agentStats.pending} pending`} icon={Users} variant="success" />
+          )}
+          {showClients && (
+            <PremiumStatCard title="Active Clients" value={tenantStats.active} subtitle={`${tenantStats.total} total`} icon={Building2} variant="primary" />
+          )}
+        </div>
+      )}
+
+      {/* Platform overview for admins */}
+      {isFullAdmin && (showDomains || showIntegrations) && (
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          {showDomains && (
+            <PremiumStatCard title="Five9 Domains" value={domainCount} icon={Globe} tier="compact" variant="default" />
+          )}
+          {showIntegrations && (
+            <PremiumStatCard title="Active Integrations" value={integrationCount} icon={Plug} tier="compact" variant="default" />
+          )}
+          {showAgents && agentStats.pending > 0 && (
+            <PremiumStatCard title="Needs Attention" value={agentStats.pending} subtitle="Agents pending setup" icon={AlertTriangle} tier="compact" variant="warning" />
+          )}
+        </div>
+      )}
+
+      {/* Recent Agents */}
       {showAgents && (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Agents</h2>
-            <Button asChild size="sm">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Recent Agents</h2>
+            <Button asChild size="sm" variant="outline">
               <Link to="/admin/agents">
-                <UserPlus className="h-4 w-4 mr-1.5" />
+                <UserPlus className="h-3.5 w-3.5 mr-1.5" />
                 Manage Agents
               </Link>
             </Button>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Total Agents" value={agentStats.total} icon={Users} variant="primary" />
-            <StatCard title="Active" value={agentStats.active} icon={Users} variant="success" />
-            <StatCard title="Pending" value={agentStats.pending} icon={Users} variant="warning" />
-            <StatCard title="Deprovisioned" value={agentStats.deprovisioned} icon={Users} variant="destructive" />
-          </div>
-
-          {recentAgents.length > 0 && (
-            <div className="rounded-lg border border-border bg-card">
-              <div className="p-4 border-b border-border">
-                <h3 className="text-sm font-medium text-foreground">Recent Agents</h3>
-              </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Added</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentAgents.map((agent) => (
-                    <TableRow key={agent.id}>
-                      <TableCell className="font-medium">{agent.first_name} {agent.last_name}</TableCell>
-                      <TableCell className="text-muted-foreground">{agent.email}</TableCell>
-                      <TableCell>
-                        <Badge variant={statusColor(agent.status)}>{agent.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(agent.created_at), "MMM d, yyyy")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <PremiumTable
+            columns={agentColumns}
+            data={recentAgents}
+            keyExtractor={(a) => a.id}
+            emptyIcon={Users}
+            emptyTitle="No agents yet"
+            emptyDescription="Onboard your first agent to get started."
+          />
         </section>
       )}
 
-      {/* Client Stats */}
+      {/* Recent Clients */}
       {showClients && (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Clients</h2>
-            <Button asChild size="sm">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Recent Clients</h2>
+            <Button asChild size="sm" variant="outline">
               <Link to="/admin">
-                <Plus className="h-4 w-4 mr-1.5" />
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
                 Manage Clients
               </Link>
             </Button>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Total Clients" value={tenantStats.total} icon={Building2} variant="primary" />
-            <StatCard title="Active" value={tenantStats.active} icon={Building2} variant="success" />
-          </div>
-
-          {recentTenants.length > 0 && (
-            <div className="rounded-lg border border-border bg-card">
-              <div className="p-4 border-b border-border">
-                <h3 className="text-sm font-medium text-foreground">Recent Clients</h3>
-              </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>CRM</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Added</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentTenants.map((tenant) => (
-                    <TableRow key={tenant.id}>
-                      <TableCell className="font-medium">{tenant.name}</TableCell>
-                      <TableCell className="text-muted-foreground capitalize">{tenant.crm_type}</TableCell>
-                      <TableCell>
-                        <Badge variant={statusColor(tenant.status)}>{tenant.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(tenant.created_at), "MMM d, yyyy")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Admin-only summary cards */}
-      {isFullAdmin && (showDomains || showIntegrations) && (
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Platform Overview</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {showDomains && (
-              <StatCard title="Five9 Domains" value={domainCount} icon={Globe} variant="default" />
-            )}
-            {showIntegrations && (
-              <StatCard title="Active Integrations" value={integrationCount} icon={Plug} variant="default" />
-            )}
-          </div>
+          <PremiumTable
+            columns={tenantColumns}
+            data={recentTenants}
+            keyExtractor={(t) => t.id}
+            emptyIcon={Building2}
+            emptyTitle="No clients yet"
+            emptyDescription="Add your first client to begin integrating."
+          />
         </section>
       )}
 
       {!showAgents && !showClients && (
-        <div className="rounded-lg border border-border bg-card p-12 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-6 py-16 text-center">
           <p className="text-muted-foreground">
             No modules are assigned to your account yet. Contact your admin to get access.
           </p>

@@ -2,67 +2,24 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Building2,
-  FileJson,
-  Activity,
-  TestTube2,
-  Settings,
-  Menu,
-  X,
-  LogOut,
-  ChevronRight,
-  ChevronDown,
-  Bell,
-  Globe,
-  Map,
-  FlaskConical,
-  Users,
-  Handshake,
-  Plug,
-  ListPlus,
-  Workflow,
-  Megaphone,
-  LayoutDashboard,
-  BarChart3,
-  FileSpreadsheet,
-  Terminal,
-  Zap as AgentZap,
-  Eye,
-  Search,
-  DollarSign,
-  Zap,
-  Ban,
-  PhoneCall,
-  ShieldAlert,
-  Database,
-  Link2,
-  Wrench,
-  BookOpen,
-  GraduationCap,
-  MessageSquare,
-  Route,
-  Target,
-  FileText,
-  Copy,
-  Scale,
+  Building2, FileJson, Activity, TestTube2, Settings, Menu, X, LogOut,
+  ChevronRight, ChevronDown, Bell, Globe, Map, FlaskConical, Users,
+  Handshake, Plug, ListPlus, Workflow, Megaphone, LayoutDashboard,
+  BarChart3, Terminal, Zap as AgentZap, Eye, Search, DollarSign, Zap,
+  Ban, PhoneCall, ShieldAlert, Database, Link2, Wrench, BookOpen,
+  GraduationCap, MessageSquare, Target, Copy, Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { DashboardSwitcher } from "@/components/layout/DashboardSwitcher";
 import { AdminTour } from "@/components/onboarding/AdminTour";
+import { HealthIndicator } from "@/components/ui/health-indicator";
 
 type NavItem = {
   name: string;
@@ -87,7 +44,6 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone, permission: "domains" },
       { name: "Blueprints", href: "/admin/campaign-blueprints", icon: Copy, permission: "domains" },
       { name: "Reports", href: "/admin/reports", icon: BarChart3, permission: "domains" },
-      
       { name: "Billing & Invoices", href: "/admin/billing", icon: DollarSign, permission: "settings" },
       { name: "Legal Connect", href: "/admin/legal-connect", icon: Scale, permission: "integrations" },
     ],
@@ -116,7 +72,6 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "ANI Block List", href: "/admin/ani-blocklist", icon: Ban, permission: "domains" },
       { name: "Callback Queue", href: "/admin/callback-queue", icon: PhoneCall, permission: "domains" },
       { name: "Abandon Rate", href: "/admin/abandon-rate", icon: ShieldAlert, permission: "domains" },
-      
     ],
   },
   {
@@ -159,7 +114,6 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const { organization, organizations, switchOrganization, signOut, user, devMode, toggleDevMode, isMasterAdmin, hasPermission } = useAuth();
 
-  // Persistent collapse state
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -184,7 +138,6 @@ export function AdminLayout() {
 
   const canView = (item: NavItem) => item.permission === null || hasPermission(item.permission);
 
-  // For breadcrumb
   const allItems = [...topNav, ...navigationGroups.flatMap((g) => g.items), ...bottomNav];
   const filteredAll = allItems.filter(canView);
   const currentPage = filteredAll.find((item) => isItemActive(item.href, location.pathname));
@@ -196,26 +149,29 @@ export function AdminLayout() {
         key={item.name}
         to={item.href}
         className={cn(
-          "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
+          "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 relative",
           isActive
-            ? "bg-sidebar-primary text-sidebar-primary-foreground"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            ? "bg-sidebar-accent/60 text-sidebar-foreground"
+            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
         )}
       >
+        {/* Left accent bar for active */}
+        {isActive && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
+        )}
         <item.icon
           className={cn(
-            "h-4 w-4 flex-shrink-0",
-            isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground"
+            "h-4 w-4 flex-shrink-0 transition-colors",
+            isActive ? "text-primary" : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70"
           )}
         />
-        {item.name}
-        {isActive && <ChevronRight className="ml-auto h-4 w-4 text-sidebar-primary-foreground/70" />}
+        <span className="truncate">{item.name}</span>
       </Link>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {!isMasterAdmin && <AdminTour />}
 
       {sidebarOpen && (
@@ -227,17 +183,18 @@ export function AdminLayout() {
 
       <aside
         className={cn(
-          "dark fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform duration-200 ease-in-out lg:translate-x-0",
+          "dark fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
+          "bg-gradient-to-b from-sidebar to-[hsl(222,47%,4%)] border-r border-sidebar-border/60",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center gap-3 px-6 border-b border-sidebar-border">
+          <div className="flex h-16 items-center gap-3 px-6">
             <Fabric59Icon size="md" className="glow-primary" />
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">Fabric59</span>
-              <span className="text-xs text-sidebar-foreground/60">Integration Hub</span>
+              <span className="text-sm font-bold tracking-tight text-sidebar-foreground">Fabric59</span>
+              <span className="text-[10px] font-medium uppercase tracking-widest text-sidebar-foreground/40">Integration Hub</span>
             </div>
             <Button
               variant="ghost"
@@ -248,14 +205,13 @@ export function AdminLayout() {
               <X className="h-5 w-5" />
             </Button>
           </div>
+          <div className="mx-4 h-px bg-gradient-to-r from-transparent via-sidebar-border/50 to-transparent" />
 
           {/* Navigation */}
           <ScrollArea className="flex-1 px-3 py-4">
-            <nav className="space-y-1">
-              {/* Top-level ungrouped items */}
+            <nav className="space-y-0.5">
               {topNav.filter(canView).map(renderNavItem)}
 
-              {/* Collapsible groups */}
               {navigationGroups.map((group) => {
                 const visibleItems = group.items.filter(canView);
                 if (visibleItems.length === 0) return null;
@@ -263,18 +219,18 @@ export function AdminLayout() {
 
                 return (
                   <Collapsible key={group.label} open={open} onOpenChange={() => toggleGroup(group.label)}>
-                    <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-3 py-2 mt-3 cursor-pointer hover:bg-sidebar-accent/50 transition-colors">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40 flex-1 text-left">
+                    <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 mt-4 cursor-pointer hover:bg-sidebar-accent/20 transition-colors">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-sidebar-foreground/30 flex-1 text-left">
                         {group.label}
                       </span>
                       <ChevronDown
                         className={cn(
-                          "h-3.5 w-3.5 text-sidebar-foreground/40 transition-transform duration-200",
+                          "h-3 w-3 text-sidebar-foreground/25 transition-transform duration-200",
                           open && "rotate-180"
                         )}
                       />
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-0.5 mt-1">
+                    <CollapsibleContent className="space-y-0.5 mt-0.5">
                       {visibleItems.map(renderNavItem)}
                     </CollapsibleContent>
                   </Collapsible>
@@ -284,8 +240,8 @@ export function AdminLayout() {
           </ScrollArea>
 
           {/* Footer */}
-          <div className="border-t border-sidebar-border p-4 space-y-3">
-            {/* Pinned bottom nav */}
+          <div className="p-4 space-y-3">
+            <div className="mx-1 h-px bg-gradient-to-r from-transparent via-sidebar-border/40 to-transparent mb-3" />
             <div className="space-y-0.5">
               {bottomNav.filter(canView).map(renderNavItem)}
             </div>
@@ -315,11 +271,11 @@ export function AdminLayout() {
             )}
 
             <div
-              className="flex items-center gap-3 rounded-lg bg-sidebar-accent/50 p-3 cursor-pointer hover:bg-sidebar-accent/70 transition-colors"
+              className="flex items-center gap-3 rounded-xl bg-sidebar-accent/30 p-3 cursor-pointer hover:bg-sidebar-accent/50 transition-colors border border-sidebar-border/30"
               onClick={() => navigate("/admin/settings")}
             >
-              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                <span className="text-xs font-medium text-primary">
+              <div className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center ring-2 ring-primary/10">
+                <span className="text-xs font-semibold text-primary">
                   {user?.email?.slice(0, 2).toUpperCase() || "U"}
                 </span>
               </div>
@@ -327,17 +283,17 @@ export function AdminLayout() {
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
                   {organization?.name || "Loading..."}
                 </p>
-                <p className="text-xs text-sidebar-foreground/60 truncate">
+                <p className="text-[11px] text-sidebar-foreground/40 truncate">
                   {user?.email || ""}
                 </p>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground"
+                className="h-7 w-7 text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                 onClick={(e) => { e.stopPropagation(); signOut(); }}
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
@@ -346,7 +302,7 @@ export function AdminLayout() {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/60 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -357,35 +313,35 @@ export function AdminLayout() {
           </Button>
 
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Admin</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-            <span className="font-medium text-foreground">{currentPage?.name || "Dashboard"}</span>
+            {currentPage && (
+              <>
+                <currentPage.icon className="h-3.5 w-3.5 text-muted-foreground/60" />
+                <span className="font-medium text-foreground">{currentPage.name}</span>
+              </>
+            )}
           </div>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-3">
             {import.meta.env.DEV && (
               <button
                 onClick={toggleDevMode}
-                className={`hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border transition-all ${
+                className={cn(
+                  "hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold border transition-all",
                   devMode
-                    ? "bg-warning/20 text-warning border-warning/40 animate-pulse"
-                    : "bg-muted text-muted-foreground border-border hover:border-warning/40 hover:text-warning"
-                }`}
-                title={devMode ? "Click to disable Dev Mode" : "Click to enable Dev Mode (bypasses auth)"}
+                    ? "bg-warning/15 text-warning border-warning/30 animate-pulse"
+                    : "bg-muted/50 text-muted-foreground border-border hover:border-warning/30 hover:text-warning"
+                )}
               >
-                <FlaskConical className="h-3.5 w-3.5" />
-                {devMode ? "DEV MODE ON" : "DEV MODE"}
+                <FlaskConical className="h-3 w-3" />
+                {devMode ? "DEV ON" : "DEV"}
               </button>
             )}
 
-            <div className="hidden sm:flex items-center gap-2 rounded-full bg-success/10 px-3 py-1.5">
-              <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-              <span className="text-xs font-medium text-success">All Systems Operational</span>
-            </div>
+            <HealthIndicator status="healthy" label="All Systems" />
           </div>
         </header>
 
-        <main className="overflow-y-auto h-[calc(100vh-4rem)] p-6">
+        <main className="overflow-y-auto h-[calc(100vh-3.5rem)] p-6">
           <Outlet />
         </main>
       </div>
