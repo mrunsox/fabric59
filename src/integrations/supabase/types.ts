@@ -2364,7 +2364,9 @@ export type Database = {
           processed_at: string | null
           processing_status: string
           provider: string | null
+          raw_headers: Json | null
           received_at: string
+          signature_valid: boolean | null
           source_event_type: string | null
           source_type: string
         }
@@ -2384,7 +2386,9 @@ export type Database = {
           processed_at?: string | null
           processing_status?: string
           provider?: string | null
+          raw_headers?: Json | null
           received_at?: string
+          signature_valid?: boolean | null
           source_event_type?: string | null
           source_type: string
         }
@@ -2404,7 +2408,9 @@ export type Database = {
           processed_at?: string | null
           processing_status?: string
           provider?: string | null
+          raw_headers?: Json | null
           received_at?: string
+          signature_valid?: boolean | null
           source_event_type?: string | null
           source_type?: string
         }
@@ -2428,6 +2434,78 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_failure_classifications: {
+        Row: {
+          classification: Database["public"]["Enums"]["failure_classification_type"]
+          client_id: string
+          created_at: string
+          event_log_id: string | null
+          id: string
+          is_retryable: boolean
+          notes: string | null
+          organization_id: string
+          sync_job_id: string | null
+        }
+        Insert: {
+          classification: Database["public"]["Enums"]["failure_classification_type"]
+          client_id: string
+          created_at?: string
+          event_log_id?: string | null
+          id?: string
+          is_retryable?: boolean
+          notes?: string | null
+          organization_id: string
+          sync_job_id?: string | null
+        }
+        Update: {
+          classification?: Database["public"]["Enums"]["failure_classification_type"]
+          client_id?: string
+          created_at?: string
+          event_log_id?: string | null
+          id?: string
+          is_retryable?: boolean
+          notes?: string | null
+          organization_id?: string
+          sync_job_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_failure_classifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_failure_classifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_failure_classifications_event_log_id_fkey"
+            columns: ["event_log_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_event_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_failure_classifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_failure_classifications_sync_job_id_fkey"
+            columns: ["sync_job_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_sync_jobs"
             referencedColumns: ["id"]
           },
         ]
@@ -2897,10 +2975,12 @@ export type Database = {
           created_at: string
           direction: string | null
           failed_at: string | null
+          failure_classification: string | null
           failure_reason: string | null
           id: string
           idempotency_key: string | null
           input_payload: Json | null
+          is_replay: boolean
           job_type: string
           last_attempt_at: string | null
           max_attempts: number
@@ -2909,6 +2989,7 @@ export type Database = {
           output_payload: Json | null
           priority: number
           provider: string
+          replay_source_id: string | null
           source_event_log_id: string | null
           status: string
           succeeded_at: string | null
@@ -2921,10 +3002,12 @@ export type Database = {
           created_at?: string
           direction?: string | null
           failed_at?: string | null
+          failure_classification?: string | null
           failure_reason?: string | null
           id?: string
           idempotency_key?: string | null
           input_payload?: Json | null
+          is_replay?: boolean
           job_type: string
           last_attempt_at?: string | null
           max_attempts?: number
@@ -2933,6 +3016,7 @@ export type Database = {
           output_payload?: Json | null
           priority?: number
           provider: string
+          replay_source_id?: string | null
           source_event_log_id?: string | null
           status?: string
           succeeded_at?: string | null
@@ -2945,10 +3029,12 @@ export type Database = {
           created_at?: string
           direction?: string | null
           failed_at?: string | null
+          failure_classification?: string | null
           failure_reason?: string | null
           id?: string
           idempotency_key?: string | null
           input_payload?: Json | null
+          is_replay?: boolean
           job_type?: string
           last_attempt_at?: string | null
           max_attempts?: number
@@ -2957,6 +3043,7 @@ export type Database = {
           output_payload?: Json | null
           priority?: number
           provider?: string
+          replay_source_id?: string | null
           source_event_log_id?: string | null
           status?: string
           succeeded_at?: string | null
@@ -2982,6 +3069,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_sync_jobs_replay_source_id_fkey"
+            columns: ["replay_source_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_sync_jobs"
             referencedColumns: ["id"]
           },
           {
@@ -3093,6 +3187,7 @@ export type Database = {
           id: string
           onboarding_status: string
           organization_id: string
+          outage_mode: boolean
           provider_overrides: Json
           sandbox_mode: boolean
           updated_at: string
@@ -3106,6 +3201,7 @@ export type Database = {
           id?: string
           onboarding_status?: string
           organization_id: string
+          outage_mode?: boolean
           provider_overrides?: Json
           sandbox_mode?: boolean
           updated_at?: string
@@ -3119,6 +3215,7 @@ export type Database = {
           id?: string
           onboarding_status?: string
           organization_id?: string
+          outage_mode?: boolean
           provider_overrides?: Json
           sandbox_mode?: boolean
           updated_at?: string
@@ -5270,6 +5367,20 @@ export type Database = {
         | "other"
         | "hubspot"
         | "zendesk"
+      failure_classification_type:
+        | "invalid_signature"
+        | "expired_subscription"
+        | "renewal_failed"
+        | "provider_unavailable"
+        | "token_refresh_failed"
+        | "unsupported_action"
+        | "payload_validation_failed"
+        | "duplicate_event"
+        | "rate_limited"
+        | "transient_network_error"
+        | "downstream_write_failed"
+        | "internal_processing_error"
+        | "dead_lettered"
       five9_domain_status: "active" | "inactive" | "pending_verification"
       notification_channel:
         | "slack"
@@ -5420,6 +5531,21 @@ export const Constants = {
         "other",
         "hubspot",
         "zendesk",
+      ],
+      failure_classification_type: [
+        "invalid_signature",
+        "expired_subscription",
+        "renewal_failed",
+        "provider_unavailable",
+        "token_refresh_failed",
+        "unsupported_action",
+        "payload_validation_failed",
+        "duplicate_event",
+        "rate_limited",
+        "transient_network_error",
+        "downstream_write_failed",
+        "internal_processing_error",
+        "dead_lettered",
       ],
       five9_domain_status: ["active", "inactive", "pending_verification"],
       notification_channel: [
