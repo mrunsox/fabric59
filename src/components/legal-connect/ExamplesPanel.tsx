@@ -46,7 +46,7 @@ export default function ExamplesPanel() {
     return true;
   });
 
-  const categories = [...new Set((examples ?? []).map((e: any) => e.category))];
+  const categories = [...new Set((examples ?? []).map((e: any) => e.category as string))];
 
   const toggleExample = (id: string) => {
     setExpandedExample(expandedExample === id ? null : id);
@@ -108,15 +108,15 @@ export default function ExamplesPanel() {
         >
           All Categories
         </Button>
-        {categories.map((c) => (
+        {categories.map((c: string) => (
           <Button
             key={c}
             size="sm"
             variant={selectedCategory === c ? "secondary" : "ghost"}
             className="text-xs h-7"
-            onClick={() => setSelectedCategory(c as string)}
+            onClick={() => setSelectedCategory(c)}
           >
-            {categoryLabels[c as string] ?? c}
+            {categoryLabels[c] ?? c}
           </Button>
         ))}
       </div>

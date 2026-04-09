@@ -60,7 +60,7 @@ export default function AISetupPanel({ clientId }: AISetupPanelProps) {
   };
 
   const renderTemplateCards = (tpls: any[]) => {
-    const grouped = tpls.reduce((acc, t) => {
+    const grouped: Record<string, any[]> = tpls.reduce((acc: Record<string, any[]>, t: any) => {
       const cat = t.category ?? "other";
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(t);
