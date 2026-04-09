@@ -1,128 +1,174 @@
 
 
-# Second-Wave Hardening: Webhook Reliability + Testing + Examples + AI Prompts
+# Premium Dashboard & Onboarding Redesign
 
-Four parts delivered in order: reliability first, validation second, examples third, AI tooling fourth.
+## What changes
 
----
-
-## What Already Exists
-
-- `legal_connect_webhook_subscriptions` table with expires_at, renew_after, failure_count, status, remote_webhook_id, events, callback_url
-- `legal-connect-webhooks` edge function (signature verification, normalization, idempotency, sync job creation)
-- `legal-connect-jobs` edge function (queue processing, retry/backoff, dead-letter, replay, renewExpiring — currently 7-day renewal)
-- `legal-connect-admin` edge function (renewWebhook at 7 days, toggleOutageMode, getWebhookHealth)
-- `legal_connect_failure_classifications` table with full classification enum
-- ReliabilityPanel UI (webhook health table, dead letter queue, failure breakdown, outage toggle)
-- 23 Legal Connect tables total
+This is a comprehensive UI/UX elevation across the dashboard shell, KPI components, tables, sidebar, and onboarding flow. No database changes. No new edge functions. Pure frontend refinement.
 
 ---
 
-## Part A: Clio 31-Day Renewal Hardening
+## Part 1: Design System Foundation
 
-### Database migration
-- Add `legal_connect_webhook_renewal_log` table (id, subscription_id, org_id, client_id, action text, previous_expires_at, new_expires_at, success boolean, error_message, created_at)
-- Add `health_status` text and `disabled_reason` text columns to `legal_connect_webhook_subscriptions`
+**`src/index.css`** — Add premium utility classes:
+- `.card-elevated` — subtle shadow + border gradient for hero cards
+- `.card-glass` — frosted glass with faint border highlight
+- `.metric-hero` — large metric card with gradient accent bar
+- `.metric-secondary` — medium metric with trend sparkline area
+- `.surface-raised` — elevated content surface with refined shadow
+- Refine `.card-hover` to be subtler (softer shadow, no border color shift)
+- Add `.header-gradient` — faint top-border gradient for page headers
+- Premium skeleton/loading classes with smoother pulse
 
-### Edge function changes
-- **legal-connect-admin**: Update `renewWebhook` to 31-day expiry with 25-day renew_after. Add `recreateWebhook`, `disableWebhook`, `enableWebhook`, `getWebhookRenewalLog` actions. Log all actions to renewal_log table.
-- **legal-connect-jobs**: Update `renewExpiring` to 31-day expiry. Add auto-recreate when renewal fails 3x but connection is still valid. Compute health_status (healthy/degraded/critical/expired) based on expiry distance and failure_count.
-
-### ReliabilityPanel UI
-- Expiration countdown (days remaining)
-- Health status badge (healthy/degraded/critical/expired/disabled)
-- Recreate, Disable/Enable buttons
-- Renewal history expandable section
-- Replay Recent Events button per subscription
+**`tailwind.config.ts`** — No structural changes needed, existing color system is solid.
 
 ---
 
-## Part B: Testing Framework
+## Part 2: Premium Shared Components
 
-### Database migration
-- `legal_connect_test_runs` (id, org_id, client_id, test_type, test_category, test_config jsonb, expected_output jsonb, actual_output jsonb, status text, correlation_id, error_message, duration_ms, created_at)
-- `legal_connect_test_plans` (id, org_id, client_id, plan_name, test_cases jsonb, generated_by, provider, campaign_types text[], status, created_at)
+### New: `src/components/ui/premium-stat-card.tsx`
+Three tiers of stat cards:
+- **Hero**: Large card spanning 2 cols, gradient accent top-border, large value, trend chart area, status indicator
+- **Standard**: Current size but with refined spacing, micro trend indicator, subtle icon treatment
+- **Compact**: Small inline metric for secondary data
 
-### Edge function: `legal-connect-test`
-- `simulateClioWebhook`: Generate Clio payload, run normalization pipeline dry-run
-- `simulateMyCaseEvent`: Same, capability-gated
-- `simulateDisposition`: Five9 post-disposition dry-run
-- `simulateLookup`: Contact/matter match test
-- `simulateRenewalFailure`, `simulateOutage`: Reliability scenario tests
-- `runTestPlan`, `generateTestPlan`: Batch test execution + AI plan generation
+### New: `src/components/ui/page-header.tsx`
+Premium page header component:
+- Title with stronger typography (text-3xl font-bold tracking-tight)
+- Subtitle text
+- Right-side slot for status chips and action buttons
+- Optional gradient top-border accent
+- System health indicators inline
 
-### UI: TestingPanel component
-- Category tabs: Clio Webhooks, MyCase Events, Dispositions, Lookups, Reliability
-- Input form with presets, Expected vs Actual viewer, pass/fail badges
-- Test history table, export report button, AI-generated test plans
+### New: `src/components/ui/premium-table.tsx`
+Wrapper around existing Table with:
+- Sticky header with refined background
+- Better row hover (bg-muted/30 not bg-muted/50)
+- Row click handler with subtle scale micro-animation
+- Quick action buttons on hover (visible on row hover)
+- Premium empty state with illustration placeholder
+- Better loading skeleton rows
 
----
+### New: `src/components/ui/health-indicator.tsx`
+Reusable system health component:
+- Dot + label format
+- Variants: healthy, degraded, critical, offline
+- Optional pulse animation for healthy state
+- Used in headers, cards, and tables
 
-## Part C: Provider Examples Library
-
-### Database migration
-- `legal_connect_examples` (id, provider, category, scenario_key unique, title, description, raw_payload jsonb, normalized_event jsonb, policy_decision jsonb, sync_jobs_emitted jsonb, review_triggers jsonb, capability_check jsonb, five9_input jsonb, tags text[], sort_order, created_at)
-
-### Seed data (~30 examples via insert tool)
-- 6 Clio webhook examples (contact/matter/task CRUD)
-- 6 Five9 call-driven scenarios (intake, consult, callback, unknown caller, ambiguous match)
-- 8 MyCase capability-aware examples (supported/conditional/unsupported actions)
-- 4 normalized transform examples
-- 5 review queue examples
-
-### UI: ExamplesPanel component
-- Category filter sidebar, example cards with expandable JSON viewers
-- Capability status indicators for MyCase
-- "Explain with AI" button per example
-
----
-
-## Part D: Admin AI Prompt Packs
-
-### Database migration
-- `legal_connect_prompt_templates` (id, org_id nullable, prompt_key, role, category, title, description, system_prompt text, input_schema jsonb, output_schema jsonb, enabled boolean, provider_notes jsonb, campaign_type_overrides jsonb, version int, created_at, updated_at)
-
-### Seed data (~13 templates via insert tool)
-- 8 admin prompts: partner_onboarding, client_onboarding, pass_through_explainer, mapping_recommender, failure_explainer, go_live_readiness, policy_comparison, recovery_checklist
-- 5 agent prompts: call_context_summary, intake_assist, existing_client_support, disposition_coach, callback_next_steps
-
-### Edge function: `legal-connect-ai`
-- `executePrompt`: Load template, merge client context, call Lovable AI gateway (gemini-2.5-flash)
-- `listTemplates`, `previewPrompt`, `explainExample`
-- Safety: no legal advice, strip blocked fields, respect provider capabilities
-
-### UI: AISetupPanel + AgentContextPanel
-- Prompt category tabs, per-prompt run/preview cards, template editor
-- AgentContextPanel: compact context summary for agent-facing views
+### Update: `src/components/ui/status-badge.tsx`
+- Slightly larger padding
+- Smoother border-radius
+- Add subtle inner shadow for depth
 
 ---
 
-## File Summary
+## Part 3: Sidebar Elevation
 
-**New files (6):**
-- `supabase/functions/legal-connect-test/index.ts`
-- `supabase/functions/legal-connect-ai/index.ts`
-- `src/components/legal-connect/TestingPanel.tsx`
-- `src/components/legal-connect/ExamplesPanel.tsx`
-- `src/components/legal-connect/AISetupPanel.tsx`
-- `src/components/legal-connect/AgentContextPanel.tsx`
+**`src/components/layout/AdminLayout.tsx`**:
+- Sidebar background: slightly darker with subtle gradient (top to bottom)
+- Logo area: add faint bottom separator with gradient fade
+- Group labels: slightly more spacing above, letter-spacing increase
+- Active state: replace solid bg with left-accent-bar (3px primary bar on left) + subtle bg tint
+- Hover state: softer, bg-sidebar-accent/30 instead of /50
+- User card at bottom: refined with subtle top border, avatar ring on hover
+- Breadcrumb in header: add page icon before current page name
+- System status chip in header: more refined pill with icon
 
-**Modified files (5):**
-- `supabase/functions/legal-connect-admin/index.ts` — 31-day renewal, recreate/disable/enable actions
-- `supabase/functions/legal-connect-jobs/index.ts` — 31-day renewal, auto-recreate, health computation
-- `src/hooks/useLegalConnect.ts` — test, example, prompt, and renewal log hooks
-- `src/pages/admin/LegalConnectPage.tsx` — wire new panels into Testing/Examples/AI tabs
-- `src/components/legal-connect/ReliabilityPanel.tsx` — health status, countdown, new action buttons
+---
 
-**1 database migration** (all tables + columns combined)
-**2 data inserts** (examples seed + prompt templates seed)
+## Part 4: Dashboard Pages Redesign
 
-### Execution order
-1. Database migration (all new tables + columns)
-2. Seed examples + prompt templates
-3. Update legal-connect-admin + legal-connect-jobs for 31-day Clio renewal
-4. Create legal-connect-test edge function
-5. Create legal-connect-ai edge function
-6. Build all UI panels
-7. Wire into LegalConnectPage + hooks
+### `src/pages/admin/UserDashboardPage.tsx` (Main Admin Dashboard)
+Transform from flat 4-card grid + table to:
+- **Premium PageHeader** with org name, system health chip, quick actions
+- **Hero Integration Health card** (2-col span): sync success rate, webhook health, failures count, review pending — with gradient accent
+- **Secondary metric strip**: 3 standard cards (Agents, Clients, Domains)
+- **"Needs Attention" section**: condensed alert list for webhook renewals, failed syncs, pending reviews
+- **Recent Activity table**: premium table treatment with avatars, status badges, quick actions
+- Right-side compact panel: onboarding progress (if incomplete), AI recommendations
+
+### `src/pages/admin/ClientOverviewPage.tsx`
+- Replace header with PageHeader component
+- Upgrade StatCard row to use PremiumStatCard (hero for CRM connection status)
+- Tab bar: refined with bottom-border indicator instead of pill background
+- Tables: use PremiumTable wrapper
+- Cards: use surface-raised class, refined spacing
+
+### `src/pages/admin/AgentDashboardPage.tsx`
+- PageHeader with agent name and shift status
+- Hero card for today's call performance
+- Refined task list and training progress sections
+
+---
+
+## Part 5: Onboarding Redesign
+
+**`src/pages/onboarding/OnboardingPage.tsx`** — Major restructure:
+
+**Layout**: Split-screen on desktop. Left: progress rail with activation milestones. Right: current step content.
+
+**Progress rail** (new left panel):
+- Vertical stepper with milestone labels
+- Completed steps get checkmark + green
+- Current step highlighted with primary accent
+- Future steps dimmed
+- Milestones: Organization → Five9 Domain → Connection Test → Setup Intent → Client Config → Go Live
+
+**Step content improvements**:
+- Each step gets a header with step title + "why this matters" subtitle
+- Contextual helper card on right explaining downstream effects
+- Smoother transitions between steps (fade + slide)
+- Success states with confetti-style check animation
+- Connection test: bigger status display with animated indicators
+
+**New completion screen**:
+- Readiness score (percentage)
+- Checklist of configured vs remaining items
+- "Launch Dashboard" primary CTA
+- "Continue Setup" secondary for remaining items
+
+**Role-aware behavior**:
+- If partner admin: show partner-specific language and hierarchy setup
+- If client admin: streamlined client-only flow
+
+---
+
+## Part 6: Premium Empty & Loading States
+
+### New: `src/components/ui/premium-empty-state.tsx`
+- Icon + title + description + CTA button
+- Subtle background pattern or gradient
+- Used across all pages
+
+### Loading skeletons
+- Update existing skeleton usage to use smoother animation
+- Add card-shaped skeleton presets
+- Table skeleton with realistic row shapes
+
+---
+
+## Files to create (6):
+1. `src/components/ui/premium-stat-card.tsx`
+2. `src/components/ui/page-header.tsx`
+3. `src/components/ui/premium-table.tsx`
+4. `src/components/ui/health-indicator.tsx`
+5. `src/components/ui/premium-empty-state.tsx`
+6. `src/components/onboarding/OnboardingMilestones.tsx`
+
+## Files to modify (7):
+1. `src/index.css` — premium utility classes
+2. `src/components/ui/status-badge.tsx` — refined styling
+3. `src/components/layout/AdminLayout.tsx` — sidebar + header elevation
+4. `src/pages/admin/UserDashboardPage.tsx` — premium dashboard layout
+5. `src/pages/admin/ClientOverviewPage.tsx` — premium page treatment
+6. `src/pages/admin/AgentDashboardPage.tsx` — premium page treatment
+7. `src/pages/onboarding/OnboardingPage.tsx` — concierge onboarding redesign
+
+## Execution order:
+1. Design system foundation (CSS + new shared components)
+2. Sidebar and header elevation
+3. Dashboard pages redesign
+4. Onboarding redesign
+5. Apply premium treatment to remaining pages
 
