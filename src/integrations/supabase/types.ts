@@ -1819,6 +1819,13 @@ export type Database = {
             referencedRelation: "legal_connect_connections"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "legal_connect_campaigns_provider_connection_id_fkey"
+            columns: ["provider_connection_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_connections_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       legal_connect_client_capabilities: {
@@ -1990,6 +1997,7 @@ export type Database = {
           encrypted_access_token: string | null
           encrypted_refresh_token: string | null
           id: string
+          is_sandbox: boolean
           last_connected_at: string | null
           last_error_at: string | null
           last_error_message: string | null
@@ -2015,6 +2023,7 @@ export type Database = {
           encrypted_access_token?: string | null
           encrypted_refresh_token?: string | null
           id?: string
+          is_sandbox?: boolean
           last_connected_at?: string | null
           last_error_at?: string | null
           last_error_message?: string | null
@@ -2040,6 +2049,7 @@ export type Database = {
           encrypted_access_token?: string | null
           encrypted_refresh_token?: string | null
           id?: string
+          is_sandbox?: boolean
           last_connected_at?: string | null
           last_error_at?: string | null
           last_error_message?: string | null
@@ -3073,6 +3083,70 @@ export type Database = {
           },
         ]
       }
+      legal_connect_tenant_configs: {
+        Row: {
+          ai_preferences: Json
+          billing_config: Json
+          client_id: string
+          created_at: string
+          feature_flags: Json
+          id: string
+          onboarding_status: string
+          organization_id: string
+          provider_overrides: Json
+          sandbox_mode: boolean
+          updated_at: string
+        }
+        Insert: {
+          ai_preferences?: Json
+          billing_config?: Json
+          client_id: string
+          created_at?: string
+          feature_flags?: Json
+          id?: string
+          onboarding_status?: string
+          organization_id: string
+          provider_overrides?: Json
+          sandbox_mode?: boolean
+          updated_at?: string
+        }
+        Update: {
+          ai_preferences?: Json
+          billing_config?: Json
+          client_id?: string
+          created_at?: string
+          feature_flags?: Json
+          id?: string
+          onboarding_status?: string
+          organization_id?: string
+          provider_overrides?: Json
+          sandbox_mode?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_tenant_configs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_tenant_configs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_tenant_configs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_connect_webhook_subscriptions: {
         Row: {
           callback_url: string | null
@@ -3163,6 +3237,13 @@ export type Database = {
             columns: ["connection_id"]
             isOneToOne: false
             referencedRelation: "legal_connect_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_webhook_subscriptions_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_connections_safe"
             referencedColumns: ["id"]
           },
           {
@@ -5050,6 +5131,109 @@ export type Database = {
           performed_by?: string | null
         }
         Relationships: []
+      }
+      legal_connect_connections_safe: {
+        Row: {
+          access_token_expires_at: string | null
+          auth_type: string | null
+          base_url: string | null
+          client_id: string | null
+          connection_name: string | null
+          created_at: string | null
+          deauth_callback_enabled: boolean | null
+          has_access_token: boolean | null
+          has_refresh_token: boolean | null
+          id: string | null
+          is_sandbox: boolean | null
+          last_connected_at: string | null
+          last_error_at: string | null
+          last_error_message: string | null
+          last_refreshed_at: string | null
+          metadata: Json | null
+          organization_id: string | null
+          provider: string | null
+          provider_account_id: string | null
+          provider_region: string | null
+          refresh_token_expires_at: string | null
+          scopes: Json | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_token_expires_at?: string | null
+          auth_type?: string | null
+          base_url?: string | null
+          client_id?: string | null
+          connection_name?: string | null
+          created_at?: string | null
+          deauth_callback_enabled?: boolean | null
+          has_access_token?: never
+          has_refresh_token?: never
+          id?: string | null
+          is_sandbox?: boolean | null
+          last_connected_at?: string | null
+          last_error_at?: string | null
+          last_error_message?: string | null
+          last_refreshed_at?: string | null
+          metadata?: Json | null
+          organization_id?: string | null
+          provider?: string | null
+          provider_account_id?: string | null
+          provider_region?: string | null
+          refresh_token_expires_at?: string | null
+          scopes?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_token_expires_at?: string | null
+          auth_type?: string | null
+          base_url?: string | null
+          client_id?: string | null
+          connection_name?: string | null
+          created_at?: string | null
+          deauth_callback_enabled?: boolean | null
+          has_access_token?: never
+          has_refresh_token?: never
+          id?: string | null
+          is_sandbox?: boolean | null
+          last_connected_at?: string | null
+          last_error_at?: string | null
+          last_error_message?: string | null
+          last_refreshed_at?: string | null
+          metadata?: Json | null
+          organization_id?: string | null
+          provider?: string | null
+          provider_account_id?: string | null
+          provider_region?: string | null
+          refresh_token_expires_at?: string | null
+          scopes?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
