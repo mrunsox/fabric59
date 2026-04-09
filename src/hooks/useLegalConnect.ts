@@ -758,3 +758,185 @@ export function useRenewWebhook() {
     onError: (e: Error) => toast.error(e.message),
   });
 }
+
+// ── Test Runs ────────────────────────────────────────────────────────
+
+export function useRunTest() {
+  const qc = useQueryClient();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const res = await supabase.functions.invoke("legal-connect-test", {
+        body: { ...payload, organization_id: orgId },
+      });
+      if (res.error) throw res.error;
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "test-history"] });
+      toast.success("Test completed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useLegalTestHistory(clientId?: string) {
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["legal-connect", "test-history", orgId, clientId],
+    queryFn: async () => {
+      let q = supabase
+        .from("legal_connect_test_runs")
+        .select("*")
+        .eq("organization_id", orgId!)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!orgId,
+  });
+}
+
+// ── Examples ─────────────────────────────────────────────────────────
+
+export function useLegalExamples() {
+  return useQuery({
+    queryKey: ["legal-connect", "examples"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("legal_connect_examples")
+        .select("*")
+        .order("sort_order");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useExplainExample() {
+  return useMutation({
+    mutationFn: async (exampleId: string) => {
+      const res = await supabase.functions.invoke("legal-connect-ai", {
+        body: { action: "explainExample", example_id: exampleId },
+      });
+      if (res.error) throw res.error;
+      return res.data;
+    },
+    onSuccess: (data) => {
+      toast.success("Explanation generated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ── Prompt Templates ─────────────────────────────────────────────────
+
+export function useLegalPromptTemplates(role?: string) {
+  return useQuery({
+    queryKey: ["legal-connect", "prompt-templates", role],
+    queryFn: async () => {
+      let q = supabase
+        .from("legal_connect_prompt_templates")
+        .select("*")
+        .eq("enabled", true)
+        .order("category")
+        .order("title");
+      if (role) q = q.eq("role", role);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useExecutePrompt() {
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: async (payload: { prompt_key: string; context: unknown; client_id?: string }) => {
+      const res = await supabase.functions.invoke("legal-connect-ai", {
+        body: { action: "executePrompt", ...payload, organization_id: orgId },
+      });
+      if (res.error) throw res.error;
+      return res.data;
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ── Webhook Renewal Log ──────────────────────────────────────────────
+
+export function useLegalRenewalLog(subscriptionId?: string, clientId?: string) {
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["legal-connect", "renewal-log", orgId, subscriptionId, clientId],
+    queryFn: async () => {
+      const res = await supabase.functions.invoke("legal-connect-admin", {
+        body: { action: "getWebhookRenewalLog", organization_id: orgId, subscription_id: subscriptionId, client_id: clientId },
+      });
+      if (res.error) throw res.error;
+      return (res.data?.data ?? []) as any[];
+    },
+    enabled: !!orgId,
+  });
+}
+
+export function useRecreateWebhook() {
+  const qc = useQueryClient();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      const res = await supabase.functions.invoke("legal-connect-admin", {
+        body: { action: "recreateWebhook", organization_id: orgId, subscription_id: subscriptionId },
+      });
+      if (res.error) throw res.error;
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "webhook-health"] });
+      qc.invalidateQueries({ queryKey: ["legal-connect", "renewal-log"] });
+      toast.success("Webhook recreated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDisableWebhook() {
+  const qc = useQueryClient();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: async ({ subscriptionId, reason }: { subscriptionId: string; reason?: string }) => {
+      const res = await supabase.functions.invoke("legal-connect-admin", {
+        body: { action: "disableWebhook", organization_id: orgId, subscription_id: subscriptionId, reason },
+      });
+      if (res.error) throw res.error;
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "webhook-health"] });
+      toast.success("Webhook disabled");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useEnableWebhook() {
+  const qc = useQueryClient();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      const res = await supabase.functions.invoke("legal-connect-admin", {
+        body: { action: "enableWebhook", organization_id: orgId, subscription_id: subscriptionId },
+      });
+      if (res.error) throw res.error;
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "webhook-health"] });
+      toast.success("Webhook re-enabled");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
