@@ -1,130 +1,152 @@
 
-# Implementation Plan: Multi-Tenant + Testing + Reporting/Reconciliation
 
-These three prompts represent a very large body of work. Given that Phase 1A (database) and Phase 1B (UI shell + hooks) are complete, the most productive approach is to implement these as three focused sessions, each building on the prior.
+# Implementation Plan: Webhook Lifecycle + Examples Library + AI Prompt Packs
 
----
-
-## Current State
-
-- **20 Legal Connect tables** exist with full RLS (org-scoped via `get_user_org_ids`, `is_org_owner_or_admin`, `is_master_admin`)
-- **`client_id`** column exists on all Legal Connect tables — multi-tenant scoping at the client level is already in the schema
-- **`tenants` table** has `partner_id` for partner→client hierarchy
-- **UI shell** has 10 tabs with real data hooks, but most tabs show placeholder/empty states
-- **No edge functions** exist yet for Legal Connect (Five9 lookup, Clio OAuth, etc.)
+These three prompts cover reliability infrastructure, reference content, and AI operational tooling. Given the existing schema already has the right columns for webhook subscriptions, sync jobs, and event log, implementation focuses on edge functions, UI, and AI integration.
 
 ---
 
-## Session 1: Multi-Tenant White-Label Hardening
+## Session 1: Webhook Lifecycle + Failure Recovery (Prompt 4)
 
 ### Database Changes (Migration)
-- Add `legal_connect_tenant_configs` table for per-client Legal Connect settings (sandbox_mode, feature_flags, ai_preferences, billing_config)
-- Add `is_sandbox` boolean to `legal_connect_connections` (default false)
-- Add `client_id` filter index optimizations where missing
+- Add `legal_connect_failure_classifications` table: id, org_id, client_id, sync_job_id, event_log_id, classification (enum: invalid_signature, expired_subscription, renewal_failed, provider_unavailable, token_refresh_failed, unsupported_action, payload_validation_failed, duplicate_event, rate_limited, transient_network_error, downstream_write_failed, internal_processing_error, dead_lettered), is_retryable boolean, notes text, created_at
+- Add `failure_classification` text column to `legal_connect_sync_jobs`
+- Add `is_replay` boolean and `replay_source_id` uuid columns to `legal_connect_sync_jobs`
+- Add `outage_mode` boolean column to `legal_connect_tenant_configs` (default false)
+- Add `signature_valid` boolean and `raw_headers` jsonb columns to `legal_connect_event_log`
 
-### Hook Updates (`useLegalConnect.ts`)
-- Add `clientId` parameter to all list hooks so data can be filtered by selected client
-- Add `useLegalConnectClients()` hook that joins `tenants` with `legal_connect_connections` to show connection status per client
-- Add `useClientLegalConnectSummary(clientId)` for single-client overview
+### Edge Functions
+
+**`supabase/functions/legal-connect-webhooks/index.ts`** — Unified webhook receiver:
+- Route by provider path param (`/clio`, `/mycase`)
+- Raw payload persistence to event log
+- Clio signature verification (HMAC-based per Clio docs)
+- MyCase signature verification (capability-gated)
+- Normalized event construction
+- Idempotency check via event_key
+- Sync job creation
+- Reject invalid signatures with security logging
+
+**`supabase/functions/legal-connect-jobs/index.ts`** — Sync job processor:
+- Dequeue jobs by priority/next_attempt_at
+- Provider-aware retry logic with exponential backoff
+- Failure classification on each attempt
+- Dead-letter after max_attempts
+- Create review queue items for human-decision failures
+- Replay support: accept replay_source_id, generate new idempotency key
+- Outage mode: skip processing if tenant outage_mode is true, re-queue
+
+**Update `legal-connect-admin/index.ts`** — Add actions:
+- `renewWebhook`: renew a specific subscription
+- `renewAllWebhooks`: renew all expiring subscriptions for a client
+- `replayJob`: create replay from sync job or event log
+- `toggleOutageMode`: pause/resume processing for a client
+- `getWebhookHealth`: subscription health summary
 
 ### UI Changes
-- **Client selector** at top of LegalConnectPage — dropdown of tenants scoped to org, filters all tabs by selected client
-- **Connections tab**: show connections grouped by client, with client ownership badges
-- **Campaigns tab**: filter by client, show client→campaign→provider routing chain
-- **Policies tab**: client-scoped profile assignment
-- **Client Onboarding Wizard**: new dialog component (`LegalConnectClientSetup.tsx`) with steps: Select Provider → Configure Campaign Types → Set Policy Defaults → Generate Checklist
-- Add client-level capability override UI in Connections tab
 
-### Edge Function
-- `supabase/functions/legal-connect-admin/index.ts` — handles client config CRUD, connection ownership validation, capability override management (keeps sensitive ops server-side)
+**New "Reliability" sub-section in Legal Connect** (add to Sync Activity tab or as sub-tabs):
+- **Webhook Health**: subscription list with status, expires_at, renew_after, last_delivery, failure_count; manual renew button; auto-renewal schedule indicator
+- **Dead Letter Queue**: filtered view of sync_jobs where status = 'dead_letter'; replay/suppress/escalate buttons
+- **Failure Breakdown**: classification counts chart; drill-down to individual jobs
+- **Outage Controls**: toggle outage mode per client; backlog count; drain status
 
-### Security
-- Validate that `client_id` on every Legal Connect write matches a tenant the user's org owns
-- Encrypted token fields (`encrypted_access_token`, `encrypted_refresh_token`) never returned in frontend queries — add a DB view or edge function that strips them
+**Hooks additions** to `useLegalConnect.ts`:
+- `useLegalWebhookHealth(clientId)` — webhook subscriptions with health indicators
+- `useReplayJob()` — mutation to replay a sync job
+- `useToggleOutageMode()` — mutation for outage toggle
+
+### Scheduled Renewal
+- Use pg_cron to call `legal-connect-jobs` with action `renewExpiring` daily, targeting subscriptions where `renew_after < now()` and status = 'active'
 
 ---
 
-## Session 2: Tenant Testing Framework
+## Session 2: Example Library (Prompt 5)
 
 ### Database Changes (Migration)
-- Add `legal_connect_test_runs` table: id, client_id, org_id, test_type, test_config (jsonb), expected_output (jsonb), actual_output (jsonb), status (pass/fail/error), correlation_id, created_at
-- Add `legal_connect_test_plans` table: id, client_id, org_id, plan_name, test_cases (jsonb), generated_by (ai/manual), status, created_at
+- Add `legal_connect_examples` table: id, provider text, category text (webhook, sync_job, review, transform, capability), scenario_key text unique, title text, description text, raw_payload jsonb, normalized_event jsonb, policy_decision jsonb, sync_jobs_emitted jsonb, review_triggers jsonb, ui_representation jsonb, tags text[], sort_order int, created_at
 
-### Edge Function
-- `supabase/functions/legal-connect-test/index.ts` — handles:
-  - `simulateLookup`: fake Five9 inbound with configurable ANI/DNIS/campaign, runs through real lookup logic, returns matched contact/matter/state without writing to CRM
-  - `simulateDisposition`: fake post-disposition with configurable disposition code, runs policy engine, creates dry-run sync jobs (flagged as test), returns what would happen
-  - `simulateWebhook`: fake Clio/MyCase webhook payload, runs normalization pipeline, returns event log preview
-  - `runTestPlan`: execute a stored test plan, record results
+### Seed Data
+Insert ~30 example rows covering:
+- **Clio webhooks** (6): contact.created, contact.updated, matter.created, matter.updated, task.created, task.updated — each with raw payload, normalized event, expected sync jobs
+- **Five9 call-driven scenarios** (6): intake_completed → Clio note, consult_booked → note+task+status, callback_requested → task, attorney_followup → priority task, unknown_caller → contact create + review, ambiguous_match → review queue
+- **MyCase capability examples** (6): supported contact lookup, supported case lookup, conditional note creation, unsupported activity create (shows review item), unsupported webhook (shows capability UI), manual_only task creation
+- **Normalized transform examples** (4): raw→normalized for each provider direction
+- **Review queue examples** (5): ambiguous match, blocked field, duplicate candidate, missing mapping, expired webhook
+- **Expected sync job outputs** (3): contact.upsert, note.create, review.required
 
 ### UI Changes
-- **Testing tab** (replace placeholder): 
-  - Test type selector (Lookup, Disposition, Webhook, Full Flow)
-  - Per-type input forms with campaign presets (inbound_intake, consult_booking, etc.)
-  - Expected vs Actual comparison panel
-  - Test history table from `legal_connect_test_runs`
-  - Pass/fail badges, correlation ID links to Logs tab
-  - "Generate Test Plan" button that calls AI assistant
-  - Export test report (CSV/PDF)
-
-### AI Integration
-- Add `test_plan` session type to `legal-connect-ai` edge function (to be created)
-- Input: client provider, campaign types, policy profile, capabilities
-- Output: structured test cases with expected outcomes
-
----
-
-## Session 3: Five9 Reporting & Reconciliation
-
-### Database Changes (Migration)
-- Add `legal_connect_call_records` table: id, client_id, org_id, call_id, interaction_id, ani, dnis, campaign_name, agent_id, agent_name, start_time, end_time, duration_seconds, disposition_code, disposition_label, call_variables (jsonb), raw_payload (jsonb), cleaned (boolean), excluded (boolean), exclusion_reason, billing_eligible (boolean), billing_category, created_at
-- Add `legal_connect_billing_metrics` materialized view or table: client_id, campaign_name, period_start, period_end, total_calls, handled_calls, meaningful_calls, consult_booked, callbacks_requested, crm_writes_attempted, crm_writes_succeeded, crm_writes_failed, review_queue_count, avg_handling_time, sync_success_rate, excluded_count
-- Add `legal_connect_reconciliation_mismatches` table: id, client_id, mismatch_type, call_id, details (jsonb), resolved, created_at
-- Add `legal_connect_disposition_categories` table: id, org_id, client_id, disposition_code, category (meaningful_handled, callback, consult_booked, no_action, spam, excluded, exception), billable (boolean)
-- Add `legal_connect_required_variables` table: id, org_id, client_id, campaign_type, variable_name, variable_label, variable_type, required (boolean), sensitive (boolean), blocked (boolean), reportable_only (boolean)
-
-### Edge Function
-- `supabase/functions/legal-connect-reporting/index.ts` — handles:
-  - `ingestCallRecord`: normalize and store Five9 payload with cleanup rules (phone normalization, timezone, dedup, spam exclusion)
-  - `reconcile`: compare call records vs event log vs sync jobs, flag mismatches
-  - `getBillingMetrics`: compute metrics per client/campaign/period
-  - `getReconciliationReport`: return mismatch summary
+- Add **"Examples"** tab to LegalConnectPage (or as sub-tab under AI Setup)
+- Category filter sidebar: Clio, MyCase, Five9, Transforms, Review
+- Example card: title, description, expandable raw/normalized/sync JSON viewers
+- "Explain with AI" button per example (calls AI assistant)
 
 ### Hooks
-- `useLegalCallRecords(clientId, filters)` — paginated call record list
-- `useLegalBillingMetrics(clientId, period)` — billing summary
-- `useLegalReconciliation(clientId)` — mismatch list
-- `useLegalDispositionCategories(clientId)` — disposition classification config
+- `useLegalExamples(category?, provider?)` — query examples table with filters
+
+---
+
+## Session 3: AI Prompt Packs (Prompt 6)
+
+### Database Changes (Migration)
+- Add `legal_connect_prompt_templates` table: id, org_id (nullable for system defaults), prompt_key text, role text (admin/agent), category text, title text, description text, system_prompt text, input_schema jsonb, output_schema jsonb, enabled boolean default true, provider_notes jsonb, campaign_type_overrides jsonb, version int default 1, created_at, updated_at
+- Unique on (org_id, prompt_key, version)
+
+### Seed Data — System Prompt Templates (~15)
+**Admin prompts:**
+1. `guided_setup` — "Set up a safe Clio intake workflow..."
+2. `pass_through_explainer` — "Explain which fields flow where..."
+3. `mapping_recommender` — "Suggest disposition→action mappings..."
+4. `failure_explainer` — "Explain why this webhook/sync failed..."
+5. `go_live_readiness` — "Review readiness and find blockers..."
+6. `policy_comparison` — "Compare two policy profiles..."
+7. `recovery_checklist` — "Generate recovery steps for this failure..."
+
+**Agent prompts:**
+8. `call_context_summary` — "Summarize caller context in 4 bullets..."
+9. `intake_assist` — "List missing intake fields and questions..."
+10. `existing_client_support` — "Summarize open matter and recommend..."
+11. `disposition_coach` — "Suggest correct disposition and follow-ups..."
+12. `callback_next_steps` — "Summarize callback history and next action..."
+
+Each template includes: system_prompt, input_schema (what context to feed), output_schema (expected structure), safety rules embedded in system prompt.
+
+### Edge Function
+**`supabase/functions/legal-connect-ai/index.ts`** — AI prompt executor:
+- Actions: `executePrompt`, `listTemplates`, `previewPrompt`, `explainExample`
+- Loads prompt template by key
+- Merges client context (connection status, capabilities, policies, recent events) into input
+- Calls Lovable AI gateway (gemini-2.5-flash for speed, gpt-5 for complex reasoning)
+- Stores session in `legal_connect_ai_sessions`
+- Returns structured markdown + optional JSON output
+- Safety: strips blocked fields, enforces "no legal advice" constraint, respects provider capabilities
 
 ### UI Changes
-- Add **Reporting** tab to LegalConnectPage (11th tab, or sub-tabs within existing structure):
-  - **Metrics Summary**: stat cards for total/handled/meaningful/consult/callback/sync success
-  - **Call Records**: searchable/filterable table with raw vs cleaned toggle
-  - **Disposition Categories**: configuration table for classifying dispositions
-  - **Required Variables**: per-campaign-type variable schema editor
-  - **Billing**: per-client/campaign billing metrics with date range filter, exportable
-  - **Reconciliation**: mismatch table with filters (handled-no-event, event-no-job, failed-billable, duplicate-writes)
-  - Export CSV for all views
+**AI Setup tab overhaul** — replace placeholder cards with functional tools:
+- Prompt category tabs: Setup, Explainer, Mapping, Reliability, Go-Live, Agent
+- Per-prompt card: title, description, "Run" button, input form (pre-filled with client context), output panel with markdown rendering
+- Template editor: edit system prompt, toggle enabled, preview with sample input
+- Version history per template
+- "Explain This" button on examples, review items, and sync failures → calls `explainExample` action
 
-### AI Integration
-- Reporting AI assistant that can explain exclusions, summarize anomalies, recommend missing variables
+**Agent context panel** (new component `src/components/legal-connect/AgentContextPanel.tsx`):
+- Compact card showing AI-generated call context summary
+- Intake checklist
+- Disposition hint
+- Designed to be embeddable in agent-facing views
+
+### Hooks additions
+- `useLegalPromptTemplates(role?, category?)` — list templates
+- `useExecutePrompt()` — mutation to run a prompt via edge function
+- `useUpdatePromptTemplate()` — mutation to edit templates
 
 ---
 
 ## Execution Order
 
-1. **Session 1** — Multi-tenant hardening (DB migration + client selector + onboarding wizard + security)
-2. **Session 2** — Testing framework (DB migration + test edge function + Testing tab UI)
-3. **Session 3** — Reporting/reconciliation (DB migration + reporting edge function + Reporting tab UI)
+1. **Session 1** — Webhook lifecycle + failure recovery (DB migration, 2 edge functions, UI reliability tools)
+2. **Session 2** — Example library (DB migration, seed data, Examples tab)
+3. **Session 3** — AI prompt packs (DB migration, seed templates, AI edge function, AI Setup overhaul)
 
-Each session is self-contained and delivers a working slice. Estimated scope: ~300-400 lines SQL per migration, ~200-300 lines per edge function, ~400-600 lines UI per session.
+Each session is self-contained. Estimated: ~200 lines SQL, ~300 lines per edge function, ~400-500 lines UI per session.
 
----
-
-## Technical Notes
-
-- All new tables follow existing pattern: `organization_id` + `client_id`, RLS via `get_user_org_ids`/`is_org_owner_or_admin`/`is_master_admin`
-- Edge functions use service role key for DB writes, validate JWT in code
-- Client selector state stored in React context or URL param for tab persistence
-- Test simulations use dry-run flags to avoid writing to production CRM connections
-- Reconciliation runs as on-demand or scheduled edge function invocation
