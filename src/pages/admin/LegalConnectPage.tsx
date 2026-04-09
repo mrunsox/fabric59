@@ -20,6 +20,9 @@ import {
 import ClientSelector from "@/components/legal-connect/ClientSelector";
 import LegalConnectClientSetup from "@/components/legal-connect/LegalConnectClientSetup";
 import ReliabilityPanel from "@/components/legal-connect/ReliabilityPanel";
+import TestingPanel from "@/components/legal-connect/TestingPanel";
+import ExamplesPanel from "@/components/legal-connect/ExamplesPanel";
+import AISetupPanel from "@/components/legal-connect/AISetupPanel";
 import { toast } from "sonner";
 
 // ── Status badge helper ──────────────────────────────────────────────
@@ -560,47 +563,12 @@ export default function LegalConnectPage() {
 
           {/* ── AI SETUP ─────────────────────────────────────── */}
           <TabsContent value="ai" className="mt-4">
-            <div className="grid md:grid-cols-3 gap-4">
-              {[
-                { title: "Guided Setup", desc: "Walk through full client integration setup", icon: Sparkles },
-                { title: "Campaign Setup Generator", desc: "Generate Five9 campaign configuration steps", icon: Megaphone },
-                { title: "Pass-through Explainer", desc: "Understand what data flows where", icon: Shield },
-                { title: "CRM Setup Generator", desc: "Generate provider-specific onboarding steps", icon: Plug },
-                { title: "Mapping Recommender", desc: "AI-suggested field and disposition mappings", icon: Map },
-                { title: "Test Plan Generator", desc: "Generate validation scenarios before go-live", icon: TestTube2 },
-                { title: "Go-Live Readiness", desc: "Score readiness and find blockers", icon: CheckCircle2 },
-              ].map((tool) => (
-                <Card key={tool.title} className="cursor-pointer hover:border-primary/50 transition-colors">
-                  <CardContent className="p-5 space-y-3">
-                    <div className="rounded-lg bg-primary/10 p-2 w-fit">
-                      <tool.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">{tool.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{tool.desc}</p>
-                    </div>
-                    <Button size="sm" variant="outline" className="text-xs w-full" disabled>
-                      Coming in Phase 4
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <AISetupPanel clientId={clientId} />
           </TabsContent>
 
           {/* ── TESTING ──────────────────────────────────────── */}
           <TabsContent value="testing" className="mt-4">
-            <Card>
-              <CardContent className="flex items-center justify-center py-20">
-                <div className="text-center space-y-3">
-                  <TestTube2 className="h-10 w-10 text-muted-foreground mx-auto" />
-                  <h3 className="text-base font-semibold text-foreground">Testing Console</h3>
-                  <p className="text-sm text-muted-foreground max-w-md">
-                    Simulate inbound calls, dispositions, webhook events, and compare expected vs actual outputs. Coming in Session 2.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <TestingPanel clientId={clientId} />
           </TabsContent>
 
           {/* ── LOGS ─────────────────────────────────────────── */}
