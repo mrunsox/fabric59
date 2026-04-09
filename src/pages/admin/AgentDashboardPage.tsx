@@ -15,8 +15,9 @@ import { useScriptSessions } from "@/hooks/useScriptSessions";
 import { useTrainingModules, useTrainingProgress } from "@/hooks/useTraining";
 import { usePerformanceGoals } from "@/hooks/usePerformanceGoals";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PageHeader } from "@/components/ui/page-header";
+import { PremiumStatCard } from "@/components/ui/premium-stat-card";
 
-// Agent runtime components
 import { AgentCallNotesInput } from "@/components/agent/AgentCallNotesInput";
 import { PostCallSummary } from "@/components/agent/PostCallSummary";
 import { TaskQueuePanel } from "@/components/agent/TaskQueuePanel";
@@ -74,36 +75,17 @@ export default function AgentDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Zap className="h-6 w-6" /> Agent Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Your personal workspace — tasks, calls, goals, and performance</p>
-      </div>
+      <PageHeader
+        title="Agent Dashboard"
+        subtitle="Your personal workspace — tasks, calls, goals, and performance"
+        icon={<div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Zap className="h-5 w-5 text-primary" /></div>}
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-card to-card/80">
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1"><Phone className="h-4 w-4" /><span className="text-xs">Calls Today</span></div>
-            <p className="text-3xl font-bold font-mono">{todaySessions.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1"><Clock className="h-4 w-4" /><span className="text-xs">Avg Handle Time</span></div>
-            <p className="text-3xl font-bold font-mono">{avgHandle}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1"><Target className="h-4 w-4" /><span className="text-xs">Tasks Pending</span></div>
-            <p className="text-3xl font-bold font-mono">{pendingTasks}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1"><Award className="h-4 w-4" /><span className="text-xs">Sessions</span></div>
-            <p className="text-3xl font-bold font-mono">{sessions.length}</p>
-          </CardContent>
-        </Card>
+        <PremiumStatCard title="Calls Today" value={todaySessions.length} icon={Phone} tier="hero" variant="primary" />
+        <PremiumStatCard title="Avg Handle Time" value={avgHandle} icon={Clock} variant="default" />
+        <PremiumStatCard title="Tasks Pending" value={pendingTasks} icon={Target} variant={pendingTasks > 0 ? "warning" : "default"} />
+        <PremiumStatCard title="Sessions" value={sessions.length} icon={Award} variant="success" />
       </div>
 
       <Tabs defaultValue="overview">
