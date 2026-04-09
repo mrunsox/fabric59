@@ -7,6 +7,7 @@ import { useInvoices } from "@/hooks/useInvoices";
 import { useCampaignScripts } from "@/hooks/useCampaignScripts";
 import { PremiumStatCard } from "@/components/ui/premium-stat-card";
 import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
