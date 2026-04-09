@@ -2438,6 +2438,63 @@ export type Database = {
           },
         ]
       }
+      legal_connect_examples: {
+        Row: {
+          capability_check: Json | null
+          category: string
+          created_at: string
+          description: string | null
+          five9_input: Json | null
+          id: string
+          normalized_event: Json
+          policy_decision: Json
+          provider: string
+          raw_payload: Json
+          review_triggers: Json
+          scenario_key: string
+          sort_order: number
+          sync_jobs_emitted: Json
+          tags: string[]
+          title: string
+        }
+        Insert: {
+          capability_check?: Json | null
+          category: string
+          created_at?: string
+          description?: string | null
+          five9_input?: Json | null
+          id?: string
+          normalized_event?: Json
+          policy_decision?: Json
+          provider: string
+          raw_payload?: Json
+          review_triggers?: Json
+          scenario_key: string
+          sort_order?: number
+          sync_jobs_emitted?: Json
+          tags?: string[]
+          title: string
+        }
+        Update: {
+          capability_check?: Json | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          five9_input?: Json | null
+          id?: string
+          normalized_event?: Json
+          policy_decision?: Json
+          provider?: string
+          raw_payload?: Json
+          review_triggers?: Json
+          scenario_key?: string
+          sort_order?: number
+          sync_jobs_emitted?: Json
+          tags?: string[]
+          title?: string
+        }
+        Relationships: []
+      }
       legal_connect_failure_classifications: {
         Row: {
           classification: Database["public"]["Enums"]["failure_classification_type"]
@@ -2828,6 +2885,71 @@ export type Database = {
           },
           {
             foreignKeyName: "legal_connect_policy_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_prompt_templates: {
+        Row: {
+          campaign_type_overrides: Json | null
+          category: string
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          input_schema: Json
+          organization_id: string | null
+          output_schema: Json
+          prompt_key: string
+          provider_notes: Json | null
+          role: string
+          system_prompt: string
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          campaign_type_overrides?: Json | null
+          category: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          input_schema?: Json
+          organization_id?: string | null
+          output_schema?: Json
+          prompt_key: string
+          provider_notes?: Json | null
+          role?: string
+          system_prompt: string
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          campaign_type_overrides?: Json | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          input_schema?: Json
+          organization_id?: string | null
+          output_schema?: Json
+          prompt_key?: string
+          provider_notes?: Json | null
+          role?: string
+          system_prompt?: string
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_prompt_templates_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -3244,15 +3366,216 @@ export type Database = {
           },
         ]
       }
+      legal_connect_test_plans: {
+        Row: {
+          campaign_types: string[] | null
+          client_id: string
+          created_at: string
+          generated_by: string
+          id: string
+          organization_id: string
+          plan_name: string
+          provider: string | null
+          status: string
+          test_cases: Json
+        }
+        Insert: {
+          campaign_types?: string[] | null
+          client_id: string
+          created_at?: string
+          generated_by?: string
+          id?: string
+          organization_id: string
+          plan_name: string
+          provider?: string | null
+          status?: string
+          test_cases?: Json
+        }
+        Update: {
+          campaign_types?: string[] | null
+          client_id?: string
+          created_at?: string
+          generated_by?: string
+          id?: string
+          organization_id?: string
+          plan_name?: string
+          provider?: string | null
+          status?: string
+          test_cases?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_test_plans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_test_plans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_test_plans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_test_runs: {
+        Row: {
+          actual_output: Json | null
+          client_id: string
+          correlation_id: string | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          expected_output: Json | null
+          id: string
+          organization_id: string
+          status: string
+          test_category: string
+          test_config: Json
+          test_type: string
+        }
+        Insert: {
+          actual_output?: Json | null
+          client_id: string
+          correlation_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          expected_output?: Json | null
+          id?: string
+          organization_id: string
+          status?: string
+          test_category: string
+          test_config?: Json
+          test_type: string
+        }
+        Update: {
+          actual_output?: Json | null
+          client_id?: string
+          correlation_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          expected_output?: Json | null
+          id?: string
+          organization_id?: string
+          status?: string
+          test_category?: string
+          test_config?: Json
+          test_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_test_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_test_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_test_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_webhook_renewal_log: {
+        Row: {
+          action: string
+          client_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          new_expires_at: string | null
+          organization_id: string
+          previous_expires_at: string | null
+          subscription_id: string
+          success: boolean
+        }
+        Insert: {
+          action: string
+          client_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          new_expires_at?: string | null
+          organization_id: string
+          previous_expires_at?: string | null
+          subscription_id: string
+          success?: boolean
+        }
+        Update: {
+          action?: string
+          client_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          new_expires_at?: string | null
+          organization_id?: string
+          previous_expires_at?: string | null
+          subscription_id?: string
+          success?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_webhook_renewal_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_webhook_renewal_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_webhook_renewal_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_webhook_renewal_log_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_webhook_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_connect_webhook_subscriptions: {
         Row: {
           callback_url: string | null
           client_id: string
           connection_id: string | null
           created_at: string
+          disabled_reason: string | null
           events: string[] | null
           expires_at: string | null
           failure_count: number
+          health_status: string
           id: string
           last_delivery_at: string | null
           last_failure_at: string | null
@@ -3273,9 +3596,11 @@ export type Database = {
           client_id: string
           connection_id?: string | null
           created_at?: string
+          disabled_reason?: string | null
           events?: string[] | null
           expires_at?: string | null
           failure_count?: number
+          health_status?: string
           id?: string
           last_delivery_at?: string | null
           last_failure_at?: string | null
@@ -3296,9 +3621,11 @@ export type Database = {
           client_id?: string
           connection_id?: string | null
           created_at?: string
+          disabled_reason?: string | null
           events?: string[] | null
           expires_at?: string | null
           failure_count?: number
+          health_status?: string
           id?: string
           last_delivery_at?: string | null
           last_failure_at?: string | null
