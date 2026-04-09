@@ -1518,6 +1518,1662 @@ export type Database = {
           },
         ]
       }
+      legal_connect_ai_checklists: {
+        Row: {
+          checklist_items: Json | null
+          checklist_type: string
+          client_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_items?: Json | null
+          checklist_type: string
+          client_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_items?: Json | null
+          checklist_type?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_ai_checklists_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ai_checklists_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ai_checklists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_ai_sessions: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          input_context: Json | null
+          organization_id: string
+          output_json: Json | null
+          output_markdown: string | null
+          session_type: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          input_context?: Json | null
+          organization_id: string
+          output_json?: Json | null
+          output_markdown?: string | null
+          session_type: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          input_context?: Json | null
+          organization_id?: string
+          output_json?: Json | null
+          output_markdown?: string | null
+          session_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_ai_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ai_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ai_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_call_variable_mappings: {
+        Row: {
+          campaign_id: string | null
+          canonical_field: string | null
+          client_id: string
+          created_at: string
+          default_value: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          pass_through_mode: string
+          provider_field_path: string | null
+          required: boolean
+          sensitive: boolean
+          source_location: string
+          target_entity: string | null
+          transform_rule: string | null
+          updated_at: string
+          variable_label: string | null
+          variable_name: string
+          variable_type: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          canonical_field?: string | null
+          client_id: string
+          created_at?: string
+          default_value?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          pass_through_mode?: string
+          provider_field_path?: string | null
+          required?: boolean
+          sensitive?: boolean
+          source_location?: string
+          target_entity?: string | null
+          transform_rule?: string | null
+          updated_at?: string
+          variable_label?: string | null
+          variable_name: string
+          variable_type?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          canonical_field?: string | null
+          client_id?: string
+          created_at?: string
+          default_value?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          pass_through_mode?: string
+          provider_field_path?: string | null
+          required?: boolean
+          sensitive?: boolean
+          source_location?: string
+          target_entity?: string | null
+          transform_rule?: string | null
+          updated_at?: string
+          variable_label?: string | null
+          variable_name?: string
+          variable_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_call_variable_mappings_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_call_variable_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_call_variable_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_call_variable_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_campaigns: {
+        Row: {
+          active: boolean
+          agent_group: string | null
+          campaign_type: string
+          client_id: string
+          created_at: string
+          dnis: string | null
+          five9_campaign_id: string | null
+          five9_campaign_name: string | null
+          id: string
+          lookup_on_call_start: boolean
+          metadata: Json | null
+          organization_id: string
+          provider_connection_id: string | null
+          queue_name: string | null
+          script_template_key: string | null
+          submit_on_acw_complete: boolean
+          submit_on_disposition: boolean
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          agent_group?: string | null
+          campaign_type?: string
+          client_id: string
+          created_at?: string
+          dnis?: string | null
+          five9_campaign_id?: string | null
+          five9_campaign_name?: string | null
+          id?: string
+          lookup_on_call_start?: boolean
+          metadata?: Json | null
+          organization_id: string
+          provider_connection_id?: string | null
+          queue_name?: string | null
+          script_template_key?: string | null
+          submit_on_acw_complete?: boolean
+          submit_on_disposition?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          agent_group?: string | null
+          campaign_type?: string
+          client_id?: string
+          created_at?: string
+          dnis?: string | null
+          five9_campaign_id?: string | null
+          five9_campaign_name?: string | null
+          id?: string
+          lookup_on_call_start?: boolean
+          metadata?: Json | null
+          organization_id?: string
+          provider_connection_id?: string | null
+          queue_name?: string | null
+          script_template_key?: string | null
+          submit_on_acw_complete?: boolean
+          submit_on_disposition?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_campaigns_provider_connection_id_fkey"
+            columns: ["provider_connection_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_client_capabilities: {
+        Row: {
+          capability_key: string
+          client_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          mode: string
+          notes: string | null
+          organization_id: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          capability_key: string
+          client_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          mode?: string
+          notes?: string | null
+          organization_id: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          capability_key?: string
+          client_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          mode?: string
+          notes?: string | null
+          organization_id?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_client_capabilities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_client_capabilities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_client_capabilities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_conflicts: {
+        Row: {
+          assigned_to: string | null
+          canonical_entity_id: string | null
+          canonical_entity_type: string | null
+          client_id: string
+          conflict_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          organization_id: string
+          provider: string | null
+          related_event_log_id: string | null
+          related_sync_job_id: string | null
+          resolution_status: string
+          resolved_at: string | null
+          severity: string
+          suggested_resolution: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          canonical_entity_id?: string | null
+          canonical_entity_type?: string | null
+          client_id: string
+          conflict_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          organization_id: string
+          provider?: string | null
+          related_event_log_id?: string | null
+          related_sync_job_id?: string | null
+          resolution_status?: string
+          resolved_at?: string | null
+          severity?: string
+          suggested_resolution?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          canonical_entity_id?: string | null
+          canonical_entity_type?: string | null
+          client_id?: string
+          conflict_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          organization_id?: string
+          provider?: string | null
+          related_event_log_id?: string | null
+          related_sync_job_id?: string | null
+          resolution_status?: string
+          resolved_at?: string | null
+          severity?: string
+          suggested_resolution?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_conflicts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_conflicts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_conflicts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_conflicts_related_event_log_id_fkey"
+            columns: ["related_event_log_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_event_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_conflicts_related_sync_job_id_fkey"
+            columns: ["related_sync_job_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_sync_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_connections: {
+        Row: {
+          access_token_expires_at: string | null
+          auth_type: string | null
+          base_url: string | null
+          client_id: string
+          connection_name: string | null
+          created_at: string
+          deauth_callback_enabled: boolean | null
+          encrypted_access_token: string | null
+          encrypted_refresh_token: string | null
+          id: string
+          last_connected_at: string | null
+          last_error_at: string | null
+          last_error_message: string | null
+          last_refreshed_at: string | null
+          metadata: Json | null
+          organization_id: string
+          provider: string
+          provider_account_id: string | null
+          provider_region: string | null
+          refresh_token_expires_at: string | null
+          scopes: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          access_token_expires_at?: string | null
+          auth_type?: string | null
+          base_url?: string | null
+          client_id: string
+          connection_name?: string | null
+          created_at?: string
+          deauth_callback_enabled?: boolean | null
+          encrypted_access_token?: string | null
+          encrypted_refresh_token?: string | null
+          id?: string
+          last_connected_at?: string | null
+          last_error_at?: string | null
+          last_error_message?: string | null
+          last_refreshed_at?: string | null
+          metadata?: Json | null
+          organization_id: string
+          provider: string
+          provider_account_id?: string | null
+          provider_region?: string | null
+          refresh_token_expires_at?: string | null
+          scopes?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          access_token_expires_at?: string | null
+          auth_type?: string | null
+          base_url?: string | null
+          client_id?: string
+          connection_name?: string | null
+          created_at?: string
+          deauth_callback_enabled?: boolean | null
+          encrypted_access_token?: string | null
+          encrypted_refresh_token?: string | null
+          id?: string
+          last_connected_at?: string | null
+          last_error_at?: string | null
+          last_error_message?: string | null
+          last_refreshed_at?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          provider?: string
+          provider_account_id?: string | null
+          provider_region?: string | null
+          refresh_token_expires_at?: string | null
+          scopes?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_contacts: {
+        Row: {
+          alt_phone_e164: string | null
+          client_id: string
+          created_at: string
+          email: string | null
+          first_name: string | null
+          full_name: string | null
+          id: string
+          last_name: string | null
+          metadata: Json | null
+          organization_id: string
+          organization_name: string | null
+          phone_e164: string | null
+          source_provider: string | null
+          source_updated_at: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          alt_phone_e164?: string | null
+          client_id: string
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          last_name?: string | null
+          metadata?: Json | null
+          organization_id: string
+          organization_name?: string | null
+          phone_e164?: string | null
+          source_provider?: string | null
+          source_updated_at?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alt_phone_e164?: string | null
+          client_id?: string
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          last_name?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          organization_name?: string | null
+          phone_e164?: string | null
+          source_provider?: string | null
+          source_updated_at?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_disposition_mappings: {
+        Row: {
+          action_profile_key: string | null
+          attach_to_existing_matter: boolean
+          campaign_id: string | null
+          client_id: string
+          create_activity: boolean
+          create_callback: boolean
+          create_contact: boolean
+          create_matter: boolean
+          create_note: boolean
+          create_task: boolean
+          create_time_entry: boolean
+          created_at: string
+          crm_status_target: string | null
+          disposition_code: string
+          disposition_label: string | null
+          id: string
+          mark_consult_booked: boolean
+          metadata: Json | null
+          organization_id: string
+          priority: number
+          require_call_notes: boolean
+          require_followup_date: boolean
+          send_to_manual_review: boolean
+          update_contact: boolean
+          updated_at: string
+        }
+        Insert: {
+          action_profile_key?: string | null
+          attach_to_existing_matter?: boolean
+          campaign_id?: string | null
+          client_id: string
+          create_activity?: boolean
+          create_callback?: boolean
+          create_contact?: boolean
+          create_matter?: boolean
+          create_note?: boolean
+          create_task?: boolean
+          create_time_entry?: boolean
+          created_at?: string
+          crm_status_target?: string | null
+          disposition_code: string
+          disposition_label?: string | null
+          id?: string
+          mark_consult_booked?: boolean
+          metadata?: Json | null
+          organization_id: string
+          priority?: number
+          require_call_notes?: boolean
+          require_followup_date?: boolean
+          send_to_manual_review?: boolean
+          update_contact?: boolean
+          updated_at?: string
+        }
+        Update: {
+          action_profile_key?: string | null
+          attach_to_existing_matter?: boolean
+          campaign_id?: string | null
+          client_id?: string
+          create_activity?: boolean
+          create_callback?: boolean
+          create_contact?: boolean
+          create_matter?: boolean
+          create_note?: boolean
+          create_task?: boolean
+          create_time_entry?: boolean
+          created_at?: string
+          crm_status_target?: string | null
+          disposition_code?: string
+          disposition_label?: string | null
+          id?: string
+          mark_consult_booked?: boolean
+          metadata?: Json | null
+          organization_id?: string
+          priority?: number
+          require_call_notes?: boolean
+          require_followup_date?: boolean
+          send_to_manual_review?: boolean
+          update_contact?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_disposition_mappings_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_disposition_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_disposition_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_disposition_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_entity_links: {
+        Row: {
+          canonical_entity_id: string
+          client_id: string
+          created_at: string
+          entity_type: string
+          id: string
+          last_synced_at: string | null
+          organization_id: string
+          provider: string
+          provider_entity_id: string
+          provider_parent_entity_id: string | null
+          sync_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          canonical_entity_id: string
+          client_id: string
+          created_at?: string
+          entity_type: string
+          id?: string
+          last_synced_at?: string | null
+          organization_id: string
+          provider: string
+          provider_entity_id: string
+          provider_parent_entity_id?: string | null
+          sync_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          canonical_entity_id?: string
+          client_id?: string
+          created_at?: string
+          entity_type?: string
+          id?: string
+          last_synced_at?: string | null
+          organization_id?: string
+          provider?: string
+          provider_entity_id?: string
+          provider_parent_entity_id?: string | null
+          sync_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_entity_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_entity_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_entity_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_event_log: {
+        Row: {
+          call_id: string | null
+          campaign_id: string | null
+          client_id: string
+          correlation_id: string | null
+          created_at: string
+          direction: string
+          event_key: string | null
+          failure_reason: string | null
+          id: string
+          normalized_payload: Json | null
+          organization_id: string
+          payload: Json | null
+          processed_at: string | null
+          processing_status: string
+          provider: string | null
+          received_at: string
+          source_event_type: string | null
+          source_type: string
+        }
+        Insert: {
+          call_id?: string | null
+          campaign_id?: string | null
+          client_id: string
+          correlation_id?: string | null
+          created_at?: string
+          direction: string
+          event_key?: string | null
+          failure_reason?: string | null
+          id?: string
+          normalized_payload?: Json | null
+          organization_id: string
+          payload?: Json | null
+          processed_at?: string | null
+          processing_status?: string
+          provider?: string | null
+          received_at?: string
+          source_event_type?: string | null
+          source_type: string
+        }
+        Update: {
+          call_id?: string | null
+          campaign_id?: string | null
+          client_id?: string
+          correlation_id?: string | null
+          created_at?: string
+          direction?: string
+          event_key?: string | null
+          failure_reason?: string | null
+          id?: string
+          normalized_payload?: Json | null
+          organization_id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          processing_status?: string
+          provider?: string | null
+          received_at?: string
+          source_event_type?: string | null
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_event_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_event_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_event_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_field_policies: {
+        Row: {
+          canonical_field: string | null
+          client_id: string
+          created_at: string
+          direction: string
+          entity_name: string
+          id: string
+          mode: string
+          notes: string | null
+          organization_id: string
+          provider: string
+          sensitivity_level: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_field?: string | null
+          client_id: string
+          created_at?: string
+          direction: string
+          entity_name: string
+          id?: string
+          mode?: string
+          notes?: string | null
+          organization_id: string
+          provider: string
+          sensitivity_level?: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_field?: string | null
+          client_id?: string
+          created_at?: string
+          direction?: string
+          entity_name?: string
+          id?: string
+          mode?: string
+          notes?: string | null
+          organization_id?: string
+          provider?: string
+          sensitivity_level?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_field_policies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_field_policies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_field_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_matters: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          matter_name: string | null
+          matter_number: string | null
+          metadata: Json | null
+          organization_id: string
+          practice_area: string | null
+          primary_contact_id: string | null
+          source_provider: string | null
+          source_updated_at: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          matter_name?: string | null
+          matter_number?: string | null
+          metadata?: Json | null
+          organization_id: string
+          practice_area?: string | null
+          primary_contact_id?: string | null
+          source_provider?: string | null
+          source_updated_at?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          matter_name?: string | null
+          matter_number?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          practice_area?: string | null
+          primary_contact_id?: string | null
+          source_provider?: string | null
+          source_updated_at?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_matters_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_matters_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_matters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_matters_primary_contact_id_fkey"
+            columns: ["primary_contact_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_notes: {
+        Row: {
+          body: string | null
+          call_id: string | null
+          client_id: string
+          created_at: string
+          disposition_code: string | null
+          id: string
+          metadata: Json | null
+          note_type: string | null
+          organization_id: string
+          related_contact_id: string | null
+          related_matter_id: string | null
+          source_provider: string | null
+          source_updated_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          call_id?: string | null
+          client_id: string
+          created_at?: string
+          disposition_code?: string | null
+          id?: string
+          metadata?: Json | null
+          note_type?: string | null
+          organization_id: string
+          related_contact_id?: string | null
+          related_matter_id?: string | null
+          source_provider?: string | null
+          source_updated_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          call_id?: string | null
+          client_id?: string
+          created_at?: string
+          disposition_code?: string | null
+          id?: string
+          metadata?: Json | null
+          note_type?: string | null
+          organization_id?: string
+          related_contact_id?: string | null
+          related_matter_id?: string | null
+          source_provider?: string | null
+          source_updated_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_notes_related_contact_id_fkey"
+            columns: ["related_contact_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_notes_related_matter_id_fkey"
+            columns: ["related_matter_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_matters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_policy_profiles: {
+        Row: {
+          allow_activity_create: boolean
+          allow_callback_create: boolean
+          allow_contact_create: boolean
+          allow_contact_update: boolean
+          allow_matter_create: boolean
+          allow_matter_update: boolean
+          allow_note_create: boolean
+          allow_sensitive_field_sync: boolean
+          allow_task_create: boolean
+          allow_time_entry_create: boolean
+          ambiguous_match_mode: string
+          client_id: string
+          created_at: string
+          duplicate_prevention_mode: string
+          id: string
+          is_default: boolean
+          name: string
+          organization_id: string
+          unknown_caller_mode: string
+          unmatched_matter_mode: string
+          updated_at: string
+        }
+        Insert: {
+          allow_activity_create?: boolean
+          allow_callback_create?: boolean
+          allow_contact_create?: boolean
+          allow_contact_update?: boolean
+          allow_matter_create?: boolean
+          allow_matter_update?: boolean
+          allow_note_create?: boolean
+          allow_sensitive_field_sync?: boolean
+          allow_task_create?: boolean
+          allow_time_entry_create?: boolean
+          ambiguous_match_mode?: string
+          client_id: string
+          created_at?: string
+          duplicate_prevention_mode?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          organization_id: string
+          unknown_caller_mode?: string
+          unmatched_matter_mode?: string
+          updated_at?: string
+        }
+        Update: {
+          allow_activity_create?: boolean
+          allow_callback_create?: boolean
+          allow_contact_create?: boolean
+          allow_contact_update?: boolean
+          allow_matter_create?: boolean
+          allow_matter_update?: boolean
+          allow_note_create?: boolean
+          allow_sensitive_field_sync?: boolean
+          allow_task_create?: boolean
+          allow_time_entry_create?: boolean
+          ambiguous_match_mode?: string
+          client_id?: string
+          created_at?: string
+          duplicate_prevention_mode?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          organization_id?: string
+          unknown_caller_mode?: string
+          unmatched_matter_mode?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_policy_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_policy_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_policy_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_provider_capabilities: {
+        Row: {
+          capability_key: string
+          capability_name: string
+          created_at: string
+          id: string
+          notes: string | null
+          provider: string
+          support_mode: string
+          supported: boolean
+          updated_at: string
+        }
+        Insert: {
+          capability_key: string
+          capability_name: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          provider: string
+          support_mode?: string
+          supported?: boolean
+          updated_at?: string
+        }
+        Update: {
+          capability_key?: string
+          capability_name?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          provider?: string
+          support_mode?: string
+          supported?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      legal_connect_review_queue: {
+        Row: {
+          acted_at: string | null
+          acted_by: string | null
+          action_payload: Json | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_log_id: string | null
+          id: string
+          organization_id: string
+          provider: string | null
+          recommended_action: string | null
+          review_type: string
+          status: string
+          sync_job_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acted_at?: string | null
+          acted_by?: string | null
+          action_payload?: Json | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_log_id?: string | null
+          id?: string
+          organization_id: string
+          provider?: string | null
+          recommended_action?: string | null
+          review_type: string
+          status?: string
+          sync_job_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acted_at?: string | null
+          acted_by?: string | null
+          action_payload?: Json | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_log_id?: string | null
+          id?: string
+          organization_id?: string
+          provider?: string | null
+          recommended_action?: string | null
+          review_type?: string
+          status?: string
+          sync_job_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_review_queue_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_review_queue_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_review_queue_event_log_id_fkey"
+            columns: ["event_log_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_event_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_review_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_review_queue_sync_job_id_fkey"
+            columns: ["sync_job_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_sync_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_sync_jobs: {
+        Row: {
+          attempt_count: number
+          client_id: string
+          correlation_id: string | null
+          created_at: string
+          direction: string | null
+          failed_at: string | null
+          failure_reason: string | null
+          id: string
+          idempotency_key: string | null
+          input_payload: Json | null
+          job_type: string
+          last_attempt_at: string | null
+          max_attempts: number
+          next_attempt_at: string | null
+          organization_id: string
+          output_payload: Json | null
+          priority: number
+          provider: string
+          source_event_log_id: string | null
+          status: string
+          succeeded_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          client_id: string
+          correlation_id?: string | null
+          created_at?: string
+          direction?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          idempotency_key?: string | null
+          input_payload?: Json | null
+          job_type: string
+          last_attempt_at?: string | null
+          max_attempts?: number
+          next_attempt_at?: string | null
+          organization_id: string
+          output_payload?: Json | null
+          priority?: number
+          provider: string
+          source_event_log_id?: string | null
+          status?: string
+          succeeded_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          client_id?: string
+          correlation_id?: string | null
+          created_at?: string
+          direction?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          idempotency_key?: string | null
+          input_payload?: Json | null
+          job_type?: string
+          last_attempt_at?: string | null
+          max_attempts?: number
+          next_attempt_at?: string | null
+          organization_id?: string
+          output_payload?: Json | null
+          priority?: number
+          provider?: string
+          source_event_log_id?: string | null
+          status?: string
+          succeeded_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_sync_jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_sync_jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_sync_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_sync_jobs_source_event_log_id_fkey"
+            columns: ["source_event_log_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_event_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_tasks: {
+        Row: {
+          assigned_to: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          due_at: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          related_contact_id: string | null
+          related_matter_id: string | null
+          source_provider: string | null
+          source_updated_at: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          related_contact_id?: string | null
+          related_matter_id?: string | null
+          source_provider?: string | null
+          source_updated_at?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          related_contact_id?: string | null
+          related_matter_id?: string | null
+          source_provider?: string | null
+          source_updated_at?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_tasks_related_contact_id_fkey"
+            columns: ["related_contact_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_tasks_related_matter_id_fkey"
+            columns: ["related_matter_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_matters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_webhook_subscriptions: {
+        Row: {
+          callback_url: string | null
+          client_id: string
+          connection_id: string | null
+          created_at: string
+          events: string[] | null
+          expires_at: string | null
+          failure_count: number
+          id: string
+          last_delivery_at: string | null
+          last_failure_at: string | null
+          metadata: Json | null
+          model_name: string | null
+          organization_id: string
+          provider: string
+          remote_webhook_id: string | null
+          renew_after: string | null
+          secret_reference: string | null
+          status: string
+          subscribed_at: string | null
+          updated_at: string
+          verification_status: string | null
+        }
+        Insert: {
+          callback_url?: string | null
+          client_id: string
+          connection_id?: string | null
+          created_at?: string
+          events?: string[] | null
+          expires_at?: string | null
+          failure_count?: number
+          id?: string
+          last_delivery_at?: string | null
+          last_failure_at?: string | null
+          metadata?: Json | null
+          model_name?: string | null
+          organization_id: string
+          provider: string
+          remote_webhook_id?: string | null
+          renew_after?: string | null
+          secret_reference?: string | null
+          status?: string
+          subscribed_at?: string | null
+          updated_at?: string
+          verification_status?: string | null
+        }
+        Update: {
+          callback_url?: string | null
+          client_id?: string
+          connection_id?: string | null
+          created_at?: string
+          events?: string[] | null
+          expires_at?: string | null
+          failure_count?: number
+          id?: string
+          last_delivery_at?: string | null
+          last_failure_at?: string | null
+          metadata?: Json | null
+          model_name?: string | null
+          organization_id?: string
+          provider?: string
+          remote_webhook_id?: string | null
+          renew_after?: string | null
+          secret_reference?: string | null
+          status?: string
+          subscribed_at?: string | null
+          updated_at?: string
+          verification_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_webhook_subscriptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_webhook_subscriptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_webhook_subscriptions_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_webhook_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mycase_mappings: {
         Row: {
           case_id: string | null
