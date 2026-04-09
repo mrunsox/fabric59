@@ -67,6 +67,7 @@ import GoalsPage from "@/pages/admin/GoalsPage";
 import CallSummaryTemplatesPage from "@/pages/admin/CallSummaryTemplatesPage";
 import ScriptFlowHubPage from "@/pages/admin/ScriptFlowHubPage";
 import EmailTemplatesPage from "@/pages/admin/EmailTemplatesPage";
+import LegalConnectPage from "@/pages/admin/LegalConnectPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import TreeEditorPage from "@/pages/admin/TreeEditorPage";
@@ -161,6 +162,7 @@ const App = () => (
                 <Route path="scriptflow" element={<ScriptFlowHubPage />} />
                 <Route path="email-templates" element={<EmailTemplatesPage />} />
                 <Route path="call-flow" element={<CallFlowBuilderPage />} />
+                <Route path="legal-connect" element={<LegalConnectPage />} />
                 <Route path="tree-editor/:scriptId" element={<TreeEditorPage />} />
                 <Route path="tree-editor" element={<TreeEditorPage />} />
                 <Route path="test" element={<TestConsolePage />} />
