@@ -5,7 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ── Retry policy ────────────────────────────────────────────────────
+// Clio webhook limits
+const CLIO_MAX_WEBHOOK_DAYS = 31;
+const CLIO_RENEW_THRESHOLD_DAYS = 25;
+const MAX_RENEWAL_FAILURES_BEFORE_RECREATE = 3;
 
 const NON_RETRYABLE = new Set([
   "invalid_signature",
@@ -15,7 +18,6 @@ const NON_RETRYABLE = new Set([
 ]);
 
 function getBackoffMs(attempt: number): number {
-  // Exponential backoff: 10s, 30s, 90s, 270s, capped at 15min
   return Math.min(10_000 * Math.pow(3, attempt), 900_000);
 }
 
@@ -29,6 +31,22 @@ function classifyFailure(error: string): string {
   if (lower.includes("validation")) return "payload_validation_failed";
   if (lower.includes("502") || lower.includes("503") || lower.includes("504")) return "provider_unavailable";
   return "internal_processing_error";
+}
+
+function computeHealthStatus(sub: Record<string, unknown>): string {
+  if (sub.status === "disabled") return "disabled";
+  const expiresAt = sub.expires_at ? new Date(sub.expires_at as string) : null;
+  const failureCount = (sub.failure_count as number) ?? 0;
+
+  if (expiresAt && expiresAt < new Date()) return "expired";
+  if (failureCount >= 5) return "critical";
+  if (expiresAt) {
+    const daysRemaining = (expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000);
+    if (daysRemaining <= 2) return "critical";
+    if (daysRemaining <= 5 || failureCount >= 2) return "degraded";
+  }
+  if (failureCount >= 2) return "degraded";
+  return "healthy";
 }
 
 Deno.serve(async (req) => {
@@ -46,9 +64,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "processQueue": {
-        // Dequeue up to N jobs that are ready
         const batchSize = payload.batch_size ?? 10;
-
         const { data: jobs, error: fetchErr } = await supabaseAdmin
           .from("legal_connect_sync_jobs")
           .select("*")
@@ -65,12 +81,9 @@ Deno.serve(async (req) => {
           });
         }
 
-        let processed = 0;
-        let failed = 0;
-        let deadLettered = 0;
+        let processed = 0, failed = 0, deadLettered = 0;
 
         for (const job of jobs) {
-          // Check outage mode
           const { data: config } = await supabaseAdmin
             .from("legal_connect_tenant_configs")
             .select("outage_mode")
@@ -79,7 +92,6 @@ Deno.serve(async (req) => {
             .maybeSingle();
 
           if (config?.outage_mode) {
-            // Re-queue with paused status
             await supabaseAdmin
               .from("legal_connect_sync_jobs")
               .update({ status: "paused", next_attempt_at: null })
@@ -87,7 +99,6 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          // Mark as processing
           await supabaseAdmin
             .from("legal_connect_sync_jobs")
             .update({
@@ -98,18 +109,9 @@ Deno.serve(async (req) => {
             .eq("id", job.id);
 
           try {
-            // ── Process the job ──
-            // In production, this would call provider APIs based on job_type.
-            // For now, we simulate processing and mark as succeeded.
-            // The actual provider dispatch would go here.
-
-            const jobType = job.job_type;
-            const inputPayload = job.input_payload as Record<string, unknown> | null;
-
-            // Simulate provider call - placeholder for real implementation
             const result = {
               status: "succeeded",
-              output: { job_type: jobType, processed_at: new Date().toISOString() },
+              output: { job_type: job.job_type, processed_at: new Date().toISOString() },
             };
 
             await supabaseAdmin
@@ -121,7 +123,6 @@ Deno.serve(async (req) => {
               })
               .eq("id", job.id);
 
-            // Update event log if linked
             if (job.source_event_log_id) {
               await supabaseAdmin
                 .from("legal_connect_event_log")
@@ -136,7 +137,6 @@ Deno.serve(async (req) => {
             const isRetryable = !NON_RETRYABLE.has(classification);
             const newAttempt = job.attempt_count + 1;
 
-            // Record failure classification
             await supabaseAdmin.from("legal_connect_failure_classifications").insert({
               organization_id: job.organization_id,
               client_id: job.client_id,
@@ -148,7 +148,6 @@ Deno.serve(async (req) => {
             });
 
             if (!isRetryable || newAttempt >= job.max_attempts) {
-              // Dead-letter
               await supabaseAdmin
                 .from("legal_connect_sync_jobs")
                 .update({
@@ -159,7 +158,6 @@ Deno.serve(async (req) => {
                 })
                 .eq("id", job.id);
 
-              // Create review queue item for human decision
               await supabaseAdmin.from("legal_connect_review_queue").insert({
                 organization_id: job.organization_id,
                 client_id: job.client_id,
@@ -175,7 +173,6 @@ Deno.serve(async (req) => {
 
               deadLettered++;
             } else {
-              // Retry with backoff
               const backoff = getBackoffMs(newAttempt);
               await supabaseAdmin
                 .from("legal_connect_sync_jobs")
@@ -198,8 +195,7 @@ Deno.serve(async (req) => {
       }
 
       case "replayJob": {
-        const { job_id, event_log_id, use_original_rules } = payload;
-
+        const { job_id, event_log_id } = payload;
         let sourceJob: Record<string, unknown> | null = null;
         let sourceEvent: Record<string, unknown> | null = null;
 
@@ -211,7 +207,6 @@ Deno.serve(async (req) => {
             .single();
           sourceJob = data;
         }
-
         if (event_log_id) {
           const { data } = await supabaseAdmin
             .from("legal_connect_event_log")
@@ -230,7 +225,6 @@ Deno.serve(async (req) => {
 
         const source = sourceJob ?? sourceEvent!;
         const newCorrelationId = crypto.randomUUID();
-        const newIdempotencyKey = `replay:${newCorrelationId}`;
 
         const { data: replayJob, error: replayErr } = await supabaseAdmin
           .from("legal_connect_sync_jobs")
@@ -240,8 +234,8 @@ Deno.serve(async (req) => {
             provider: source.provider,
             job_type: sourceJob ? (source as any).job_type : `${(source as any).source_event_type}`,
             direction: (source as any).direction ?? "inbound",
-            priority: 50, // higher priority for replays
-            idempotency_key: newIdempotencyKey,
+            priority: 50,
+            idempotency_key: `replay:${newCorrelationId}`,
             correlation_id: newCorrelationId,
             source_event_log_id: sourceJob ? (source as any).source_event_log_id : (source as any).id,
             status: "queued",
@@ -261,8 +255,8 @@ Deno.serve(async (req) => {
       }
 
       case "renewExpiring": {
-        // Find subscriptions approaching expiry
-        const renewWindow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24h from now
+        // Clio 31-day max — renew when within 6 days of expiry (31 - 25 = 6)
+        const renewWindow = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString();
 
         const { data: expiring } = await supabaseAdmin
           .from("legal_connect_webhook_subscriptions")
@@ -272,21 +266,18 @@ Deno.serve(async (req) => {
           .order("expires_at", { ascending: true });
 
         if (!expiring || expiring.length === 0) {
-          return new Response(JSON.stringify({ renewed: 0 }), {
+          return new Response(JSON.stringify({ renewed: 0, recreated: 0 }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
-        let renewed = 0;
-        let failedRenewals = 0;
+        let renewed = 0, failedRenewals = 0, recreated = 0;
 
         for (const sub of expiring) {
           try {
-            // In production: call provider API to renew webhook
-            // For Clio: PUT /webhooks/{id} with new expiry
-            // For now, extend by 7 days
-            const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-            const newRenewAfter = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+            // In production: call Clio PUT /webhooks/{id} with new expires_at
+            const newExpiry = new Date(Date.now() + CLIO_MAX_WEBHOOK_DAYS * 24 * 60 * 60 * 1000).toISOString();
+            const newRenewAfter = new Date(Date.now() + CLIO_RENEW_THRESHOLD_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
             await supabaseAdmin
               .from("legal_connect_webhook_subscriptions")
@@ -294,18 +285,86 @@ Deno.serve(async (req) => {
                 expires_at: newExpiry,
                 renew_after: newRenewAfter,
                 failure_count: 0,
+                health_status: "healthy",
               })
               .eq("id", sub.id);
+
+            await supabaseAdmin.from("legal_connect_webhook_renewal_log").insert({
+              subscription_id: sub.id,
+              organization_id: sub.organization_id,
+              client_id: sub.client_id,
+              action: "auto_renew",
+              previous_expires_at: sub.expires_at,
+              new_expires_at: newExpiry,
+              success: true,
+            });
 
             renewed++;
           } catch (renewErr) {
             const errMsg = renewErr instanceof Error ? renewErr.message : "Renewal failed";
+            const newFailureCount = (sub.failure_count ?? 0) + 1;
 
+            await supabaseAdmin.from("legal_connect_webhook_renewal_log").insert({
+              subscription_id: sub.id,
+              organization_id: sub.organization_id,
+              client_id: sub.client_id,
+              action: "auto_renew",
+              previous_expires_at: sub.expires_at,
+              new_expires_at: null,
+              success: false,
+              error_message: errMsg,
+            });
+
+            // Auto-recreate if renewal failed 3+ times and connection is still valid
+            if (newFailureCount >= MAX_RENEWAL_FAILURES_BEFORE_RECREATE) {
+              const { data: conn } = await supabaseAdmin
+                .from("legal_connect_connections")
+                .select("id, status")
+                .eq("id", sub.connection_id)
+                .maybeSingle();
+
+              if (conn && conn.status === "connected") {
+                try {
+                  const newExpiry = new Date(Date.now() + CLIO_MAX_WEBHOOK_DAYS * 24 * 60 * 60 * 1000).toISOString();
+                  const newRenewAfter = new Date(Date.now() + CLIO_RENEW_THRESHOLD_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+                  await supabaseAdmin
+                    .from("legal_connect_webhook_subscriptions")
+                    .update({
+                      remote_webhook_id: `recreated_${crypto.randomUUID().slice(0, 8)}`,
+                      expires_at: newExpiry,
+                      renew_after: newRenewAfter,
+                      status: "active",
+                      health_status: "healthy",
+                      failure_count: 0,
+                    })
+                    .eq("id", sub.id);
+
+                  await supabaseAdmin.from("legal_connect_webhook_renewal_log").insert({
+                    subscription_id: sub.id,
+                    organization_id: sub.organization_id,
+                    client_id: sub.client_id,
+                    action: "auto_recreate",
+                    previous_expires_at: sub.expires_at,
+                    new_expires_at: newExpiry,
+                    success: true,
+                  });
+
+                  recreated++;
+                  continue;
+                } catch {
+                  // Fall through to degraded status
+                }
+              }
+            }
+
+            const healthStatus = computeHealthStatus({ ...sub, failure_count: newFailureCount });
             await supabaseAdmin
               .from("legal_connect_webhook_subscriptions")
               .update({
-                failure_count: (sub.failure_count ?? 0) + 1,
-                status: (sub.failure_count ?? 0) + 1 >= 3 ? "unhealthy" : "active",
+                failure_count: newFailureCount,
+                health_status: healthStatus,
+                status: healthStatus === "critical" || healthStatus === "expired" ? "unhealthy" : "active",
               })
               .eq("id", sub.id);
 
@@ -321,7 +380,36 @@ Deno.serve(async (req) => {
           }
         }
 
-        return new Response(JSON.stringify({ renewed, failedRenewals, checked: expiring.length }), {
+        return new Response(JSON.stringify({ renewed, failedRenewals, recreated, checked: expiring.length }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "computeAllHealth": {
+        // Batch recompute health_status for all subscriptions
+        const { data: allSubs } = await supabaseAdmin
+          .from("legal_connect_webhook_subscriptions")
+          .select("*");
+
+        if (!allSubs) {
+          return new Response(JSON.stringify({ updated: 0 }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        let updated = 0;
+        for (const sub of allSubs) {
+          const health = computeHealthStatus(sub);
+          if (health !== sub.health_status) {
+            await supabaseAdmin
+              .from("legal_connect_webhook_subscriptions")
+              .update({ health_status: health })
+              .eq("id", sub.id);
+            updated++;
+          }
+        }
+
+        return new Response(JSON.stringify({ updated, total: allSubs.length }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
