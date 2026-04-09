@@ -5,43 +5,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  LayoutDashboard,
-  Plug,
-  Megaphone,
-  Shield,
-  Map,
-  Activity,
-  AlertTriangle,
-  Sparkles,
-  TestTube2,
-  FileText,
-  RefreshCw,
-  Wifi,
-  WifiOff,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Eye,
+  LayoutDashboard, Plug, Megaphone, Shield, Map, Activity, AlertTriangle,
+  Sparkles, TestTube2, FileText, RefreshCw, Wifi, WifiOff, CheckCircle2, XCircle, Eye, Plus,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import {
-  useLegalConnections,
-  useLegalCampaigns,
-  useLegalSyncJobs,
-  useLegalReviewQueue,
-  useLegalEventLog,
-  useLegalConflicts,
-  useLegalProviderCapabilities,
-  useLegalPolicyProfiles,
+  useLegalConnections, useLegalCampaigns, useLegalSyncJobs, useLegalReviewQueue,
+  useLegalEventLog, useLegalConflicts, useLegalProviderCapabilities, useLegalPolicyProfiles,
+  useLegalConnectClients,
 } from "@/hooks/useLegalConnect";
+import ClientSelector from "@/components/legal-connect/ClientSelector";
+import LegalConnectClientSetup from "@/components/legal-connect/LegalConnectClientSetup";
+import { toast } from "sonner";
 
 // ── Status badge helper ──────────────────────────────────────────────
 
@@ -75,8 +53,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// ── Stat Card ────────────────────────────────────────────────────────
-
 function StatCard({ label, value, icon: Icon, loading }: { label: string; value: string | number; icon: React.ElementType; loading?: boolean }) {
   return (
     <Card>
@@ -93,8 +69,6 @@ function StatCard({ label, value, icon: Icon, loading }: { label: string; value:
   );
 }
 
-// ── Tab icons ────────────────────────────────────────────────────────
-
 const tabMeta = [
   { value: "overview", label: "Overview", icon: LayoutDashboard },
   { value: "connections", label: "Connections", icon: Plug },
@@ -108,19 +82,28 @@ const tabMeta = [
   { value: "logs", label: "Logs", icon: FileText },
 ];
 
-// ── Main page ────────────────────────────────────────────────────────
-
 export default function LegalConnectPage() {
   const [tab, setTab] = useState("overview");
+  const [selectedClient, setSelectedClient] = useState("all");
+  const [setupOpen, setSetupOpen] = useState(false);
 
-  const { data: connections, isLoading: connLoading } = useLegalConnections();
-  const { data: campaigns, isLoading: campLoading } = useLegalCampaigns();
-  const { data: syncJobs, isLoading: syncLoading } = useLegalSyncJobs({ limit: 50 });
-  const { data: reviewItems, isLoading: reviewLoading } = useLegalReviewQueue();
-  const { data: eventLog, isLoading: logLoading } = useLegalEventLog({ limit: 50 });
-  const { data: conflicts } = useLegalConflicts("open");
+  const clientId = selectedClient === "all" ? undefined : selectedClient;
+  const selectedClientName = undefined; // resolved below from clients data
+
+  // Client list for selector
+  const { data: clients, isLoading: clientsLoading } = useLegalConnectClients();
+
+  // All data hooks now accept optional clientId
+  const { data: connections, isLoading: connLoading } = useLegalConnections(clientId);
+  const { data: campaigns, isLoading: campLoading } = useLegalCampaigns(clientId);
+  const { data: syncJobs, isLoading: syncLoading } = useLegalSyncJobs({ limit: 50, client_id: clientId });
+  const { data: reviewItems, isLoading: reviewLoading } = useLegalReviewQueue(undefined, clientId);
+  const { data: eventLog, isLoading: logLoading } = useLegalEventLog({ limit: 50, client_id: clientId });
+  const { data: conflicts } = useLegalConflicts("open", clientId);
   const { data: capabilities } = useLegalProviderCapabilities();
-  const { data: policyProfiles, isLoading: policiesLoading } = useLegalPolicyProfiles();
+  const { data: policyProfiles, isLoading: policiesLoading } = useLegalPolicyProfiles(clientId);
+
+  const resolvedClientName = clients?.find((c) => c.id === selectedClient)?.name;
 
   // derived stats
   const connectedCount = connections?.filter((c) => c.status === "connected").length ?? 0;
@@ -131,14 +114,34 @@ export default function LegalConnectPage() {
   const totalJobs = syncJobs?.length ?? 0;
   const successRate = totalJobs > 0 ? Math.round((succeededJobs / totalJobs) * 100) : 0;
 
+  const handleSetupComplete = (config: { provider: string; campaignTypes: string[]; policyDefaults: any }) => {
+    toast.success(`Setup checklist generated for ${resolvedClientName ?? "client"} with ${config.provider}`);
+  };
+
   return (
     <>
       <SEOHead title="Legal Connect — Fabric59" description="Enterprise legal CRM integration hub" />
 
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Legal Connect</h1>
-          <p className="text-sm text-muted-foreground mt-1">Five9 ↔ Fabric59 ↔ Clio / MyCase integration hub</p>
+        {/* Header with client selector */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Legal Connect</h1>
+            <p className="text-sm text-muted-foreground mt-1">Five9 ↔ Fabric59 ↔ Clio / MyCase integration hub</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <ClientSelector
+              clients={clients ?? []}
+              value={selectedClient}
+              onChange={setSelectedClient}
+              isLoading={clientsLoading}
+            />
+            {clientId && (
+              <Button size="sm" onClick={() => setSetupOpen(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1.5" /> Setup Wizard
+              </Button>
+            )}
+          </div>
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
@@ -198,6 +201,40 @@ export default function LegalConnectPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Client overview cards when viewing all */}
+            {!clientId && clients && clients.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Clients</CardTitle>
+                  <CardDescription>{clients.length} clients configured</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {clients.map((c) => (
+                      <div
+                        key={c.id}
+                        className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => setSelectedClient(c.id)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {c.connectedProviders.map((p) => (
+                              <Badge key={p} variant="outline" className="text-[10px] capitalize">{p}</Badge>
+                            ))}
+                            {c.connectedProviders.length === 0 && (
+                              <span className="text-xs text-muted-foreground">No connections</span>
+                            )}
+                          </div>
+                        </div>
+                        <StatusBadge status={c.onboardingStatus === "complete" ? "connected" : c.onboardingStatus === "in_progress" ? "pending" : "not_connected"} />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader className="pb-3">
@@ -262,7 +299,10 @@ export default function LegalConnectPage() {
                               <WifiOff className="h-4 w-4 text-destructive" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{conn.connection_name || conn.provider}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium text-foreground truncate">{conn.connection_name || conn.provider}</p>
+                                {(conn as any).is_sandbox && <Badge variant="outline" className="text-[10px] px-1.5 py-0">sandbox</Badge>}
+                              </div>
                               <p className="text-xs text-muted-foreground">
                                 {conn.auth_type ?? "—"} · Last connected {conn.last_connected_at ? new Date(conn.last_connected_at).toLocaleDateString() : "never"}
                               </p>
@@ -363,7 +403,7 @@ export default function LegalConnectPage() {
                     ) : !policyProfiles || policyProfiles.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
-                          No policy profiles created. The full pass-through matrix is coming in Phase 1E.
+                          No policy profiles created. Create one to control data pass-through rules.
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -393,46 +433,18 @@ export default function LegalConnectPage() {
                 <TabsTrigger value="fields" className="text-xs">CRM Fields</TabsTrigger>
                 <TabsTrigger value="statuses" className="text-xs">Status Mappings</TabsTrigger>
               </TabsList>
-              <TabsContent value="dispositions" className="mt-4">
-                <Card>
-                  <CardContent className="flex items-center justify-center py-16">
-                    <div className="text-center space-y-2">
-                      <Map className="h-8 w-8 text-muted-foreground mx-auto" />
-                      <p className="text-sm text-muted-foreground">Disposition mapping editor — coming in Phase 1E</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="variables" className="mt-4">
-                <Card>
-                  <CardContent className="flex items-center justify-center py-16">
-                    <div className="text-center space-y-2">
-                      <Map className="h-8 w-8 text-muted-foreground mx-auto" />
-                      <p className="text-sm text-muted-foreground">Call variable mapping editor — coming in Phase 1E</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="fields" className="mt-4">
-                <Card>
-                  <CardContent className="flex items-center justify-center py-16">
-                    <div className="text-center space-y-2">
-                      <Map className="h-8 w-8 text-muted-foreground mx-auto" />
-                      <p className="text-sm text-muted-foreground">CRM field mapping editor — coming in Phase 1E</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              <TabsContent value="statuses" className="mt-4">
-                <Card>
-                  <CardContent className="flex items-center justify-center py-16">
-                    <div className="text-center space-y-2">
-                      <Map className="h-8 w-8 text-muted-foreground mx-auto" />
-                      <p className="text-sm text-muted-foreground">Status mapping editor — coming in Phase 1E</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+              {["dispositions", "variables", "fields", "statuses"].map((sub) => (
+                <TabsContent key={sub} value={sub} className="mt-4">
+                  <Card>
+                    <CardContent className="flex items-center justify-center py-16">
+                      <div className="text-center space-y-2">
+                        <Map className="h-8 w-8 text-muted-foreground mx-auto" />
+                        <p className="text-sm text-muted-foreground capitalize">{sub.replace(/_/g, " ")} mapping editor — coming in Phase 1E</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              ))}
             </Tabs>
           </TabsContent>
 
@@ -513,7 +525,7 @@ export default function LegalConnectPage() {
                     ) : !reviewItems || reviewItems.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
-                          No items pending review. Items will appear here when ambiguous matches or blocked actions occur.
+                          No items pending review.
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -577,7 +589,7 @@ export default function LegalConnectPage() {
                   <TestTube2 className="h-10 w-10 text-muted-foreground mx-auto" />
                   <h3 className="text-base font-semibold text-foreground">Testing Console</h3>
                   <p className="text-sm text-muted-foreground max-w-md">
-                    Simulate inbound calls, dispositions, webhook events, and compare expected vs actual outputs. Coming in Phase 5.
+                    Simulate inbound calls, dispositions, webhook events, and compare expected vs actual outputs. Coming in Session 2.
                   </p>
                 </div>
               </CardContent>
@@ -613,7 +625,7 @@ export default function LegalConnectPage() {
                     ) : !eventLog || eventLog.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
-                          No events logged yet. Events will appear once integrations process calls.
+                          No events logged yet.
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -636,6 +648,14 @@ export default function LegalConnectPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Client onboarding wizard */}
+      <LegalConnectClientSetup
+        open={setupOpen}
+        onOpenChange={setSetupOpen}
+        clientName={resolvedClientName}
+        onComplete={handleSetupComplete}
+      />
     </>
   );
 }

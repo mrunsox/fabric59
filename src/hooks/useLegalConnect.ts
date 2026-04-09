@@ -12,16 +12,18 @@ function useOrgId() {
 
 // ── Connections ──────────────────────────────────────────────────────
 
-export function useLegalConnections() {
+export function useLegalConnections(clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "connections", orgId],
+    queryKey: ["legal-connect", "connections", orgId, clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("legal_connect_connections")
         .select("*")
         .eq("organization_id", orgId!)
         .order("created_at", { ascending: false });
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -120,16 +122,18 @@ export function useLegalClientCapabilities(clientId?: string) {
 
 // ── Campaigns ────────────────────────────────────────────────────────
 
-export function useLegalCampaigns() {
+export function useLegalCampaigns(clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "campaigns", orgId],
+    queryKey: ["legal-connect", "campaigns", orgId, clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("legal_connect_campaigns")
         .select("*")
         .eq("organization_id", orgId!)
         .order("created_at", { ascending: false });
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -193,15 +197,16 @@ export function useDeleteLegalCampaign() {
 
 // ── Disposition Mappings ─────────────────────────────────────────────
 
-export function useLegalDispositionMappings(campaignId?: string) {
+export function useLegalDispositionMappings(clientId?: string, campaignId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "disposition-mappings", orgId, campaignId],
+    queryKey: ["legal-connect", "disposition-mappings", orgId, clientId, campaignId],
     queryFn: async () => {
       let q = supabase
         .from("legal_connect_disposition_mappings")
         .select("*")
         .eq("organization_id", orgId!);
+      if (clientId) q = q.eq("client_id", clientId);
       if (campaignId) q = q.eq("campaign_id", campaignId);
       const { data, error } = await q.order("priority");
       if (error) throw error;
@@ -231,15 +236,16 @@ export function useCreateLegalDispositionMapping() {
 
 // ── Call Variable Mappings ───────────────────────────────────────────
 
-export function useLegalCallVariableMappings(campaignId?: string) {
+export function useLegalCallVariableMappings(clientId?: string, campaignId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "call-variable-mappings", orgId, campaignId],
+    queryKey: ["legal-connect", "call-variable-mappings", orgId, clientId, campaignId],
     queryFn: async () => {
       let q = supabase
         .from("legal_connect_call_variable_mappings")
         .select("*")
         .eq("organization_id", orgId!);
+      if (clientId) q = q.eq("client_id", clientId);
       if (campaignId) q = q.eq("campaign_id", campaignId);
       const { data, error } = await q;
       if (error) throw error;
@@ -251,16 +257,18 @@ export function useLegalCallVariableMappings(campaignId?: string) {
 
 // ── Policy Profiles ──────────────────────────────────────────────────
 
-export function useLegalPolicyProfiles() {
+export function useLegalPolicyProfiles(clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "policy-profiles", orgId],
+    queryKey: ["legal-connect", "policy-profiles", orgId, clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("legal_connect_policy_profiles")
         .select("*")
         .eq("organization_id", orgId!)
         .order("created_at", { ascending: false });
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -288,16 +296,18 @@ export function useCreateLegalPolicyProfile() {
 
 // ── Canonical Entities (read-only) ───────────────────────────────────
 
-export function useLegalContacts() {
+export function useLegalContacts(clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "contacts", orgId],
+    queryKey: ["legal-connect", "contacts", orgId, clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("legal_connect_contacts")
         .select("*")
         .eq("organization_id", orgId!)
         .order("created_at", { ascending: false });
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -305,16 +315,18 @@ export function useLegalContacts() {
   });
 }
 
-export function useLegalMatters() {
+export function useLegalMatters(clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "matters", orgId],
+    queryKey: ["legal-connect", "matters", orgId, clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("legal_connect_matters")
         .select("*")
         .eq("organization_id", orgId!)
         .order("created_at", { ascending: false });
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -329,6 +341,7 @@ export interface EventLogFilters {
   processing_status?: string;
   call_id?: string;
   correlation_id?: string;
+  client_id?: string;
   limit?: number;
 }
 
@@ -345,6 +358,7 @@ export function useLegalEventLog(filters?: EventLogFilters) {
       if (filters?.processing_status) q = q.eq("processing_status", filters.processing_status);
       if (filters?.call_id) q = q.eq("call_id", filters.call_id);
       if (filters?.correlation_id) q = q.eq("correlation_id", filters.correlation_id);
+      if (filters?.client_id) q = q.eq("client_id", filters.client_id);
       const { data, error } = await q
         .order("received_at", { ascending: false })
         .limit(filters?.limit ?? 100);
@@ -360,6 +374,7 @@ export function useLegalEventLog(filters?: EventLogFilters) {
 export interface SyncJobFilters {
   provider?: string;
   status?: string;
+  client_id?: string;
   limit?: number;
 }
 
@@ -374,6 +389,7 @@ export function useLegalSyncJobs(filters?: SyncJobFilters) {
         .eq("organization_id", orgId!);
       if (filters?.provider) q = q.eq("provider", filters.provider);
       if (filters?.status) q = q.eq("status", filters.status);
+      if (filters?.client_id) q = q.eq("client_id", filters.client_id);
       const { data, error } = await q
         .order("created_at", { ascending: false })
         .limit(filters?.limit ?? 100);
@@ -386,16 +402,17 @@ export function useLegalSyncJobs(filters?: SyncJobFilters) {
 
 // ── Conflicts ────────────────────────────────────────────────────────
 
-export function useLegalConflicts(status?: string) {
+export function useLegalConflicts(status?: string, clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "conflicts", orgId, status],
+    queryKey: ["legal-connect", "conflicts", orgId, status, clientId],
     queryFn: async () => {
       let q = supabase
         .from("legal_connect_conflicts")
         .select("*")
         .eq("organization_id", orgId!);
       if (status) q = q.eq("resolution_status", status);
+      if (clientId) q = q.eq("client_id", clientId);
       const { data, error } = await q.order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -406,16 +423,17 @@ export function useLegalConflicts(status?: string) {
 
 // ── Review Queue ─────────────────────────────────────────────────────
 
-export function useLegalReviewQueue(status?: string) {
+export function useLegalReviewQueue(status?: string, clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "review-queue", orgId, status],
+    queryKey: ["legal-connect", "review-queue", orgId, status, clientId],
     queryFn: async () => {
       let q = supabase
         .from("legal_connect_review_queue")
         .select("*")
         .eq("organization_id", orgId!);
       if (status) q = q.eq("status", status);
+      if (clientId) q = q.eq("client_id", clientId);
       const { data, error } = await q.order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -444,15 +462,17 @@ export function useUpdateReviewItem() {
 
 // ── Field Policies ───────────────────────────────────────────────────
 
-export function useLegalFieldPolicies() {
+export function useLegalFieldPolicies(clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "field-policies", orgId],
+    queryKey: ["legal-connect", "field-policies", orgId, clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("legal_connect_field_policies")
         .select("*")
         .eq("organization_id", orgId!);
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -462,15 +482,17 @@ export function useLegalFieldPolicies() {
 
 // ── Webhook Subscriptions ────────────────────────────────────────────
 
-export function useLegalWebhookSubscriptions() {
+export function useLegalWebhookSubscriptions(clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "webhook-subscriptions", orgId],
+    queryKey: ["legal-connect", "webhook-subscriptions", orgId, clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("legal_connect_webhook_subscriptions")
         .select("*")
         .eq("organization_id", orgId!);
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -480,16 +502,18 @@ export function useLegalWebhookSubscriptions() {
 
 // ── AI Sessions ──────────────────────────────────────────────────────
 
-export function useLegalAISessions() {
+export function useLegalAISessions(clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "ai-sessions", orgId],
+    queryKey: ["legal-connect", "ai-sessions", orgId, clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("legal_connect_ai_sessions")
         .select("*")
         .eq("organization_id", orgId!)
         .order("created_at", { ascending: false });
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
@@ -499,18 +523,100 @@ export function useLegalAISessions() {
 
 // ── AI Checklists ────────────────────────────────────────────────────
 
-export function useLegalAIChecklists() {
+export function useLegalAIChecklists(clientId?: string) {
   const orgId = useOrgId();
   return useQuery({
-    queryKey: ["legal-connect", "ai-checklists", orgId],
+    queryKey: ["legal-connect", "ai-checklists", orgId, clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("legal_connect_ai_checklists")
         .select("*")
         .eq("organization_id", orgId!)
         .order("created_at", { ascending: false });
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
+    },
+    enabled: !!orgId,
+  });
+}
+
+// ── Tenant Configs ───────────────────────────────────────────────────
+
+export function useLegalTenantConfig(clientId?: string) {
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["legal-connect", "tenant-config", orgId, clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("legal_connect_tenant_configs")
+        .select("*")
+        .eq("organization_id", orgId!)
+        .eq("client_id", clientId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId && !!clientId,
+  });
+}
+
+export function useUpsertLegalTenantConfig() {
+  const qc = useQueryClient();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const { error } = await supabase
+        .from("legal_connect_tenant_configs")
+        .upsert({ ...payload, organization_id: orgId } as any, { onConflict: "organization_id,client_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "tenant-config"] });
+      toast.success("Client config saved");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ── Legal Connect Clients (join tenants with connection count) ────────
+
+export function useLegalConnectClients() {
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["legal-connect", "clients", orgId],
+    queryFn: async () => {
+      const { data: tenants, error: tErr } = await supabase
+        .from("tenants")
+        .select("id, name, partner_id")
+        .eq("organization_id", orgId!)
+        .order("name");
+      if (tErr) throw tErr;
+
+      const { data: connections, error: cErr } = await supabase
+        .from("legal_connect_connections")
+        .select("client_id, status, provider")
+        .eq("organization_id", orgId!);
+      if (cErr) throw cErr;
+
+      const { data: configs, error: cfgErr } = await supabase
+        .from("legal_connect_tenant_configs")
+        .select("client_id, onboarding_status, sandbox_mode")
+        .eq("organization_id", orgId!);
+      if (cfgErr) throw cfgErr;
+
+      return (tenants ?? []).map((t) => {
+        const clientConns = (connections ?? []).filter((c) => c.client_id === t.id);
+        const cfg = (configs ?? []).find((c) => c.client_id === t.id);
+        return {
+          ...t,
+          connectionCount: clientConns.length,
+          connectedProviders: [...new Set(clientConns.filter((c) => c.status === "connected").map((c) => c.provider))],
+          onboardingStatus: cfg?.onboarding_status ?? "not_started",
+          isSandbox: cfg?.sandbox_mode ?? false,
+        };
+      });
     },
     enabled: !!orgId,
   });
