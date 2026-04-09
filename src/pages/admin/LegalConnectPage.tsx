@@ -553,6 +553,11 @@ export default function LegalConnectPage() {
             </Card>
           </TabsContent>
 
+          {/* ── RELIABILITY ──────────────────────────────────── */}
+          <TabsContent value="reliability" className="mt-4">
+            <ReliabilityPanel clientId={clientId} />
+          </TabsContent>
+
           {/* ── AI SETUP ─────────────────────────────────────── */}
           <TabsContent value="ai" className="mt-4">
             <div className="grid md:grid-cols-3 gap-4">
