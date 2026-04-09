@@ -621,3 +621,140 @@ export function useLegalConnectClients() {
     enabled: !!orgId,
   });
 }
+
+// ── Failure Classifications ──────────────────────────────────────────
+
+export function useLegalFailureClassifications(clientId?: string) {
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["legal-connect", "failure-classifications", orgId, clientId],
+    queryFn: async () => {
+      let q = supabase
+        .from("legal_connect_failure_classifications")
+        .select("*")
+        .eq("organization_id", orgId!)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!orgId,
+  });
+}
+
+// ── Webhook Health (via admin edge function) ─────────────────────────
+
+export function useLegalWebhookHealth(clientId?: string) {
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["legal-connect", "webhook-health", orgId, clientId],
+    queryFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await supabase.functions.invoke("legal-connect-admin", {
+        body: { action: "getWebhookHealth", organization_id: orgId, client_id: clientId },
+      });
+      if (res.error) throw res.error;
+      return res.data?.data as {
+        subscriptions: any[];
+        recentFailures: any[];
+        deadLetterCount: number;
+        pausedCount: number;
+      };
+    },
+    enabled: !!orgId,
+  });
+}
+
+// ── Dead Letter Queue ────────────────────────────────────────────────
+
+export function useLegalDeadLetterQueue(clientId?: string) {
+  const orgId = useOrgId();
+  return useQuery({
+    queryKey: ["legal-connect", "dead-letter", orgId, clientId],
+    queryFn: async () => {
+      let q = supabase
+        .from("legal_connect_sync_jobs")
+        .select("*")
+        .eq("organization_id", orgId!)
+        .eq("status", "dead_letter")
+        .order("failed_at", { ascending: false })
+        .limit(50);
+      if (clientId) q = q.eq("client_id", clientId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!orgId,
+  });
+}
+
+// ── Replay Job Mutation ──────────────────────────────────────────────
+
+export function useReplayJob() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { job_id?: string; event_log_id?: string }) => {
+      const res = await supabase.functions.invoke("legal-connect-jobs", {
+        body: { action: "replayJob", ...payload },
+      });
+      if (res.error) throw res.error;
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "sync-jobs"] });
+      qc.invalidateQueries({ queryKey: ["legal-connect", "dead-letter"] });
+      toast.success("Replay job created");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ── Toggle Outage Mode ───────────────────────────────────────────────
+
+export function useToggleOutageMode() {
+  const qc = useQueryClient();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: async ({ clientId, outageMode }: { clientId: string; outageMode: boolean }) => {
+      const res = await supabase.functions.invoke("legal-connect-admin", {
+        body: { action: "toggleOutageMode", organization_id: orgId, client_id: clientId, outage_mode: outageMode },
+      });
+      if (res.error) throw res.error;
+      return res.data;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "tenant-config"] });
+      qc.invalidateQueries({ queryKey: ["legal-connect", "webhook-health"] });
+      qc.invalidateQueries({ queryKey: ["legal-connect", "sync-jobs"] });
+      toast.success(vars.outageMode ? "Outage mode enabled — jobs paused" : "Outage mode disabled — jobs resumed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ── Renew Webhook ────────────────────────────────────────────────────
+
+export function useRenewWebhook() {
+  const qc = useQueryClient();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      const res = await supabase.functions.invoke("legal-connect-admin", {
+        body: { action: "renewWebhook", organization_id: orgId, subscription_id: subscriptionId },
+      });
+      if (res.error) throw res.error;
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "webhook-health"] });
+      qc.invalidateQueries({ queryKey: ["legal-connect", "webhook-subscriptions"] });
+      toast.success("Webhook renewed");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}

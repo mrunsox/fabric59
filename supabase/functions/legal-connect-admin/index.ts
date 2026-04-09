@@ -144,6 +144,99 @@ Deno.serve(async (req) => {
         break;
       }
 
+      case "toggleOutageMode": {
+        const { data, error } = await supabaseAdmin
+          .from("legal_connect_tenant_configs")
+          .update({ outage_mode: payload.outage_mode ?? false })
+          .eq("organization_id", payload.organization_id)
+          .eq("client_id", payload.client_id)
+          .select()
+          .single();
+        if (error) throw error;
+
+        // If turning off outage mode, resume paused jobs
+        if (!payload.outage_mode) {
+          await supabaseAdmin
+            .from("legal_connect_sync_jobs")
+            .update({ status: "queued", next_attempt_at: new Date().toISOString() })
+            .eq("organization_id", payload.organization_id)
+            .eq("client_id", payload.client_id)
+            .eq("status", "paused");
+        }
+
+        result = data;
+        break;
+      }
+
+      case "getWebhookHealth": {
+        const { data: subs, error } = await supabaseAdmin
+          .from("legal_connect_webhook_subscriptions")
+          .select("*")
+          .eq("organization_id", payload.organization_id);
+        if (error) throw error;
+
+        // Get failure counts per subscription
+        const { data: failures } = await supabaseAdmin
+          .from("legal_connect_failure_classifications")
+          .select("classification, created_at")
+          .eq("organization_id", payload.organization_id)
+          .in("classification", ["expired_subscription", "renewal_failed", "invalid_signature"])
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        // Get dead letter count
+        const { count: deadLetterCount } = await supabaseAdmin
+          .from("legal_connect_sync_jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", payload.organization_id)
+          .eq("status", "dead_letter");
+
+        // Get paused count (outage backlog)
+        const { count: pausedCount } = await supabaseAdmin
+          .from("legal_connect_sync_jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", payload.organization_id)
+          .eq("status", "paused");
+
+        result = {
+          subscriptions: subs ?? [],
+          recentFailures: failures ?? [],
+          deadLetterCount: deadLetterCount ?? 0,
+          pausedCount: pausedCount ?? 0,
+        };
+        break;
+      }
+
+      case "renewWebhook": {
+        // Manual renewal of a specific subscription
+        const { data: sub, error: subErr } = await supabaseAdmin
+          .from("legal_connect_webhook_subscriptions")
+          .select("*")
+          .eq("id", payload.subscription_id)
+          .eq("organization_id", payload.organization_id)
+          .single();
+        if (subErr) throw subErr;
+
+        // In production: call provider API to renew
+        const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const newRenewAfter = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+
+        const { data, error } = await supabaseAdmin
+          .from("legal_connect_webhook_subscriptions")
+          .update({
+            expires_at: newExpiry,
+            renew_after: newRenewAfter,
+            status: "active",
+            failure_count: 0,
+          })
+          .eq("id", payload.subscription_id)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+        break;
+      }
+
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }

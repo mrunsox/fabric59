@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import {
   LayoutDashboard, Plug, Megaphone, Shield, Map, Activity, AlertTriangle,
-  Sparkles, TestTube2, FileText, RefreshCw, Wifi, WifiOff, CheckCircle2, XCircle, Eye, Plus,
+  Sparkles, TestTube2, FileText, RefreshCw, Wifi, WifiOff, CheckCircle2, XCircle, Eye, Plus, HeartPulse,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import {
@@ -19,6 +19,7 @@ import {
 } from "@/hooks/useLegalConnect";
 import ClientSelector from "@/components/legal-connect/ClientSelector";
 import LegalConnectClientSetup from "@/components/legal-connect/LegalConnectClientSetup";
+import ReliabilityPanel from "@/components/legal-connect/ReliabilityPanel";
 import { toast } from "sonner";
 
 // ── Status badge helper ──────────────────────────────────────────────
@@ -77,6 +78,7 @@ const tabMeta = [
   { value: "mappings", label: "Mappings", icon: Map },
   { value: "sync", label: "Sync Activity", icon: Activity },
   { value: "review", label: "Review Queue", icon: AlertTriangle },
+  { value: "reliability", label: "Reliability", icon: HeartPulse },
   { value: "ai", label: "AI Setup", icon: Sparkles },
   { value: "testing", label: "Testing", icon: TestTube2 },
   { value: "logs", label: "Logs", icon: FileText },
@@ -549,6 +551,11 @@ export default function LegalConnectPage() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* ── RELIABILITY ──────────────────────────────────── */}
+          <TabsContent value="reliability" className="mt-4">
+            <ReliabilityPanel clientId={clientId} />
           </TabsContent>
 
           {/* ── AI SETUP ─────────────────────────────────────── */}
