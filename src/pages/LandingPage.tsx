@@ -12,6 +12,7 @@ import { StatsCounter } from "@/components/marketing/StatsCounter";
 import { TestimonialCards } from "@/components/marketing/TestimonialCards";
 import { LeadCaptureBar } from "@/components/marketing/LeadCaptureBar";
 import { motion } from "framer-motion";
+import { ScrollToTopButton } from "@/components/layout/ScrollToTopButton";
 import {
   ArrowRight, ChevronRight, HelpCircle, Check, Star,
   Link as LinkIcon, Settings, Zap, Scale, Globe,
@@ -344,6 +345,7 @@ export default function LandingPage() {
       </main>
 
       <MegaFooter />
+      <ScrollToTopButton />
     </div>
   );
 }

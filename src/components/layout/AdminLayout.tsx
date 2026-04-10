@@ -20,6 +20,7 @@ import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { DashboardSwitcher } from "@/components/layout/DashboardSwitcher";
 import { AdminTour } from "@/components/onboarding/AdminTour";
 import { HealthIndicator } from "@/components/ui/health-indicator";
+import { ScrollToTopButton } from "@/components/layout/ScrollToTopButton";
 
 type NavItem = {
   name: string;
@@ -366,6 +367,7 @@ export function AdminLayout() {
           <Outlet />
         </main>
       </div>
+      <ScrollToTopButton />
     </div>
   );
 }
