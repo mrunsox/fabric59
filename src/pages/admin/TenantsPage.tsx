@@ -198,7 +198,7 @@ export default function TenantsPage() {
       header: "Health",
       render: (tenant: Tenant) => (
         <HealthIndicator
-          status={tenant.status === "active" ? "healthy" : tenant.status === "pending_verification" ? "pending" : "offline"}
+          status={tenant.status === "active" ? "healthy" : (tenant.status as string) === "pending_verification" ? "pending" : "offline"}
         />
       ),
     },
