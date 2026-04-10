@@ -212,7 +212,7 @@ export default function TestConsolePage() {
       if (error) {
         toast.error(`Five9 test failed: ${error.message}`);
       } else if (data?.skipped) {
-        toast.info("Duplicate detected — idempotent skip");
+        toast.info("Duplicate detected, idempotent skip");
       } else {
         toast.success("Five9 E2E test completed");
       }
@@ -315,7 +315,7 @@ export default function TestConsolePage() {
         tenant_id: selectedTenant,
         endpoint: actualEndpoint,
         method: actualMethod,
-        message: "Simulated response — use Five9 E2E tab for real edge function tests",
+        message: "Simulated response. Use Five9 E2E tab for real edge function tests.",
         payload: actualPayload,
       };
 
