@@ -1,163 +1,77 @@
 
 
-# Premium Design System Overhaul + Onboarding Flows
+# Premium Clients Page + Sidebar Refinement
 
-This is a two-phase frontend-only redesign. No database changes. No edge functions.
-
----
-
-## Phase 1: Design System Elevation
-
-### 1A. Color & Typography Foundation (`src/index.css`)
-
-Refine the CSS custom properties and utility classes:
-- **Neutrals**: Tighten the dark palette — darker card backgrounds, more contrast between surfaces (`--card` slightly darker, `--muted` more subtle)
-- **Status colors**: Add `--syncing`, `--pending-review`, `--disconnected` semantic tokens
-- **Typography**: Add `.text-display` (text-4xl font-bold tracking-tight), `.text-headline` (text-xl font-semibold tracking-tight), `.text-caption` (text-[11px] font-medium uppercase tracking-wider text-muted-foreground)
-- **Surfaces**: Refine `.surface-raised`, `.surface-inset` (recessed bg for filter bars), `.surface-overlay` (modals/drawers)
-- **Borders**: Add `.border-subtle` (border-border/40), `.divider-gradient` (gradient fade separator)
-- **Motion**: Add `.transition-premium` (200ms ease-out for all interactive), `.animate-slide-in-right`, `.animate-fade-up`
-- Remove/refine `.glow-primary` (too flashy), make `.card-hover` quieter
-
-### 1B. Core Component Refinements
-
-**`button.tsx`** — Add `rounded-lg` default, subtle `shadow-sm` on default variant, `active:scale-[0.98]` micro-press
-
-**`premium-stat-card.tsx`** — Refine hero card: remove blur blob, use cleaner accent bar, add optional sparkline slot, tighter spacing
-
-**`premium-table.tsx`** — Add sticky filter bar slot, row group separators, hover quick-action column support, row expansion support
-
-**`page-header.tsx`** — Add breadcrumb slot, action bar row below title for filters/tabs, stronger divider
-
-**`status-badge.tsx`** — Add `syncing`, `review`, `disconnected` variants. Add size variants (sm/default/lg)
-
-**`health-indicator.tsx`** — Add `syncing` and `pending` states with animated indicators
-
-**New: `src/components/ui/action-banner.tsx`** — Dismissible recommendation/warning banner for dashboard pages (icon + message + CTA + dismiss)
-
-**New: `src/components/ui/metric-strip.tsx`** — Horizontal strip of 3-5 compact inline metrics for secondary data rows
-
-**New: `src/components/ui/step-card.tsx`** — Onboarding step card with icon, title, description, status indicator, and expandable content
-
-### 1C. Sidebar & Shell Elevation (`AdminLayout.tsx`)
-
-- Refine sidebar gradient (more subtle, stop at ~60%)
-- Group labels: increase top margin to `mt-6` for stronger visual separation
-- Active state: make accent bar `2px` (not 3), add `font-semibold` to active text
-- Add collapsible mini-sidebar mode (icons only at `w-14`) for larger screens
-- Header: add thin bottom-border gradient, remove redundant HealthIndicator (move into dashboard hero)
-- Breadcrumb: show parent group > current page
-
-### 1D. Design System Reference Page
-
-**New: `src/pages/admin/DesignSystemPage.tsx`** — Internal style guide showing:
-- Color tokens rendered as swatches
-- Typography scale examples
-- Component gallery (buttons, badges, cards, tables, health indicators)
-- Status system reference
-- Dashboard pattern examples
-
-Add route at `/admin/design-system` and sidebar entry under Platform group.
+Redesign the Clients list page (`TenantsPage.tsx`) into a premium integration command center and refine the app shell for consistency.
 
 ---
 
-## Phase 2: Premium Onboarding Flows
+## Current State
 
-### 2A. Onboarding Architecture Overhaul (`OnboardingPage.tsx`)
-
-Restructure into a role-aware router that selects one of three flows:
-
-- **Partner Setup Flow** — for new white-label partners
-- **Client Setup Flow** — for adding a client under a partner
-- **Legal Connect Activation Flow** — for activating CRM sync under a client
-
-The existing onboarding (org → domain → test → intent → tenant → complete) becomes the foundation for Partner Setup, with the other two as new flows accessible from dashboard CTAs.
-
-### 2B. Partner Setup Flow (enhance existing `OnboardingPage.tsx`)
-
-Upgrade existing steps with premium treatment:
-- **Welcome screen**: Full-width hero with outcome messaging, role selection
-- **Organization step**: Add "why this matters" contextual helper card alongside form
-- **Domain step**: Add credential security messaging, animated connection indicators
-- **Testing step**: Bigger status display, animated progress, detailed connection report
-- **Intent step**: Richer cards with feature previews
-- **Client step**: Add CRM recommendation based on intent, policy preset suggestion
-- **Complete screen**: Readiness score (% of setup complete), configured checklist, remaining items, primary CTA + secondary "Continue Setup"
-
-### 2C. Client Setup Flow
-
-**New: `src/components/onboarding/ClientOnboardingFlow.tsx`**
-
-Steps:
-1. **Welcome** — "Setting up [Client Name] under [Partner]"
-2. **Client Profile** — Name, vertical/industry, team size
-3. **CRM Selection** — Card-based picker with capability indicators
-4. **Campaign Ownership** — Five9 campaign assignment
-5. **Policy Defaults** — AI-recommended presets based on vertical + CRM
-6. **Review & Create** — Summary card with readiness indicators
-
-### 2D. Legal Connect Activation Flow
-
-**New: `src/components/onboarding/LegalConnectActivationFlow.tsx`**
-
-Steps:
-1. **Welcome** — "Activating Legal Connect for [Client]"
-2. **Connect CRM** — OAuth or credential entry with live validation
-3. **Map Campaigns** — Five9 campaign ↔ CRM workspace mapping
-4. **Configure Variables** — Call variable + disposition mapping with AI suggestions
-5. **Set Policies** — Pass-through policy picker with "explain" panel
-6. **Run Tests** — Automated test suite with pass/fail results
-7. **Review Readiness** — Score, blockers, warnings
-8. **Activate** — Confirmation with "what happens next" summary
-
-### 2E. Shared Onboarding Components
-
-**Enhance `OnboardingMilestones.tsx`** — Add completion percentage, estimated time remaining, milestone grouping
-
-**New: `src/components/onboarding/OnboardingContextHelper.tsx`** — Side panel that explains downstream effects of current setup decision
-
-**New: `src/components/onboarding/ReadinessScore.tsx`** — Circular progress with score, configured items list, blocker warnings
-
-**New: `src/components/onboarding/AIRecommendationCard.tsx`** — "AI suggests..." card with reasoning and accept/customize actions
+The `TenantsPage.tsx` uses the old `StatCard` and `DataTable` components — flat, generic, template-level. The sidebar was already elevated in the previous pass but can be tightened further. The premium design system components (`PremiumStatCard`, `PremiumTable`, `PageHeader`, `ActionBanner`, `MetricStrip`, `HealthIndicator`) already exist and are underused on this page.
 
 ---
 
-## File Summary
+## Changes
 
-**New files (8):**
-1. `src/components/ui/action-banner.tsx`
-2. `src/components/ui/metric-strip.tsx`
-3. `src/components/ui/step-card.tsx`
-4. `src/pages/admin/DesignSystemPage.tsx`
-5. `src/components/onboarding/ClientOnboardingFlow.tsx`
-6. `src/components/onboarding/LegalConnectActivationFlow.tsx`
-7. `src/components/onboarding/OnboardingContextHelper.tsx`
-8. `src/components/onboarding/ReadinessScore.tsx`
-9. `src/components/onboarding/AIRecommendationCard.tsx`
+### 1. Clients Page Redesign (`src/pages/admin/TenantsPage.tsx`)
 
-**Modified files (10):**
-1. `src/index.css` — refined tokens, new utility classes, motion
-2. `src/components/ui/button.tsx` — rounded-lg, micro-press, shadow
-3. `src/components/ui/premium-stat-card.tsx` — cleaner hero, sparkline slot
-4. `src/components/ui/premium-table.tsx` — filter slot, row expansion
-5. `src/components/ui/page-header.tsx` — breadcrumb, action bar
-6. `src/components/ui/status-badge.tsx` — new variants, sizes
-7. `src/components/ui/health-indicator.tsx` — syncing/pending states
-8. `src/components/layout/AdminLayout.tsx` — sidebar refinements, breadcrumb
-9. `src/components/onboarding/OnboardingMilestones.tsx` — completion %, grouping
-10. `src/pages/onboarding/OnboardingPage.tsx` — premium treatment, role routing
-11. `src/pages/admin/UserDashboardPage.tsx` — action banners, metric strip
-12. `src/App.tsx` — add design system route
+**Header**: Replace inline title/buttons with `PageHeader` component. Add icon, subtitle with live client count, and grouped action buttons (Add Client primary, Sync from Five9 outline, Export ghost).
 
-**Execution order:**
-1. Design tokens + CSS utilities
-2. Core component refinements (button, badges, cards, tables)
-3. New shared components (action-banner, metric-strip, step-card)
-4. Sidebar & shell elevation
-5. Dashboard pages — apply new components
-6. Design system reference page
-7. Onboarding shared components (context helper, readiness, AI card)
-8. Partner setup flow enhancement
-9. Client setup flow
-10. Legal Connect activation flow
+**Metrics**: Replace 4x `StatCard` grid with:
+- 1 `PremiumStatCard` hero (2-col span) showing "Integration Health" — active clients / total, with success variant
+- 3 standard `PremiumStatCard`: Active Clients, API Calls (24h), Errors (24h)
+
+**Operational Focus**: Add a "Needs Attention" section using `ActionBanner` when errors > 0 or inactive clients exist. Show webhook renewals due, failed syncs, pending CRM connections.
+
+**Metric Strip**: Add `MetricStrip` below hero cards showing: CRM breakdown counts, partner count, sync volume.
+
+**Filter Bar**: Redesign using `surface-inset` container with:
+- Search input with icon
+- Partner dropdown (styled select)
+- CRM type filter (new)
+- Status filter (new: active/inactive/pending)
+- Clear filters button
+
+**Table**: Replace `DataTable` with `PremiumTable`. Redesign columns:
+- Client: avatar circle + name + truncated ID
+- Partner: partner name or "Direct" badge
+- CRM: `StatusBadge` with CRM variant
+- Health: `HealthIndicator` component
+- Status: `StatusBadge` with dot
+- Integrations: tooltip icon badges (existing pattern, refined)
+- Last Activity: relative timestamp
+- Actions: ghost icon buttons (open, edit, test, delete)
+
+**Empty State**: Use `PremiumEmptyState` with Building2 icon, premium copy and CTA.
+
+**Loading State**: Use `PremiumTable` built-in skeleton loading.
+
+### 2. Sidebar Minor Refinement (`src/components/layout/AdminLayout.tsx`)
+
+- Reorganize navigation groups to align with the prompt's suggested IA: rename/reorder groups to Overview, Operations, Integrations, Agent Tools, Configuration, Monitoring, Platform
+- Move Legal Connect from Operations into its own "Integrations" group alongside Field Mappings and general Integrations
+- Add `Command` (search/command palette placeholder) icon button in the header next to health indicator
+
+### 3. Client Overview Page Enhancement (`src/pages/admin/ClientOverviewPage.tsx`)
+
+- Replace inline header with `PageHeader` component
+- Add `HealthIndicator` to header showing connection status
+- Use `PremiumStatCard` instead of current stat cards with better variants
+
+---
+
+## Files
+
+**Modified (3):**
+1. `src/pages/admin/TenantsPage.tsx` — full redesign using premium components
+2. `src/components/layout/AdminLayout.tsx` — navigation group refinement, command palette button
+3. `src/pages/admin/ClientOverviewPage.tsx` — header and stat card upgrade
+
+**No new files needed** — all premium components already exist.
+
+## Execution Order
+1. TenantsPage redesign (biggest impact)
+2. AdminLayout sidebar group refinement
+3. ClientOverviewPage header upgrade
 
