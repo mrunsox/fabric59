@@ -294,6 +294,194 @@ export function useCreateLegalPolicyProfile() {
   });
 }
 
+// ── Disposition Mapping Mutations ─────────────────────────────────────
+
+export function useUpdateLegalDispositionMapping() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      const { error } = await supabase
+        .from("legal_connect_disposition_mappings")
+        .update(data)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "disposition-mappings"] });
+      toast.success("Disposition mapping updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteLegalDispositionMapping() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("legal_connect_disposition_mappings")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "disposition-mappings"] });
+      toast.success("Disposition mapping deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ── Call Variable Mapping Mutations ──────────────────────────────────
+
+export function useCreateLegalCallVariableMapping() {
+  const qc = useQueryClient();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const { error } = await supabase
+        .from("legal_connect_call_variable_mappings")
+        .insert([{ ...payload, organization_id: orgId } as any]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "call-variable-mappings"] });
+      toast.success("Call variable mapping created");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useUpdateLegalCallVariableMapping() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      const { error } = await supabase
+        .from("legal_connect_call_variable_mappings")
+        .update(data)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "call-variable-mappings"] });
+      toast.success("Call variable mapping updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteLegalCallVariableMapping() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("legal_connect_call_variable_mappings")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "call-variable-mappings"] });
+      toast.success("Call variable mapping deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ── Field Policy Mutations ───────────────────────────────────────────
+
+export function useCreateLegalFieldPolicy() {
+  const qc = useQueryClient();
+  const orgId = useOrgId();
+  return useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const { error } = await supabase
+        .from("legal_connect_field_policies")
+        .insert([{ ...payload, organization_id: orgId } as any]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "field-policies"] });
+      toast.success("Field policy created");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useUpdateLegalFieldPolicy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      const { error } = await supabase
+        .from("legal_connect_field_policies")
+        .update(data)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "field-policies"] });
+      toast.success("Field policy updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteLegalFieldPolicy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("legal_connect_field_policies")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "field-policies"] });
+      toast.success("Field policy deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ── Policy Profile Mutations ─────────────────────────────────────────
+
+export function useUpdateLegalPolicyProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      const { error } = await supabase
+        .from("legal_connect_policy_profiles")
+        .update(data)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "policy-profiles"] });
+      toast.success("Policy profile updated");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteLegalPolicyProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("legal_connect_policy_profiles")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["legal-connect", "policy-profiles"] });
+      toast.success("Policy profile deleted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
 // ── Canonical Entities (read-only) ───────────────────────────────────
 
 export function useLegalContacts(clientId?: string) {

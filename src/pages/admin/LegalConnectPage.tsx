@@ -9,20 +9,29 @@ import {
 } from "@/components/ui/table";
 import {
   LayoutDashboard, Plug, Megaphone, Shield, Map, Activity, AlertTriangle,
-  Sparkles, TestTube2, FileText, RefreshCw, Wifi, WifiOff, CheckCircle2, XCircle, Eye, Plus, HeartPulse,
+  Sparkles, TestTube2, FileText, RefreshCw, Wifi, WifiOff, CheckCircle2, XCircle, Eye, Plus, HeartPulse, Scale,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { PageHeader } from "@/components/ui/page-header";
+import { PremiumStatCard } from "@/components/ui/premium-stat-card";
+import { ActionBanner } from "@/components/ui/action-banner";
 import {
   useLegalConnections, useLegalCampaigns, useLegalSyncJobs, useLegalReviewQueue,
   useLegalEventLog, useLegalConflicts, useLegalProviderCapabilities, useLegalPolicyProfiles,
-  useLegalConnectClients,
+  useLegalConnectClients, useUpdateReviewItem,
 } from "@/hooks/useLegalConnect";
+import { useAuth } from "@/contexts/AuthContext";
 import ClientSelector from "@/components/legal-connect/ClientSelector";
 import LegalConnectClientSetup from "@/components/legal-connect/LegalConnectClientSetup";
 import ReliabilityPanel from "@/components/legal-connect/ReliabilityPanel";
 import TestingPanel from "@/components/legal-connect/TestingPanel";
 import ExamplesPanel from "@/components/legal-connect/ExamplesPanel";
 import AISetupPanel from "@/components/legal-connect/AISetupPanel";
+import CampaignFormDialog from "@/components/legal-connect/CampaignFormDialog";
+import PolicyProfileFormDialog from "@/components/legal-connect/PolicyProfileFormDialog";
+import DispositionMappingEditor from "@/components/legal-connect/DispositionMappingEditor";
+import CallVariableMappingEditor from "@/components/legal-connect/CallVariableMappingEditor";
+import FieldPolicyEditor from "@/components/legal-connect/FieldPolicyEditor";
 import { toast } from "sonner";
 
 // ── Status badge helper ──────────────────────────────────────────────
@@ -57,22 +66,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function StatCard({ label, value, icon: Icon, loading }: { label: string; value: string | number; icon: React.ElementType; loading?: boolean }) {
-  return (
-    <Card>
-      <CardContent className="flex items-center gap-4 p-5">
-        <div className="rounded-lg bg-primary/10 p-2.5">
-          <Icon className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          {loading ? <Skeleton className="h-7 w-16 mb-1" /> : <p className="text-2xl font-bold text-foreground">{value}</p>}
-          <p className="text-xs text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 const tabMeta = [
   { value: "overview", label: "Overview", icon: LayoutDashboard },
   { value: "connections", label: "Connections", icon: Plug },
@@ -91,14 +84,13 @@ export default function LegalConnectPage() {
   const [tab, setTab] = useState("overview");
   const [selectedClient, setSelectedClient] = useState("all");
   const [setupOpen, setSetupOpen] = useState(false);
+  const [campaignDialogOpen, setCampaignDialogOpen] = useState(false);
+  const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
 
+  const { user } = useAuth();
   const clientId = selectedClient === "all" ? undefined : selectedClient;
-  const selectedClientName = undefined; // resolved below from clients data
 
-  // Client list for selector
   const { data: clients, isLoading: clientsLoading } = useLegalConnectClients();
-
-  // All data hooks now accept optional clientId
   const { data: connections, isLoading: connLoading } = useLegalConnections(clientId);
   const { data: campaigns, isLoading: campLoading } = useLegalCampaigns(clientId);
   const { data: syncJobs, isLoading: syncLoading } = useLegalSyncJobs({ limit: 50, client_id: clientId });
@@ -107,6 +99,8 @@ export default function LegalConnectPage() {
   const { data: conflicts } = useLegalConflicts("open", clientId);
   const { data: capabilities } = useLegalProviderCapabilities();
   const { data: policyProfiles, isLoading: policiesLoading } = useLegalPolicyProfiles(clientId);
+
+  const updateReview = useUpdateReviewItem();
 
   const resolvedClientName = clients?.find((c) => c.id === selectedClient)?.name;
 
@@ -123,31 +117,77 @@ export default function LegalConnectPage() {
     toast.success(`Setup checklist generated for ${resolvedClientName ?? "client"} with ${config.provider}`);
   };
 
+  const handleApprove = (id: string) => {
+    updateReview.mutate({ id, data: { status: "approved", reviewed_by: user?.id, reviewed_at: new Date().toISOString() } });
+  };
+
+  const handleReject = (id: string) => {
+    updateReview.mutate({ id, data: { status: "rejected", reviewed_by: user?.id, reviewed_at: new Date().toISOString() } });
+  };
+
   return (
     <>
       <SEOHead title="Legal Connect — Fabric59" description="Enterprise legal CRM integration hub" />
 
       <div className="space-y-6">
-        {/* Header with client selector */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Legal Connect</h1>
-            <p className="text-sm text-muted-foreground mt-1">Five9 ↔ Fabric59 ↔ Clio / MyCase integration hub</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <ClientSelector
-              clients={clients ?? []}
-              value={selectedClient}
-              onChange={setSelectedClient}
-              isLoading={clientsLoading}
-            />
-            {clientId && (
-              <Button size="sm" onClick={() => setSetupOpen(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1.5" /> Setup Wizard
-              </Button>
-            )}
-          </div>
+        {/* ── Premium Header ──────────────────────────────────── */}
+        <PageHeader
+          title="Legal Connect"
+          subtitle="Five9 ↔ Fabric59 ↔ Clio / MyCase integration hub"
+          icon={<div className="rounded-xl bg-primary/10 p-2.5"><Scale className="h-5 w-5 text-primary" /></div>}
+        >
+          <ClientSelector
+            clients={clients ?? []}
+            value={selectedClient}
+            onChange={setSelectedClient}
+            isLoading={clientsLoading}
+          />
+          {clientId && (
+            <Button size="sm" onClick={() => setSetupOpen(true)}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" /> Setup Wizard
+            </Button>
+          )}
+        </PageHeader>
+
+        {/* ── Premium Metrics ─────────────────────────────────── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <PremiumStatCard
+            title="Sync Health"
+            value={`${successRate}%`}
+            subtitle={`${succeededJobs} of ${totalJobs} jobs succeeded`}
+            icon={HeartPulse}
+            tier="hero"
+            variant={successRate >= 90 ? "success" : successRate >= 70 ? "warning" : "destructive"}
+          />
+          <PremiumStatCard title="Connected Providers" value={connectedCount} icon={Plug} variant="primary" />
+          <PremiumStatCard title="Active Campaigns" value={activeCampaigns} icon={Megaphone} variant="default" />
+          <PremiumStatCard
+            title="Pending Reviews"
+            value={pendingReviews}
+            icon={AlertTriangle}
+            variant={pendingReviews > 0 ? "warning" : "default"}
+          />
         </div>
+
+        {/* ── Attention Banner ────────────────────────────────── */}
+        {failedJobs > 0 && (
+          <ActionBanner
+            icon={XCircle}
+            variant="destructive"
+            title={`${failedJobs} sync job${failedJobs > 1 ? "s" : ""} failed`}
+            description="Review failed or dead-letter sync jobs in the Sync Activity tab."
+            action={{ label: "View Sync Jobs", onClick: () => setTab("sync") }}
+          />
+        )}
+        {pendingReviews > 0 && (
+          <ActionBanner
+            icon={AlertTriangle}
+            variant="warning"
+            title={`${pendingReviews} item${pendingReviews > 1 ? "s" : ""} awaiting review`}
+            description="Approve or reject pending review items before they block sync operations."
+            action={{ label: "Open Review Queue", onClick: () => setTab("review") }}
+          />
+        )}
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
@@ -155,19 +195,15 @@ export default function LegalConnectPage() {
               <TabsTrigger key={t.value} value={t.value} className="flex items-center gap-1.5 text-xs px-3 py-1.5">
                 <t.icon className="h-3.5 w-3.5" />
                 {t.label}
+                {t.value === "review" && pendingReviews > 0 && (
+                  <Badge className="ml-1 h-4 min-w-4 px-1 text-[10px] bg-warning text-warning-foreground">{pendingReviews}</Badge>
+                )}
               </TabsTrigger>
             ))}
           </TabsList>
 
           {/* ── OVERVIEW ─────────────────────────────────────── */}
           <TabsContent value="overview" className="space-y-6 mt-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Connected Providers" value={connectedCount} icon={Plug} loading={connLoading} />
-              <StatCard label="Active Campaigns" value={activeCampaigns} icon={Megaphone} loading={campLoading} />
-              <StatCard label="Pending Reviews" value={pendingReviews} icon={AlertTriangle} loading={reviewLoading} />
-              <StatCard label="Failed Sync Jobs" value={failedJobs} icon={XCircle} loading={syncLoading} />
-            </div>
-
             <div className="grid md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-3">
@@ -331,7 +367,7 @@ export default function LegalConnectPage() {
           <TabsContent value="campaigns" className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">Five9 Campaign Mappings</h2>
-              <Button size="sm"><Megaphone className="h-3.5 w-3.5 mr-1.5" /> Add Campaign</Button>
+              <Button size="sm" onClick={() => setCampaignDialogOpen(true)}><Megaphone className="h-3.5 w-3.5 mr-1.5" /> Add Campaign</Button>
             </div>
             <Card>
               <CardContent className="p-0">
@@ -381,7 +417,7 @@ export default function LegalConnectPage() {
           <TabsContent value="policies" className="space-y-4 mt-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">Policy Profiles</h2>
-              <Button size="sm"><Shield className="h-3.5 w-3.5 mr-1.5" /> New Profile</Button>
+              <Button size="sm" onClick={() => setPolicyDialogOpen(true)}><Shield className="h-3.5 w-3.5 mr-1.5" /> New Profile</Button>
             </div>
             <Card>
               <CardContent className="p-0">
@@ -435,21 +471,17 @@ export default function LegalConnectPage() {
               <TabsList className="bg-muted/50">
                 <TabsTrigger value="dispositions" className="text-xs">Dispositions</TabsTrigger>
                 <TabsTrigger value="variables" className="text-xs">Call Variables</TabsTrigger>
-                <TabsTrigger value="fields" className="text-xs">CRM Fields</TabsTrigger>
-                <TabsTrigger value="statuses" className="text-xs">Status Mappings</TabsTrigger>
+                <TabsTrigger value="fields" className="text-xs">Field Policies</TabsTrigger>
               </TabsList>
-              {["dispositions", "variables", "fields", "statuses"].map((sub) => (
-                <TabsContent key={sub} value={sub} className="mt-4">
-                  <Card>
-                    <CardContent className="flex items-center justify-center py-16">
-                      <div className="text-center space-y-2">
-                        <Map className="h-8 w-8 text-muted-foreground mx-auto" />
-                        <p className="text-sm text-muted-foreground capitalize">{sub.replace(/_/g, " ")} mapping editor — coming in Phase 1E</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              ))}
+              <TabsContent value="dispositions" className="mt-4">
+                <DispositionMappingEditor clientId={clientId} />
+              </TabsContent>
+              <TabsContent value="variables" className="mt-4">
+                <CallVariableMappingEditor clientId={clientId} />
+              </TabsContent>
+              <TabsContent value="fields" className="mt-4">
+                <FieldPolicyEditor clientId={clientId} />
+              </TabsContent>
             </Tabs>
           </TabsContent>
 
@@ -542,10 +574,14 @@ export default function LegalConnectPage() {
                           <TableCell><StatusBadge status={r.status} /></TableCell>
                           <TableCell className="text-muted-foreground text-xs">{new Date(r.created_at).toLocaleString()}</TableCell>
                           <TableCell>
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="outline" className="text-xs h-7">Approve</Button>
-                              <Button size="sm" variant="ghost" className="text-xs h-7">Reject</Button>
-                            </div>
+                            {r.status === "pending" ? (
+                              <div className="flex gap-1">
+                                <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => handleApprove(r.id)} disabled={updateReview.isPending}>Approve</Button>
+                                <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => handleReject(r.id)} disabled={updateReview.isPending}>Reject</Button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Reviewed</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -624,12 +660,22 @@ export default function LegalConnectPage() {
         </Tabs>
       </div>
 
-      {/* Client onboarding wizard */}
+      {/* Dialogs */}
       <LegalConnectClientSetup
         open={setupOpen}
         onOpenChange={setSetupOpen}
         clientName={resolvedClientName}
         onComplete={handleSetupComplete}
+      />
+      <CampaignFormDialog
+        open={campaignDialogOpen}
+        onOpenChange={setCampaignDialogOpen}
+        clientId={clientId}
+      />
+      <PolicyProfileFormDialog
+        open={policyDialogOpen}
+        onOpenChange={setPolicyDialogOpen}
+        clientId={clientId}
       />
     </>
   );
