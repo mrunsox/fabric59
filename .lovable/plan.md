@@ -1,256 +1,121 @@
 
 
-# Fabric59 Implementation Audit — Five9 Integration Readiness
+# Close Five9 Integration Gaps — Implementation Plan
 
-## A. Full Feature Inventory by Domain
-
-### 1. Five9 Integration
-
-| Feature | Status | Evidence |
-|---------|--------|----------|
-| SOAP v13 Admin API wrapper | **Built & working** | `five9-provisioning/index.ts` (824 lines) — 30+ actions |
-| createUser / deactivate / modifyUser / deleteUser | **Built** | SOAP calls with XML escaping, role inference |
-| getSkills / addSkillsToUser / removeSkillsFromUser | **Built** | Full skill lifecycle |
-| createInboundCampaign / start/stop/forceStop | **Built** | Campaign lifecycle management |
-| createDisposition / modifyDisposition / getDispositions | **Built** | Bulk creation with "already exists" handling |
-| addDispositionsToCampaign / modifyCampaignProfileDispositions | **Built** | Group assignment, per-profile targeting |
-| createCampaignProfile / getCampaignProfiles | **Built** | Profile CRUD |
-| addDNIS / removeDNIS / getDNISList | **Built** | Full DNIS management |
-| getCampaignConfig (snapshot for archiving) | **Built** | Reads DNIS, skills, dispositions, state |
-| createWebConnector / modify / delete / getWebConnectors | **Built** | Full Web Connector lifecycle with variable substitution |
-| addRecordToList | **Built** | With dynamic fieldsMapping and listUpdateSettings |
-| getListsInfo | **Built** | List discovery |
-| syncFromFive9 (agents + skills → local DB) | **Built** | Server-side upserts via service role key |
-| five9-main webhook handler | **Built** | 811 lines — dual-path routing (tenant/domain), call normalization |
-| Clio handler in five9-main | **Built** | Contact search/create, matter resolution, Communication + Activity creation |
-| MyCase handler in five9-main | **Built** | Contact search/create, case resolution, Note creation |
-| Generic CRM dispatch (crm-push) | **Built** | REST adapter for Workiz/Salesforce/HubSpot/Zendesk |
-| Web callback writeback | **Built** | Matches call results back to web_callbacks table |
-| Downstream notification triggering | **Built** | Per-tenant notification_triggers evaluation |
-| five9-schema (metadata fetch) | **Built** | Contact fields, call variables, dispositions via SOAP |
-| five9-reporting | **Built** | Statistics API integration with disposition gating |
-| test-five9-connection | **Built** | Credential validation with SOAP fault classification |
-| Domain credential storage | **Built** | five9_domains table with encrypted fields |
-| Webhook secret validation | **Built** | x-webhook-secret header check on both routes |
-| Call variable model | **Partial** | Call variables passed as raw payload fields; no typed call variable registry at Five9-provisioning level |
-| Workflow Automation rules (Five9 side) | **Not in scope** | Fabric59 acts as the connector target, not the WFA rule author |
-
-### 2. Legal Connect Module
-
-| Feature | Status | Evidence |
-|---------|--------|----------|
-| 20+ database tables with RLS | **Built** | Full schema: connections, contacts, matters, campaigns, sync jobs, event log, conflicts, policies, etc. |
-| useLegalConnect hooks (50+ queries/mutations) | **Built** | Comprehensive CRUD including new disposition/call-variable/field-policy/policy-profile mutations |
-| 10-tab UI page | **Built** | Overview, Connections, Campaigns, Policies, Mappings, Sync, Review, Reliability, AI, Testing, Logs |
-| Client Selector + setup wizard | **Built** | LegalConnectClientSetup with provider/campaign config |
-| Disposition Mapping Editor | **Built** | PremiumTable with inline toggles, add/delete |
-| Call Variable Mapping Editor | **Built** | Source/target/mode/sensitive fields |
-| Field Policy Editor | **Built** | Allow/block/review/redact/hash modes |
-| Campaign Form Dialog | **Built** | Add/edit campaigns with connection linking |
-| Policy Profile Form Dialog | **Built** | Ambiguous match, duplicate prevention modes |
-| Review Queue with Approve/Reject | **Built** | Wired to useUpdateReviewItem mutation |
-| legal-connect-webhooks (Clio/MyCase inbound) | **Built** | HMAC signature verification, event normalization, event log + sync job creation |
-| legal-connect-jobs (sync processor) | **Built** | Queue processing, exponential backoff, dead-letter, failure classification, replay |
-| legal-connect-admin | **Built** | Webhook renewal, outage toggle, client setup, capability queries |
-| legal-connect-test | **Built** | Clio/MyCase/Five9 simulation with policy evaluation and test run recording |
-| legal-connect-ai | **Built** | Prompt executor with Lovable AI gateway, safety preamble, session persistence |
-| Reliability Panel | **Built** | Webhook health, dead-letter management, outage mode |
-| Testing Panel | **Built** | Test simulation UI |
-| AI Setup Panel | **Built** | Prompt template management |
-| Example Library & Seed Data | **Planned only** | Table exists but no seed data inserted |
-| Go-Live Readiness Tools | **Planned only** | No implementation |
-| Clio Deep Two-Way Sync | **Planned only** | One-way (Five9→Clio) works; reverse sync not built |
-| MyCase Capability-Aware Adapter | **Planned only** | Standalone `mycase/index.ts` is a stub (14 lines, returns "API integration pending") |
-
-### 3. Clio Integration
-
-| Feature | Status | Evidence |
-|---------|--------|----------|
-| OAuth2 flow (authorization code) | **Built** | `clio-oauth-callback/index.ts` — token exchange + storage |
-| Token refresh (auto-refresh on expiry) | **Built** | In `five9-main` getClioAccessToken helper |
-| oauth_tokens table | **Built** | With org/tenant scoping |
-| clio_mappings table (phone→contact+matter) | **Built** | Unique on (tenant_id, phone) |
-| Contact search by phone | **Built** | Clio API v4 `/contacts.json?query=` |
-| Contact auto-create | **Built** | Conditional on rules.autoCreateContact |
-| Matter resolution (latest open) | **Built** | `/matters.json?contact_id=&status=open` |
-| Matter auto-create | **Built** | Conditional on rules + queue restrictions |
-| Communication creation (PhoneCall) | **Built** | Full body with direction, agent, disposition, recording |
-| Time Entry creation | **Built** | Conditional on rules.createTimeEntryForBillable |
-| Webhook subscription model | **Built** | legal_connect_webhook_subscriptions table |
-| Webhook signature verification | **Built** | HMAC-SHA256 in legal-connect-webhooks |
-| Webhook renewal (31-day lifecycle) | **Built** | legal-connect-admin handles renewal + logging |
-| Webhook renewal log | **Built** | legal_connect_webhook_renewal_log table |
-| Reverse sync (Clio→Five9) | **Planned only** | Webhook receiver logs events but no action taken |
-| CLIO_CLIENT_ID / CLIO_CLIENT_SECRET secrets | **Missing** | Not in secrets list — blocks OAuth flow |
-
-### 4. MyCase Integration
-
-| Feature | Status | Evidence |
-|---------|--------|----------|
-| Contact search/create | **Built** | In five9-main handleCallForMyCase |
-| Case resolution/create | **Built** | `/cases?contact_id=&status=open` |
-| Note creation | **Built** | With case or contact fallback |
-| mycase_mappings table | **Built** | phone→contact_id+case_id |
-| API key auth model | **Built** | Via api_keys table |
-| Capability matrix (provider_capabilities) | **Built** | Table + UI in overview |
-| Client capabilities (per-client overrides) | **Built** | legal_connect_client_capabilities table |
-| Standalone MyCase edge function | **Stub** | `mycase/index.ts` = 14 lines returning "API integration pending" |
-| Webhook signature verification | **Built** | In legal-connect-webhooks (same HMAC pattern) |
-| Reverse sync | **Not built** | No handler for MyCase webhooks → actions |
-
-### 5. Auth / Multi-Tenant / Roles
-
-| Feature | Status | Evidence |
-|---------|--------|----------|
-| Email/password auth | **Built** | Login, Signup, Forgot/Reset password pages |
-| Organization hierarchy (Org→Partner→Client) | **Built** | organizations, partners, tenants tables with RLS |
-| Role system (app_role enum) | **Built** | user_roles table with admin, master_admin, ops_team |
-| Permission system | **Built** | user_permissions table + user_has_permission() |
-| Organization membership | **Built** | organization_members with owner/admin/member roles |
-| Master admin access | **Built** | /system-access route + is_master_admin() |
-| Dev mode bypass | **Built** | For faster development |
+Now that we've confirmed Clio credentials are per-client (already handled by `integration_configs` JSONB + `oauth_tokens`), here are the remaining actionable items from the audit.
 
 ---
 
-## B. Five9 Readiness Crosswalk
+## 1. Wire Real CRM Calls into `legal-connect-jobs` processQueue
 
-| Five9 Requirement | App Status | Gap |
-|---|---|---|
-| Campaign mapping (Five9 campaign → tenant/client) | ✅ Built | campaign_scripts + legal_connect_campaigns tables |
-| Domain/client routing | ✅ Built | Dual-path: x-tenant-id or x-five9-domain |
-| Web Connector endpoint | ✅ Built | five9-main is the target URL |
-| Web Connector registration (SOAP) | ✅ Built | createWebConnector with variables + worksheet |
-| Lookup endpoint (pre-call) | ⚠️ Partial | five9-main handles call_ended/disposition_set but NOT pre-call lookup. No screen-pop or pre-call contact lookup endpoint exists |
-| Post-disposition endpoint | ✅ Built | five9-main processes disposition_set events |
-| Call variable model | ⚠️ Partial | Variables flow through payload.raw but no typed call variable registry at Five9 API level; legal_connect_call_variable_mappings handles mapping |
-| Disposition mapping model | ✅ Built | legal_connect_disposition_mappings with 15+ action flags |
-| Reporting variables | ✅ Built | five9-reporting with Statistics API |
-| Callback handling | ✅ Built | web-callback + addRecordToList |
-| Sync-from-Five9 | ✅ Built | agents + skills auto-import |
-| Agent screen-pop support | ❌ Missing | No pre-call lookup endpoint for Agent Desktop Plus connector |
-| Call variable creation/management via SOAP | ❌ Missing | No createCallVariable or modifyCallVariable SOAP actions |
-| Agent context panel (live agent view) | ⚠️ Planned | AgentContextPanel component exists but is not wired to real data |
-| Billing/cleaned metrics | ✅ Built | call_log_cache + data plane views |
+**Problem:** Lines 111-125 of `legal-connect-jobs/index.ts` mark every job as "succeeded" without executing any CRM API calls. The entire Legal Connect sync pipeline is instrumented but has no execution engine.
+
+**Fix:** Replace the stub with a dispatcher that:
+- Reads the job's `provider` and `job_type` fields
+- Fetches the tenant's `integration_configs` to get Clio OAuth token ID or MyCase API key
+- For Clio jobs: obtains access token via `oauth_tokens`, calls Clio API (contact search/create, matter resolve, communication create) — replicating the logic already proven in `five9-main`
+- For MyCase jobs: fetches API key from `api_keys` table, calls MyCase API with the same patterns from `five9-main`
+- Records output payload on success, or triggers retry/dead-letter on failure
+
+**File:** `supabase/functions/legal-connect-jobs/index.ts` — replace lines 111-125 with ~200 lines of real CRM dispatch logic, extracting the Clio/MyCase API helpers (already written in `five9-main`) into shared inline functions.
 
 ---
 
-## C. Clio / MyCase Readiness Crosswalk
+## 2. Build Pre-Call Lookup Endpoint
 
-| Capability | Clio | MyCase |
-|---|---|---|
-| Auth model | ✅ OAuth2 built | ✅ API key built |
-| Token storage | ✅ oauth_tokens table | ✅ api_keys table |
-| Contact lookup | ✅ Working | ✅ Working |
-| Contact create | ✅ Working | ✅ Working |
-| Matter/case lookup | ✅ Working | ✅ Working |
-| Matter/case create | ✅ Working | ✅ Working |
-| Note/activity creation | ✅ Communication + Activity | ✅ Note creation |
-| Webhook subscription | ✅ Table + renewal | ⚠️ Table exists, no creation flow |
-| Webhook renewal | ✅ 31-day lifecycle handled | N/A (MyCase doesn't expire same way) |
-| Webhook signature verify | ✅ HMAC-SHA256 | ✅ Same pattern |
-| Reverse sync | ❌ Events logged, no action | ❌ Not built |
-| Capability matrix | ✅ Built (provider_capabilities) | ✅ Built |
-| Standalone adapter | N/A (in five9-main) | ❌ Stub only |
-| **OAuth secrets** | ❌ CLIO_CLIENT_ID/SECRET missing | N/A |
+**Problem:** Five9 Agent Desktop Plus screen-pop requires a lookup URL that returns contact data before/during a call. Currently `five9-main` only handles `call_ended`/`disposition_set` — no pre-call path.
 
-**Clio is significantly ahead of MyCase.** MyCase has a working handler inside five9-main but the standalone `mycase/index.ts` is a 14-line stub.
+**Fix:** Add a `lookup` action to `five9-main` that:
+- Accepts ANI (caller phone number) + optional DNIS/campaign
+- Searches `legal_connect_contacts` canonical table first
+- Falls back to `clio_mappings` / `mycase_mappings`
+- Returns structured screen-pop data: contact name, phone, matter/case info, recent call history
+- Responds in <500ms (no CRM API calls, local DB only)
+
+**File:** `supabase/functions/five9-main/index.ts` — add ~80 lines for a new `lookup` path before the existing Route A/B processing.
 
 ---
 
-## D. Testing Readiness
+## 3. Add Call Variable SOAP Actions to Five9 Provisioning
 
-### What Can Be Tested Now
+**Problem:** No `createCallVariable`, `modifyCallVariable`, or `getCallVariables` SOAP actions exist, preventing programmatic management of Five9 call variables.
 
-| Flow | Test Type | Ready? |
-|---|---|---|
-| Five9 SOAP connection test | End-to-end | ✅ With valid FIVE9_USERNAME/PASSWORD |
-| Agent sync from Five9 | End-to-end | ✅ |
-| Disposition creation + campaign assignment | End-to-end | ✅ |
-| Campaign creation + DNIS + skill assignment | End-to-end | ✅ |
-| Web Connector creation | End-to-end | ✅ |
-| five9-main webhook (domain route) | End-to-end | ✅ With webhook_secret |
-| five9-main → Clio handler | ⚠️ Blocked | Need CLIO_CLIENT_ID + CLIO_CLIENT_SECRET |
-| five9-main → MyCase handler | ⚠️ Blocked | Need a tenant with MyCase API key configured |
-| Legal Connect disposition mapping CRUD | UI only | ✅ |
-| Legal Connect call variable mapping CRUD | UI only | ✅ |
-| Legal Connect test simulation (Clio/Five9) | Mock only | ✅ legal-connect-test uses sample payloads |
-| Legal Connect sync job processing | Mock only | ⚠️ Jobs succeed immediately without real CRM calls |
-| Legal Connect webhook inbound (Clio) | ⚠️ Blocked | Need real Clio instance |
-| Review queue approve/reject | UI+DB | ✅ |
-| Onboarding flows (partner/client/LC) | UI only | ✅ No real provisioning |
+**Fix:** Add 3 new action handlers to `five9-provisioning/index.ts`:
+- `getCallVariables` — SOAP `getCallVariables` → parse response
+- `createCallVariable` — accepts name, group, description, type (STRING/NUMBER/DATE/BOOLEAN/CURRENCY/PERCENT/EMAIL/URL/PHONE/TIME/TIME_PERIOD/LIST)
+- `modifyCallVariable` — accepts name + updates
 
-### What Blocks Testing
-
-| Blocker | Severity | Impact |
-|---|---|---|
-| **Missing CLIO_CLIENT_ID / CLIO_CLIENT_SECRET secrets** | Critical | Blocks all Clio OAuth + API calls |
-| **Sync jobs succeed without real CRM calls** | High | legal-connect-jobs processQueue marks all jobs "succeeded" without executing actual provider API calls (lines 111-125 just set succeeded) |
-| **No pre-call lookup endpoint** | High | Five9 Agent Desktop Plus screen-pop requires a lookup URL returning contact data |
-| **MyCase standalone adapter is a stub** | Medium | `mycase/index.ts` does nothing real |
-| **No call variable CRUD via SOAP** | Medium | Can't programmatically create/manage Five9 call variables |
-| **Agent context panel not wired** | Medium | Agent-facing panel exists as component but isn't connected |
-| **No example/seed data** | Low | Testing panel works but empty state isn't instructive |
+**File:** `supabase/functions/five9-provisioning/index.ts` — add ~80 lines after the existing disposition management section.
 
 ---
 
-## E. Critical Architecture Gap: Sync Job Processor
+## 4. Build Real MyCase Standalone Adapter
 
-The `legal-connect-jobs` processQueue handler (lines 111-125) contains a **stub implementation**:
+**Problem:** `mycase/index.ts` is a 14-line stub returning "API integration pending."
 
-```text
-const result = {
-  status: "succeeded",
-  output: { job_type: job.job_type, processed_at: new Date().toISOString() },
-};
-```
+**Fix:** Replace with a real adapter supporting:
+- `searchContacts` — by phone/email/name
+- `createContact` — with phone, name, email
+- `searchCases` — by contact_id, status
+- `createCase` — with name, contact_id
+- `createNote` — with subject, content, case_id or contact_id
+- `getContact` / `getCase` — by ID
 
-It marks every job as "succeeded" without executing any real CRM API calls. This means:
-- The queue/backoff/dead-letter infrastructure works
-- But no actual Clio contact creation, matter creation, or note creation happens through the Legal Connect pipeline
-- The real CRM work only happens via `five9-main` (the old direct-call path)
+Uses the same `mycaseApiFetch` pattern already proven in `five9-main`. Reads API key from `api_keys` table via tenant config.
 
-This is the **single largest gap** — the new Legal Connect pipeline is fully instrumented but has no real execution engine.
+**File:** `supabase/functions/mycase/index.ts` — full rewrite, ~250 lines.
 
 ---
 
-## F. Gap Backlog (Prioritized)
+## 5. Seed Example Library Data
 
-### Tier 1 — Must Fix Before Smoke Testing
+**Problem:** The `legal_connect_example_library` table exists but has no rows. The Testing Panel's example picker shows empty state.
 
-| # | Gap | Effort | Impact |
-|---|---|---|---|
-| 1 | **Wire real CRM calls into legal-connect-jobs processQueue** | Large | Unlocks the entire Legal Connect sync pipeline |
-| 2 | **Add CLIO_CLIENT_ID + CLIO_CLIENT_SECRET secrets** | Trivial | Unlocks all Clio OAuth flows |
-| 3 | **Build pre-call lookup endpoint** | Medium | Required for Five9 Agent Desktop Plus screen-pop |
+**Fix:** Create a migration that inserts ~15 example scenarios covering:
+- Clio: contact_created, contact_updated, matter_created, matter_updated, task_created
+- MyCase: contact_created, case_created, note_created
+- Five9: qualified_lead, callback_scheduled, consult_booked, no_answer, wrong_number, voicemail
 
-### Tier 2 — Must Fix Before Integration Testing
+Each row includes provider, scenario_name, description, sample_payload, expected_outcome.
 
-| # | Gap | Effort | Impact |
-|---|---|---|---|
-| 4 | Build real MyCase adapter in legal-connect-jobs (not the stub) | Medium | MyCase parity with Clio |
-| 5 | Add call variable CRUD SOAP actions (createCallVariable, getCallVariables) | Medium | Programmatic Five9 variable management |
-| 6 | Wire Agent Context Panel to real Legal Connect data | Small | Agent-facing experience |
-| 7 | Seed example library data | Small | Testing framework usability |
-
-### Tier 3 — Before Pilot
-
-| # | Gap | Effort | Impact |
-|---|---|---|---|
-| 8 | Clio reverse sync (webhook → actions) | Large | Two-way sync |
-| 9 | Go-live readiness checklist tool | Medium | Operational confidence |
-| 10 | AI prompt pack seeding | Small | AI setup completeness |
+**Method:** Database migration with INSERT statements.
 
 ---
 
-## G. Recommended Next-Build Sequence
+## 6. Wire Agent Context Panel to Live Data
 
-1. **Add Clio OAuth secrets** (5 min) — unblocks all Clio testing
-2. **Wire legal-connect-jobs to real CRM adapters** — the job processor needs to actually call Clio/MyCase APIs based on job_type, using the same patterns already in five9-main's handlers
-3. **Build pre-call lookup endpoint** — new action in five9-main or a dedicated function that accepts ANI/DNIS, searches contacts via Legal Connect canonical tables, and returns screen-pop data
-4. **Add Five9 call variable SOAP actions** — createCallVariable, modifyCallVariable, getCallVariables
-5. **Build real MyCase adapter** in the job processor
-6. **Seed example library** with the ~30 scenarios already defined as constants in legal-connect-test
-7. **Wire Agent Context Panel** to useLegalConnect hooks for live call context
+**Problem:** `AgentContextPanel` accepts props but is never rendered with real data from Legal Connect hooks.
 
-This sequence prioritizes unblocking real end-to-end testing as fast as possible.
+**Fix:** Create a wrapper component `AgentContextPanelConnected` that:
+- Takes `clientId` and `callerPhone` as props
+- Uses `useLegalContacts` to find the contact by phone
+- Uses `useLegalMatters` to find open matters for that contact
+- Uses `useLegalEventLog` for recent events
+- Passes resolved data into `AgentContextPanel`
+
+**Files:**
+- New: `src/components/legal-connect/AgentContextPanelConnected.tsx` (~50 lines)
+- Modified: Wire it into the Agent Dashboard page where appropriate
+
+---
+
+## Execution Order
+
+1. `legal-connect-jobs` — real CRM dispatch (highest impact, unlocks pipeline)
+2. `five9-main` — pre-call lookup endpoint
+3. `five9-provisioning` — call variable SOAP actions
+4. `mycase/index.ts` — full adapter rewrite
+5. DB migration — seed example library
+6. `AgentContextPanelConnected` — live data wiring
+
+## Files Summary
+
+| Action | File |
+|--------|------|
+| Major rewrite | `supabase/functions/legal-connect-jobs/index.ts` |
+| Add lookup path | `supabase/functions/five9-main/index.ts` |
+| Add 3 actions | `supabase/functions/five9-provisioning/index.ts` |
+| Full rewrite | `supabase/functions/mycase/index.ts` |
+| New component | `src/components/legal-connect/AgentContextPanelConnected.tsx` |
+| DB migration | Seed `legal_connect_example_library` with ~15 rows |
 
