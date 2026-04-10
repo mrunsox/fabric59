@@ -806,6 +806,69 @@ serve(async (req) => {
       const dnisList = extractValues(xml, 'number');
       responseData = { success: true, dnisList };
 
+    // ==================== Call Variable Management ====================
+    } else if (action === 'getCallVariables') {
+      const soapBody = `<ser:getCallVariables/>`;
+      const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getCallVariables', soapBody);
+      const varBlocks = xml.match(/<return>(.*?)<\/return>/gs) || [];
+      const variables = varBlocks.map(block => ({
+        name: extractFirst(block, 'name'),
+        group: extractFirst(block, 'group'),
+        description: extractFirst(block, 'description'),
+        type: extractFirst(block, 'type'),
+        defaultValue: extractFirst(block, 'defaultValue'),
+        reporting: extractFirst(block, 'reporting') === 'true',
+        sensitive: extractFirst(block, 'sensitive') === 'true',
+      }));
+      responseData = { success: true, variables };
+
+    } else if (action === 'createCallVariable') {
+      const { name, group, description, type, defaultValue, reporting, sensitive } = payload as {
+        name: string; group?: string; description?: string;
+        type?: string; defaultValue?: string; reporting?: boolean; sensitive?: boolean;
+      };
+      const fields: string[] = [`<name>${escapeXml(name)}</name>`];
+      if (group) fields.push(`<group>${escapeXml(group)}</group>`);
+      if (description) fields.push(`<description>${escapeXml(description)}</description>`);
+      if (type) fields.push(`<type>${escapeXml(type)}</type>`);
+      if (defaultValue) fields.push(`<defaultValue>${escapeXml(defaultValue)}</defaultValue>`);
+      if (reporting !== undefined) fields.push(`<reporting>${reporting}</reporting>`);
+      if (sensitive !== undefined) fields.push(`<sensitive>${sensitive}</sensitive>`);
+      const soapBody = `<ser:createCallVariable>
+  <variable>
+    ${fields.join('\n    ')}
+  </variable>
+</ser:createCallVariable>`;
+      try {
+        await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'createCallVariable', soapBody);
+        responseData = { success: true };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (msg.toLowerCase().includes('already exists')) {
+          responseData = { success: true, note: 'Call variable already exists' };
+        } else { throw err; }
+      }
+
+    } else if (action === 'modifyCallVariable') {
+      const { name, updates } = payload as {
+        name: string;
+        updates: { group?: string; description?: string; type?: string; defaultValue?: string; reporting?: boolean; sensitive?: boolean };
+      };
+      const fields: string[] = [`<name>${escapeXml(name)}</name>`];
+      if (updates.group) fields.push(`<group>${escapeXml(updates.group)}</group>`);
+      if (updates.description !== undefined) fields.push(`<description>${escapeXml(updates.description)}</description>`);
+      if (updates.type) fields.push(`<type>${escapeXml(updates.type)}</type>`);
+      if (updates.defaultValue !== undefined) fields.push(`<defaultValue>${escapeXml(updates.defaultValue)}</defaultValue>`);
+      if (updates.reporting !== undefined) fields.push(`<reporting>${updates.reporting}</reporting>`);
+      if (updates.sensitive !== undefined) fields.push(`<sensitive>${updates.sensitive}</sensitive>`);
+      const soapBody = `<ser:modifyCallVariable>
+  <variable>
+    ${fields.join('\n    ')}
+  </variable>
+</ser:modifyCallVariable>`;
+      await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'modifyCallVariable', soapBody);
+      responseData = { success: true };
+
     } else {
       responseData = { success: false, error: `Unknown action: ${action}` };
     }
