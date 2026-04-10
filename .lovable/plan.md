@@ -1,77 +1,91 @@
 
 
-# Premium Clients Page + Sidebar Refinement
+# Build, Finish & Test — Legal Connect
 
-Redesign the Clients list page (`TenantsPage.tsx`) into a premium integration command center and refine the app shell for consistency.
+Complete the Legal Connect module by building the missing Mappings editors, upgrading the page to premium design, and wiring all CRUD operations end-to-end.
 
 ---
 
 ## Current State
 
-The `TenantsPage.tsx` uses the old `StatCard` and `DataTable` components — flat, generic, template-level. The sidebar was already elevated in the previous pass but can be tightened further. The premium design system components (`PremiumStatCard`, `PremiumTable`, `PageHeader`, `ActionBanner`, `MetricStrip`, `HealthIndicator`) already exist and are underused on this page.
+**Working:** Overview, Connections, Campaigns, Policies, Sync Activity, Review Queue, Reliability, AI Setup, Testing, Logs tabs — all render with real data hooks. Client setup wizard works. Agent context panel exists.
+
+**Incomplete:**
+1. **Mappings tab** — all 4 sub-tabs (Dispositions, Call Variables, CRM Fields, Status Mappings) show "coming in Phase 1E" placeholder
+2. **Missing CRUD hooks** — no create/update/delete for call variable mappings or field policies
+3. **Premium design** — page still uses old `StatCard` and plain tables, not the premium components
+4. **Review Queue actions** — Approve/Reject buttons are wired but missing mutation calls with proper payload
+5. **Campaign CRUD UI** — "Add Campaign" button exists but no form/dialog
+6. **Policy CRUD UI** — "New Profile" button exists but no form/dialog
 
 ---
 
-## Changes
+## Plan
 
-### 1. Clients Page Redesign (`src/pages/admin/TenantsPage.tsx`)
+### 1. Add missing CRUD hooks (`src/hooks/useLegalConnect.ts`)
+- `useCreateLegalCallVariableMapping`, `useUpdateLegalCallVariableMapping`, `useDeleteLegalCallVariableMapping`
+- `useCreateLegalFieldPolicy`, `useUpdateLegalFieldPolicy`, `useDeleteLegalFieldPolicy`
+- `useUpdateLegalDispositionMapping`, `useDeleteLegalDispositionMapping`
+- `useUpdateLegalPolicyProfile`, `useDeleteLegalPolicyProfile`
 
-**Header**: Replace inline title/buttons with `PageHeader` component. Add icon, subtitle with live client count, and grouped action buttons (Add Client primary, Sync from Five9 outline, Export ghost).
+### 2. Build Disposition Mapping Editor (`src/components/legal-connect/DispositionMappingEditor.tsx`)
+- Table showing disposition_code, label, action flags (create_contact, create_matter, etc.), priority
+- Add row dialog with full field set
+- Inline toggle for boolean flags
+- Delete with confirmation
+- Filtered by selected campaign
 
-**Metrics**: Replace 4x `StatCard` grid with:
-- 1 `PremiumStatCard` hero (2-col span) showing "Integration Health" — active clients / total, with success variant
-- 3 standard `PremiumStatCard`: Active Clients, API Calls (24h), Errors (24h)
+### 3. Build Call Variable Mapping Editor (`src/components/legal-connect/CallVariableMappingEditor.tsx`)
+- Table: variable_name, source_location, pass_through_mode, target_entity, provider_field_path, sensitive flag
+- Add/edit dialog
+- Delete
+- Campaign filter
 
-**Operational Focus**: Add a "Needs Attention" section using `ActionBanner` when errors > 0 or inactive clients exist. Show webhook renewals due, failed syncs, pending CRM connections.
+### 4. Build Field Policy Editor (`src/components/legal-connect/FieldPolicyEditor.tsx`)
+- Table: entity_name, direction, mode (allow/block/review/redact/hash), sensitivity_level, provider
+- Add/edit dialog with mode selector
+- Delete
 
-**Metric Strip**: Add `MetricStrip` below hero cards showing: CRM breakdown counts, partner count, sync volume.
+### 5. Build Campaign Form Dialog (`src/components/legal-connect/CampaignFormDialog.tsx`)
+- Dialog for add/edit campaign: five9_campaign_name, campaign_type, dnis, provider_connection_id
+- Used by Campaigns tab "Add Campaign" button
 
-**Filter Bar**: Redesign using `surface-inset` container with:
-- Search input with icon
-- Partner dropdown (styled select)
-- CRM type filter (new)
-- Status filter (new: active/inactive/pending)
-- Clear filters button
+### 6. Build Policy Profile Form Dialog (`src/components/legal-connect/PolicyProfileFormDialog.tsx`)
+- Dialog for add/edit policy profile: name, is_default, allow_contact_create, allow_matter_create, ambiguous_match_mode, duplicate_prevention_mode
+- Used by Policies tab "New Profile" button
 
-**Table**: Replace `DataTable` with `PremiumTable`. Redesign columns:
-- Client: avatar circle + name + truncated ID
-- Partner: partner name or "Direct" badge
-- CRM: `StatusBadge` with CRM variant
-- Health: `HealthIndicator` component
-- Status: `StatusBadge` with dot
-- Integrations: tooltip icon badges (existing pattern, refined)
-- Last Activity: relative timestamp
-- Actions: ghost icon buttons (open, edit, test, delete)
+### 7. Wire Review Queue actions
+- Approve button calls `useUpdateReviewItem` with `{ status: "approved", reviewed_by: userId, reviewed_at: now }`
+- Reject button calls same with `{ status: "rejected" }`
 
-**Empty State**: Use `PremiumEmptyState` with Building2 icon, premium copy and CTA.
+### 8. Upgrade to premium design (`src/pages/admin/LegalConnectPage.tsx`)
+- Replace header with `PageHeader` component
+- Replace `StatCard` with `PremiumStatCard` (hero for sync health)
+- Replace inline tables with `PremiumTable` or at minimum better styling
+- Replace Mappings placeholder with the 4 new editor components
 
-**Loading State**: Use `PremiumTable` built-in skeleton loading.
-
-### 2. Sidebar Minor Refinement (`src/components/layout/AdminLayout.tsx`)
-
-- Reorganize navigation groups to align with the prompt's suggested IA: rename/reorder groups to Overview, Operations, Integrations, Agent Tools, Configuration, Monitoring, Platform
-- Move Legal Connect from Operations into its own "Integrations" group alongside Field Mappings and general Integrations
-- Add `Command` (search/command palette placeholder) icon button in the header next to health indicator
-
-### 3. Client Overview Page Enhancement (`src/pages/admin/ClientOverviewPage.tsx`)
-
-- Replace inline header with `PageHeader` component
-- Add `HealthIndicator` to header showing connection status
-- Use `PremiumStatCard` instead of current stat cards with better variants
+### 9. Wire Mappings tab
+- Replace the 4 "coming in Phase 1E" placeholders with the new editor components
+- Each sub-tab renders its editor, filtered by `clientId`
 
 ---
 
 ## Files
 
-**Modified (3):**
-1. `src/pages/admin/TenantsPage.tsx` — full redesign using premium components
-2. `src/components/layout/AdminLayout.tsx` — navigation group refinement, command palette button
-3. `src/pages/admin/ClientOverviewPage.tsx` — header and stat card upgrade
+**New (5):**
+1. `src/components/legal-connect/DispositionMappingEditor.tsx`
+2. `src/components/legal-connect/CallVariableMappingEditor.tsx`
+3. `src/components/legal-connect/FieldPolicyEditor.tsx`
+4. `src/components/legal-connect/CampaignFormDialog.tsx`
+5. `src/components/legal-connect/PolicyProfileFormDialog.tsx`
 
-**No new files needed** — all premium components already exist.
+**Modified (2):**
+1. `src/hooks/useLegalConnect.ts` — add missing CRUD hooks
+2. `src/pages/admin/LegalConnectPage.tsx` — premium upgrade, wire new editors, wire review actions, wire campaign/policy dialogs
 
-## Execution Order
-1. TenantsPage redesign (biggest impact)
-2. AdminLayout sidebar group refinement
-3. ClientOverviewPage header upgrade
+**Execution order:**
+1. CRUD hooks
+2. Form dialogs (Campaign, Policy Profile)
+3. Mapping editors (Dispositions, Call Variables, Field Policies)
+4. Wire everything into LegalConnectPage + premium upgrade
 
