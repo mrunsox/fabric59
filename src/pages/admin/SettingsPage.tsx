@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw, Activity, Users, UserPlus, User, Lock, FileText, Plus, Trash2 } from "lucide-react";
+import { Save, Shield, Bell, Zap, Database, Key, Eye, EyeOff, Loader2, Hash, CheckCircle2, AlertCircle, RefreshCw, Activity, Users, UserPlus, User, Lock, FileText, Plus, Trash2, Scale, ExternalLink, Download, AlertTriangle } from "lucide-react";
 import { InviteMemberDialog } from "@/components/settings/InviteMemberDialog";
 import { useAppConfig } from "@/hooks/useAppConfig";
 import { useTeamPermissions, PERMISSION_KEYS } from "@/hooks/useTeamPermissions";
@@ -450,6 +450,7 @@ export default function SettingsPage() {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           {isOrgAdmin && <TabsTrigger value="email-templates">Email Templates</TabsTrigger>}
           <TabsTrigger value="data">Data</TabsTrigger>
+          <TabsTrigger value="legal">Legal & Compliance</TabsTrigger>
         </TabsList>
 
         {/* ── Profile Tab ── */}

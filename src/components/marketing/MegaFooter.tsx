@@ -139,15 +139,9 @@ export function MegaFooter() {
             <h4 className="text-sm font-semibold text-foreground mb-4">Company</h4>
             <nav className="flex flex-col gap-2.5">
               {companyLinks.map((link) => (
-                link.href.startsWith("mailto:") || link.href === "#" ? (
-                  <a key={link.label} href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
-                    {link.label}
-                  </a>
-                ) : (
-                  <Link key={link.label} to={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
-                    {link.label}
-                  </Link>
-                )
+                <Link key={link.label} to={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+                  {link.label}
+                </Link>
               ))}
             </nav>
             {/* Security badges */}
