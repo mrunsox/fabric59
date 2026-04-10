@@ -1,105 +1,60 @@
 
 
-# Prompt Alignment Audit — Fabric59 vs Ultra Master Standards
+# Privacy, Trust, and Compliance Pages Implementation
 
-## Summary
+## Overview
 
-Fabric59 is **well-aligned** on core infrastructure (auth, multi-tenant, RLS, build map, marketing shell, onboarding) but has **notable gaps** in several extended segments. Below is a section-by-section breakdown.
+Implement 4 new public pages (`/privacy`, `/trust`, `/responsible-disclosure`, `/contact`), expand the existing `/security` and `/terms` pages with full professional content, add a "Legal & Compliance" admin settings tab, update all footers and nav, and add incident reporting hooks.
 
----
+## Variables
 
-## Alignment Scorecard
+- `PRODUCT_NAME` = Fabric59
+- `PRODUCT_DESCRIPTION` = The all-in-one Five9 integration platform for BPOs and contact centers
+- `PRIMARY_DOMAIN` = fabric59.lovable.app
+- `COMPLIANCE_EMAIL` = security@fabric59.com
 
-| Prompt Section | Status | Notes |
-|---|---|---|
-| **0. Client readiness / multi-tenant** | DONE | Three-level hierarchy (Org → Partner → Client), per-tenant branding, RLS everywhere |
-| **1. Layout, nav, auth** | DONE | Left sidebar, top sub-nav, `/login` with back-to-home, forgot password flow |
-| **2. Footer / UNSOX branding** | DONE | Orange pulsing heart linking to unsox.com, dynamic copyright year in `MegaFooter.tsx` |
-| **3. /outline build map** | PARTIAL | `buildMap.ts` exists with 23 categories, `/outline` route works, "Tested" checkbox present. **Missing:** "KB" checkbox column, `requiredSecrets` array, unfinished-items-float-to-top ordering |
-| **4. Knowledge base** | PARTIAL | DB-backed KB exists (`kb_categories`, `kb_articles`, hooks). **Missing:** `knowledgeBase.ts` file derived from buildMap with structured fields (`publicTitle`, `summary`, `howItWorks`, `whenToUseIt`, `faq`). KB checkbox not wired in `/outline` |
-| **5. Required secrets** | MISSING | No `requiredSecrets` array in `buildMap.ts`, no secrets section on `/outline` |
-| **6. AI assistant** | MISSING | No floating chat button, no assistant panel, no KB-wired AI assistant, no tenant-configurable assistant settings |
-| **6a. AI guardrails** | MISSING | No `/prompts` directory, no system prompt template, no guardrails config |
-| **7. Marketing site** | PARTIAL | `/` landing page is rich with mega menu, feature tabs, stats, testimonials, pricing, FAQ. **Missing:** `/product`, `/demo`, `/faq` as separate routes. No interactive sandbox/scripted demo. No before/after slider or persona tabs |
-| **8. SEO / AI readiness** | DONE | `SEOHead.tsx`, `StructuredData.tsx`, `robots.txt`, `sitemap.xml`, `llms.txt`, `ai.txt` all present |
-| **9. Copy rules (no dashes)** | NOT AUDITED | Would need a content sweep |
-| **10. Onboarding** | DONE | `/onboarding` with milestone rail, Five9 connection test, intent capture, readiness score, context helper. Concierge model implemented |
-| **11. Data model / RLS** | DONE | `tenant_id`, timestamps, soft delete, RLS on all tables, `user_has_permission()` security definer |
-| **12. Notifications** | PARTIAL | `notifications` table, `NotificationsPage`, `useNotifications` hook. **Missing:** in-app notification bell/center icon in header, lifecycle emails, webhook event layer |
-| **13. Analytics / instrumentation** | PARTIAL | `api_logs`, call session tracking, outcome analytics exist. **Missing:** structured activation/engagement/retention event logging, error rate tracking on critical flows |
-| **14. Roles / permissions / audit** | DONE | Granular permissions table, `user_has_permission()`, permission-based sidebar, audit log table for agent lifecycle |
-| **15. Import/export** | PARTIAL | Report exports exist. **Missing:** CSV export for main entities, import wizard, data portability docs |
-| **16. Contextual help** | MISSING | No contextual help icons on complex pages, no KB ↔ assistant cross-links |
-| **17. Prompt governance** | MISSING | No `/prompts` directory, no prompt library, no change tracking |
-| **18. Testing mindset** | PARTIAL | `/outline` tested checkboxes work. Test console exists. **Missing:** vitest coverage is minimal (only `example.test.ts`) |
+## Files to Create
 
----
+| File | Route | Purpose |
+|------|-------|---------|
+| `src/pages/PrivacyPage.tsx` | `/privacy` | Full privacy policy with data collection, retention, GDPR, US/CA sections, subprocessor table |
+| `src/pages/TrustPage.tsx` | `/trust` | Compliance center: SOC 2 status, controls overview, data handling, DDQ instructions, cross-links |
+| `src/pages/ResponsibleDisclosurePage.tsx` | `/responsible-disclosure` | Security research policy, scope, safe harbor, reporting instructions |
+| `src/pages/ContactPage.tsx` | `/contact` | Compliance/DPO contact, sales placeholder, pre-filled mailto links |
 
-## Website Builder Prompt Gaps
+## Files to Rewrite
 
-| Requirement | Status |
-|---|---|
-| `/product` deep tour page | MISSING |
-| `/demo` interactive sandbox | MISSING |
-| `/faq` standalone route | MISSING (inline accordion on landing only) |
-| `/legal/privacy` | MISSING |
-| `/legal/terms` | DONE (`/terms`) |
-| Sticky header on scroll | MISSING |
-| Interactive storytelling (3+ modules) | PARTIAL (FeatureTabs only; no before/after slider, persona tabs, or mini dashboard sim) |
-| Live/simulated product visual in hero | MISSING (static content only) |
+| File | Changes |
+|------|---------|
+| `src/pages/SecurityPage.tsx` | Expand from 4 cards to full sections: Architecture & Data Protection, Access Control & Audit, Enterprise Features (SSO/SCIM coming soon, IP allowlisting, API tokens), Incident Response with mailto link |
+| `src/pages/TermsPage.tsx` | Expand from 5 sections to full ToS: Introduction/parties, Eligibility, Account responsibilities, Service availability, Fees/billing, Prohibited activities, IP, Disclaimers, Limitation of liability, Governing law placeholders |
 
-## Onboarding Prompt Gaps
+## Files to Edit
 
-| Requirement | Status |
-|---|---|
-| Multi-step concierge flow | DONE |
-| AI-guided intent capture | PARTIAL (intent step exists but no AI recommendation engine) |
-| Profile + workspace basics step | PARTIAL (org name collected, no avatar/timezone/color) |
-| First object creation with AI assist | MISSING |
-| Invite team step | MISSING |
-| Micro tour after setup | DONE (GuidedTour, AdminTour, MasterTour components) |
-| Getting started dashboard widget | MISSING |
-| Onboarding restart from settings | MISSING |
+| File | Changes |
+|------|---------|
+| `src/App.tsx` | Add routes: `/privacy`, `/trust`, `/responsible-disclosure`, `/contact` |
+| `src/components/marketing/MegaFooter.tsx` | Add Privacy, Trust, Responsible Disclosure, Contact to company links |
+| `src/components/marketing/MegaMenuHeader.tsx` | Add Trust/Compliance link under Resources dropdown |
+| `src/components/layout/AdminLayout.tsx` | No change needed (Settings tab approach below) |
+| `src/pages/admin/SettingsPage.tsx` | Add "Legal & Compliance" tab with: external links to all trust pages, org data retention summary (placeholder config), "System of Record Export" stub button, and "Report an Incident" mailto button |
+| `src/data/buildMap.ts` | Add "Privacy & Trust" category with all 8 items (4 new pages + 2 rewrites + admin tab + footer links) |
 
----
+## Shared Layout
 
-## Priority Gaps to Close (Recommended Sprint Order)
+All new public pages use the same pattern as existing `/security` and `/terms`: back-to-home link, Fabric59 icon + title, `SEOHead`, prose sections with consistent typography.
 
-### Sprint A — Build Map & KB Alignment (quick wins)
-1. Add `requiredSecrets` array to `buildMap.ts` with Stripe, Five9, Clio, Google, Slack keys
-2. Add "KB" checkbox column to `/outline`
-3. Add "Required Secrets" section to `/outline`
-4. Add unfinished-items-float-to-top sorting
-5. Create `src/data/knowledgeBase.ts` with structured fields derived from buildMap
+## In-App Compliance Hooks
 
-### Sprint B — AI Assistant + Guardrails
-1. Build floating chat button component for logged-in users
-2. Create assistant panel with KB-grounded responses
-3. Create `/prompts/assistant-system.txt` with guardrails from section 6a
-4. Add tenant-configurable assistant settings (name, avatar, enabled toggle)
-5. Wire contextual help icons on complex pages
+1. **Settings > Legal & Compliance tab** — links to all 6 trust pages, retention summary card, export stub, incident report mailto
+2. **Incident mailto template** — pre-fills subject with `[Security Incident] Fabric59 — {org name}` and body with org/tenant name, user email, current route, description placeholder
+3. **Footer links** — both MegaFooter (marketing) and AdminLayout footer get: Security, Privacy, Terms, Trust, Responsible Disclosure, Contact
 
-### Sprint C — Marketing Expansion
-1. Add `/product` deep tour page
-2. Add `/demo` interactive sandbox (read-only mini app with mock data)
-3. Add `/faq` standalone route
-4. Add `/legal/privacy` route
-5. Add sticky header behavior on scroll
-6. Add 2 more interactive storytelling modules (before/after slider, persona tabs)
-7. Add live product visual in hero section
+## Content Approach
 
-### Sprint D — Notifications + Import/Export
-1. Add notification bell icon in header with dropdown
-2. Add CSV export buttons for main entity tables
-3. Add import wizard component
-4. Define lifecycle email templates
-5. Create webhook event layer for key actions
+All copy will be professional B2B SaaS boilerplate with clear `[PLACEHOLDER]` markers where legal counsel review is needed (jurisdiction, specific retention periods, subprocessor list). No binding promises; uses "designed to support" and "in progress" language for certifications.
 
-### Sprint E — Onboarding Polish
-1. Add AI-recommended setup defaults based on intent answers
-2. Add invite team step to onboarding flow
-3. Add "Getting started" dashboard widget with checklist
-4. Add onboarding restart option in settings
+## No Backend Changes
 
-No code changes needed now. This is a gap analysis only. Let me know which sprint to tackle first.
+This is purely pages, content, and navigation. No database migrations, no edge functions, no auth changes.
 
