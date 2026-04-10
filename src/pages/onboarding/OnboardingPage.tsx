@@ -64,7 +64,7 @@ export default function OnboardingPage() {
 
   if (!user) {
     return (
-      <div className="dark min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -409,7 +409,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="dark min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-4xl flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
         {/* Left rail — milestones */}
         <div className="hidden lg:block w-56 flex-shrink-0 pt-4">

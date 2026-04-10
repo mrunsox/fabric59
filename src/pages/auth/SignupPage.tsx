@@ -30,7 +30,7 @@ export default function SignupPage() {
 
   if (isLoading) {
     return (
-      <div className="dark min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -52,7 +52,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="dark min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left - Value prop showcase */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,hsl(var(--primary)/0.12),transparent_60%)]" />

@@ -28,7 +28,7 @@ export function MasterLayout() {
   ];
 
   return (
-    <div className="dark min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex">
       <MasterTour />
 
       {/* Sidebar */}

@@ -40,7 +40,7 @@ export function MegaFooter() {
   const [email, setEmail] = useState("");
 
   return (
-    <footer className="dark border-t border-border/30 bg-background pt-20 pb-8">
+    <footer className="border-t border-border/30 bg-background pt-20 pb-8">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-16">
           {/* Brand */}
