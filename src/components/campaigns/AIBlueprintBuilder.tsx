@@ -219,7 +219,7 @@ export function AIBlueprintBuilder({ onClose }: AIBlueprintBuilderProps) {
           <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-lg font-medium text-foreground">Drop campaign documents here</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Agent scripts, FAQ docs, department guides, call flows — PDF, DOCX, or TXT
+            Agent scripts, FAQ docs, department guides, call flows. PDF, DOCX, or TXT.
           </p>
           <p className="text-xs text-muted-foreground mt-2">
             Drop multiple files at once for best results

@@ -40,7 +40,7 @@ const tabs = [
     id: "legal",
     icon: Scale,
     label: "Legal Connect",
-    headline: "Clio & MyCase — fully automated",
+    headline: "Clio & MyCase, Fully Automated",
     description: "Automated contact resolution, matter linking, and disposition-driven CRM writebacks. Policy engine with field-level allow/block/redact rules. Webhook sync with retry logic and dead-letter handling.",
     bullets: [
       "Automated Clio/MyCase contact lookup",

@@ -127,7 +127,7 @@ export default function LegalConnectPage() {
 
   return (
     <>
-      <SEOHead title="Legal Connect — Fabric59" description="Enterprise legal CRM integration hub" />
+      <SEOHead title="Legal Connect | Fabric59" description="Enterprise legal CRM integration hub" />
 
       <div className="space-y-6">
         {/* ── Premium Header ──────────────────────────────────── */}

@@ -45,7 +45,7 @@ export function WhiteLabelPartnerSelector({
             <SelectValue placeholder={orgsLoading ? "Loading..." : "Select partner"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__none__">— Select a partner —</SelectItem>
+            <SelectItem value="__none__">Select a partner</SelectItem>
             {orgs.map((org) => (
               <SelectItem key={org.id} value={org.id}>
                 {org.brand_name || org.name}
@@ -148,7 +148,7 @@ export function WhiteLabelPartnerSelector({
               <SelectValue placeholder={templatesLoading ? "Loading..." : "Select template"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__none__">— Use default —</SelectItem>
+              <SelectItem value="__none__">Use default</SelectItem>
               {templates.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.name} {t.is_default && "(default)"}

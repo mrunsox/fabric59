@@ -86,8 +86,8 @@ export default function OutlinePage() {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Build Outline — Fabric59 Feature Roadmap"
-        description="See every feature planned and built for Fabric59 — the Five9 integration platform for agent lifecycle management and CRM field mapping."
+        title="Build Outline | Fabric59 Feature Roadmap"
+        description="See every feature planned and built for Fabric59, the Five9 integration platform for agent lifecycle management and CRM field mapping."
         canonical="https://fabric59.lovable.app/outline"
       />
       {/* Header */}

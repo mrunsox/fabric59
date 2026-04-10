@@ -11,7 +11,7 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Privacy Policy — Fabric59"
+        title="Privacy Policy | Fabric59"
         description="Learn how Fabric59 collects, uses, and protects your data. Our privacy policy covers data handling, retention, GDPR, and your rights."
         canonical="https://fabric59.lovable.app/privacy"
       />

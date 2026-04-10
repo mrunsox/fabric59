@@ -512,4 +512,15 @@ export const buildMap: BuildCategory[] = [
       { name: "Safety-Labeled Prompts", description: "Clear labeling for prompts that affect security, trust, or user-facing behavior", status: "planned" },
     ],
   },
+  // ── UI/UX Cleanup Sprint ──
+  {
+    name: "UI/UX Cleanup",
+    items: [
+      { name: "Hyphen and Dash Cleanup", description: "Remove decorative dashes site-wide, rewrite with commas and colons", status: "done" },
+      { name: "toTitleCase Utility", description: "Reusable title case function in utils.ts for headings", status: "done" },
+      { name: "CSS Heading Capitalize", description: "Global text-transform: capitalize on h1 through h6", status: "done" },
+      { name: "Scroll to Top Button", description: "Fixed bottom left button on long pages", status: "done" },
+      { name: "OG Image and Social Metadata", description: "Branded 1200x630 OG image with stable self-hosted URL", status: "done" },
+    ],
+  },
 ];
