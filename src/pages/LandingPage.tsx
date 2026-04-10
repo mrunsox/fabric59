@@ -97,7 +97,7 @@ const cardReveal = {
 
 export default function LandingPage() {
   return (
-    <div className="dark min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <SEOHead
         title="Fabric59 | Five9 Integration Hub for CRM & Agent Lifecycle Management"
         description="Fabric59 automates Five9 agent onboarding, CRM field mapping, Legal Connect for Clio/MyCase, and 55+ integrations for BPOs and contact centers."

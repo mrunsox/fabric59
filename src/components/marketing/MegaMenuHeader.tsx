@@ -51,7 +51,7 @@ export function MegaMenuHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="dark border-b border-border/50 backdrop-blur-xl sticky top-0 z-50 bg-background/90">
+    <header className="border-b border-border/50 backdrop-blur-xl sticky top-0 z-50 bg-background/90">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
         <Link to="/">
           <Fabric59Logo iconSize="md" />
@@ -210,7 +210,7 @@ export function MegaMenuHeader() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="dark w-80 bg-background p-6">
+          <SheetContent side="right" className="w-80 bg-background p-6">
             <div className="flex flex-col gap-6 mt-8">
               <div className="space-y-1">
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Platform</div>

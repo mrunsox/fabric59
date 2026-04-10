@@ -51,7 +51,7 @@ export default function OutlinePage() {
   const progressPct = Math.round((done / total) * 100);
 
   return (
-    <div className="dark min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <SEOHead
         title="Build Outline — Fabric59 Feature Roadmap"
         description="See every feature planned and built for Fabric59 — the Five9 integration platform for agent lifecycle management and CRM field mapping."
