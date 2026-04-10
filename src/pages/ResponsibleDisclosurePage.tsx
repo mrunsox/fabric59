@@ -26,7 +26,7 @@ export default function ResponsibleDisclosurePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Responsible Disclosure — Fabric59"
+        title="Responsible Disclosure | Fabric59"
         description="Fabric59 responsible disclosure policy. Report security vulnerabilities safely and responsibly."
         canonical="https://fabric59.lovable.app/responsible-disclosure"
       />

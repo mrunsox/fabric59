@@ -12,7 +12,7 @@ export default function TermsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Terms of Service — Fabric59"
+        title="Terms of Service | Fabric59"
         description="Terms of service for Fabric59, the Five9 integration platform by UNSOX Digital."
         canonical="https://fabric59.lovable.app/terms"
       />

@@ -43,7 +43,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Contact — Fabric59"
+        title="Contact | Fabric59"
         description="Get in touch with Fabric59 for security, compliance, partnership, or support inquiries."
         canonical="https://fabric59.lovable.app/contact"
       />

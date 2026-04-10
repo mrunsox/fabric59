@@ -11,7 +11,7 @@ export default function SecurityPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Security — Fabric59"
+        title="Security | Fabric59"
         description="Learn how Fabric59 protects your data with multi-tenant isolation, AES-256 encryption, RBAC, audit logging, and enterprise-grade infrastructure."
         canonical="https://fabric59.lovable.app/security"
       />

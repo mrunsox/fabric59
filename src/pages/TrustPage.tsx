@@ -22,7 +22,7 @@ export default function TrustPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Trust Center — Fabric59"
+        title="Trust Center | Fabric59"
         description="Fabric59 Trust Center: compliance status, security controls, data handling, and how to request due diligence documentation."
         canonical="https://fabric59.lovable.app/trust"
       />
