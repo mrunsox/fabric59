@@ -52,7 +52,7 @@ export default function CampaignFormDialog({ open, onOpenChange, clientId, editD
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label>Five9 Campaign Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Legal Intake — Inbound" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Legal Intake, Inbound" />
           </div>
           <div className="space-y-1.5">
             <Label>Campaign Type</Label>

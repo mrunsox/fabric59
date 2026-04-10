@@ -259,7 +259,7 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
             <SelectValue placeholder="Select an organization..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">— No organization —</SelectItem>
+            <SelectItem value="none">No organization</SelectItem>
             {organizations.map((org) => (
               <SelectItem key={org.id} value={org.id}>
                 {org.name}
@@ -280,7 +280,7 @@ export function TenantForm({ tenant, onSuccess }: TenantFormProps) {
             <SelectValue placeholder="Select a partner..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">— No partner —</SelectItem>
+            <SelectItem value="none">No partner</SelectItem>
             {partnersList.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.name}
