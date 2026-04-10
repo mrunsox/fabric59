@@ -1,48 +1,87 @@
 
 
-# UI/UX & Copy Cleanup Sprint
+# SEO + AEO Compliance Audit and Gap Closure
 
-## 1. Hyphen/Dash Cleanup (~35 files)
-Scan all `.tsx` files for `—`, `–`, and decorative `-`. Rewrite sentences to use commas, colons, or short sentences. Keep hyphens only in compound words (e.g., "AI-powered", "real-time"), phone numbers, and URL slugs.
+## Current State (What's Already Done)
 
-Key files: `ContactPage`, `SecurityPage`, `PrivacyPage`, `OutlinePage`, `BillingPage`, `NotificationsPage`, `CampaignDetailPage`, `AbandonRatePage`, `TestConsolePage`, `Report59UploadPage`, and ~25 others identified in the search.
+| Checklist Item | Status |
+|---|---|
+| Clean URLs for public pages | DONE |
+| robots.txt | PARTIAL (allows everything, doesn't block admin/auth/staging) |
+| XML sitemap | PARTIAL (missing /privacy, /trust, /responsible-disclosure, /contact) |
+| Canonical tags on each page | DONE (SEOHead component) |
+| Unique title + meta per page | DONE |
+| Semantic H1/H2/H3 structure | DONE |
+| Organization + FAQPage schema | DONE (LandingPage) |
+| SoftwareApplication schema | MISSING |
+| llms.txt + ai.txt | DONE but STALE (missing /privacy, /trust, /contact, /responsible-disclosure) |
+| AEO direct-answer paragraphs | MISSING on most pages |
+| "What is Fabric59?" standalone page | MISSING (inline on landing only) |
+| Internal topic cluster links | PARTIAL |
+| Hero em dash in prose | Still present (line 144) |
+| noindex on dashboards/admin | MISSING from SEOHead defaults |
 
-## 2. `toTitleCase` Utility
-Add `toTitleCase(input: string): string` to `src/lib/utils.ts`. Capitalizes significant words, keeps minor words lowercase (a, an, the, and, but, or, for, nor, at, by, from, in, of, on, to, up, with, as, into, over, onto, per, vs), preserves acronyms.
+---
 
-## 3. CSS Title Case for Headings
-Add to `src/index.css` base layer:
-```css
-h1, h2, h3, h4, h5, h6 {
-  text-transform: capitalize;
-}
-```
-One line, instant site-wide effect.
+## Changes to Implement
 
-## 4. Scroll-to-Top Button
-- **New file:** `src/components/layout/ScrollToTopButton.tsx` with fixed bottom-left `ChevronUp` button, appears after 300px scroll, smooth-scrolls to top, primary color, rounded, shadow.
-- Wire into `AdminLayout.tsx` and `LandingPage.tsx`.
-- Existing `ScrollToTop` route-change reset is already in `App.tsx`.
+### 1. robots.txt: Block admin, auth, staging paths
 
-## 5. OG Image / Social Share Metadata
-- Replace the expiring Google Cloud Storage OG image URL in `index.html` with a stable self-hosted path (`/og-image.png`).
-- Generate a 1200x630 branded OG image with Fabric59 logo and brand colors, saved to `public/og-image.png`.
-- Ensure `og:image`, `og:title`, `og:description`, `twitter:card`, `twitter:image` are consistent and use absolute URLs.
+Add `Disallow` rules for `/admin`, `/master`, `/onboarding`, `/forgot-password`, `/reset-password`, `/system-access` while keeping all public marketing paths open.
 
-## 6. Build Map Update
-Add a "UI/UX Cleanup" category to `src/data/buildMap.ts` with items for this sprint.
+### 2. sitemap.xml: Add missing public pages
 
-## Files
+Add `/privacy`, `/trust`, `/responsible-disclosure`, `/contact` entries with appropriate priority values.
+
+### 3. SoftwareApplication structured data
+
+Add `SoftwareApplication` JSON-LD to `LandingPage.tsx` with name, description, category, pricing, and URL fields.
+
+### 4. llms.txt + ai.txt: Update with new pages
+
+Add entries for `/privacy`, `/trust`, `/responsible-disclosure`, `/contact` to both files.
+
+### 5. AEO direct-answer paragraphs
+
+Add a 40-60 word "direct answer" opening paragraph to the top of each major public page body:
+- `/security`: "What security measures does Fabric59 use?"
+- `/privacy`: "How does Fabric59 handle personal data?"
+- `/trust`: "What compliance standards does Fabric59 follow?"
+- `/terms`: Brief intro paragraph already exists, just needs tightening
+- `/contact`: Already concise enough
+
+### 6. noindex on admin/auth pages
+
+Update `SEOHead` calls on login, signup, forgot-password, reset-password, onboarding, and the NotFound page to include `noindex` where not already set.
+
+### 7. Fix remaining hero em dash
+
+Replace the `—` on LandingPage line 144 with a comma.
+
+### 8. Build map update
+
+Add an "SEO & AEO Hardening" category to `buildMap.ts` tracking these items.
+
+---
+
+## Files to Change
 
 | File | Action |
-|------|--------|
-| `src/lib/utils.ts` | Add `toTitleCase` function |
-| `src/index.css` | Add `text-transform: capitalize` for h1-h6 |
-| `src/components/layout/ScrollToTopButton.tsx` | New: scroll-to-top button |
-| `src/components/layout/AdminLayout.tsx` | Add `<ScrollToTopButton />` |
-| `src/pages/LandingPage.tsx` | Add `<ScrollToTopButton />` |
-| `index.html` | Update OG image to stable path |
-| `public/og-image.png` | Generated branded OG image |
-| ~35 `.tsx` files | Rewrite dash punctuation |
-| `src/data/buildMap.ts` | Add sprint items |
+|---|---|
+| `public/robots.txt` | Add Disallow rules for admin/auth paths |
+| `public/sitemap.xml` | Add 4 missing public pages |
+| `public/llms.txt` | Add new pages and update stale dash |
+| `public/ai.txt` | Add new page entries |
+| `src/pages/LandingPage.tsx` | Add SoftwareApplication LD, fix hero dash |
+| `src/pages/SecurityPage.tsx` | Add AEO direct-answer opening paragraph |
+| `src/pages/PrivacyPage.tsx` | Add AEO direct-answer opening paragraph |
+| `src/pages/TrustPage.tsx` | Add AEO direct-answer opening paragraph |
+| `src/pages/auth/LoginPage.tsx` | Add `noindex` to SEOHead (or add SEOHead with noindex) |
+| `src/pages/auth/SignupPage.tsx` | Add `noindex` to SEOHead |
+| `src/pages/auth/ForgotPasswordPage.tsx` | Add `noindex` to SEOHead |
+| `src/pages/auth/ResetPasswordPage.tsx` | Add `noindex` to SEOHead |
+| `src/pages/onboarding/OnboardingPage.tsx` | Add `noindex` to SEOHead |
+| `src/data/buildMap.ts` | Add "SEO & AEO Hardening" category |
+
+No backend changes. Content and metadata only.
 
