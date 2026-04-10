@@ -476,7 +476,6 @@ export const buildMap: BuildCategory[] = [
       { name: "Product Tour Page", description: "Deep /product page with interactive walkthrough of key features", status: "planned" },
       { name: "Interactive Demo Sandbox", description: "/demo page with read-only mini app using mock data for guided exploration", status: "planned" },
       { name: "Standalone FAQ Page", description: "Dedicated /faq route with categorized questions and search", status: "planned" },
-      { name: "Standalone FAQ Page", description: "Dedicated /faq route with categorized questions and search", status: "planned" },
       { name: "Sticky Header on Scroll", description: "Condensed header with backdrop blur that persists on scroll", status: "planned" },
       { name: "Before/After Interactive Module", description: "Draggable slider showing workflow transformation from manual to Fabric59", status: "planned" },
       { name: "Persona Tabs Module", description: "Choose your role tabs that swap hero copy and visuals for BPO, legal, home services", status: "planned" },
