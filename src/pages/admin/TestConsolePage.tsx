@@ -17,8 +17,9 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Play, Loader2, Copy, Check, Phone, Headphones, PhoneOff, History, Save, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { Play, Loader2, Copy, Check, Phone, Headphones, PhoneOff, History, Save, ChevronDown, Plus, Trash2, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 interface TestResponse {
   status: number;
@@ -34,6 +35,7 @@ interface HistoryEntry {
   endpoint: string;
   status: number;
   payload?: string;
+  scenario?: string;
 }
 
 interface SavedTemplate {
@@ -42,6 +44,71 @@ interface SavedTemplate {
   endpoint: string;
   payload: string;
 }
+
+// Pre-built Five9 test scenarios
+const five9Scenarios = {
+  "qualified-lead": {
+    label: "Qualified Lead → Clio Contact + Communication",
+    description: "Simulates a successful inbound call with Qualified Lead disposition",
+    payload: {
+      callId: `test-${Date.now()}`,
+      direction: "inbound",
+      ani: "416-555-1234",
+      dnis: "800-555-9999",
+      campaign: "Legal Intake",
+      queue: "Legal",
+      disposition: "Qualified Lead",
+      agentName: "Test Agent",
+      durationSeconds: 240,
+      callerName: "John",
+      callerLastName: "Doe",
+    },
+  },
+  "missing-variable": {
+    label: "Missing Required Call Variable",
+    description: "Call payload with empty ANI to test validation",
+    payload: {
+      callId: `test-${Date.now()}`,
+      direction: "inbound",
+      ani: "",
+      dnis: "",
+      campaign: "Legal Intake",
+      disposition: "Qualified Lead",
+      agentName: "Test Agent",
+      durationSeconds: 120,
+    },
+  },
+  "unknown-disposition": {
+    label: "Unknown Disposition",
+    description: "Disposition that doesn't match any mapping",
+    payload: {
+      callId: `test-${Date.now()}`,
+      direction: "inbound",
+      ani: "416-555-4321",
+      dnis: "800-555-9999",
+      campaign: "Legal Intake",
+      queue: "Legal",
+      disposition: "UNKNOWN_DISPO_TEST",
+      agentName: "Test Agent",
+      durationSeconds: 60,
+    },
+  },
+  "duplicate-call": {
+    label: "Duplicate Call ID (Idempotency)",
+    description: "Re-sends the same call ID to verify idempotent skip",
+    payload: {
+      callId: "test-idempotency-check",
+      direction: "inbound",
+      ani: "416-555-9999",
+      dnis: "800-555-9999",
+      campaign: "Legal Intake",
+      queue: "Legal",
+      disposition: "Qualified Lead",
+      agentName: "Test Agent",
+      durationSeconds: 180,
+    },
+  },
+};
 
 const samplePayloads = {
   intake: JSON.stringify({ contact: { name: "John Doe", phone: "416-123-4567", email: "john@example.com" }, intake: { type: "consultation", service: "divorce", urgency: "high", custom: { gate_code: "1234", notes: "Urgent matter" } } }, null, 2),
@@ -52,7 +119,7 @@ function loadHistory(): HistoryEntry[] {
   try { return JSON.parse(localStorage.getItem("test-console-history") || "[]"); } catch { return []; }
 }
 function saveHistory(entries: HistoryEntry[]) {
-  localStorage.setItem("test-console-history", JSON.stringify(entries.slice(0, 20)));
+  localStorage.setItem("test-console-history", JSON.stringify(entries.slice(0, 30)));
 }
 function loadTemplates(): SavedTemplate[] {
   try { return JSON.parse(localStorage.getItem("test-console-templates") || "[]"); } catch { return []; }
@@ -71,7 +138,7 @@ export default function TestConsolePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<TestResponse | null>(null);
   const [copied, setCopied] = useState(false);
-  const [phase, setPhase] = useState("post-call");
+  const [phase, setPhase] = useState("five9-e2e");
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory);
   const [templates, setTemplates] = useState<SavedTemplate[]>(loadTemplates);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -87,10 +154,121 @@ export default function TestConsolePage() {
   const [callDuration, setCallDuration] = useState("180");
   const [agentNotes, setAgentNotes] = useState("");
 
+  // Five9 E2E state
+  const [selectedScenario, setSelectedScenario] = useState<string>("qualified-lead");
+  const [scenarioPayload, setScenarioPayload] = useState(JSON.stringify(five9Scenarios["qualified-lead"].payload, null, 2));
+
   useEffect(() => { saveHistory(history); }, [history]);
   useEffect(() => { saveTemplates(templates); }, [templates]);
 
+  useEffect(() => {
+    const scenario = five9Scenarios[selectedScenario as keyof typeof five9Scenarios];
+    if (scenario) {
+      // Generate fresh callId for non-duplicate scenarios
+      const p = { ...scenario.payload };
+      if (selectedScenario !== "duplicate-call") {
+        (p as any).callId = `test-${Date.now()}`;
+      }
+      setScenarioPayload(JSON.stringify(p, null, 2));
+    }
+  }, [selectedScenario]);
+
+  // Send real Five9 E2E test via five9-main edge function
+  const handleFive9Test = async () => {
+    if (!selectedTenant) { toast.error("Please select a tenant"); return; }
+    setIsLoading(true);
+    setResponse(null);
+    const startTime = Date.now();
+    try {
+      const parsedPayload = JSON.parse(scenarioPayload);
+      const { data, error } = await supabase.functions.invoke("five9-main", {
+        body: parsedPayload,
+        headers: {
+          "x-tenant-id": selectedTenant,
+        },
+      });
+
+      const duration = Date.now() - startTime;
+      const status = error ? 500 : (data?.skipped ? 200 : (data?.success ? 200 : 400));
+
+      setResponse({
+        status,
+        statusText: error ? "Error" : (data?.skipped ? "Skipped (Idempotent)" : "OK"),
+        data: error ? { error: error.message } : data,
+        duration,
+      });
+
+      const entry: HistoryEntry = {
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        method: "POST",
+        endpoint: "five9-main",
+        status,
+        payload: scenarioPayload,
+        scenario: selectedScenario,
+      };
+      setHistory((prev) => [entry, ...prev]);
+
+      if (error) {
+        toast.error(`Five9 test failed: ${error.message}`);
+      } else if (data?.skipped) {
+        toast.info("Duplicate detected — idempotent skip");
+      } else {
+        toast.success("Five9 E2E test completed");
+      }
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      setResponse({ status: 500, statusText: "Error", data: { error: errorMessage }, duration });
+      toast.error(`Request failed: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Send real lookup via five9-main
+  const handleLookupTest = async () => {
+    if (!selectedTenant) { toast.error("Please select a tenant"); return; }
+    setIsLoading(true);
+    setResponse(null);
+    const startTime = Date.now();
+    try {
+      const { data, error } = await supabase.functions.invoke("five9-main", {
+        body: { action: "lookup", ani: lookupPhone, dnis: "" },
+      });
+      const duration = Date.now() - startTime;
+
+      setResponse({
+        status: error ? 500 : 200,
+        statusText: error ? "Error" : "OK",
+        data: error ? { error: error.message } : data,
+        duration,
+      });
+
+      const entry: HistoryEntry = {
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        method: "POST",
+        endpoint: "five9-main/lookup",
+        status: error ? 500 : 200,
+        payload: JSON.stringify({ action: "lookup", ani: lookupPhone }),
+      };
+      setHistory((prev) => [entry, ...prev]);
+
+      if (error) toast.error(`Lookup failed: ${error.message}`);
+      else toast.success(data?.matched ? "Contact found" : "No match found");
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      setResponse({ status: 500, statusText: "Error", data: { error: (error as Error).message }, duration });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleTest = async () => {
+    if (phase === "five9-e2e") return handleFive9Test();
+    if (phase === "pre-call") return handleLookupTest();
+
     if (!selectedTenant) { toast.error("Please select a tenant"); return; }
     setIsLoading(true);
     setResponse(null);
@@ -100,50 +278,54 @@ export default function TestConsolePage() {
       let actualEndpoint = endpoint;
       let actualMethod = method;
 
-      if (phase === "pre-call") {
-        actualEndpoint = `/contacts?phone=${lookupPhone}${lookupEmail ? `&email=${lookupEmail}` : ""}`;
-        actualMethod = "GET";
-      } else if (phase === "during-call") {
-        actualPayload = { disposition, call_duration_seconds: parseInt(callDuration), agent_notes: agentNotes };
-        actualEndpoint = "/call-variables";
-        actualMethod = "POST";
-      } else {
-        actualPayload = method !== "GET" ? JSON.parse(payload) : null;
+      if (phase === "during-call") {
+        // Send as post-disposition event to five9-main
+        actualPayload = {
+          callId: `test-during-${Date.now()}`,
+          direction: "inbound",
+          ani: lookupPhone || "416-555-0000",
+          disposition,
+          durationSeconds: parseInt(callDuration),
+          agentName: "Test Agent",
+          agentNotes,
+        };
+        const { data, error } = await supabase.functions.invoke("five9-main", {
+          body: actualPayload,
+          headers: { "x-tenant-id": selectedTenant },
+        });
+        const duration = Date.now() - startTime;
+        setResponse({
+          status: error ? 500 : 200,
+          statusText: error ? "Error" : "OK",
+          data: error ? { error: error.message } : data,
+          duration,
+        });
+        const entry: HistoryEntry = { id: crypto.randomUUID(), timestamp: new Date().toISOString(), method: "POST", endpoint: "five9-main/disposition", status: error ? 500 : 200, payload: JSON.stringify(actualPayload) };
+        setHistory((prev) => [entry, ...prev]);
+        if (error) toast.error(`Failed: ${error.message}`);
+        else toast.success("During-call test completed");
+        return;
       }
+
+      // Post-call generic
+      actualPayload = method !== "GET" ? JSON.parse(payload) : null;
 
       const simulatedResponse = {
         success: true,
         tenant_id: selectedTenant,
         endpoint: actualEndpoint,
         method: actualMethod,
-        message: phase === "pre-call"
-          ? "Contact lookup completed"
-          : phase === "during-call"
-          ? "Call variables captured"
-          : "Simulated response — Edge functions will handle real CRM calls",
-        ...(phase === "pre-call" ? { contact: { name: "John Doe", crm_id: "CL-12345", open_matters: 2, last_interaction: "2026-02-15" } } : {}),
+        message: "Simulated response — use Five9 E2E tab for real edge function tests",
         payload: actualPayload,
       };
 
-      await new Promise((r) => setTimeout(r, 500 + Math.random() * 500));
+      await new Promise((r) => setTimeout(r, 300));
       const duration = Date.now() - startTime;
 
       setResponse({ status: 200, statusText: "OK", data: simulatedResponse, duration });
-
       const entry: HistoryEntry = { id: crypto.randomUUID(), timestamp: new Date().toISOString(), method: actualMethod, endpoint: actualEndpoint, status: 200, payload: actualPayload ? JSON.stringify(actualPayload) : undefined };
       setHistory((prev) => [entry, ...prev]);
-
-      await supabase.from("api_logs").insert([{
-        tenant_id: selectedTenant,
-        endpoint: `/api/v1/tenants/${selectedTenant}${actualEndpoint}`,
-        method: actualMethod,
-        request_payload: (actualPayload ?? null) as Record<string, string> | null,
-        response: JSON.parse(JSON.stringify(simulatedResponse)),
-        status: "success",
-        response_time_ms: duration,
-      }]);
-
-      toast.success("Request completed successfully");
+      toast.success("Request completed");
     } catch (error) {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -178,25 +360,45 @@ export default function TestConsolePage() {
   };
 
   const handleReplayHistory = (entry: HistoryEntry) => {
-    setMethod(entry.method as "GET" | "POST" | "PATCH");
-    setEndpoint(entry.endpoint);
-    if (entry.payload) setPayload(entry.payload);
-    setPhase("post-call");
+    if (entry.endpoint === "five9-main" && entry.payload) {
+      setPhase("five9-e2e");
+      setScenarioPayload(entry.payload);
+      if (entry.scenario) setSelectedScenario(entry.scenario);
+    } else {
+      setMethod(entry.method as "GET" | "POST" | "PATCH");
+      setEndpoint(entry.endpoint);
+      if (entry.payload) setPayload(entry.payload);
+      setPhase("post-call");
+    }
   };
+
+  // Interpret response for scenario verdict
+  const getVerdict = () => {
+    if (!response) return null;
+    const d = response.data as any;
+    if (d?.skipped) return { icon: <AlertTriangle className="h-4 w-4" />, label: "Idempotent Skip", color: "text-warning" };
+    if (d?.error || response.status >= 400) return { icon: <XCircle className="h-4 w-4" />, label: "Failed", color: "text-destructive" };
+    if (d?.clio?.communicationId) return { icon: <CheckCircle2 className="h-4 w-4" />, label: "Clio: Contact + Communication created", color: "text-success" };
+    if (d?.mycase?.noteId) return { icon: <CheckCircle2 className="h-4 w-4" />, label: "MyCase: Contact + Note created", color: "text-success" };
+    if (d?.success) return { icon: <CheckCircle2 className="h-4 w-4" />, label: "Success (no CRM action)", color: "text-success" };
+    return null;
+  };
+
+  const verdict = getVerdict();
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold">Test Console</h1>
-        <p className="text-muted-foreground">Simulate Five9 API calls across call phases</p>
+        <p className="text-muted-foreground">Send real Five9 payloads to edge functions and verify E2E flows</p>
       </div>
 
-      {/* Call Phase Tabs */}
       <Tabs value={phase} onValueChange={setPhase}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="five9-e2e" className="gap-2"><Play className="h-4 w-4" />Five9 E2E</TabsTrigger>
           <TabsTrigger value="pre-call" className="gap-2"><Phone className="h-4 w-4" />Pre-Call Lookup</TabsTrigger>
           <TabsTrigger value="during-call" className="gap-2"><Headphones className="h-4 w-4" />During Call</TabsTrigger>
-          <TabsTrigger value="post-call" className="gap-2"><PhoneOff className="h-4 w-4" />Post-Call Intake</TabsTrigger>
+          <TabsTrigger value="post-call" className="gap-2"><PhoneOff className="h-4 w-4" />Post-Call</TabsTrigger>
         </TabsList>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -205,7 +407,7 @@ export default function TestConsolePage() {
             <CardHeader>
               <CardTitle>Request Builder</CardTitle>
               <CardDescription>
-                {phase === "pre-call" ? "Simulate a contact lookup by phone or email" : phase === "during-call" ? "Capture call variables and disposition" : "Full request builder for post-call intake"}
+                {phase === "five9-e2e" ? "Select a test scenario and send a real Five9 event to five9-main" : phase === "pre-call" ? "Send a real lookup request to five9-main" : phase === "during-call" ? "Send a post-disposition event to five9-main" : "Generic request builder"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -223,9 +425,42 @@ export default function TestConsolePage() {
                 </Select>
               </div>
 
+              {/* Five9 E2E Tab */}
+              <TabsContent value="five9-e2e" className="mt-0 space-y-4">
+                <div className="space-y-2">
+                  <Label>Test Scenario</Label>
+                  <Select value={selectedScenario} onValueChange={setSelectedScenario}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(five9Scenarios).map(([key, s]) => (
+                        <SelectItem key={key} value={key}>
+                          <div className="flex flex-col">
+                            <span>{s.label}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {five9Scenarios[selectedScenario as keyof typeof five9Scenarios]?.description}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Five9 Event Payload</Label>
+                    <Badge variant="outline" className="text-xs">Sent to five9-main</Badge>
+                  </div>
+                  <Textarea
+                    value={scenarioPayload}
+                    onChange={(e) => setScenarioPayload(e.target.value)}
+                    className="font-mono text-sm min-h-[220px]"
+                  />
+                </div>
+              </TabsContent>
+
               <TabsContent value="pre-call" className="mt-0 space-y-4">
                 <div className="space-y-2">
-                  <Label>Phone Number</Label>
+                  <Label>Phone Number (ANI)</Label>
                   <Input value={lookupPhone} onChange={(e) => setLookupPhone(e.target.value)} placeholder="416-123-4567" />
                 </div>
                 <div className="space-y-2">
@@ -294,7 +529,6 @@ export default function TestConsolePage() {
                   </div>
                 )}
 
-                {/* Headers Editor */}
                 <Collapsible open={headersOpen} onOpenChange={setHeadersOpen}>
                   <CollapsibleTrigger asChild>
                     <Button variant="ghost" size="sm" className="gap-2 w-full justify-start">
@@ -314,7 +548,6 @@ export default function TestConsolePage() {
                   </CollapsibleContent>
                 </Collapsible>
 
-                {/* Saved Templates */}
                 {templates.length > 0 && (
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Saved Templates</Label>
@@ -329,7 +562,7 @@ export default function TestConsolePage() {
 
               <Button onClick={handleTest} disabled={isLoading || !selectedTenant} className="w-full gap-2">
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                {isLoading ? "Sending..." : "Send Request"}
+                {isLoading ? "Sending..." : phase === "five9-e2e" ? "Run Five9 E2E Test" : phase === "pre-call" ? "Run Lookup" : "Send Request"}
               </Button>
             </CardContent>
           </Card>
@@ -341,7 +574,7 @@ export default function TestConsolePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Response</CardTitle>
-                    <CardDescription>View the response from your test request</CardDescription>
+                    <CardDescription>Live response from edge function</CardDescription>
                   </div>
                   {response && (
                     <div className="flex items-center gap-3">
@@ -355,6 +588,12 @@ export default function TestConsolePage() {
                 </div>
               </CardHeader>
               <CardContent>
+                {verdict && (
+                  <div className={`flex items-center gap-2 mb-4 p-3 rounded-lg border ${verdict.color}`}>
+                    {verdict.icon}
+                    <span className="text-sm font-medium">{verdict.label}</span>
+                  </div>
+                )}
                 {response ? (
                   <Tabs defaultValue="body" className="w-full">
                     <TabsList className="w-full justify-start">
@@ -394,6 +633,7 @@ export default function TestConsolePage() {
                         <div className="flex items-center gap-3">
                           <span className={`font-mono text-xs font-medium ${entry.method === "GET" ? "text-success" : "text-primary"}`}>{entry.method}</span>
                           <span className="font-mono text-xs text-muted-foreground truncate max-w-[200px]">{entry.endpoint}</span>
+                          {entry.scenario && <Badge variant="outline" className="text-xs">{entry.scenario}</Badge>}
                         </div>
                         <div className="flex items-center gap-2">
                           <StatusBadge variant={entry.status < 400 ? "success" : "error"}>{entry.status}</StatusBadge>
