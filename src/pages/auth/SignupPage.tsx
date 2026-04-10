@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Check, ArrowLeft, Shield, Zap, GitBranch, Scale, Bot, Users } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { motion } from "framer-motion";
 
 const valueProps = [

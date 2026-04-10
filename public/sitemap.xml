@@ -11,23 +11,43 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://fabric59.lovable.app/signup</loc>
+    <loc>https://fabric59.lovable.app/security</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://fabric59.lovable.app/login</loc>
+    <loc>https://fabric59.lovable.app/privacy</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://fabric59.lovable.app/security</loc>
+    <loc>https://fabric59.lovable.app/trust</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://fabric59.lovable.app/terms</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://fabric59.lovable.app/responsible-disclosure</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://fabric59.lovable.app/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://fabric59.lovable.app/signup</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://fabric59.lovable.app/login</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
   </url>
 </urlset>

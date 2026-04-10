@@ -80,6 +80,28 @@ const faqLD = {
   })),
 };
 
+const softwareAppLD = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Fabric59",
+  url: "https://fabric59.lovable.app",
+  description: "Five9 integration platform for agent lifecycle management, CRM field mapping, and 55+ pre-built integrations for BPOs and contact centers.",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "AggregateOffer",
+    lowPrice: "197",
+    highPrice: "497",
+    priceCurrency: "USD",
+    offerCount: "3",
+  },
+  creator: {
+    "@type": "Organization",
+    name: "UNSOX Digital",
+    url: "https://unsox.com",
+  },
+};
+
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
@@ -104,7 +126,7 @@ export default function LandingPage() {
         description="Fabric59 automates Five9 agent onboarding, CRM field mapping, Legal Connect for Clio/MyCase, and 55+ integrations for BPOs and contact centers."
         canonical="https://fabric59.lovable.app/"
       />
-      <StructuredData data={[organizationLD, faqLD]} />
+      <StructuredData data={[organizationLD, faqLD, softwareAppLD]} />
 
       <MegaMenuHeader />
 
@@ -141,7 +163,7 @@ export default function LandingPage() {
             <motion.p custom={2} initial="hidden" animate="visible" variants={fadeUp}
               className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
             >
-              The all-in-one platform for Five9 agent lifecycle management, CRM field mapping, Legal Connect, and 55+ integrations — built for BPOs and contact centers.
+              The all-in-one platform for Five9 agent lifecycle management, CRM field mapping, Legal Connect, and 55+ integrations, built for BPOs and contact centers.
             </motion.p>
 
             <motion.div custom={3} initial="hidden" animate="visible" variants={fadeUp}

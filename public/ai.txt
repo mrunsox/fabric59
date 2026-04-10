@@ -23,7 +23,11 @@ Website: https://fabric59.lovable.app
 - / — Landing page with product overview, features, FAQ
 - /outline — Build outline showing all features and development status
 - /security — Security practices and compliance information
+- /privacy — Privacy policy and data handling practices
+- /trust — Trust center with compliance status and security controls
 - /terms — Terms of service
+- /responsible-disclosure — Responsible disclosure policy for security researchers
+- /contact — Contact information and inquiry form
 - /login — User login
 - /signup — New account registration
 

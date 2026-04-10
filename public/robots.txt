@@ -2,9 +2,21 @@
 
 User-agent: Googlebot
 Allow: /
+Disallow: /admin
+Disallow: /master
+Disallow: /onboarding
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /system-access
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /master
+Disallow: /onboarding
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /system-access
 
 User-agent: Twitterbot
 Allow: /
@@ -15,6 +27,8 @@ Allow: /
 # AI Crawlers — full access for LLMO/GEO/AEO
 User-agent: GPTBot
 Allow: /
+Disallow: /admin
+Disallow: /master
 
 User-agent: ChatGPT-User
 Allow: /
@@ -36,5 +50,11 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /master
+Disallow: /onboarding
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /system-access
 
 Sitemap: https://fabric59.lovable.app/sitemap.xml

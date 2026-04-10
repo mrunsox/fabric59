@@ -29,7 +29,11 @@ export default function PrivacyPage() {
           <h1 className="text-3xl font-bold">Privacy Policy</h1>
         </div>
 
-        <p className="text-muted-foreground mb-10">Last updated: {LAST_UPDATED}</p>
+        <p className="text-muted-foreground mb-4">Last updated: {LAST_UPDATED}</p>
+
+        <p className="text-muted-foreground mb-10 leading-relaxed">
+          Fabric59 collects only the data necessary to operate its Five9 integration platform, including account credentials, agent records, and CRM field mappings. Data is encrypted at rest and in transit, retained only as long as needed, and never sold to third parties. Users can request data export or deletion at any time.
+        </p>
 
         <div className="prose prose-sm max-w-none space-y-8">
           <section className="space-y-3">
