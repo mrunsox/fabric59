@@ -659,6 +659,81 @@ serve(async (req) => {
   );
 
   try {
+    const payload = await req.json();
+    const startTime = Date.now();
+
+    // ── Pre-call Lookup endpoint (no auth context needed, uses ANI) ──
+    if (payload.action === 'lookup' || payload.event_type === 'lookup') {
+      const ani = payload.ani || payload.fromNumber || payload.phone || '';
+      const dnis = payload.dnis || payload.toNumber || '';
+      const normalizedAni = normalizePhone(ani);
+
+      // Search canonical contacts table
+      const { data: lcContacts } = await supabase
+        .from('legal_connect_contacts')
+        .select('id, first_name, last_name, phone, email, provider, provider_id, client_id')
+        .or(`phone.eq.${normalizedAni},primary_phone.eq.${normalizedAni}`)
+        .limit(5);
+
+      // Search clio_mappings
+      const { data: clioMaps } = await supabase
+        .from('clio_mappings')
+        .select('tenant_id, contact_id, matter_id, phone')
+        .eq('phone', normalizedAni)
+        .limit(3);
+
+      // Search mycase_mappings
+      const { data: mycaseMaps } = await supabase
+        .from('mycase_mappings')
+        .select('tenant_id, contact_id, case_id, phone')
+        .eq('phone', normalizedAni)
+        .limit(3);
+
+      // Build screen-pop data
+      const contact = lcContacts?.[0] || null;
+      let matters: any[] = [];
+      if (contact) {
+        const { data: matterData } = await supabase
+          .from('legal_connect_matters')
+          .select('id, title, status, provider, provider_id')
+          .eq('contact_id', contact.id)
+          .eq('status', 'open')
+          .order('created_at', { ascending: false })
+          .limit(5);
+        matters = matterData || [];
+      }
+
+      // Recent call history for this number
+      const { data: recentCalls } = await supabase
+        .from('call_sessions')
+        .select('id, started_at, duration_seconds, status, ani, dnis')
+        .eq('ani', ani)
+        .order('started_at', { ascending: false })
+        .limit(5);
+
+      return new Response(JSON.stringify({
+        success: true,
+        ani: normalizedAni,
+        dnis,
+        contact: contact ? {
+          id: contact.id,
+          name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim(),
+          phone: contact.phone,
+          email: contact.email,
+          provider: contact.provider,
+        } : null,
+        matters,
+        mappings: {
+          clio: clioMaps || [],
+          mycase: mycaseMaps || [],
+        },
+        recent_calls: recentCalls || [],
+        matched: !!(contact || clioMaps?.length || mycaseMaps?.length),
+      }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { context, domainRoute, error, status } = await resolveContext(req, supabase);
 
     if (error) {
@@ -666,9 +741,6 @@ serve(async (req) => {
         status: status || 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    const payload = await req.json();
-    const startTime = Date.now();
 
     // ── Route B: Domain-level event processing ──
     if (domainRoute) {
