@@ -119,35 +119,34 @@ export default function ClientOverviewPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="h-8 w-8">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+      <PageHeader
+        title={tenant.name}
+        subtitle={tenant.id}
+        icon={
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/8 border border-primary/10">
             <Building2 className="h-5 w-5 text-primary" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-foreground">{tenant.name}</h1>
-              <StatusBadge variant={tenant.crm_type as CrmType}>
-                {crmLabels[tenant.crm_type]}
-              </StatusBadge>
-              <StatusBadge variant={tenant.status as TenantStatus} dot>
-                {tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)}
-              </StatusBadge>
-            </div>
-            <p className="text-xs text-muted-foreground font-mono">{tenant.id}</p>
-            {partner && (
-              <Link to={`/admin/partners/${partner.id}`} className="mt-1">
-                <Badge variant="outline" className="text-xs cursor-pointer hover:bg-accent">
-                  Partner: {partner.name}
-                </Badge>
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
+        }
+        breadcrumb={
+          <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="text-muted-foreground gap-1.5 -ml-2 h-7">
+            <ArrowLeft className="h-3.5 w-3.5" /> Clients
+          </Button>
+        }
+      >
+        <StatusBadge variant={tenant.crm_type as CrmType}>
+          {crmLabels[tenant.crm_type]}
+        </StatusBadge>
+        <StatusBadge variant={tenant.status as TenantStatus} dot>
+          {tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)}
+        </StatusBadge>
+        {partner && (
+          <Link to={`/admin/partners/${partner.id}`}>
+            <Badge variant="outline" className="text-xs cursor-pointer hover:bg-accent">
+              Partner: {partner.name}
+            </Badge>
+          </Link>
+        )}
+      </PageHeader>
 
       {/* Stats Row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

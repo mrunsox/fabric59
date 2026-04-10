@@ -36,16 +36,23 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Operations",
     items: [
-      { name: "Five9 Domains", href: "/admin/domains", icon: Globe, permission: "domains" },
-      { name: "Agents", href: "/admin/agents", icon: Users, permission: "agents" },
       { name: "Clients", href: "/admin", icon: Building2, permission: "tenants" },
       { name: "Partners", href: "/admin/partners", icon: Handshake, permission: "tenants" },
-      { name: "Dispositions", href: "/admin/dispositions", icon: ListPlus, permission: "domains" },
+      { name: "Five9 Domains", href: "/admin/domains", icon: Globe, permission: "domains" },
+      { name: "Agents", href: "/admin/agents", icon: Users, permission: "agents" },
       { name: "Campaigns", href: "/admin/campaigns", icon: Megaphone, permission: "domains" },
+      { name: "Dispositions", href: "/admin/dispositions", icon: ListPlus, permission: "domains" },
       { name: "Blueprints", href: "/admin/campaign-blueprints", icon: Copy, permission: "domains" },
       { name: "Reports", href: "/admin/reports", icon: BarChart3, permission: "domains" },
       { name: "Billing & Invoices", href: "/admin/billing", icon: DollarSign, permission: "settings" },
+    ],
+  },
+  {
+    label: "Integrations",
+    items: [
       { name: "Legal Connect", href: "/admin/legal-connect", icon: Scale, permission: "integrations" },
+      { name: "Integrations", href: "/admin/integrations", icon: Plug, permission: "integrations" },
+      { name: "Field Mappings", href: "/admin/mappings", icon: FileJson, permission: "mappings" },
     ],
   },
   {
@@ -65,22 +72,11 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Configuration",
     items: [
-      { name: "Integrations", href: "/admin/integrations", icon: Plug, permission: "integrations" },
-      { name: "Field Mappings", href: "/admin/mappings", icon: FileJson, permission: "mappings" },
       { name: "Call Flow Builder", href: "/admin/call-flow", icon: Workflow, permission: "call_flow" },
       { name: "Automations", href: "/admin/automations", icon: Zap, permission: "domains" },
       { name: "ANI Block List", href: "/admin/ani-blocklist", icon: Ban, permission: "domains" },
       { name: "Callback Queue", href: "/admin/callback-queue", icon: PhoneCall, permission: "domains" },
       { name: "Abandon Rate", href: "/admin/abandon-rate", icon: ShieldAlert, permission: "domains" },
-    ],
-  },
-  {
-    label: "Platform",
-    items: [
-      { name: "Data Plane", href: "/admin/data-plane", icon: Database, permission: "domains" },
-      { name: "Identity Resolution", href: "/admin/identity", icon: Link2, permission: "domains" },
-      { name: "Utilities", href: "/admin/utilities", icon: Wrench, permission: "settings" },
-      { name: "Design System", href: "/admin/design-system", icon: Palette, permission: null },
     ],
   },
   {
@@ -90,6 +86,15 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Test Console", href: "/admin/test", icon: TestTube2, permission: "test_console" },
       { name: "Notifications", href: "/admin/notifications", icon: Bell, permission: "notifications" },
       { name: "Feedback", href: "/admin/feedback", icon: MessageSquare, permission: null },
+    ],
+  },
+  {
+    label: "Platform",
+    items: [
+      { name: "Data Plane", href: "/admin/data-plane", icon: Database, permission: "domains" },
+      { name: "Identity Resolution", href: "/admin/identity", icon: Link2, permission: "domains" },
+      { name: "Utilities", href: "/admin/utilities", icon: Wrench, permission: "settings" },
+      { name: "Design System", href: "/admin/design-system", icon: Palette, permission: null },
     ],
   },
 ];
