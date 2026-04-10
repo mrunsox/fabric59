@@ -1033,6 +1033,115 @@ export default function SettingsPage() {
             <EmailTemplatesSection />
           </TabsContent>
         )}
+
+        {/* ── Legal & Compliance Tab ── */}
+        <TabsContent value="legal" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Scale className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Legal & Compliance</CardTitle>
+                  <CardDescription>Trust pages, data retention, and compliance resources</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Trust page links */}
+              <div>
+                <Label className="text-sm font-semibold mb-3 block">Public Trust Pages</Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {[
+                    { label: "Security", href: "/security" },
+                    { label: "Privacy Policy", href: "/privacy" },
+                    { label: "Terms of Service", href: "/terms" },
+                    { label: "Trust Center", href: "/trust" },
+                    { label: "Responsible Disclosure", href: "/responsible-disclosure" },
+                    { label: "Contact", href: "/contact" },
+                  ].map((link) => (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between text-sm p-3 rounded-md border border-border/40 hover:bg-muted/30 transition-colors"
+                    >
+                      <span>{link.label}</span>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Data retention summary */}
+              <div>
+                <Label className="text-sm font-semibold mb-3 block">Data Retention Summary</Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="p-3 rounded-md border border-border/40 bg-muted/10">
+                    <p className="text-xs text-muted-foreground mb-1">Active Records</p>
+                    <p className="text-sm font-medium">Retained while account is active</p>
+                  </div>
+                  <div className="p-3 rounded-md border border-border/40 bg-muted/10">
+                    <p className="text-xs text-muted-foreground mb-1">Audit Logs</p>
+                    <p className="text-sm font-medium">12 months (immutable archive)</p>
+                  </div>
+                  <div className="p-3 rounded-md border border-border/40 bg-muted/10">
+                    <p className="text-xs text-muted-foreground mb-1">API Logs</p>
+                    <p className="text-sm font-medium">90 days (configurable)</p>
+                  </div>
+                  <div className="p-3 rounded-md border border-border/40 bg-muted/10">
+                    <p className="text-xs text-muted-foreground mb-1">Post-Deletion Purge</p>
+                    <p className="text-sm font-medium">30 days after account closure</p>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* System of Record Export */}
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">System of Record Export</Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Generate a configuration and data summary report to support audits, DDQs, and compliance reviews.
+                </p>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => toast.info("System of Record export is being prepared. This feature will generate a comprehensive report of your organization's configuration, integrations, and data handling settings.")}
+                >
+                  <Download className="h-4 w-4" />
+                  Export Compliance Report
+                </Button>
+              </div>
+
+              <Separator />
+
+              {/* Report an Incident */}
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">Report an Incident</Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  If you suspect a security or privacy incident, report it immediately.
+                </p>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  asChild
+                >
+                  <a
+                    href={`mailto:security@fabric59.com?subject=${encodeURIComponent(`[Security Incident] Fabric59 — ${organization?.name || "Organization"}`)}&body=${encodeURIComponent(`Organization: ${organization?.name || "N/A"}\nUser: ${user?.email || "N/A"}\nPage: Settings > Legal & Compliance\n\nDescription of incident:\n\n`)}`}
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    Report Security Incident
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
