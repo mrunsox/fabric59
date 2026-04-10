@@ -125,14 +125,27 @@ async function getClioAccessToken(
   if (!token) return null;
 
   if (token.expires_at && new Date(token.expires_at).getTime() < Date.now() + 300_000) {
-    const clioClientId = Deno.env.get('CLIO_CLIENT_ID');
-    const clioClientSecret = Deno.env.get('CLIO_CLIENT_SECRET');
-    if (!clioClientId || !clioClientSecret || !token.refresh_token_encrypted) {
-      console.error('Cannot refresh Clio token: missing credentials');
+    if (!token.refresh_token_encrypted) {
+      console.error('Cannot refresh Clio token: missing refresh token');
       return token.access_token_encrypted;
     }
 
     try {
+      // Per-client credentials: look up from legal_connect_connections
+      const { data: conn } = await supabase
+        .from('legal_connect_connections')
+        .select('config')
+        .eq('oauth_token_id', oauthTokenId)
+        .maybeSingle();
+
+      const clioClientId = conn?.config?.client_id;
+      const clioClientSecret = conn?.config?.client_secret;
+
+      if (!clioClientId || !clioClientSecret) {
+        console.error('Cannot refresh Clio token: no client_id/client_secret in legal_connect_connections for oauth_token_id', oauthTokenId);
+        return token.access_token_encrypted;
+      }
+
       const res = await fetch('https://app.clio.com/oauth/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -152,6 +165,8 @@ async function getClioAccessToken(
           expires_at: new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString(),
         }).eq('id', oauthTokenId);
         return data.access_token;
+      } else {
+        console.error('Clio token refresh HTTP error:', res.status, await res.text().catch(() => ''));
       }
     } catch (e) {
       console.error('Clio token refresh failed:', e);
@@ -159,6 +174,27 @@ async function getClioAccessToken(
   }
 
   return token.access_token_encrypted;
+}
+
+// ─── Idempotency Guard ──────────────────────────────────────────────────────
+
+async function checkIdempotency(
+  supabase: any,
+  callId: string,
+  tenantId: string,
+  disposition?: string
+): Promise<boolean> {
+  const idempotencyKey = `${callId}:${tenantId}:${disposition || 'none'}`;
+  const { data } = await supabase
+    .from('api_logs')
+    .select('id')
+    .eq('endpoint', 'five9-main')
+    .eq('tenant_id', tenantId)
+    .eq('status', 'success')
+    .contains('request_payload', { callId, idempotencyKey })
+    .limit(1);
+
+  return (data?.length || 0) > 0;
 }
 
 // ─── Clio API helpers ────────────────────────────────────────────────────────
@@ -819,6 +855,17 @@ serve(async (req) => {
       const call = normalizeCallEvent(payload);
       const results: any = { tenantId: context.tenantId, callId: call.id };
 
+      // Idempotency check — skip if this exact call+tenant+disposition was already processed
+      const isDuplicate = await checkIdempotency(supabase, call.id, context.tenantId, call.disposition);
+      if (isDuplicate) {
+        return new Response(JSON.stringify({
+          success: true, skipped: true, reason: 'duplicate',
+          tenantId: context.tenantId, callId: call.id,
+        }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // Handle Clio
       if (context.configs.clio?.enabled && context.configs.clio.rules?.enabled) {
         try {
@@ -855,13 +902,15 @@ serve(async (req) => {
 
       const elapsed = Date.now() - startTime;
 
-      // Log to api_logs
+      const idempotencyKey = `${call.id}:${context.tenantId}:${call.disposition || 'none'}`;
+
+      // Log to api_logs (includes idempotency key for duplicate detection)
       await supabase.from('api_logs').insert({
         tenant_id: context.tenantId,
         endpoint: 'five9-main',
         method: 'POST',
         status: (results.clio?.error || results.mycase?.error) ? 'error' : 'success',
-        request_payload: { callId: call.id, direction: call.direction, queue: call.queue },
+        request_payload: { callId: call.id, idempotencyKey, direction: call.direction, queue: call.queue, disposition: call.disposition },
         response: results,
         response_time_ms: elapsed,
       });
