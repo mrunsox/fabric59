@@ -198,7 +198,7 @@ export function AdminLayout() {
 
       <aside
         className={cn(
-          "dark fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
           "bg-gradient-to-b from-sidebar via-sidebar to-[hsl(222,47%,3%)] border-r border-sidebar-border/40",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
