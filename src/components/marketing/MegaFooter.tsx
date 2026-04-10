@@ -30,10 +30,12 @@ const resourceLinks = [
 ];
 
 const companyLinks = [
-  { label: "About", href: "#" },
   { label: "Security", href: "/security" },
+  { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
-  { label: "Contact", href: "mailto:hi@fabric59.com" },
+  { label: "Trust", href: "/trust" },
+  { label: "Responsible Disclosure", href: "/responsible-disclosure" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function MegaFooter() {
