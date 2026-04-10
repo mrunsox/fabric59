@@ -44,6 +44,7 @@ const resourceItems = [
 const resourceLinks = [
   { icon: BookOpen, title: "Build Outline", href: "/outline" },
   { icon: Lock, title: "Security", href: "/security" },
+  { icon: Shield, title: "Trust Center", href: "/trust" },
   { icon: HelpCircle, title: "FAQ", href: "#faq" },
 ];
 

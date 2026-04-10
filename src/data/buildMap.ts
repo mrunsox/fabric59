@@ -455,6 +455,20 @@ export const buildMap: BuildCategory[] = [
       { name: "Contextual Help Icons", description: "Help icons on complex pages linking to KB articles or prefilled assistant questions", status: "planned" },
     ],
   },
+  // ── Privacy & Trust ──
+  {
+    name: "Privacy & Trust",
+    items: [
+      { name: "Privacy Policy Page", description: "/privacy route with full data collection, retention, GDPR, CCPA, and subprocessor table", status: "done" },
+      { name: "Trust Center Page", description: "/trust route with compliance status, controls, data handling, and DDQ instructions", status: "done" },
+      { name: "Responsible Disclosure Page", description: "/responsible-disclosure route with scope, safe harbor, and reporting instructions", status: "done" },
+      { name: "Contact Page", description: "/contact route with DPO, compliance, sales, and support contact cards", status: "done" },
+      { name: "Security Page Expansion", description: "Expanded /security with architecture, access control, enterprise features, and incident response", status: "done" },
+      { name: "Terms of Service Expansion", description: "Expanded /terms with eligibility, prohibited activities, IP, governing law placeholders", status: "done" },
+      { name: "Legal & Compliance Settings Tab", description: "Admin settings tab with trust page links, retention summary, export stub, incident reporting", status: "done" },
+      { name: "Footer Trust Links", description: "All trust/legal pages linked in MegaFooter and MegaMenuHeader", status: "done" },
+    ],
+  },
   // ── Sprint C: Marketing Expansion ──
   {
     name: "Marketing Expansion",
@@ -462,7 +476,6 @@ export const buildMap: BuildCategory[] = [
       { name: "Product Tour Page", description: "Deep /product page with interactive walkthrough of key features", status: "planned" },
       { name: "Interactive Demo Sandbox", description: "/demo page with read-only mini app using mock data for guided exploration", status: "planned" },
       { name: "Standalone FAQ Page", description: "Dedicated /faq route with categorized questions and search", status: "planned" },
-      { name: "Privacy Policy Page", description: "/legal/privacy route with standard privacy policy content", status: "planned" },
       { name: "Sticky Header on Scroll", description: "Condensed header with backdrop blur that persists on scroll", status: "planned" },
       { name: "Before/After Interactive Module", description: "Draggable slider showing workflow transformation from manual to Fabric59", status: "planned" },
       { name: "Persona Tabs Module", description: "Choose your role tabs that swap hero copy and visuals for BPO, legal, home services", status: "planned" },

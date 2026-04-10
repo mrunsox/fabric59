@@ -21,6 +21,10 @@ import OutlinePage from "@/pages/OutlinePage";
 import LandingPage from "@/pages/LandingPage";
 import TermsPage from "@/pages/TermsPage";
 import SecurityPage from "@/pages/SecurityPage";
+import PrivacyPage from "@/pages/PrivacyPage";
+import TrustPage from "@/pages/TrustPage";
+import ResponsibleDisclosurePage from "@/pages/ResponsibleDisclosurePage";
+import ContactPage from "@/pages/ContactPage";
 
 // Admin pages
 import TenantsPage from "@/pages/admin/TenantsPage";
@@ -100,6 +104,10 @@ const App = () => (
             <Route path="/outline" element={<OutlinePage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/security" element={<SecurityPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/trust" element={<TrustPage />} />
+            <Route path="/responsible-disclosure" element={<ResponsibleDisclosurePage />} />
+            <Route path="/contact" element={<ContactPage />} />
 
             {/* Master admin routes - hidden, only accessible via /system-access */}
             <Route element={<MasterProtectedRoute />}>
