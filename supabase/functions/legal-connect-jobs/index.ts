@@ -49,6 +49,297 @@ function computeHealthStatus(sub: Record<string, unknown>): string {
   return "healthy";
 }
 
+// ─── CRM API Helpers (extracted from five9-main patterns) ────────────────────
+
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  return `+${digits}`;
+}
+
+async function apiFetchWithRetry(
+  method: string,
+  url: string,
+  headers: Record<string, string>,
+  body?: unknown,
+  maxRetries = 3
+): Promise<{ ok: boolean; status: number; data: any }> {
+  const opts: RequestInit = { method, headers: { ...headers, "Content-Type": "application/json" } };
+  if (body) opts.body = JSON.stringify(body);
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const res = await fetch(url, opts);
+    if (res.status === 429 || res.status >= 500) {
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      continue;
+    }
+    return { ok: res.ok, status: res.status, data: await res.json() };
+  }
+  return { ok: false, status: 0, data: { error: "Max retries exceeded" } };
+}
+
+async function getClioAccessToken(supabase: any, oauthTokenId: string): Promise<string | null> {
+  const { data: token } = await supabase
+    .from("oauth_tokens")
+    .select("*")
+    .eq("id", oauthTokenId)
+    .eq("provider", "clio")
+    .single();
+
+  if (!token) return null;
+
+  // Check if token needs refresh (within 5 minutes of expiry)
+  if (token.expires_at && new Date(token.expires_at).getTime() < Date.now() + 300_000) {
+    // For per-client Clio credentials, we need to look up the connection's client_id/secret
+    // from the tenant's integration_configs or a dedicated credentials store
+    // For now, attempt refresh if we have the refresh token
+    if (token.refresh_token_encrypted) {
+      try {
+        // Look up Clio app credentials from the connection that owns this token
+        const { data: conn } = await supabase
+          .from("legal_connect_connections")
+          .select("config")
+          .eq("oauth_token_id", oauthTokenId)
+          .maybeSingle();
+
+        const clioClientId = conn?.config?.client_id;
+        const clioClientSecret = conn?.config?.client_secret;
+
+        if (clioClientId && clioClientSecret) {
+          const res = await fetch("https://app.clio.com/oauth/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              grant_type: "refresh_token",
+              refresh_token: token.refresh_token_encrypted,
+              client_id: clioClientId,
+              client_secret: clioClientSecret,
+            }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            await supabase
+              .from("oauth_tokens")
+              .update({
+                access_token_encrypted: data.access_token,
+                refresh_token_encrypted: data.refresh_token || token.refresh_token_encrypted,
+                expires_at: new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString(),
+              })
+              .eq("id", oauthTokenId);
+            return data.access_token;
+          }
+        }
+      } catch (e) {
+        console.error("Clio token refresh failed:", e);
+      }
+    }
+  }
+
+  return token.access_token_encrypted;
+}
+
+async function getMyCaseApiKey(supabase: any, apiKeyId: string): Promise<string | null> {
+  const { data: keyRow } = await supabase
+    .from("api_keys")
+    .select("key_hash")
+    .eq("id", apiKeyId)
+    .single();
+  return keyRow?.key_hash || null;
+}
+
+// ─── CRM Job Executors ──────────────────────────────────────────────────────
+
+async function executeClioJob(
+  supabase: any,
+  job: any,
+  tenantConfigs: any
+): Promise<{ status: string; output: any }> {
+  const clioConfig = tenantConfigs?.clio;
+  if (!clioConfig?.oauthTokenId) {
+    throw new Error("No Clio OAuth token configured for this tenant");
+  }
+
+  const accessToken = await getClioAccessToken(supabase, clioConfig.oauthTokenId);
+  if (!accessToken) throw new Error("Could not obtain Clio access token");
+
+  const baseUrl = "https://app.clio.com/api/v4";
+  const authHeaders = { Authorization: `Bearer ${accessToken}` };
+  const input = job.input_payload || {};
+  const jobType = job.job_type;
+
+  if (jobType === "contact.search" || jobType === "contact.lookup") {
+    const phone = normalizePhone(input.phone || input.ani || "");
+    const res = await apiFetchWithRetry("GET", `${baseUrl}/contacts.json?query=${encodeURIComponent(phone)}&type=Person`, authHeaders);
+    return { status: "succeeded", output: { contacts: res.data?.data || [], found: (res.data?.data?.length || 0) > 0 } };
+  }
+
+  if (jobType === "contact.create") {
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/contacts.json`, authHeaders, {
+      data: {
+        type: "Person",
+        first_name: input.first_name || "Unknown",
+        last_name: input.last_name || "Caller",
+        phone_numbers: input.phone ? [{ name: "Work", number: normalizePhone(input.phone), default_number: true }] : [],
+      },
+    });
+    if (!res.ok) throw new Error(`Clio contact create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { contact_id: res.data?.data?.id } };
+  }
+
+  if (jobType === "matter.resolve" || jobType === "matter.search") {
+    const contactId = input.contact_id;
+    if (!contactId) throw new Error("contact_id required for matter resolution");
+    const res = await apiFetchWithRetry("GET", `${baseUrl}/matters.json?contact_id=${contactId}&status=open&order=created_at(desc)`, authHeaders);
+    const matters = res.data?.data || [];
+    return { status: "succeeded", output: { matters, matter_id: matters[0]?.id || null } };
+  }
+
+  if (jobType === "matter.create") {
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/matters.json`, authHeaders, {
+      data: {
+        description: input.description || "Intake from Five9",
+        status: "open",
+        client: input.contact_id ? { id: Number(input.contact_id) } : undefined,
+      },
+    });
+    if (!res.ok) throw new Error(`Clio matter create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { matter_id: res.data?.data?.id } };
+  }
+
+  if (jobType === "communication.create") {
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/communications.json`, authHeaders, {
+      data: {
+        type: "PhoneCall",
+        subject: input.subject || "Five9 Phone Call",
+        body: input.body || "",
+        date: input.date || new Date().toISOString(),
+        received_at: input.received_at || new Date().toISOString(),
+        ...(input.contact_id ? { senders: [{ id: Number(input.contact_id), type: "Contact" }] } : {}),
+        ...(input.matter_id ? { matter: { id: Number(input.matter_id) } } : {}),
+      },
+    });
+    if (!res.ok) throw new Error(`Clio communication create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { communication_id: res.data?.data?.id } };
+  }
+
+  if (jobType === "activity.create" || jobType === "time_entry.create") {
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/activities.json`, authHeaders, {
+      data: {
+        type: "TimeEntry",
+        quantity: input.quantity || 0.1,
+        date: input.date || new Date().toISOString().split("T")[0],
+        note: input.note || "Five9 phone call",
+        ...(input.matter_id ? { matter: { id: Number(input.matter_id) } } : {}),
+      },
+    });
+    if (!res.ok) throw new Error(`Clio activity create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { activity_id: res.data?.data?.id } };
+  }
+
+  throw new Error(`Unsupported Clio job type: ${jobType}`);
+}
+
+async function executeMyCaseJob(
+  supabase: any,
+  job: any,
+  tenantConfigs: any
+): Promise<{ status: string; output: any }> {
+  const mycaseConfig = tenantConfigs?.mycase;
+  if (!mycaseConfig?.apiKeyId) {
+    throw new Error("No MyCase API key configured for this tenant");
+  }
+
+  const apiKey = await getMyCaseApiKey(supabase, mycaseConfig.apiKeyId);
+  if (!apiKey) throw new Error("Could not retrieve MyCase API key");
+
+  const baseUrl = "https://api.mycase.com/v2";
+  const authHeaders = { Authorization: `Bearer ${apiKey}` };
+  const input = job.input_payload || {};
+  const jobType = job.job_type;
+
+  if (jobType === "contact.search" || jobType === "contact.lookup") {
+    const phone = normalizePhone(input.phone || input.ani || "");
+    const res = await apiFetchWithRetry("GET", `${baseUrl}/contacts?phone=${encodeURIComponent(phone)}`, authHeaders);
+    return { status: "succeeded", output: { contacts: res.data?.contacts || [], found: (res.data?.contacts?.length || 0) > 0 } };
+  }
+
+  if (jobType === "contact.create") {
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/contacts`, authHeaders, {
+      contact: {
+        first_name: input.first_name || "Unknown",
+        last_name: input.last_name || "Caller",
+        phone: input.phone ? normalizePhone(input.phone) : undefined,
+      },
+    });
+    if (!res.ok) throw new Error(`MyCase contact create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { contact_id: res.data?.contact?.id } };
+  }
+
+  if (jobType === "case.search" || jobType === "matter.resolve" || jobType === "matter.search") {
+    const contactId = input.contact_id;
+    if (!contactId) throw new Error("contact_id required for case search");
+    const res = await apiFetchWithRetry("GET", `${baseUrl}/cases?contact_id=${contactId}&status=open`, authHeaders);
+    const cases = res.data?.cases || [];
+    return { status: "succeeded", output: { cases, case_id: cases[0]?.id || null } };
+  }
+
+  if (jobType === "case.create" || jobType === "matter.create") {
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/cases`, authHeaders, {
+      case: {
+        name: input.name || input.description || "Intake from Five9",
+        contact_id: input.contact_id ? Number(input.contact_id) : undefined,
+      },
+    });
+    if (!res.ok) throw new Error(`MyCase case create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { case_id: res.data?.case?.id } };
+  }
+
+  if (jobType === "note.create" || jobType === "communication.create") {
+    const notePayload: any = {
+      note: {
+        subject: input.subject || "Five9 Phone Call",
+        content: input.body || input.content || "",
+      },
+    };
+    if (input.case_id) notePayload.note.case_id = Number(input.case_id);
+    else if (input.contact_id) notePayload.note.contact_id = Number(input.contact_id);
+
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/notes`, authHeaders, notePayload);
+    if (!res.ok) throw new Error(`MyCase note create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { note_id: res.data?.note?.id } };
+  }
+
+  throw new Error(`Unsupported MyCase job type: ${jobType}`);
+}
+
+async function executeJob(
+  supabase: any,
+  job: any
+): Promise<{ status: string; output: any }> {
+  // Fetch the tenant's integration_configs to get provider credentials
+  const { data: tenant } = await supabase
+    .from("tenants")
+    .select("integration_configs")
+    .eq("id", job.client_id)
+    .single();
+
+  const configs = (tenant?.integration_configs as any) || {};
+  const provider = (job.provider || "").toLowerCase();
+
+  if (provider === "clio") {
+    return await executeClioJob(supabase, job, configs);
+  }
+  if (provider === "mycase") {
+    return await executeMyCaseJob(supabase, job, configs);
+  }
+
+  throw new Error(`Unsupported provider: ${provider}`);
+}
+
+// ─── Main Server ─────────────────────────────────────────────────────────────
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -109,10 +400,8 @@ Deno.serve(async (req) => {
             .eq("id", job.id);
 
           try {
-            const result = {
-              status: "succeeded",
-              output: { job_type: job.job_type, processed_at: new Date().toISOString() },
-            };
+            // ── Real CRM dispatch ──
+            const result = await executeJob(supabaseAdmin, job);
 
             await supabaseAdmin
               .from("legal_connect_sync_jobs")
@@ -255,7 +544,6 @@ Deno.serve(async (req) => {
       }
 
       case "renewExpiring": {
-        // Clio 31-day max — renew when within 6 days of expiry (31 - 25 = 6)
         const renewWindow = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString();
 
         const { data: expiring } = await supabaseAdmin
@@ -275,7 +563,6 @@ Deno.serve(async (req) => {
 
         for (const sub of expiring) {
           try {
-            // In production: call Clio PUT /webhooks/{id} with new expires_at
             const newExpiry = new Date(Date.now() + CLIO_MAX_WEBHOOK_DAYS * 24 * 60 * 60 * 1000).toISOString();
             const newRenewAfter = new Date(Date.now() + CLIO_RENEW_THRESHOLD_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
@@ -315,7 +602,6 @@ Deno.serve(async (req) => {
               error_message: errMsg,
             });
 
-            // Auto-recreate if renewal failed 3+ times and connection is still valid
             if (newFailureCount >= MAX_RENEWAL_FAILURES_BEFORE_RECREATE) {
               const { data: conn } = await supabaseAdmin
                 .from("legal_connect_connections")
@@ -386,7 +672,6 @@ Deno.serve(async (req) => {
       }
 
       case "computeAllHealth": {
-        // Batch recompute health_status for all subscriptions
         const { data: allSubs } = await supabaseAdmin
           .from("legal_connect_webhook_subscriptions")
           .select("*");
