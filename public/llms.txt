@@ -2,7 +2,7 @@
 > Five9 integration platform for agent lifecycle management and CRM field mapping
 
 ## What is Fabric59?
-Fabric59 is an all-in-one platform that automates Five9 agent onboarding, offboarding, CRM field mapping, and 55+ third-party integrations. Built specifically for BPOs and contact centers, Fabric59 eliminates manual provisioning across Five9, Google Workspace, and Slack — reducing agent setup time from hours to minutes.
+Fabric59 is an all-in-one platform that automates Five9 agent onboarding, offboarding, CRM field mapping, and 55+ third-party integrations. Built specifically for BPOs and contact centers, Fabric59 eliminates manual provisioning across Five9, Google Workspace, and Slack, reducing agent setup time from hours to minutes.
 
 ## Who is it for?
 - BPO contact centers managing hundreds of agents across Five9
@@ -46,4 +46,8 @@ Fabric59 is an UNSOX Digital solution. Contact: hi@fabric59.com
 - Website: https://fabric59.lovable.app
 - Build Outline: https://fabric59.lovable.app/outline
 - Security: https://fabric59.lovable.app/security
+- Privacy: https://fabric59.lovable.app/privacy
+- Trust Center: https://fabric59.lovable.app/trust
 - Terms: https://fabric59.lovable.app/terms
+- Responsible Disclosure: https://fabric59.lovable.app/responsible-disclosure
+- Contact: https://fabric59.lovable.app/contact

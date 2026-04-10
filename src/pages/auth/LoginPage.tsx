@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft, Shield, Zap, Users, GitBranch, Scale, Bot, Check } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { motion, AnimatePresence } from "framer-motion";
 
 const features = [
@@ -56,6 +57,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <SEOHead title="Sign In | Fabric59" description="Sign in to your Fabric59 account." noindex />
       {/* Left - Feature showcase */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,hsl(var(--primary)/0.12),transparent_60%)]" />

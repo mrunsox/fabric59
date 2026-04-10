@@ -40,8 +40,11 @@ export default function TrustPage() {
           <h1 className="text-3xl font-bold">Trust Center</h1>
         </div>
 
+        <p className="text-muted-foreground mb-4 leading-relaxed">
+          Fabric59 follows industry standard security controls including AES-256 encryption, row-level security, role-based access control, and immutable audit logging. The platform is designed to support SOC 2 Type II requirements and enforces organization-level data isolation across all tenants.
+        </p>
         <p className="text-muted-foreground mb-10 leading-relaxed">
-          Fabric59 is the all-in-one Five9 integration platform for BPOs and contact centers. We are committed to protecting your data and maintaining transparency about our security and compliance posture.
+          We are committed to protecting your data and maintaining transparency about our security and compliance posture.
         </p>
 
         {/* Compliance Status */}

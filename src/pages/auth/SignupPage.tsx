@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Check, ArrowLeft, Shield, Zap, GitBranch, Scale, Bot, Users } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { motion } from "framer-motion";
 
 const valueProps = [
@@ -53,6 +54,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <SEOHead title="Sign Up | Fabric59" description="Create a Fabric59 account." noindex />
       {/* Left - Value prop showcase */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,hsl(var(--primary)/0.12),transparent_60%)]" />

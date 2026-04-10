@@ -29,6 +29,9 @@ export default function SecurityPage() {
           <h1 className="text-3xl font-bold">Security</h1>
         </div>
 
+        <p className="text-muted-foreground mb-4 leading-relaxed">
+          Fabric59 protects customer data with AES-256 encryption at rest, TLS 1.3 in transit, row-level security on all tenant tables, role-based access control, and immutable audit logging. The platform enforces organization-level data isolation so no tenant can access another's records.
+        </p>
         <p className="text-muted-foreground mb-10 leading-relaxed">
           Security is foundational to Fabric59. We implement industry best practices to protect your data, credentials, and integrations across every layer of the platform.
         </p>

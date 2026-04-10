@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+import { SEOHead } from "@/components/seo/SEOHead";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -71,6 +72,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <SEOHead title="Reset Password | Fabric59" description="Set a new password for your Fabric59 account." noindex />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">

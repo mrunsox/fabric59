@@ -12,6 +12,7 @@ import {
   Eye, EyeOff, Wifi, XCircle, CheckCircle, Users, Link2, Rocket,
 } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { OnboardingMilestones, type Milestone } from "@/components/onboarding/OnboardingMilestones";
 import { OnboardingContextHelper } from "@/components/onboarding/OnboardingContextHelper";
 import { ReadinessScore } from "@/components/onboarding/ReadinessScore";
@@ -410,6 +411,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <SEOHead title="Onboarding | Fabric59" description="Set up your Fabric59 account." noindex />
       <div className="w-full max-w-4xl flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
         {/* Left rail — milestones */}
         <div className="hidden lg:block w-56 flex-shrink-0 pt-4">
