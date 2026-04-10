@@ -72,6 +72,7 @@ import LegalConnectPage from "@/pages/admin/LegalConnectPage";
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import TreeEditorPage from "@/pages/admin/TreeEditorPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
+import DesignSystemPage from "@/pages/admin/DesignSystemPage";
 import NotFound from "./pages/NotFound";
 
 // Master admin pages
@@ -167,6 +168,7 @@ const App = () => (
                 <Route path="tree-editor" element={<TreeEditorPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="design-system" element={<DesignSystemPage />} />
               </Route>
             </Route>
 

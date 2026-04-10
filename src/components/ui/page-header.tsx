@@ -5,14 +5,17 @@ interface PageHeaderProps {
   title: string;
   subtitle?: string;
   children?: ReactNode;
+  actions?: ReactNode;
+  breadcrumb?: ReactNode;
   className?: string;
   accent?: boolean;
   icon?: ReactNode;
 }
 
-export function PageHeader({ title, subtitle, children, className, accent = true, icon }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, children, actions, breadcrumb, className, accent = true, icon }: PageHeaderProps) {
   return (
     <div className={cn("pb-1", accent && "header-gradient", className)}>
+      {breadcrumb && <div className="mb-2">{breadcrumb}</div>}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-1">
         <div className="flex items-center gap-3 min-w-0">
           {icon}
@@ -23,6 +26,7 @@ export function PageHeader({ title, subtitle, children, className, accent = true
         </div>
         {children && <div className="flex items-center gap-2 flex-shrink-0">{children}</div>}
       </div>
+      {actions && <div className="mt-4 flex items-center gap-2">{actions}</div>}
     </div>
   );
 }
