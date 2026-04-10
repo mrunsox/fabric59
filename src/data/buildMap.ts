@@ -5,12 +5,39 @@ export interface BuildItem {
   description: string;
   status: ItemStatus;
   tested?: boolean;
+  kbReady?: boolean;
 }
 
 export interface BuildCategory {
   name: string;
   items: BuildItem[];
 }
+
+export interface RequiredSecret {
+  name: string;
+  service: string;
+  description: string;
+  isPublic: boolean;
+}
+
+export const requiredSecrets: RequiredSecret[] = [
+  { name: "FIVE9_USERNAME", service: "Five9 SOAP API", description: "Five9 admin account username for SOAP API provisioning calls", isPublic: false },
+  { name: "FIVE9_PASSWORD", service: "Five9 SOAP API", description: "Five9 admin account password for SOAP API authentication", isPublic: false },
+  { name: "SUPABASE_SERVICE_ROLE_KEY", service: "Lovable Cloud", description: "Service role key for backend database operations", isPublic: false },
+  { name: "SUPABASE_ANON_KEY", service: "Lovable Cloud", description: "Anonymous/publishable key for client-side database access", isPublic: true },
+  { name: "SUPABASE_URL", service: "Lovable Cloud", description: "Backend project URL for API calls", isPublic: true },
+  { name: "LOVABLE_API_KEY", service: "Lovable AI Gateway", description: "API key for AI-powered features (script generation, call flow builder)", isPublic: false },
+  { name: "SLACK_API_KEY", service: "Slack", description: "Slack Bot token for agent onboarding/offboarding channel management", isPublic: false },
+  { name: "STRIPE_SECRET_KEY", service: "Stripe Billing", description: "Stripe secret key for payment processing and subscription management", isPublic: false },
+  { name: "STRIPE_PUBLISHABLE_KEY", service: "Stripe Billing", description: "Stripe publishable key for client-side payment forms", isPublic: true },
+  { name: "CLIO_CLIENT_ID", service: "Clio CRM", description: "OAuth2 client ID for Clio Manage API integration", isPublic: true },
+  { name: "CLIO_CLIENT_SECRET", service: "Clio CRM", description: "OAuth2 client secret for Clio authorization code exchange", isPublic: false },
+  { name: "GOOGLE_WORKSPACE_ADMIN_EMAIL", service: "Google Workspace", description: "Service account delegated admin email for user provisioning", isPublic: false },
+  { name: "GOOGLE_SERVICE_ACCOUNT_KEY", service: "Google Workspace", description: "JSON service account credentials for Google Admin SDK", isPublic: false },
+  { name: "RESEND_API_KEY", service: "Resend Email", description: "Resend API key for transactional emails (credentials, notifications)", isPublic: false },
+  { name: "TWILIO_ACCOUNT_SID", service: "Twilio SMS", description: "Twilio account SID for SMS notification delivery", isPublic: false },
+  { name: "TWILIO_AUTH_TOKEN", service: "Twilio SMS", description: "Twilio auth token for SMS API authentication", isPublic: false },
+];
 
 export const buildMap: BuildCategory[] = [
   {
@@ -142,7 +169,7 @@ export const buildMap: BuildCategory[] = [
     items: [
       { name: "Settings Page", description: "Organization-level configuration", status: "done", tested: true },
       { name: "Integration Credentials UI", description: "Admin UI to configure Five9, Resend, and Google Workspace keys", status: "done", tested: true },
-      { name: "Dark Mode UI", description: "Consistent dark theme throughout the app", status: "done", tested: true },
+      { name: "Light Mode UI", description: "Clean white background light theme throughout the app", status: "done", tested: true },
       { name: "Responsive Sidebar", description: "Mobile-friendly collapsible navigation", status: "done", tested: true },
       { name: "Onboarding Flow", description: "New user org creation wizard", status: "done", tested: true },
       { name: "Build Outline Page", description: "Living build map showing feature progress", status: "done", tested: true },
@@ -155,8 +182,8 @@ export const buildMap: BuildCategory[] = [
       { name: "Agents Nav Item", description: "New 'Agents' link in sidebar navigation", status: "done", tested: true },
       { name: "Agents Module Page", description: "/admin/agents with Onboarding/Offboarding tabs", status: "done", tested: true },
       { name: "Database Tables", description: "agents, scheduled_jobs, audit_logs, app_config tables with RLS", status: "done", tested: true },
-      { name: "Five9 Provisioning Function", description: "SOAP wrapper — createUser, deactivate, getExtensions, getAllUsers, getSkills", status: "done", tested: true },
-      { name: "Google Workspace Function", description: "Admin Directory API — createUser, suspendUser, deleteUser", status: "done", tested: true },
+      { name: "Five9 Provisioning Function", description: "SOAP wrapper for createUser, deactivate, getExtensions, getAllUsers, getSkills", status: "done", tested: true },
+      { name: "Google Workspace Function", description: "Admin Directory API for createUser, suspendUser, deleteUser", status: "done", tested: true },
       { name: "Send Credentials Function", description: "Styled HTML credential email via Resend", status: "done", tested: true },
       { name: "Process Jobs Function", description: "Background job processor for scheduled deprovisionings", status: "done", tested: true },
       { name: "Provisioning Form", description: "Agent onboarding form with extension conflict check and skills", status: "done", tested: true },
@@ -296,7 +323,7 @@ export const buildMap: BuildCategory[] = [
       { name: "Automation Rules Engine", description: "Configure trigger conditions and action chains per campaign", status: "done" },
       { name: "Urgency-Based Channel Routing", description: "Add urgency level (LOW/NORMAL/HIGH) to notification payloads; HIGH prefers real-time channels (SMS/Slack), LOW uses email only", status: "done" },
       { name: "Quiet Hours per Organization", description: "Per-org quiet hours window (start/end time + timezone); non-HIGH notifications delayed until window ends", status: "done" },
-      { name: "Channel Preference & Fallback", description: "Primary/secondary channel selection per org with automatic fallback when primary fails (Slack → SMS → Email)", status: "done" },
+      { name: "Channel Preference & Fallback", description: "Primary/secondary channel selection per org with automatic fallback when primary fails (Slack to SMS to Email)", status: "done" },
       { name: "Disposition-to-Channel Mapping", description: "Extend disposition email engine so each disposition can trigger specific notification channels beyond email", status: "done" },
     ],
   },
@@ -304,9 +331,9 @@ export const buildMap: BuildCategory[] = [
     name: "ANI Block List",
     items: [
       { name: "ANI Block SOAP Action", description: "New modifyCampaignProfile call in five9-provisioning to add/remove ANI filtering rules (REJECT action, EQUALS operator) with E.164 formatting", status: "done" },
-      { name: "Disposition-Triggered Auto-Block", description: "five9-webhook detects 'Block Caller' disposition and auto-invokes the block SOAP action for that ANI against the campaign profile", status: "done" },
+      { name: "Disposition-Triggered Auto-Block", description: "five9-webhook detects Block Caller disposition and auto-invokes the block SOAP action for that ANI against the campaign profile", status: "done" },
       { name: "Block List Management UI", description: "Admin page showing blocked ANIs per campaign profile with search, unblock button, and audit trail", status: "done" },
-      { name: "Block Confirmation Notification", description: "Send Slack/email notification confirming 'Number [ANI] blocked on [Campaign Profile] by [Agent]' via existing send-notification", status: "done" },
+      { name: "Block Confirmation Notification", description: "Send Slack/email notification confirming number blocked on campaign profile by agent via existing send-notification", status: "done" },
     ],
   },
   {
@@ -322,7 +349,7 @@ export const buildMap: BuildCategory[] = [
     name: "Abandon Rate Reduction Engine",
     items: [
       { name: "Skill Callback Audit Scanner", description: "Edge function calling getSkillsInfo via SOAP, checks every active skill for enableCallback status, flags non-compliant skills", status: "done" },
-      { name: "IVR Optimization Analyzer", description: "AI-assisted (Gemini) analysis of IVR script definitions via getIVRScripts — checks for high-volume branching, callback modules, wait-time announcements", status: "done" },
+      { name: "IVR Optimization Analyzer", description: "AI-assisted (Gemini) analysis of IVR script definitions via getIVRScripts for high-volume branching, callback modules, wait-time announcements", status: "done" },
       { name: "Auto-Remediation Engine", description: "Automated SOAP calls (modifySkill, modifyIVRScript) to enable callback on flagged skills and inject missing IVR modules", status: "done" },
       { name: "Generic Callback Template", description: "Pre-built IVR callback flow template (high-volume If/Then, announcement, menu, digit mapping) applied by auto-remediation to deficient campaigns", status: "done" },
       { name: "Abandon Rate Dashboard", description: "Admin UI showing per-skill callback audit status, IVR compliance scores, remediation history, and before/after abandon rate metrics", status: "done" },
@@ -332,7 +359,7 @@ export const buildMap: BuildCategory[] = [
     name: "Web Callback Orchestration",
     items: [
       { name: "Web Callbacks Table", description: "web_callbacks table with org/tenant scoping, contact fields, routing intent, call outcome tracking, RLS", status: "done" },
-      { name: "Callback Routing Configs", description: "Per-tenant queue→Five9 campaign mapping table with mode (human/ai) support", status: "done" },
+      { name: "Callback Routing Configs", description: "Per-tenant queue to Five9 campaign mapping table with mode (human/ai) support", status: "done" },
       { name: "Web Callback Edge Function", description: "Receives callback requests, validates phone, normalizes defaults, stores record, triggers Five9 dial", status: "done" },
       { name: "Five9 addRecordToList Action", description: "New SOAP action in five9-provisioning to inject contacts into outbound lists for immediate dialing", status: "done" },
       { name: "Callback Outcome Writeback", description: "Extend five9-webhook to match call results back to web_callbacks and update status/disposition", status: "done" },
@@ -342,18 +369,18 @@ export const buildMap: BuildCategory[] = [
   {
     name: "Data Plane Views",
     items: [
-      { name: "Call Usage Summary View", description: "fabric59_call_usage_summary — per tenant/org/period: total_minutes, total_calls, skill breakdown, billable flags. Sourced from call_log_cache", status: "done" },
-      { name: "Agent Activity Summary View", description: "fabric59_agent_activity_summary — per agent/period: talk_time, ready_time, logged_in_time, call_count. Sourced from call_log_cache + agents", status: "done" },
-      { name: "CRM Push Leads View", description: "fabric59_crm_push_leads — normalized lead events from api_logs where endpoint matches crm-push/*: org_id, tenant_id, crm_type, object_type, object_id, contact fields, timestamps", status: "done" },
-      { name: "Agents Identity View", description: "fabric59_agents_identity — unified agent directory joining agents table with five9/slack/google IDs, scoped by org", status: "done" },
-      { name: "Customers Identity View", description: "fabric59_customers_identity — unified client directory from tenants with CRM refs, Stripe refs, integration_configs keys", status: "done" },
-      { name: "Lifecycle Audit View", description: "fabric59_lifecycle_audit — filtered audit_logs for entity_type in (agent, provisioning, deprovisioning) with structured details", status: "done" },
+      { name: "Call Usage Summary View", description: "fabric59_call_usage_summary: per tenant/org/period total_minutes, total_calls, skill breakdown, billable flags from call_log_cache", status: "done" },
+      { name: "Agent Activity Summary View", description: "fabric59_agent_activity_summary: per agent/period talk_time, ready_time, logged_in_time, call_count from call_log_cache + agents", status: "done" },
+      { name: "CRM Push Leads View", description: "fabric59_crm_push_leads: normalized lead events from api_logs with crm_type, object_type, contact fields, timestamps", status: "done" },
+      { name: "Agents Identity View", description: "fabric59_agents_identity: unified agent directory joining agents table with five9/slack/google IDs, scoped by org", status: "done" },
+      { name: "Customers Identity View", description: "fabric59_customers_identity: unified client directory from tenants with CRM refs, Stripe refs, integration_configs keys", status: "done" },
+      { name: "Lifecycle Audit View", description: "fabric59_lifecycle_audit: filtered audit_logs for entity_type in (agent, provisioning, deprovisioning) with structured details", status: "done" },
     ],
   },
   {
     name: "Identity Resolution",
     items: [
-      { name: "Identity Cross-Reference Table", description: "identity_xrefs table: org_id, person_type (agent/client), internal_id, external_system (five9/slack/google/stripe/crm), external_id, synced_at. With RLS by org_id", status: "done" },
+      { name: "Identity Cross-Reference Table", description: "identity_xrefs table: org_id, person_type, internal_id, external_system, external_id, synced_at with RLS by org_id", status: "done" },
       { name: "Identity Sync Edge Function", description: "Edge function that reads agents + tenants + integration_configs and upserts identity_xrefs rows, callable on-demand or via pg_cron", status: "done" },
     ],
   },
@@ -361,9 +388,9 @@ export const buildMap: BuildCategory[] = [
     name: "CRM Integration Engine",
     items: [
       { name: "OAuth Tokens Table", description: "oauth_tokens table for Clio OAuth2 access/refresh tokens with org-scoped RLS and encryption", status: "done" },
-      { name: "Clio Mappings Table", description: "clio_mappings table: phone → contact_id + matter_id per tenant, unique on (tenant_id, phone)", status: "done" },
-      { name: "MyCase Mappings Table", description: "mycase_mappings table: phone → contact_id + case_id per tenant, unique on (tenant_id, phone)", status: "done" },
-      { name: "Five9-Main Edge Function", description: "Hub entrypoint for all tenants — normalizes CallEvent, dispatches to Clio/MyCase handlers based on integration_configs rules", status: "done" },
+      { name: "Clio Mappings Table", description: "clio_mappings table: phone to contact_id + matter_id per tenant, unique on (tenant_id, phone)", status: "done" },
+      { name: "MyCase Mappings Table", description: "mycase_mappings table: phone to contact_id + case_id per tenant, unique on (tenant_id, phone)", status: "done" },
+      { name: "Five9-Main Edge Function", description: "Hub entrypoint for all tenants normalizing CallEvent, dispatches to Clio/MyCase handlers based on integration_configs rules", status: "done" },
       { name: "Clio Handler", description: "Contact search/create, matter resolution, Communication + Activity creation via Clio API v4 with per-queue rule overrides", status: "done" },
       { name: "MyCase Handler", description: "Contact search/create, case resolution, Note creation via MyCase API with per-queue rule overrides", status: "done" },
       { name: "Clio OAuth Callback", description: "Edge function handling Clio OAuth2 authorization code exchange, token storage, and tenant config update", status: "done" },
@@ -404,6 +431,72 @@ export const buildMap: BuildCategory[] = [
       { name: "Clio Deep Two-Way Sync", description: "Full bidirectional sync with webhook ingestion, reverse sync, advanced disposition mapping, conflict management, and operational dashboards", status: "planned" },
       { name: "MyCase Capability-Aware Adapter", description: "Provider adapter that checks tenant capabilities before attempting actions, with graceful fallback to review queue", status: "planned" },
       { name: "Go-Live Readiness & Rollout Tools", description: "Readiness checklist, rollout risk analysis, post-launch monitoring, and AI-powered go-live review", status: "planned" },
+    ],
+  },
+  // ── Sprint A: Build Map & KB Alignment ──
+  {
+    name: "Build Map & Knowledge Base",
+    items: [
+      { name: "Required Secrets Array", description: "Typed requiredSecrets in buildMap.ts with service, description, and public/private flag", status: "done" },
+      { name: "KB Checkbox on Outline", description: "Per-feature KB readiness checkbox on /outline page persisted in localStorage", status: "done" },
+      { name: "Required Secrets Section on Outline", description: "Visual section on /outline showing all required API keys with lock icons and service badges", status: "done" },
+      { name: "Unfinished Items Float to Top", description: "Sort items within each category so untested/incomplete items appear first", status: "done" },
+      { name: "Knowledge Base Data File", description: "src/data/knowledgeBase.ts with structured publicTitle, summary, howItWorks, whenToUseIt, faq fields", status: "done" },
+    ],
+  },
+  // ── Sprint B: AI Assistant + Guardrails ──
+  {
+    name: "AI Assistant & Guardrails",
+    items: [
+      { name: "Floating Chat Button", description: "Bottom-right chat button for logged-in users that opens an AI assistant panel", status: "planned" },
+      { name: "Assistant Panel with KB Grounding", description: "Chat panel with responses grounded in knowledgeBase.ts and buildMap features", status: "planned" },
+      { name: "System Prompt with Guardrails", description: "/prompts/assistant-system.txt with identity, scope, safety, and escalation rules", status: "planned" },
+      { name: "Tenant-Configurable Assistant", description: "Per-tenant settings for assistant name, avatar, description, and enabled toggle", status: "planned" },
+      { name: "Contextual Help Icons", description: "Help icons on complex pages linking to KB articles or prefilled assistant questions", status: "planned" },
+    ],
+  },
+  // ── Sprint C: Marketing Expansion ──
+  {
+    name: "Marketing Expansion",
+    items: [
+      { name: "Product Tour Page", description: "Deep /product page with interactive walkthrough of key features", status: "planned" },
+      { name: "Interactive Demo Sandbox", description: "/demo page with read-only mini app using mock data for guided exploration", status: "planned" },
+      { name: "Standalone FAQ Page", description: "Dedicated /faq route with categorized questions and search", status: "planned" },
+      { name: "Privacy Policy Page", description: "/legal/privacy route with standard privacy policy content", status: "planned" },
+      { name: "Sticky Header on Scroll", description: "Condensed header with backdrop blur that persists on scroll", status: "planned" },
+      { name: "Before/After Interactive Module", description: "Draggable slider showing workflow transformation from manual to Fabric59", status: "planned" },
+      { name: "Persona Tabs Module", description: "Choose your role tabs that swap hero copy and visuals for BPO, legal, home services", status: "planned" },
+      { name: "Live Product Visual in Hero", description: "Animated or interactive mini UI in the hero section showing real product capabilities", status: "planned" },
+    ],
+  },
+  // ── Sprint D: Notifications + Import/Export ──
+  {
+    name: "Notifications & Data Portability",
+    items: [
+      { name: "Notification Bell in Header", description: "Bell icon with unread badge in app header, dropdown list of recent notifications", status: "planned" },
+      { name: "CSV Export for Main Entities", description: "Export buttons on agents, tenants, campaigns, and call logs tables", status: "planned" },
+      { name: "Import Wizard Component", description: "Upload, column mapping, validation, and safe write flow for bulk data imports", status: "planned" },
+      { name: "Lifecycle Email Templates", description: "Welcome, trial, billing, and update email templates via Resend", status: "planned" },
+      { name: "Webhook Event Layer", description: "Structured event bus for key actions (call ended, agent provisioned, invoice created) with hook support", status: "planned" },
+    ],
+  },
+  // ── Sprint E: Onboarding Polish ──
+  {
+    name: "Onboarding Polish",
+    items: [
+      { name: "AI-Recommended Setup Defaults", description: "Use onboarding intent answers to suggest optimal initial configuration", status: "planned" },
+      { name: "Invite Team Step", description: "Onboarding step to invite teammates with role suggestions based on org size", status: "planned" },
+      { name: "Getting Started Dashboard Widget", description: "Persistent checklist widget on main dashboard until key steps are completed", status: "planned" },
+      { name: "Onboarding Restart from Settings", description: "Option in settings or /help to reopen or reset the onboarding flow", status: "planned" },
+    ],
+  },
+  // ── Sprint F: Prompt Governance ──
+  {
+    name: "Prompt Governance",
+    items: [
+      { name: "Prompts Directory", description: "/prompts directory with centralized prompt library listing major prompts with title, description, and version", status: "planned" },
+      { name: "Prompt Change Tracking", description: "Short change notes when prompts are modified, with version history", status: "planned" },
+      { name: "Safety-Labeled Prompts", description: "Clear labeling for prompts that affect security, trust, or user-facing behavior", status: "planned" },
     ],
   },
 ];
