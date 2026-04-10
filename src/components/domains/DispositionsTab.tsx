@@ -172,7 +172,7 @@ export function DispositionsTab({ domainId, canManage }: DispositionsTabProps) {
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Format: <code className="bg-muted px-1 rounded">Name | Type | Description | Group (optional)</code> — Type defaults to <code className="bg-muted px-1 rounded">FinalApplyToCampaigns</code> if omitted
+              Format: <code className="bg-muted px-1 rounded">Name | Type | Description | Group (optional)</code>. Type defaults to <code className="bg-muted px-1 rounded">FinalApplyToCampaigns</code> if omitted.
             </p>
           </div>
 

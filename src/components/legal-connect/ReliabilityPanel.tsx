@@ -139,7 +139,7 @@ export default function ReliabilityPanel({ clientId }: ReliabilityPanelProps) {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Webhook Subscriptions</CardTitle>
-              <CardDescription>Monitor health, expiry countdown, and renewal — Clio max 31 days</CardDescription>
+              <CardDescription>Monitor health, expiry countdown, and renewal. Clio max 31 days.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>

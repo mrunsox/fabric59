@@ -266,7 +266,7 @@ export default function CallFlowBuilderPage() {
               <CardHeader className="pb-3 shrink-0 flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  Alex — Call Flow Engineer
+                  Alex, Call Flow Engineer
                 </CardTitle>
                 {messages.length > 0 && (
                   <Button variant="ghost" size="sm" onClick={handleStartOver} className="gap-2">

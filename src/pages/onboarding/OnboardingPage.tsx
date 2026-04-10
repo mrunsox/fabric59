@@ -283,7 +283,7 @@ export default function OnboardingPage() {
             </div>
           </div>
           <CardTitle className="text-xl tracking-tight">What would you like to set up first?</CardTitle>
-          <CardDescription>Choose your primary use case — you can always use both later</CardDescription>
+          <CardDescription>Choose your primary use case. You can always use both later.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 pt-2">
           <button type="button" onClick={() => setIntent("provisioning")} className={cn(
@@ -316,7 +316,7 @@ export default function OnboardingPage() {
                   <p className="font-semibold text-sm">CRM & Campaign Integration</p>
                   {intent === "integration" && <Check className="h-4 w-4 text-primary" />}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">Connect CRMs to Five9 campaigns — map fields, sync contacts.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Connect CRMs to Five9 campaigns. Map fields and sync contacts.</p>
               </div>
             </div>
           </button>
@@ -390,7 +390,7 @@ export default function OnboardingPage() {
               { label: `Intent: ${intent === "provisioning" ? "Agent Provisioning" : intent === "integration" ? "CRM Integration" : "Selected"}`, complete: !!intent },
               { label: `First client: ${tenantName || "Skipped"}`, complete: !!tenantName },
             ]}
-            blockers={!tenantName ? ["No client configured — add one from the dashboard"] : []}
+            blockers={!tenantName ? ["No client configured. Add one from the dashboard."] : []}
           />
         </CardContent>
         <div className="px-6 pb-6 space-y-2">

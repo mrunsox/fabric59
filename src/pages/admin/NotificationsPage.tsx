@@ -198,7 +198,7 @@ export default function NotificationsPage() {
                 {alertsLoading ? (
                   <TableRow><TableCell colSpan={4} className="text-center py-8">Loading...</TableCell></TableRow>
                 ) : (errorAlerts?.length || 0) === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No error alerts — everything is running smoothly</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No error alerts. Everything is running smoothly.</TableCell></TableRow>
                 ) : (
                   errorAlerts?.map((alert) => (
                     <TableRow key={alert.id}>
