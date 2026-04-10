@@ -57,6 +57,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <SEOHead title="Sign In | Fabric59" description="Sign in to your Fabric59 account." noindex />
       {/* Left - Feature showcase */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,hsl(var(--primary)/0.12),transparent_60%)]" />

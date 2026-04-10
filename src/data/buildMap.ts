@@ -523,4 +523,17 @@ export const buildMap: BuildCategory[] = [
       { name: "OG Image and Social Metadata", description: "Branded 1200x630 OG image with stable self-hosted URL", status: "done" },
     ],
   },
+  // ── SEO & AEO Hardening Sprint ──
+  {
+    name: "SEO & AEO Hardening",
+    items: [
+      { name: "robots.txt Admin/Auth Disallow", description: "Block /admin, /master, /onboarding, and auth paths from crawlers", status: "done" },
+      { name: "Sitemap Expansion", description: "Added /privacy, /trust, /responsible-disclosure, /contact to sitemap.xml", status: "done" },
+      { name: "SoftwareApplication Schema", description: "Added SoftwareApplication JSON-LD structured data to landing page", status: "done" },
+      { name: "llms.txt and ai.txt Update", description: "Added all new public pages to LLM and AI agent discovery files", status: "done" },
+      { name: "AEO Direct Answer Paragraphs", description: "Added citation-ready opening paragraphs to Security, Privacy, and Trust pages", status: "done" },
+      { name: "noindex on Auth Pages", description: "Applied noindex to login, signup, forgot-password, reset-password, onboarding, and 404", status: "done" },
+      { name: "Hero Dash Cleanup", description: "Replaced remaining em dash in landing page hero copy", status: "done" },
+    ],
+  },
 ];

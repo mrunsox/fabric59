@@ -54,6 +54,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <SEOHead title="Sign Up | Fabric59" description="Create a Fabric59 account." noindex />
       {/* Left - Value prop showcase */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,hsl(var(--primary)/0.12),transparent_60%)]" />
