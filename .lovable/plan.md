@@ -1,121 +1,169 @@
 
 
-# Close Five9 Integration Gaps — Implementation Plan
+# Five9 Gap-Closure Sprint Plan — E2E Testing Readiness
 
-Now that we've confirmed Clio credentials are per-client (already handled by `integration_configs` JSONB + `oauth_tokens`), here are the remaining actionable items from the audit.
+## Golden Path: Target E2E Test Scenario
 
----
-
-## 1. Wire Real CRM Calls into `legal-connect-jobs` processQueue
-
-**Problem:** Lines 111-125 of `legal-connect-jobs/index.ts` mark every job as "succeeded" without executing any CRM API calls. The entire Legal Connect sync pipeline is instrumented but has no execution engine.
-
-**Fix:** Replace the stub with a dispatcher that:
-- Reads the job's `provider` and `job_type` fields
-- Fetches the tenant's `integration_configs` to get Clio OAuth token ID or MyCase API key
-- For Clio jobs: obtains access token via `oauth_tokens`, calls Clio API (contact search/create, matter resolve, communication create) — replicating the logic already proven in `five9-main`
-- For MyCase jobs: fetches API key from `api_keys` table, calls MyCase API with the same patterns from `five9-main`
-- Records output payload on success, or triggers retry/dead-letter on failure
-
-**File:** `supabase/functions/legal-connect-jobs/index.ts` — replace lines 111-125 with ~200 lines of real CRM dispatch logic, extracting the Clio/MyCase API helpers (already written in `five9-main`) into shared inline functions.
+```text
+1. Five9 inbound call → ANI/DNIS/campaign sent to Fabric59 lookup endpoint
+2. Fabric59 resolves contact from legal_connect_contacts / clio_mappings
+3. Screen-pop data returned to Five9 Agent Desktop Plus
+4. Agent handles call, sets disposition + worksheet answers
+5. Five9 posts disposition + call variables to five9-main (post-disposition)
+6. five9-main normalizes event → resolves tenant → dispatches to Clio handler
+7. Clio handler: contact search/create → matter resolve → communication create
+8. Event logged in api_logs + legal_connect_event_log
+9. Reconciliation: Five9 call ID traceable through logs → CRM record IDs
+```
 
 ---
 
-## 2. Build Pre-Call Lookup Endpoint
+## Gap → Story Mapping
 
-**Problem:** Five9 Agent Desktop Plus screen-pop requires a lookup URL that returns contact data before/during a call. Currently `five9-main` only handles `call_ended`/`disposition_set` — no pre-call path.
-
-**Fix:** Add a `lookup` action to `five9-main` that:
-- Accepts ANI (caller phone number) + optional DNIS/campaign
-- Searches `legal_connect_contacts` canonical table first
-- Falls back to `clio_mappings` / `mycase_mappings`
-- Returns structured screen-pop data: contact name, phone, matter/case info, recent call history
-- Responds in <500ms (no CRM API calls, local DB only)
-
-**File:** `supabase/functions/five9-main/index.ts` — add ~80 lines for a new `lookup` path before the existing Route A/B processing.
+| # | Gap | Sprint | Story |
+|---|---|---|---|
+| 1 | `five9-main` Clio token refresh uses env vars, not per-client secrets | S1 | Fix getClioAccessToken to read client_id/client_secret from legal_connect_connections |
+| 2 | No duplicate prevention / idempotency on CRM writes | S1 | Add idempotency key check before CRM dispatch in five9-main |
+| 3 | No test harness for Five9 payloads | S1 | Build Test Console for sending sample Five9 events to five9-main |
+| 4 | No reconciliation view (call ID → events → CRM) | S2 | Build E2E trace view linking Five9 call to downstream actions |
+| 5 | No structured error handling for missing call variables | S2 | Add validation + graceful rejection for required variables |
+| 6 | MyCase standalone adapter not tested E2E | S3 | Verify MyCase adapter mirrors Clio golden path |
 
 ---
 
-## 3. Add Call Variable SOAP Actions to Five9 Provisioning
+## Sprint 1 — Core E2E Plumbing (Critical Fixes)
 
-**Problem:** No `createCallVariable`, `modifyCallVariable`, or `getCallVariables` SOAP actions exist, preventing programmatic management of Five9 call variables.
+**Goal:** Run one real Five9 → Fabric59 → Clio test call successfully with per-client credentials.
 
-**Fix:** Add 3 new action handlers to `five9-provisioning/index.ts`:
-- `getCallVariables` — SOAP `getCallVariables` → parse response
-- `createCallVariable` — accepts name, group, description, type (STRING/NUMBER/DATE/BOOLEAN/CURRENCY/PERCENT/EMAIL/URL/PHONE/TIME/TIME_PERIOD/LIST)
-- `modifyCallVariable` — accepts name + updates
+**Timebox:** 1 session
 
-**File:** `supabase/functions/five9-provisioning/index.ts` — add ~80 lines after the existing disposition management section.
+**Entry criteria:** All edge functions deployed, at least one tenant with Clio OAuth token configured.
 
----
+### Stories
 
-## 4. Build Real MyCase Standalone Adapter
+#### 1.1 Fix Clio Token Refresh to Use Per-Client Credentials
+**File:** `supabase/functions/five9-main/index.ts` (lines 114-162)
 
-**Problem:** `mycase/index.ts` is a 14-line stub returning "API integration pending."
+The `getClioAccessToken` function currently reads `CLIO_CLIENT_ID` and `CLIO_CLIENT_SECRET` from `Deno.env.get()`. Since Clio credentials are per-client (stored in `legal_connect_connections.config`), this must be changed to:
+- Accept `tenantId` as a parameter
+- Query `tenants.integration_configs → clio.oauthTokenId`
+- Join to `legal_connect_connections` via `oauth_token_id` to get `config.client_id` and `config.client_secret`
+- Use those for the refresh grant
 
-**Fix:** Replace with a real adapter supporting:
-- `searchContacts` — by phone/email/name
-- `createContact` — with phone, name, email
-- `searchCases` — by contact_id, status
-- `createCase` — with name, contact_id
-- `createNote` — with subject, content, case_id or contact_id
-- `getContact` / `getCase` — by ID
+This is the same pattern already working in `legal-connect-jobs/index.ts` lines 100-133. Port that logic.
 
-Uses the same `mycaseApiFetch` pattern already proven in `five9-main`. Reads API key from `api_keys` table via tenant config.
+#### 1.2 Add Idempotency Guard to CRM Dispatch
+**File:** `supabase/functions/five9-main/index.ts`
 
-**File:** `supabase/functions/mycase/index.ts` — full rewrite, ~250 lines.
+Before calling `handleCallForClio` / `handleCallForMyCase`:
+- Compute idempotency key from `call.id + tenantId + disposition`
+- Check `api_logs` or a new `processed_events` set for that key
+- Skip if already processed, preventing duplicate CRM records on retry/replay
 
----
-
-## 5. Seed Example Library Data
-
-**Problem:** The `legal_connect_example_library` table exists but has no rows. The Testing Panel's example picker shows empty state.
-
-**Fix:** Create a migration that inserts ~15 example scenarios covering:
-- Clio: contact_created, contact_updated, matter_created, matter_updated, task_created
-- MyCase: contact_created, case_created, note_created
-- Five9: qualified_lead, callback_scheduled, consult_booked, no_answer, wrong_number, voicemail
-
-Each row includes provider, scenario_name, description, sample_payload, expected_outcome.
-
-**Method:** Database migration with INSERT statements.
-
----
-
-## 6. Wire Agent Context Panel to Live Data
-
-**Problem:** `AgentContextPanel` accepts props but is never rendered with real data from Legal Connect hooks.
-
-**Fix:** Create a wrapper component `AgentContextPanelConnected` that:
-- Takes `clientId` and `callerPhone` as props
-- Uses `useLegalContacts` to find the contact by phone
-- Uses `useLegalMatters` to find open matters for that contact
-- Uses `useLegalEventLog` for recent events
-- Passes resolved data into `AgentContextPanel`
-
+#### 1.3 Build Five9 Test Console Page
 **Files:**
-- New: `src/components/legal-connect/AgentContextPanelConnected.tsx` (~50 lines)
-- Modified: Wire it into the Agent Dashboard page where appropriate
+- New: `src/pages/admin/TestConsolePage.tsx` (may already exist — extend it)
+- Wire into admin routes
+
+The console should:
+- Let admin select a tenant and provider
+- Pre-fill a sample Five9 payload (lookup or post-disposition)
+- Send it to `five9-main` via `supabase.functions.invoke`
+- Display raw response + processing trace
+- Show what CRM actions would fire (or did fire in test mode)
+
+### Exit Criteria
+- [ ] Clio token refresh works with per-client credentials (no env vars needed)
+- [ ] Duplicate Five9 events don't create duplicate CRM records
+- [ ] Admin can send a test payload and see the full processing result
 
 ---
 
-## Execution Order
+## Sprint 2 — Hardening & Observability
 
-1. `legal-connect-jobs` — real CRM dispatch (highest impact, unlocks pipeline)
-2. `five9-main` — pre-call lookup endpoint
-3. `five9-provisioning` — call variable SOAP actions
-4. `mycase/index.ts` — full adapter rewrite
-5. DB migration — seed example library
-6. `AgentContextPanelConnected` — live data wiring
+**Goal:** E2E tests are repeatable, failures are visible, and results are verifiable.
+
+**Timebox:** 1 session
+
+**Entry criteria:** Sprint 1 complete.
+
+### Stories
+
+#### 2.1 Build E2E Reconciliation Trace View
+**File:** New component on Reports or Legal Connect page
+
+A view that:
+- Takes a Five9 call ID or ANI + timestamp
+- Queries `api_logs`, `legal_connect_event_log`, `legal_connect_sync_jobs`
+- Shows the chain: webhook received → event logged → sync job created → CRM result
+- Links to CRM record IDs (Clio contact/matter/communication IDs)
+
+#### 2.2 Add Call Variable Validation
+**File:** `supabase/functions/five9-main/index.ts`
+
+Before CRM dispatch:
+- Check tenant's `legal_connect_call_variable_mappings` for required variables
+- If a required variable is missing from payload, log a structured error and return a clear rejection
+- Don't silently proceed with partial data
+
+#### 2.3 Add Error Scenario Test Cases
+**File:** Extend Test Console
+
+Add pre-built test scenarios:
+- Missing required call variable → expect graceful rejection
+- Unknown disposition → expect skip with log
+- Expired Clio token → expect refresh + retry
+- Duplicate call ID → expect idempotent skip
+
+### Exit Criteria
+- [ ] Given a Five9 call ID, admin can trace it through the full pipeline
+- [ ] Missing required call variables produce clear, logged rejections
+- [ ] At least 4 test scenarios (success, missing var, unknown dispo, duplicate) pass
+
+### Acceptance Criteria (Sprint 1+2 combined)
+- "Given a Five9 test call with disposition `Qualified Lead`, we see a contact + communication in Clio"
+- "Given a missing required call variable, the system rejects gracefully and logs it"
+- "Given a duplicate call event, no duplicate CRM records are created"
+- "Given an expired Clio token, the system refreshes using per-client secrets and retries"
+
+---
+
+## Sprint 3 — MyCase Parity (Post-Clio Pilot)
+
+**Goal:** MyCase flows mirror the Clio golden path for tenants using MyCase.
+
+**Timebox:** 1 session
+
+**Entry criteria:** Clio E2E testing passing.
+
+### Stories
+- Verify MyCase adapter mirrors the full golden path (lookup → post-disposition → case + note)
+- Add MyCase-specific test scenarios to Test Console
+- Validate idempotency and error handling for MyCase flows
+
+**This sprint can be deferred until after Clio pilot** since MyCase uses simpler API key auth and the standalone adapter + job executor are already built.
+
+---
+
+## Risks & Assumptions
+
+| Risk | Mitigation |
+|---|---|
+| Per-client Clio credentials may not be stored yet in `legal_connect_connections.config` | Sprint 1.1 includes fallback logging; setup wizard already captures these |
+| Five9 payload format may vary between Web Connector and WFA triggers | normalizeCallEvent already handles multiple field names; test with real payloads |
+| `legal_connect_contacts` table may be empty for test tenants | Lookup falls back to `clio_mappings` / `mycase_mappings`; pre-populate for test |
+| Rate limits on Clio API during testing | Built-in retry with backoff already in clioApiFetch |
+
+---
 
 ## Files Summary
 
-| Action | File |
-|--------|------|
-| Major rewrite | `supabase/functions/legal-connect-jobs/index.ts` |
-| Add lookup path | `supabase/functions/five9-main/index.ts` |
-| Add 3 actions | `supabase/functions/five9-provisioning/index.ts` |
-| Full rewrite | `supabase/functions/mycase/index.ts` |
-| New component | `src/components/legal-connect/AgentContextPanelConnected.tsx` |
-| DB migration | Seed `legal_connect_example_library` with ~15 rows |
+| Sprint | Action | File |
+|---|---|---|
+| S1 | Fix per-client Clio token refresh | `supabase/functions/five9-main/index.ts` |
+| S1 | Add idempotency guard | `supabase/functions/five9-main/index.ts` |
+| S1 | Build/extend Test Console | `src/pages/admin/TestConsolePage.tsx` |
+| S2 | Build reconciliation trace view | New component in Legal Connect or Reports |
+| S2 | Add call variable validation | `supabase/functions/five9-main/index.ts` |
+| S2 | Add error test scenarios | `src/pages/admin/TestConsolePage.tsx` |
 
