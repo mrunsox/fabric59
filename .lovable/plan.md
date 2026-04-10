@@ -1,60 +1,48 @@
 
 
-# Privacy, Trust, and Compliance Pages Implementation
+# UI/UX & Copy Cleanup Sprint
 
-## Overview
+## 1. Hyphen/Dash Cleanup (~35 files)
+Scan all `.tsx` files for `—`, `–`, and decorative `-`. Rewrite sentences to use commas, colons, or short sentences. Keep hyphens only in compound words (e.g., "AI-powered", "real-time"), phone numbers, and URL slugs.
 
-Implement 4 new public pages (`/privacy`, `/trust`, `/responsible-disclosure`, `/contact`), expand the existing `/security` and `/terms` pages with full professional content, add a "Legal & Compliance" admin settings tab, update all footers and nav, and add incident reporting hooks.
+Key files: `ContactPage`, `SecurityPage`, `PrivacyPage`, `OutlinePage`, `BillingPage`, `NotificationsPage`, `CampaignDetailPage`, `AbandonRatePage`, `TestConsolePage`, `Report59UploadPage`, and ~25 others identified in the search.
 
-## Variables
+## 2. `toTitleCase` Utility
+Add `toTitleCase(input: string): string` to `src/lib/utils.ts`. Capitalizes significant words, keeps minor words lowercase (a, an, the, and, but, or, for, nor, at, by, from, in, of, on, to, up, with, as, into, over, onto, per, vs), preserves acronyms.
 
-- `PRODUCT_NAME` = Fabric59
-- `PRODUCT_DESCRIPTION` = The all-in-one Five9 integration platform for BPOs and contact centers
-- `PRIMARY_DOMAIN` = fabric59.lovable.app
-- `COMPLIANCE_EMAIL` = security@fabric59.com
+## 3. CSS Title Case for Headings
+Add to `src/index.css` base layer:
+```css
+h1, h2, h3, h4, h5, h6 {
+  text-transform: capitalize;
+}
+```
+One line, instant site-wide effect.
 
-## Files to Create
+## 4. Scroll-to-Top Button
+- **New file:** `src/components/layout/ScrollToTopButton.tsx` with fixed bottom-left `ChevronUp` button, appears after 300px scroll, smooth-scrolls to top, primary color, rounded, shadow.
+- Wire into `AdminLayout.tsx` and `LandingPage.tsx`.
+- Existing `ScrollToTop` route-change reset is already in `App.tsx`.
 
-| File | Route | Purpose |
-|------|-------|---------|
-| `src/pages/PrivacyPage.tsx` | `/privacy` | Full privacy policy with data collection, retention, GDPR, US/CA sections, subprocessor table |
-| `src/pages/TrustPage.tsx` | `/trust` | Compliance center: SOC 2 status, controls overview, data handling, DDQ instructions, cross-links |
-| `src/pages/ResponsibleDisclosurePage.tsx` | `/responsible-disclosure` | Security research policy, scope, safe harbor, reporting instructions |
-| `src/pages/ContactPage.tsx` | `/contact` | Compliance/DPO contact, sales placeholder, pre-filled mailto links |
+## 5. OG Image / Social Share Metadata
+- Replace the expiring Google Cloud Storage OG image URL in `index.html` with a stable self-hosted path (`/og-image.png`).
+- Generate a 1200x630 branded OG image with Fabric59 logo and brand colors, saved to `public/og-image.png`.
+- Ensure `og:image`, `og:title`, `og:description`, `twitter:card`, `twitter:image` are consistent and use absolute URLs.
 
-## Files to Rewrite
+## 6. Build Map Update
+Add a "UI/UX Cleanup" category to `src/data/buildMap.ts` with items for this sprint.
 
-| File | Changes |
-|------|---------|
-| `src/pages/SecurityPage.tsx` | Expand from 4 cards to full sections: Architecture & Data Protection, Access Control & Audit, Enterprise Features (SSO/SCIM coming soon, IP allowlisting, API tokens), Incident Response with mailto link |
-| `src/pages/TermsPage.tsx` | Expand from 5 sections to full ToS: Introduction/parties, Eligibility, Account responsibilities, Service availability, Fees/billing, Prohibited activities, IP, Disclaimers, Limitation of liability, Governing law placeholders |
+## Files
 
-## Files to Edit
-
-| File | Changes |
-|------|---------|
-| `src/App.tsx` | Add routes: `/privacy`, `/trust`, `/responsible-disclosure`, `/contact` |
-| `src/components/marketing/MegaFooter.tsx` | Add Privacy, Trust, Responsible Disclosure, Contact to company links |
-| `src/components/marketing/MegaMenuHeader.tsx` | Add Trust/Compliance link under Resources dropdown |
-| `src/components/layout/AdminLayout.tsx` | No change needed (Settings tab approach below) |
-| `src/pages/admin/SettingsPage.tsx` | Add "Legal & Compliance" tab with: external links to all trust pages, org data retention summary (placeholder config), "System of Record Export" stub button, and "Report an Incident" mailto button |
-| `src/data/buildMap.ts` | Add "Privacy & Trust" category with all 8 items (4 new pages + 2 rewrites + admin tab + footer links) |
-
-## Shared Layout
-
-All new public pages use the same pattern as existing `/security` and `/terms`: back-to-home link, Fabric59 icon + title, `SEOHead`, prose sections with consistent typography.
-
-## In-App Compliance Hooks
-
-1. **Settings > Legal & Compliance tab** — links to all 6 trust pages, retention summary card, export stub, incident report mailto
-2. **Incident mailto template** — pre-fills subject with `[Security Incident] Fabric59 — {org name}` and body with org/tenant name, user email, current route, description placeholder
-3. **Footer links** — both MegaFooter (marketing) and AdminLayout footer get: Security, Privacy, Terms, Trust, Responsible Disclosure, Contact
-
-## Content Approach
-
-All copy will be professional B2B SaaS boilerplate with clear `[PLACEHOLDER]` markers where legal counsel review is needed (jurisdiction, specific retention periods, subprocessor list). No binding promises; uses "designed to support" and "in progress" language for certifications.
-
-## No Backend Changes
-
-This is purely pages, content, and navigation. No database migrations, no edge functions, no auth changes.
+| File | Action |
+|------|--------|
+| `src/lib/utils.ts` | Add `toTitleCase` function |
+| `src/index.css` | Add `text-transform: capitalize` for h1-h6 |
+| `src/components/layout/ScrollToTopButton.tsx` | New: scroll-to-top button |
+| `src/components/layout/AdminLayout.tsx` | Add `<ScrollToTopButton />` |
+| `src/pages/LandingPage.tsx` | Add `<ScrollToTopButton />` |
+| `index.html` | Update OG image to stable path |
+| `public/og-image.png` | Generated branded OG image |
+| ~35 `.tsx` files | Rewrite dash punctuation |
+| `src/data/buildMap.ts` | Add sprint items |
 
