@@ -812,6 +812,13 @@ serve(async (req) => {
         for (const tenant of (tenants || [])) {
           const configs: IntegrationConfigs = (tenant.integration_configs as any) || {};
 
+          // Idempotency check per tenant
+          const isDup = await checkIdempotency(supabase, call.id, tenant.id, call.disposition);
+          if (isDup) {
+            console.log(`Skipping duplicate for tenant ${tenant.id}, call ${call.id}`);
+            continue;
+          }
+
           if (configs.clio?.enabled && configs.clio.rules?.enabled) {
             try {
               await handleCallForClio({
@@ -842,6 +849,18 @@ serve(async (req) => {
               durationSeconds: call.durationSeconds,
             });
           }
+
+          // Log with idempotency key
+          const idempotencyKey = `${call.id}:${tenant.id}:${call.disposition || 'none'}`;
+          await supabase.from('api_logs').insert({
+            tenant_id: tenant.id,
+            endpoint: 'five9-main',
+            method: 'POST',
+            status: 'success',
+            request_payload: { callId: call.id, idempotencyKey, direction: call.direction, queue: call.queue, disposition: call.disposition },
+            response: { domainRoute: true },
+            response_time_ms: Date.now() - startTime,
+          });
         }
       }
 
