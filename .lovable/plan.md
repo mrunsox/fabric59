@@ -1,169 +1,106 @@
 
 
-# Five9 Gap-Closure Sprint Plan — E2E Testing Readiness
+# Marketing Pages Overhaul — Modern, Interactive, Feature-Rich
 
-## Golden Path: Target E2E Test Scenario
+## Overview
 
-```text
-1. Five9 inbound call → ANI/DNIS/campaign sent to Fabric59 lookup endpoint
-2. Fabric59 resolves contact from legal_connect_contacts / clio_mappings
-3. Screen-pop data returned to Five9 Agent Desktop Plus
-4. Agent handles call, sets disposition + worksheet answers
-5. Five9 posts disposition + call variables to five9-main (post-disposition)
-6. five9-main normalizes event → resolves tenant → dispatches to Clio handler
-7. Clio handler: contact search/create → matter resolve → communication create
-8. Event logged in api_logs + legal_connect_event_log
-9. Reconciliation: Five9 call ID traceable through logs → CRM record IDs
-```
+Complete redesign of the marketing experience across 4 areas: (1) landing page with all backend features showcased, (2) interactive super mega menu header, (3) mega menu footer with lead magnets, and (4) transform /login and /signup into interactive landing pages with embedded auth.
 
----
+## What Changes
 
-## Gap → Story Mapping
+### 1. Super Mega Menu Header
+**File:** New `src/components/marketing/MegaMenuHeader.tsx`
 
-| # | Gap | Sprint | Story |
-|---|---|---|---|
-| 1 | `five9-main` Clio token refresh uses env vars, not per-client secrets | S1 | Fix getClioAccessToken to read client_id/client_secret from legal_connect_connections |
-| 2 | No duplicate prevention / idempotency on CRM writes | S1 | Add idempotency key check before CRM dispatch in five9-main |
-| 3 | No test harness for Five9 payloads | S1 | Build Test Console for sending sample Five9 events to five9-main |
-| 4 | No reconciliation view (call ID → events → CRM) | S2 | Build E2E trace view linking Five9 call to downstream actions |
-| 5 | No structured error handling for missing call variables | S2 | Add validation + graceful rejection for required variables |
-| 6 | MyCase standalone adapter not tested E2E | S3 | Verify MyCase adapter mirrors Clio golden path |
+Replace the current simple nav links with a full mega menu using Radix NavigationMenu (already installed). Four dropdown panels:
 
----
+- **Platform** — 3-column grid showcasing: Agent Lifecycle, CRM Field Mapping, AI Call Flow Builder, Campaign Automation, Decision Tree Scripting, Legal Connect, Disposition Engine, Five9 Domain Management. Each item has icon + 1-line description + link.
+- **Integrations** — Left column lists categories (CRM, Legal, Productivity, Communication), right column shows a scrolling logo grid of the 20 integration logos in `/public/integration-logos/`. Bottom CTA: "See all 55+ integrations."
+- **Resources** — Lead magnets: "Five9 Automation Playbook" (PDF gated), "ROI Calculator" (interactive), "Migration Checklist" (gated), plus links to Build Outline, Security, FAQ.
+- **Pricing** — Quick 3-tier comparison strip with CTAs, linking to #pricing section.
 
-## Sprint 1 — Core E2E Plumbing (Critical Fixes)
+Mobile: Collapsible accordion version via Sheet/Drawer.
 
-**Goal:** Run one real Five9 → Fabric59 → Clio test call successfully with per-client credentials.
+### 2. Landing Page Overhaul  
+**File:** Rewrite `src/pages/LandingPage.tsx` (split into sub-components under `src/components/marketing/`)
 
-**Timebox:** 1 session
+New sections (all with framer-motion scroll animations):
 
-**Entry criteria:** All edge functions deployed, at least one tenant with Clio OAuth token configured.
+- **Hero** — Animated gradient background with particle/grid effect. Rotating headline typewriter showing different use cases. Embedded mini-demo video placeholder or animated product mockup. Two CTAs + trust badges.
+- **Logo Carousel** — Infinite-scroll ticker of integration logos (the 20 SVGs). "Works with 55+ tools."
+- **Feature Showcase** — Interactive tabbed section (not static cards). 6 tabs: Agent Lifecycle, Field Mapping, Legal Connect, Campaign Engine, AI Call Flow, Reporting. Each tab reveals a product screenshot/mockup area + feature bullets + micro-animation.
+- **Legal Connect Section** — NEW. Dedicated section for the Clio/MyCase integration pipeline we just built. Highlight: automated contact resolution, matter linking, disposition-driven CRM writebacks, webhook sync, policy engine.
+- **Five9 Deep Integration Section** — NEW. Showcase: SOAP API provisioning, call variable management, pre-call lookup/screen-pop, Web Connector management, real-time agent sync.
+- **Interactive Stats Counter** — Animated counting numbers: "55+ Integrations", "30+ SOAP Actions", "10+ CRM Providers", "<60s Agent Provisioning".
+- **How It Works** — Redesigned as a horizontal stepper with connecting lines and animated icons.
+- **Social Proof** — Testimonial cards (placeholder content for now) with avatar, name, role, quote.
+- **Pricing** — Keep existing 3-tier but add toggle for monthly/annual, hover effects, feature comparison expandable.
+- **FAQ** — Keep existing accordion but add search/filter.
+- **CTA Banner** — Full-width gradient banner before footer: "Ready to automate your Five9 operations?" with email capture (lead magnet).
 
-### Stories
+### 3. Mega Footer
+**File:** New `src/components/marketing/MegaFooter.tsx`
 
-#### 1.1 Fix Clio Token Refresh to Use Per-Client Credentials
-**File:** `supabase/functions/five9-main/index.ts` (lines 114-162)
+Redesign the 4-column footer into a 5-column mega footer:
 
-The `getClioAccessToken` function currently reads `CLIO_CLIENT_ID` and `CLIO_CLIENT_SECRET` from `Deno.env.get()`. Since Clio credentials are per-client (stored in `legal_connect_connections.config`), this must be changed to:
-- Accept `tenantId` as a parameter
-- Query `tenants.integration_configs → clio.oauthTokenId`
-- Join to `legal_connect_connections` via `oauth_token_id` to get `config.client_id` and `config.client_secret`
-- Use those for the refresh grant
+- **Brand Column** — Logo, tagline, social icons with hover effects, newsletter email signup (lead magnet).
+- **Platform** — All major feature pages listed with icons.
+- **Integrations** — Top integration categories with logo thumbnails.
+- **Resources** — Lead magnets: Playbook PDF, ROI Calculator, Migration Checklist, Build Outline, API Docs link.
+- **Company** — About, Security, Terms, Contact, Careers placeholder.
 
-This is the same pattern already working in `legal-connect-jobs/index.ts` lines 100-133. Port that logic.
+Bottom bar: Copyright, UNSOX Digital attribution, SOC2/security badges.
 
-#### 1.2 Add Idempotency Guard to CRM Dispatch
-**File:** `supabase/functions/five9-main/index.ts`
+### 4. Login & Signup as Interactive Landing Pages
+**Files:** Rewrite `src/pages/auth/LoginPage.tsx` and `src/pages/auth/SignupPage.tsx`
 
-Before calling `handleCallForClio` / `handleCallForMyCase`:
-- Compute idempotency key from `call.id + tenantId + disposition`
-- Check `api_logs` or a new `processed_events` set for that key
-- Skip if already processed, preventing duplicate CRM records on retry/replay
+Transform from plain centered card into split-screen interactive landing pages:
 
-#### 1.3 Build Five9 Test Console Page
-**Files:**
-- New: `src/pages/admin/TestConsolePage.tsx` (may already exist — extend it)
-- Wire into admin routes
+**Login Page:**
+- Left half: Animated product showcase — rotating feature highlights with icons and brief descriptions. Trust signals, customer count, security badges. Background animated gradient mesh.
+- Right half: The existing login form card, slightly restyled to match.
+- Mobile: Stacked — showcase collapses to a compact hero above the form.
 
-The console should:
-- Let admin select a tenant and provider
-- Pre-fill a sample Five9 payload (lookup or post-disposition)
-- Send it to `five9-main` via `supabase.functions.invoke`
-- Display raw response + processing trace
-- Show what CRM actions would fire (or did fire in test mode)
+**Signup Page:**
+- Left half: Interactive "What you get" checklist with animated check marks appearing on scroll. Value proposition bullets. "Join 50+ contact centers" social proof.
+- Right half: The existing signup form, kept functional as-is.
+- Mobile: Same stacking pattern.
 
-### Exit Criteria
-- [ ] Clio token refresh works with per-client credentials (no env vars needed)
-- [ ] Duplicate Five9 events don't create duplicate CRM records
-- [ ] Admin can send a test payload and see the full processing result
+### 5. Shared Components Created
+- `src/components/marketing/MegaMenuHeader.tsx` — Header with mega menu
+- `src/components/marketing/MegaFooter.tsx` — Mega footer with lead magnets
+- `src/components/marketing/LogoCarousel.tsx` — Infinite scroll integration logos
+- `src/components/marketing/FeatureTabs.tsx` — Interactive tabbed feature showcase
+- `src/components/marketing/StatsCounter.tsx` — Animated number counters
+- `src/components/marketing/TestimonialCards.tsx` — Social proof section
+- `src/components/marketing/LeadCaptureBar.tsx` — Email capture CTA banner
 
----
+### 6. New Features Highlighted on Marketing Page
+From the audit/implementation work, these backend capabilities will now be surfaced:
+- Legal Connect (Clio + MyCase integration pipeline)
+- Five9 SOAP provisioning (30+ actions)
+- Pre-call lookup / screen-pop endpoint
+- Call variable management
+- Disposition-to-CRM action mapping
+- Webhook sync with retry/dead-letter
+- Policy engine (field-level allow/block/redact)
+- AI-powered call flow builder
+- E2E test console
+- Agent context panel
 
-## Sprint 2 — Hardening & Observability
+### Files Summary
 
-**Goal:** E2E tests are repeatable, failures are visible, and results are verifiable.
+| Action | File |
+|--------|------|
+| New | `src/components/marketing/MegaMenuHeader.tsx` |
+| New | `src/components/marketing/MegaFooter.tsx` |
+| New | `src/components/marketing/LogoCarousel.tsx` |
+| New | `src/components/marketing/FeatureTabs.tsx` |
+| New | `src/components/marketing/StatsCounter.tsx` |
+| New | `src/components/marketing/TestimonialCards.tsx` |
+| New | `src/components/marketing/LeadCaptureBar.tsx` |
+| Rewrite | `src/pages/LandingPage.tsx` |
+| Rewrite | `src/pages/auth/LoginPage.tsx` |
+| Rewrite | `src/pages/auth/SignupPage.tsx` |
 
-**Timebox:** 1 session
-
-**Entry criteria:** Sprint 1 complete.
-
-### Stories
-
-#### 2.1 Build E2E Reconciliation Trace View
-**File:** New component on Reports or Legal Connect page
-
-A view that:
-- Takes a Five9 call ID or ANI + timestamp
-- Queries `api_logs`, `legal_connect_event_log`, `legal_connect_sync_jobs`
-- Shows the chain: webhook received → event logged → sync job created → CRM result
-- Links to CRM record IDs (Clio contact/matter/communication IDs)
-
-#### 2.2 Add Call Variable Validation
-**File:** `supabase/functions/five9-main/index.ts`
-
-Before CRM dispatch:
-- Check tenant's `legal_connect_call_variable_mappings` for required variables
-- If a required variable is missing from payload, log a structured error and return a clear rejection
-- Don't silently proceed with partial data
-
-#### 2.3 Add Error Scenario Test Cases
-**File:** Extend Test Console
-
-Add pre-built test scenarios:
-- Missing required call variable → expect graceful rejection
-- Unknown disposition → expect skip with log
-- Expired Clio token → expect refresh + retry
-- Duplicate call ID → expect idempotent skip
-
-### Exit Criteria
-- [ ] Given a Five9 call ID, admin can trace it through the full pipeline
-- [ ] Missing required call variables produce clear, logged rejections
-- [ ] At least 4 test scenarios (success, missing var, unknown dispo, duplicate) pass
-
-### Acceptance Criteria (Sprint 1+2 combined)
-- "Given a Five9 test call with disposition `Qualified Lead`, we see a contact + communication in Clio"
-- "Given a missing required call variable, the system rejects gracefully and logs it"
-- "Given a duplicate call event, no duplicate CRM records are created"
-- "Given an expired Clio token, the system refreshes using per-client secrets and retries"
-
----
-
-## Sprint 3 — MyCase Parity (Post-Clio Pilot)
-
-**Goal:** MyCase flows mirror the Clio golden path for tenants using MyCase.
-
-**Timebox:** 1 session
-
-**Entry criteria:** Clio E2E testing passing.
-
-### Stories
-- Verify MyCase adapter mirrors the full golden path (lookup → post-disposition → case + note)
-- Add MyCase-specific test scenarios to Test Console
-- Validate idempotency and error handling for MyCase flows
-
-**This sprint can be deferred until after Clio pilot** since MyCase uses simpler API key auth and the standalone adapter + job executor are already built.
-
----
-
-## Risks & Assumptions
-
-| Risk | Mitigation |
-|---|---|
-| Per-client Clio credentials may not be stored yet in `legal_connect_connections.config` | Sprint 1.1 includes fallback logging; setup wizard already captures these |
-| Five9 payload format may vary between Web Connector and WFA triggers | normalizeCallEvent already handles multiple field names; test with real payloads |
-| `legal_connect_contacts` table may be empty for test tenants | Lookup falls back to `clio_mappings` / `mycase_mappings`; pre-populate for test |
-| Rate limits on Clio API during testing | Built-in retry with backoff already in clioApiFetch |
-
----
-
-## Files Summary
-
-| Sprint | Action | File |
-|---|---|---|
-| S1 | Fix per-client Clio token refresh | `supabase/functions/five9-main/index.ts` |
-| S1 | Add idempotency guard | `supabase/functions/five9-main/index.ts` |
-| S1 | Build/extend Test Console | `src/pages/admin/TestConsolePage.tsx` |
-| S2 | Build reconciliation trace view | New component in Legal Connect or Reports |
-| S2 | Add call variable validation | `supabase/functions/five9-main/index.ts` |
-| S2 | Add error test scenarios | `src/pages/admin/TestConsolePage.tsx` |
+No backend/DB changes needed. All auth functionality preserved as-is.
 
