@@ -7,7 +7,7 @@ import {
   Handshake, Plug, ListPlus, Workflow, Megaphone, LayoutDashboard,
   BarChart3, Terminal, Zap as AgentZap, Eye, Search, DollarSign, Zap,
   Ban, PhoneCall, ShieldAlert, Database, Link2, Wrench, BookOpen,
-  GraduationCap, MessageSquare, Target, Copy, Scale,
+  GraduationCap, MessageSquare, Target, Copy, Scale, Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -80,6 +80,7 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
       { name: "Data Plane", href: "/admin/data-plane", icon: Database, permission: "domains" },
       { name: "Identity Resolution", href: "/admin/identity", icon: Link2, permission: "domains" },
       { name: "Utilities", href: "/admin/utilities", icon: Wrench, permission: "settings" },
+      { name: "Design System", href: "/admin/design-system", icon: Palette, permission: null },
     ],
   },
   {
@@ -106,6 +107,15 @@ function isItemActive(href: string, pathname: string) {
 
 function groupContainsActive(items: NavItem[], pathname: string) {
   return items.some((item) => isItemActive(item.href, pathname));
+}
+
+function findParentGroup(pathname: string): string | null {
+  for (const group of navigationGroups) {
+    if (group.items.some((item) => isItemActive(item.href, pathname))) {
+      return group.label;
+    }
+  }
+  return null;
 }
 
 export function AdminLayout() {
@@ -141,6 +151,7 @@ export function AdminLayout() {
   const allItems = [...topNav, ...navigationGroups.flatMap((g) => g.items), ...bottomNav];
   const filteredAll = allItems.filter(canView);
   const currentPage = filteredAll.find((item) => isItemActive(item.href, location.pathname));
+  const parentGroup = findParentGroup(location.pathname);
 
   const renderNavItem = (item: NavItem) => {
     const isActive = isItemActive(item.href, location.pathname);
@@ -149,20 +160,19 @@ export function AdminLayout() {
         key={item.name}
         to={item.href}
         className={cn(
-          "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 relative",
+          "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-premium relative",
           isActive
-            ? "bg-sidebar-accent/60 text-sidebar-foreground"
-            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
+            ? "bg-sidebar-accent/50 text-sidebar-foreground font-semibold"
+            : "text-sidebar-foreground/55 hover:bg-sidebar-accent/20 hover:text-sidebar-foreground font-medium"
         )}
       >
-        {/* Left accent bar for active */}
         {isActive && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-r-full bg-primary" />
         )}
         <item.icon
           className={cn(
             "h-4 w-4 flex-shrink-0 transition-colors",
-            isActive ? "text-primary" : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70"
+            isActive ? "text-primary" : "text-sidebar-foreground/35 group-hover:text-sidebar-foreground/60"
           )}
         />
         <span className="truncate">{item.name}</span>
@@ -184,17 +194,17 @@ export function AdminLayout() {
       <aside
         className={cn(
           "dark fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ease-in-out lg:translate-x-0",
-          "bg-gradient-to-b from-sidebar to-[hsl(222,47%,4%)] border-r border-sidebar-border/60",
+          "bg-gradient-to-b from-sidebar via-sidebar to-[hsl(222,47%,3%)] border-r border-sidebar-border/40",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center gap-3 px-6">
-            <Fabric59Icon size="md" className="glow-primary" />
+            <Fabric59Icon size="md" />
             <div className="flex flex-col">
               <span className="text-sm font-bold tracking-tight text-sidebar-foreground">Fabric59</span>
-              <span className="text-[10px] font-medium uppercase tracking-widest text-sidebar-foreground/40">Integration Hub</span>
+              <span className="text-[10px] font-medium uppercase tracking-widest text-sidebar-foreground/30">Integration Hub</span>
             </div>
             <Button
               variant="ghost"
@@ -205,7 +215,7 @@ export function AdminLayout() {
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <div className="mx-4 h-px bg-gradient-to-r from-transparent via-sidebar-border/50 to-transparent" />
+          <div className="mx-4 divider-gradient" />
 
           {/* Navigation */}
           <ScrollArea className="flex-1 px-3 py-4">
@@ -219,13 +229,13 @@ export function AdminLayout() {
 
                 return (
                   <Collapsible key={group.label} open={open} onOpenChange={() => toggleGroup(group.label)}>
-                    <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 mt-4 cursor-pointer hover:bg-sidebar-accent/20 transition-colors">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-sidebar-foreground/30 flex-1 text-left">
+                    <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-3 py-2 mt-6 cursor-pointer hover:bg-sidebar-accent/15 transition-premium">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-sidebar-foreground/25 flex-1 text-left">
                         {group.label}
                       </span>
                       <ChevronDown
                         className={cn(
-                          "h-3 w-3 text-sidebar-foreground/25 transition-transform duration-200",
+                          "h-3 w-3 text-sidebar-foreground/20 transition-transform duration-200",
                           open && "rotate-180"
                         )}
                       />
@@ -241,7 +251,7 @@ export function AdminLayout() {
 
           {/* Footer */}
           <div className="p-4 space-y-3">
-            <div className="mx-1 h-px bg-gradient-to-r from-transparent via-sidebar-border/40 to-transparent mb-3" />
+            <div className="mx-1 divider-gradient mb-3" />
             <div className="space-y-0.5">
               {bottomNav.filter(canView).map(renderNavItem)}
             </div>
@@ -271,10 +281,10 @@ export function AdminLayout() {
             )}
 
             <div
-              className="flex items-center gap-3 rounded-xl bg-sidebar-accent/30 p-3 cursor-pointer hover:bg-sidebar-accent/50 transition-colors border border-sidebar-border/30"
+              className="flex items-center gap-3 rounded-xl bg-sidebar-accent/20 p-3 cursor-pointer hover:bg-sidebar-accent/35 transition-premium border border-sidebar-border/20"
               onClick={() => navigate("/admin/settings")}
             >
-              <div className="h-8 w-8 rounded-full bg-primary/15 flex items-center justify-center ring-2 ring-primary/10">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/8">
                 <span className="text-xs font-semibold text-primary">
                   {user?.email?.slice(0, 2).toUpperCase() || "U"}
                 </span>
@@ -283,14 +293,14 @@ export function AdminLayout() {
                 <p className="text-sm font-medium text-sidebar-foreground truncate">
                   {organization?.name || "Loading..."}
                 </p>
-                <p className="text-[11px] text-sidebar-foreground/40 truncate">
+                <p className="text-[11px] text-sidebar-foreground/35 truncate">
                   {user?.email || ""}
                 </p>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                className="h-7 w-7 text-sidebar-foreground/35 hover:text-sidebar-foreground hover:bg-sidebar-accent/40"
                 onClick={(e) => { e.stopPropagation(); signOut(); }}
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -302,7 +312,7 @@ export function AdminLayout() {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/60 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 px-6 border-b border-border/40">
           <Button
             variant="ghost"
             size="icon"
@@ -313,11 +323,17 @@ export function AdminLayout() {
           </Button>
 
           <div className="flex items-center gap-2 text-sm">
-            {currentPage && (
+            {parentGroup && (
               <>
-                <currentPage.icon className="h-3.5 w-3.5 text-muted-foreground/60" />
-                <span className="font-medium text-foreground">{currentPage.name}</span>
+                <span className="text-muted-foreground/50 text-xs font-medium">{parentGroup}</span>
+                <ChevronRight className="h-3 w-3 text-muted-foreground/30" />
               </>
+            )}
+            {currentPage && (
+              <div className="flex items-center gap-1.5">
+                <currentPage.icon className="h-3.5 w-3.5 text-muted-foreground/50" />
+                <span className="font-medium text-foreground">{currentPage.name}</span>
+              </div>
             )}
           </div>
 
@@ -326,7 +342,7 @@ export function AdminLayout() {
               <button
                 onClick={toggleDevMode}
                 className={cn(
-                  "hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold border transition-all",
+                  "hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold border transition-premium",
                   devMode
                     ? "bg-warning/15 text-warning border-warning/30 animate-pulse"
                     : "bg-muted/50 text-muted-foreground border-border hover:border-warning/30 hover:text-warning"
