@@ -77,7 +77,7 @@ export default function AgentDashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title="Agent Dashboard"
-        subtitle="Your personal workspace — tasks, calls, goals, and performance"
+        subtitle="Your personal workspace: tasks, calls, goals, and performance"
         icon={<div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center"><Zap className="h-5 w-5 text-primary" /></div>}
       />
 
