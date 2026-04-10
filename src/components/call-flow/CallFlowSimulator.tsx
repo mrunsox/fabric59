@@ -20,7 +20,7 @@ const scenarios: Record<string, { name: string; steps: SimStep[] }> = {
   "personal-injury": {
     name: "Personal Injury Intake",
     steps: [
-      { phase: "pre-call", action: "ANI lookup triggered — searching CRM", integration: "Five9 → CRM", delay: 1200 },
+      { phase: "pre-call", action: "ANI lookup triggered, searching CRM", integration: "Five9 → CRM", delay: 1200 },
       { phase: "pre-call", action: "Contact found: John Smith (existing client)", integration: "Salesforce", dataPoints: ["Name: John Smith", "Phone: (416) 555-0199"], delay: 800 },
       { phase: "pre-call", action: "Screen pop delivered to agent workstation", integration: "Five9 Agent Desktop", delay: 600 },
       { phase: "during-call", callerMessage: "Hi, I was in a car accident last week and I need help.", agentMessage: "I'm sorry to hear that, John. I'd be happy to help you. Can you tell me when the accident happened?", delay: 2000 },
@@ -28,7 +28,7 @@ const scenarios: Record<string, { name: string; steps: SimStep[] }> = {
       { phase: "during-call", callerMessage: "I was rear-ended at a traffic light on Highway 401.", action: "Accident type + location captured", integration: "Data Capture", dataPoints: ["Type: Rear-end collision", "Location: Highway 401"], delay: 1500 },
       { phase: "during-call", agentMessage: "Were there any injuries? Did you seek medical attention?", delay: 1000 },
       { phase: "during-call", callerMessage: "Yes, I went to the ER. I have whiplash and back pain.", action: "Medical info captured", integration: "Data Capture", dataPoints: ["Injuries: Whiplash, Back pain", "Medical: ER visit"], delay: 1500 },
-      { phase: "during-call", action: "Disposition set: Qualified Lead — Personal Injury", integration: "Five9", delay: 800 },
+      { phase: "during-call", action: "Disposition set: Qualified Lead, Personal Injury", integration: "Five9", delay: 800 },
       { phase: "post-call", action: "Creating new matter in CRM", integration: "Salesforce", delay: 1000 },
       { phase: "post-call", action: "Matter created: PI-2026-0847", integration: "Salesforce", dataPoints: ["Matter ID: PI-2026-0847", "Practice Area: Personal Injury"], delay: 800 },
       { phase: "post-call", action: "Slack notification sent to #intake-leads", integration: "Slack", delay: 600 },
@@ -39,8 +39,8 @@ const scenarios: Record<string, { name: string; steps: SimStep[] }> = {
   "hvac-service": {
     name: "HVAC Service Dispatch",
     steps: [
-      { phase: "pre-call", action: "ANI lookup — searching client database", integration: "Five9 → Workiz", delay: 1200 },
-      { phase: "pre-call", action: "New caller — no existing record", integration: "Workiz", delay: 800 },
+      { phase: "pre-call", action: "ANI lookup, searching client database", integration: "Five9 → Workiz", delay: 1200 },
+      { phase: "pre-call", action: "New caller, no existing record", integration: "Workiz", delay: 800 },
       { phase: "during-call", callerMessage: "Hi, my AC stopped working and it's really hot. Can someone come today?", agentMessage: "I can absolutely help with that! Let me get some information from you.", delay: 2000 },
       { phase: "during-call", callerMessage: "My name is Sarah Chen, I'm at 123 Oak Street.", action: "Contact info captured", integration: "Data Capture", dataPoints: ["Name: Sarah Chen", "Address: 123 Oak Street"], delay: 1500 },
       { phase: "during-call", callerMessage: "The unit is a Carrier, about 5 years old. It just stopped blowing cold air.", action: "Equipment details captured", integration: "Data Capture", dataPoints: ["Brand: Carrier", "Age: 5 years", "Issue: No cooling"], delay: 1500 },
