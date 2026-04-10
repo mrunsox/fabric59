@@ -258,7 +258,7 @@
 
   /* === Card hover === */
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-md hover:shadow-black/4;
+    @apply transition-all duration-200 hover:shadow-md;
   }
 
   /* === Premium skeleton === */
