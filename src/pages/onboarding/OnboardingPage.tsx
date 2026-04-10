@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { OnboardingMilestones, type Milestone } from "@/components/onboarding/OnboardingMilestones";
+import { OnboardingContextHelper } from "@/components/onboarding/OnboardingContextHelper";
+import { ReadinessScore } from "@/components/onboarding/ReadinessScore";
 import { toast } from "sonner";
 
 type Step = "org" | "domain" | "testing" | "intent" | "tenant" | "complete";
@@ -155,7 +157,7 @@ export default function OnboardingPage() {
       <Card className="card-elevated border-0 shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-4 ring-primary/5">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
               <Building className="h-7 w-7 text-primary" />
             </div>
           </div>
@@ -168,6 +170,7 @@ export default function OnboardingPage() {
               <Label htmlFor="orgName">Organization Name</Label>
               <Input id="orgName" placeholder="Your Agency Name" value={orgName} onChange={(e) => setOrgName(e.target.value)} required className="h-11" />
             </div>
+            <OnboardingContextHelper title="Why this matters" description="Your organization is the top-level container for all domains, clients, agents, and integrations. Choose a name that represents your business." />
           </CardContent>
           <div className="px-6 pb-6">
             <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
@@ -183,7 +186,7 @@ export default function OnboardingPage() {
       <Card className="card-elevated border-0 shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-4 ring-primary/5">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
               <Globe className="h-7 w-7 text-primary" />
             </div>
           </div>
@@ -208,8 +211,8 @@ export default function OnboardingPage() {
                   {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">Used to sync agent skills, call variables, and dispositions</p>
             </div>
+            <OnboardingContextHelper title="Credential security" description="Your credentials are encrypted at rest and used only to sync agent skills, call variables, and dispositions. They are never stored in plain text." />
           </CardContent>
           <div className="px-6 pb-6">
             <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
@@ -226,8 +229,8 @@ export default function OnboardingPage() {
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
             <div className={cn("flex h-14 w-14 items-center justify-center rounded-2xl ring-4",
-              connectionStatus === "success" ? "bg-success/15 ring-success/10" :
-              connectionStatus === "failed" ? "bg-destructive/10 ring-destructive/5" : "bg-primary/10 ring-primary/5"
+              connectionStatus === "success" ? "bg-success/10 ring-success/10" :
+              connectionStatus === "failed" ? "bg-destructive/10 ring-destructive/5" : "bg-primary/8 ring-primary/5"
             )}>
               {connectionStatus === "testing" && <Wifi className="h-7 w-7 text-primary animate-pulse" />}
               {connectionStatus === "success" && <CheckCircle className="h-7 w-7 text-success" />}
@@ -243,9 +246,16 @@ export default function OnboardingPage() {
         </CardHeader>
         <CardContent>
           {connectionStatus === "testing" && (
-            <div className="flex items-center justify-center gap-3 py-6 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="text-sm">Authenticating with Five9…</span>
+            <div className="flex flex-col items-center gap-4 py-6">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <div className="space-y-1.5 w-full max-w-xs">
+                {["Authenticating", "Verifying permissions", "Loading domain config"].map((t, i) => (
+                  <div key={t} className="flex items-center gap-2 text-sm text-muted-foreground animate-fade-up" style={{ animationDelay: `${i * 400}ms` }}>
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary/60" />
+                    {t}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           {connectionStatus === "success" && (
@@ -268,7 +278,7 @@ export default function OnboardingPage() {
       <Card className="card-elevated border-0 shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-4 ring-primary/5">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
               <Rocket className="h-7 w-7 text-primary" />
             </div>
           </div>
@@ -277,11 +287,11 @@ export default function OnboardingPage() {
         </CardHeader>
         <CardContent className="space-y-3 pt-2">
           <button type="button" onClick={() => setIntent("provisioning")} className={cn(
-            "w-full text-left rounded-xl border-2 p-4 transition-all",
-            intent === "provisioning" ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/40 hover:bg-muted/20"
+            "w-full text-left rounded-xl border-2 p-4 transition-premium",
+            intent === "provisioning" ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10"
           )}>
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8">
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -294,11 +304,11 @@ export default function OnboardingPage() {
             </div>
           </button>
           <button type="button" onClick={() => setIntent("integration")} className={cn(
-            "w-full text-left rounded-xl border-2 p-4 transition-all",
-            intent === "integration" ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/40 hover:bg-muted/20"
+            "w-full text-left rounded-xl border-2 p-4 transition-premium",
+            intent === "integration" ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10"
           )}>
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8">
                 <Link2 className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -310,6 +320,7 @@ export default function OnboardingPage() {
               </div>
             </div>
           </button>
+          <OnboardingContextHelper title="What this determines" description="Your choice here sets your initial dashboard view and recommended next steps. You can always access all features from the sidebar." />
         </CardContent>
         <div className="px-6 pb-6">
           <Button className="w-full h-11" disabled={!intent} onClick={() => setStep("tenant")}>
@@ -323,7 +334,7 @@ export default function OnboardingPage() {
       <Card className="card-elevated border-0 shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-4 ring-primary/5">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
               <Building2 className="h-7 w-7 text-primary" />
             </div>
           </div>
@@ -346,6 +357,7 @@ export default function OnboardingPage() {
                 <option value="other">Other / None</option>
               </select>
             </div>
+            <OnboardingContextHelper title="CRM recommendation" description={intent === "integration" ? "Since you chose CRM integration, selecting the right CRM type ensures we load the correct field schemas and mapping templates." : "You can configure CRM connections later from the client overview page."} />
           </CardContent>
           <div className="px-6 pb-6 flex gap-2">
             <Button type="button" variant="outline" className="flex-1 h-11" onClick={() => setStep("complete")}>Skip</Button>
@@ -362,7 +374,7 @@ export default function OnboardingPage() {
       <Card className="card-elevated border-0 shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-success/15 ring-4 ring-success/10">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-success/10 ring-4 ring-success/10">
               <Fabric59Icon size="lg" className="h-12 w-12" />
             </div>
           </div>
@@ -370,40 +382,27 @@ export default function OnboardingPage() {
           <CardDescription>Your Fabric59 account is ready to use</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-2">
-          {/* Readiness checklist */}
-          <div className="rounded-xl bg-muted/30 border border-border/60 p-4 space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Setup Summary</h4>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2.5 text-sm">
-                <div className="h-5 w-5 rounded-full bg-success/15 flex items-center justify-center"><Check className="h-3 w-3 text-success" /></div>
-                <span>Organization: {orgName || organization?.name}</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-sm">
-                <div className="h-5 w-5 rounded-full bg-success/15 flex items-center justify-center"><Check className="h-3 w-3 text-success" /></div>
-                <span>Domain: {five9Username.includes("@") ? five9Username.split("@")[1] : domainDisplayName}</span>
-              </div>
-              {tenantName && (
-                <div className="flex items-center gap-2.5 text-sm">
-                  <div className="h-5 w-5 rounded-full bg-success/15 flex items-center justify-center"><Check className="h-3 w-3 text-success" /></div>
-                  <span>First client: {tenantName}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Readiness score */}
-          <div className="text-center py-2">
-            <p className="text-4xl font-bold tracking-tight text-foreground">
-              {tenantName ? "100" : "75"}%
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">Readiness Score</p>
-          </div>
+          <ReadinessScore
+            score={tenantName ? 100 : 75}
+            items={[
+              { label: `Organization: ${orgName || organization?.name || "Configured"}`, complete: true },
+              { label: `Domain: ${five9Username.includes("@") ? five9Username.split("@")[1] : domainDisplayName || "Configured"}`, complete: true },
+              { label: `Intent: ${intent === "provisioning" ? "Agent Provisioning" : intent === "integration" ? "CRM Integration" : "Selected"}`, complete: !!intent },
+              { label: `First client: ${tenantName || "Skipped"}`, complete: !!tenantName },
+            ]}
+            blockers={!tenantName ? ["No client configured — add one from the dashboard"] : []}
+          />
         </CardContent>
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-6 space-y-2">
           <Button onClick={handleComplete} className="w-full h-11">
             {intent === "provisioning" ? "Go to Agent Provisioning" : intent === "integration" ? "Go to Mapping Builder" : "Launch Dashboard"}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
+          {!tenantName && (
+            <Button variant="outline" onClick={() => setStep("tenant")} className="w-full h-11">
+              Add a Client First
+            </Button>
+          )}
         </div>
       </Card>
     ),
@@ -415,7 +414,7 @@ export default function OnboardingPage() {
         {/* Left rail — milestones */}
         <div className="hidden lg:block w-56 flex-shrink-0 pt-4">
           <div className="flex items-center gap-2.5 mb-8">
-            <Fabric59Icon size="md" className="glow-primary" />
+            <Fabric59Icon size="md" />
             <div>
               <p className="text-sm font-bold tracking-tight text-foreground">Fabric59</p>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Setup</p>
@@ -433,7 +432,7 @@ export default function OnboardingPage() {
             ))}
           </div>
 
-          <div className="animate-fade-in">
+          <div className="animate-fade-up">
             {stepContent[step]}
           </div>
         </div>
