@@ -44,7 +44,7 @@ const scenarios: Record<string, { name: string; steps: SimStep[] }> = {
       { phase: "during-call", callerMessage: "Hi, my AC stopped working and it's really hot. Can someone come today?", agentMessage: "I can absolutely help with that! Let me get some information from you.", delay: 2000 },
       { phase: "during-call", callerMessage: "My name is Sarah Chen, I'm at 123 Oak Street.", action: "Contact info captured", integration: "Data Capture", dataPoints: ["Name: Sarah Chen", "Address: 123 Oak Street"], delay: 1500 },
       { phase: "during-call", callerMessage: "The unit is a Carrier, about 5 years old. It just stopped blowing cold air.", action: "Equipment details captured", integration: "Data Capture", dataPoints: ["Brand: Carrier", "Age: 5 years", "Issue: No cooling"], delay: 1500 },
-      { phase: "during-call", action: "Disposition set: Service Call — HVAC Repair", integration: "Five9", delay: 800 },
+      { phase: "during-call", action: "Disposition set: Service Call, HVAC Repair", integration: "Five9", delay: 800 },
       { phase: "post-call", action: "New client created in Workiz", integration: "Workiz", delay: 1000 },
       { phase: "post-call", action: "Job dispatched: HVAC-2026-1234", integration: "Workiz", dataPoints: ["Job ID: HVAC-2026-1234", "Priority: Urgent"], delay: 800 },
       { phase: "post-call", action: "Technician notified via SMS", integration: "Twilio", delay: 600 },
