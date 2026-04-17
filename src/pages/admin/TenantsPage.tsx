@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { TenantForm } from "@/components/tenants/TenantForm";
+import { exportToCsv } from "@/lib/exportToCsv";
 import type { Tenant, CrmType, TenantStatus } from "@/types/database";
 import {
   Building2,
@@ -363,7 +364,25 @@ export default function TenantsPage() {
         subtitle={`${tenants.length} client integrations across ${uniqueCrms.length} CRM systems`}
         icon={<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/8 border border-primary/10"><Building2 className="h-5 w-5 text-primary" /></div>}
       >
-        <Button variant="ghost" size="sm" className="text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+          onClick={() =>
+            exportToCsv(
+              filteredTenants as unknown as Record<string, unknown>[],
+              `clients-${new Date().toISOString().slice(0, 10)}.csv`,
+              [
+                { key: "name", header: "Name" },
+                { key: "crm_type", header: "CRM" },
+                { key: "status", header: "Status" },
+                { key: "partner_id", header: "Partner" },
+                { key: "created_at", header: "Created" },
+              ],
+            )
+          }
+          disabled={filteredTenants.length === 0}
+        >
           <Download className="h-4 w-4 mr-1.5" /> Export
         </Button>
         <Button

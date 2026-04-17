@@ -27,6 +27,7 @@ import ReliabilityPanel from "@/components/legal-connect/ReliabilityPanel";
 import TestingPanel from "@/components/legal-connect/TestingPanel";
 import ExamplesPanel from "@/components/legal-connect/ExamplesPanel";
 import AISetupPanel from "@/components/legal-connect/AISetupPanel";
+import GoLiveReadiness from "@/components/legal-connect/GoLiveReadiness";
 import CampaignFormDialog from "@/components/legal-connect/CampaignFormDialog";
 import PolicyProfileFormDialog from "@/components/legal-connect/PolicyProfileFormDialog";
 import DispositionMappingEditor from "@/components/legal-connect/DispositionMappingEditor";
@@ -593,7 +594,8 @@ export default function LegalConnectPage() {
           </TabsContent>
 
           {/* ── RELIABILITY ──────────────────────────────────── */}
-          <TabsContent value="reliability" className="mt-4">
+          <TabsContent value="reliability" className="mt-4 space-y-6">
+            <GoLiveReadiness clientId={clientId} />
             <ReliabilityPanel clientId={clientId} />
           </TabsContent>
 
