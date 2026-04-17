@@ -21,6 +21,8 @@ import { DashboardSwitcher } from "@/components/layout/DashboardSwitcher";
 import { AdminTour } from "@/components/onboarding/AdminTour";
 import { HealthIndicator } from "@/components/ui/health-indicator";
 import { ScrollToTopButton } from "@/components/layout/ScrollToTopButton";
+import { AssistantButton } from "@/components/assistant/AssistantButton";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 type NavItem = {
   name: string;
@@ -359,6 +361,7 @@ export function AdminLayout() {
               </button>
             )}
 
+            <NotificationBell />
             <HealthIndicator status="healthy" label="All Systems" />
           </div>
         </header>
@@ -368,6 +371,7 @@ export function AdminLayout() {
         </main>
       </div>
       <ScrollToTopButton />
+      <AssistantButton />
     </div>
   );
 }

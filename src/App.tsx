@@ -25,6 +25,9 @@ import PrivacyPage from "@/pages/PrivacyPage";
 import TrustPage from "@/pages/TrustPage";
 import ResponsibleDisclosurePage from "@/pages/ResponsibleDisclosurePage";
 import ContactPage from "@/pages/ContactPage";
+import FaqPage from "@/pages/FaqPage";
+import ProductTourPage from "@/pages/ProductTourPage";
+import DemoSandboxPage from "@/pages/DemoSandboxPage";
 
 // Admin pages
 import TenantsPage from "@/pages/admin/TenantsPage";
@@ -108,6 +111,9 @@ const App = () => (
             <Route path="/trust" element={<TrustPage />} />
             <Route path="/responsible-disclosure" element={<ResponsibleDisclosurePage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/faq" element={<FaqPage />} />
+            <Route path="/product" element={<ProductTourPage />} />
+            <Route path="/demo" element={<DemoSandboxPage />} />
 
             {/* Master admin routes - hidden, only accessible via /system-access */}
             <Route element={<MasterProtectedRoute />}>
