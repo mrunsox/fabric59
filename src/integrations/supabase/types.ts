@@ -206,6 +206,47 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_config: {
+        Row: {
+          assistant_name: string
+          created_at: string
+          enabled: boolean
+          greeting: string
+          id: string
+          organization_id: string
+          tone: string
+          updated_at: string
+        }
+        Insert: {
+          assistant_name?: string
+          created_at?: string
+          enabled?: boolean
+          greeting?: string
+          id?: string
+          organization_id: string
+          tone?: string
+          updated_at?: string
+        }
+        Update: {
+          assistant_name?: string
+          created_at?: string
+          enabled?: boolean
+          greeting?: string
+          id?: string
+          organization_id?: string
+          tone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -4042,6 +4083,44 @@ export type Database = {
           },
         ]
       }
+      platform_events: {
+        Row: {
+          correlation_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          organization_id: string
+          payload: Json
+          source: string | null
+        }
+        Insert: {
+          correlation_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          organization_id: string
+          payload?: Json
+          source?: string | null
+        }
+        Update: {
+          correlation_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          organization_id?: string
+          payload?: Json
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_call_automations: {
         Row: {
           action_type: string
@@ -4213,6 +4292,67 @@ export type Database = {
             columns: ["script_session_id"]
             isOneToOne: false
             referencedRelation: "script_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qr_did_mappings: {
+        Row: {
+          created_at: string
+          did: string
+          id: string
+          is_active: boolean
+          label: string | null
+          organization_id: string
+          routing_config_id: string | null
+          source_channel: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          did: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          organization_id: string
+          routing_config_id?: string | null
+          source_channel?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          did?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          organization_id?: string
+          routing_config_id?: string | null
+          source_channel?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_did_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_did_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "qr_did_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
