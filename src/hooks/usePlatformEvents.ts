@@ -36,13 +36,15 @@ export function useEmitEvent() {
   return useMutation({
     mutationFn: async (input: EmitEventInput) => {
       if (!organization?.id) throw new Error("No organization");
-      const { error } = await supabase.from("platform_events").insert({
-        organization_id: organization.id,
-        event_type: input.event_type,
-        payload: input.payload ?? {},
-        source: input.source ?? "client",
-        correlation_id: input.correlation_id,
-      });
+      const { error } = await supabase.from("platform_events").insert([
+        {
+          organization_id: organization.id,
+          event_type: input.event_type,
+          payload: (input.payload ?? {}) as never,
+          source: input.source ?? "client",
+          correlation_id: input.correlation_id,
+        },
+      ]);
       if (error) throw error;
     },
     onSuccess: () => {
