@@ -27,20 +27,19 @@ export default function QrRoutingPage() {
   const remove = useDeleteQrDidMapping();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Partial<QrDidMapping>>({
-    did_phone: "",
+    did: "",
     source_channel: "qr_code",
-    campaign_label: "",
-    destination_queue: "",
+    label: "",
     is_active: true,
   });
 
   const reset = () => {
-    setForm({ did_phone: "", source_channel: "qr_code", campaign_label: "", destination_queue: "", is_active: true });
+    setForm({ did: "", source_channel: "qr_code", label: "", is_active: true });
   };
 
   const handleSave = async () => {
-    if (!form.did_phone) return;
-    await upsert.mutateAsync(form as any);
+    if (!form.did) return;
+    await upsert.mutateAsync(form as Partial<QrDidMapping> & { did: string });
     setOpen(false);
     reset();
   };
@@ -73,35 +72,26 @@ export default function QrRoutingPage() {
               <DialogHeader>
                 <DialogTitle>Add QR Routing Mapping</DialogTitle>
                 <DialogDescription>
-                  Connect a DID phone number to a destination queue. Inbound calls will be tagged with the source channel for reporting.
+                  Connect a DID phone number to a routing config. Inbound calls will be tagged with the source channel for reporting.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="did_phone">DID Phone (E.164)</Label>
+                  <Label htmlFor="did">DID Phone (E.164)</Label>
                   <Input
-                    id="did_phone"
+                    id="did"
                     placeholder="+15551234567"
-                    value={form.did_phone ?? ""}
-                    onChange={(e) => setForm({ ...form, did_phone: e.target.value })}
+                    value={form.did ?? ""}
+                    onChange={(e) => setForm({ ...form, did: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="campaign_label">Campaign label</Label>
+                  <Label htmlFor="label">Label</Label>
                   <Input
-                    id="campaign_label"
+                    id="label"
                     placeholder="Spring intake QR"
-                    value={form.campaign_label ?? ""}
-                    onChange={(e) => setForm({ ...form, campaign_label: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="destination_queue">Destination queue</Label>
-                  <Input
-                    id="destination_queue"
-                    placeholder="legal-intake-q"
-                    value={form.destination_queue ?? ""}
-                    onChange={(e) => setForm({ ...form, destination_queue: e.target.value })}
+                    value={form.label ?? ""}
+                    onChange={(e) => setForm({ ...form, label: e.target.value })}
                   />
                 </div>
                 <div>
@@ -123,7 +113,7 @@ export default function QrRoutingPage() {
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button onClick={handleSave} disabled={upsert.isPending || !form.did_phone}>
+                  <Button onClick={handleSave} disabled={upsert.isPending || !form.did}>
                     {upsert.isPending ? "Saving..." : "Save mapping"}
                   </Button>
                 </div>
@@ -136,7 +126,7 @@ export default function QrRoutingPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Active mappings</CardTitle>
             <CardDescription>
-              Each row maps an inbound DID to a destination queue. Calls hitting these numbers are stamped with source_channel for billing and reporting.
+              Each row maps an inbound DID to a routing config. Calls hitting these numbers are stamped with the source channel for billing and reporting.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -144,8 +134,7 @@ export default function QrRoutingPage() {
               <TableHeader>
                 <TableRow className="border-border">
                   <TableHead className="text-foreground/80">DID</TableHead>
-                  <TableHead className="text-foreground/80">Campaign</TableHead>
-                  <TableHead className="text-foreground/80">Destination Queue</TableHead>
+                  <TableHead className="text-foreground/80">Label</TableHead>
                   <TableHead className="text-foreground/80">Source</TableHead>
                   <TableHead className="text-foreground/80">Status</TableHead>
                   <TableHead className="text-foreground/80 w-12"></TableHead>
@@ -154,11 +143,11 @@ export default function QrRoutingPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">Loading...</TableCell>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Loading...</TableCell>
                   </TableRow>
                 ) : !mappings || mappings.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
                       <QrCode className="h-6 w-6 mx-auto mb-2" />
                       No QR routing mappings yet. Add one to begin tracking inbound QR calls.
                     </TableCell>
@@ -168,10 +157,9 @@ export default function QrRoutingPage() {
                     <TableRow key={m.id} className="border-border">
                       <TableCell className="font-mono text-sm flex items-center gap-2">
                         <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                        {m.did_phone}
+                        {m.did}
                       </TableCell>
-                      <TableCell className="text-foreground">{m.campaign_label || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{m.destination_queue || "—"}</TableCell>
+                      <TableCell className="text-foreground">{m.label || "—"}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-xs">{m.source_channel}</Badge>
                       </TableCell>

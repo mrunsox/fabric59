@@ -6,13 +6,12 @@ import { toast } from "sonner";
 export interface QrDidMapping {
   id: string;
   organization_id: string;
-  client_id: string | null;
-  did_phone: string;
+  tenant_id: string | null;
+  did: string;
+  label: string | null;
   source_channel: string;
-  campaign_label: string | null;
-  destination_queue: string | null;
+  routing_config_id: string | null;
   is_active: boolean;
-  metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
@@ -21,7 +20,7 @@ export function useQrDidMappings() {
   const { organization } = useAuth();
   return useQuery({
     queryKey: ["qr_did_mappings", organization?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<QrDidMapping[]> => {
       if (!organization?.id) return [];
       const { data, error } = await supabase
         .from("qr_did_mappings")
@@ -37,15 +36,11 @@ export function useQrDidMappings() {
 
 export function useUpsertQrDidMapping() {
   const qc = useQueryClient();
-  const { organization, user } = useAuth();
+  const { organization } = useAuth();
   return useMutation({
-    mutationFn: async (input: Partial<QrDidMapping> & { did_phone: string }) => {
+    mutationFn: async (input: Partial<QrDidMapping> & { did: string }) => {
       if (!organization?.id) throw new Error("No organization");
-      const payload = {
-        ...input,
-        organization_id: organization.id,
-        created_by: input.id ? undefined : user?.id,
-      };
+      const payload = { ...input, organization_id: organization.id };
       if (input.id) {
         const { error } = await supabase
           .from("qr_did_mappings")
