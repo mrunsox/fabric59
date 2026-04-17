@@ -45,14 +45,33 @@ const resourceLinks = [
   { icon: BookOpen, title: "Build Outline", href: "/outline" },
   { icon: Lock, title: "Security", href: "/security" },
   { icon: Shield, title: "Trust Center", href: "/trust" },
-  { icon: HelpCircle, title: "FAQ", href: "#faq" },
+  { icon: HelpCircle, title: "FAQ", href: "/faq" },
+  { icon: BookOpen, title: "Product Tour", href: "/product" },
 ];
 
 export function MegaMenuHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  if (typeof window !== "undefined") {
+    // attach once
+    if (!(window as unknown as { __fabric_scroll?: boolean }).__fabric_scroll) {
+      (window as unknown as { __fabric_scroll?: boolean }).__fabric_scroll = true;
+    }
+  }
+
+  // simple scroll listener via React
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useState(() => {
+    if (typeof window === "undefined") return;
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return undefined;
+  });
 
   return (
-    <header className="border-b border-border/50 backdrop-blur-xl sticky top-0 z-50 bg-background/90">
+    <header className={`border-b sticky top-0 z-50 backdrop-blur-xl transition-all ${scrolled ? "border-border/70 bg-background/95 shadow-sm py-0" : "border-border/40 bg-background/80"}`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
         <Link to="/">
           <Fabric59Logo iconSize="md" />

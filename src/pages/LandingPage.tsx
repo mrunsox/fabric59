@@ -11,6 +11,9 @@ import { FeatureTabs } from "@/components/marketing/FeatureTabs";
 import { StatsCounter } from "@/components/marketing/StatsCounter";
 import { TestimonialCards } from "@/components/marketing/TestimonialCards";
 import { LeadCaptureBar } from "@/components/marketing/LeadCaptureBar";
+import { BeforeAfterSlider } from "@/components/marketing/BeforeAfterSlider";
+import { PersonaTabs } from "@/components/marketing/PersonaTabs";
+import { HeroProductVisual } from "@/components/marketing/HeroProductVisual";
 import { motion } from "framer-motion";
 import { ScrollToTopButton } from "@/components/layout/ScrollToTopButton";
 import {
@@ -189,8 +192,31 @@ export default function LandingPage() {
               <span className="flex items-center gap-1.5"><Database className="h-3.5 w-3.5 text-primary" /> Row-Level Security</span>
               <span className="flex items-center gap-1.5"><Workflow className="h-3.5 w-3.5 text-primary" /> 30+ SOAP Actions</span>
             </motion.div>
+
+            <HeroProductVisual />
           </div>
         </section>
+
+        {/* Persona Tabs */}
+        <PersonaTabs />
+
+        {/* Before / After */}
+        <BeforeAfterSlider
+          beforeLabel="Manual"
+          afterLabel="Automated"
+          beforeContent={
+            <div className="text-center max-w-sm">
+              <p className="text-2xl font-bold text-destructive mb-2">3 hours</p>
+              <p className="text-sm text-muted-foreground">to onboard a single agent across Five9, Google, and Slack with manual handoffs.</p>
+            </div>
+          }
+          afterContent={
+            <div className="text-center max-w-sm">
+              <p className="text-2xl font-bold text-primary mb-2">42 seconds</p>
+              <p className="text-sm text-muted-foreground">to onboard the same agent with one Fabric59 form.</p>
+            </div>
+          }
+        />
 
         {/* Logo Carousel */}
         <LogoCarousel />

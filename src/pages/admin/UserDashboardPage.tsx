@@ -12,6 +12,7 @@ import { MetricStrip } from "@/components/ui/metric-strip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { GettingStartedWidget } from "@/components/onboarding/GettingStartedWidget";
 
 interface AgentStats { total: number; active: number; pending: number; deprovisioned: number }
 interface TenantStats { total: number; active: number }
@@ -135,6 +136,8 @@ export default function UserDashboardPage() {
           variant="warning"
         />
       )}
+
+      <GettingStartedWidget />
 
       {/* Metric strip */}
       {isFullAdmin && (
