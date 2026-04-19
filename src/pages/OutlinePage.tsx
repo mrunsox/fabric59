@@ -145,36 +145,6 @@ export default function OutlinePage() {
           </div>
         </div>
 
-        {/* Required Secrets */}
-        <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5 text-primary" />
-            <p className="text-sm font-medium text-foreground">Required Secrets and API Keys</p>
-            <span className="text-xs text-muted-foreground ml-auto">{requiredSecrets.length} keys</span>
-          </div>
-          <div className="grid gap-2">
-            {requiredSecrets.map((secret) => (
-              <div key={secret.name} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/50 border border-border">
-                {secret.isPublic ? (
-                  <Unlock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                ) : (
-                  <Lock className="h-4 w-4 text-destructive flex-shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono font-medium text-foreground">{secret.name}</span>
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{secret.service}</Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{secret.description}</p>
-                </div>
-                <span className="text-[10px] text-muted-foreground flex-shrink-0">
-                  {secret.isPublic ? "public" : "private"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Categories */}
         {sortedCategories.map((category) => {
           const catDone = category.items.filter((i) => i.status === "done").length;
@@ -265,6 +235,39 @@ export default function OutlinePage() {
             </div>
           );
         })}
+
+        {/* Required Secrets — To Be Configured Later */}
+        <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <KeyRound className="h-5 w-5 text-primary" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">Required Secrets and API Keys (To Be Configured Later)</p>
+              <p className="text-xs text-muted-foreground mt-0.5">These external credentials unlock the remaining planned features.</p>
+            </div>
+            <span className="text-xs text-muted-foreground flex-shrink-0">{requiredSecrets.length} keys</span>
+          </div>
+          <div className="grid gap-2">
+            {requiredSecrets.map((secret) => (
+              <div key={secret.name} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/50 border border-border">
+                {secret.isPublic ? (
+                  <Unlock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                ) : (
+                  <Lock className="h-4 w-4 text-destructive flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-mono font-medium text-foreground">{secret.name}</span>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{secret.service}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{secret.description}</p>
+                </div>
+                <span className="text-[10px] text-muted-foreground flex-shrink-0">
+                  {secret.isPublic ? "public" : "private"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </main>
     </div>
   );
