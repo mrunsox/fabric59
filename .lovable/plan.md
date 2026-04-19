@@ -1,78 +1,108 @@
 
-The user wants to finish item #5 from the remaining list: **Lifecycle Email Templates (Resend)**.
+The user wants Clio Deep Two-Way Sync built out — specifically the 10 capabilities shown in the uploaded image. Looking at existing code: `clio-oauth-callback` edge function already exists, `useClientIntegrationConfigs` already handles Clio config, and `legal-connect-sync-engine` is already in place.
 
-Per the transactional email guide, I should default to **Lovable Emails** (built-in) rather than Resend, since the user hasn't explicitly named Resend as their required provider. Lovable Emails is zero-config and uses the same underlying infrastructure without requiring API keys.
+The user said "this is what clio needs and it needs to be both way sync" — so they want all 10 features built. Clio requires OAuth credentials (CLIO_CLIENT_ID, CLIO_CLIENT_SECRET) which I should check are configured. The OAuth callback already references them.
 
-# Lifecycle Email Templates Implementation
+Let me plan this concisely.
 
-## What This Builds
+# Clio Deep Two-Way Sync — Full Build
 
-A complete app-email system for lifecycle notifications using Lovable's built-in email infrastructure (no API key, no domain setup blocking work, no third-party signup).
+Implements the 10 Clio capabilities from your screenshot, end-to-end, with bidirectional sync (Fabric59 ↔ Clio).
 
-## Lifecycle Templates to Create
+## Prerequisites Check
+- `CLIO_CLIENT_ID` + `CLIO_CLIENT_SECRET` — already referenced by existing `clio-oauth-callback` function. I'll verify they're set; if not, I'll prompt you to add them before deploying.
 
-Based on the platform's existing notification triggers (visible in `useNotifications`, agent provisioning, campaign lifecycle, Legal Connect):
+## What Gets Built
 
-1. **welcome** — sent after signup completes
-2. **agent-provisioned** — sent when an agent's Five9 credentials are created
-3. **agent-deprovisioned** — sent when an agent is offboarded
-4. **campaign-launched** — sent to client when their campaign goes live
-5. **campaign-paused** — sent when outage mode pauses a campaign
-6. **invite-team-member** — sent when an admin invites a new user
-7. **password-changed** — security confirmation after password change
-8. **weekly-summary** — weekly client digest (per-recipient, triggered by cron, one row per client)
+### 1. Clio OAuth Connector (UI polish)
+- "Connect Clio" button in Settings → Integrations (per-tenant), launches OAuth via existing `clio-oauth-callback`
+- Shows connection status, connected account email, last refresh timestamp
+- Disconnect button (revokes token, clears `oauthTokenId`)
 
-## Setup Sequence
+### 2. Clio Test Connection
+- "Test Connection" button → calls new edge function `clio-test-connection` → hits Clio `/users/who_am_i` → displays linked user, firm name, subscription tier
 
-1. Run `email_domain--setup_email_infra` to create queues, RPC wrappers, suppression tables, cron job
-2. Run `email_domain--scaffold_transactional_email` to scaffold `send-transactional-email`, `handle-email-unsubscribe`, `handle-email-suppression` Edge Functions
-3. Create 8 React Email `.tsx` templates in `supabase/functions/_shared/transactional-email-templates/`, styled with Fabric59 brand (cyan #0EA5E9, white background, Inter font)
-4. Register all 8 in `registry.ts` with `previewData` for dashboard preview
-5. Create unsubscribe page at `/unsubscribe` (path determined by scaffold tool) matching brand styling
-6. Wire trigger calls into existing flows:
-   - `SignupPage` → welcome
-   - `useProvisionAgent` hook → agent-provisioned
-   - `useDeprovisionAgent` hook → agent-deprovisioned
-   - Campaign start/stop actions → campaign-launched / campaign-paused
-   - `invite-member` edge function → invite-team-member
-   - Password change handler → password-changed
-   - Skip cron-based weekly-summary trigger for now (just create template)
-7. Deploy edge functions
-8. Add an **Email Templates** admin page at `/admin/emails` listing all templates with preview links and the unsubscribe stats
-9. Flip the Resend item in `buildMap.ts` from `planned` to `done` (rename to "Lifecycle Email Templates" since we're using Lovable Emails, not Resend)
+### 3. Contact Field Mapping UI
+- New page `/admin/integrations/clio/mapping` with drag-drop field mapper (React Flow, reuses existing `visual-mapping-builder` pattern)
+- Maps Fabric59 lead fields → Clio Contact fields (first_name, last_name, primary_email, primary_phone, custom_fields)
+- Stored in `integration_configs.clio.fieldMappings`
 
-## Files
+### 4. Contact Sync to Clio (outbound)
+- New edge function `clio-sync-contact`
+- Triggered when lead reaches "Qualified" disposition (wired into existing post-call automation engine)
+- Creates or updates Clio contact via `POST/PATCH /api/v4/contacts.json`
+- Stores returned `clio_contact_id` on the lead row
 
-**New (~12):**
-- `supabase/functions/_shared/transactional-email-templates/welcome.tsx`
-- `supabase/functions/_shared/transactional-email-templates/agent-provisioned.tsx`
-- `supabase/functions/_shared/transactional-email-templates/agent-deprovisioned.tsx`
-- `supabase/functions/_shared/transactional-email-templates/campaign-launched.tsx`
-- `supabase/functions/_shared/transactional-email-templates/campaign-paused.tsx`
-- `supabase/functions/_shared/transactional-email-templates/invite-team-member.tsx`
-- `supabase/functions/_shared/transactional-email-templates/password-changed.tsx`
-- `supabase/functions/_shared/transactional-email-templates/weekly-summary.tsx`
-- `src/pages/UnsubscribePage.tsx`
-- `src/pages/admin/EmailTemplatesPage.tsx`
+### 5. Matter Creation in Clio
+- New edge function `clio-create-matter`
+- Triggered when lead hits configured pipeline stage (e.g. "Retainer Signed")
+- Creates matter via `POST /api/v4/matters.json` with practice area, responsible attorney, client reference
 
-**Edited (~8):**
-- `supabase/functions/_shared/transactional-email-templates/registry.ts` (register all 8)
-- `src/App.tsx` (add `/unsubscribe` and `/admin/emails` routes)
-- `src/pages/auth/SignupPage.tsx` (welcome trigger)
-- `src/hooks/useAgents.ts` or provisioning hook (agent triggers)
-- Campaign start/stop flow file (campaign triggers)
-- `supabase/functions/invite-member/index.ts` (invite trigger)
-- Password change flow (security trigger)
-- `src/data/buildMap.ts` (flip status to `done`)
+### 6. Clio Matter ID Storage + Deep Link
+- New columns on `legal_connect_intakes`: `clio_matter_id`, `clio_matter_url`
+- UI shows "Open in Clio" button that deep-links to `https://app.clio.com/nc/#/matters/{id}`
 
-## Domain Note
+### 7. Status Pull from Clio (inbound)
+- New edge function `clio-pull-matter-status` (cron every 15 min, also on-demand)
+- Pulls `status`, `pending_at`, `closed_at`, `next_court_date` from each tracked matter
+- Updates local `legal_connect_intakes` (read-only mirror)
 
-The user will need to set up an email sending domain via the Lovable Cloud Emails UI for emails to actually send to real addresses. The infrastructure, templates, and triggers all work without it; emails just queue until the domain is verified. I'll surface a clear note in the new Email Templates admin page explaining how to verify the sending domain.
+### 8. Billing Handoff to Clio
+- New edge function `clio-push-billing`
+- Pushes campaign/engagement summary to Clio as a `Bill` or `Activity` entry
+- Triggered manually from Reporting page or auto on campaign close
 
-## What This Is NOT
+### 9. Sync Audit Trail
+- New table `clio_sync_log` (entity_type, entity_id, direction, action, payload, response, status, synced_by, synced_at)
+- New page `/admin/integrations/clio/audit` with filterable log viewer
 
-- Not Resend (Lovable Emails is the recommended built-in path; no API key needed)
-- Not marketing/bulk emails (each template is 1:1 triggered by a specific event)
-- Not a newsletter system
+### 10. Reusable Connector Pattern
+- Refactor sync logic into `supabase/functions/_shared/legal-crm-adapter.ts` with abstract interface (`syncContact`, `createMatter`, `pullStatus`, `pushBilling`)
+- Clio implements the interface; future Lawmatics/Litify/CosmoLex adapters drop in without rewriting orchestration
 
-If you specifically want Resend instead of Lovable Emails, say "use Resend" and I'll swap the approach to connect the Resend connector and route through its gateway.
+## Two-Way Sync Architecture
+
+```
+Fabric59 ─── OUTBOUND ───▶ Clio
+   ▲                        │
+   │                     webhook + cron pull
+   └─── INBOUND ──────────┘
+```
+
+- **Outbound** (Fabric59 → Clio): triggered by Five9 dispositions, stage changes, manual push
+- **Inbound** (Clio → Fabric59): Clio webhooks (matter.updated, contact.updated) + 15-min cron status pull as fallback
+- Conflict resolution: last-write-wins per field, with full audit log preserving every change
+
+## Database Migrations
+1. Add `clio_contact_id`, `clio_matter_id`, `clio_matter_url` columns to relevant tables
+2. New table `clio_sync_log` (RLS scoped by org_id)
+3. Extend `integration_configs.clio` JSONB schema: `fieldMappings`, `pipelineStageTriggers`, `lastSyncAt`
+
+## Edge Functions (5 new)
+- `clio-test-connection`
+- `clio-sync-contact`
+- `clio-create-matter`
+- `clio-pull-matter-status` (cron)
+- `clio-push-billing`
+- `clio-webhook-handler` (inbound from Clio)
+
+## New UI Pages/Components
+- `src/pages/admin/ClioIntegrationPage.tsx` — connection card, test, disconnect
+- `src/pages/admin/ClioFieldMappingPage.tsx` — visual field mapper
+- `src/pages/admin/ClioAuditLogPage.tsx` — sync history
+- `src/components/integrations/ClioConnectButton.tsx`
+- `src/components/integrations/ClioMatterDeepLink.tsx`
+
+## Files Edited
+- `src/App.tsx` — add 3 Clio routes
+- `src/data/buildMap.ts` — flip "Clio Deep Two-Way Sync" to `done` (and add the 10 sub-items as completed)
+- `src/types/integrations.ts` — extend `ClioIntegrationConfig` with new fields
+- `supabase/config.toml` — register new functions, add cron schedule for `clio-pull-matter-status`
+- Existing post-call automation engine — wire Clio triggers
+
+## Estimated Scope
+~10 new files, ~6 edits, 3 migrations, 6 edge functions. The OAuth + token storage groundwork already exists.
+
+## What I'll Verify First (Before Building)
+1. `CLIO_CLIENT_ID` and `CLIO_CLIENT_SECRET` are set (if not, I'll request them)
+2. Confirm Clio webhook subscription URL points to `clio-webhook-handler` (you'll register this in your Clio dev app once deployed)
