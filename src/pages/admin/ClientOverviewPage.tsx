@@ -203,6 +203,49 @@ export default function ClientOverviewPage() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4 mt-4">
+          {/* Layered setup entry cards — clear separation between client provider setup and campaign config */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Card
+              className="border-border cursor-pointer hover:border-primary/40 transition-colors"
+              onClick={() => navigate(`/admin/clients/${tenant.id}/legal-connect`)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-lg bg-primary/10 p-2">
+                      <Scale className="h-4 w-4 text-primary" />
+                    </div>
+                    <CardTitle className="text-base">Legal Connect</CardTitle>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <CardDescription className="text-xs pt-1">
+                  Provider connections, OAuth, webhooks, field mappings, policies
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card
+              className="border-border cursor-pointer hover:border-primary/40 transition-colors"
+              onClick={() => navigate(`/admin/clients/${tenant.id}/five9-overlay`)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-lg bg-primary/10 p-2">
+                      <PhoneCall className="h-4 w-4 text-primary" />
+                    </div>
+                    <CardTitle className="text-base">Five9 Overlay (Campaigns)</CardTitle>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <CardDescription className="text-xs pt-1">
+                  Campaign routing, call variables, dispositions, simulation
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Behavior & Mappings */}
             <div className="space-y-4">
