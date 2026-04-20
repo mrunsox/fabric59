@@ -1185,6 +1185,7 @@ export type Database = {
           group_name: string
           id: string
           organization_id: string
+          scope: string
           updated_at: string
         }
         Insert: {
@@ -1197,6 +1198,7 @@ export type Database = {
           group_name: string
           id?: string
           organization_id: string
+          scope?: string
           updated_at?: string
         }
         Update: {
@@ -1209,6 +1211,7 @@ export type Database = {
           group_name?: string
           id?: string
           organization_id?: string
+          scope?: string
           updated_at?: string
         }
         Relationships: [
@@ -1340,8 +1343,11 @@ export type Database = {
       }
       five9_campaign_routes: {
         Row: {
+          call_variable_group_id: string | null
           campaign_name: string | null
+          campaign_type: string | null
           client_id: string
+          connection_id: string | null
           created_at: string
           default_disposition_policy: string
           dnis: string | null
@@ -1356,8 +1362,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          call_variable_group_id?: string | null
           campaign_name?: string | null
+          campaign_type?: string | null
           client_id: string
+          connection_id?: string | null
           created_at?: string
           default_disposition_policy?: string
           dnis?: string | null
@@ -1372,8 +1381,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          call_variable_group_id?: string | null
           campaign_name?: string | null
+          campaign_type?: string | null
           client_id?: string
+          connection_id?: string | null
           created_at?: string
           default_disposition_policy?: string
           dnis?: string | null
@@ -1389,6 +1401,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "five9_campaign_routes_call_variable_group_id_fkey"
+            columns: ["call_variable_group_id"]
+            isOneToOne: false
+            referencedRelation: "five9_call_variable_groups"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "five9_campaign_routes_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
@@ -1400,6 +1419,20 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_campaign_routes_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_campaign_routes_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_connections_safe"
             referencedColumns: ["id"]
           },
           {
