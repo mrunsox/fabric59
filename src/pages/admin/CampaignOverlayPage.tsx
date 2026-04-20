@@ -130,15 +130,10 @@ export default function CampaignOverlayPage() {
             <CampaignDispositionsPanel clientId={clientId!} campaignId={campaignRouteId} />
           </TabsContent>
           <TabsContent value="policies" className="mt-4">
-            <CampaignPoliciesPanel campaignRouteId={campaignRouteId} />
+            <CampaignPoliciesPanel clientId={clientId!} campaignId={campaignRouteId} />
           </TabsContent>
           <TabsContent value="simulation" className="mt-4">
-            <CampaignSimulationPanel
-              clientId={clientId!}
-              campaignRouteId={campaignRouteId}
-              providerTarget={route?.provider_target ?? null}
-              hasConnection={connection?.status === "connected"}
-            />
+            <CampaignSimulationPanel clientId={clientId!} campaignRouteId={campaignRouteId} />
           </TabsContent>
           <TabsContent value="health" className="mt-4">
             <CampaignHealthPanel clientId={clientId!} campaignRouteId={campaignRouteId} />
