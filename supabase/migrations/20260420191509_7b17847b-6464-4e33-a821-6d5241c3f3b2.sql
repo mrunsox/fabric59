@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Service role inserts five9 events" ON public.five9_event_log;
