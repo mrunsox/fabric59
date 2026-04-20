@@ -1,111 +1,214 @@
 
 
-# Wire the Refactor — Routes, Runtime, Legacy Bridge, Sidebar
+# Fabric59 Backend Dashboard Refactor — Two-Tier Shell, Readiness Engine, AI Guidance, Campaign Builder
 
-The components and tables from the prior plan exist. This plan **wires them up**, completes the runtime refactor, adds the missing pieces, and shuts down the legacy path.
+The current admin shell is a single overloaded vertical rail (38+ items in 6 collapsible groups), table-first content, no contextual sub-nav, no readiness signals, and no in-product Five9 docs surface. This plan replaces that with a modern enterprise control center built around real jobs-to-be-done.
 
-## What's already in place (no rebuild needed)
-- DB schema extensions: `five9_campaign_routes.connection_id / campaign_type / call_variable_group_id`, validation trigger, `legal_connect_disposition_mappings.campaign_id`, `five9_call_variable_groups.scope`
-- Client-level UI: `ClientLegalConnectPage` + `ProviderConnectionCard` + 3 wizards + `WebhookSettingsPanel` + `ProviderPoliciesPanel` + `FieldMappingPanel` + `ConnectionHealthPanel`
-- Campaign-level UI: 6 panels under `src/components/campaign-overlay/`
+## What the user will see
 
-## What this plan adds / changes
+### 1. New two-tier navigation shell
 
-### 1. Route wiring (`src/App.tsx`)
-Add inside the `/admin` block:
-- `clients/:clientId/legal-connect` → `ClientLegalConnectPage`
-- `clients/:clientId/legal-connect/setup/:provider` → `ClientLegalConnectPage`
-- `clients/:clientId/five9-overlay` → new `CampaignOverlayListPage`
-- `clients/:clientId/five9-overlay/campaigns/:campaignRouteId` → new `CampaignOverlayPage`
+**Global vertical rail (collapsed by default to icon strip, ~64px)** — 11 top-level destinations only, no nested groups, no scroll on standard viewports:
 
-### 2. New page shells
-**`src/pages/admin/CampaignOverlayListPage.tsx`** — campaign route cards for this client (uses `five9_campaign_routes` filtered by `client_id`); each card links to detail; CTA "Create campaign route" opens an inline form; empty-state CTA.
-
-**`src/pages/admin/CampaignOverlayPage.tsx`** — tabbed shell (Routing · Variables · Dispositions · Policies · Simulation · Health) wrapping the existing `CampaignXxxPanel` components, scoped to one `campaignRouteId`. No provider credential fields anywhere. Header shows: client name, campaign name, connected provider badge (with "Not connected — go to Legal Connect" CTA when missing).
-
-### 3. Sidebar / client overview entry points
-**`src/components/layout/AdminLayout.tsx`** — keep the global "Legal Connect" link (system-admin global view) but rename label to "Legal Connect (Global)" to reduce confusion.
-
-**`src/pages/admin/ClientOverviewPage.tsx`** — add two prominent action cards:
-- "Legal Connect" → `clients/:id/legal-connect`
-- "Five9 Overlay (Campaigns)" → `clients/:id/five9-overlay`
-
-### 4. Runtime refactor — `legal-connect-jobs`
-Replace the hardcoded `if (provider === "clio") / "mycase"` chain with provider-registry dispatch.
-
-- Register `clioAdapter`, `mycaseAdapter`, `smokeballAdapter` instances against `provider-registry.ts` via a single `_shared/register-adapters.ts` (imported at the top of every consumer)
-- `executeJob(supabase, job)` → load `legal_connect_connections` by `job.connection_id` (preferred) or `(client_id, provider)`; resolve adapter via `getAdapter(connection.provider)`; pass `connection` (not raw `integration_configs`) to adapter calls
-- Smokeball becomes reachable; future providers slot in by registry registration only
-- Legacy fallback: if no `legal_connect_connections` row exists, call `legacyConfigBridge.resolveProviderConnection(clientId, provider)` (read-through only) and log a deprecation warning into `legal_connect_event_log`
-
-### 5. Runtime refactor — `five9-overlay-test`
-- Delete the `stubAdapter`
-- Resolve real adapter via `getAdapter(provider)` from registry
-- Honor `dryRun: boolean` in request body — when true, orchestrator skips actual `apiFetch` calls and returns the planned chain only (the orchestrator already supports this)
-- Returns: `{ normalized, route, action_chain, execution: { dryRun, results } }`
-
-### 6. Legacy bridge — `src/lib/legal-connect/legacyConfigBridge.ts` (new)
-Pure read-through helper, no writes:
+```text
+┌──┬─────────────────────────────────────────────────┐
+│⌂ │ Five9 → Campaigns                               │ ← breadcrumb + page title
+│👥│ ┌─────────────────────────────────────────────┐ │
+│☎ │ │ Overview | Domains | Campaign Builder |     │ │ ← horizontal sub-nav
+│⚖ │ │ Campaigns | Variables | Dispositions |      │ │   (sticky, owns local IA)
+│📣│ │ Routing | Health | Docs                     │ │
+│🤖│ ├─────────────────────────────────────────────┤ │
+│⚡│ │                                             │ │
+│🧪│ │   Page content (cards, larger spacing,      │ │
+│📊│ │   stronger H1/H2, fewer borders)            │ │
+│📚│ │                                             │ │
+│⚙ │ └─────────────────────────────────────────────┘ │
+└──┴─────────────────────────────────────────────────┘
+   Overview · Clients · Five9 · Legal Connect · Campaigns ·
+   Agents · Automations · Testing · Monitoring · Docs · Settings
 ```
-resolveProviderConnection(clientId, provider): Promise<LegalConnectConnectionDraft | null>
+
+Rail items expand to text label on hover/pinned state (user preference persisted). Each section owns its own horizontal sub-nav — no item appears in both navs.
+
+### 2. Redesigned Overview / Client dashboard
+
+Replaces the current "Recent agents / Recent clients" tables. New blocks:
+
+- **Setup Progress** — readiness checklist for the active client (Five9 connected · Campaign exists · Variables · Dispositions · Provider connected · Mapping complete · Test passed · Ready to receive calls). Each row clickable to its setup screen.
+- **AI Guidance** — "Top 3 next actions" computed from readiness state with one-click jumps and blocker explanations.
+- **System Health** — webhook health, event health, sync failures, agent availability (compact metric strip).
+- **Live Operations** — active campaigns, recent calls, open review items.
+- **Quick Actions** — Create campaign · Connect provider · Run readiness test · Open docs · Start simulation.
+
+### 3. Five9 Campaign Builder (new guided flow)
+
+`/admin/five9/campaign-builder` and `/admin/five9/campaign-builder/:draftId` — six-step wizard with persistent draft (`campaign_builder_drafts` table). Each step has its own validation, AI panel, and Docs panel:
+
+1. **Basics** — name, type, domain, queue/profile, client, provider target
+2. **Call Variable Group** — create/choose group, define variables (label, type, default, required)
+3. **Campaign Profile** — pick which variables agents see/edit (preview of agent worksheet)
+4. **Dispositions** — create/choose, map to action chains
+5. **Routing** — campaign→client→provider, screen-pop, callback, review fallback
+6. **Readiness Test** — checklist + simulation run; status: Draft · Configured · Testing · Ready
+
+Final state writes to `five9_campaign_routes`, `five9_call_variable_groups`, `legal_connect_disposition_mappings` (already in schema).
+
+### 4. AI Guidance panel (right rail, context-aware)
+
+Toggleable side rail (not just floating button). Reads URL + readiness state and generates next-step guidance via `assistant-chat` edge function with new `context` payload (current page, client, campaign, readiness signals). Produces:
+
+- Current state summary
+- Top 3 recommended actions (each is a clickable CTA)
+- Blocker explanations
+- Links to relevant Five9 docs
+
+### 5. Five9 Docs panel (right rail, context-aware)
+
+Drawer next to the AI panel. Curated mapping of route → Five9 doc topics seeded into `five9_docs_index` (title, summary, official URL, "why this matters", checklist items). Topics covered: campaigns, campaign profiles, call variable groups, call variables, dispositions, IVR scripts, web connector. Each card: AI summary · Why it matters · Checklist · Open official doc.
+
+### 6. Readiness engine
+
+New `src/lib/readiness/` module + view `v_campaign_readiness` (and `v_client_readiness`). Pure compute, no new tables — derives from existing rows:
+
+- `five9_domains` (connected?)
+- `five9_campaign_routes` (exists, has `connection_id`, has `call_variable_group_id`?)
+- `five9_call_variable_groups` + `_call_variables` (configured, required marked?)
+- `legal_connect_disposition_mappings` (configured?)
+- `legal_connect_connections` (active for provider_target?)
+- `five9_event_log` (any successful test?)
+
+Output: `{ status: 'not_started' | 'in_progress' | 'blocked' | 'test_ready' | 'ready', signals: {...}, blockers: [...], next_action: {...} }`. Drives dashboard cards, AI guidance, banners, quick actions.
+
+## Technical breakdown
+
+### Files
+
+**New (~14):**
+- `src/components/layout/AdminShell.tsx` — replaces `AdminLayout`, two-tier shell with collapsible icon rail
+- `src/components/layout/SectionTabs.tsx` — sticky horizontal sub-nav driven by route config
+- `src/config/navigation.ts` — single source: global sections + per-section sub-nav definitions
+- `src/components/dashboard/ReadinessChecklist.tsx`
+- `src/components/dashboard/AIGuidanceCard.tsx`
+- `src/components/dashboard/QuickActionsGrid.tsx`
+- `src/components/dashboard/SystemHealthStrip.tsx`
+- `src/components/assistant/GuidancePanel.tsx` — right-rail context-aware AI (reuses streaming logic from `AssistantButton`)
+- `src/components/docs/Five9DocsPanel.tsx` — right-rail docs drawer
+- `src/lib/readiness/computeCampaignReadiness.ts`
+- `src/lib/readiness/computeClientReadiness.ts`
+- `src/data/five9DocsIndex.ts` — curated topic→doc map (no scraping; static curated)
+- `src/pages/admin/CampaignBuilderPage.tsx` — six-step wizard shell
+- `src/components/campaign-builder/{StepBasics,StepVariables,StepProfile,StepDispositions,StepRouting,StepReadiness}.tsx`
+
+**Edited (~6):**
+- `src/App.tsx` — swap `AdminLayout` for `AdminShell`; add `/admin/five9/campaign-builder` routes
+- `src/pages/admin/UserDashboardPage.tsx` — new block layout (readiness · AI · health · ops · actions); keep "recent" data as one collapsed accordion
+- `src/pages/admin/ClientOverviewPage.tsx` — same redesign scoped to one client
+- `src/components/assistant/AssistantButton.tsx` — keep floating button, but it now opens `GuidancePanel` in side-rail mode when a context exists
+- `supabase/functions/assistant-chat/index.ts` — accept optional `context` (page, clientId, campaignId, readinessSignals) and prepend a context block to the system prompt
+- `src/integrations/supabase/types.ts` — auto-regenerated after migration
+
+**1 migration:**
+- `campaign_builder_drafts` table (id, user_id, client_id, current_step, payload jsonb, status, timestamps; RLS scoped to user + org)
+- View `v_campaign_readiness` (campaign_route_id → signal columns + computed status)
+- View `v_client_readiness` (client_id → aggregate signals)
+- No changes to existing tables
+
+### Navigation map (final IA)
+
+```text
+Global rail              Section sub-nav
+─────────────────────────────────────────────────────────────
+Overview              →  Dashboard · Activity · AI Guidance
+Clients               →  All Clients · Partners · Onboarding
+Five9                 →  Overview · Domains · Campaign Builder ·
+                         Campaigns · Variables · Dispositions ·
+                         Routing · Health · Docs
+Legal Connect         →  Overview · Connections · Webhooks ·
+                         Mappings · Policies · Testing · Health
+Campaigns             →  Active · Drafts · Blueprints · Archive
+Agents                →  Roster · Provisioning · Supervisor · QA
+Automations           →  Post-Call · Email Templates · ANI Block ·
+                         Callback Queue · Abandon Rate
+Testing               →  Test Console · Simulations · Replay · Failures
+Monitoring            →  API Logs · Webhooks · Sync Jobs · Notifications
+Docs                  →  Five9 Concepts · Knowledge Base · Build Outline
+Settings              →  Workspace · Billing · Integrations · Design System
 ```
-- First tries `legal_connect_connections` (preferred)
-- Falls back to `tenants.integration_configs.{clio|mycase}` and projects into a `LegalConnectConnectionDraft` shape
-- New saves are routed exclusively through `useCreateLegalConnection` (already in place)
-- Server-side mirror: `supabase/functions/_shared/legacy-config-bridge.ts` for use by `legal-connect-jobs`
 
-### 7. Deprecate legacy CRM wizard
-**`src/components/admin/CrmIntegrationWizard.tsx`** — top-of-card deprecation banner:
-> "This setup is moving to Client → Legal Connect. [Open Legal Connect →] [Migrate now]"
+Items currently in the sidebar that become sub-nav children (no longer top-level): Domains, Agents, Dispositions, Blueprints, Reports, Field Mappings, Scripts/ScriptFlow/Scripter, Goals, Training, Knowledge Base, Call Flow Builder, ANI Block List, Callback Queue, Abandon Rate, Identity, Data Plane, Utilities, Notifications, Feedback, Design System.
 
-"Migrate now" reads `integration_configs.{clio|mycase}` for the current tenant, calls `useCreateLegalConnection` to create the new row, then stamps `integration_configs.{provider}.migrated_at = <iso>`. Stays usable behind `?legacy=true`; nav links removed.
+### Visual system updates (applied in shell + cards)
 
-### 8. Demote in-page Five9 Overlay tab
-**`src/pages/admin/LegalConnectPage.tsx`** — remove `five9` tab entry (DomainRouting / CallVariables / Disposition / Simulation / Health are now per-campaign). Keep `connections / campaigns / policies / mappings / sync / review / reliability / ai / testing / logs` as the **system-admin global cross-client view**. Add a banner: "For per-client provider setup, open the client's Legal Connect tab."
+- Container max-width 1440px with `px-8` (current is `px-6` edge-to-edge)
+- Card padding bumped from `p-6` to `p-8`; gap from `gap-4` to `gap-6`
+- H1 `text-3xl tracking-tight`; H2 `text-xl`; muted body `text-sm`
+- Status pills replace ad-hoc badges via existing `StatusBadge`
+- Sticky section tabs use `border-b` only (no boxed tabs), active state = 2px primary underline
+- Empty states get iconography + AI-suggested next action
 
-### 9. Empty states & gating already covered by existing components
-- `CampaignRoutingPanel` already filters provider dropdown to connected providers and shows the "Connect provider first" CTA
-- `CampaignSimulationPanel` already disables run when no connection exists
-- `ProviderConnectionCard` already shows secret-missing state
-Verify these remain correct after wiring; no rebuild expected.
+### AI guidance — context payload
 
-### 10. Seeds (one insert)
-Single seed via insert tool (idempotent on conflict):
-- 1 starter call variable group `"Default Intake Group"` with scope=`'client'` per existing tenant that has any `legal_connect_connections` row (creates a reusable template)
-- 5 starter dispositions in `legal_connect_disposition_mappings` per connection, `campaign_id = NULL` (client-default fallback): Qualified Lead, Existing Client Inquiry, Callback, Wrong Number, Needs Review
-- No provider credentials seeded
+```json
+{
+  "page": "/admin/five9/campaign-builder/abc/dispositions",
+  "clientId": "...",
+  "campaignDraftId": "...",
+  "readinessSignals": {
+    "domain_connected": true,
+    "variables_configured": true,
+    "dispositions_count": 3,
+    "dispositions_required": 5,
+    "blockers": ["missing_disposition:Qualified Lead"]
+  }
+}
+```
 
-### 11. Files touched
+The edge function prepends this as a structured system message, then runs the existing knowledge-base RAG. No new function required.
 
-**New (3):**
-- `src/pages/admin/CampaignOverlayListPage.tsx`
-- `src/pages/admin/CampaignOverlayPage.tsx`
-- `src/lib/legal-connect/legacyConfigBridge.ts`
-- `supabase/functions/_shared/legacy-config-bridge.ts`
-- `supabase/functions/_shared/register-adapters.ts`
+### Five9 docs index (curated, static)
 
-**Edited (5):**
-- `src/App.tsx` — add 4 routes
-- `src/components/layout/AdminLayout.tsx` — rename global link
-- `src/pages/admin/ClientOverviewPage.tsx` — add 2 entry cards
-- `src/pages/admin/LegalConnectPage.tsx` — drop `five9` tab + banner
-- `src/components/admin/CrmIntegrationWizard.tsx` — deprecation banner + Migrate button
-- `supabase/functions/legal-connect-jobs/index.ts` — registry dispatch + bridge fallback
-- `supabase/functions/five9-overlay-test/index.ts` — real adapter + dryRun
+Hand-curated topic file mapping ~12 Five9 admin concepts to: official URL · 2-sentence "why this matters" · 3-5 item checklist. Surfaced contextually based on current route. (No live scraping — Five9 docs aren't a stable feed; static curated content with periodic manual refresh is more reliable and faster.)
 
-**1 seed insert** (no schema change).
+### Readiness engine — view shape
 
-### 12. Out of scope (honest)
-- Real OAuth handshake still needs `CLIO_CLIENT_ID/SECRET`, `SMOKEBALL_CLIENT_ID/SECRET`, `MYCASE_WEBHOOK_SECRET` set in secrets — wizards remain in "stubbed activate" mode until those are set; Connect buttons surface the missing-secret state via existing logic
-- Cron registration for Clio token refresh — surfaced as manual "Refresh now" button (already present in `ClientLegalConnectPage` health area)
-- Per-tab role gating beyond what `user_has_permission` already enforces
+```sql
+CREATE VIEW v_campaign_readiness AS
+SELECT
+  r.id AS route_id, r.client_id, r.tenant_id,
+  (d.id IS NOT NULL) AS domain_connected,
+  (r.call_variable_group_id IS NOT NULL) AS variable_group_assigned,
+  (SELECT COUNT(*) FROM five9_call_variables v WHERE v.group_id = r.call_variable_group_id) AS variable_count,
+  (SELECT COUNT(*) FROM legal_connect_disposition_mappings m WHERE m.campaign_id = r.id) AS disposition_count,
+  (r.connection_id IS NOT NULL) AS provider_connected,
+  (SELECT COUNT(*) FROM five9_event_log e WHERE e.matched_route_id = r.id AND e.status = 'success') AS successful_event_count,
+  CASE
+    WHEN d.id IS NULL THEN 'blocked'
+    WHEN r.call_variable_group_id IS NULL THEN 'in_progress'
+    WHEN r.connection_id IS NULL THEN 'in_progress'
+    WHEN (SELECT COUNT(*) FROM five9_event_log e WHERE e.matched_route_id = r.id AND e.status = 'success') = 0 THEN 'test_ready'
+    ELSE 'ready'
+  END AS status
+FROM five9_campaign_routes r
+LEFT JOIN five9_domains d ON d.id = r.five9_domain_id;
+```
 
-### Acceptance
-- Visiting `/admin/clients/:id/legal-connect` shows provider connect flow (no campaign UI)
-- Visiting `/admin/clients/:id/five9-overlay/campaigns/:routeId` shows campaign tabs with no secret/auth fields
-- Campaign provider dropdown only lists connected providers for that client
-- `legal-connect-jobs` dispatches Clio, MyCase **and** Smokeball via the registry
-- `five9-overlay-test` calls real adapters (dry-run by default)
-- Legacy `CrmIntegrationWizard` shows deprecation banner with one-click migration
-- `LegalConnectPage` no longer hosts the campaign-scoped Five9 Overlay tab
+`security_invoker = true` so RLS on underlying tables applies.
+
+## Out of scope (honest)
+
+- Real-time scraping of Five9 docs site (using curated index instead)
+- Replacing every existing admin page individually — this refactor changes the shell, dashboard, and adds Campaign Builder; existing pages render as-is inside the new shell with only their route categorized into the new sub-nav
+- Streaming the AI guidance side-rail (uses existing non-streaming `assistant-chat` invoke for simplicity in v1; can upgrade later)
+- Full React Tour for the new shell (a single "What changed" banner shown once is enough)
+
+## Acceptance
+
+- Vertical rail shows 11 items max, never scrolls on 1080p
+- Every section route has its own sticky horizontal sub-nav
+- Dashboard leads with Readiness + AI Guidance, not raw tables
+- Campaign Builder takes a draft from blank to a `ready` row in `v_campaign_readiness`
+- AI Guidance panel reads readiness signals and proposes next actions on every Five9 / Legal Connect screen
+- Five9 Docs panel surfaces relevant topic cards based on current route
+- No nav item is duplicated between global rail and horizontal sub-nav
+- Existing pages (logs, agents, mappings, etc.) load inside the new shell without modification
 
