@@ -3,16 +3,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, ChevronLeft, ChevronRight, Sparkles, BookOpen, Loader2 } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Sparkles, BookOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { GuidancePanel } from "@/components/assistant/GuidancePanel";
 import { Five9DocsPanel } from "@/components/docs/Five9DocsPanel";
+import { StepBasics } from "@/components/campaign-builder/StepBasics";
+import { StepVariables } from "@/components/campaign-builder/StepVariables";
+import { StepProfile } from "@/components/campaign-builder/StepProfile";
+import { StepDispositions } from "@/components/campaign-builder/StepDispositions";
+import { StepRouting } from "@/components/campaign-builder/StepRouting";
+import { StepReadiness } from "@/components/campaign-builder/StepReadiness";
+import type { DraftPayload } from "@/components/campaign-builder/types";
 
 const STEPS = [
   { key: "basics", label: "Basics", description: "Name, type, domain, client, provider" },
@@ -22,19 +24,6 @@ const STEPS = [
   { key: "routing", label: "Routing", description: "Campaign-to-provider mapping" },
   { key: "readiness", label: "Readiness", description: "Validate + test" },
 ];
-
-interface DraftPayload {
-  campaign_name?: string;
-  campaign_type?: string;
-  five9_domain?: string;
-  client_id?: string;
-  provider_target?: string;
-  variable_group_name?: string;
-  variables?: Array<{ name: string; label: string; type: string; required: boolean }>;
-  worksheet_fields?: string[];
-  dispositions?: Array<{ code: string; label: string; action: string }>;
-  routing_notes?: string;
-}
 
 export default function CampaignBuilderPage() {
   const { draftId } = useParams<{ draftId: string }>();
@@ -182,85 +171,12 @@ export default function CampaignBuilderPage() {
           <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
         </div>
 
-        {step.key === "basics" && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2"><Label>Campaign name</Label><Input value={payload.campaign_name || ""} onChange={(e) => updatePayload({ campaign_name: e.target.value })} placeholder="24H Virtual - Inbound" /></div>
-            <div className="space-y-2"><Label>Campaign type</Label><Input value={payload.campaign_type || ""} onChange={(e) => updatePayload({ campaign_type: e.target.value })} placeholder="Inbound" /></div>
-            <div className="space-y-2"><Label>Five9 domain</Label>
-              <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm" value={payload.five9_domain || ""} onChange={(e) => updatePayload({ five9_domain: e.target.value })}>
-                <option value="">Select domain…</option>
-                {domains.map((d) => <option key={d.id} value={d.domain}>{d.display_name}</option>)}
-              </select>
-            </div>
-            <div className="space-y-2"><Label>Client</Label>
-              <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm" value={payload.client_id || ""} onChange={(e) => updatePayload({ client_id: e.target.value })}>
-                <option value="">Select client…</option>
-                {tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-            </div>
-            <div className="space-y-2"><Label>Provider target (optional)</Label>
-              <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm" value={payload.provider_target || ""} onChange={(e) => updatePayload({ provider_target: e.target.value })}>
-                <option value="">None</option>
-                <option value="clio">Clio</option>
-                <option value="mycase">MyCase</option>
-                <option value="smokeball">Smokeball</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        {step.key === "variables" && (
-          <div className="space-y-4">
-            <div className="space-y-2"><Label>Variable group name</Label><Input value={payload.variable_group_name || ""} onChange={(e) => updatePayload({ variable_group_name: e.target.value })} placeholder="Default Intake Group" /></div>
-            <p className="text-xs text-muted-foreground">Variables can be added in detail after the campaign is created. For now, name the group.</p>
-          </div>
-        )}
-
-        {step.key === "profile" && (
-          <div className="space-y-3">
-            <Label>Worksheet fields (comma-separated)</Label>
-            <Textarea value={payload.worksheet_fields?.join(", ") || ""} onChange={(e) => updatePayload({ worksheet_fields: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} placeholder="first_name, last_name, phone, case_type" rows={3} />
-            <p className="text-xs text-muted-foreground">These fields will appear in the agent worksheet during the call.</p>
-          </div>
-        )}
-
-        {step.key === "dispositions" && (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Recommended starter set:</p>
-            <div className="grid gap-2">
-              {["Qualified Lead", "Existing Client Inquiry", "Callback", "Wrong Number", "Needs Review"].map((d) => (
-                <div key={d} className="flex items-center gap-2 p-3 rounded-lg border border-border">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                  <span className="text-sm">{d}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">Action chains can be configured per disposition in the Dispositions section after this builder.</p>
-          </div>
-        )}
-
-        {step.key === "routing" && (
-          <div className="space-y-3">
-            <Label>Routing notes</Label>
-            <Textarea value={payload.routing_notes || ""} onChange={(e) => updatePayload({ routing_notes: e.target.value })} placeholder="e.g. Pop the agent worksheet on inbound, fall back to review queue if no match" rows={4} />
-          </div>
-        )}
-
-        {step.key === "readiness" && (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Review and create the campaign route:</p>
-            <div className="rounded-lg border border-border p-4 space-y-1 text-sm">
-              <div><span className="text-muted-foreground">Name:</span> <span className="font-medium">{payload.campaign_name || "—"}</span></div>
-              <div><span className="text-muted-foreground">Domain:</span> <span className="font-medium">{payload.five9_domain || "—"}</span></div>
-              <div><span className="text-muted-foreground">Client:</span> <span className="font-medium">{tenants.find((t) => t.id === payload.client_id)?.name || "—"}</span></div>
-              <div><span className="text-muted-foreground">Provider:</span> <Badge variant="outline">{payload.provider_target || "none"}</Badge></div>
-            </div>
-            <Button onClick={finish} disabled={saving || !payload.campaign_name || !payload.five9_domain || !payload.client_id} className="w-full">
-              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-              Create campaign route
-            </Button>
-          </div>
-        )}
+        {step.key === "basics" && <StepBasics payload={payload} updatePayload={updatePayload} domains={domains} tenants={tenants} />}
+        {step.key === "variables" && <StepVariables payload={payload} updatePayload={updatePayload} />}
+        {step.key === "profile" && <StepProfile payload={payload} updatePayload={updatePayload} />}
+        {step.key === "dispositions" && <StepDispositions payload={payload} updatePayload={updatePayload} />}
+        {step.key === "routing" && <StepRouting payload={payload} updatePayload={updatePayload} />}
+        {step.key === "readiness" && <StepReadiness payload={payload} updatePayload={updatePayload} tenants={tenants} saving={saving} onFinish={finish} />}
       </div>
 
       {/* Footer nav */}

@@ -79,6 +79,15 @@ import ClientLegalConnectPage from "@/pages/admin/ClientLegalConnectPage";
 import CampaignOverlayListPage from "@/pages/admin/CampaignOverlayListPage";
 import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
 import CampaignBuilderPage from "@/pages/admin/CampaignBuilderPage";
+import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
+import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
+import CampaignsOverviewPage from "@/pages/admin/CampaignsOverviewPage";
+import CampaignDraftsPage from "@/pages/admin/CampaignDraftsPage";
+import CampaignReadinessBoardPage from "@/pages/admin/CampaignReadinessBoardPage";
+import CampaignEventLogPage from "@/pages/admin/CampaignEventLogPage";
+import TestingHubPage from "@/pages/admin/TestingHubPage";
+import MonitoringHubPage from "@/pages/admin/MonitoringHubPage";
+import DocsHubPage from "@/pages/admin/DocsHubPage";
 import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
@@ -136,8 +145,17 @@ const App = () => (
               {/* Admin routes */}
               <Route path="/admin" element={<AdminShell />}>
                 <Route index element={<TenantsPage />} />
+                <Route path="five9" element={<Five9OverviewPage />} />
                 <Route path="five9/campaign-builder" element={<CampaignBuilderPage />} />
                 <Route path="five9/campaign-builder/:draftId" element={<CampaignBuilderPage />} />
+                <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
+                <Route path="campaigns/overview" element={<CampaignsOverviewPage />} />
+                <Route path="campaigns/drafts" element={<CampaignDraftsPage />} />
+                <Route path="campaigns/readiness" element={<CampaignReadinessBoardPage />} />
+                <Route path="campaigns/event-log" element={<CampaignEventLogPage />} />
+                <Route path="testing" element={<TestingHubPage />} />
+                <Route path="monitoring" element={<MonitoringHubPage />} />
+                <Route path="docs" element={<DocsHubPage />} />
                 <Route path="clients/:id" element={<ClientOverviewPage />} />
                 <Route path="clients/:clientId/legal-connect" element={<ClientLegalConnectPage />} />
                 <Route path="clients/:clientId/legal-connect/setup/:provider" element={<ClientLegalConnectPage />} />
