@@ -773,6 +773,53 @@ serve(async (req) => {
       });
     }
 
+    // ── New Five9 Overlay Pipeline (runs alongside legacy CRM dispatch) ──
+    // Logs every inbound event to five9_event_log with normalized + routed + mapped state.
+    try {
+      const normalized = normalizeFive9Event(payload);
+      const route = await resolveFive9Route(supabase, normalized);
+      let mappedActions: any = [];
+      let dispositionMapping: any = null;
+      if (route.client_id && normalized.disposition) {
+        const { data: dm } = await supabase
+          .from("legal_connect_disposition_mappings")
+          .select("*")
+          .eq("client_id", route.client_id)
+          .eq("disposition_code", normalized.disposition)
+          .maybeSingle();
+        if (dm) {
+          dispositionMapping = dm;
+          const capabilities = route.provider_target
+            ? new Set<string>([
+                "create_contact","update_contact","lookup_contact","lookup_matter",
+                "create_matter","create_lead","create_note","create_task","create_activity",
+              ])
+            : new Set<string>();
+          const result = buildActionChain(normalized, dm as any, capabilities as any);
+          mappedActions = result.actions;
+        }
+      }
+      await supabase.from("five9_event_log").insert({
+        correlation_id: normalized.correlation_id,
+        event_type: normalized.event_type,
+        five9_domain: normalized.five9_domain ?? null,
+        campaign_name: normalized.campaign_name ?? null,
+        ani: normalized.ani ?? null,
+        dnis: normalized.dnis ?? null,
+        raw_payload: payload,
+        normalized_payload: normalized as any,
+        resolved_client_id: route.client_id,
+        resolved_provider: route.provider_target,
+        organization_id: route.organization_id,
+        mapped_actions: mappedActions as any,
+        sync_jobs_created: [],
+        status: route.client_id && route.provider_target ? "processed" : "unresolved",
+        processing_time_ms: Date.now() - startTime,
+      });
+    } catch (overlayErr) {
+      console.error("five9-overlay pipeline error:", overlayErr);
+    }
+
     const { context, domainRoute, error, status } = await resolveContext(req, supabase);
 
     if (error) {
