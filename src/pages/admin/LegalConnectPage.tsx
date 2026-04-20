@@ -625,7 +625,7 @@ export default function LegalConnectPage() {
                 <PolicyControlsPanel clientId={clientId} />
               </TabsContent>
               <TabsContent value="simulation" className="mt-4">
-                <SimulationPanel clientId={clientId} />
+                <SimulationPanel />
               </TabsContent>
               <TabsContent value="health" className="mt-4">
                 <Five9HealthPanel clientId={clientId} />
