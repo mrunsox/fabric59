@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import {
   LayoutDashboard, Plug, Megaphone, Shield, Map, Activity, AlertTriangle,
-  Sparkles, TestTube2, FileText, RefreshCw, Wifi, WifiOff, CheckCircle2, XCircle, Eye, Plus, HeartPulse, Scale,
+  Sparkles, TestTube2, FileText, RefreshCw, Wifi, WifiOff, CheckCircle2, XCircle, Eye, Plus, HeartPulse, Scale, PhoneCall,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { PageHeader } from "@/components/ui/page-header";
@@ -33,6 +33,12 @@ import PolicyProfileFormDialog from "@/components/legal-connect/PolicyProfileFor
 import DispositionMappingEditor from "@/components/legal-connect/DispositionMappingEditor";
 import CallVariableMappingEditor from "@/components/legal-connect/CallVariableMappingEditor";
 import FieldPolicyEditor from "@/components/legal-connect/FieldPolicyEditor";
+import DomainRoutingPanel from "@/components/five9-overlay/DomainRoutingPanel";
+import CallVariablesPanel from "@/components/five9-overlay/CallVariablesPanel";
+import PolicyControlsPanel from "@/components/five9-overlay/PolicyControlsPanel";
+import SimulationPanel from "@/components/five9-overlay/SimulationPanel";
+import Five9HealthPanel from "@/components/five9-overlay/Five9HealthPanel";
+import EventLogViewer from "@/components/five9-overlay/EventLogViewer";
 import { toast } from "sonner";
 
 // ── Status badge helper ──────────────────────────────────────────────
@@ -75,6 +81,7 @@ const tabMeta = [
   { value: "mappings", label: "Mappings", icon: Map },
   { value: "sync", label: "Sync Activity", icon: Activity },
   { value: "review", label: "Review Queue", icon: AlertTriangle },
+  { value: "five9", label: "Five9 Overlay", icon: PhoneCall },
   { value: "reliability", label: "Reliability", icon: HeartPulse },
   { value: "ai", label: "AI Setup", icon: Sparkles },
   { value: "testing", label: "Testing", icon: TestTube2 },
