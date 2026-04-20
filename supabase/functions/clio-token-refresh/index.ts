@@ -2,8 +2,38 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.93.3";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { clioAdapter } from "../clio/index.ts";
-import type { AdapterConnectionContext } from "../_shared/legal-crm-adapter.ts";
+
+async function refreshClioToken(refreshToken: string): Promise<
+  | { ok: true; access_token: string; refresh_token: string; expires_at: string }
+  | { ok: false; error: string }
+> {
+  const clientId = Deno.env.get("CLIO_CLIENT_ID");
+  const clientSecret = Deno.env.get("CLIO_CLIENT_SECRET");
+  if (!clientId || !clientSecret) return { ok: false, error: "Clio OAuth secrets not configured" };
+  if (!refreshToken) return { ok: false, error: "no refresh token on connection" };
+
+  const res = await fetch("https://app.clio.com/oauth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: clientId,
+      client_secret: clientSecret,
+    }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    return { ok: false, error: `clio refresh failed: ${txt}` };
+  }
+  const tokens = await res.json();
+  return {
+    ok: true,
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token ?? refreshToken,
+    expires_at: new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000).toISOString(),
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
