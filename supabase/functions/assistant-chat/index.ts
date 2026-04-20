@@ -44,7 +44,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { messages, knowledgeContext, assistantName } = await req.json();
+    const { messages, knowledgeContext, assistantName, mode } = await req.json();
+    const isGuidance = mode === "guidance";
 
     if (!Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "messages must be an array" }), {
@@ -54,7 +55,9 @@ Deno.serve(async (req) => {
     }
 
     const contextBlock = knowledgeContext
-      ? `\n\nKNOWLEDGE BASE CONTEXT:\n${knowledgeContext}`
+      ? (isGuidance
+          ? `\n\nCURRENT CONTEXT:\n${knowledgeContext}\n\nUse the context above to give task-aware, page-specific guidance. Recommend the next concrete action and explain blockers in plain English.`
+          : `\n\nKNOWLEDGE BASE CONTEXT:\n${knowledgeContext}`)
       : "";
     const namedSystem = assistantName
       ? SYSTEM_PROMPT.replace("Fabric Assistant", assistantName)
@@ -70,7 +73,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [{ role: "system", content: fullSystem }, ...messages],
-        stream: true,
+        stream: !isGuidance,
       }),
     });
 
@@ -95,6 +98,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (isGuidance) {
+      const json = await aiResponse.json();
+      const reply = json?.choices?.[0]?.message?.content ?? "";
+      return new Response(JSON.stringify({ reply }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     return new Response(aiResponse.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
