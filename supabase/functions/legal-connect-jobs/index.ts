@@ -315,48 +315,66 @@ async function executeMyCaseJob(
   throw new Error(`Unsupported MyCase job type: ${jobType}`);
 }
 
+async function callSmokeballAction(
+  clientId: string,
+  action: string,
+  payload: any,
+): Promise<{ ok: boolean; status: number; data: any }> {
+  const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/smokeball`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      "x-tenant-id": clientId,
+    },
+    body: JSON.stringify({ action, payload }),
+  });
+  let data: any = null;
+  try { data = await res.json(); } catch { /* ignore */ }
+  return { ok: res.ok, status: res.status, data };
+}
+
 async function executeSmokeballJob(
-  supabase: any,
   job: any,
-  ctx: AdapterConnectionContext,
 ): Promise<{ status: string; output: any }> {
-  const adapter = getAdapter("smokeball");
-  if (!adapter) throw new Error("Smokeball adapter not registered");
   const input = job.input_payload || {};
   const jobType = job.job_type;
+  const clientId = job.client_id;
 
   if (jobType === "contact.search" || jobType === "contact.lookup") {
-    const r = await adapter.searchContact(ctx, { phone: input.phone || input.ani, email: input.email });
-    if (!r.ok) throw new Error(r.error || "smokeball search failed");
-    return { status: "succeeded", output: { contacts: r.data || [], found: (r.data?.length || 0) > 0 } };
+    const r = await callSmokeballAction(clientId, "searchContact", { phone: input.phone || input.ani, email: input.email });
+    if (!r.ok) throw new Error(r.data?.error || "smokeball search failed");
+    const list = r.data?.data || [];
+    return { status: "succeeded", output: { contacts: list, found: list.length > 0 } };
   }
   if (jobType === "contact.create") {
-    const r = await adapter.createContact(ctx, {
+    const r = await callSmokeballAction(clientId, "createContact", {
       first_name: input.first_name || "Unknown",
       last_name: input.last_name || "Caller",
       phone: input.phone,
       email: input.email,
-    } as any);
-    if (!r.ok) throw new Error(r.error || "smokeball contact create failed");
-    return { status: "succeeded", output: { contact_id: (r.data as any)?.provider_id } };
+    });
+    if (!r.ok) throw new Error(r.data?.error || "smokeball contact create failed");
+    return { status: "succeeded", output: { contact_id: r.data?.data?.provider_id } };
   }
-  if (jobType === "matter.create" && adapter.createMatter) {
-    const r = await adapter.createMatter(ctx, {
+  if (jobType === "matter.create") {
+    const r = await callSmokeballAction(clientId, "createMatter", {
       description: input.description || "Intake from Five9",
       contact_id: input.contact_id,
-    } as any);
-    if (!r.ok) throw new Error(r.error || "smokeball matter create failed");
-    return { status: "succeeded", output: { matter_id: (r.data as any)?.provider_id } };
+    });
+    if (!r.ok) throw new Error(r.data?.error || "smokeball matter create failed");
+    return { status: "succeeded", output: { matter_id: r.data?.data?.provider_id } };
   }
   if (jobType === "note.create" || jobType === "communication.create") {
-    const r = await adapter.createNote(ctx, {
+    const r = await callSmokeballAction(clientId, "createNote", {
       subject: input.subject || "Five9 Phone Call",
-      body: input.body || input.content || "",
+      content: input.body || input.content || "",
       contact_id: input.contact_id,
       matter_id: input.matter_id,
-    } as any);
-    if (!r.ok) throw new Error(r.error || "smokeball note create failed");
-    return { status: "succeeded", output: { note_id: (r.data as any)?.provider_id } };
+    });
+    if (!r.ok) throw new Error(r.data?.error || "smokeball note create failed");
+    return { status: "succeeded", output: { note_id: r.data?.data?.provider_id } };
   }
   throw new Error(`Unsupported Smokeball job type: ${jobType}`);
 }
