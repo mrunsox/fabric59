@@ -41,3 +41,18 @@ verify_jwt = false
 
 [functions.ai-blueprint-builder]
 verify_jwt = false
+
+[functions.clio]
+verify_jwt = false
+
+[functions.clio-token-refresh]
+verify_jwt = false
+
+[functions.clio-deauth-callback]
+verify_jwt = false
+
+[functions.smokeball]
+verify_jwt = false
+
+[functions.smokeball-oauth-callback]
+verify_jwt = false
