@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
-import { AdminLayout } from "@/components/layout/AdminLayout";
+import { AdminShell } from "@/components/layout/AdminShell";
 import { MasterLayout } from "@/components/layout/MasterLayout";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
@@ -78,6 +78,7 @@ import LegalConnectPage from "@/pages/admin/LegalConnectPage";
 import ClientLegalConnectPage from "@/pages/admin/ClientLegalConnectPage";
 import CampaignOverlayListPage from "@/pages/admin/CampaignOverlayListPage";
 import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
+import CampaignBuilderPage from "@/pages/admin/CampaignBuilderPage";
 import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
@@ -133,8 +134,10 @@ const App = () => (
               <Route path="/onboarding" element={<OnboardingPage />} />
               
               {/* Admin routes */}
-              <Route path="/admin" element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminShell />}>
                 <Route index element={<TenantsPage />} />
+                <Route path="five9/campaign-builder" element={<CampaignBuilderPage />} />
+                <Route path="five9/campaign-builder/:draftId" element={<CampaignBuilderPage />} />
                 <Route path="clients/:id" element={<ClientOverviewPage />} />
                 <Route path="clients/:clientId/legal-connect" element={<ClientLegalConnectPage />} />
                 <Route path="clients/:clientId/legal-connect/setup/:provider" element={<ClientLegalConnectPage />} />
