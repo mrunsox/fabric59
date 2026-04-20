@@ -123,6 +123,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "api_keys_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       api_logs: {
@@ -173,6 +180,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -658,6 +672,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "callback_routing_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       campaign_archives: {
@@ -766,6 +787,88 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "campaign_blueprints_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_builder_drafts: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_route_id: string | null
+          current_step: number
+          id: string
+          organization_id: string
+          payload: Json
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_route_id?: string | null
+          current_step?: number
+          id?: string
+          organization_id: string
+          payload?: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_route_id?: string | null
+          current_step?: number
+          id?: string
+          organization_id?: string
+          payload?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_builder_drafts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "campaign_builder_drafts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_builder_drafts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "campaign_builder_drafts_created_route_id_fkey"
+            columns: ["created_route_id"]
+            isOneToOne: false
+            referencedRelation: "five9_campaign_routes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_builder_drafts_created_route_id_fkey"
+            columns: ["created_route_id"]
+            isOneToOne: false
+            referencedRelation: "v_campaign_readiness"
+            referencedColumns: ["route_id"]
+          },
+          {
+            foreignKeyName: "campaign_builder_drafts_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -954,6 +1057,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "clio_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       disposition_access: {
@@ -1064,6 +1174,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "error_alerts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       feedback_submissions: {
@@ -1172,6 +1289,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "field_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       five9_call_variable_groups: {
@@ -1235,6 +1359,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_call_variable_groups_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "five9_call_variable_groups_organization_id_fkey"
@@ -1324,6 +1455,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_call_variables_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "five9_call_variables_group_id_fkey"
@@ -1420,6 +1558,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_campaign_routes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "five9_campaign_routes_connection_id_fkey"
@@ -1589,6 +1734,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "five9_event_log_resolved_client_id_fkey"
+            columns: ["resolved_client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       identity_xrefs: {
@@ -1687,6 +1839,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_line_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -1788,6 +1947,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       kb_articles: {
@@ -1866,6 +2032,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "kb_articles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       kb_categories: {
@@ -1914,6 +2087,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kb_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -1965,6 +2145,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ai_checklists_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_ai_checklists_organization_id_fkey"
@@ -2023,6 +2210,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ai_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_ai_sessions_organization_id_fkey"
@@ -2120,6 +2314,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_call_variable_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_call_variable_mappings_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -2205,6 +2406,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_campaigns_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -2278,6 +2486,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_client_capabilities_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_client_capabilities_organization_id_fkey"
@@ -2360,6 +2575,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_conflicts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_conflicts_organization_id_fkey"
@@ -2482,6 +2704,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_connections_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -2559,6 +2788,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_contacts_organization_id_fkey"
@@ -2689,6 +2925,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_disposition_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_disposition_mappings_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -2754,6 +2997,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_entity_links_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_entity_links_organization_id_fkey"
@@ -2845,6 +3095,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_event_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_event_log_organization_id_fkey"
@@ -2962,6 +3219,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_failure_classifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_failure_classifications_event_log_id_fkey"
             columns: ["event_log_id"]
             isOneToOne: false
@@ -3043,6 +3307,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_field_policies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_field_policies_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -3111,6 +3382,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_matters_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_matters_organization_id_fkey"
@@ -3191,6 +3469,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_notes_organization_id_fkey"
@@ -3299,6 +3584,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_policy_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_policy_profiles_organization_id_fkey"
@@ -3484,6 +3776,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_review_queue_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_review_queue_event_log_id_fkey"
             columns: ["event_log_id"]
             isOneToOne: false
@@ -3604,6 +3903,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_sync_jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_sync_jobs_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -3694,6 +4000,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_tasks_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -3775,6 +4088,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_tenant_configs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_tenant_configs_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -3834,6 +4154,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_test_plans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_test_plans_organization_id_fkey"
@@ -3906,6 +4233,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_test_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_test_runs_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -3965,6 +4299,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_webhook_renewal_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "legal_connect_webhook_renewal_log_organization_id_fkey"
@@ -4074,6 +4415,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_webhook_subscriptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_webhook_subscriptions_connection_id_fkey"
             columns: ["connection_id"]
             isOneToOne: false
@@ -4149,6 +4497,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "mycase_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       notifications: {
@@ -4199,6 +4554,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -4260,6 +4622,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_tokens_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -4566,6 +4935,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "post_call_automations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       profiles: {
@@ -4731,6 +5107,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "qr_did_mappings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       report_templates: {
@@ -4861,6 +5244,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_uploads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "report_uploads_uploaded_by_fkey"
@@ -5103,6 +5493,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "script_sessions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       script_templates: {
@@ -5163,6 +5560,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "script_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -5289,6 +5693,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "scripts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       tasks: {
@@ -5372,6 +5783,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -5611,6 +6029,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "training_modules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       training_progress: {
@@ -5697,6 +6122,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "unified_schema_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -5863,6 +6295,13 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "web_callbacks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
     }
@@ -5972,6 +6411,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "tenants_organization_id_fkey"
@@ -6167,7 +6613,109 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "legal_connect_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
             foreignKeyName: "legal_connect_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_campaign_readiness: {
+        Row: {
+          campaign_name: string | null
+          client_id: string | null
+          disposition_count: number | null
+          domain_connected: boolean | null
+          five9_domain: string | null
+          organization_id: string | null
+          provider_connected: boolean | null
+          provider_target: string | null
+          required_variable_count: number | null
+          route_id: string | null
+          status: string | null
+          successful_event_count: number | null
+          variable_count: number | null
+          variable_group_assigned: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "five9_campaign_routes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "five9_campaign_routes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_campaign_routes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "five9_campaign_routes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_client_readiness: {
+        Row: {
+          campaign_exists: boolean | null
+          client_id: string | null
+          dispositions_configured: boolean | null
+          domain_connected: boolean | null
+          organization_id: string | null
+          provider_connected: boolean | null
+          ready_route_count: number | null
+          route_count: number | null
+          status: string | null
+          variable_group_exists: boolean | null
+        }
+        Insert: {
+          campaign_exists?: never
+          client_id?: string | null
+          dispositions_configured?: never
+          domain_connected?: never
+          organization_id?: string | null
+          provider_connected?: never
+          ready_route_count?: never
+          route_count?: never
+          status?: never
+          variable_group_exists?: never
+        }
+        Update: {
+          campaign_exists?: never
+          client_id?: string | null
+          dispositions_configured?: never
+          domain_connected?: never
+          organization_id?: string | null
+          provider_connected?: never
+          ready_route_count?: never
+          route_count?: never
+          status?: never
+          variable_group_exists?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
