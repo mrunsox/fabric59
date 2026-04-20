@@ -600,6 +600,42 @@ export default function LegalConnectPage() {
             </Card>
           </TabsContent>
 
+          {/* ── FIVE9 OVERLAY ─────────────────────────────────── */}
+          <TabsContent value="five9" className="mt-4">
+            <Tabs defaultValue="routing">
+              <TabsList className="bg-muted/50">
+                <TabsTrigger value="routing" className="text-xs">Domain Routing</TabsTrigger>
+                <TabsTrigger value="variables" className="text-xs">Call Variables</TabsTrigger>
+                <TabsTrigger value="dispositions" className="text-xs">Dispositions</TabsTrigger>
+                <TabsTrigger value="policies" className="text-xs">Policies</TabsTrigger>
+                <TabsTrigger value="simulation" className="text-xs">Simulation</TabsTrigger>
+                <TabsTrigger value="health" className="text-xs">Health</TabsTrigger>
+                <TabsTrigger value="events" className="text-xs">Event Log</TabsTrigger>
+              </TabsList>
+              <TabsContent value="routing" className="mt-4">
+                <DomainRoutingPanel clientId={clientId} />
+              </TabsContent>
+              <TabsContent value="variables" className="mt-4">
+                <CallVariablesPanel clientId={clientId} />
+              </TabsContent>
+              <TabsContent value="dispositions" className="mt-4">
+                <DispositionMappingEditor clientId={clientId} />
+              </TabsContent>
+              <TabsContent value="policies" className="mt-4">
+                <PolicyControlsPanel clientId={clientId} />
+              </TabsContent>
+              <TabsContent value="simulation" className="mt-4">
+                <SimulationPanel clientId={clientId} />
+              </TabsContent>
+              <TabsContent value="health" className="mt-4">
+                <Five9HealthPanel clientId={clientId} />
+              </TabsContent>
+              <TabsContent value="events" className="mt-4">
+                <EventLogViewer clientId={clientId} />
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+
           {/* ── RELIABILITY ──────────────────────────────────── */}
           <TabsContent value="reliability" className="mt-4 space-y-6">
             <GoLiveReadiness clientId={clientId} />
