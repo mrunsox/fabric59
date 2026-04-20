@@ -39,6 +39,9 @@ import {
   FileText,
   Receipt,
   Route,
+  Scale,
+  PhoneCall,
+  ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 

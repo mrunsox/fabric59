@@ -81,7 +81,6 @@ const tabMeta = [
   { value: "mappings", label: "Mappings", icon: Map },
   { value: "sync", label: "Sync Activity", icon: Activity },
   { value: "review", label: "Review Queue", icon: AlertTriangle },
-  { value: "five9", label: "Five9 Overlay", icon: PhoneCall },
   { value: "reliability", label: "Reliability", icon: HeartPulse },
   { value: "ai", label: "AI Setup", icon: Sparkles },
   { value: "testing", label: "Testing", icon: TestTube2 },
@@ -600,41 +599,10 @@ export default function LegalConnectPage() {
             </Card>
           </TabsContent>
 
-          {/* ── FIVE9 OVERLAY ─────────────────────────────────── */}
-          <TabsContent value="five9" className="mt-4">
-            <Tabs defaultValue="routing">
-              <TabsList className="bg-muted/50">
-                <TabsTrigger value="routing" className="text-xs">Domain Routing</TabsTrigger>
-                <TabsTrigger value="variables" className="text-xs">Call Variables</TabsTrigger>
-                <TabsTrigger value="dispositions" className="text-xs">Dispositions</TabsTrigger>
-                <TabsTrigger value="policies" className="text-xs">Policies</TabsTrigger>
-                <TabsTrigger value="simulation" className="text-xs">Simulation</TabsTrigger>
-                <TabsTrigger value="health" className="text-xs">Health</TabsTrigger>
-                <TabsTrigger value="events" className="text-xs">Event Log</TabsTrigger>
-              </TabsList>
-              <TabsContent value="routing" className="mt-4">
-                <DomainRoutingPanel clientId={clientId} />
-              </TabsContent>
-              <TabsContent value="variables" className="mt-4">
-                <CallVariablesPanel clientId={clientId} />
-              </TabsContent>
-              <TabsContent value="dispositions" className="mt-4">
-                <DispositionMappingEditor clientId={clientId} />
-              </TabsContent>
-              <TabsContent value="policies" className="mt-4">
-                <PolicyControlsPanel clientId={clientId} />
-              </TabsContent>
-              <TabsContent value="simulation" className="mt-4">
-                <SimulationPanel />
-              </TabsContent>
-              <TabsContent value="health" className="mt-4">
-                <Five9HealthPanel clientId={clientId} />
-              </TabsContent>
-              <TabsContent value="events" className="mt-4">
-                <EventLogViewer clientId={clientId} />
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
+          {/* Per-campaign Five9 Overlay tabs have moved to the per-client area:
+              /admin/clients/:id/five9-overlay/campaigns/:routeId
+              This global page no longer hosts campaign-scoped Five9 config. */}
+
 
           {/* ── RELIABILITY ──────────────────────────────────── */}
           <TabsContent value="reliability" className="mt-4 space-y-6">
