@@ -75,6 +75,9 @@ import CallSummaryTemplatesPage from "@/pages/admin/CallSummaryTemplatesPage";
 import ScriptFlowHubPage from "@/pages/admin/ScriptFlowHubPage";
 import EmailTemplatesPage from "@/pages/admin/EmailTemplatesPage";
 import LegalConnectPage from "@/pages/admin/LegalConnectPage";
+import ClientLegalConnectPage from "@/pages/admin/ClientLegalConnectPage";
+import CampaignOverlayListPage from "@/pages/admin/CampaignOverlayListPage";
+import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
 import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
@@ -133,6 +136,10 @@ const App = () => (
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<TenantsPage />} />
                 <Route path="clients/:id" element={<ClientOverviewPage />} />
+                <Route path="clients/:clientId/legal-connect" element={<ClientLegalConnectPage />} />
+                <Route path="clients/:clientId/legal-connect/setup/:provider" element={<ClientLegalConnectPage />} />
+                <Route path="clients/:clientId/five9-overlay" element={<CampaignOverlayListPage />} />
+                <Route path="clients/:clientId/five9-overlay/campaigns/:campaignRouteId" element={<CampaignOverlayPage />} />
                 <Route path="partners" element={<PartnersPage />} />
                 <Route path="partners/:id" element={<PartnerOverviewPage />} />
                 <Route path="dashboard" element={<UserDashboardPage />} />

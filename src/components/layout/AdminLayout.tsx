@@ -53,7 +53,7 @@ const navigationGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Integrations",
     items: [
-      { name: "Legal Connect", href: "/admin/legal-connect", icon: Scale, permission: "integrations" },
+      { name: "Legal Connect (Global)", href: "/admin/legal-connect", icon: Scale, permission: "integrations" },
       { name: "Integrations", href: "/admin/integrations", icon: Plug, permission: "integrations" },
       { name: "Field Mappings", href: "/admin/mappings", icon: FileJson, permission: "mappings" },
     ],
