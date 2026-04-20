@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, ExternalLink, CheckCircle2, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
-import { ALL_DOCS } from "@/data/five9DocsIndex";
+import { FIVE9_DOCS as ALL_DOCS } from "@/data/five9DocsIndex";
 
 export default function DocsHubPage() {
   const [tab, setTab] = useState("five9");
