@@ -1174,6 +1174,243 @@ export type Database = {
           },
         ]
       }
+      five9_call_variable_groups: {
+        Row: {
+          campaign_id: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          display_label: string | null
+          display_order: number
+          group_name: string
+          id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          display_label?: string | null
+          display_order?: number
+          group_name: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          display_label?: string | null
+          display_order?: number
+          group_name?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "five9_call_variable_groups_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_call_variable_groups_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "five9_call_variable_groups_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_call_variable_groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      five9_call_variables: {
+        Row: {
+          campaign_id: string | null
+          client_id: string
+          created_at: string
+          data_type: string
+          default_value: string | null
+          description: string | null
+          display_label: string
+          display_order: number
+          enum_values: Json
+          fabric59_field_path: string | null
+          group_id: string | null
+          id: string
+          internal_name: string
+          organization_id: string
+          required: boolean
+          updated_at: string
+          validation_rules: Json
+        }
+        Insert: {
+          campaign_id?: string | null
+          client_id: string
+          created_at?: string
+          data_type?: string
+          default_value?: string | null
+          description?: string | null
+          display_label: string
+          display_order?: number
+          enum_values?: Json
+          fabric59_field_path?: string | null
+          group_id?: string | null
+          id?: string
+          internal_name: string
+          organization_id: string
+          required?: boolean
+          updated_at?: string
+          validation_rules?: Json
+        }
+        Update: {
+          campaign_id?: string | null
+          client_id?: string
+          created_at?: string
+          data_type?: string
+          default_value?: string | null
+          description?: string | null
+          display_label?: string
+          display_order?: number
+          enum_values?: Json
+          fabric59_field_path?: string | null
+          group_id?: string | null
+          id?: string
+          internal_name?: string
+          organization_id?: string
+          required?: boolean
+          updated_at?: string
+          validation_rules?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "five9_call_variables_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_call_variables_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "five9_call_variables_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_call_variables_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "five9_call_variable_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_call_variables_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      five9_campaign_routes: {
+        Row: {
+          campaign_name: string | null
+          client_id: string
+          created_at: string
+          default_disposition_policy: string
+          dnis: string | null
+          five9_domain: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          organization_id: string
+          priority: number
+          provider_target: string | null
+          queue_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          campaign_name?: string | null
+          client_id: string
+          created_at?: string
+          default_disposition_policy?: string
+          dnis?: string | null
+          five9_domain: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          organization_id: string
+          priority?: number
+          provider_target?: string | null
+          queue_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          campaign_name?: string | null
+          client_id?: string
+          created_at?: string
+          default_disposition_policy?: string
+          dnis?: string | null
+          five9_domain?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          organization_id?: string
+          priority?: number
+          provider_target?: string | null
+          queue_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "five9_campaign_routes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "five9_campaign_routes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_campaign_routes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       five9_domains: {
         Row: {
           api_connection_status: string | null
@@ -1229,6 +1466,94 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      five9_event_log: {
+        Row: {
+          ani: string | null
+          campaign_name: string | null
+          correlation_id: string
+          created_at: string
+          dnis: string | null
+          error: string | null
+          event_type: string
+          five9_domain: string | null
+          id: string
+          mapped_actions: Json
+          normalized_payload: Json
+          organization_id: string | null
+          processing_time_ms: number | null
+          raw_payload: Json
+          resolved_client_id: string | null
+          resolved_provider: string | null
+          status: string
+          sync_jobs_created: string[]
+          updated_at: string
+        }
+        Insert: {
+          ani?: string | null
+          campaign_name?: string | null
+          correlation_id: string
+          created_at?: string
+          dnis?: string | null
+          error?: string | null
+          event_type: string
+          five9_domain?: string | null
+          id?: string
+          mapped_actions?: Json
+          normalized_payload?: Json
+          organization_id?: string | null
+          processing_time_ms?: number | null
+          raw_payload?: Json
+          resolved_client_id?: string | null
+          resolved_provider?: string | null
+          status?: string
+          sync_jobs_created?: string[]
+          updated_at?: string
+        }
+        Update: {
+          ani?: string | null
+          campaign_name?: string | null
+          correlation_id?: string
+          created_at?: string
+          dnis?: string | null
+          error?: string | null
+          event_type?: string
+          five9_domain?: string | null
+          id?: string
+          mapped_actions?: Json
+          normalized_payload?: Json
+          organization_id?: string | null
+          processing_time_ms?: number | null
+          raw_payload?: Json
+          resolved_client_id?: string | null
+          resolved_provider?: string | null
+          status?: string
+          sync_jobs_created?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "five9_event_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "five9_event_log_resolved_client_id_fkey"
+            columns: ["resolved_client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "five9_event_log_resolved_client_id_fkey"
+            columns: ["resolved_client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -2029,6 +2354,7 @@ export type Database = {
       legal_connect_connections: {
         Row: {
           access_token_expires_at: string | null
+          auth_state_meta: Json
           auth_type: string | null
           base_url: string | null
           client_id: string
@@ -2055,6 +2381,7 @@ export type Database = {
         }
         Insert: {
           access_token_expires_at?: string | null
+          auth_state_meta?: Json
           auth_type?: string | null
           base_url?: string | null
           client_id: string
@@ -2081,6 +2408,7 @@ export type Database = {
         }
         Update: {
           access_token_expires_at?: string | null
+          auth_state_meta?: Json
           auth_type?: string | null
           base_url?: string | null
           client_id?: string
@@ -2226,13 +2554,18 @@ export type Database = {
           disposition_code: string
           disposition_label: string | null
           id: string
+          is_open_disposition: boolean
           mark_consult_booked: boolean
           metadata: Json | null
           organization_id: string
           priority: number
+          provider_target: string | null
+          reporting_value: string | null
           require_call_notes: boolean
           require_followup_date: boolean
+          required_call_variables: string[]
           send_to_manual_review: boolean
+          unsupported_action_behavior: string
           update_contact: boolean
           updated_at: string
         }
@@ -2253,13 +2586,18 @@ export type Database = {
           disposition_code: string
           disposition_label?: string | null
           id?: string
+          is_open_disposition?: boolean
           mark_consult_booked?: boolean
           metadata?: Json | null
           organization_id: string
           priority?: number
+          provider_target?: string | null
+          reporting_value?: string | null
           require_call_notes?: boolean
           require_followup_date?: boolean
+          required_call_variables?: string[]
           send_to_manual_review?: boolean
+          unsupported_action_behavior?: string
           update_contact?: boolean
           updated_at?: string
         }
@@ -2280,13 +2618,18 @@ export type Database = {
           disposition_code?: string
           disposition_label?: string | null
           id?: string
+          is_open_disposition?: boolean
           mark_consult_booked?: boolean
           metadata?: Json | null
           organization_id?: string
           priority?: number
+          provider_target?: string | null
+          reporting_value?: string | null
           require_call_notes?: boolean
           require_followup_date?: boolean
+          required_call_variables?: string[]
           send_to_manual_review?: boolean
+          unsupported_action_behavior?: string
           update_contact?: boolean
           updated_at?: string
         }
