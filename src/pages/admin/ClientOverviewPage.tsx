@@ -1,19 +1,24 @@
+import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useTenant, useUpdateTenant } from "@/hooks/useTenants";
 import { usePartner } from "@/hooks/usePartners";
-import { useApiLogs, useApiLogStats } from "@/hooks/useApiLogs";
+import { useApiLogs } from "@/hooks/useApiLogs";
 import { useClientIntegrationConfigs } from "@/hooks/useClientIntegrationConfigs";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useCampaignScripts } from "@/hooks/useCampaignScripts";
-import { PremiumStatCard } from "@/components/ui/premium-stat-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   Table,
   TableBody,
@@ -24,24 +29,27 @@ import {
 } from "@/components/ui/table";
 import { Five9WebhookCard } from "@/components/tenants/Five9WebhookCard";
 import { CrmConnectionCard } from "@/components/tenants/CrmConnectionCard";
+import { ReadinessChecklist } from "@/components/dashboard/ReadinessChecklist";
+import { AIGuidanceCard } from "@/components/dashboard/AIGuidanceCard";
+import { SystemHealthStrip } from "@/components/dashboard/SystemHealthStrip";
+import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
+import {
+  fetchClientReadiness,
+  type ClientReadiness,
+} from "@/lib/readiness/computeCampaignReadiness";
 import type { IntegrationConfigs } from "@/types/integrations";
 import type { CrmType, TenantStatus, NotificationTriggers } from "@/types/database";
 import {
   ArrowLeft,
-  Activity,
-  AlertCircle,
-  Link2,
-  Map,
   Workflow,
-  ExternalLink,
   Building2,
-  TestTube,
+  Activity,
+  PhoneCall,
+  AlertCircle,
+  CheckCircle2,
+  Map,
   FileText,
   Receipt,
-  Route,
-  Scale,
-  PhoneCall,
-  ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -61,22 +69,33 @@ export default function ClientOverviewPage() {
   const { data: tenant, isLoading } = useTenant(id || "");
   const { data: partner } = usePartner(tenant?.partner_id || "");
   const { data: logs = [] } = useApiLogs({ tenantId: id, limit: 10 });
-  const { data: stats } = useApiLogStats();
-  const { configs, saveConfigs, isSaving } = useClientIntegrationConfigs(id || "");
+  const { configs, saveConfigs } = useClientIntegrationConfigs(id || "");
   const updateTenant = useUpdateTenant();
   const { data: allInvoices = [] } = useInvoices();
   const { data: campaignScripts = [] } = useCampaignScripts();
 
+  const [readiness, setReadiness] = useState<ClientReadiness | null>(null);
+  const [readinessLoading, setReadinessLoading] = useState(true);
+
   const clientInvoices = allInvoices.filter((inv: any) => inv.tenant_id === id);
   const clientScripts = campaignScripts.filter((cs: any) => cs.tenant_id === id);
+
+  useEffect(() => {
+    if (!id) return;
+    setReadinessLoading(true);
+    fetchClientReadiness(id).then((r) => {
+      setReadiness(r);
+      setReadinessLoading(false);
+    });
+  }, [id]);
 
   if (isLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
         <div className="h-8 w-48 rounded bg-muted animate-pulse" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-24 rounded-lg border border-border bg-card animate-pulse" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-64 rounded-2xl border border-border bg-card animate-pulse" />
           ))}
         </div>
       </div>
@@ -119,6 +138,11 @@ export default function ClientOverviewPage() {
     { label: "Power Automate", value: tenant.power_automate_webhook_url },
   ].filter((d) => d.value);
 
+  const activeScripts = clientScripts.filter((cs: any) => cs.is_active).length;
+  const recentLogCount = logs.length;
+  const lastLogAt = logs[0]?.created_at;
+  const openInvoices = clientInvoices.filter((inv: any) => inv.status !== "paid").length;
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -126,12 +150,12 @@ export default function ClientOverviewPage() {
         title={tenant.name}
         subtitle={tenant.id}
         icon={
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/8 border border-primary/10">
-            <Building2 className="h-5 w-5 text-primary" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
+            <Building2 className="h-6 w-6 text-primary" />
           </div>
         }
         breadcrumb={
-          <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="text-muted-foreground gap-1.5 -ml-2 h-7">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/admin/clients")} className="text-muted-foreground gap-1.5 -ml-2 h-7">
             <ArrowLeft className="h-3.5 w-3.5" /> Clients
           </Button>
         }
@@ -149,351 +173,272 @@ export default function ClientOverviewPage() {
             </Badge>
           </Link>
         )}
+        <Button variant="outline" size="sm" asChild>
+          <Link to={`/admin/clients/${tenant.id}/legal-connect`}>Legal Connect</Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link to={`/admin/clients/${tenant.id}/five9-overlay`}>Five9 Overlay</Link>
+        </Button>
       </PageHeader>
 
-      {/* Stats Row */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <PremiumStatCard
-          title="API Calls (24h)"
-          value={stats?.total || 0}
-          subtitle={`${stats?.successRate || 100}% success rate`}
-          icon={Activity}
-          variant="default"
-        />
-        <PremiumStatCard
-          title="Errors (24h)"
-          value={stats?.errors || 0}
-          subtitle="Requires attention"
-          icon={AlertCircle}
-          variant={stats?.errors ? "destructive" : "default"}
-        />
-        <PremiumStatCard
-          title="CRM Connection"
-          value={
-            (configs?.clio?.enabled ? "Clio" : "") ||
-            (configs?.mycase?.enabled ? "MyCase" : "") ||
-            "None"
-          }
-          subtitle={
-            configs?.clio?.oauthTokenId || configs?.mycase?.apiKeyId
-              ? "Connected"
-              : "Not connected"
-          }
-          icon={Link2}
-          variant={configs?.clio?.oauthTokenId || configs?.mycase?.apiKeyId ? "success" : "warning"}
-        />
-        <PremiumStatCard
-          title="Script Mappings"
-          value={clientScripts.length}
-          subtitle="DNIS/campaign routes"
-          icon={Route}
-          variant="primary"
-        />
+      {/* Setup Progress + AI Guidance */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ReadinessChecklist readiness={readiness} loading={readinessLoading} title="Setup Progress" />
+        <AIGuidanceCard readiness={readiness} />
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="legal-connect">Legal Connect</TabsTrigger>
-          <TabsTrigger value="five9-scripts">Five9 & Scripts</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-        </TabsList>
+      {/* System Health */}
+      <SystemHealthStrip organizationId={tenant.organization_id} />
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4 mt-4">
-          {/* Layered setup entry cards — clear separation between client provider setup and campaign config */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Card
-              className="border-border cursor-pointer hover:border-primary/40 transition-colors"
-              onClick={() => navigate(`/admin/clients/${tenant.id}/legal-connect`)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="rounded-lg bg-primary/10 p-2">
-                      <Scale className="h-4 w-4 text-primary" />
-                    </div>
-                    <CardTitle className="text-base">Legal Connect</CardTitle>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <CardDescription className="text-xs pt-1">
-                  Provider connections, OAuth, webhooks, field mappings, policies
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card
-              className="border-border cursor-pointer hover:border-primary/40 transition-colors"
-              onClick={() => navigate(`/admin/clients/${tenant.id}/five9-overlay`)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="rounded-lg bg-primary/10 p-2">
-                      <PhoneCall className="h-4 w-4 text-primary" />
-                    </div>
-                    <CardTitle className="text-base">Five9 Overlay (Campaigns)</CardTitle>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <CardDescription className="text-xs pt-1">
-                  Campaign routing, call variables, dispositions, simulation
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Behavior & Mappings */}
-            <div className="space-y-4">
-              <Card className="border-border">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    <Map className="h-4 w-4 text-primary" />
-                    <CardTitle className="text-base">Field Mappings</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="outline" size="sm" asChild className="w-full">
-                    <Link to="/admin/mappings">
-                      <Map className="h-4 w-4 mr-2" /> Open Mapping Builder
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    <Workflow className="h-4 w-4 text-primary" />
-                    <CardTitle className="text-base">Workflow Automations</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {([
-                    { key: "intake_created" as const, label: "Send on intake created" },
-                    { key: "call_ended" as const, label: "Send on call ended" },
-                    { key: "contact_updated" as const, label: "Send on CRM update" },
-                  ] as const).map((trigger) => (
-                    <div key={trigger.key} className="flex items-center justify-between">
-                      <Label className="text-sm">{trigger.label}</Label>
-                      <Switch
-                        checked={!!tenant.notification_triggers?.[trigger.key]}
-                        onCheckedChange={(v) => handleNotificationToggle(trigger.key, v)}
-                      />
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+      {/* Live Operations strip */}
+      <div className="rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-sm font-semibold tracking-tight text-foreground mb-4">Live Operations</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link to={`/admin/script-routing?tenant=${tenant.id}`} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+            <PhoneCall className="h-4 w-4 text-foreground" />
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Active campaigns</p>
+              <p className="text-lg font-semibold text-foreground">{activeScripts}</p>
             </div>
-
-            {/* Activity & Quick Actions */}
-            <div className="space-y-4">
-              <Card className="border-border">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" />
-                      <CardTitle className="text-base">Recent API Logs</CardTitle>
-                    </div>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to={`/admin/logs?tenant=${tenant.id}`}>
-                        View All <ExternalLink className="h-3 w-3 ml-1" />
-                      </Link>
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {logs.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">No recent API activity.</p>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-border">
-                          <TableHead className="text-xs">Endpoint</TableHead>
-                          <TableHead className="text-xs">Status</TableHead>
-                          <TableHead className="text-xs">Time</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {logs.slice(0, 8).map((log) => (
-                          <TableRow key={log.id} className="border-border">
-                            <TableCell className="text-xs font-mono truncate max-w-[140px]">{log.endpoint}</TableCell>
-                            <TableCell>
-                              <StatusBadge variant={log.status === "success" ? "active" : "inactive"} dot>
-                                {log.status}
-                              </StatusBadge>
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {format(new Date(log.created_at), "HH:mm")}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button variant="outline" size="sm" asChild className="w-full justify-start">
-                    <Link to="/admin/test">
-                      <TestTube className="h-4 w-4 mr-2" /> Open Test Console
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="sm" asChild className="w-full justify-start">
-                    <Link to={`/admin/logs?tenant=${tenant.id}`}>
-                      <FileText className="h-4 w-4 mr-2" /> Open API Logs
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+          </Link>
+          <Link to={`/admin/logs?tenant=${tenant.id}`} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+            <Activity className="h-4 w-4 text-foreground" />
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Recent events</p>
+              <p className="text-lg font-semibold text-foreground">{recentLogCount}</p>
+            </div>
+          </Link>
+          <Link to={`/admin/clients/${tenant.id}/legal-connect`} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+            {configs?.clio?.oauthTokenId || configs?.mycase?.apiKeyId ? (
+              <CheckCircle2 className="h-4 w-4 text-success" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-warning" />
+            )}
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Provider</p>
+              <p className="text-lg font-semibold text-foreground">
+                {(configs?.clio?.enabled && "Clio") || (configs?.mycase?.enabled && "MyCase") || "None"}
+              </p>
+            </div>
+          </Link>
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+            <FileText className="h-4 w-4 text-foreground" />
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Last activity</p>
+              <p className="text-sm font-semibold text-foreground">
+                {lastLogAt ? format(new Date(lastLogAt), "MMM d, HH:mm") : "—"}
+              </p>
             </div>
           </div>
-        </TabsContent>
+        </div>
+      </div>
 
-        {/* Legal Connect Tab */}
-        <TabsContent value="legal-connect" className="space-y-4 mt-4">
-          <Five9WebhookCard
-            tenantId={tenant.id}
-            webhookSecret={webhookSecret}
-            onWebhookSecretChange={handleWebhookSecretChange}
-          />
-          <div className="grid gap-4 lg:grid-cols-2">
-            <CrmConnectionCard
-              crm="clio"
-              tenantId={tenant.id}
-              config={configs?.clio as unknown as Record<string, unknown> | undefined}
-              onConfigChange={(c) => handleCrmConfigChange("clio", c)}
-            />
-            <CrmConnectionCard
-              crm="mycase"
-              tenantId={tenant.id}
-              config={configs?.mycase as unknown as Record<string, unknown> | undefined}
-              onConfigChange={(c) => handleCrmConfigChange("mycase", c)}
-            />
-          </div>
-          {webhookDestinations.length > 0 && (
+      {/* Quick Actions — client scoped */}
+      <QuickActionsGrid clientId={tenant.id} />
+
+      {/* More details */}
+      <Accordion type="single" collapsible className="rounded-2xl border border-border bg-card">
+        <AccordionItem value="details" className="border-0">
+          <AccordionTrigger className="px-6 py-4 hover:no-underline">
+            <span className="text-sm font-semibold tracking-tight text-foreground">More details — integrations, scripts, billing</span>
+          </AccordionTrigger>
+          <AccordionContent className="px-6 pb-6 space-y-6">
+            {/* Legal Connect cards */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-foreground">Legal Connect setup</h3>
+              <Five9WebhookCard
+                tenantId={tenant.id}
+                webhookSecret={webhookSecret}
+                onWebhookSecretChange={handleWebhookSecretChange}
+              />
+              <div className="grid gap-4 lg:grid-cols-2">
+                <CrmConnectionCard
+                  crm="clio"
+                  tenantId={tenant.id}
+                  config={configs?.clio as unknown as Record<string, unknown> | undefined}
+                  onConfigChange={(c) => handleCrmConfigChange("clio", c)}
+                />
+                <CrmConnectionCard
+                  crm="mycase"
+                  tenantId={tenant.id}
+                  config={configs?.mycase as unknown as Record<string, unknown> | undefined}
+                  onConfigChange={(c) => handleCrmConfigChange("mycase", c)}
+                />
+              </div>
+              {webhookDestinations.length > 0 && (
+                <Card className="border-border">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Workflow webhook destinations</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {webhookDestinations.map((d) => (
+                      <div key={d.label} className="flex items-center justify-between text-sm">
+                        <span className="font-medium">{d.label}</span>
+                        <Badge variant="outline" className="font-mono text-xs truncate max-w-[180px]">
+                          {d.value}
+                        </Badge>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Workflow Automations */}
             <Card className="border-border">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Webhook Destinations</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Workflow className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base">Workflow automations</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {webhookDestinations.map((d) => (
-                  <div key={d.label} className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{d.label}</span>
-                    <Badge variant="outline" className="font-mono text-xs truncate max-w-[180px]">
-                      {d.value}
-                    </Badge>
+              <CardContent className="space-y-4">
+                {([
+                  { key: "intake_created" as const, label: "Send on intake created" },
+                  { key: "call_ended" as const, label: "Send on call ended" },
+                  { key: "contact_updated" as const, label: "Send on CRM update" },
+                ] as const).map((trigger) => (
+                  <div key={trigger.key} className="flex items-center justify-between">
+                    <Label className="text-sm">{trigger.label}</Label>
+                    <Switch
+                      checked={!!tenant.notification_triggers?.[trigger.key]}
+                      onCheckedChange={(v) => handleNotificationToggle(trigger.key, v)}
+                    />
                   </div>
                 ))}
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
 
-        {/* Five9 & Scripts Tab */}
-        <TabsContent value="five9-scripts" className="mt-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">DNIS / Campaign → Script Mappings</h2>
-            <Button size="sm" onClick={() => navigate("/admin/script-routing")}>
-              Manage All Routes
-            </Button>
-          </div>
-          {clientScripts.length === 0 ? (
+            {/* Script mappings */}
             <Card className="border-border">
-              <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">No script mappings for this client yet.</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/admin/script-routing")}>
-                  Add Script Mapping
-                </Button>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Map className="h-4 w-4 text-primary" />
+                    <CardTitle className="text-base">DNIS / Campaign → Script mappings</CardTitle>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => navigate("/admin/script-routing")}>
+                    Manage all routes
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {clientScripts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">No script mappings yet.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border">
+                        <TableHead>DNIS</TableHead>
+                        <TableHead>Campaign ID</TableHead>
+                        <TableHead>Script ID</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {clientScripts.map((cs: any) => (
+                        <TableRow key={cs.id} className="border-border">
+                          <TableCell className="font-mono text-sm">{cs.dnis || "—"}</TableCell>
+                          <TableCell className="font-mono text-sm">{cs.five9_campaign_id || "—"}</TableCell>
+                          <TableCell className="font-mono text-sm">{cs.script_id?.slice(0, 8)}...</TableCell>
+                          <TableCell>
+                            <Badge variant={cs.is_active ? "default" : "secondary"}>
+                              {cs.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
-          ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>DNIS</TableHead>
-                    <TableHead>Campaign ID</TableHead>
-                    <TableHead>Script ID</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {clientScripts.map((cs: any) => (
-                    <TableRow key={cs.id}>
-                      <TableCell className="font-mono text-sm">{cs.dnis || "—"}</TableCell>
-                      <TableCell className="font-mono text-sm">{cs.five9_campaign_id || "—"}</TableCell>
-                      <TableCell className="font-mono text-sm">{cs.script_id?.slice(0, 8)}...</TableCell>
-                      <TableCell>
-                        <Badge variant={cs.is_active ? "default" : "secondary"}>
-                          {cs.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </TabsContent>
 
-        {/* Reports Tab */}
-        <TabsContent value="reports" className="mt-4">
-          <Card className="border-border">
-            <CardContent className="py-8 text-center">
-              <p className="text-muted-foreground">Reports filtered to this client are available on the main Reports page.</p>
-              <Button variant="outline" size="sm" className="mt-3" onClick={() => navigate("/admin/reports")}>
-                Open Reports
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Billing Tab */}
-        <TabsContent value="billing" className="mt-4 space-y-4">
-          {clientInvoices.length === 0 ? (
+            {/* Recent API logs */}
             <Card className="border-border">
-              <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">No invoices for this client yet.</p>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <CardTitle className="text-base">Recent API logs</CardTitle>
+                  </div>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to={`/admin/logs?tenant=${tenant.id}`}>View all</Link>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {logs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">No recent API activity.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border">
+                        <TableHead className="text-xs">Endpoint</TableHead>
+                        <TableHead className="text-xs">Status</TableHead>
+                        <TableHead className="text-xs">Time</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {logs.slice(0, 8).map((log) => (
+                        <TableRow key={log.id} className="border-border">
+                          <TableCell className="text-xs font-mono truncate max-w-[140px]">{log.endpoint}</TableCell>
+                          <TableCell>
+                            <StatusBadge variant={log.status === "success" ? "active" : "inactive"} dot>
+                              {log.status}
+                            </StatusBadge>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {format(new Date(log.created_at), "HH:mm")}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
-          ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Issue Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {clientInvoices.map((inv: any) => (
-                    <TableRow key={inv.id}>
-                      <TableCell className="text-sm">{format(new Date(inv.issue_date), "MMM d, yyyy")}</TableCell>
-                      <TableCell>
-                        <Badge variant={inv.status === "paid" ? "default" : "secondary"}>{inv.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-sm">
-                        ${Number(inv.total_amount).toFixed(2)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+
+            {/* Billing */}
+            <Card className="border-border">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base">Billing ({openInvoices} open)</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {clientInvoices.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">No invoices for this client yet.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border">
+                        <TableHead>Issue date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {clientInvoices.map((inv: any) => (
+                        <TableRow key={inv.id} className="border-border">
+                          <TableCell className="text-sm">{format(new Date(inv.issue_date), "MMM d, yyyy")}</TableCell>
+                          <TableCell>
+                            <Badge variant={inv.status === "paid" ? "default" : "secondary"}>{inv.status}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm">
+                            ${Number(inv.total_amount).toFixed(2)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }
