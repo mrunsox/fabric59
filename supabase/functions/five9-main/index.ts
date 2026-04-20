@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { normalizeFive9Event } from "../_shared/five9-event-normalizer.ts";
+import { resolveFive9Route } from "../_shared/five9-router.ts";
+import { buildActionChain } from "../_shared/disposition-mapping-engine.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
