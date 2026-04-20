@@ -407,29 +407,10 @@ async function executeJob(
     connection = data;
   }
 
-  // 2) For Smokeball, dispatch via registry using the connection's tokens
+  // 2) For Smokeball, dispatch via the smokeball edge function (HTTP)
   if (provider === "smokeball") {
     if (!connection) throw new Error("No Smokeball connection found for this client");
-    let access_token: string | undefined;
-    if (connection.oauth_token_id) {
-      const { data: tok } = await supabase
-        .from("oauth_tokens")
-        .select("access_token_encrypted, refresh_token_encrypted, expires_at")
-        .eq("id", connection.oauth_token_id)
-        .maybeSingle();
-      access_token = tok?.access_token_encrypted;
-    }
-    const ctx: AdapterConnectionContext = {
-      connection_id: connection.id,
-      client_id: connection.client_id,
-      organization_id: connection.organization_id,
-      provider: "smokeball",
-      access_token,
-      region: connection.region ?? "US",
-      base_url: connection.base_url,
-      metadata: connection.metadata ?? {},
-    };
-    return await executeSmokeballJob(supabase, job, ctx);
+    return await executeSmokeballJob(job);
   }
 
   // 3) Clio / MyCase — keep existing executors but resolve config via legacy bridge fallback
