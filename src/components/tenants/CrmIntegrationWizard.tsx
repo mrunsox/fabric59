@@ -229,6 +229,41 @@ export function CrmIntegrationWizard({ tenantId, configs, onChange }: CrmIntegra
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent className="px-4 pb-4 space-y-4">
+        {/* Deprecation banner — new setup lives under Client → Legal Connect */}
+        <div className="rounded-lg border border-warning/40 bg-warning/5 p-3 flex items-start gap-3">
+          <ExternalLink className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+          <div className="flex-1 space-y-2">
+            <p className="text-sm font-medium text-foreground">
+              This setup is moving to <span className="text-primary">Client → Legal Connect</span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              All new provider connections should be created from the per-client Legal Connect page.
+              This wizard is read-only legacy and remains available for migration.
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              {tenantId && (
+                <Button asChild size="sm" variant="default" className="h-7 text-xs">
+                  <a href={`/admin/clients/${tenantId}/legal-connect`}>
+                    Open Legal Connect →
+                  </a>
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => {
+                  toast.info(
+                    "Open Client → Legal Connect to run the per-provider Connect wizard. Existing credentials remain available here as fallback."
+                  );
+                }}
+              >
+                Migrate now
+              </Button>
+            </div>
+          </div>
+        </div>
+
         <p className="text-sm text-muted-foreground">
           Connect Five9 to Clio and/or MyCase in three steps: enable webhooks, connect your CRM, and choose a behavior profile.
         </p>

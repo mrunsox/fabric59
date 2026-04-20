@@ -156,6 +156,13 @@ export default function LegalConnectPage() {
           )}
         </PageHeader>
 
+        <ActionBanner
+          icon={PhoneCall}
+          variant="default"
+          title="Per-client provider setup has moved"
+          description="Open a client and use the Legal Connect tab to manage connections, webhooks, and policies. Per-campaign Five9 Overlay now lives under each client's Five9 Overlay tab."
+        />
+
         {/* ── Premium Metrics ─────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <PremiumStatCard
