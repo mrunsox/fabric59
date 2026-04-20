@@ -1,4 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.93.3";
+import "../_shared/register-adapters.ts";
+import { getAdapter } from "../_shared/provider-registry.ts";
+import { resolveLegacyConnection } from "../_shared/legacy-config-bridge.ts";
+import type { AdapterConnectionContext } from "../_shared/legal-crm-adapter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -314,19 +318,126 @@ async function executeMyCaseJob(
   throw new Error(`Unsupported MyCase job type: ${jobType}`);
 }
 
+async function executeSmokeballJob(
+  supabase: any,
+  job: any,
+  ctx: AdapterConnectionContext,
+): Promise<{ status: string; output: any }> {
+  const adapter = getAdapter("smokeball");
+  if (!adapter) throw new Error("Smokeball adapter not registered");
+  const input = job.input_payload || {};
+  const jobType = job.job_type;
+
+  if (jobType === "contact.search" || jobType === "contact.lookup") {
+    const r = await adapter.searchContact(ctx, { phone: input.phone || input.ani, email: input.email });
+    if (!r.ok) throw new Error(r.error || "smokeball search failed");
+    return { status: "succeeded", output: { contacts: r.data || [], found: (r.data?.length || 0) > 0 } };
+  }
+  if (jobType === "contact.create") {
+    const r = await adapter.createContact(ctx, {
+      first_name: input.first_name || "Unknown",
+      last_name: input.last_name || "Caller",
+      phone: input.phone,
+      email: input.email,
+    } as any);
+    if (!r.ok) throw new Error(r.error || "smokeball contact create failed");
+    return { status: "succeeded", output: { contact_id: (r.data as any)?.provider_id } };
+  }
+  if (jobType === "matter.create" && adapter.createMatter) {
+    const r = await adapter.createMatter(ctx, {
+      description: input.description || "Intake from Five9",
+      contact_id: input.contact_id,
+    } as any);
+    if (!r.ok) throw new Error(r.error || "smokeball matter create failed");
+    return { status: "succeeded", output: { matter_id: (r.data as any)?.provider_id } };
+  }
+  if (jobType === "note.create" || jobType === "communication.create") {
+    const r = await adapter.createNote(ctx, {
+      subject: input.subject || "Five9 Phone Call",
+      body: input.body || input.content || "",
+      contact_id: input.contact_id,
+      matter_id: input.matter_id,
+    } as any);
+    if (!r.ok) throw new Error(r.error || "smokeball note create failed");
+    return { status: "succeeded", output: { note_id: (r.data as any)?.provider_id } };
+  }
+  throw new Error(`Unsupported Smokeball job type: ${jobType}`);
+}
+
 async function executeJob(
   supabase: any,
   job: any
 ): Promise<{ status: string; output: any }> {
-  // Fetch the tenant's integration_configs to get provider credentials
+  const provider = (job.provider || "").toLowerCase();
+
+  // 1) Prefer legal_connect_connections (new path)
+  let connection: any = null;
+  if (job.connection_id) {
+    const { data } = await supabase
+      .from("legal_connect_connections")
+      .select("*")
+      .eq("id", job.connection_id)
+      .maybeSingle();
+    connection = data;
+  }
+  if (!connection) {
+    const { data } = await supabase
+      .from("legal_connect_connections")
+      .select("*")
+      .eq("client_id", job.client_id)
+      .eq("provider", provider)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    connection = data;
+  }
+
+  // 2) For Smokeball, dispatch via registry using the connection's tokens
+  if (provider === "smokeball") {
+    if (!connection) throw new Error("No Smokeball connection found for this client");
+    let access_token: string | undefined;
+    if (connection.oauth_token_id) {
+      const { data: tok } = await supabase
+        .from("oauth_tokens")
+        .select("access_token_encrypted, refresh_token_encrypted, expires_at")
+        .eq("id", connection.oauth_token_id)
+        .maybeSingle();
+      access_token = tok?.access_token_encrypted;
+    }
+    const ctx: AdapterConnectionContext = {
+      connection_id: connection.id,
+      client_id: connection.client_id,
+      organization_id: connection.organization_id,
+      provider: "smokeball",
+      access_token,
+      region: connection.region ?? "US",
+      base_url: connection.base_url,
+      metadata: connection.metadata ?? {},
+    };
+    return await executeSmokeballJob(supabase, job, ctx);
+  }
+
+  // 3) Clio / MyCase — keep existing executors but resolve config via legacy bridge fallback
+  let configs: any;
   const { data: tenant } = await supabase
     .from("tenants")
     .select("integration_configs")
     .eq("id", job.client_id)
     .single();
+  configs = (tenant?.integration_configs as any) || {};
 
-  const configs = (tenant?.integration_configs as any) || {};
-  const provider = (job.provider || "").toLowerCase();
+  // If no legacy block AND no legal_connect_connections row, surface the bridge result for visibility
+  if (!configs?.[provider] && !connection) {
+    const legacy = await resolveLegacyConnection(supabase, job.client_id, provider);
+    if (!legacy) throw new Error(`No ${provider} connection found for client`);
+    // Project legacy back into config shape for executors
+    configs = {
+      [provider]: provider === "clio"
+        ? { oauthTokenId: legacy.legacy_oauth_token_id }
+        : { apiKeyId: legacy.legacy_api_key_id },
+    };
+    console.warn(`[legal-connect-jobs] Using legacy bridge for ${provider} (client=${job.client_id}). Migrate to legal_connect_connections.`);
+  }
 
   if (provider === "clio") {
     return await executeClioJob(supabase, job, configs);
