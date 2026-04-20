@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.smokeball-oauth-callback]
 verify_jwt = false
+
+[functions.five9-overlay-test]
+verify_jwt = false
