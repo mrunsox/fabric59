@@ -1,15 +1,23 @@
 import { Link } from "react-router-dom";
 import { Plus, Plug, FlaskConical, BookOpen, Play, type LucideIcon } from "lucide-react";
 
-const ACTIONS: { title: string; href: string; icon: LucideIcon }[] = [
-  { title: "Create campaign", href: "/admin/five9/campaign-builder", icon: Plus },
-  { title: "Connect provider", href: "/admin/legal-connect", icon: Plug },
-  { title: "Run readiness test", href: "/admin/test", icon: FlaskConical },
-  { title: "Open docs", href: "/admin/kb", icon: BookOpen },
-  { title: "Start simulation", href: "/admin/test", icon: Play },
-];
+export function QuickActionsGrid({ clientId }: { clientId?: string } = {}) {
+  const actions: { title: string; href: string; icon: LucideIcon }[] = clientId
+    ? [
+        { title: "Create campaign", href: `/admin/five9/campaign-builder?client=${clientId}`, icon: Plus },
+        { title: "Connect provider", href: `/admin/clients/${clientId}/legal-connect`, icon: Plug },
+        { title: "Five9 Overlay", href: `/admin/clients/${clientId}/five9-overlay`, icon: Play },
+        { title: "Run readiness test", href: `/admin/test?tenant=${clientId}`, icon: FlaskConical },
+        { title: "Open docs", href: "/admin/kb", icon: BookOpen },
+      ]
+    : [
+        { title: "Create campaign", href: "/admin/five9/campaign-builder", icon: Plus },
+        { title: "Connect provider", href: "/admin/legal-connect", icon: Plug },
+        { title: "Run readiness test", href: "/admin/test", icon: FlaskConical },
+        { title: "Open docs", href: "/admin/kb", icon: BookOpen },
+        { title: "Start simulation", href: "/admin/test", icon: Play },
+      ];
 
-export function QuickActionsGrid() {
   return (
     <div className="rounded-2xl border border-border bg-card p-8 space-y-5">
       <div>
@@ -17,7 +25,7 @@ export function QuickActionsGrid() {
         <p className="text-sm text-muted-foreground mt-0.5">Jump straight into a setup task</p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        {ACTIONS.map((a) => {
+        {actions.map((a) => {
           const Icon = a.icon;
           return (
             <Link
