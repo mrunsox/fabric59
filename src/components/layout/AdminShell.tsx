@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LogOut, ChevronDown, Menu, BookOpen, Sparkles } from "lucide-react";
+import { LogOut, ChevronDown, Menu, BookOpen, Sparkles, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -25,6 +25,14 @@ export function AdminShell() {
   const [docsOpen, setDocsOpen] = useState(false);
   const [guidanceOpen, setGuidanceOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [expanded, setExpanded] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("fabric59:nav:expanded") === "1";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("fabric59:nav:expanded", expanded ? "1" : "0");
+  }, [expanded]);
 
   const activeSection = findActiveSection(location.pathname);
   const visibleSections = GLOBAL_SECTIONS.filter((s) => !s.permission || hasPermission(s.permission));
@@ -34,39 +42,59 @@ export function AdminShell() {
       {/* Global vertical icon rail */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-16 bg-sidebar border-r border-sidebar-border/40 flex flex-col items-center py-3 transition-transform",
+          "fixed inset-y-0 left-0 z-40 bg-sidebar border-r border-sidebar-border/40 flex flex-col py-3 transition-[width,transform] duration-200",
+          expanded ? "w-56 items-stretch px-2" : "w-16 items-center",
           "lg:translate-x-0",
           mobileNavOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
-        <Link to="/admin/dashboard" className="mb-4">
+        <Link
+          to="/admin/dashboard"
+          className={cn(
+            "mb-4 flex items-center gap-2",
+            expanded ? "px-2" : "justify-center"
+          )}
+        >
           <Fabric59Icon size="md" />
+          {expanded && (
+            <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
+              Fabric59
+            </span>
+          )}
         </Link>
 
-        <nav className="flex-1 flex flex-col items-center gap-1.5 mt-2 w-full px-2">
+        <nav className={cn("flex-1 flex flex-col gap-1.5 mt-2 w-full", !expanded && "items-center px-2")}>
           {visibleSections.map((s) => {
             const Icon = s.icon;
             const active = activeSection?.key === s.key;
+            const link = (
+              <NavLink
+                to={s.href}
+                onClick={() => setMobileNavOpen(false)}
+                className={cn(
+                  "relative flex items-center transition-colors rounded-xl",
+                  expanded
+                    ? "h-10 w-full px-3 gap-3 text-sm"
+                    : "w-12 h-12 justify-center",
+                  active
+                    ? "bg-primary/10 text-primary"
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/30"
+                )}
+                aria-label={s.label}
+              >
+                {active && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-6 rounded-r-full bg-primary" />
+                )}
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                {expanded && <span className="truncate font-medium">{s.label}</span>}
+              </NavLink>
+            );
+
+            if (expanded) return <div key={s.key}>{link}</div>;
+
             return (
               <Tooltip key={s.key} delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <NavLink
-                    to={s.href}
-                    onClick={() => setMobileNavOpen(false)}
-                    className={cn(
-                      "relative w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
-                      active
-                        ? "bg-primary/10 text-primary"
-                        : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/30"
-                    )}
-                    aria-label={s.label}
-                  >
-                    {active && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-6 rounded-r-full bg-primary" />
-                    )}
-                    <Icon className="h-5 w-5" />
-                  </NavLink>
-                </TooltipTrigger>
+                <TooltipTrigger asChild>{link}</TooltipTrigger>
                 <TooltipContent side="right" className="font-medium">
                   {s.label}
                 </TooltipContent>
@@ -75,18 +103,43 @@ export function AdminShell() {
           })}
         </nav>
 
-        <div className="mt-auto flex flex-col items-center gap-2 pb-2">
+        <div className={cn("mt-auto flex flex-col gap-2 pb-2", expanded ? "items-stretch" : "items-center")}>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setExpanded((v) => !v)}
+                className={cn(
+                  "hidden lg:flex items-center transition-colors text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/30 rounded-xl",
+                  expanded ? "h-10 w-full px-3 gap-3 text-sm" : "w-12 h-12 justify-center"
+                )}
+                aria-label={expanded ? "Collapse navigation" : "Expand navigation"}
+              >
+                {expanded ? (
+                  <PanelLeftClose className="h-4 w-4 flex-shrink-0" />
+                ) : (
+                  <PanelLeftOpen className="h-4 w-4 flex-shrink-0" />
+                )}
+                {expanded && <span className="font-medium">Collapse</span>}
+              </button>
+            </TooltipTrigger>
+            {!expanded && <TooltipContent side="right">Expand</TooltipContent>}
+          </Tooltip>
+
           <Tooltip delayDuration={300}>
             <TooltipTrigger asChild>
               <button
                 onClick={() => signOut()}
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/30"
+                className={cn(
+                  "flex items-center transition-colors text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/30 rounded-xl",
+                  expanded ? "h-10 w-full px-3 gap-3 text-sm" : "w-12 h-12 justify-center"
+                )}
                 aria-label="Sign out"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-4 w-4 flex-shrink-0" />
+                {expanded && <span className="font-medium">Sign out</span>}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right">Sign out</TooltipContent>
+            {!expanded && <TooltipContent side="right">Sign out</TooltipContent>}
           </Tooltip>
         </div>
       </aside>
@@ -100,7 +153,7 @@ export function AdminShell() {
       )}
 
       {/* Main column */}
-      <div className="flex-1 lg:pl-16 min-w-0 flex flex-col">
+      <div className={cn("flex-1 min-w-0 flex flex-col transition-[padding] duration-200", expanded ? "lg:pl-56" : "lg:pl-16")}>
         {/* Top header */}
         <header className="sticky top-0 z-30 h-14 bg-background/95 backdrop-blur border-b border-border/40">
           <div className="mx-auto max-w-[1440px] h-full px-8 flex items-center gap-4">
