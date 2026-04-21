@@ -228,6 +228,7 @@ const App = () => (
                 <Route path="mappings/builder/:id" element={<MappingBuilderPage />} />
                 <Route path="logs" element={<ApiLogsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="tenants" element={<TenantsPage />} />
                 <Route path="agents" element={<AgentsPage />} />
                 <Route path="dispositions" element={<DispositionsPage />} />
                 <Route path="integrations" element={<IntegrationsPage />} />
