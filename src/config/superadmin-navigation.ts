@@ -1,0 +1,16 @@
+import { LayoutDashboard, Archive, Download, Route, BookOpen } from "lucide-react";
+
+export type SuperadminNavItem = {
+  key: string;
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+export const SUPERADMIN_SECTIONS: SuperadminNavItem[] = [
+  { key: "overview", label: "Overview", href: "/superadmin", icon: LayoutDashboard },
+  { key: "vault", label: "Feature Vault", href: "/superadmin/vault", icon: Archive },
+  { key: "exports", label: "Source Exports", href: "/superadmin/exports", icon: Download },
+  { key: "routes", label: "Advanced Routes", href: "/superadmin/routes", icon: Route },
+  { key: "docs", label: "System Docs", href: "/superadmin/docs", icon: BookOpen },
+];
