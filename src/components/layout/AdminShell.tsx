@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LogOut, ChevronDown, Menu, BookOpen, Sparkles } from "lucide-react";
+import { LogOut, ChevronDown, Menu, BookOpen, Sparkles, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
