@@ -1066,6 +1066,132 @@ export type Database = {
           },
         ]
       }
+      deployment_runs: {
+        Row: {
+          deployment_id: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          organization_id: string
+          payload: Json | null
+          started_at: string
+          status: string
+          trigger_event_id: string | null
+        }
+        Insert: {
+          deployment_id: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          organization_id: string
+          payload?: Json | null
+          started_at?: string
+          status?: string
+          trigger_event_id?: string | null
+        }
+        Update: {
+          deployment_id?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          organization_id?: string
+          payload?: Json | null
+          started_at?: string
+          status?: string
+          trigger_event_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deployment_runs_deployment_id_fkey"
+            columns: ["deployment_id"]
+            isOneToOne: false
+            referencedRelation: "deployments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deployment_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deployments: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          flow_id: string
+          flow_version: number
+          id: string
+          organization_id: string
+          scope: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          flow_id: string
+          flow_version?: number
+          id?: string
+          organization_id: string
+          scope?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          flow_id?: string
+          flow_version?: number
+          id?: string
+          organization_id?: string
+          scope?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deployments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "deployments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deployments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "deployments_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deployments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       disposition_access: {
         Row: {
           created_at: string
@@ -1740,6 +1866,135 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_client_readiness"
             referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      flow_templates: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          definition: Json
+          description: string | null
+          id: string
+          name: string
+          organization_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          definition?: Json
+          description?: string | null
+          id?: string
+          name: string
+          organization_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          definition?: Json
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flow_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          definition: Json
+          flow_id: string
+          id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          definition?: Json
+          flow_id: string
+          id?: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          definition?: Json
+          flow_id?: string
+          id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_versions_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flows: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          definition: Json
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          status: string
+          trigger_type: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          definition?: Json
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          status?: string
+          trigger_type: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          definition?: Json
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          status?: string
+          trigger_type?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flows_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4673,6 +4928,7 @@ export type Database = {
           brand_primary_color: string | null
           brand_reply_to: string | null
           created_at: string
+          five9_ownership_mode: Database["public"]["Enums"]["five9_ownership_mode"]
           id: string
           integration_configs: Json | null
           name: string
@@ -4688,6 +4944,7 @@ export type Database = {
           brand_primary_color?: string | null
           brand_reply_to?: string | null
           created_at?: string
+          five9_ownership_mode?: Database["public"]["Enums"]["five9_ownership_mode"]
           id?: string
           integration_configs?: Json | null
           name: string
@@ -4703,6 +4960,7 @@ export type Database = {
           brand_primary_color?: string | null
           brand_reply_to?: string | null
           created_at?: string
+          five9_ownership_mode?: Database["public"]["Enums"]["five9_ownership_mode"]
           id?: string
           integration_configs?: Json | null
           name?: string
@@ -5807,6 +6065,9 @@ export type Database = {
           dropbox_api_key: string | null
           five9_campaign_identifier: string | null
           five9_domain_id: string | null
+          five9_ownership_mode:
+            | Database["public"]["Enums"]["five9_ownership_mode"]
+            | null
           google_calendar_id: string | null
           id: string
           integration_configs: Json | null
@@ -5846,6 +6107,9 @@ export type Database = {
           dropbox_api_key?: string | null
           five9_campaign_identifier?: string | null
           five9_domain_id?: string | null
+          five9_ownership_mode?:
+            | Database["public"]["Enums"]["five9_ownership_mode"]
+            | null
           google_calendar_id?: string | null
           id?: string
           integration_configs?: Json | null
@@ -5885,6 +6149,9 @@ export type Database = {
           dropbox_api_key?: string | null
           five9_campaign_identifier?: string | null
           five9_domain_id?: string | null
+          five9_ownership_mode?:
+            | Database["public"]["Enums"]["five9_ownership_mode"]
+            | null
           google_calendar_id?: string | null
           id?: string
           integration_configs?: Json | null
@@ -6185,6 +6452,116 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vault_exports: {
+        Row: {
+          bundle_path: string
+          created_at: string
+          created_by: string | null
+          feature_id: string
+          id: string
+          manifest: Json
+          size_bytes: number
+          version: string
+        }
+        Insert: {
+          bundle_path: string
+          created_at?: string
+          created_by?: string | null
+          feature_id: string
+          id?: string
+          manifest?: Json
+          size_bytes?: number
+          version?: string
+        }
+        Update: {
+          bundle_path?: string
+          created_at?: string
+          created_by?: string | null
+          feature_id?: string
+          id?: string
+          manifest?: Json
+          size_bytes?: number
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_exports_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "vault_features"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vault_features: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          backend_files: string[]
+          created_at: string
+          db_objects: string[]
+          dependencies: Json
+          edge_functions: string[]
+          extraction_notes: string | null
+          frontend_files: string[]
+          id: string
+          name: string
+          original_routes: string[]
+          reason_archived: string | null
+          required_secrets: string[]
+          restore_notes: string | null
+          risks: string | null
+          slug: string
+          status: Database["public"]["Enums"]["vault_feature_status"]
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          backend_files?: string[]
+          created_at?: string
+          db_objects?: string[]
+          dependencies?: Json
+          edge_functions?: string[]
+          extraction_notes?: string | null
+          frontend_files?: string[]
+          id?: string
+          name: string
+          original_routes?: string[]
+          reason_archived?: string | null
+          required_secrets?: string[]
+          restore_notes?: string | null
+          risks?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["vault_feature_status"]
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          backend_files?: string[]
+          created_at?: string
+          db_objects?: string[]
+          dependencies?: Json
+          edge_functions?: string[]
+          extraction_notes?: string | null
+          frontend_files?: string[]
+          id?: string
+          name?: string
+          original_routes?: string[]
+          reason_archived?: string | null
+          required_secrets?: string[]
+          restore_notes?: string | null
+          risks?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["vault_feature_status"]
+          summary?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -6773,6 +7150,7 @@ export type Database = {
         | "internal_processing_error"
         | "dead_lettered"
       five9_domain_status: "active" | "inactive" | "pending_verification"
+      five9_ownership_mode: "client" | "workspace"
       notification_channel:
         | "slack"
         | "email"
@@ -6786,6 +7164,12 @@ export type Database = {
       org_plan: "free" | "starter" | "pro" | "enterprise"
       org_role: "owner" | "admin" | "member"
       org_status: "active" | "suspended" | "cancelled"
+      vault_feature_status:
+        | "core"
+        | "archived"
+        | "experimental"
+        | "deprecated"
+        | "extracted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6939,6 +7323,7 @@ export const Constants = {
         "dead_lettered",
       ],
       five9_domain_status: ["active", "inactive", "pending_verification"],
+      five9_ownership_mode: ["client", "workspace"],
       notification_channel: [
         "slack",
         "email",
@@ -6953,6 +7338,13 @@ export const Constants = {
       org_plan: ["free", "starter", "pro", "enterprise"],
       org_role: ["owner", "admin", "member"],
       org_status: ["active", "suspended", "cancelled"],
+      vault_feature_status: [
+        "core",
+        "archived",
+        "experimental",
+        "deprecated",
+        "extracted",
+      ],
     },
   },
 } as const

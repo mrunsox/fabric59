@@ -1,6 +1,6 @@
 import {
-  LayoutDashboard, Building2, Phone, Scale, Megaphone, Users,
-  Zap, FlaskConical, Activity, BookOpen, Settings,
+  LayoutDashboard, Building, Building2, Phone, Plug, Workflow,
+  Rocket, Activity, FileStack, Settings,
 } from "lucide-react";
 
 export type SubNavItem = {
@@ -29,10 +29,14 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     href: "/admin/dashboard",
     permission: null,
     matches: ["/admin/dashboard"],
-    subNav: [
-      { label: "Dashboard", href: "/admin/dashboard" },
-      { label: "Build Outline", href: "/outline" },
-    ],
+  },
+  {
+    key: "workspaces",
+    label: "Workspaces",
+    icon: Building,
+    href: "/admin/workspaces",
+    permission: null,
+    matches: ["/admin/workspaces"],
   },
   {
     key: "clients",
@@ -40,11 +44,7 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     icon: Building2,
     href: "/admin",
     permission: "tenants",
-    matches: ["/admin", "/admin/clients", "/admin/partners"],
-    subNav: [
-      { label: "All Clients", href: "/admin" },
-      { label: "Partners", href: "/admin/partners" },
-    ],
+    matches: ["/admin", "/admin/clients"],
   },
   {
     key: "five9",
@@ -55,7 +55,6 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     matches: [
       "/admin/five9", "/admin/domains", "/admin/campaigns",
       "/admin/dispositions", "/admin/campaign-blueprints",
-      "/admin/abandon-rate", "/admin/callback-queue", "/admin/ani-blocklist",
     ],
     subNav: [
       { label: "Overview", href: "/admin/five9" },
@@ -63,113 +62,47 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
       { label: "Campaign Builder", href: "/admin/five9/campaign-builder" },
       { label: "Campaigns", href: "/admin/campaigns" },
       { label: "Dispositions", href: "/admin/dispositions" },
-      { label: "Blueprints", href: "/admin/campaign-blueprints" },
     ],
   },
   {
-    key: "legal-connect",
-    label: "Legal Connect",
-    icon: Scale,
-    href: "/admin/legal-connect/overview",
+    key: "connectors",
+    label: "Connectors",
+    icon: Plug,
+    href: "/admin/connectors",
     permission: "integrations",
-    matches: ["/admin/legal-connect", "/admin/integrations", "/admin/mappings"],
-    subNav: [
-      { label: "Overview", href: "/admin/legal-connect/overview" },
-      { label: "Connections", href: "/admin/legal-connect" },
-      { label: "Integrations", href: "/admin/integrations" },
-      { label: "Field Mappings", href: "/admin/mappings" },
-    ],
+    matches: ["/admin/connectors", "/admin/legal-connect", "/admin/integrations", "/admin/mappings"],
   },
   {
-    key: "campaigns",
-    label: "Campaigns",
-    icon: Megaphone,
-    href: "/admin/campaigns/overview",
-    permission: "domains",
-    matches: ["/admin/campaigns", "/admin/scriptflow", "/admin/scripts", "/admin/script-routing", "/admin/call-flow", "/admin/tree-editor", "/admin/qr-routing"],
-    subNav: [
-      { label: "Overview", href: "/admin/campaigns/overview" },
-      { label: "Active", href: "/admin/campaigns" },
-      { label: "Drafts", href: "/admin/campaigns/drafts" },
-      { label: "Readiness", href: "/admin/campaigns/readiness" },
-      { label: "Event Log", href: "/admin/campaigns/event-log" },
-      { label: "Archived", href: "/admin/campaigns/archived" },
-    ],
-  },
-  {
-    key: "agents",
-    label: "Agents",
-    icon: Users,
-    href: "/admin/agents",
-    permission: "agents",
-    matches: ["/admin/agents", "/admin/agent-dashboard", "/admin/supervisor", "/admin/qa", "/admin/goals", "/admin/training", "/admin/scripter"],
-    subNav: [
-      { label: "Roster", href: "/admin/agents" },
-      { label: "Supervisor", href: "/admin/supervisor" },
-      { label: "QA", href: "/admin/qa" },
-      { label: "Goals", href: "/admin/goals" },
-      { label: "Training", href: "/admin/training" },
-    ],
-  },
-  {
-    key: "automations",
-    label: "Automations",
-    icon: Zap,
-    href: "/admin/automations",
-    permission: "domains",
-    matches: ["/admin/automations", "/admin/email-templates", "/admin/summary-templates", "/admin/ani-blocklist", "/admin/callback-queue", "/admin/abandon-rate"],
-    subNav: [
-      { label: "Post-Call", href: "/admin/automations" },
-      { label: "Email Templates", href: "/admin/email-templates" },
-      { label: "Summary Templates", href: "/admin/summary-templates" },
-      { label: "ANI Block List", href: "/admin/ani-blocklist" },
-      { label: "Callback Queue", href: "/admin/callback-queue" },
-      { label: "Abandon Rate", href: "/admin/abandon-rate" },
-    ],
-  },
-  {
-    key: "testing",
-    label: "Testing",
-    icon: FlaskConical,
-    href: "/admin/testing",
-    permission: "test_console",
-    matches: ["/admin/testing", "/admin/test"],
-    subNav: [
-      { label: "Overview", href: "/admin/testing" },
-      { label: "Test Console", href: "/admin/test" },
-      { label: "Failures", href: "/admin/campaigns/event-log" },
-    ],
-  },
-  {
-    key: "monitoring",
-    label: "Monitoring",
-    icon: Activity,
-    href: "/admin/monitoring",
-    permission: "logs",
-    matches: ["/admin/monitoring", "/admin/logs", "/admin/notifications", "/admin/data-plane", "/admin/identity", "/admin/feedback", "/admin/reports", "/admin/billing"],
-    subNav: [
-      { label: "Overview", href: "/admin/monitoring" },
-      { label: "API Logs", href: "/admin/logs" },
-      { label: "Notifications", href: "/admin/notifications" },
-      { label: "Reports", href: "/admin/reports" },
-      { label: "Billing", href: "/admin/billing" },
-      { label: "Data Plane", href: "/admin/data-plane" },
-      { label: "Identity", href: "/admin/identity" },
-      { label: "Feedback", href: "/admin/feedback" },
-    ],
-  },
-  {
-    key: "docs",
-    label: "Docs",
-    icon: BookOpen,
-    href: "/admin/docs",
+    key: "flows",
+    label: "Flows",
+    icon: Workflow,
+    href: "/admin/flows",
     permission: null,
-    matches: ["/admin/docs", "/admin/kb"],
-    subNav: [
-      { label: "Hub", href: "/admin/docs" },
-      { label: "Knowledge Base", href: "/admin/kb" },
-      { label: "Build Outline", href: "/outline" },
-    ],
+    matches: ["/admin/flows"],
+  },
+  {
+    key: "deployments",
+    label: "Deployments",
+    icon: Rocket,
+    href: "/admin/deployments",
+    permission: null,
+    matches: ["/admin/deployments"],
+  },
+  {
+    key: "runs",
+    label: "Runs",
+    icon: Activity,
+    href: "/admin/runs",
+    permission: null,
+    matches: ["/admin/runs", "/admin/logs", "/admin/monitoring"],
+  },
+  {
+    key: "templates",
+    label: "Templates",
+    icon: FileStack,
+    href: "/admin/templates",
+    permission: null,
+    matches: ["/admin/templates"],
   },
   {
     key: "settings",
@@ -177,21 +110,14 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     icon: Settings,
     href: "/admin/settings",
     permission: "settings",
-    matches: ["/admin/settings", "/admin/utilities", "/admin/design-system"],
-    subNav: [
-      { label: "Workspace", href: "/admin/settings" },
-      { label: "Utilities", href: "/admin/utilities" },
-      { label: "Design System", href: "/admin/design-system" },
-    ],
+    matches: ["/admin/settings"],
   },
 ];
 
 export function findActiveSection(pathname: string): SectionDef | null {
-  // exact match first
   for (const s of GLOBAL_SECTIONS) {
     if (s.href === pathname) return s;
   }
-  // prefix match using `matches`
   let best: SectionDef | null = null;
   let bestLen = 0;
   for (const s of GLOBAL_SECTIONS) {
