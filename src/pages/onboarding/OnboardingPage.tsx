@@ -541,6 +541,7 @@ export default function OnboardingPage() {
 
           <div className="animate-fade-up">
             {stepContent[step]}
+            <SkipFooter />
           </div>
         </div>
       </div>
