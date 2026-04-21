@@ -41,10 +41,11 @@ export default function OnboardingPage() {
   const { organization, user, isMasterAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const [step, setStep] = useState<Step>(organization ? "domain" : "org");
+  const [step, setStep] = useState<Step>(organization ? "ownership" : "org");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [orgName, setOrgName] = useState("");
+  const [ownershipMode, setOwnershipMode] = useState<OwnershipMode | null>(null);
   const [domainDisplayName, setDomainDisplayName] = useState("");
   const [five9Username, setFive9Username] = useState("");
   const [five9Password, setFive9Password] = useState("");
@@ -62,7 +63,7 @@ export default function OnboardingPage() {
   }, [isMasterAdmin, organization, navigate]);
 
   useEffect(() => {
-    if (organization && step === "org") setStep("domain");
+    if (organization && step === "org") setStep("ownership");
   }, [organization, step]);
 
   if (!user) {
@@ -84,7 +85,7 @@ export default function OnboardingPage() {
       const { error: memberError } = await supabase.from("organization_members").insert({ organization_id: org.id, user_id: user.id, role: "owner" });
       if (memberError) throw memberError;
       setCreatedOrgId(org.id);
-      setStep("domain");
+      setStep("ownership");
       toast.success("Organization created!");
     } catch (error: unknown) {
       toast.error((error as Error).message || "Failed to create organization");
