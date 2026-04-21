@@ -186,7 +186,77 @@ export default function OnboardingPage() {
       </Card>
     ),
 
-    domain: (
+    ownership: (
+      <Card className="card-elevated border-0 shadow-lg">
+        <CardHeader className="text-center pb-2">
+          <div className="flex justify-center mb-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
+              <Users className="h-7 w-7 text-primary" />
+            </div>
+          </div>
+          <CardTitle className="text-xl tracking-tight">Who owns the Five9 account?</CardTitle>
+          <CardDescription>This determines how Five9 connections and deployments are scoped.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 pt-2">
+          <button type="button" onClick={() => setOwnershipMode("workspace")} className={cn(
+            "w-full text-left rounded-xl border-2 p-4 transition-premium",
+            ownershipMode === "workspace" ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10"
+          )}>
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8">
+                <Building className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-sm">This workspace / BPO</p>
+                  {ownershipMode === "workspace" && <Check className="h-4 w-4 text-primary" />}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">One shared Five9 account. Clients are scoped by campaign, queue, DNIS, or call variables.</p>
+              </div>
+            </div>
+          </button>
+          <button type="button" onClick={() => setOwnershipMode("client")} className={cn(
+            "w-full text-left rounded-xl border-2 p-4 transition-premium",
+            ownershipMode === "client" ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10"
+          )}>
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8">
+                <Building2 className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-sm">Each client owns their Five9</p>
+                  {ownershipMode === "client" && <Check className="h-4 w-4 text-primary" />}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Clients connect their own Five9 domain. Each client manages its own connection.</p>
+              </div>
+            </div>
+          </button>
+        </CardContent>
+        <div className="px-6 pb-6">
+          <Button
+            className="w-full h-11"
+            disabled={!ownershipMode || isSubmitting}
+            onClick={async () => {
+              const orgId = getOrgId();
+              if (!orgId || !ownershipMode) return;
+              setIsSubmitting(true);
+              const { error } = await supabase
+                .from("organizations")
+                .update({ five9_ownership_mode: ownershipMode })
+                .eq("id", orgId);
+              setIsSubmitting(false);
+              if (error) { toast.error(error.message); return; }
+              setStep("domain");
+            }}
+          >
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
+            Continue
+          </Button>
+        </div>
+      </Card>
+    ),
+
       <Card className="card-elevated border-0 shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
