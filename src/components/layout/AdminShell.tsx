@@ -25,6 +25,14 @@ export function AdminShell() {
   const [docsOpen, setDocsOpen] = useState(false);
   const [guidanceOpen, setGuidanceOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [expanded, setExpanded] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("fabric59:nav:expanded") === "1";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("fabric59:nav:expanded", expanded ? "1" : "0");
+  }, [expanded]);
 
   const activeSection = findActiveSection(location.pathname);
   const visibleSections = GLOBAL_SECTIONS.filter((s) => !s.permission || hasPermission(s.permission));
