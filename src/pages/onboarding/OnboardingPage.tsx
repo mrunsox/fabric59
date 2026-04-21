@@ -257,6 +257,7 @@ export default function OnboardingPage() {
       </Card>
     ),
 
+    domain: (
       <Card className="card-elevated border-0 shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-4">
