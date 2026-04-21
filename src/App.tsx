@@ -96,10 +96,37 @@ import UserDashboardPage from "@/pages/admin/UserDashboardPage";
 import DesignSystemPage from "@/pages/admin/DesignSystemPage";
 import NotFound from "./pages/NotFound";
 
+// Integration core pages
+import OverviewPage from "@/pages/admin/OverviewPage";
+import WorkspacesPage from "@/pages/admin/WorkspacesPage";
+import WorkspaceDetailPage from "@/pages/admin/WorkspaceDetailPage";
+import ClientsPage from "@/pages/admin/ClientsPage";
+import ClientWorkspacePage from "@/pages/admin/ClientWorkspacePage";
+import Five9Page from "@/pages/admin/Five9Page";
+import ConnectorsCatalogPage from "@/pages/admin/ConnectorsCatalogPage";
+import ConnectorInstancePage from "@/pages/admin/ConnectorInstancePage";
+import FlowsPage from "@/pages/admin/FlowsPage";
+import FlowBuilderPage from "@/pages/admin/FlowBuilderPage";
+import DeploymentsPage from "@/pages/admin/DeploymentsPage";
+import DeploymentDetailPage from "@/pages/admin/DeploymentDetailPage";
+import RunsPage from "@/pages/admin/RunsPage";
+import RunDetailPage from "@/pages/admin/RunDetailPage";
+import TemplatesPage from "@/pages/admin/TemplatesPage";
+import TemplateDetailPage from "@/pages/admin/TemplateDetailPage";
+
 // Master admin pages
 import MasterDashboardPage from "@/pages/master/MasterDashboardPage";
 import OrganizationsOverviewPage from "@/pages/master/OrganizationsOverviewPage";
 import UsersManagementPage from "@/pages/master/UsersManagementPage";
+
+// Superadmin (Feature Vault)
+import { SuperadminShell } from "@/components/layout/SuperadminShell";
+import SuperadminOverviewPage from "@/pages/superadmin/SuperadminOverviewPage";
+import FeatureVaultPage from "@/pages/superadmin/FeatureVaultPage";
+import FeatureVaultDetailPage from "@/pages/superadmin/FeatureVaultDetailPage";
+import SourceExportsPage from "@/pages/superadmin/SourceExportsPage";
+import AdvancedRoutesPage from "@/pages/superadmin/AdvancedRoutesPage";
+import SystemDocsPage from "@/pages/superadmin/SystemDocsPage";
 
 const queryClient = new QueryClient();
 
@@ -136,6 +163,16 @@ const App = () => (
                 <Route path="organizations" element={<OrganizationsOverviewPage />} />
                 <Route path="users" element={<UsersManagementPage />} />
               </Route>
+
+              {/* Superadmin Feature Vault */}
+              <Route path="/superadmin" element={<SuperadminShell />}>
+                <Route index element={<SuperadminOverviewPage />} />
+                <Route path="vault" element={<FeatureVaultPage />} />
+                <Route path="vault/:id" element={<FeatureVaultDetailPage />} />
+                <Route path="exports" element={<SourceExportsPage />} />
+                <Route path="routes" element={<AdvancedRoutesPage />} />
+                <Route path="docs" element={<SystemDocsPage />} />
+              </Route>
             </Route>
 
             {/* Protected routes */}
@@ -144,8 +181,28 @@ const App = () => (
               
               {/* Admin routes */}
               <Route path="/admin" element={<AdminShell />}>
-                <Route index element={<TenantsPage />} />
-                <Route path="five9" element={<Five9OverviewPage />} />
+                <Route index element={<OverviewPage />} />
+
+                {/* Integration core */}
+                <Route path="workspaces" element={<WorkspacesPage />} />
+                <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
+                <Route path="clients" element={<ClientsPage />} />
+                <Route path="clients/:id/workspace" element={<ClientWorkspacePage />} />
+                <Route path="connectors" element={<ConnectorsCatalogPage />} />
+                <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
+                <Route path="flows" element={<FlowsPage />} />
+                <Route path="flows/new" element={<FlowBuilderPage />} />
+                <Route path="flows/:id" element={<FlowBuilderPage />} />
+                <Route path="deployments" element={<DeploymentsPage />} />
+                <Route path="deployments/:id" element={<DeploymentDetailPage />} />
+                <Route path="runs" element={<RunsPage />} />
+                <Route path="runs/:id" element={<RunDetailPage />} />
+                <Route path="templates" element={<TemplatesPage />} />
+                <Route path="templates/:id" element={<TemplateDetailPage />} />
+
+                {/* Five9 (top-level) */}
+                <Route path="five9" element={<Five9Page />} />
+                <Route path="five9/legacy" element={<Five9OverviewPage />} />
                 <Route path="five9/campaign-builder" element={<CampaignBuilderPage />} />
                 <Route path="five9/campaign-builder/:draftId" element={<CampaignBuilderPage />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
@@ -171,6 +228,7 @@ const App = () => (
                 <Route path="mappings/builder/:id" element={<MappingBuilderPage />} />
                 <Route path="logs" element={<ApiLogsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="tenants" element={<TenantsPage />} />
                 <Route path="agents" element={<AgentsPage />} />
                 <Route path="dispositions" element={<DispositionsPage />} />
                 <Route path="integrations" element={<IntegrationsPage />} />

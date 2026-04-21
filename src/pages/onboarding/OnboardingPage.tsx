@@ -18,12 +18,14 @@ import { OnboardingContextHelper } from "@/components/onboarding/OnboardingConte
 import { ReadinessScore } from "@/components/onboarding/ReadinessScore";
 import { toast } from "sonner";
 
-type Step = "org" | "domain" | "testing" | "intent" | "tenant" | "complete";
+type Step = "org" | "ownership" | "domain" | "testing" | "intent" | "tenant" | "complete";
 type ConnectionStatus = "testing" | "success" | "failed";
 type Intent = "provisioning" | "integration";
+type OwnershipMode = "client" | "workspace";
 
 const milestones: Milestone[] = [
   { key: "org", label: "Organization", description: "Create your workspace", icon: Building },
+  { key: "ownership", label: "Five9 Owner", description: "Who owns the Five9 account", icon: Users },
   { key: "domain", label: "Five9 Domain", description: "Connect your call center", icon: Globe },
   { key: "intent", label: "Setup Intent", description: "Choose your primary use case", icon: Rocket },
   { key: "tenant", label: "First Client", description: "Add your first client", icon: Building2 },
@@ -31,7 +33,7 @@ const milestones: Milestone[] = [
 ];
 
 const milestoneIndex = (step: Step): number => {
-  const map: Record<Step, number> = { org: 0, domain: 1, testing: 1, intent: 2, tenant: 3, complete: 4 };
+  const map: Record<Step, number> = { org: 0, ownership: 1, domain: 2, testing: 2, intent: 3, tenant: 4, complete: 5 };
   return map[step];
 };
 
@@ -39,10 +41,11 @@ export default function OnboardingPage() {
   const { organization, user, isMasterAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const [step, setStep] = useState<Step>(organization ? "domain" : "org");
+  const [step, setStep] = useState<Step>(organization ? "ownership" : "org");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [orgName, setOrgName] = useState("");
+  const [ownershipMode, setOwnershipMode] = useState<OwnershipMode | null>(null);
   const [domainDisplayName, setDomainDisplayName] = useState("");
   const [five9Username, setFive9Username] = useState("");
   const [five9Password, setFive9Password] = useState("");
@@ -60,7 +63,7 @@ export default function OnboardingPage() {
   }, [isMasterAdmin, organization, navigate]);
 
   useEffect(() => {
-    if (organization && step === "org") setStep("domain");
+    if (organization && step === "org") setStep("ownership");
   }, [organization, step]);
 
   if (!user) {
@@ -82,7 +85,7 @@ export default function OnboardingPage() {
       const { error: memberError } = await supabase.from("organization_members").insert({ organization_id: org.id, user_id: user.id, role: "owner" });
       if (memberError) throw memberError;
       setCreatedOrgId(org.id);
-      setStep("domain");
+      setStep("ownership");
       toast.success("Organization created!");
     } catch (error: unknown) {
       toast.error((error as Error).message || "Failed to create organization");
@@ -180,6 +183,77 @@ export default function OnboardingPage() {
             </Button>
           </div>
         </form>
+      </Card>
+    ),
+
+    ownership: (
+      <Card className="card-elevated border-0 shadow-lg">
+        <CardHeader className="text-center pb-2">
+          <div className="flex justify-center mb-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
+              <Users className="h-7 w-7 text-primary" />
+            </div>
+          </div>
+          <CardTitle className="text-xl tracking-tight">Who owns the Five9 account?</CardTitle>
+          <CardDescription>This determines how Five9 connections and deployments are scoped.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 pt-2">
+          <button type="button" onClick={() => setOwnershipMode("workspace")} className={cn(
+            "w-full text-left rounded-xl border-2 p-4 transition-premium",
+            ownershipMode === "workspace" ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10"
+          )}>
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8">
+                <Building className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-sm">This workspace / BPO</p>
+                  {ownershipMode === "workspace" && <Check className="h-4 w-4 text-primary" />}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">One shared Five9 account. Clients are scoped by campaign, queue, DNIS, or call variables.</p>
+              </div>
+            </div>
+          </button>
+          <button type="button" onClick={() => setOwnershipMode("client")} className={cn(
+            "w-full text-left rounded-xl border-2 p-4 transition-premium",
+            ownershipMode === "client" ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10"
+          )}>
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8">
+                <Building2 className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-sm">Each client owns their Five9</p>
+                  {ownershipMode === "client" && <Check className="h-4 w-4 text-primary" />}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">Clients connect their own Five9 domain. Each client manages its own connection.</p>
+              </div>
+            </div>
+          </button>
+        </CardContent>
+        <div className="px-6 pb-6">
+          <Button
+            className="w-full h-11"
+            disabled={!ownershipMode || isSubmitting}
+            onClick={async () => {
+              const orgId = getOrgId();
+              if (!orgId || !ownershipMode) return;
+              setIsSubmitting(true);
+              const { error } = await supabase
+                .from("organizations")
+                .update({ five9_ownership_mode: ownershipMode })
+                .eq("id", orgId);
+              setIsSubmitting(false);
+              if (error) { toast.error(error.message); return; }
+              setStep("domain");
+            }}
+          >
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
+            Continue
+          </Button>
+        </div>
       </Card>
     ),
 
