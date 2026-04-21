@@ -5,6 +5,7 @@ import { ReadinessChecklist } from "@/components/dashboard/ReadinessChecklist";
 import { AIGuidanceCard } from "@/components/dashboard/AIGuidanceCard";
 import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
 import { SystemHealthStrip } from "@/components/dashboard/SystemHealthStrip";
+import { OnboardingResumeCard } from "@/components/onboarding/OnboardingResumeCard";
 import { fetchClientReadiness, type ClientReadiness } from "@/lib/readiness/computeCampaignReadiness";
 import { Shield } from "lucide-react";
 
@@ -28,6 +29,8 @@ export default function UserDashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <OnboardingResumeCard />
+
       <div className="flex items-start gap-4">
         <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
           <Shield className="h-6 w-6 text-primary" />

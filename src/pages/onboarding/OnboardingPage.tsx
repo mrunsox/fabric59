@@ -23,6 +23,9 @@ type ConnectionStatus = "testing" | "success" | "failed";
 type Intent = "provisioning" | "integration";
 type OwnershipMode = "client" | "workspace";
 
+const RESUME_KEY = "fabric59:onboarding:resumeStep";
+const SKIPPABLE_STEPS: Step[] = ["ownership", "domain", "intent", "tenant"];
+
 const milestones: Milestone[] = [
   { key: "org", label: "Organization", description: "Create your workspace", icon: Building },
   { key: "ownership", label: "Five9 Owner", description: "Who owns the Five9 account", icon: Users },
@@ -41,7 +44,11 @@ export default function OnboardingPage() {
   const { organization, user, isMasterAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const [step, setStep] = useState<Step>(organization ? "ownership" : "org");
+  const [step, setStep] = useState<Step>(() => {
+    const resume = typeof window !== "undefined" ? (localStorage.getItem(RESUME_KEY) as Step | null) : null;
+    if (resume && organization) return resume;
+    return organization ? "ownership" : "org";
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [orgName, setOrgName] = useState("");
@@ -65,6 +72,30 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (organization && step === "org") setStep("ownership");
   }, [organization, step]);
+
+  // Persist current resumable step; clear once user reaches the end
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (step === "complete") {
+      localStorage.removeItem(RESUME_KEY);
+    } else if (SKIPPABLE_STEPS.includes(step)) {
+      localStorage.setItem(RESUME_KEY, step);
+    }
+  }, [step]);
+
+  const handleSkip = () => {
+    if (typeof window !== "undefined") localStorage.setItem(RESUME_KEY, step);
+    navigate("/admin");
+  };
+
+  const SkipFooter = () =>
+    SKIPPABLE_STEPS.includes(step) ? (
+      <div className="px-6 pb-5 -mt-2 text-center">
+        <button type="button" onClick={handleSkip} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+          Skip for now — finish later from the dashboard
+        </button>
+      </div>
+    ) : null;
 
   if (!user) {
     return (
@@ -510,6 +541,7 @@ export default function OnboardingPage() {
 
           <div className="animate-fade-up">
             {stepContent[step]}
+            <SkipFooter />
           </div>
         </div>
       </div>
