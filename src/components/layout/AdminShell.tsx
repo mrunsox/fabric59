@@ -153,7 +153,7 @@ export function AdminShell() {
       )}
 
       {/* Main column */}
-      <div className="flex-1 lg:pl-16 min-w-0 flex flex-col">
+      <div className={cn("flex-1 min-w-0 flex flex-col transition-[padding] duration-200", expanded ? "lg:pl-56" : "lg:pl-16")}>
         {/* Top header */}
         <header className="sticky top-0 z-30 h-14 bg-background/95 backdrop-blur border-b border-border/40">
           <div className="mx-auto max-w-[1440px] h-full px-8 flex items-center gap-4">
