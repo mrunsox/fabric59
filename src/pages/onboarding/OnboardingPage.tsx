@@ -18,12 +18,14 @@ import { OnboardingContextHelper } from "@/components/onboarding/OnboardingConte
 import { ReadinessScore } from "@/components/onboarding/ReadinessScore";
 import { toast } from "sonner";
 
-type Step = "org" | "domain" | "testing" | "intent" | "tenant" | "complete";
+type Step = "org" | "ownership" | "domain" | "testing" | "intent" | "tenant" | "complete";
 type ConnectionStatus = "testing" | "success" | "failed";
 type Intent = "provisioning" | "integration";
+type OwnershipMode = "client" | "workspace";
 
 const milestones: Milestone[] = [
   { key: "org", label: "Organization", description: "Create your workspace", icon: Building },
+  { key: "ownership", label: "Five9 Owner", description: "Who owns the Five9 account", icon: Users },
   { key: "domain", label: "Five9 Domain", description: "Connect your call center", icon: Globe },
   { key: "intent", label: "Setup Intent", description: "Choose your primary use case", icon: Rocket },
   { key: "tenant", label: "First Client", description: "Add your first client", icon: Building2 },
@@ -31,7 +33,7 @@ const milestones: Milestone[] = [
 ];
 
 const milestoneIndex = (step: Step): number => {
-  const map: Record<Step, number> = { org: 0, domain: 1, testing: 1, intent: 2, tenant: 3, complete: 4 };
+  const map: Record<Step, number> = { org: 0, ownership: 1, domain: 2, testing: 2, intent: 3, tenant: 4, complete: 5 };
   return map[step];
 };
 
