@@ -1,101 +1,178 @@
 
 
-# Fabric59 IA Completion — Hub Pages, Operational Dashboards, Builder Split
+# Fabric59 Refactor — Integration Core + Superadmin Feature Vault
 
-The two-tier shell, readiness engine, AI Guidance, Docs panel, dashboard cards, and a working Campaign Builder already exist. This plan fills the **specific page gaps** in the IA spec so the navigation no longer points to placeholders and every section has a purpose-built landing page.
+Reposition Fabric59 as a focused **Five9-native integration configurator** while preserving every existing non-core module inside a Superadmin-only **Feature Vault** with downloadable source bundles.
 
-## What the user will see
+**Scope discipline**: nothing in this plan exists outside the integration configurator core or the Feature Vault. No new dashboards, no new AI surfaces, no new analytics, no marketing changes, no nice-to-have utilities.
 
-### 1. Section overview hubs (3 new pages)
+---
 
-Each top-level section (Five9, Legal Connect, Campaigns) gets a dedicated **Overview** page so the sub-nav's first tab is meaningful instead of redirecting.
+## Phase 1 — Isolate the integrations core
 
-- **`/admin/five9`** — Five9 hub: domain count + health, campaign count by readiness state, variables/dispositions counts, AI guidance card, "Create campaign" + "Connect domain" CTAs.
-- **`/admin/legal-connect/overview`** — provider connection grid (Clio · MyCase · Smokeball with connected/pending/missing badges), webhook health, recent sync failures, AI guidance.
-- **`/admin/campaigns/overview`** — operational board: active routes, drafts in progress, ready vs blocked split, recent events strip.
+### Navigation rewrite
 
-### 2. Campaigns operational sub-pages (3 new pages)
+Replace `src/config/navigation.ts` with the 10-item customer-facing nav:
 
-Replace the placeholder routes in `Campaigns` sub-nav with real pages:
+```text
+Overview · Workspaces · Clients · Five9 · Connectors ·
+Flows · Deployments · Runs · Templates · Settings
+```
 
-- **Drafts** (`/admin/campaigns/drafts`) — list of `campaign_builder_drafts` for this org with "Resume" button → `/admin/five9/campaign-builder/:draftId`. Shows current step, last touched, owner.
-- **Readiness** (`/admin/campaigns/readiness`) — board view of every `v_campaign_readiness` row grouped by status (Not started · In progress · Blocked · Test ready · Ready). Each card → campaign overlay.
-- **Event Log** (`/admin/campaigns/event-log`) — filtered `five9_event_log` table with status pills, campaign filter, time-range filter (reuses existing `EventLogViewer` if available; otherwise a compact table).
+Add `src/config/superadmin-navigation.ts` (master-admin only): `Overview · Feature Vault · Source Exports · Advanced Routes · System Docs`.
 
-### 3. Testing & Monitoring area landings (2 new pages)
+Every archived route stays mounted in `App.tsx` — only nav links disappear. Direct URLs still work for staff.
 
-- **`/admin/testing`** — landing for Testing area with cards linking to: Test Console (existing), Simulations (link to campaign overlay sim tab), Replay (existing), Failures (filtered event log).
-- **`/admin/monitoring`** — landing with cards: API Logs, Webhooks (filtered logs), Sync Jobs, Alerts (link to Notifications), Review Queue.
+### Ownership model (first-class)
 
-These avoid empty 404s when users click the section icon before picking a sub-tab.
+Migration adds `five9_ownership_mode` enum (`client` | `workspace`) to `organizations` and `tenants` (nullable on tenants = inherit from org). Backfill existing rows to `workspace`.
 
-### 4. Unified Docs Hub (1 new page)
+Onboarding gains one required question: **"Who owns the Five9 account?"** — answer drives downstream scoping. New helper `src/lib/five9/resolveOwnership.ts` returns `{ mode, domainId, ownerScope }` for any client + flow context.
 
-- **`/admin/docs`** — replaces the bare KB redirect. Shows `Five9DocsPanel` content inline (all topics, search), tabs for Five9 · Legal Integrations · Setup Guides · Knowledge Base, plus a card linking to the Build Outline.
+### Top-level pages (10)
 
-### 5. Campaign Builder split (refactor 1 file → 7 files)
+| Section | Page(s) | Built from |
+|---|---|---|
+| Overview | `OverviewPage` | rename of `UserDashboardPage` + ownership-aware widgets |
+| Workspaces | `WorkspacesPage`, `WorkspaceDetailPage` | new — lists `organizations`, shared Five9, workspace templates |
+| Clients | `ClientsPage`, `ClientWorkspacePage` | reuse `TenantsPage` + `ClientOverviewPage` |
+| Five9 | `Five9Page` (tabs: Connections/Campaigns/Variables/Dispositions) | reuse `Five9OverviewPage`, `DomainsPage`, `CampaignsPage`, `DispositionsPage`, `CampaignBuilderPage` |
+| Connectors | `ConnectorsCatalogPage`, `ConnectorInstancePage` | new shell; reuses `LegalConnectPage` connection cards + Webhook/Custom-HTTP |
+| Flows | `FlowsPage`, `FlowBuilderPage` | new (model below) |
+| Deployments | `DeploymentsPage`, `DeploymentDetailPage` | new |
+| Runs | `RunsPage`, `RunDetailPage` | unified view over `five9_event_log` + `legal_connect_sync_jobs` + `deployment_runs` |
+| Templates | `TemplatesPage`, `TemplateDetailPage` | new |
+| Settings | `SettingsPage` | reuse existing + "Advanced Routes" link for staff |
 
-`CampaignBuilderPage.tsx` currently has all 6 steps inline. Split per spec:
+### Flow / Deployment data model
 
-- `src/components/campaign-builder/StepBasics.tsx`
-- `src/components/campaign-builder/StepVariables.tsx`
-- `src/components/campaign-builder/StepProfile.tsx`
-- `src/components/campaign-builder/StepDispositions.tsx`
-- `src/components/campaign-builder/StepRouting.tsx`
-- `src/components/campaign-builder/StepReadiness.tsx`
-- `CampaignBuilderPage.tsx` becomes a thin shell that renders the active step component and owns draft persistence
+```sql
+flows                -- id, org_id, name, trigger_type, definition jsonb, version, status
+flow_versions        -- id, flow_id, version, definition jsonb, created_by, created_at
+flow_templates       -- id, org_id (nullable=global), name, definition jsonb, category
+deployments          -- id, flow_id, flow_version, client_id, scope jsonb, status, created_at
+deployment_runs      -- id, deployment_id, trigger_event_id, status, started_at, finished_at, error
+```
 
-Each step file accepts `{ payload, updatePayload }` and is independently editable.
+All RLS-scoped to `organization_id`.
 
-### 6. Navigation cleanup
+### Flow Builder (linear, Phase 1)
 
-`src/config/navigation.ts` updated so every sub-nav `href` resolves to a real route (Five9 Overview, Campaigns Overview, Drafts, Readiness, Event Log, Testing landing, Monitoring landing, Docs hub, Legal Connect Overview).
+Step-based builder (no React Flow yet):
+
+- **Trigger** — Five9 event type (`call_end`, `disposition`, `callback_request`, `variable_change`, `webhook`)
+- **Filters** — workspace/client/domain/campaign/queue/disposition/variable predicates
+- **Mapping** — source → target field rows with simple transforms
+- **Action** — connector + action (Clio create matter, MyCase task, Webhook POST, etc.)
+- **Failure policy** — retry count, fallback action
+
+Serialized into `flows.definition`. Runtime is the existing `legal-connect-jobs` edge fn plus a thin new `flow-runner` wrapper that loads a deployment, evaluates filters, applies mappings, dispatches to the connector.
+
+---
+
+## Phase 2 — Superadmin Feature Vault
+
+### New tables
+
+```sql
+vault_features    -- id, slug, name, status (core|archived|experimental|deprecated|extracted),
+                  --   summary, reason_archived, original_routes text[], frontend_files text[],
+                  --   backend_files text[], db_objects text[], edge_functions text[],
+                  --   dependencies jsonb, required_secrets text[], risks text, restore_notes text,
+                  --   extraction_notes text, archived_at, archived_by
+vault_exports     -- id, feature_id, version, manifest jsonb, bundle_path, size_bytes, created_at, created_by
+```
+
+New private storage bucket `vault-exports` for generated `.zip` bundles.
+
+### Superadmin pages
+
+- `SuperadminOverviewPage` — vault entry count, last export, status breakdown
+- `FeatureVaultPage` — table of `vault_features` with filters + "Generate export" button
+- `FeatureVaultDetailPage` — manifest view + docs preview + export history
+- `SourceExportsPage` — list of `vault_exports` with signed download URLs
+- `AdvancedRoutesPage` — listing every route in the app (including archived)
+- `SystemDocsPage` — moves `DocsHubPage` content here
+
+### Export generator (`vault-export` edge fn)
+
+1. Reads a `vault_features` row
+2. Fetches every file listed in `frontend_files` + `backend_files`
+3. Generates docs (`overview.md`, `routes.md`, `schema.md`, `dependencies.md`, `extraction-notes.md`) by templating the row
+4. Builds `manifest.json`
+5. Zips into `frontend/ backend/ docs/ manifest.json`
+6. Uploads to `vault-exports` bucket; inserts `vault_exports` row
+
+---
+
+## Phase 3 — Agent Lifecycle preservation (first vault entry)
+
+Seed `vault_features` with a complete entry for **Agent Lifecycle**:
+
+- **Frontend**: `AgentsPage`, `AgentDashboardPage`, `SupervisorPage`, `components/agents/onboarding/*`, `components/agents/offboarding/*`, `hooks/useProvisioning.ts`, `useDeprovisioning.ts`, `useFive9Sync.ts`, `types/provisioning.ts`, `types/deprovisioning.ts`
+- **Backend**: `five9-provisioning`, `slack-agent`, `send-credentials`, `google-workspace`, `send-hr-notification`
+- **DB**: `agents`, `provisioning_history`, `deprovisioning_audit` + RLS
+- **Secrets**: `FIVE9_USERNAME`, `FIVE9_PASSWORD`, `SLACK_API_KEY`, Google Workspace creds
+
+Generate the first export bundle and verify download end-to-end before Phase 4.
+
+---
+
+## Phase 4 — Archive remaining non-core modules
+
+Seed `vault_features` rows (one per module) for: Scripts/ScriptFlow/TreeEditor/CallFlow stack · QA Analytics · Training · KB · Reports · Billing · Goals · Campaign Blueprints · Legacy Campaign Intake · ANI Block · Callback Queue · Abandon Rate · Mapping Builder (visual) · Partners · Feedback · Design System · Data Plane · Identity Resolution.
+
+Same manifest → docs → export pipeline. No code deleted; only nav entries removed.
+
+`CampaignIntakePage` redirects to `/admin/five9/campaign-builder` (the only true deprecation).
+
+---
 
 ## Files
 
-**New (12):**
-- `src/pages/admin/Five9OverviewPage.tsx`
-- `src/pages/admin/LegalConnectOverviewPage.tsx`
-- `src/pages/admin/CampaignsOverviewPage.tsx`
-- `src/pages/admin/CampaignDraftsPage.tsx`
-- `src/pages/admin/CampaignReadinessBoardPage.tsx`
-- `src/pages/admin/CampaignEventLogPage.tsx`
-- `src/pages/admin/TestingHubPage.tsx`
-- `src/pages/admin/MonitoringHubPage.tsx`
-- `src/pages/admin/DocsHubPage.tsx`
-- `src/components/campaign-builder/StepBasics.tsx` + 5 sibling step files
+**New (~30):**
+- `src/config/navigation.ts` (rewrite) + `src/config/superadmin-navigation.ts`
+- `src/lib/five9/resolveOwnership.ts`
+- `src/pages/admin/{Overview,Workspaces,WorkspaceDetail,Clients,Five9,ConnectorsCatalog,ConnectorInstance,Flows,FlowBuilder,Deployments,DeploymentDetail,Runs,RunDetail,Templates,TemplateDetail}Page.tsx`
+- `src/pages/superadmin/{Overview,FeatureVault,FeatureVaultDetail,SourceExports,AdvancedRoutes,SystemDocs}Page.tsx`
+- `src/components/flows/{TriggerStep,FilterStep,MappingStep,ActionStep,FailureStep,FlowSummary}.tsx`
+- `src/components/vault/{VaultEntryCard,ExportHistoryTable,ManifestViewer}.tsx`
+- `supabase/functions/flow-runner/index.ts`
+- `supabase/functions/vault-export/index.ts`
 
-**Edited (3):**
-- `src/App.tsx` — register the 9 new routes
-- `src/config/navigation.ts` — re-target sub-nav hrefs to real routes
-- `src/pages/admin/CampaignBuilderPage.tsx` — replace inline steps with imports of the 6 step components (preserve draft logic, stepper, header)
+**Edited (~6):**
+- `src/App.tsx` — register new routes (keep all archived routes mounted)
+- `src/pages/OnboardingPage.tsx` — Five9 ownership question
+- `src/components/auth/MasterProtectedRoute.tsx` — wrap superadmin routes
+- `src/pages/admin/CampaignIntakePage.tsx` — redirect to Campaign Builder
+- `src/pages/admin/SettingsPage.tsx` — "Advanced Routes" link for staff
+- `src/integrations/supabase/types.ts` — auto-regenerated
 
-**No DB changes, no edge function changes, no new components in `dashboard/`** — every new page composes existing primitives (`ReadinessChecklist`, `AIGuidanceCard`, `SystemHealthStrip`, `QuickActionsGrid`, `Five9DocsPanel`, `GuidancePanel`, `Card`, `Badge`, etc.) plus existing data hooks.
+**Migrations (3):**
+1. Add `five9_ownership_mode` enum + columns; backfill `workspace`
+2. Create `flows`, `flow_versions`, `flow_templates`, `deployments`, `deployment_runs` + RLS
+3. Create `vault_features`, `vault_exports` + master-admin RLS + `vault-exports` storage bucket
 
-## Technical notes
+---
 
-- All hub pages query existing tables: `five9_domains`, `five9_campaign_routes`, `legal_connect_connections`, `legal_connect_disposition_mappings`, `five9_event_log`, `campaign_builder_drafts`, plus the `v_campaign_readiness` / `v_client_readiness` views.
-- Drafts page reads `campaign_builder_drafts` filtered by `organization_id`; "Resume" navigates with `draftId`.
-- Readiness board reads `v_campaign_readiness` and groups in JS by `status` field.
-- Event log page reuses the existing event log query patterns from `CampaignHealthPanel` / `ApiLogsPage`.
-- Builder split is mechanical — copy each step's JSX into its own file; the shell still owns `payload`, `stepIdx`, `saveDraft`, `finish`.
-- Section icons in `navigation.ts` already include Megaphone (Campaigns), FlaskConical (Testing), Activity (Monitoring), BookOpen (Docs) — no new icons needed.
+## Out of scope (explicit)
 
-## Out of scope (honest)
+- Visual node-based flow canvas (linear builder only)
+- Per-end-customer OAuth (workspace-owned credentials only)
+- Auto-rebuilding archived modules from bundles (export only)
+- Deleting any archived code or tables
+- Marketing site changes
+- New AI surfaces beyond what already exists
+- Any feature not on the spec above
 
-- Building dedicated `Variables` and `Dispositions` admin pages from scratch (existing `DispositionsPage` is reused; variables remain managed inside the Campaign Builder + per-campaign overlay panel — adding a global variables manager is a larger feature for a follow-up)
-- Dedicated `Routing` standalone page (routing is configured per-campaign inside the campaign overlay; spec's "Routing" sub-tab will redirect to the Campaign Builder Step 5 / overlay)
-- New AI Guidance variants (`AIGuidanceDrawer`, `NextBestActionsCard`, etc.) — the existing `GuidancePanel` + `AIGuidanceCard` cover the same surface; renaming/duplicating them would add components without new behavior
-- Extracting `ContextDocsPanel` as a separate component — `Five9DocsPanel` already does this and is route-aware
-- A separate Five9 Health page (`/admin/five9/health`) — folded into the Five9 Overview hub
+---
 
 ## Acceptance
 
-- Every entry in every section sub-nav resolves to a real, purposeful page
-- `/admin/five9`, `/admin/legal-connect/overview`, `/admin/campaigns/overview` lead with status + AI guidance + CTAs, not empty tables
-- `/admin/campaigns/drafts` lists in-progress drafts and resumes them in the builder
-- `/admin/campaigns/readiness` shows campaigns grouped by readiness status
-- `/admin/testing` and `/admin/monitoring` are real landing hubs, not redirects
-- `/admin/docs` shows the unified docs hub with all Five9 topics inline
-- `CampaignBuilderPage` renders correctly after the split with no behavior change
+- Main nav shows only the 10 customer-facing sections; superadmin nav appears for master admins
+- Onboarding asks "Who owns Five9?" and the answer scopes deployments
+- A user can: create a flow → assign a connector action → deploy scoped to a client+disposition → see runs in the Runs page
+- Every archived route still resolves at its original URL (no 404s)
+- Superadmin can open Feature Vault → Agent Lifecycle → Generate Export → download a working `.zip` (frontend/, backend/, docs/, manifest.json)
+- All remaining non-core modules have vault entries with downloadable bundles after Phase 4
 
