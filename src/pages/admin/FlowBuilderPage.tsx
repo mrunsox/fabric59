@@ -53,7 +53,7 @@ export default function FlowBuilderPage() {
     if (!id) return;
     setSaving(true);
     const { error } = await supabase.from("flows").update({
-      name, status, definition: definition as unknown as Record<string, unknown>, trigger_type: definition.trigger.type,
+      name, status, definition: definition as never, trigger_type: definition.trigger.type,
     }).eq("id", id);
     setSaving(false);
     if (error) toast.error(error.message); else toast.success("Saved");

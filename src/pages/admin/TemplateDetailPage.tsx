@@ -24,7 +24,7 @@ export default function TemplateDetailPage() {
   const save = async () => {
     let definition: Record<string, unknown> = {};
     try { definition = JSON.parse(defText); } catch { toast.error("Invalid JSON"); return; }
-    const { error } = await supabase.from("flow_templates").update({ name, category, definition }).eq("id", id!);
+    const { error } = await supabase.from("flow_templates").update({ name, category, definition: definition as never }).eq("id", id!);
     if (error) toast.error(error.message); else toast.success("Saved");
   };
 

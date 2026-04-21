@@ -32,7 +32,7 @@ export default function DeploymentDetailPage() {
     let scope: Record<string, unknown> = {};
     try { scope = JSON.parse(scopeText); } catch { toast.error("Invalid scope JSON"); return; }
     const { error } = await supabase.from("deployments").update({
-      status: dep.status, client_id: dep.client_id, flow_id: dep.flow_id, scope,
+      status: dep.status, client_id: dep.client_id, flow_id: dep.flow_id, scope: scope as never,
     }).eq("id", dep.id);
     if (error) toast.error(error.message); else toast.success("Saved");
   };
