@@ -44,7 +44,11 @@ export default function OnboardingPage() {
   const { organization, user, isMasterAdmin } = useAuth();
   const navigate = useNavigate();
 
-  const [step, setStep] = useState<Step>(organization ? "ownership" : "org");
+  const [step, setStep] = useState<Step>(() => {
+    const resume = typeof window !== "undefined" ? (localStorage.getItem(RESUME_KEY) as Step | null) : null;
+    if (resume && organization) return resume;
+    return organization ? "ownership" : "org";
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [orgName, setOrgName] = useState("");
