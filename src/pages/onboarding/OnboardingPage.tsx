@@ -73,6 +73,30 @@ export default function OnboardingPage() {
     if (organization && step === "org") setStep("ownership");
   }, [organization, step]);
 
+  // Persist current resumable step; clear once user reaches the end
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (step === "complete") {
+      localStorage.removeItem(RESUME_KEY);
+    } else if (SKIPPABLE_STEPS.includes(step)) {
+      localStorage.setItem(RESUME_KEY, step);
+    }
+  }, [step]);
+
+  const handleSkip = () => {
+    if (typeof window !== "undefined") localStorage.setItem(RESUME_KEY, step);
+    navigate("/admin");
+  };
+
+  const SkipFooter = () =>
+    SKIPPABLE_STEPS.includes(step) ? (
+      <div className="px-6 pb-5 -mt-2 text-center">
+        <button type="button" onClick={handleSkip} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+          Skip for now — finish later from the dashboard
+        </button>
+      </div>
+    ) : null;
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
