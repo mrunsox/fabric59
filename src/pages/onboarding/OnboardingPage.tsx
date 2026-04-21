@@ -23,6 +23,9 @@ type ConnectionStatus = "testing" | "success" | "failed";
 type Intent = "provisioning" | "integration";
 type OwnershipMode = "client" | "workspace";
 
+const RESUME_KEY = "fabric59:onboarding:resumeStep";
+const SKIPPABLE_STEPS: Step[] = ["ownership", "domain", "intent", "tenant"];
+
 const milestones: Milestone[] = [
   { key: "org", label: "Organization", description: "Create your workspace", icon: Building },
   { key: "ownership", label: "Five9 Owner", description: "Who owns the Five9 account", icon: Users },
