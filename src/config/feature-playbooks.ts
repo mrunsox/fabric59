@@ -197,6 +197,88 @@ const five9Domain: FeaturePlaybook = {
       ],
     },
     {
+      id: "sandbox",
+      title: "Sandbox walkthrough (Five9 test login)",
+      intro:
+        "Step-by-step end-to-end run using the shared Fabric59 sandbox login above. Complete steps in order; each step's checks must all be green before moving on.",
+      steps: [
+        {
+          id: "sb1",
+          title: "Sign in to the Five9 sandbox directly",
+          body: "Open https://login.five9.com/ in a separate tab and sign in with the credentials in the block above. Baseline check that the account itself is healthy before testing the platform's bridge.",
+          checks: [
+            { id: "c1", label: "Login URL opens and accepts the Fabric59 username" },
+            { id: "c2", label: "Password authenticates without MFA challenge or lockout" },
+            { id: "c3", label: "Five9 admin console loads with at least one campaign visible", hint: "If empty, capture a screenshot before continuing — sync expectations below assume non-empty data." },
+          ],
+        },
+        {
+          id: "sb2",
+          title: "Connect the domain through the wizard in this app",
+          body: "From Domains, run the connect wizard and paste the same Fabric59 credentials. Exercises the Pabbly auth bridge and credential encryption path.",
+          checks: [
+            { id: "c1", label: "Wizard reaches the Pabbly auth step without error" },
+            { id: "c2", label: "Auth call returns 2xx and a domain row is created" },
+            { id: "c3", label: "Derived domain identifier matches expected slug" },
+            { id: "c4", label: "Stored password is encrypted at rest, not visible in plaintext", hint: "Spot-check via the credentials inspector or a SELECT on the encrypted column." },
+          ],
+        },
+        {
+          id: "sb3",
+          title: "Run Test Connection",
+          body: "Trigger the test-five9-connection edge function from the domain detail page. Validates round-trip without mutating Five9.",
+          checks: [
+            { id: "c1", label: "Test Connection returns success within ~5s" },
+            { id: "c2", label: "Connection status badge flips to connected" },
+            { id: "c3", label: "Re-running Test Connection is idempotent" },
+          ],
+        },
+        {
+          id: "sb4",
+          title: "Trigger Users + Skills sync",
+          body: "Run the sync job for the connected domain. Expect populated Users/Skills scoped to this domain only.",
+          checks: [
+            { id: "c1", label: "Sync job transitions queued -> running -> succeeded" },
+            { id: "c2", label: "Users table populated with non-zero row count for this domain" },
+            { id: "c3", label: "Skills table populated and scoped by domain id" },
+            { id: "c4", label: "Last-sync timestamp updates on completion" },
+            { id: "c5", label: "Re-run produces no duplicate rows" },
+          ],
+        },
+        {
+          id: "sb5",
+          title: "Exercise a SOAP read-back",
+          body: "Hit a read-only SOAP call (Web Connector lookup or campaign profile fetch) to confirm WsAdminService v13 envelope alignment.",
+          checks: [
+            { id: "c1", label: "Outbound SOAP envelope validates against expected schema" },
+            { id: "c2", label: "Response parses without throwing on unexpected fields" },
+            { id: "c3", label: "Correlation id appears on request and response in API logs" },
+          ],
+        },
+        {
+          id: "sb6",
+          title: "Exercise a SOAP write (ANI block list)",
+          body: "Add then remove a throwaway ANI via ModifyCampaignProfile. Confirm both directions land in the Five9 admin console.",
+          checks: [
+            { id: "c1", label: "Add ANI: success response and entry visible in Five9 admin" },
+            { id: "c2", label: "Remove ANI: success response and entry no longer visible" },
+            { id: "c3", label: "Failure path surfaces the SOAP fault string, not a generic 500" },
+          ],
+        },
+        {
+          id: "sb7",
+          title: "Disconnect the domain safely",
+          body: "Run Disconnect from the domain detail page. Confirms credential-lifecycle safeguards and short-circuit behavior.",
+          checks: [
+            { id: "c1", label: "Disconnect prompts confirmation before tearing down" },
+            { id: "c2", label: "Stored credentials are removed; row state reflects disconnected" },
+            { id: "c3", label: "Post-disconnect dispatch attempts are short-circuited with a clear log line" },
+            { id: "c4", label: "Re-connect with same Fabric59 creds works without manual cleanup" },
+          ],
+        },
+      ],
+    },
+    {
       id: "setup",
       title: "Setup",
       steps: [
