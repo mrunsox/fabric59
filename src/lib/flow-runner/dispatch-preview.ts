@@ -29,12 +29,18 @@ export interface DispatchPreview {
   url?: string;
   headers?: Record<string, string>;
   body?: Record<string, unknown>;
+  idempotencyKey?: string;
   notes: string[];
+}
+
+export interface PreviewOptions {
+  idempotencyKey?: string;
 }
 
 export function buildDispatchPreview(
   definition: FlowDefinition,
-  payload: unknown
+  payload: unknown,
+  options: PreviewOptions = {}
 ): DispatchPreview {
   const action = definition.action;
   const notes: string[] = [];
@@ -44,6 +50,7 @@ export function buildDispatchPreview(
 
   const isHttp = action.connector === "webhook" || action.connector === "custom-http";
   const cfg = (action.config ?? {}) as Record<string, unknown>;
+  const idempotencyKey = options.idempotencyKey;
 
   // Resolve mappings against the sample payload.
   const mapped: Record<string, unknown> = {};
@@ -60,9 +67,11 @@ export function buildDispatchPreview(
     return {
       kind: "non_http",
       body: mapped,
+      idempotencyKey,
       notes: [
         `Connector "${action.connector}" performs a connector action ("${action.action}"); no raw HTTP request is dispatched.`,
         "The mapped payload below is what gets sent to the connector adapter.",
+        ...(idempotencyKey ? [`Idempotency key forwarded to the connector adapter: ${idempotencyKey}`] : []),
       ],
     };
   }
@@ -79,6 +88,7 @@ export function buildDispatchPreview(
     "X-Fabric59-Test": "true",
     "X-Fabric59-Connector": action.connector,
     "X-Fabric59-Action": action.action,
+    ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
     ...userHeaders,
   };
 
@@ -89,7 +99,7 @@ export function buildDispatchPreview(
       ? (cfg.body as Record<string, unknown>)
       : mapped;
 
-  return { kind: "http", method, url, headers, body, notes };
+  return { kind: "http", method, url, headers, body, idempotencyKey, notes };
 }
 
 export function previewAsCurl(p: DispatchPreview): string {
@@ -100,3 +110,25 @@ export function previewAsCurl(p: DispatchPreview): string {
   const bodyJson = JSON.stringify(p.body ?? {}, null, 2).replace(/'/g, "'\\''");
   return `curl -X ${p.method} '${p.url}' \\\n${headerArgs} \\\n  -d '${bodyJson}'`;
 }
+
+/**
+ * Compute a sample idempotency key the same way flow-runner does:
+ *   sha256(`${deployment_id}:${source_event_id ?? random}`)
+ * For test-mode previews we use a stable "preview" seed so the key is
+ * reproducible while the user iterates on the same flow + payload.
+ */
+export async function computePreviewIdempotencyKey(
+  deploymentId: string,
+  payload: unknown
+): Promise<string> {
+  // Stable hash of payload so changing payload → changing key (matches prod behavior
+  // where a different source_event_id produces a different key).
+  const payloadStr = JSON.stringify(payload ?? {});
+  const seed = `${deploymentId || "preview"}:${payloadStr}`;
+  const enc = new TextEncoder().encode(seed);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
