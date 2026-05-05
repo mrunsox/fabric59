@@ -1,14 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Play, Eye, Copy, Check, AlertTriangle } from "lucide-react";
+import { Loader2, Play, Eye, Copy, Check, AlertTriangle, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { FlowDefinition } from "@/lib/flow-templates/adapter";
 import { toast } from "sonner";
-import { buildDispatchPreview, previewAsCurl } from "@/lib/flow-runner/dispatch-preview";
+import {
+  buildDispatchPreview,
+  previewAsCurl,
+  computePreviewIdempotencyKey,
+} from "@/lib/flow-runner/dispatch-preview";
 
 export function TestStep({
   flowId,
