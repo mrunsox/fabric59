@@ -113,6 +113,30 @@ export function TestStep({
             Test mode adds <code className="font-mono">X-Fabric59-Test: true</code> and is not persisted.
           </p>
 
+          {preview.kind !== "incomplete" && idempotencyKey && (
+            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-secondary/20 px-3 py-2">
+              <KeyRound className="h-3.5 w-3.5 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Idempotency key</p>
+                <code className="font-mono text-xs break-all block">{idempotencyKey}</code>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {preview.kind === "http"
+                    ? "Sent as the Idempotency-Key header (visible above)."
+                    : "Forwarded to the connector adapter for dedupe."}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 shrink-0"
+                onClick={() => copy(idempotencyKey, "idem")}
+              >
+                {copied === "idem" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                <span className="ml-1 text-[10px]">Copy</span>
+              </Button>
+            </div>
+          )}
+
           {preview.notes.length > 0 && (
             <ul className="text-xs text-amber-700 bg-amber-500/10 border border-amber-500/30 rounded-md p-2 space-y-0.5">
               {preview.notes.map((n, i) => (
