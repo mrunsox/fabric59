@@ -161,7 +161,7 @@ const App = () => (
             <Route path="/master/organizations" element={<Navigate to="/superadmin/workspaces" replace />} />
             <Route path="/master/users" element={<Navigate to="/superadmin/users" replace />} />
             <Route path="/master/vault" element={<Navigate to="/superadmin/vault" replace />} />
-            <Route path="/master/vault/:id" element={<MasterVaultDetailRedirect />} />
+            <Route path="/master/vault/:id" element={<Navigate to="/superadmin/vault" replace />} />
             <Route path="/master/exports" element={<Navigate to="/superadmin/exports" replace />} />
             <Route path="/master/routes" element={<Navigate to="/superadmin/routes" replace />} />
             <Route path="/master/docs" element={<Navigate to="/superadmin/docs" replace />} />
