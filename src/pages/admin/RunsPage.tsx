@@ -7,8 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Activity, RotateCw } from "lucide-react";
+import { Activity, RotateCw, AlertTriangle, ShieldAlert, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { classifyError, type RetryClass } from "@/lib/flow-runner/retry-classification";
+
+const CLASS_META: Record<RetryClass, { label: string; tone: string; Icon: typeof AlertTriangle }> = {
+  retriable: { label: "Retriable", tone: "border-amber-500/40 bg-amber-500/10 text-amber-700", Icon: AlertTriangle },
+  non_retriable: { label: "Non-retriable", tone: "border-destructive/40 bg-destructive/10 text-destructive", Icon: ShieldAlert },
+  unknown: { label: "Unknown", tone: "border-border bg-secondary/40 text-muted-foreground", Icon: HelpCircle },
+};
 
 interface Run {
   id: string;
@@ -100,25 +108,57 @@ export default function RunsPage() {
             <p className="px-6 py-4 text-sm text-muted-foreground">No runs match.</p>
           ) : (
             <ul className="divide-y divide-border/40">
-              {filtered.map((r) => (
-                <li key={r.id} className="px-6 py-3 flex items-center justify-between gap-4">
-                  <div className="flex-1 cursor-pointer" onClick={() => navigate(`/admin/runs/${r.id}`)}>
-                    <p className="text-sm font-medium">{new Date(r.started_at).toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Dep {r.deployment_id.slice(0, 8)}…
-                      {r.retry_of ? ` · retry of ${r.retry_of.slice(0, 8)}…` : ""}
-                      {r.external_record_id ? ` · ext ${r.external_record_id}` : ""}
-                    </p>
-                    {r.error && <p className="text-xs text-destructive mt-0.5">{r.error}</p>}
-                  </div>
-                  <Badge variant={r.status === "succeeded" ? "default" : r.status === "failed" ? "destructive" : "secondary"}>{r.status}</Badge>
-                  {(r.status === "failed" || r.status === "succeeded") && (
-                    <Button size="sm" variant="ghost" disabled={retrying === r.id} onClick={() => retry(r.id)}>
-                      <RotateCw className={`h-3.5 w-3.5 mr-1 ${retrying === r.id ? "animate-spin" : ""}`} /> Retry
-                    </Button>
-                  )}
-                </li>
-              ))}
+              {filtered.map((r) => {
+                const verdict = r.status === "failed" ? classifyError(r.error) : null;
+                const meta = verdict ? CLASS_META[verdict.cls] : null;
+                const retryDisabled = retrying === r.id || verdict?.cls === "non_retriable";
+                return (
+                  <li key={r.id} className="px-6 py-3 flex items-center justify-between gap-4">
+                    <div className="flex-1 cursor-pointer min-w-0" onClick={() => navigate(`/admin/runs/${r.id}`)}>
+                      <p className="text-sm font-medium">{new Date(r.started_at).toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        Dep {r.deployment_id.slice(0, 8)}…
+                        {r.retry_of ? ` · retry of ${r.retry_of.slice(0, 8)}…` : ""}
+                        {r.external_record_id ? ` · ext ${r.external_record_id}` : ""}
+                      </p>
+                      {r.error && (
+                        <div className="mt-1 flex items-start gap-2">
+                          {meta && (
+                            <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${meta.tone}`}>
+                              <meta.Icon className="h-3 w-3" />
+                              {meta.label}
+                              {verdict?.status ? ` · ${verdict.status}` : ""}
+                            </span>
+                          )}
+                          <p className="text-xs text-destructive flex-1 truncate" title={r.error}>{r.error}</p>
+                        </div>
+                      )}
+                    </div>
+                    <Badge variant={r.status === "succeeded" ? "default" : r.status === "failed" ? "destructive" : "secondary"}>{r.status}</Badge>
+                    {(r.status === "failed" || r.status === "succeeded") && (
+                      <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled={retryDisabled}
+                                onClick={() => retry(r.id)}
+                              >
+                                <RotateCw className={`h-3.5 w-3.5 mr-1 ${retrying === r.id ? "animate-spin" : ""}`} /> Retry
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-xs text-xs">
+                            {verdict?.reason ?? "Replay this run with the same idempotency key."}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </CardContent>
