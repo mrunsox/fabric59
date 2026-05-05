@@ -43,6 +43,7 @@ export default function RunDetailPage() {
   const [run, setRun] = useState<RunData | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [copied, setCopied] = useState<"idem" | "ext" | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const copyValue = async (value: string, kind: "idem" | "ext", label: string) => {
     await navigator.clipboard.writeText(value);
@@ -53,6 +54,26 @@ export default function RunDetailPage() {
 
   const copyKey = () => run?.idempotency_key && copyValue(run.idempotency_key, "idem", "Idempotency key");
   const copyExt = () => run?.external_record_id && copyValue(run.external_record_id, "ext", "External record id");
+
+  const exportReport = async (format: "json" | "csv") => {
+    if (!run) return;
+    setExporting(true);
+    try {
+      const report = await fetchRunReport(run.id);
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const base = `run-report-${run.id.slice(0, 8)}-${stamp}`;
+      if (format === "json") {
+        downloadFile(`${base}.json`, JSON.stringify(report, null, 2), "application/json");
+      } else {
+        downloadFile(`${base}.csv`, reportToCsv(report), "text/csv");
+      }
+      toast.success(`Run report exported (${report.total_runs} run${report.total_runs === 1 ? "" : "s"})`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
