@@ -15,4 +15,5 @@ export const SUPERADMIN_SECTIONS: SuperadminNavItem[] = [
   { key: "exports", label: "Source Exports", href: "/superadmin/exports", icon: Download },
   { key: "routes", label: "Advanced Routes", href: "/superadmin/routes", icon: Route },
   { key: "docs", label: "System Docs", href: "/superadmin/docs", icon: BookOpen },
+  { key: "dev-guide", label: "Dev Guide", href: "/superadmin/dev-guide", icon: FileText },
 ];
