@@ -308,6 +308,8 @@ export function TestingPlaybook({ slug }: Props) {
         </CardContent>
       </Card>
 
+      {playbook.credentials && <CredentialsCard block={playbook.credentials} />}
+
       {playbook.sections.map((s) => (
         <SectionCard
           key={s.id}
