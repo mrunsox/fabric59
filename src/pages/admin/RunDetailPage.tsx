@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RotateCw } from "lucide-react";
+import { RotateCw, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 
 interface RunData {
@@ -28,6 +28,15 @@ export default function RunDetailPage() {
   const { id } = useParams();
   const [run, setRun] = useState<RunData | null>(null);
   const [retrying, setRetrying] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyKey = async () => {
+    if (!run?.idempotency_key) return;
+    await navigator.clipboard.writeText(run.idempotency_key);
+    setCopied(true);
+    toast.success("Idempotency key copied");
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -69,7 +78,16 @@ export default function RunDetailPage() {
           {run.finished_at && <p><span className="text-muted-foreground">Finished:</span> {new Date(run.finished_at).toLocaleString()}</p>}
           {run.source_event_type && <p><span className="text-muted-foreground">Source:</span> {run.source_event_type}</p>}
           {run.source_event_id && <p><span className="text-muted-foreground">Event id:</span> {run.source_event_id}</p>}
-          {run.idempotency_key && <p className="col-span-2 break-all"><span className="text-muted-foreground">Idempotency:</span> {run.idempotency_key}</p>}
+          {run.idempotency_key && (
+            <div className="col-span-2 flex items-center gap-2 rounded-md border border-border/60 bg-secondary/20 px-3 py-2">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">Idempotency key</span>
+              <code className="flex-1 font-mono text-xs break-all">{run.idempotency_key}</code>
+              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={copyKey}>
+                {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                <span className="ml-1 text-xs">{copied ? "Copied" : "Copy"}</span>
+              </Button>
+            </div>
+          )}
           {run.external_record_id && <p><span className="text-muted-foreground">External record:</span> {run.external_record_id}</p>}
           {run.retry_of && <p><span className="text-muted-foreground">Retry of:</span> {run.retry_of}</p>}
           {run.error && <p className="col-span-2 text-destructive">Error: {run.error}</p>}
