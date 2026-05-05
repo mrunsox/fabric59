@@ -844,13 +844,15 @@ serve(async (req) => {
       const eventType = payload.event_type;
       const eventData = payload.data || payload;
 
-      // Log the webhook event
+      // Log the webhook event (top-level webhook receipt; per-tenant rows logged below).
+      const inboundCallId = (eventData?.call_id || eventData?.id || payload?.call_id || 'unknown') as string;
+      const inboundIdemKey = `${inboundCallId}:domain:${domainId}:${eventType || 'event'}`;
       await supabase.from('api_logs').insert({
         endpoint: `five9-main/domain/${eventType || 'unknown'}`,
         method: 'POST',
         status: 'success',
-        request_payload: payload,
-        response: { received: true },
+        request_payload: { idempotency_key: inboundIdemKey, event_type: eventType, payload },
+        response: { received: true, idempotency_key: inboundIdemKey },
         response_time_ms: 0,
       });
 
@@ -899,6 +901,8 @@ serve(async (req) => {
             }
           }
 
+          const idempotencyKey = `${call.id}:${tenant.id}:${call.disposition || 'none'}`;
+
           // Generic CRM dispatch for non-legal CRMs
           const hasLegalCrm = configs.clio?.enabled || configs.mycase?.enabled;
           if (!hasLegalCrm && configs.crm?.api_url) {
@@ -907,18 +911,17 @@ serve(async (req) => {
               toNumber: call.toNumber, agentName: call.agentName, queue: call.queue,
               campaign: call.campaign, disposition: call.disposition,
               durationSeconds: call.durationSeconds,
-            });
+            }, idempotencyKey);
           }
 
-          // Log with idempotency key
-          const idempotencyKey = `${call.id}:${tenant.id}:${call.disposition || 'none'}`;
+          // Log with idempotency key (top-level so it's queryable via JSONB).
           await supabase.from('api_logs').insert({
             tenant_id: tenant.id,
             endpoint: 'five9-main',
             method: 'POST',
             status: 'success',
-            request_payload: { callId: call.id, idempotencyKey, direction: call.direction, queue: call.queue, disposition: call.disposition },
-            response: { domainRoute: true },
+            request_payload: { idempotency_key: idempotencyKey, callId: call.id, direction: call.direction, queue: call.queue, disposition: call.disposition },
+            response: { domainRoute: true, idempotency_key: idempotencyKey },
             response_time_ms: Date.now() - startTime,
           });
         }
@@ -967,6 +970,8 @@ serve(async (req) => {
         }
       }
 
+      const idempotencyKey = `${call.id}:${context.tenantId}:${call.disposition || 'none'}`;
+
       // Generic CRM dispatch for non-legal CRMs
       const hasLegalCrm = context.configs.clio?.enabled || context.configs.mycase?.enabled;
       if (!hasLegalCrm && context.configs.crm?.api_url) {
@@ -975,26 +980,25 @@ serve(async (req) => {
           toNumber: call.toNumber, agentName: call.agentName, queue: call.queue,
           campaign: call.campaign, disposition: call.disposition,
           durationSeconds: call.durationSeconds,
-        });
-        results.genericCrm = { dispatched: true };
+        }, idempotencyKey);
+        results.genericCrm = { dispatched: true, idempotency_key: idempotencyKey };
       }
 
       const elapsed = Date.now() - startTime;
+      results.idempotency_key = idempotencyKey;
 
-      const idempotencyKey = `${call.id}:${context.tenantId}:${call.disposition || 'none'}`;
-
-      // Log to api_logs (includes idempotency key for duplicate detection)
+      // Log to api_logs with top-level idempotency_key for end-to-end correlation.
       await supabase.from('api_logs').insert({
         tenant_id: context.tenantId,
         endpoint: 'five9-main',
         method: 'POST',
         status: (results.clio?.error || results.mycase?.error) ? 'error' : 'success',
-        request_payload: { callId: call.id, idempotencyKey, direction: call.direction, queue: call.queue, disposition: call.disposition },
-        response: results,
+        request_payload: { idempotency_key: idempotencyKey, callId: call.id, direction: call.direction, queue: call.queue, disposition: call.disposition },
+        response: { ...results, idempotency_key: idempotencyKey },
         response_time_ms: elapsed,
       });
 
-      return new Response(JSON.stringify({ success: true, ...results }), {
+      return new Response(JSON.stringify({ success: true, idempotency_key: idempotencyKey, ...results }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
