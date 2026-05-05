@@ -365,16 +365,16 @@ async function mycaseApiFetch(
   method: string,
   path: string,
   apiKey: string,
-  body?: any
+  body?: any,
+  idempotencyKey?: string
 ): Promise<any> {
   const baseUrl = 'https://api.mycase.com/v2';
-  const opts: RequestInit = {
-    method,
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
   };
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+  const opts: RequestInit = { method, headers };
   if (body) opts.body = JSON.stringify(body);
 
   for (let attempt = 0; attempt < 3; attempt++) {
