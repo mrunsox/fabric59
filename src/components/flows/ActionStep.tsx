@@ -2,9 +2,18 @@ import { useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { FlowDefinition, FlowTemplate } from "@/lib/flow-templates/adapter";
 import { connectorsForTemplate, getConnector, type ConnectorKey } from "@/data/connector-actions";
+
+const CAP_LABELS: Record<string, string> = {
+  supportsActionFlows: "Actions",
+  supportsLookupFlows: "Lookups",
+  supportsWebhookRelay: "Webhook relay",
+  supportsCallbackTaskFlows: "Callbacks",
+  supportsTwoWaySync: "Two-way sync",
+};
 
 export function ActionStep({
   definition,
