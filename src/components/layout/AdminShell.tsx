@@ -21,7 +21,7 @@ import { GuidancePanel } from "@/components/assistant/GuidancePanel";
 export function AdminShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { organization, organizations, switchOrganization, signOut, user, hasPermission } = useAuth();
+  const { organization, organizations, switchOrganization, signOut, user, hasPermission, isMasterAdmin } = useAuth();
   const [docsOpen, setDocsOpen] = useState(false);
   const [guidanceOpen, setGuidanceOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
