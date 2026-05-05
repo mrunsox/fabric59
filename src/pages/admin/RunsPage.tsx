@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Activity, RotateCw, AlertTriangle, ShieldAlert, HelpCircle } from "lucide-react";
+import { Activity, RotateCw, AlertTriangle, ShieldAlert, HelpCircle, Search, X, Link2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { classifyError, type RetryClass } from "@/lib/flow-runner/retry-classification";
 
