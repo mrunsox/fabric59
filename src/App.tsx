@@ -94,6 +94,7 @@ import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import TreeEditorPage from "@/pages/admin/TreeEditorPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
 import DesignSystemPage from "@/pages/admin/DesignSystemPage";
+import DevGuidePage from "@/pages/admin/DevGuidePage";
 import NotFound from "./pages/NotFound";
 
 // Integration core pages
@@ -272,6 +273,8 @@ const App = () => (
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="design-system" element={<DesignSystemPage />} />
+                <Route path="dev-guide" element={<DevGuidePage />} />
+                <Route path="settings/dev-guide" element={<DevGuidePage />} />
               </Route>
             </Route>
 
