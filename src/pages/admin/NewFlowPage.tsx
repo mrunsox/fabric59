@@ -10,6 +10,7 @@ import { Sparkles, ArrowLeft, Loader2 } from "lucide-react";
 import { listTemplatesSync } from "@/lib/flow-templates/adapter";
 import { toast } from "sonner";
 import type { FlowTemplate } from "@/data/flow-templates";
+import { connectorsForTemplate } from "@/data/connector-actions";
 
 export default function NewFlowPage() {
   const navigate = useNavigate();
@@ -62,6 +63,8 @@ export default function NewFlowPage() {
         {templates.map((t) => {
           const Icon = (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[t.icon] || Icons.Workflow;
           const isCreating = creating === t.key;
+          const compatible = connectorsForTemplate(t.key);
+          const noConnectors = compatible.length === 0;
           return (
             <Card key={t.key} className="hover:border-primary/40 transition-colors flex flex-col">
               <CardHeader>
@@ -74,14 +77,25 @@ export default function NewFlowPage() {
               </CardHeader>
               <CardContent className="flex-1 flex flex-col gap-4">
                 <p className="text-sm text-muted-foreground flex-1">{t.description}</p>
-                <div className="flex flex-wrap gap-1">
-                  {t.supportedConnectors.map((c) => (
-                    <Badge key={c} variant="secondary" className="text-xs">{c}</Badge>
-                  ))}
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                    Compatible connectors
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {noConnectors ? (
+                      <Badge variant="outline" className="text-xs text-muted-foreground">
+                        None available
+                      </Badge>
+                    ) : (
+                      compatible.map((c) => (
+                        <Badge key={c.key} variant="secondary" className="text-xs">{c.name}</Badge>
+                      ))
+                    )}
+                  </div>
                 </div>
-                <Button onClick={() => create(t)} disabled={!!creating}>
+                <Button onClick={() => create(t)} disabled={!!creating || noConnectors}>
                   {isCreating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                  Use this template
+                  {noConnectors ? "No connectors support this" : "Use this template"}
                 </Button>
               </CardContent>
             </Card>
