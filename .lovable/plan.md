@@ -1,68 +1,60 @@
-# Dev Guide page (Superadmin → Settings)
+# Dev Guide architecture flowchart
 
-Internal developer reference for the Five9-native legal integration platform. Reachable from `Superadmin Dashboard → Settings → Dev Guide` and at `/admin/dev-guide`.
+Add a visual architecture flowchart to the existing internal `/admin/dev-guide` page so the dev team can understand the Five9 → Fabric59 → Legal systems chain at a glance.
 
-## 1. New page: `src/pages/admin/DevGuidePage.tsx`
+## Approach
 
-Docs-style layout with a sticky left section nav (active section tracked via `IntersectionObserver`) and a max-width content column. Uses the same admin shell, semantic tokens, and Card components as `RunsPage` / `SettingsPage`. Reuses the exact terminology used in the flow builder: **Trigger → Filters → Mapping → Action → Failure Policy → Test → Review**, and the entity names **Flow Templates, Flows, Connectors, Connector Capabilities, Connector Actions, Deployments, Runs**.
+Build a **custom React/CSS flowchart** (no new dependencies). Mermaid isn't installed and adding it for one diagram is overkill; React Flow is overkill for a static layered diagram. A semantic-tokened grid of layered "lane" cards with connector arrows fits the Linear-style admin shell, renders crisply in light mode, and stays maintainable (edit an array, the diagram updates).
 
-Top of page: an "Internal" badge plus the developer-facing summary callout from the brief.
+## What to build
 
-The chain is stated explicitly and consistently across sections:
+### 1. New component: `src/components/dev-guide/ArchitectureFlowchart.tsx`
 
-```
-Five9 event ─► Flow Template ─► Flow (Trigger → Filters → Mapping → Action → Failure Policy)
-                                       │                                      │
-                                       ▼                                      ▼
-                                 Deployment scope                Connector instance + Capability + Action
-                                       │                                      │
-                                       └──────────────► Run ──────────────────┘
-                                          request/response, idempotency_key,
-                                          source_event_id, retry_of, external_record_id
-```
+A self-contained, responsive layered flowchart with seven horizontal lanes stacked top-to-bottom, each containing labeled chip-style nodes. Between lanes, a thin vertical connector with a downward chevron in primary color indicates flow.
 
-Sections:
+Layers (top → bottom), with a small Lucide icon and a one-line caption per lane:
 
-1. **Overview** — what Fabric59 is becoming, why Five9 is the event spine, why legal systems (Clio, MyCase, Lawmatics, Litify, CosmoLex, PracticePanther, Smokeball) are connectors, why the product is template- and flow-driven. Calls out that the same architecture must serve client-owned Five9 accounts and shared workspace Five9.
-2. **Core architecture** — defines each entity in the chain (Five9 event → Flow Template → Flow → Deployment → Connector + Capability + Action → Run) with one-line definitions and the ASCII diagram above.
-3. **Flow types** — the five templates, each with Trigger / Purpose / Input shape / Output shape:
-   - Disposition Webhook Flow
-   - CRM Action Flow
-   - Inbound Lookup Flow
-   - Callback / Task Flow
-   - Custom Relay Flow
-4. **Connector model** — connector type, auth/config state, supported actions, capabilities, health checks. Examples: Clio, MyCase, Webhook, Custom HTTP. Notes that capabilities gate which templates and actions are selectable in the FlowBuilder.
-5. **Deployment model** — why a saved flow is not live, scope dimensions (workspace, client, Five9 domain, campaign, queue, disposition, connector instance pinning), and why scope must support both shared and client-owned Five9.
-6. **Runs and reliability** — `request_payload`, `response_payload`, `source_event_id`, `idempotency_key` (sha256 of `deployment_id:source_event_id`, reused on replay), `retry_of` chain, retry classification (retriable / non-retriable / unknown), `external_record_id`, Run Report export (JSON/CSV) bundling the full retry chain.
-7. **MVP build priorities** — ordered: template selector → template-aware FlowBuilder → webhook/Custom HTTP execution with test-mode dispatch preview → Deployments scoping → Runs UI with retry/replay + idempotency-key search + Run Report → Connector capabilities surface → CRM action stubs → real CRM actions.
-8. **Guardrails** — explicit "do not" list: no one-off Clio/MyCase admin pages, no canvas/node builder this phase, no breaking schema rewrites, no per-CRM mega-builders, no scope creep.
+1. **Five9 event source** (`PhoneIncoming`) — On Call Dispositioned · On Call Ended · Callback Requested · Inbound ANI Lookup
+2. **Flow Template** (`LayoutTemplate`) — Disposition Webhook · CRM Action · Inbound Lookup · Callback / Task · Custom Relay
+3. **Configured Flow** (`Workflow`) — Trigger · Filters · Mappings · Action · Failure Policy · Test / Review
+4. **Deployment Scope** (`Target`) — Workspace · Client · Five9 Domain · Campaign · Queue · Disposition Conditions
+5. **Connector Layer** (`Plug`) — Clio · MyCase · Smokeball · Webhook · Custom HTTP · Future Connectors
+6. **Execution Run** (`Activity`) — Request Payload · Response Payload · Success / Failure · Retry / Replay · Idempotency / External Record
+7. **Target Outcomes** (`CheckCircle2`) — Create/Update Contact · Create Matter/Case · Create Task · Create Note/Activity · Return Screen-Pop Context · Send Webhook Payload
 
-Content is embedded in the component for now but structured as data arrays (one entry per flow type, one per section) so it can move to markdown or a CMS later without touching layout.
+Visual structure:
 
-## 2. Routing in `src/App.tsx`
+- Each lane is a rounded card with a header row (icon + lane name + caption) and a flex-wrap row of chip nodes (small bordered pills using `bg-secondary/40`, `border-border/60`).
+- Between lanes: a centered 24px-tall vertical line in `bg-border` topped by a `ChevronDown` glyph in `text-primary`, communicating directional flow without an SVG arrow library.
+- The Connector lane and Deployment lane both feed into Execution; this fan-in is annotated with a small caption under the arrow ("Deployment scope + Connector resolve at run time").
+- Container: `border border-border/60 rounded-xl bg-card p-4 sm:p-6` with `overflow-x-auto` for narrow viewports. Chip rows use `flex-wrap gap-2` and are readable at the current admin width (1202px) without horizontal scroll.
 
-Inside the existing admin route group, add:
+Color use: cyan primary only on the chevrons, lane icons, and lane name. Chips and lane cards use neutral semantic tokens. No raw hex colors. Fully built from semantic tokens so it inherits future theme work.
 
-```tsx
-<Route path="dev-guide" element={<DevGuidePage />} />
-<Route path="settings/dev-guide" element={<DevGuidePage />} />
-```
+A short legend strip below the diagram (3 inline items): primary chevron = directional flow · neutral chip = entity / value · stacked lane = system layer.
 
-Both `/admin/dev-guide` and `/admin/settings/dev-guide` resolve to the same page so the Settings deep-link and a direct URL both work.
+### 2. Caption block under the diagram
 
-## 3. Surface under Settings — `src/pages/admin/SettingsPage.tsx`
+Render the brief's prose verbatim:
 
-The existing Settings page uses a `Tabs` strip. Add a new **Dev Guide** tab (gated to master admins via `isMasterAdmin`) whose content is a single intro Card describing what the guide is, plus a primary "Open Dev Guide" button that navigates to `/admin/dev-guide`. This satisfies "easy to find under Settings → Dev Guide" without bloating SettingsPage with the full doc body.
+> Fabric59 uses Five9 as the event source and orchestration entry point. Admins choose a flow template, configure logic and mappings, scope where the flow is deployed, and route actions through reusable connectors such as Clio, MyCase, Smokeball, or generic webhook/HTTP targets. Every execution is tracked as a run so the system can support monitoring, retry, replay, and safe connector behavior over time.
+
+Plus a one-line reinforcement: *Fabric59 is a reusable Five9-native integration hub, not a one-off Clio connector.*
+
+### 3. Mount it in `src/pages/admin/DevGuidePage.tsx`
+
+Insert a new **"Architecture flowchart"** section as the second section (right after Overview, before Core architecture) so the visual primes the rest of the doc. Add it to the sticky section nav with an icon (`GitBranch`) and id `flowchart`. Section body = `<ArchitectureFlowchart />` followed by the caption block.
 
 ## Acceptance check
 
-- Master admins see a **Dev Guide** tab in Superadmin Settings; the button opens the dedicated page.
-- `/admin/dev-guide` renders the full guide with working anchor nav and active-section highlighting.
-- Five9 → Flow Template → Flow → Deployment → Connector → Run chain is stated identically in the diagram, the architecture section, and the flow-type entries; terminology matches the FlowBuilder steps.
-- Visual style matches the rest of the admin shell (semantic tokens only, no custom colors).
+- The Dev Guide shows a layered flowchart covering all seven layers in the brief, each with the listed nodes.
+- Diagram renders cleanly at 1202px and remains usable down to mobile (chips wrap, container scrolls horizontally only as a last resort).
+- All chips and labels match the FlowBuilder terminology already used in the rest of the guide.
+- Caption block reinforces "reusable integration hub, not a one-off Clio connector".
+- Uses semantic tokens only; no hex colors, no new dependencies.
 
 ## Out of scope
 
-- Markdown/CMS backing (structure-only; content stays in the component).
-- Public `/dev-guide` route (admin-only as specified).
-- Editing UI for the doc content.
+- Mermaid runtime, React Flow, or any diagramming library.
+- Interactivity (clicking nodes, zoom/pan).
+- Editing the diagram from the UI.
