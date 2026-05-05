@@ -9,7 +9,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, RotateCcw, ClipboardList, CheckCircle2, Circle, PlayCircle } from "lucide-react";
+import { ChevronDown, RotateCcw, ClipboardList, CheckCircle2, Circle, PlayCircle, KeyRound, Copy, Eye, EyeOff, ExternalLink, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   FEATURE_PLAYBOOKS,
