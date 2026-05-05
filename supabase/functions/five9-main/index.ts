@@ -206,16 +206,16 @@ async function clioApiFetch(
   method: string,
   path: string,
   accessToken: string,
-  body?: any
+  body?: any,
+  idempotencyKey?: string
 ): Promise<any> {
   const baseUrl = 'https://app.clio.com/api/v4';
-  const opts: RequestInit = {
-    method,
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
   };
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+  const opts: RequestInit = { method, headers };
   if (body) opts.body = JSON.stringify(body);
 
   for (let attempt = 0; attempt < 3; attempt++) {
