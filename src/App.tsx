@@ -115,8 +115,7 @@ import RunDetailPage from "@/pages/admin/RunDetailPage";
 import TemplatesPage from "@/pages/admin/TemplatesPage";
 import TemplateDetailPage from "@/pages/admin/TemplateDetailPage";
 
-// Master admin pages
-import MasterDashboardPage from "@/pages/master/MasterDashboardPage";
+// Platform admin pages (mounted under /superadmin)
 import OrganizationsOverviewPage from "@/pages/master/OrganizationsOverviewPage";
 import UsersManagementPage from "@/pages/master/UsersManagementPage";
 

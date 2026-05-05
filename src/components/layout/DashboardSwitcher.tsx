@@ -20,7 +20,7 @@ export function DashboardSwitcher({ current }: Props) {
 
       {isMasterAdmin && (
         <Link
-          to="/master"
+          to="/superadmin"
           className={cn(
             "flex items-center gap-2 rounded-md px-2.5 py-2 text-xs font-medium transition-colors",
             current === "master"
@@ -29,7 +29,7 @@ export function DashboardSwitcher({ current }: Props) {
           )}
         >
           <Settings2 className="h-3.5 w-3.5" />
-          System Admin
+          Platform Admin
         </Link>
       )}
 

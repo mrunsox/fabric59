@@ -22,8 +22,8 @@ export function SuperadminShell() {
           <div className="flex items-center gap-2">
             <Fabric59Icon size="sm" />
             <div className="flex flex-col">
-              <span className="font-semibold text-sm text-foreground leading-tight">Superadmin</span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Feature Vault</span>
+              <span className="font-semibold text-sm text-foreground leading-tight">Platform Admin</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Superadmin</span>
             </div>
           </div>
         </div>
