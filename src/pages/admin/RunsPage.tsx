@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Activity, RotateCw, AlertTriangle, ShieldAlert, HelpCircle } from "lucide-react";
+import { Activity, RotateCw, AlertTriangle, ShieldAlert, HelpCircle, Search, X, Link2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { classifyError, type RetryClass } from "@/lib/flow-runner/retry-classification";
 
@@ -27,6 +28,7 @@ interface Run {
   deployment_id: string;
   retry_of: string | null;
   external_record_id: string | null;
+  idempotency_key: string | null;
 }
 
 export default function RunsPage() {
@@ -36,13 +38,14 @@ export default function RunsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [depFilter, setDepFilter] = useState("all");
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const { data: runs = [] } = useQuery({
     queryKey: ["runs", organization?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("deployment_runs")
-        .select("id, status, started_at, finished_at, error, deployment_id, retry_of, external_record_id")
+        .select("id, status, started_at, finished_at, error, deployment_id, retry_of, external_record_id, idempotency_key")
         .eq("organization_id", organization!.id)
         .order("started_at", { ascending: false })
         .limit(200);
@@ -52,10 +55,30 @@ export default function RunsPage() {
   });
 
   const deployments = useMemo(() => Array.from(new Set(runs.map((r) => r.deployment_id))), [runs]);
-  const filtered = runs.filter((r) =>
-    (statusFilter === "all" || r.status === statusFilter) &&
-    (depFilter === "all" || r.deployment_id === depFilter)
-  );
+  const q = search.trim().toLowerCase();
+  const filtered = runs.filter((r) => {
+    if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    if (depFilter !== "all" && r.deployment_id !== depFilter) return false;
+    if (q) {
+      const hay = [r.idempotency_key, r.retry_of, r.id, r.external_record_id]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Group related runs: a run is "related" if it shares idempotency_key OR is in a retry_of chain
+  const relatedGroupId = (r: Run) => r.idempotency_key || r.retry_of || r.id;
+  const groupCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    runs.forEach((r) => {
+      const k = relatedGroupId(r);
+      m.set(k, (m.get(k) || 0) + 1);
+    });
+    return m;
+  }, [runs]);
 
   const retry = async (runId: string) => {
     setRetrying(runId);
@@ -85,7 +108,25 @@ export default function RunsPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative flex-1 min-w-[260px] max-w-md">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by idempotency key, retry_of, run id, external id…"
+            className="pl-8 pr-8"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -99,6 +140,11 @@ export default function RunsPage() {
             {deployments.map((d) => <SelectItem key={d} value={d}>{d.slice(0, 8)}…</SelectItem>)}
           </SelectContent>
         </Select>
+        {q && (
+          <span className="text-xs text-muted-foreground">
+            {filtered.length} of {runs.length} match
+          </span>
+        )}
       </div>
 
       <Card>
@@ -112,6 +158,8 @@ export default function RunsPage() {
                 const verdict = r.status === "failed" ? classifyError(r.error) : null;
                 const meta = verdict ? CLASS_META[verdict.cls] : null;
                 const retryDisabled = retrying === r.id || verdict?.cls === "non_retriable";
+                const groupKey = relatedGroupId(r);
+                const relatedCount = groupCounts.get(groupKey) || 1;
                 return (
                   <li key={r.id} className="px-6 py-3 flex items-center justify-between gap-4">
                     <div className="flex-1 cursor-pointer min-w-0" onClick={() => navigate(`/admin/runs/${r.id}`)}>
@@ -121,6 +169,11 @@ export default function RunsPage() {
                         {r.retry_of ? ` · retry of ${r.retry_of.slice(0, 8)}…` : ""}
                         {r.external_record_id ? ` · ext ${r.external_record_id}` : ""}
                       </p>
+                      {r.idempotency_key && (
+                        <p className="text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5" title={r.idempotency_key}>
+                          idem: {r.idempotency_key}
+                        </p>
+                      )}
                       {r.error && (
                         <div className="mt-1 flex items-start gap-2">
                           {meta && (
@@ -134,6 +187,29 @@ export default function RunsPage() {
                         </div>
                       )}
                     </div>
+                    {relatedCount > 1 && (
+                      <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSearch(groupKey);
+                              }}
+                            >
+                              <Link2 className="h-3 w-3 mr-1" />
+                              {relatedCount} related
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-xs text-xs">
+                            Filter to runs sharing this idempotency key or retry chain.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                     <Badge variant={r.status === "succeeded" ? "default" : r.status === "failed" ? "destructive" : "secondary"}>{r.status}</Badge>
                     {(r.status === "failed" || r.status === "succeeded") && (
                       <TooltipProvider delayDuration={150}>
