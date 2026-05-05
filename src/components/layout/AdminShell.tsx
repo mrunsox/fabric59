@@ -43,7 +43,9 @@ export function AdminShell() {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 bg-sidebar border-r border-sidebar-border/40 flex flex-col py-3 transition-[width,transform] duration-200",
-          expanded ? "w-56 items-stretch px-2" : "w-16 items-center",
+          expanded
+            ? "w-56 items-stretch px-2"
+            : "w-56 items-stretch px-2 lg:w-16 lg:items-center lg:px-0",
           "lg:translate-x-0",
           mobileNavOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
@@ -103,23 +105,30 @@ export function AdminShell() {
           })}
         </nav>
 
-        <div className={cn("mt-auto flex flex-col gap-2 pb-2", expanded ? "items-stretch" : "items-center")}>
+        <div className={cn("mt-auto flex flex-col gap-2 pb-2", expanded ? "items-stretch" : "lg:items-center items-stretch")}>
           {isMasterAdmin && (
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
                 <NavLink
                   to="/superadmin"
+                  onClick={() => setMobileNavOpen(false)}
                   className={cn(
                     "flex items-center transition-colors rounded-xl bg-primary/10 text-primary hover:bg-primary/15",
-                    expanded ? "h-10 w-full px-3 gap-3 text-sm" : "w-12 h-12 justify-center"
+                    // On mobile drawer, always show full-width with label.
+                    // On desktop, follow the rail's expanded/collapsed state.
+                    expanded
+                      ? "h-10 w-full px-3 gap-3 text-sm"
+                      : "h-10 w-full px-3 gap-3 text-sm lg:w-12 lg:h-12 lg:px-0 lg:gap-0 lg:justify-center"
                   )}
                   aria-label="Platform Admin"
                 >
                   <ShieldCheck className="h-4 w-4 flex-shrink-0" />
-                  {expanded && <span className="font-medium truncate">Platform Admin</span>}
+                  <span className={cn("font-medium truncate", !expanded && "lg:hidden")}>
+                    Platform Admin
+                  </span>
                 </NavLink>
               </TooltipTrigger>
-              {!expanded && <TooltipContent side="right">Platform Admin</TooltipContent>}
+              {!expanded && <TooltipContent side="right" className="hidden lg:block">Platform Admin</TooltipContent>}
             </Tooltip>
           )}
 
