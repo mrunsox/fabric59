@@ -274,8 +274,6 @@ const App = () => (
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="design-system" element={<DesignSystemPage />} />
-                <Route path="dev-guide" element={<DevGuidePage />} />
-                <Route path="settings/dev-guide" element={<DevGuidePage />} />
               </Route>
             </Route>
 
