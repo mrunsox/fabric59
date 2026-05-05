@@ -97,7 +97,23 @@ export default function RunDetailPage() {
           )}
           {run.external_record_id && <p><span className="text-muted-foreground">External record:</span> {run.external_record_id}</p>}
           {run.retry_of && <p><span className="text-muted-foreground">Retry of:</span> {run.retry_of}</p>}
-          {run.error && <p className="col-span-2 text-destructive">Error: {run.error}</p>}
+          {run.error && (() => {
+            const verdict = classifyError(run.error);
+            const meta = CLASS_META[verdict.cls];
+            return (
+              <div className="col-span-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${meta.tone}`}>
+                    <meta.Icon className="h-3.5 w-3.5" />
+                    {meta.label}
+                    {verdict.status ? ` · ${verdict.status}` : ""}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{verdict.reason}</span>
+                </div>
+                <p className="text-xs text-destructive font-mono break-all">{run.error}</p>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
