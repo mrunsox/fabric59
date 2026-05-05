@@ -4,8 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Copy, Check } from "lucide-react";
+import { RotateCw, Copy, Check, AlertTriangle, ShieldAlert, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import { classifyError, type RetryClass } from "@/lib/flow-runner/retry-classification";
+
+const CLASS_META: Record<RetryClass, { label: string; tone: string; Icon: typeof AlertTriangle }> = {
+  retriable: { label: "Retriable", tone: "border-amber-500/40 bg-amber-500/10 text-amber-700", Icon: AlertTriangle },
+  non_retriable: { label: "Non-retriable", tone: "border-destructive/40 bg-destructive/10 text-destructive", Icon: ShieldAlert },
+  unknown: { label: "Unknown", tone: "border-border bg-secondary/40 text-muted-foreground", Icon: HelpCircle },
+};
 
 interface RunData {
   id: string;
