@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -95,6 +97,8 @@ export default function LegalConnectPage() {
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
 
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const clientId = selectedClient === "all" ? undefined : selectedClient;
 
   const { data: clients, isLoading: clientsLoading } = useLegalConnectClients();
@@ -122,6 +126,40 @@ export default function LegalConnectPage() {
 
   const handleSetupComplete = (config: { provider: string; campaignTypes: string[]; policyDefaults: any }) => {
     toast.success(`Setup checklist generated for ${resolvedClientName ?? "client"} with ${config.provider}`);
+    // Refresh data so any new connection / campaign created during setup appears.
+    queryClient.invalidateQueries({ queryKey: ["legal-connect"] });
+    queryClient.invalidateQueries({ queryKey: ["legal-connections"] });
+    queryClient.invalidateQueries({ queryKey: ["legal-campaigns"] });
+  };
+
+  // Connect a provider for the currently-selected client.
+  // If no client is selected, the user is sent to pick one. Without a client
+  // there is no scope to write a connection against, so silently opening the
+  // setup wizard would be misleading.
+  const handleConnectProvider = (provider: string) => {
+    if (!clientId) {
+      toast.info("Pick a specific client first to connect a provider.");
+      setTab("overview");
+      return;
+    }
+    // Send the user to the per-client legal connect setup page for the chosen provider.
+    navigate(`/admin/clients/${clientId}/legal-connect/setup/${provider}`);
+  };
+
+  // Refresh a single connection's status by invalidating the connections query.
+  const handleRefreshConnection = (provider: string) => {
+    queryClient.invalidateQueries({ queryKey: ["legal-connections"] });
+    toast.success(`Refreshing ${provider} connection status…`);
+  };
+
+  // Open the per-client view for a connection.
+  const handleViewConnection = (conn: { client_id?: string | null }) => {
+    const target = conn.client_id ?? clientId;
+    if (!target) {
+      toast.info("This connection is not scoped to a client. Open it from the per-client view.");
+      return;
+    }
+    navigate(`/admin/clients/${target}/legal-connect`);
   };
 
   const handleApprove = (id: string) => {
@@ -332,7 +370,12 @@ export default function LegalConnectPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base capitalize">{provider === "five9" ? "Five9" : provider === "clio" ? "Clio" : "MyCase"}</CardTitle>
-                      <Button size="sm" variant="outline" className="text-xs">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={() => handleConnectProvider(provider)}
+                      >
                         <Plug className="h-3.5 w-3.5 mr-1.5" /> Connect
                       </Button>
                     </div>
@@ -364,8 +407,24 @@ export default function LegalConnectPage() {
                             </div>
                             <StatusBadge status={conn.status} />
                             <div className="flex gap-1">
-                              <Button size="sm" variant="ghost" className="text-xs h-7"><RefreshCw className="h-3 w-3" /></Button>
-                              <Button size="sm" variant="ghost" className="text-xs h-7"><Eye className="h-3 w-3" /></Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-xs h-7"
+                                onClick={() => handleRefreshConnection(provider)}
+                                aria-label={`Refresh ${provider} connection`}
+                              >
+                                <RefreshCw className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-xs h-7"
+                                onClick={() => handleViewConnection(conn as any)}
+                                aria-label={`View ${provider} connection`}
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
                         ))}

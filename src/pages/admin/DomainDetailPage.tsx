@@ -321,12 +321,27 @@ export default function DomainDetailPage() {
                   <div>
                     <p className="text-sm font-medium">Credentials are configured</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      This domain is connected. Click below to update the credentials.
+                      This domain is connected. Re-test the connection or update the stored credentials.
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setCredentialsUnlocked(true)}>
-                    Edit Credentials
-                  </Button>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTestConnection}
+                      disabled={testConnection.isPending || !domain.five9_username}
+                    >
+                      {testConnection.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plug className="mr-2 h-4 w-4" />
+                      )}
+                      Test Connection
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setCredentialsUnlocked(true)}>
+                      Edit Credentials
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 canManage && (

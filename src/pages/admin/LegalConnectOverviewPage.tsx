@@ -15,15 +15,19 @@ const PROVIDERS = [
 ];
 
 interface ProviderStat { connected: number; total: number; }
+type Health = "ok" | "degraded" | "down" | "unknown";
 
 export default function LegalConnectOverviewPage() {
   const { organization } = useAuth();
   const [providerStats, setProviderStats] = useState<Record<string, ProviderStat>>({});
   const [recentFailures, setRecentFailures] = useState<any[]>([]);
+  const [inboundHealth, setInboundHealth] = useState<Health>("unknown");
+  const [callbackHealth, setCallbackHealth] = useState<Health>("unknown");
 
   useEffect(() => {
     if (!organization) return;
-    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const since24 = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     supabase.from("tenants").select("id, integration_configs").eq("organization_id", organization.id).then(({ data }: any) => {
       const stats: Record<string, ProviderStat> = {};
@@ -37,8 +41,59 @@ export default function LegalConnectOverviewPage() {
       setProviderStats(stats);
     });
 
-    supabase.from("five9_event_log").select("id, created_at, event_type, error, resolved_provider").eq("organization_id", organization.id).eq("status", "failed").gte("created_at", since).order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecentFailures(data || []));
+    supabase.from("five9_event_log").select("id, created_at, event_type, error, resolved_provider").eq("organization_id", organization.id).eq("status", "failed").gte("created_at", since7).order("created_at", { ascending: false }).limit(5).then(({ data }) => setRecentFailures(data || []));
+
+    // Compute real inbound webhook health from the last 24h of five9_event_log.
+    Promise.all([
+      supabase.from("five9_event_log").select("id", { count: "exact", head: true }).eq("organization_id", organization.id).gte("created_at", since24),
+      supabase.from("five9_event_log").select("id", { count: "exact", head: true }).eq("organization_id", organization.id).eq("status", "failed").gte("created_at", since24),
+    ]).then(([all, failed]: any) => {
+      const total = all.count ?? 0;
+      const fail = failed.count ?? 0;
+      if (total === 0) {
+        setInboundHealth("unknown");
+      } else {
+        const rate = fail / total;
+        setInboundHealth(rate < 0.05 ? "ok" : rate < 0.25 ? "degraded" : "down");
+      }
+    });
+
+    // Provider callback health — derive from sync_jobs over last 24h if available.
+    (supabase as any)
+      .from("legal_sync_jobs")
+      .select("status, created_at")
+      .eq("organization_id", organization.id)
+      .gte("created_at", since24)
+      .then(({ data, error }: any) => {
+        if (error || !data) {
+          setCallbackHealth("unknown");
+          return;
+        }
+        const total = data.length;
+        if (total === 0) {
+          setCallbackHealth("unknown");
+          return;
+        }
+        const fail = data.filter((j: any) => j.status === "failed" || j.status === "dead_letter").length;
+        const rate = fail / total;
+        setCallbackHealth(rate < 0.05 ? "ok" : rate < 0.25 ? "degraded" : "down");
+      });
   }, [organization]);
+
+  const healthLabel = (h: Health) => {
+    switch (h) {
+      case "ok":
+        return { label: "OK", className: "bg-success/10 text-success border-success/30" };
+      case "degraded":
+        return { label: "Degraded", className: "bg-warning/10 text-warning border-warning/30" };
+      case "down":
+        return { label: "Down", className: "bg-destructive/10 text-destructive border-destructive/30" };
+      default:
+        return { label: "No traffic 24h", className: "bg-muted text-muted-foreground border-border" };
+    }
+  };
+  const inb = healthLabel(inboundHealth);
+  const cb = healthLabel(callbackHealth);
 
   return (
     <div className="space-y-8">
@@ -79,8 +134,14 @@ export default function LegalConnectOverviewPage() {
         <Card>
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><Webhook className="h-4 w-4 text-primary" />Webhook Health</CardTitle></CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <div className="flex items-center justify-between"><span className="text-muted-foreground">Inbound webhooks</span><Badge variant="outline" className="bg-success/10 text-success border-success/30">OK</Badge></div>
-            <div className="flex items-center justify-between"><span className="text-muted-foreground">Provider callbacks</span><Badge variant="outline" className="bg-success/10 text-success border-success/30">OK</Badge></div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Inbound webhooks (24h)</span>
+              <Badge variant="outline" className={inb.className}>{inb.label}</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Provider callbacks (24h)</span>
+              <Badge variant="outline" className={cb.className}>{cb.label}</Badge>
+            </div>
             <Button variant="outline" size="sm" asChild className="w-full mt-3">
               <Link to="/admin/integrations">Open integrations</Link>
             </Button>

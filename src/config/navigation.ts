@@ -71,6 +71,11 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     href: "/admin/connectors",
     permission: "integrations",
     matches: ["/admin/connectors", "/admin/legal-connect", "/admin/integrations", "/admin/mappings"],
+    subNav: [
+      { label: "Overview", href: "/admin/connectors" },
+      { label: "Legal Connect", href: "/admin/legal-connect" },
+      { label: "Mappings", href: "/admin/mappings" },
+    ],
   },
   {
     key: "flows",
