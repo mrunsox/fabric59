@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { FlowDefinition, FlowTemplate } from "@/lib/flow-templates/adapter";
 import { connectorsForTemplate, getConnector, type ConnectorKey } from "@/data/connector-actions";
+import { HealthCheckPanel } from "./HealthCheckPanel";
 
 const CAP_LABELS: Record<string, string> = {
   supportsActionFlows: "Actions",
@@ -97,6 +98,8 @@ export function ActionStep({
           </div>
         </div>
       )}
+
+      <HealthCheckPanel connector={connector} actionKey={action.action} />
 
       {isHttp && (
         <div className="space-y-3 rounded-md border border-border/50 p-4 bg-secondary/20">

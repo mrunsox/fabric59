@@ -2,6 +2,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import type { FlowDefinition, FlowTemplate } from "@/lib/flow-templates/adapter";
+import { getConnector } from "@/data/connector-actions";
+import { HealthCheckPanel } from "./HealthCheckPanel";
 
 export function FlowSummary({
   definition,
@@ -15,8 +17,10 @@ export function FlowSummary({
   template?: FlowTemplate | null;
 }) {
   const a = definition.action;
+  const connector = getConnector(a?.connector || undefined);
   return (
     <div className="space-y-4">
+      <HealthCheckPanel connector={connector} actionKey={a?.action} />
       <div className="flex flex-wrap items-center gap-2 text-sm">
         {template && <Badge variant="secondary">Template: {template.name}</Badge>}
         <Badge variant="outline">Trigger: {definition.trigger.type}</Badge>
