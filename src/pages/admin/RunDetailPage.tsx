@@ -102,6 +102,22 @@ export default function RunDetailPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Run detail</h1>
         <div className="flex items-center gap-2">
           <Badge variant={run.status === "succeeded" ? "default" : run.status === "failed" ? "destructive" : "secondary"}>{run.status}</Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" disabled={exporting}>
+                {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1" />}
+                Run report
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => exportReport("json")}>
+                <FileJson className="h-3.5 w-3.5 mr-2" /> Download JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportReport("csv")}>
+                <FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button size="sm" variant="outline" onClick={retry} disabled={retrying}>
             <RotateCw className={`h-3.5 w-3.5 mr-1 ${retrying ? "animate-spin" : ""}`} /> Replay
           </Button>
