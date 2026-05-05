@@ -44,7 +44,7 @@ export default function SystemAccessPage() {
       }
 
       // Master admin verified - redirect to master dashboard
-      navigate("/master", { replace: true });
+      navigate("/superadmin", { replace: true });
     } catch {
       // Silent rejection on any error
       navigate("/login", { replace: true });

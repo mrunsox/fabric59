@@ -83,9 +83,9 @@ export function InviteMemberDialog({ open, onOpenChange }: InviteMemberDialogPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Invite Team Member</DialogTitle>
+          <DialogTitle>Invite to Workspace</DialogTitle>
           <DialogDescription>
-            Send an email invitation to add a new member to your organization.
+            Send an email invitation to add a new member to this workspace.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">

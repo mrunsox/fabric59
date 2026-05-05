@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Organization, OrganizationMember, OrgRole } from "@/types/database";
+import { isWorkspaceAdmin as computeIsWorkspaceAdmin, type WorkspaceRole } from "@/config/hierarchy";
 
 const DEV_USER = { id: "dev-user", email: "dev@fabric59.com" } as User;
 const DEV_ORG: Organization = {
@@ -40,7 +41,15 @@ interface AuthContextType {
   organizations: Organization[];
   isLoading: boolean;
   isAuthenticated: boolean;
+  /**
+   * @deprecated Use `workspaceRole` (and `isWorkspaceAdmin`) from useAuth().
+   * Kept temporarily for backward compatibility — see follow-up cleanup ticket.
+   */
   orgRole: OrgRole | null;
+  /** Workspace-scoped role sourced from organization_members.role. */
+  workspaceRole: WorkspaceRole | null;
+  /** True when workspaceRole is 'owner' or 'admin'. */
+  isWorkspaceAdmin: boolean;
   isMasterAdmin: boolean;
   devMode: boolean;
   permissions: string[];
@@ -323,6 +332,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading: devMode ? false : isAuthLoading || isOrgLoading,
     isAuthenticated: devMode || !!user,
     orgRole: effectiveMembership?.role ?? null,
+    workspaceRole: (effectiveMembership?.role ?? null) as WorkspaceRole | null,
+    isWorkspaceAdmin: computeIsWorkspaceAdmin(effectiveMembership?.role as WorkspaceRole | null | undefined),
     isMasterAdmin: devMode ? false : isMasterAdmin,
     devMode,
     permissions: devMode ? ALL_PERMISSIONS : permissions,

@@ -40,7 +40,7 @@ const LANES: Lane[] = [
   {
     icon: Target,
     name: "Deployment Scope",
-    caption: "Where and when the flow is allowed to fire",
+    caption: "Workspace (organization) and optional Client (tenant) scope",
     chips: ["Workspace", "Client", "Five9 Domain", "Campaign", "Queue", "Disposition Conditions"],
   },
   {

@@ -66,7 +66,7 @@ export default function OnboardingPage() {
   const [createdOrgId, setCreatedOrgId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isMasterAdmin && !organization) navigate("/master", { replace: true });
+    if (isMasterAdmin && !organization) navigate("/superadmin", { replace: true });
   }, [isMasterAdmin, organization, navigate]);
 
   useEffect(() => {
