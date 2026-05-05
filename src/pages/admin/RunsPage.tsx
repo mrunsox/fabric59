@@ -158,6 +158,8 @@ export default function RunsPage() {
                 const verdict = r.status === "failed" ? classifyError(r.error) : null;
                 const meta = verdict ? CLASS_META[verdict.cls] : null;
                 const retryDisabled = retrying === r.id || verdict?.cls === "non_retriable";
+                const groupKey = relatedGroupId(r);
+                const relatedCount = groupCounts.get(groupKey) || 1;
                 return (
                   <li key={r.id} className="px-6 py-3 flex items-center justify-between gap-4">
                     <div className="flex-1 cursor-pointer min-w-0" onClick={() => navigate(`/admin/runs/${r.id}`)}>
@@ -167,6 +169,11 @@ export default function RunsPage() {
                         {r.retry_of ? ` · retry of ${r.retry_of.slice(0, 8)}…` : ""}
                         {r.external_record_id ? ` · ext ${r.external_record_id}` : ""}
                       </p>
+                      {r.idempotency_key && (
+                        <p className="text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5" title={r.idempotency_key}>
+                          idem: {r.idempotency_key}
+                        </p>
+                      )}
                       {r.error && (
                         <div className="mt-1 flex items-start gap-2">
                           {meta && (
@@ -180,6 +187,27 @@ export default function RunsPage() {
                         </div>
                       )}
                     </div>
+                    {relatedCount > 1 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSearch(groupKey);
+                            }}
+                          >
+                            <Link2 className="h-3 w-3 mr-1" />
+                            {relatedCount} related
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="max-w-xs text-xs">
+                          Filter to runs sharing this idempotency key or retry chain.
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                     <Badge variant={r.status === "succeeded" ? "default" : r.status === "failed" ? "destructive" : "secondary"}>{r.status}</Badge>
                     {(r.status === "failed" || r.status === "succeeded") && (
                       <TooltipProvider delayDuration={150}>
