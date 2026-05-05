@@ -19,7 +19,90 @@ import {
   type PlaybookCheck,
   type PlaybookSection,
   type PlaybookStep,
+  type PlaybookCredentialBlock,
 } from "@/config/feature-playbooks";
+
+function CredentialsCard({ block }: { block: PlaybookCredentialBlock }) {
+  const [revealed, setRevealed] = useState<Record<number, boolean>>({});
+  const copy = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`Copied ${label}`);
+    } catch {
+      toast.error("Clipboard unavailable");
+    }
+  };
+  return (
+    <Card className="border-amber-500/30 bg-amber-50/30 dark:bg-amber-950/10">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <KeyRound className="h-4 w-4 text-amber-600" />
+          <CardTitle className="text-base">{block.title}</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {block.description && (
+          <p className="text-sm text-muted-foreground">{block.description}</p>
+        )}
+        {block.warning && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-100/40 dark:bg-amber-950/20 px-3 py-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+            <p className="text-xs text-amber-900 dark:text-amber-200">{block.warning}</p>
+          </div>
+        )}
+        <div className="space-y-1.5">
+          {block.items.map((item, i) => {
+            const isRevealed = !!revealed[i];
+            const display = item.secret && !isRevealed ? "•".repeat(Math.min(item.value.length, 16)) : item.value;
+            return (
+              <div
+                key={i}
+                className="flex items-center gap-2 rounded-lg border border-border/60 bg-card px-3 py-2"
+              >
+                <span className="text-xs font-medium text-muted-foreground w-24 shrink-0">
+                  {item.label}
+                </span>
+                {item.href && !item.secret ? (
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-mono text-primary hover:underline truncate flex items-center gap-1 flex-1 min-w-0"
+                  >
+                    <span className="truncate">{display}</span>
+                    <ExternalLink className="h-3 w-3 shrink-0" />
+                  </a>
+                ) : (
+                  <code className="text-sm font-mono flex-1 min-w-0 truncate">{display}</code>
+                )}
+                {item.secret && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    onClick={() => setRevealed((r) => ({ ...r, [i]: !r[i] }))}
+                    aria-label={isRevealed ? "Hide" : "Reveal"}
+                  >
+                    {isRevealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => copy(item.value, item.label)}
+                  aria-label={`Copy ${item.label}`}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 interface Props {
   slug: string | null | undefined;
