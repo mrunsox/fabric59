@@ -108,7 +108,25 @@ export default function RunsPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative flex-1 min-w-[260px] max-w-md">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by idempotency key, retry_of, run id, external id…"
+            className="pl-8 pr-8"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -122,6 +140,11 @@ export default function RunsPage() {
             {deployments.map((d) => <SelectItem key={d} value={d}>{d.slice(0, 8)}…</SelectItem>)}
           </SelectContent>
         </Select>
+        {q && (
+          <span className="text-xs text-muted-foreground">
+            {filtered.length} of {runs.length} match
+          </span>
+        )}
       </div>
 
       <Card>
