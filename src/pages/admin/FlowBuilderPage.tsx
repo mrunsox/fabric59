@@ -11,39 +11,44 @@ import { FilterStep } from "@/components/flows/FilterStep";
 import { MappingStep } from "@/components/flows/MappingStep";
 import { ActionStep } from "@/components/flows/ActionStep";
 import { FailureStep } from "@/components/flows/FailureStep";
+import { TestStep } from "@/components/flows/TestStep";
 import { FlowSummary } from "@/components/flows/FlowSummary";
 import { Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { getTemplateByKeySync, type FlowDefinition, type FlowTemplate } from "@/lib/flow-templates/adapter";
 
-export interface FlowDefinition {
-  trigger: { type: string; [k: string]: unknown };
-  filters: Array<{ field: string; op: string; value: string }>;
-  mappings: Array<{ source: string; target: string; transform?: string }>;
-  action: { connector: string; action: string; config: Record<string, unknown> } | null;
-  failure: { retries: number; fallback?: string };
-}
+// Re-export for legacy imports
+export type { FlowDefinition };
 
-const STEPS = ["Trigger", "Filters", "Mapping", "Action", "Failure", "Summary"] as const;
+const STEPS = ["Trigger", "Filters", "Mapping", "Action", "Failure", "Test", "Review"] as const;
+
+const EMPTY_DEF: FlowDefinition = {
+  trigger: { type: "call_end" },
+  filters: [],
+  mappings: [],
+  action: null,
+  failure: { retries: 0 },
+};
 
 export default function FlowBuilderPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [status, setStatus] = useState("draft");
-  const [definition, setDefinition] = useState<FlowDefinition>({
-    trigger: { type: "call_end" }, filters: [], mappings: [], action: null, failure: { retries: 0 },
-  });
+  const [definition, setDefinition] = useState<FlowDefinition>(EMPTY_DEF);
+  const [template, setTemplate] = useState<FlowTemplate | null>(null);
   const [stepIdx, setStepIdx] = useState(0);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) { setLoading(false); return; }
     supabase.from("flows").select("*").eq("id", id).maybeSingle().then(({ data }) => {
       if (data) {
         setName(data.name);
         setStatus(data.status);
-        setDefinition(data.definition as unknown as FlowDefinition);
+        setDefinition((data.definition ?? EMPTY_DEF) as unknown as FlowDefinition);
+        setTemplate(getTemplateByKeySync(data.template_type));
       }
       setLoading(false);
     });
@@ -67,6 +72,7 @@ export default function FlowBuilderPage() {
         <div className="flex-1">
           <Label className="text-xs text-muted-foreground">Flow name</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} className="text-2xl font-semibold mt-1 max-w-md" />
+          {template && <p className="text-xs text-muted-foreground mt-1">Template: {template.name}</p>}
         </div>
         <div className="flex items-center gap-2">
           <Badge variant={status === "active" ? "default" : "secondary"}>{status}</Badge>
@@ -86,12 +92,13 @@ export default function FlowBuilderPage() {
       <Card>
         <CardHeader><CardTitle className="text-base">{STEPS[stepIdx]}</CardTitle></CardHeader>
         <CardContent>
-          {stepIdx === 0 && <TriggerStep definition={definition} update={setDefinition} />}
-          {stepIdx === 1 && <FilterStep definition={definition} update={setDefinition} />}
+          {stepIdx === 0 && <TriggerStep definition={definition} update={setDefinition} template={template} />}
+          {stepIdx === 1 && <FilterStep definition={definition} update={setDefinition} template={template} />}
           {stepIdx === 2 && <MappingStep definition={definition} update={setDefinition} />}
-          {stepIdx === 3 && <ActionStep definition={definition} update={setDefinition} />}
+          {stepIdx === 3 && <ActionStep definition={definition} update={setDefinition} template={template} />}
           {stepIdx === 4 && <FailureStep definition={definition} update={setDefinition} />}
-          {stepIdx === 5 && <FlowSummary definition={definition} status={status} setStatus={setStatus} />}
+          {stepIdx === 5 && id && <TestStep flowId={id} definition={definition} />}
+          {stepIdx === 6 && <FlowSummary definition={definition} status={status} setStatus={setStatus} template={template} />}
         </CardContent>
       </Card>
 
