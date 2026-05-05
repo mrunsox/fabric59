@@ -104,6 +104,25 @@ export function AdminShell() {
         </nav>
 
         <div className={cn("mt-auto flex flex-col gap-2 pb-2", expanded ? "items-stretch" : "items-center")}>
+          {isMasterAdmin && (
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <NavLink
+                  to="/superadmin"
+                  className={cn(
+                    "flex items-center transition-colors rounded-xl bg-primary/10 text-primary hover:bg-primary/15",
+                    expanded ? "h-10 w-full px-3 gap-3 text-sm" : "w-12 h-12 justify-center"
+                  )}
+                  aria-label="Platform Admin"
+                >
+                  <ShieldCheck className="h-4 w-4 flex-shrink-0" />
+                  {expanded && <span className="font-medium truncate">Platform Admin</span>}
+                </NavLink>
+              </TooltipTrigger>
+              {!expanded && <TooltipContent side="right">Platform Admin</TooltipContent>}
+            </Tooltip>
+          )}
+
           <Tooltip delayDuration={300}>
             <TooltipTrigger asChild>
               <button
