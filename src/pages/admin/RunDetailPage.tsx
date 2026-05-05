@@ -92,12 +92,21 @@ export default function RunDetailPage() {
               <span className="text-xs uppercase tracking-wider text-muted-foreground">Idempotency key</span>
               <code className="flex-1 font-mono text-xs break-all">{run.idempotency_key}</code>
               <Button size="sm" variant="ghost" className="h-7 px-2" onClick={copyKey}>
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                <span className="ml-1 text-xs">{copied ? "Copied" : "Copy"}</span>
+                {copied === "idem" ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                <span className="ml-1 text-xs">{copied === "idem" ? "Copied" : "Copy"}</span>
               </Button>
             </div>
           )}
-          {run.external_record_id && <p><span className="text-muted-foreground">External record:</span> {run.external_record_id}</p>}
+          {run.external_record_id && (
+            <div className="col-span-2 flex items-center gap-2 rounded-md border border-border/60 bg-secondary/20 px-3 py-2">
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">External record</span>
+              <code className="flex-1 font-mono text-xs break-all">{run.external_record_id}</code>
+              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={copyExt}>
+                {copied === "ext" ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                <span className="ml-1 text-xs">{copied === "ext" ? "Copied" : "Copy"}</span>
+              </Button>
+            </div>
+          )}
           {run.retry_of && <p><span className="text-muted-foreground">Retry of:</span> {run.retry_of}</p>}
           {run.error && (() => {
             const verdict = classifyError(run.error);
