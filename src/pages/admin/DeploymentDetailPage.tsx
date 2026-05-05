@@ -38,7 +38,7 @@ export default function DeploymentDetailPage() {
       if (data) { setDep(data as unknown as Dep); setScopeText(JSON.stringify(data.scope, null, 2)); }
     });
     supabase.from("tenants").select("id, name").eq("organization_id", organization.id).then(({ data }) => setClients(data || []));
-    supabase.from("five9_domains").select("id, name").eq("organization_id", organization.id).then(({ data }) => setDomains((data || []) as Array<{ id: string; name: string }>));
+    supabase.from("five9_domains").select("id, display_name").eq("organization_id", organization.id).then(({ data }) => setDomains((data || []).map((d) => ({ id: d.id, name: d.display_name }))));
     supabase.from("flows").select("id, name, template_type, trigger_type").eq("organization_id", organization.id).then(({ data }) => setFlows(data || []));
   }, [id, organization]);
 
