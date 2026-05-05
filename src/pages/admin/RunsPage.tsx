@@ -38,13 +38,14 @@ export default function RunsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [depFilter, setDepFilter] = useState("all");
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const { data: runs = [] } = useQuery({
     queryKey: ["runs", organization?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("deployment_runs")
-        .select("id, status, started_at, finished_at, error, deployment_id, retry_of, external_record_id")
+        .select("id, status, started_at, finished_at, error, deployment_id, retry_of, external_record_id, idempotency_key")
         .eq("organization_id", organization!.id)
         .order("started_at", { ascending: false })
         .limit(200);
@@ -54,10 +55,30 @@ export default function RunsPage() {
   });
 
   const deployments = useMemo(() => Array.from(new Set(runs.map((r) => r.deployment_id))), [runs]);
-  const filtered = runs.filter((r) =>
-    (statusFilter === "all" || r.status === statusFilter) &&
-    (depFilter === "all" || r.deployment_id === depFilter)
-  );
+  const q = search.trim().toLowerCase();
+  const filtered = runs.filter((r) => {
+    if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    if (depFilter !== "all" && r.deployment_id !== depFilter) return false;
+    if (q) {
+      const hay = [r.idempotency_key, r.retry_of, r.id, r.external_record_id]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // Group related runs: a run is "related" if it shares idempotency_key OR is in a retry_of chain
+  const relatedGroupId = (r: Run) => r.idempotency_key || r.retry_of || r.id;
+  const groupCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    runs.forEach((r) => {
+      const k = relatedGroupId(r);
+      m.set(k, (m.get(k) || 0) + 1);
+    });
+    return m;
+  }, [runs]);
 
   const retry = async (runId: string) => {
     setRetrying(runId);
