@@ -249,6 +249,10 @@ async function handleCallForClio(params: {
   const clientPhone = call.direction === 'inbound' ? call.fromNumber : call.toNumber;
   const normalizedPhone = normalizePhone(clientPhone);
 
+  // Stable idempotency key threaded into every mutating Clio request so retries
+  // dedupe end-to-end and traces correlate with api_logs / deployment_runs.
+  const idempotencyKey = `${call.id}:${tenantId}:${call.disposition || 'none'}`;
+
   let contactId: string | undefined;
   let matterId: string | undefined;
 
@@ -277,7 +281,7 @@ async function handleCallForClio(params: {
           last_name: call.raw?.callerLastName || 'Caller',
           phone_numbers: [{ name: 'Work', number: normalizedPhone, default_number: true }],
         },
-      });
+      }, `${idempotencyKey}:contact`);
       if (createRes.ok) {
         contactId = String(createRes.data.data.id);
         await supabase.from('clio_mappings').insert({
@@ -302,7 +306,7 @@ async function handleCallForClio(params: {
             status: 'open',
             client: { id: Number(contactId) },
           },
-        });
+        }, `${idempotencyKey}:matter`);
         if (matterRes.ok) {
           matterId = String(matterRes.data.data.id);
         }
@@ -341,7 +345,7 @@ async function handleCallForClio(params: {
   if (contactId) commBody.data.senders = [{ id: Number(contactId), type: 'Contact' }];
   if (matterId) commBody.data.matter = { id: Number(matterId) };
 
-  const commRes = await clioApiFetch('POST', '/communications.json', accessToken, commBody);
+  const commRes = await clioApiFetch('POST', '/communications.json', accessToken, commBody, `${idempotencyKey}:comm`);
   const communicationId = commRes.ok ? String(commRes.data?.data?.id) : undefined;
 
   if (rules.createTimeEntryForBillable && matterId && call.durationSeconds) {
@@ -353,10 +357,10 @@ async function handleCallForClio(params: {
         note: `Five9 phone call – ${call.disposition || call.queue || 'General'}`,
         matter: { id: Number(matterId) },
       },
-    });
+    }, `${idempotencyKey}:activity`);
   }
 
-  return { contactId, matterId, communicationId };
+  return { contactId, matterId, communicationId, idempotencyKey };
 }
 
 // ─── MyCase API helper ───────────────────────────────────────────────────────
