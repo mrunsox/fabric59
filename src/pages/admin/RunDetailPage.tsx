@@ -35,15 +35,17 @@ export default function RunDetailPage() {
   const { id } = useParams();
   const [run, setRun] = useState<RunData | null>(null);
   const [retrying, setRetrying] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"idem" | "ext" | null>(null);
 
-  const copyKey = async () => {
-    if (!run?.idempotency_key) return;
-    await navigator.clipboard.writeText(run.idempotency_key);
-    setCopied(true);
-    toast.success("Idempotency key copied");
-    setTimeout(() => setCopied(false), 1500);
+  const copyValue = async (value: string, kind: "idem" | "ext", label: string) => {
+    await navigator.clipboard.writeText(value);
+    setCopied(kind);
+    toast.success(`${label} copied`);
+    setTimeout(() => setCopied(null), 1500);
   };
+
+  const copyKey = () => run?.idempotency_key && copyValue(run.idempotency_key, "idem", "Idempotency key");
+  const copyExt = () => run?.external_record_id && copyValue(run.external_record_id, "ext", "External record id");
 
   useEffect(() => {
     if (!id) return;
