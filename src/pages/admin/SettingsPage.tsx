@@ -1137,10 +1137,10 @@ export default function SettingsPage() {
                         },
                         integrations_configured: {
                           // Booleans only — never the values themselves
-                          five9_admin_username: !!configValues?.five9_admin_username,
-                          five9_admin_password: !!configValues?.five9_admin_password,
-                          api_rate_limit: configValues?.api_rate_limit ?? null,
-                          api_timeout_ms: configValues?.api_timeout_ms ?? null,
+                          five9_admin_username: !!(configValues as any)?.five9_admin_username,
+                          five9_admin_password: !!(configValues as any)?.five9_admin_password,
+                          api_rate_limit: (configValues as any)?.api_rate_limit ?? null,
+                          api_timeout_ms: (configValues as any)?.api_timeout_ms ?? null,
                         },
                         notes: [
                           "This snapshot is generated client-side from the data already visible in this Settings page.",
