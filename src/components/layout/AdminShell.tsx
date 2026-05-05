@@ -112,14 +112,19 @@ export function AdminShell() {
                 <NavLink
                   to="/superadmin"
                   onClick={() => setMobileNavOpen(false)}
-                  className={cn(
-                    "flex items-center transition-colors rounded-xl bg-primary/10 text-primary hover:bg-primary/15",
-                    // On mobile drawer, always show full-width with label.
-                    // On desktop, follow the rail's expanded/collapsed state.
-                    expanded
-                      ? "h-10 w-full px-3 gap-3 text-sm"
-                      : "h-10 w-full px-3 gap-3 text-sm lg:w-12 lg:h-12 lg:px-0 lg:gap-0 lg:justify-center"
-                  )}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center transition-colors rounded-xl border",
+                      isActive
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        : "bg-primary/5 text-primary border-primary/20 hover:bg-primary/10 hover:border-primary/30",
+                      // On mobile drawer, always show full-width with label.
+                      // On desktop, follow the rail's expanded/collapsed state.
+                      expanded
+                        ? "h-10 w-full px-3 gap-3 text-sm"
+                        : "h-10 w-full px-3 gap-3 text-sm lg:w-12 lg:h-12 lg:px-0 lg:gap-0 lg:justify-center"
+                    )
+                  }
                   aria-label="Platform Admin"
                 >
                   <ShieldCheck className="h-4 w-4 flex-shrink-0" />
