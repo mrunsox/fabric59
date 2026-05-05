@@ -9,11 +9,27 @@ import { Phone, Plus, Plug, BookOpen, Activity, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Five9DocsPanel } from "@/components/docs/Five9DocsPanel";
 
-interface Stats { domains: number; activeRoutes: number; readyRoutes: number; blockedRoutes: number; events24h: number; }
+interface Stats {
+  domains: number;
+  activeRoutes: number;
+  readyRoutes: number;
+  blockedRoutes: number;
+  events24h: number;
+  failedEvents24h: number;
+  webhookHealth: "ok" | "degraded" | "down" | "unknown";
+}
 
 export default function Five9OverviewPage() {
   const { organization } = useAuth();
-  const [stats, setStats] = useState<Stats>({ domains: 0, activeRoutes: 0, readyRoutes: 0, blockedRoutes: 0, events24h: 0 });
+  const [stats, setStats] = useState<Stats>({
+    domains: 0,
+    activeRoutes: 0,
+    readyRoutes: 0,
+    blockedRoutes: 0,
+    events24h: 0,
+    failedEvents24h: 0,
+    webhookHealth: "unknown",
+  });
   const [docsOpen, setDocsOpen] = useState(false);
 
   useEffect(() => {
@@ -24,17 +40,45 @@ export default function Five9OverviewPage() {
       supabase.from("five9_campaign_routes").select("id", { count: "exact", head: true }).eq("organization_id", organization.id).eq("is_active", true),
       (supabase as any).from("v_campaign_readiness").select("status").eq("organization_id", organization.id),
       supabase.from("five9_event_log").select("id", { count: "exact", head: true }).eq("organization_id", organization.id).gte("created_at", since),
-    ]).then(([d, r, rd, e]: any) => {
+      supabase.from("five9_event_log").select("id", { count: "exact", head: true }).eq("organization_id", organization.id).eq("status", "failed").gte("created_at", since),
+    ]).then(([d, r, rd, e, f]: any) => {
       const rows = (rd.data || []) as { status: string }[];
+      const events24h = e.count ?? 0;
+      const failedEvents24h = f.count ?? 0;
+      // Health rule:
+      //  - no events in 24h → unknown (we can't say it's healthy without traffic)
+      //  - failure rate < 5% → ok
+      //  - failure rate < 25% → degraded
+      //  - else → down
+      let health: Stats["webhookHealth"] = "unknown";
+      if (events24h > 0) {
+        const rate = failedEvents24h / events24h;
+        health = rate < 0.05 ? "ok" : rate < 0.25 ? "degraded" : "down";
+      }
       setStats({
         domains: d.count ?? 0,
         activeRoutes: r.count ?? 0,
         readyRoutes: rows.filter((x) => x.status === "ready").length,
         blockedRoutes: rows.filter((x) => x.status === "blocked").length,
-        events24h: e.count ?? 0,
+        events24h,
+        failedEvents24h,
+        webhookHealth: health,
       });
     });
   }, [organization]);
+
+  const healthBadge = (() => {
+    switch (stats.webhookHealth) {
+      case "ok":
+        return { label: "OK", className: "bg-success/10 text-success border-success/30" };
+      case "degraded":
+        return { label: "Degraded", className: "bg-warning/10 text-warning border-warning/30" };
+      case "down":
+        return { label: "Down", className: "bg-destructive/10 text-destructive border-destructive/30" };
+      default:
+        return { label: "No traffic 24h", className: "bg-muted text-muted-foreground border-border" };
+    }
+  })();
 
   const tiles = [
     { label: "Domains", value: stats.domains, href: "/admin/domains" },
@@ -91,8 +135,20 @@ export default function Five9OverviewPage() {
         <Card>
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><Activity className="h-4 w-4 text-primary" />Health</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <div className="flex items-center justify-between"><span className="text-muted-foreground">Webhook intake</span><Badge variant="outline" className="bg-success/10 text-success border-success/30">OK</Badge></div>
-            <div className="flex items-center justify-between"><span className="text-muted-foreground">Last 24h events</span><span className="font-medium">{stats.events24h}</span></div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Webhook intake</span>
+              <Badge variant="outline" className={healthBadge.className}>{healthBadge.label}</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Last 24h events</span>
+              <span className="font-medium">{stats.events24h}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Failed (24h)</span>
+              <span className={`font-medium ${stats.failedEvents24h > 0 ? "text-destructive" : ""}`}>
+                {stats.failedEvents24h}
+              </span>
+            </div>
             <Button variant="outline" size="sm" asChild className="w-full mt-2">
               <Link to="/admin/campaigns/event-log">View event log</Link>
             </Button>

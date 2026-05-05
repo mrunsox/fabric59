@@ -1112,7 +1112,64 @@ export default function SettingsPage() {
                 <Button
                   variant="outline"
                   className="gap-2"
-                  onClick={() => toast.info("System of Record export is being prepared. This feature will generate a comprehensive report of your organization's configuration, integrations, and data handling settings.")}
+                  onClick={() => {
+                    try {
+                      // Build a non-sensitive configuration snapshot. No secrets,
+                      // credentials, or PII beyond the requesting user's own email.
+                      const snapshot = {
+                        report: "Fabric59 System of Record — Configuration Snapshot",
+                        generated_at: new Date().toISOString(),
+                        generated_by: user?.email || "unknown",
+                        organization: organization
+                          ? {
+                              id: organization.id,
+                              name: organization.name,
+                              slug: (organization as any).slug ?? null,
+                              created_at: (organization as any).created_at ?? null,
+                            }
+                          : null,
+                        membership_role: membership?.role ?? null,
+                        team: {
+                          member_count: members?.length ?? 0,
+                          roles: Array.from(
+                            new Set((members ?? []).map((m: any) => m.role).filter(Boolean))
+                          ),
+                        },
+                        integrations_configured: {
+                          // Booleans only — never the values themselves
+                          five9_admin_username: !!configValues?.five9_admin_username,
+                          five9_admin_password: !!configValues?.five9_admin_password,
+                          api_rate_limit: configValues?.api_rate_limit ?? null,
+                          api_timeout_ms: configValues?.api_timeout_ms ?? null,
+                        },
+                        notes: [
+                          "This snapshot is generated client-side from the data already visible in this Settings page.",
+                          "Secrets, tokens, passwords and API keys are intentionally excluded.",
+                          "For a full audit-grade System of Record export including activity logs, contact your account team.",
+                        ],
+                      };
+                      const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
+                        type: "application/json",
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      const safeOrg = (organization?.name || "organization")
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/^-+|-+$/g, "");
+                      const stamp = new Date().toISOString().slice(0, 10);
+                      a.download = `fabric59-compliance-snapshot-${safeOrg}-${stamp}.json`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                      toast.success("Compliance snapshot downloaded.");
+                    } catch (err) {
+                      console.error("Compliance export failed", err);
+                      toast.error("Could not generate compliance snapshot.");
+                    }
+                  }}
                 >
                   <Download className="h-4 w-4" />
                   Export Compliance Report

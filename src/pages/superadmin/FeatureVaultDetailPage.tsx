@@ -4,11 +4,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { ManifestViewer } from "@/components/vault/ManifestViewer";
 import { ExportHistoryTable } from "@/components/vault/ExportHistoryTable";
 import { TestingPlaybook } from "@/components/vault/TestingPlaybook";
+
+const statusColor: Record<string, string> = {
+  core: "bg-primary/10 text-primary border-primary/30",
+  archived: "bg-muted text-muted-foreground border-border",
+  experimental: "bg-warning/10 text-warning border-warning/30",
+  deprecated: "bg-destructive/10 text-destructive border-destructive/30",
+  extracted: "bg-success/10 text-success border-success/30",
+};
+
+/**
+ * For experimental / active features, a deep link to the live product page so
+ * the dev team can jump from the vault detail straight into the live feature.
+ * Keys are vault_features.slug values.
+ */
+const LIVE_LINKS: Record<string, { label: string; href: string }> = {
+  "legal-connect": { label: "Open Legal Connect", href: "/admin/legal-connect" },
+  "five9-domain-management": { label: "Open Five9 Domains", href: "/admin/domains" },
+};
 
 export default function FeatureVaultDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -49,7 +67,7 @@ export default function FeatureVaultDetailPage() {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Export failed");
-      toast.success("Export bundle generated");
+      toast.success("Export bundle generated. Use the Download link in Export history below.");
       await load();
     } catch (e: any) {
       toast.error(e.message);
@@ -61,6 +79,8 @@ export default function FeatureVaultDetailPage() {
   if (loading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!feature) return <p className="text-sm text-muted-foreground">Feature not found.</p>;
 
+  const liveLink = feature.slug ? LIVE_LINKS[feature.slug] : undefined;
+
   return (
     <div className="space-y-6">
       <Button asChild variant="ghost" size="sm">
@@ -69,23 +89,35 @@ export default function FeatureVaultDetailPage() {
         </Link>
       </Button>
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-foreground">{feature.name}</h1>
-            <Badge variant="secondary">{feature.status}</Badge>
+            <Badge variant="outline" className={statusColor[feature.status] ?? ""}>
+              {feature.status}
+            </Badge>
           </div>
           <p className="text-muted-foreground text-sm mt-1">{feature.summary}</p>
           <p className="text-xs font-mono text-muted-foreground/70 mt-1">{feature.slug}</p>
         </div>
-        <Button onClick={handleGenerate} disabled={generating}>
-          {generating ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4 mr-2" />
+        <div className="flex items-center gap-2 flex-wrap">
+          {liveLink && (
+            <Button asChild variant="outline">
+              <Link to={liveLink.href}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                {liveLink.label}
+              </Link>
+            </Button>
           )}
-          Generate export
-        </Button>
+          <Button onClick={handleGenerate} disabled={generating}>
+            {generating ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            Generate export
+          </Button>
+        </div>
       </div>
 
       <TestingPlaybook slug={feature.slug} />
