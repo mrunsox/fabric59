@@ -28,6 +28,7 @@ interface Run {
   deployment_id: string;
   retry_of: string | null;
   external_record_id: string | null;
+  idempotency_key: string | null;
 }
 
 export default function RunsPage() {
