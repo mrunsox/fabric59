@@ -206,16 +206,16 @@ async function clioApiFetch(
   method: string,
   path: string,
   accessToken: string,
-  body?: any
+  body?: any,
+  idempotencyKey?: string
 ): Promise<any> {
   const baseUrl = 'https://app.clio.com/api/v4';
-  const opts: RequestInit = {
-    method,
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
   };
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+  const opts: RequestInit = { method, headers };
   if (body) opts.body = JSON.stringify(body);
 
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -249,6 +249,10 @@ async function handleCallForClio(params: {
   const clientPhone = call.direction === 'inbound' ? call.fromNumber : call.toNumber;
   const normalizedPhone = normalizePhone(clientPhone);
 
+  // Stable idempotency key threaded into every mutating Clio request so retries
+  // dedupe end-to-end and traces correlate with api_logs / deployment_runs.
+  const idempotencyKey = `${call.id}:${tenantId}:${call.disposition || 'none'}`;
+
   let contactId: string | undefined;
   let matterId: string | undefined;
 
@@ -277,7 +281,7 @@ async function handleCallForClio(params: {
           last_name: call.raw?.callerLastName || 'Caller',
           phone_numbers: [{ name: 'Work', number: normalizedPhone, default_number: true }],
         },
-      });
+      }, `${idempotencyKey}:contact`);
       if (createRes.ok) {
         contactId = String(createRes.data.data.id);
         await supabase.from('clio_mappings').insert({
@@ -302,7 +306,7 @@ async function handleCallForClio(params: {
             status: 'open',
             client: { id: Number(contactId) },
           },
-        });
+        }, `${idempotencyKey}:matter`);
         if (matterRes.ok) {
           matterId = String(matterRes.data.data.id);
         }
@@ -341,7 +345,7 @@ async function handleCallForClio(params: {
   if (contactId) commBody.data.senders = [{ id: Number(contactId), type: 'Contact' }];
   if (matterId) commBody.data.matter = { id: Number(matterId) };
 
-  const commRes = await clioApiFetch('POST', '/communications.json', accessToken, commBody);
+  const commRes = await clioApiFetch('POST', '/communications.json', accessToken, commBody, `${idempotencyKey}:comm`);
   const communicationId = commRes.ok ? String(commRes.data?.data?.id) : undefined;
 
   if (rules.createTimeEntryForBillable && matterId && call.durationSeconds) {
@@ -353,10 +357,10 @@ async function handleCallForClio(params: {
         note: `Five9 phone call – ${call.disposition || call.queue || 'General'}`,
         matter: { id: Number(matterId) },
       },
-    });
+    }, `${idempotencyKey}:activity`);
   }
 
-  return { contactId, matterId, communicationId };
+  return { contactId, matterId, communicationId, idempotencyKey };
 }
 
 // ─── MyCase API helper ───────────────────────────────────────────────────────
@@ -365,16 +369,16 @@ async function mycaseApiFetch(
   method: string,
   path: string,
   apiKey: string,
-  body?: any
+  body?: any,
+  idempotencyKey?: string
 ): Promise<any> {
   const baseUrl = 'https://api.mycase.com/v2';
-  const opts: RequestInit = {
-    method,
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
   };
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+  const opts: RequestInit = { method, headers };
   if (body) opts.body = JSON.stringify(body);
 
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -414,6 +418,9 @@ async function handleCallForMyCase(params: {
   const clientPhone = call.direction === 'inbound' ? call.fromNumber : call.toNumber;
   const normalizedPhone = normalizePhone(clientPhone);
 
+  // Stable idempotency key threaded into every mutating MyCase request.
+  const idempotencyKey = `${call.id}:${tenantId}:${call.disposition || 'none'}`;
+
   let contactId: string | undefined;
   let caseId: string | undefined;
 
@@ -441,7 +448,7 @@ async function handleCallForMyCase(params: {
           last_name: call.raw?.callerLastName || 'Caller',
           phone: normalizedPhone,
         },
-      });
+      }, `${idempotencyKey}:contact`);
       if (createRes.ok) {
         contactId = String(createRes.data?.contact?.id);
         await supabase.from('mycase_mappings').insert({
@@ -465,7 +472,7 @@ async function handleCallForMyCase(params: {
             name: `Intake from Five9 – ${call.queue || 'General'}`,
             contact_id: Number(contactId),
           },
-        });
+        }, `${idempotencyKey}:case`);
         if (caseRes.ok) {
           caseId = String(caseRes.data?.case?.id);
         }
@@ -502,10 +509,10 @@ async function handleCallForMyCase(params: {
   if (caseId) notePayload.note.case_id = Number(caseId);
   else if (contactId && rules.fallbackToContactOnly) notePayload.note.contact_id = Number(contactId);
 
-  const noteRes = await mycaseApiFetch('POST', '/notes', apiKey, notePayload);
+  const noteRes = await mycaseApiFetch('POST', '/notes', apiKey, notePayload, `${idempotencyKey}:note`);
   const noteId = noteRes.ok ? String(noteRes.data?.note?.id) : undefined;
 
-  return { contactId, caseId, noteId };
+  return { contactId, caseId, noteId, idempotencyKey };
 }
 
 // ─── Web Callback Writeback (from five9-webhook) ────────────────────────────
@@ -669,16 +676,19 @@ async function dispatchToGenericCrm(
   supabase: any,
   tenantId: string,
   crmAction: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  idempotencyKey?: string
 ): Promise<void> {
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+    };
+    if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
     await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/crm-push`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-      },
-      body: JSON.stringify({ tenant_id: tenantId, crm_action: crmAction, data }),
+      headers,
+      body: JSON.stringify({ tenant_id: tenantId, crm_action: crmAction, data, idempotency_key: idempotencyKey }),
     });
   } catch (e) {
     console.error('crm-push dispatch error:', e);
@@ -834,13 +844,15 @@ serve(async (req) => {
       const eventType = payload.event_type;
       const eventData = payload.data || payload;
 
-      // Log the webhook event
+      // Log the webhook event (top-level webhook receipt; per-tenant rows logged below).
+      const inboundCallId = (eventData?.call_id || eventData?.id || payload?.call_id || 'unknown') as string;
+      const inboundIdemKey = `${inboundCallId}:domain:${domainId}:${eventType || 'event'}`;
       await supabase.from('api_logs').insert({
         endpoint: `five9-main/domain/${eventType || 'unknown'}`,
         method: 'POST',
         status: 'success',
-        request_payload: payload,
-        response: { received: true },
+        request_payload: { idempotency_key: inboundIdemKey, event_type: eventType, payload },
+        response: { received: true, idempotency_key: inboundIdemKey },
         response_time_ms: 0,
       });
 
@@ -889,6 +901,8 @@ serve(async (req) => {
             }
           }
 
+          const idempotencyKey = `${call.id}:${tenant.id}:${call.disposition || 'none'}`;
+
           // Generic CRM dispatch for non-legal CRMs
           const hasLegalCrm = configs.clio?.enabled || configs.mycase?.enabled;
           if (!hasLegalCrm && configs.crm?.api_url) {
@@ -897,18 +911,17 @@ serve(async (req) => {
               toNumber: call.toNumber, agentName: call.agentName, queue: call.queue,
               campaign: call.campaign, disposition: call.disposition,
               durationSeconds: call.durationSeconds,
-            });
+            }, idempotencyKey);
           }
 
-          // Log with idempotency key
-          const idempotencyKey = `${call.id}:${tenant.id}:${call.disposition || 'none'}`;
+          // Log with idempotency key (top-level so it's queryable via JSONB).
           await supabase.from('api_logs').insert({
             tenant_id: tenant.id,
             endpoint: 'five9-main',
             method: 'POST',
             status: 'success',
-            request_payload: { callId: call.id, idempotencyKey, direction: call.direction, queue: call.queue, disposition: call.disposition },
-            response: { domainRoute: true },
+            request_payload: { idempotency_key: idempotencyKey, callId: call.id, direction: call.direction, queue: call.queue, disposition: call.disposition },
+            response: { domainRoute: true, idempotency_key: idempotencyKey },
             response_time_ms: Date.now() - startTime,
           });
         }
@@ -957,6 +970,8 @@ serve(async (req) => {
         }
       }
 
+      const idempotencyKey = `${call.id}:${context.tenantId}:${call.disposition || 'none'}`;
+
       // Generic CRM dispatch for non-legal CRMs
       const hasLegalCrm = context.configs.clio?.enabled || context.configs.mycase?.enabled;
       if (!hasLegalCrm && context.configs.crm?.api_url) {
@@ -965,26 +980,25 @@ serve(async (req) => {
           toNumber: call.toNumber, agentName: call.agentName, queue: call.queue,
           campaign: call.campaign, disposition: call.disposition,
           durationSeconds: call.durationSeconds,
-        });
-        results.genericCrm = { dispatched: true };
+        }, idempotencyKey);
+        results.genericCrm = { dispatched: true, idempotency_key: idempotencyKey };
       }
 
       const elapsed = Date.now() - startTime;
+      results.idempotency_key = idempotencyKey;
 
-      const idempotencyKey = `${call.id}:${context.tenantId}:${call.disposition || 'none'}`;
-
-      // Log to api_logs (includes idempotency key for duplicate detection)
+      // Log to api_logs with top-level idempotency_key for end-to-end correlation.
       await supabase.from('api_logs').insert({
         tenant_id: context.tenantId,
         endpoint: 'five9-main',
         method: 'POST',
         status: (results.clio?.error || results.mycase?.error) ? 'error' : 'success',
-        request_payload: { callId: call.id, idempotencyKey, direction: call.direction, queue: call.queue, disposition: call.disposition },
-        response: results,
+        request_payload: { idempotency_key: idempotencyKey, callId: call.id, direction: call.direction, queue: call.queue, disposition: call.disposition },
+        response: { ...results, idempotency_key: idempotencyKey },
         response_time_ms: elapsed,
       });
 
-      return new Response(JSON.stringify({ success: true, ...results }), {
+      return new Response(JSON.stringify({ success: true, idempotency_key: idempotencyKey, ...results }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
