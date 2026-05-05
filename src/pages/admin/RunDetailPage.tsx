@@ -4,9 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Copy, Check, AlertTriangle, ShieldAlert, HelpCircle } from "lucide-react";
+import { RotateCw, Copy, Check, AlertTriangle, ShieldAlert, HelpCircle, Download, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { classifyError, type RetryClass } from "@/lib/flow-runner/retry-classification";
+import { fetchRunReport, reportToCsv, downloadFile } from "@/lib/flow-runner/run-report";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const CLASS_META: Record<RetryClass, { label: string; tone: string; Icon: typeof AlertTriangle }> = {
   retriable: { label: "Retriable", tone: "border-amber-500/40 bg-amber-500/10 text-amber-700", Icon: AlertTriangle },
