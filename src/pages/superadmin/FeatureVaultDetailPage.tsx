@@ -88,6 +88,8 @@ export default function FeatureVaultDetailPage() {
         </Button>
       </div>
 
+      <TestingPlaybook slug={feature.slug} />
+
       <ManifestViewer feature={feature} />
 
       <Card>
