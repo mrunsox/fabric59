@@ -22,10 +22,25 @@ export type PlaybookSection = {
   checks?: PlaybookCheck[];
 };
 
+export type PlaybookCredential = {
+  label: string;
+  value: string;
+  secret?: boolean;
+  href?: string;
+};
+
+export type PlaybookCredentialBlock = {
+  title: string;
+  description?: string;
+  warning?: string;
+  items: PlaybookCredential[];
+};
+
 export type FeaturePlaybook = {
   slug: string;
   objective: string;
   depth: "full" | "baseline";
+  credentials?: PlaybookCredentialBlock;
   sections: PlaybookSection[];
 };
 
