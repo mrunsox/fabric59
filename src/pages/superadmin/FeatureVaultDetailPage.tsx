@@ -8,6 +8,7 @@ import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ManifestViewer } from "@/components/vault/ManifestViewer";
 import { ExportHistoryTable } from "@/components/vault/ExportHistoryTable";
+import { TestingPlaybook } from "@/components/vault/TestingPlaybook";
 
 export default function FeatureVaultDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -86,6 +87,8 @@ export default function FeatureVaultDetailPage() {
           Generate export
         </Button>
       </div>
+
+      <TestingPlaybook slug={feature.slug} />
 
       <ManifestViewer feature={feature} />
 
