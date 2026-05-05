@@ -451,6 +451,7 @@ export default function SettingsPage() {
           {isOrgAdmin && <TabsTrigger value="email-templates">Email Templates</TabsTrigger>}
           <TabsTrigger value="data">Data</TabsTrigger>
           <TabsTrigger value="legal">Legal & Compliance</TabsTrigger>
+          {isMasterAdmin && <TabsTrigger value="dev-guide">Dev Guide</TabsTrigger>}
         </TabsList>
 
         {/* ── Profile Tab ── */}
