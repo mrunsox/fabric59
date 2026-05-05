@@ -22,7 +22,9 @@ export default function WorkspacesPage() {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">Workspaces</h1>
-        <p className="text-sm text-muted-foreground mt-1">Organizations and BPOs using this integration platform</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Tenant boundary for the platform. Workspaces are backed by the <code className="text-xs bg-secondary/60 px-1 py-0.5 rounded">organizations</code> table; all flows, deployments, runs, and clients are scoped here.
+        </p>
       </div>
 
       {isLoading ? (
