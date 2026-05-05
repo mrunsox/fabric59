@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
 import { AdminShell } from "@/components/layout/AdminShell";
-import { MasterLayout } from "@/components/layout/MasterLayout";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -158,17 +157,17 @@ const App = () => (
             <Route path="/product" element={<ProductTourPage />} />
             <Route path="/demo" element={<DemoSandboxPage />} />
 
-            {/* Master admin routes - hidden, only accessible via /system-access */}
-            <Route element={<MasterProtectedRoute />}>
-              <Route path="/master" element={<MasterLayout />}>
-                <Route index element={<MasterDashboardPage />} />
-                <Route path="organizations" element={<OrganizationsOverviewPage />} />
-                <Route path="users" element={<UsersManagementPage />} />
-              </Route>
+            {/* Legacy /master/* → consolidated under /superadmin */}
+            <Route path="/master" element={<Navigate to="/superadmin" replace />} />
+            <Route path="/master/organizations" element={<Navigate to="/superadmin/workspaces" replace />} />
+            <Route path="/master/users" element={<Navigate to="/superadmin/users" replace />} />
 
-              {/* Superadmin Feature Vault */}
+            {/* Unified platform admin (Superadmin) — gated by master_admin */}
+            <Route element={<MasterProtectedRoute />}>
               <Route path="/superadmin" element={<SuperadminShell />}>
                 <Route index element={<SuperadminOverviewPage />} />
+                <Route path="workspaces" element={<OrganizationsOverviewPage />} />
+                <Route path="users" element={<UsersManagementPage />} />
                 <Route path="vault" element={<FeatureVaultPage />} />
                 <Route path="vault/:id" element={<FeatureVaultDetailPage />} />
                 <Route path="exports" element={<SourceExportsPage />} />
