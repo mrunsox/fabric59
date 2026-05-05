@@ -2,9 +2,18 @@ import { useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { FlowDefinition, FlowTemplate } from "@/lib/flow-templates/adapter";
 import { connectorsForTemplate, getConnector, type ConnectorKey } from "@/data/connector-actions";
+
+const CAP_LABELS: Record<string, string> = {
+  supportsActionFlows: "Actions",
+  supportsLookupFlows: "Lookups",
+  supportsWebhookRelay: "Webhook relay",
+  supportsCallbackTaskFlows: "Callbacks",
+  supportsTwoWaySync: "Two-way sync",
+};
 
 export function ActionStep({
   definition,
@@ -52,14 +61,42 @@ export function ActionStep({
         </div>
         <div>
           <Label>Action</Label>
-          <Select value={action.action} onValueChange={(v) => set({ action: v })} disabled={!connector}>
-            <SelectTrigger><SelectValue placeholder="Choose action" /></SelectTrigger>
+          <Select value={action.action} onValueChange={(v) => set({ action: v })} disabled={!connector || !actions.length}>
+            <SelectTrigger><SelectValue placeholder={connector && !actions.length ? "No compatible actions" : "Choose action"} /></SelectTrigger>
             <SelectContent>
               {actions.map((a) => <SelectItem key={a.key} value={a.key}>{a.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          {connector && !actions.length && template && (
+            <p className="text-xs text-destructive mt-1">
+              {connector.name} has no actions for {template.name}.
+            </p>
+          )}
         </div>
       </div>
+
+      {connector && (
+        <div className="rounded-md border border-border/50 p-3 bg-secondary/10">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+            {connector.name} capabilities
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(CAP_LABELS).map(([k, label]) => {
+              const enabled = (connector.capabilities as unknown as Record<string, boolean>)[k];
+              return (
+                <Badge
+                  key={k}
+                  variant={enabled ? "secondary" : "outline"}
+                  className={enabled ? "text-xs" : "text-xs text-muted-foreground line-through"}
+                >
+                  {label}
+                </Badge>
+              );
+            })}
+            <Badge variant="outline" className="text-xs">auth: {connector.capabilities.authType}</Badge>
+          </div>
+        </div>
+      )}
 
       {isHttp && (
         <div className="space-y-3 rounded-md border border-border/50 p-4 bg-secondary/20">
