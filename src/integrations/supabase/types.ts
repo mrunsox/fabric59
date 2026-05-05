@@ -1068,34 +1068,58 @@ export type Database = {
       }
       deployment_runs: {
         Row: {
+          connector_instance_id: string | null
           deployment_id: string
           error: string | null
+          external_record_id: string | null
           finished_at: string | null
           id: string
+          idempotency_key: string | null
           organization_id: string
           payload: Json | null
+          request_payload: Json | null
+          response_payload: Json | null
+          retry_of: string | null
+          source_event_id: string | null
+          source_event_type: string | null
           started_at: string
           status: string
           trigger_event_id: string | null
         }
         Insert: {
+          connector_instance_id?: string | null
           deployment_id: string
           error?: string | null
+          external_record_id?: string | null
           finished_at?: string | null
           id?: string
+          idempotency_key?: string | null
           organization_id: string
           payload?: Json | null
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_of?: string | null
+          source_event_id?: string | null
+          source_event_type?: string | null
           started_at?: string
           status?: string
           trigger_event_id?: string | null
         }
         Update: {
+          connector_instance_id?: string | null
           deployment_id?: string
           error?: string | null
+          external_record_id?: string | null
           finished_at?: string | null
           id?: string
+          idempotency_key?: string | null
           organization_id?: string
           payload?: Json | null
+          request_payload?: Json | null
+          response_payload?: Json | null
+          retry_of?: string | null
+          source_event_id?: string | null
+          source_event_type?: string | null
           started_at?: string
           status?: string
           trigger_event_id?: string | null
@@ -1115,43 +1139,68 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "deployment_runs_retry_of_fkey"
+            columns: ["retry_of"]
+            isOneToOne: false
+            referencedRelation: "deployment_runs"
+            referencedColumns: ["id"]
+          },
         ]
       }
       deployments: {
         Row: {
+          campaign_name: string | null
           client_id: string | null
           created_at: string
           created_by: string | null
+          five9_domain_id: string | null
           flow_id: string
           flow_version: number
           id: string
           organization_id: string
+          owner_scope_id: string | null
+          owner_scope_type: string
           scope: Json
           status: string
+          template_type: string | null
+          trigger_type: string | null
           updated_at: string
         }
         Insert: {
+          campaign_name?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          five9_domain_id?: string | null
           flow_id: string
           flow_version?: number
           id?: string
           organization_id: string
+          owner_scope_id?: string | null
+          owner_scope_type?: string
           scope?: Json
           status?: string
+          template_type?: string | null
+          trigger_type?: string | null
           updated_at?: string
         }
         Update: {
+          campaign_name?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          five9_domain_id?: string | null
           flow_id?: string
           flow_version?: number
           id?: string
           organization_id?: string
+          owner_scope_id?: string | null
+          owner_scope_type?: string
           scope?: Json
           status?: string
+          template_type?: string | null
+          trigger_type?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1175,6 +1224,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_client_readiness"
             referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "deployments_five9_domain_id_fkey"
+            columns: ["five9_domain_id"]
+            isOneToOne: false
+            referencedRelation: "five9_domains"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "deployments_flow_id_fkey"
@@ -1950,6 +2006,8 @@ export type Database = {
       }
       flows: {
         Row: {
+          client_id: string | null
+          connector_instance_id: string | null
           created_at: string
           created_by: string | null
           definition: Json
@@ -1958,11 +2016,14 @@ export type Database = {
           name: string
           organization_id: string
           status: string
+          template_type: string | null
           trigger_type: string
           updated_at: string
           version: number
         }
         Insert: {
+          client_id?: string | null
+          connector_instance_id?: string | null
           created_at?: string
           created_by?: string | null
           definition?: Json
@@ -1971,11 +2032,14 @@ export type Database = {
           name: string
           organization_id: string
           status?: string
+          template_type?: string | null
           trigger_type: string
           updated_at?: string
           version?: number
         }
         Update: {
+          client_id?: string | null
+          connector_instance_id?: string | null
           created_at?: string
           created_by?: string | null
           definition?: Json
@@ -1984,11 +2048,33 @@ export type Database = {
           name?: string
           organization_id?: string
           status?: string
+          template_type?: string | null
           trigger_type?: string
           updated_at?: string
           version?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "flows_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "flows_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flows_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
           {
             foreignKeyName: "flows_organization_id_fkey"
             columns: ["organization_id"]

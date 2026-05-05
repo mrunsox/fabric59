@@ -1,11 +1,31 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { FlowDefinition } from "@/pages/admin/FlowBuilderPage";
+import { Badge } from "@/components/ui/badge";
+import type { FlowDefinition, FlowTemplate } from "@/lib/flow-templates/adapter";
 
-export function FlowSummary({ definition, status, setStatus }: { definition: FlowDefinition; status: string; setStatus: (s: string) => void }) {
+export function FlowSummary({
+  definition,
+  status,
+  setStatus,
+  template,
+}: {
+  definition: FlowDefinition;
+  status: string;
+  setStatus: (s: string) => void;
+  template?: FlowTemplate | null;
+}) {
+  const a = definition.action;
   return (
     <div className="space-y-4">
-      <div>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        {template && <Badge variant="secondary">Template: {template.name}</Badge>}
+        <Badge variant="outline">Trigger: {definition.trigger.type}</Badge>
+        {a?.connector && <Badge variant="outline">{a.connector} · {a.action}</Badge>}
+        <Badge variant="outline">Filters: {definition.filters.length}</Badge>
+        <Badge variant="outline">Mappings: {definition.mappings.length}</Badge>
+        <Badge variant="outline">Retries: {definition.failure.retries}</Badge>
+      </div>
+      <div className="max-w-xs">
         <Label>Status</Label>
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger><SelectValue /></SelectTrigger>

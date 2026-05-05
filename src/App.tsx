@@ -107,6 +107,7 @@ import ConnectorsCatalogPage from "@/pages/admin/ConnectorsCatalogPage";
 import ConnectorInstancePage from "@/pages/admin/ConnectorInstancePage";
 import FlowsPage from "@/pages/admin/FlowsPage";
 import FlowBuilderPage from "@/pages/admin/FlowBuilderPage";
+import NewFlowPage from "@/pages/admin/NewFlowPage";
 import DeploymentsPage from "@/pages/admin/DeploymentsPage";
 import DeploymentDetailPage from "@/pages/admin/DeploymentDetailPage";
 import RunsPage from "@/pages/admin/RunsPage";
@@ -191,7 +192,7 @@ const App = () => (
                 <Route path="connectors" element={<ConnectorsCatalogPage />} />
                 <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
                 <Route path="flows" element={<FlowsPage />} />
-                <Route path="flows/new" element={<FlowBuilderPage />} />
+                <Route path="flows/new" element={<NewFlowPage />} />
                 <Route path="flows/:id" element={<FlowBuilderPage />} />
                 <Route path="deployments" element={<DeploymentsPage />} />
                 <Route path="deployments/:id" element={<DeploymentDetailPage />} />
