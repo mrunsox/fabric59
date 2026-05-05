@@ -188,25 +188,27 @@ export default function RunsPage() {
                       )}
                     </div>
                     {relatedCount > 1 && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSearch(groupKey);
-                            }}
-                          >
-                            <Link2 className="h-3 w-3 mr-1" />
-                            {relatedCount} related
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="left" className="max-w-xs text-xs">
-                          Filter to runs sharing this idempotency key or retry chain.
-                        </TooltipContent>
-                      </Tooltip>
+                      <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSearch(groupKey);
+                              }}
+                            >
+                              <Link2 className="h-3 w-3 mr-1" />
+                              {relatedCount} related
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="max-w-xs text-xs">
+                            Filter to runs sharing this idempotency key or retry chain.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                     <Badge variant={r.status === "succeeded" ? "default" : r.status === "failed" ? "destructive" : "secondary"}>{r.status}</Badge>
                     {(r.status === "failed" || r.status === "succeeded") && (
