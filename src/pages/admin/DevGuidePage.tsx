@@ -162,8 +162,36 @@ export default function DevGuidePage() {
 
           {/* Core architecture */}
           <section>
-            <SectionHeader id="architecture" title="Core architecture" kicker="Entities and how they connect" />
+            <SectionHeader id="architecture" title="Core architecture" kicker="Hierarchy and entities" />
             <div className="space-y-3 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Tenant hierarchy</div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Fabric59 has four logical layers. <code className="text-xs bg-secondary/60 px-1 py-0.5 rounded">organizations</code> is the real tenant boundary; everything below it is scoped by <code className="text-xs">organization_id</code>.
+                </p>
+                <ul className="space-y-1.5 text-sm text-foreground/90">
+                  <li><Chip>Platform</Chip> Superadmin, backed by <code className="text-xs">user_roles.role = 'master_admin'</code>. Cross-workspace tools live under <code className="text-xs">/superadmin</code>.</li>
+                  <li><Chip>Workspace</Chip> backed by <code className="text-xs">organizations</code>. Tenant boundary for all flows, deployments, runs, templates, partners, and clients.</li>
+                  <li><Chip>Partner</Chip> backed by <code className="text-xs">partners</code>. Middle layer inside a Workspace; groups Clients for branding, reporting, and config inheritance.</li>
+                  <li><Chip>Client</Chip> backed by <code className="text-xs">tenants</code>. End customer under a Partner / Workspace; holds CRM credentials and integration configs.</li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Config merge order: <strong>Client &gt; Partner &gt; Workspace</strong>.
+                </p>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Roles</div>
+                <ul className="space-y-1.5 text-sm text-foreground/90">
+                  <li><Chip>Superadmin</Chip> <code className="text-xs">user_roles.role = 'master_admin'</code>. Platform-wide. Only role that can read across workspaces.</li>
+                  <li><Chip>Workspace Admin</Chip> <code className="text-xs">organization_members.role IN ('owner','admin')</code>. Full control inside one workspace. <code className="text-xs">owner</code> is reserved for billing, deletion, and ownership transfer once those flows ship; today identical to <code className="text-xs">admin</code>.</li>
+                  <li><Chip>Workspace Member</Chip> <code className="text-xs">organization_members.role = 'member'</code>. Standard workspace user; gated by <code className="text-xs">user_permissions</code>.</li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Source of truth: <code className="text-xs bg-secondary/60 px-1 py-0.5 rounded">src/config/hierarchy.ts</code>.
+                </p>
+              </Card>
+
               <p>
                 There are six first-class entities. Each one maps to a route in the admin and a table in the
                 backend. Read this list top-down — every row depends on the rows above it.
@@ -338,7 +366,9 @@ export default function DevGuidePage() {
             <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
               <p>
                 A Flow is just a definition. A <strong>Deployment</strong> is what actually subscribes that flow
-                to a real Five9 event in a real environment. A deployment binds:
+                to a real Five9 event in a real environment. Deployments are scoped to a <strong>Workspace</strong>{" "}
+                (<code className="text-xs">organization_id</code>) and may optionally relate to a <strong>Client</strong>{" "}
+                (<code className="text-xs">tenant_id</code> / <code className="text-xs">client_id</code>). A deployment binds:
               </p>
               <div className="grid gap-3">
                 <Card>
