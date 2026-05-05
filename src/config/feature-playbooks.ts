@@ -22,10 +22,25 @@ export type PlaybookSection = {
   checks?: PlaybookCheck[];
 };
 
+export type PlaybookCredential = {
+  label: string;
+  value: string;
+  secret?: boolean;
+  href?: string;
+};
+
+export type PlaybookCredentialBlock = {
+  title: string;
+  description?: string;
+  warning?: string;
+  items: PlaybookCredential[];
+};
+
 export type FeaturePlaybook = {
   slug: string;
   objective: string;
   depth: "full" | "baseline";
+  credentials?: PlaybookCredentialBlock;
   sections: PlaybookSection[];
 };
 
@@ -158,6 +173,18 @@ const five9Domain: FeaturePlaybook = {
   depth: "full",
   objective:
     "Validate that a Five9 domain can be connected, synced, modified, and safely disconnected, with the Pabbly auth bridge, Web Connector registration, Users/Skills sync, and SOAP schema alignment all functioning.",
+  credentials: {
+    title: "Five9 test domain credentials",
+    description:
+      "Shared sandbox login for the dev team to exercise domain connect, sync, and SOAP flows end-to-end.",
+    warning:
+      "Sandbox use only. Do not run destructive operations against production data. Rotate credentials when testing concludes.",
+    items: [
+      { label: "Login URL", value: "https://login.five9.com/", href: "https://login.five9.com/" },
+      { label: "Username", value: "Fabric59" },
+      { label: "Password", value: "DD@KFH666UxhiF%i3oIX", secret: true },
+    ],
+  },
   sections: [
     {
       id: "prereqs",
