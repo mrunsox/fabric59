@@ -418,6 +418,9 @@ async function handleCallForMyCase(params: {
   const clientPhone = call.direction === 'inbound' ? call.fromNumber : call.toNumber;
   const normalizedPhone = normalizePhone(clientPhone);
 
+  // Stable idempotency key threaded into every mutating MyCase request.
+  const idempotencyKey = `${call.id}:${tenantId}:${call.disposition || 'none'}`;
+
   let contactId: string | undefined;
   let caseId: string | undefined;
 
@@ -445,7 +448,7 @@ async function handleCallForMyCase(params: {
           last_name: call.raw?.callerLastName || 'Caller',
           phone: normalizedPhone,
         },
-      });
+      }, `${idempotencyKey}:contact`);
       if (createRes.ok) {
         contactId = String(createRes.data?.contact?.id);
         await supabase.from('mycase_mappings').insert({
@@ -469,7 +472,7 @@ async function handleCallForMyCase(params: {
             name: `Intake from Five9 – ${call.queue || 'General'}`,
             contact_id: Number(contactId),
           },
-        });
+        }, `${idempotencyKey}:case`);
         if (caseRes.ok) {
           caseId = String(caseRes.data?.case?.id);
         }
@@ -506,10 +509,10 @@ async function handleCallForMyCase(params: {
   if (caseId) notePayload.note.case_id = Number(caseId);
   else if (contactId && rules.fallbackToContactOnly) notePayload.note.contact_id = Number(contactId);
 
-  const noteRes = await mycaseApiFetch('POST', '/notes', apiKey, notePayload);
+  const noteRes = await mycaseApiFetch('POST', '/notes', apiKey, notePayload, `${idempotencyKey}:note`);
   const noteId = noteRes.ok ? String(noteRes.data?.note?.id) : undefined;
 
-  return { contactId, caseId, noteId };
+  return { contactId, caseId, noteId, idempotencyKey };
 }
 
 // ─── Web Callback Writeback (from five9-webhook) ────────────────────────────
