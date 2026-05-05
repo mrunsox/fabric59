@@ -25,18 +25,29 @@ export function TestStep({
   const [payloadText, setPayloadText] = useState(initial);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<unknown>(null);
-  const [copied, setCopied] = useState<"body" | "curl" | null>(null);
+  const [copied, setCopied] = useState<"body" | "curl" | "idem" | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState<string>("");
 
   const parsedPayload = useMemo(() => {
     try { return JSON.parse(payloadText); } catch { return null; }
   }, [payloadText]);
 
+  // Recompute the preview idempotency key whenever flow or payload changes,
+  // mirroring how flow-runner derives one server-side.
+  useEffect(() => {
+    let cancelled = false;
+    computePreviewIdempotencyKey(flowId, parsedPayload ?? {}).then((k) => {
+      if (!cancelled) setIdempotencyKey(k);
+    });
+    return () => { cancelled = true; };
+  }, [flowId, parsedPayload]);
+
   const preview = useMemo(
-    () => buildDispatchPreview(definition, parsedPayload ?? {}),
-    [definition, parsedPayload]
+    () => buildDispatchPreview(definition, parsedPayload ?? {}, { idempotencyKey }),
+    [definition, parsedPayload, idempotencyKey]
   );
 
-  const copy = async (text: string, key: "body" | "curl") => {
+  const copy = async (text: string, key: "body" | "curl" | "idem") => {
     await navigator.clipboard.writeText(text);
     setCopied(key);
     toast.success("Copied");
