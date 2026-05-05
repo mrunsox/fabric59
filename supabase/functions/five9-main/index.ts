@@ -676,16 +676,19 @@ async function dispatchToGenericCrm(
   supabase: any,
   tenantId: string,
   crmAction: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  idempotencyKey?: string
 ): Promise<void> {
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+    };
+    if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
     await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/crm-push`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-      },
-      body: JSON.stringify({ tenant_id: tenantId, crm_action: crmAction, data }),
+      headers,
+      body: JSON.stringify({ tenant_id: tenantId, crm_action: crmAction, data, idempotency_key: idempotencyKey }),
     });
   } catch (e) {
     console.error('crm-push dispatch error:', e);
