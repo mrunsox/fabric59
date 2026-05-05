@@ -1,14 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Play, Eye, Copy, Check, AlertTriangle } from "lucide-react";
+import { Loader2, Play, Eye, Copy, Check, AlertTriangle, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { FlowDefinition } from "@/lib/flow-templates/adapter";
 import { toast } from "sonner";
-import { buildDispatchPreview, previewAsCurl } from "@/lib/flow-runner/dispatch-preview";
+import {
+  buildDispatchPreview,
+  previewAsCurl,
+  computePreviewIdempotencyKey,
+} from "@/lib/flow-runner/dispatch-preview";
 
 export function TestStep({
   flowId,
@@ -21,18 +25,29 @@ export function TestStep({
   const [payloadText, setPayloadText] = useState(initial);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<unknown>(null);
-  const [copied, setCopied] = useState<"body" | "curl" | null>(null);
+  const [copied, setCopied] = useState<"body" | "curl" | "idem" | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState<string>("");
 
   const parsedPayload = useMemo(() => {
     try { return JSON.parse(payloadText); } catch { return null; }
   }, [payloadText]);
 
+  // Recompute the preview idempotency key whenever flow or payload changes,
+  // mirroring how flow-runner derives one server-side.
+  useEffect(() => {
+    let cancelled = false;
+    computePreviewIdempotencyKey(flowId, parsedPayload ?? {}).then((k) => {
+      if (!cancelled) setIdempotencyKey(k);
+    });
+    return () => { cancelled = true; };
+  }, [flowId, parsedPayload]);
+
   const preview = useMemo(
-    () => buildDispatchPreview(definition, parsedPayload ?? {}),
-    [definition, parsedPayload]
+    () => buildDispatchPreview(definition, parsedPayload ?? {}, { idempotencyKey }),
+    [definition, parsedPayload, idempotencyKey]
   );
 
-  const copy = async (text: string, key: "body" | "curl") => {
+  const copy = async (text: string, key: "body" | "curl" | "idem") => {
     await navigator.clipboard.writeText(text);
     setCopied(key);
     toast.success("Copied");
@@ -97,6 +112,30 @@ export function TestStep({
             This is exactly what the runner will send when you click <strong>Run test</strong>.
             Test mode adds <code className="font-mono">X-Fabric59-Test: true</code> and is not persisted.
           </p>
+
+          {preview.kind !== "incomplete" && idempotencyKey && (
+            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-secondary/20 px-3 py-2">
+              <KeyRound className="h-3.5 w-3.5 text-primary shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Idempotency key</p>
+                <code className="font-mono text-xs break-all block">{idempotencyKey}</code>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {preview.kind === "http"
+                    ? "Sent as the Idempotency-Key header (visible above)."
+                    : "Forwarded to the connector adapter for dedupe."}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 shrink-0"
+                onClick={() => copy(idempotencyKey, "idem")}
+              >
+                {copied === "idem" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                <span className="ml-1 text-[10px]">Copy</span>
+              </Button>
+            </div>
+          )}
 
           {preview.notes.length > 0 && (
             <ul className="text-xs text-amber-700 bg-amber-500/10 border border-amber-500/30 rounded-md p-2 space-y-0.5">
