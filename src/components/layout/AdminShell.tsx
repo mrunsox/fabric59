@@ -43,7 +43,7 @@ export function AdminShell() {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 bg-sidebar border-r border-sidebar-border/40 flex flex-col py-3 transition-[width,transform] duration-200",
-          expanded ? "w-56 items-stretch px-2" : "w-56 items-stretch px-2 lg:w-16 lg:items-center lg:px-0",
+          expanded ? "w-56 items-stretch px-2" : "w-16 items-center",
           "lg:translate-x-0",
           mobileNavOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
