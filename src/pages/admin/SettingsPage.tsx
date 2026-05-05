@@ -451,7 +451,7 @@ export default function SettingsPage() {
           {isOrgAdmin && <TabsTrigger value="email-templates">Email Templates</TabsTrigger>}
           <TabsTrigger value="data">Data</TabsTrigger>
           <TabsTrigger value="legal">Legal & Compliance</TabsTrigger>
-          {isMasterAdmin && <TabsTrigger value="dev-guide">Dev Guide</TabsTrigger>}
+          
         </TabsList>
 
         {/* ── Profile Tab ── */}
@@ -1144,34 +1144,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {isMasterAdmin && (
-          <TabsContent value="dev-guide" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle>Dev Guide</CardTitle>
-                    <CardDescription>
-                      Internal reference for the Five9-native legal integration platform.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Documents the Five9 → Flow Templates → Flows → Deployments → Connectors → Runs chain
-                  using the FlowBuilder terminology already in the product.
-                </p>
-                <Button asChild>
-                  <a href="/admin/dev-guide">Open Dev Guide</a>
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
       </Tabs>
     </div>
   );

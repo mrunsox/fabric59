@@ -93,7 +93,7 @@ import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import TreeEditorPage from "@/pages/admin/TreeEditorPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
 import DesignSystemPage from "@/pages/admin/DesignSystemPage";
-import DevGuidePage from "@/pages/admin/DevGuidePage";
+import DevGuidePage from "@/pages/superadmin/DevGuidePage";
 import NotFound from "./pages/NotFound";
 
 // Integration core pages
@@ -160,6 +160,8 @@ const App = () => (
             <Route path="/master" element={<Navigate to="/superadmin" replace />} />
             <Route path="/master/organizations" element={<Navigate to="/superadmin/workspaces" replace />} />
             <Route path="/master/users" element={<Navigate to="/superadmin/users" replace />} />
+            <Route path="/admin/dev-guide" element={<Navigate to="/superadmin/dev-guide" replace />} />
+            <Route path="/admin/settings/dev-guide" element={<Navigate to="/superadmin/dev-guide" replace />} />
 
             {/* Unified platform admin (Superadmin) — gated by master_admin */}
             <Route element={<MasterProtectedRoute />}>
@@ -172,6 +174,7 @@ const App = () => (
                 <Route path="exports" element={<SourceExportsPage />} />
                 <Route path="routes" element={<AdvancedRoutesPage />} />
                 <Route path="docs" element={<SystemDocsPage />} />
+                <Route path="dev-guide" element={<DevGuidePage />} />
               </Route>
             </Route>
 
@@ -271,8 +274,6 @@ const App = () => (
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="design-system" element={<DesignSystemPage />} />
-                <Route path="dev-guide" element={<DevGuidePage />} />
-                <Route path="settings/dev-guide" element={<DevGuidePage />} />
               </Route>
             </Route>
 
