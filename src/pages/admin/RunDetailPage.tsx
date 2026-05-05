@@ -4,9 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Copy, Check, AlertTriangle, ShieldAlert, HelpCircle } from "lucide-react";
+import { RotateCw, Copy, Check, AlertTriangle, ShieldAlert, HelpCircle, Download, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { classifyError, type RetryClass } from "@/lib/flow-runner/retry-classification";
+import { fetchRunReport, reportToCsv, downloadFile } from "@/lib/flow-runner/run-report";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const CLASS_META: Record<RetryClass, { label: string; tone: string; Icon: typeof AlertTriangle }> = {
   retriable: { label: "Retriable", tone: "border-amber-500/40 bg-amber-500/10 text-amber-700", Icon: AlertTriangle },
@@ -36,6 +43,7 @@ export default function RunDetailPage() {
   const [run, setRun] = useState<RunData | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [copied, setCopied] = useState<"idem" | "ext" | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const copyValue = async (value: string, kind: "idem" | "ext", label: string) => {
     await navigator.clipboard.writeText(value);
@@ -46,6 +54,26 @@ export default function RunDetailPage() {
 
   const copyKey = () => run?.idempotency_key && copyValue(run.idempotency_key, "idem", "Idempotency key");
   const copyExt = () => run?.external_record_id && copyValue(run.external_record_id, "ext", "External record id");
+
+  const exportReport = async (format: "json" | "csv") => {
+    if (!run) return;
+    setExporting(true);
+    try {
+      const report = await fetchRunReport(run.id);
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const base = `run-report-${run.id.slice(0, 8)}-${stamp}`;
+      if (format === "json") {
+        downloadFile(`${base}.json`, JSON.stringify(report, null, 2), "application/json");
+      } else {
+        downloadFile(`${base}.csv`, reportToCsv(report), "text/csv");
+      }
+      toast.success(`Run report exported (${report.total_runs} run${report.total_runs === 1 ? "" : "s"})`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -74,6 +102,22 @@ export default function RunDetailPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Run detail</h1>
         <div className="flex items-center gap-2">
           <Badge variant={run.status === "succeeded" ? "default" : run.status === "failed" ? "destructive" : "secondary"}>{run.status}</Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" disabled={exporting}>
+                {exporting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1" />}
+                Run report
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => exportReport("json")}>
+                <FileJson className="h-3.5 w-3.5 mr-2" /> Download JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportReport("csv")}>
+                <FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button size="sm" variant="outline" onClick={retry} disabled={retrying}>
             <RotateCw className={`h-3.5 w-3.5 mr-1 ${retrying ? "animate-spin" : ""}`} /> Replay
           </Button>
