@@ -189,7 +189,7 @@ export function runMappingTest(
       transform: m.transform?.type ?? "none",
       output: outVal,
       ok: result.ok,
-      error: result.ok ? undefined : result.error,
+      error: result.ok ? undefined : (result as TransformErr).error,
       warnings: warns,
     });
   }
