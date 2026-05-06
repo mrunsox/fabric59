@@ -138,12 +138,19 @@ export default function ProviderConnectionCard({
 
         <div className="mt-5 flex flex-wrap items-center gap-2">
           {!connection ? (
-            <Button asChild size="sm">
-              <Link to={`/admin/clients/${clientId}/legal-connect/setup/${provider}`}>
+            disabledReason ? (
+              <Button size="sm" disabled title={disabledReason}>
                 <Plug className="h-3.5 w-3.5 mr-1.5" />
                 Connect {meta.label}
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button asChild size="sm">
+                <Link to={`/admin/clients/${clientId}/legal-connect/setup/${provider}`}>
+                  <Plug className="h-3.5 w-3.5 mr-1.5" />
+                  Connect {meta.label}
+                </Link>
+              </Button>
+            )
           ) : (
             <>
               <Button size="sm" variant="outline" onClick={onTest} disabled={testing}>
