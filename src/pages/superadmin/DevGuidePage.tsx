@@ -10,6 +10,9 @@ import {
   Activity,
   ShieldCheck,
   ChevronRight,
+  ClipboardCheck,
+  CheckCircle2,
+  Circle,
 } from "lucide-react";
 import { ArchitectureFlowchart } from "@/components/dev-guide/ArchitectureFlowchart";
 
