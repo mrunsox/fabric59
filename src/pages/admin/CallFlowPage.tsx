@@ -9,13 +9,60 @@ const MASTER_PHASES: FlowPhase[] = [
     title: "Before Call",
     caption: "Setup, routing, lookup, preparation",
     steps: [
-      { id: "b1", lane: "system", kind: "automated", required: true, label: "Inbound arrives or outbound initiated", note: "Five9 IVR / dialer event" },
-      { id: "b2", lane: "system", kind: "automated", required: true, label: "Resolve workspace context", note: "workspace → partner → client" },
-      { id: "b3", lane: "system", kind: "automated", required: true, label: "Lookup caller / CRM record", note: "ANI lookup, prior interactions, identity_xrefs" },
-      { id: "b4", lane: "system", kind: "decision", required: true, label: "Run queue / routing logic", note: "Skill, priority, callback policy" },
-      { id: "b5", lane: "system", kind: "automated", required: true, label: "Assign agent + prepare screen pop" },
-      { id: "b6", lane: "agent", kind: "agent", required: false, label: "Review caller context pre-connect" },
-      { id: "b7", lane: "external", kind: "external", required: false, label: "Pull live CRM snapshot", note: "Clio / MyCase via five9-main" },
+      {
+        id: "b1", lane: "system", kind: "automated", required: true,
+        label: "Inbound arrives or outbound initiated", note: "Five9 IVR / dialer event",
+        impl: [
+          { kind: "edge", name: "five9-main", detail: "Unified webhook entry from Five9" },
+          { kind: "edge", name: "five9-webhook", detail: "Legacy webhook receiver" },
+        ],
+      },
+      {
+        id: "b2", lane: "system", kind: "automated", required: true,
+        label: "Resolve workspace context", note: "workspace → partner → client",
+        impl: [
+          { kind: "lib", name: "src/lib/five9/resolveOwnership.ts", detail: "Maps Five9 domain → tenant" },
+          { kind: "lib", name: "src/lib/config-merge.ts", detail: "Client > Partner > Org config inheritance" },
+        ],
+      },
+      {
+        id: "b3", lane: "system", kind: "automated", required: true,
+        label: "Lookup caller / CRM record", note: "ANI lookup, prior interactions, identity_xrefs",
+        impl: [
+          { kind: "edge", name: "five9-main", detail: "Pre-call ANI lookup endpoint" },
+          { kind: "table", name: "identity_xrefs" },
+          { kind: "hook", name: "useCallLogs", detail: "Prior interactions" },
+        ],
+      },
+      {
+        id: "b4", lane: "system", kind: "decision", required: true,
+        label: "Run queue / routing logic", note: "Skill, priority, callback policy",
+        impl: [
+          { kind: "edge", name: "five9-main", detail: "Routing dispatch" },
+          { kind: "hook", name: "useQrDidMappings" },
+        ],
+      },
+      {
+        id: "b5", lane: "system", kind: "automated", required: true,
+        label: "Assign agent + prepare screen pop",
+        impl: [
+          { kind: "hook", name: "useAgentPresence" },
+          { kind: "edge", name: "five9-main", detail: "Sub-500ms screen pop payload" },
+        ],
+      },
+      {
+        id: "b6", lane: "agent", kind: "agent", required: false,
+        label: "Review caller context pre-connect",
+        impl: [{ kind: "component", name: "src/components/five9-overlay/" }],
+      },
+      {
+        id: "b7", lane: "external", kind: "external", required: false,
+        label: "Pull live CRM snapshot", note: "Clio / MyCase via five9-main",
+        impl: [
+          { kind: "edge", name: "clio" },
+          { kind: "edge", name: "mycase" },
+        ],
+      },
     ],
   },
   {
@@ -23,12 +70,42 @@ const MASTER_PHASES: FlowPhase[] = [
     title: "During Call",
     caption: "Live conversation + in-call updates",
     steps: [
-      { id: "d1", lane: "system", kind: "automated", required: true, label: "Call connected — state: connected" },
-      { id: "d2", lane: "system", kind: "automated", required: false, label: "Start recording / transcript", note: "If consent + config enabled" },
-      { id: "d3", lane: "agent", kind: "agent", required: false, label: "Agent updates live notes / structured fields" },
-      { id: "d4", lane: "agent", kind: "decision", required: false, label: "Branch: hold / transfer / escalate / book" },
-      { id: "d5", lane: "agent", kind: "agent", required: false, label: "Compliance prompt acknowledged" },
-      { id: "d6", lane: "system", kind: "automated", required: true, label: "Live call ends — state: ended" },
+      {
+        id: "d1", lane: "system", kind: "automated", required: true,
+        label: "Call connected — state: connected",
+        impl: [
+          { kind: "hook", name: "useCallSessionTracking" },
+          { kind: "event", name: "call.connected" },
+        ],
+      },
+      {
+        id: "d2", lane: "system", kind: "automated", required: false,
+        label: "Start recording / transcript", note: "If consent + config enabled",
+        impl: [{ kind: "hook", name: "useCallSessionEvents" }],
+      },
+      {
+        id: "d3", lane: "agent", kind: "agent", required: false,
+        label: "Agent updates live notes / structured fields",
+        impl: [{ kind: "component", name: "AgentCallNotesInput", detail: "Debounced autosave" }],
+      },
+      {
+        id: "d4", lane: "agent", kind: "decision", required: false,
+        label: "Branch: hold / transfer / escalate / book",
+        impl: [{ kind: "component", name: "src/components/agent/" }],
+      },
+      {
+        id: "d5", lane: "agent", kind: "agent", required: false,
+        label: "Compliance prompt acknowledged",
+        impl: [{ kind: "hook", name: "useScriptSessions" }],
+      },
+      {
+        id: "d6", lane: "system", kind: "automated", required: true,
+        label: "Live call ends — state: ended",
+        impl: [
+          { kind: "edge", name: "five9-main", detail: "callEnded webhook" },
+          { kind: "event", name: "call.ended" },
+        ],
+      },
     ],
   },
   {
@@ -36,12 +113,46 @@ const MASTER_PHASES: FlowPhase[] = [
     title: "ACW (Wrap-up)",
     caption: "After live call ends, before final submit",
     steps: [
-      { id: "a1", lane: "system", kind: "automated", required: true, label: "Enter ACW state — timer starts" },
-      { id: "a2", lane: "system", kind: "automated", required: false, label: "Generate AI summary + action items", note: "Lovable AI gateway" },
-      { id: "a3", lane: "agent", kind: "agent", required: true, label: "Review / edit notes + summary" },
-      { id: "a4", lane: "agent", kind: "agent", required: true, label: "Complete required structured fields" },
-      { id: "a5", lane: "agent", kind: "agent", required: false, label: "Create callback / follow-up / internal task" },
-      { id: "a6", lane: "external", kind: "external", required: false, label: "Patch CRM contact / matter draft", note: "Optional in-ACW write" },
+      {
+        id: "a1", lane: "system", kind: "automated", required: true,
+        label: "Enter ACW state — timer starts",
+        impl: [{ kind: "hook", name: "useCallSessionTracking" }],
+      },
+      {
+        id: "a2", lane: "system", kind: "automated", required: false,
+        label: "Generate AI summary + action items", note: "Lovable AI gateway",
+        impl: [
+          { kind: "edge", name: "ai-suggestions" },
+          { kind: "component", name: "PostCallSummary" },
+        ],
+      },
+      {
+        id: "a3", lane: "agent", kind: "agent", required: true,
+        label: "Review / edit notes + summary",
+        impl: [{ kind: "component", name: "AgentCallNotesInput" }],
+      },
+      {
+        id: "a4", lane: "agent", kind: "agent", required: true,
+        label: "Complete required structured fields",
+        impl: [{ kind: "hook", name: "useCallSummaryTemplates" }],
+      },
+      {
+        id: "a5", lane: "agent", kind: "agent", required: false,
+        label: "Create callback / follow-up / internal task",
+        impl: [
+          { kind: "hook", name: "useCallbackReminders" },
+          { kind: "hook", name: "useTasks" },
+          { kind: "component", name: "CallbackRemindersPanel" },
+        ],
+      },
+      {
+        id: "a6", lane: "external", kind: "external", required: false,
+        label: "Patch CRM contact / matter draft", note: "Optional in-ACW write",
+        impl: [
+          { kind: "edge", name: "five9-main", detail: "Best-effort draft write" },
+          { kind: "lib", name: "supabase/functions/_shared/legal-crm-adapter.ts" },
+        ],
+      },
     ],
   },
   {
@@ -49,10 +160,29 @@ const MASTER_PHASES: FlowPhase[] = [
     title: "Disposition",
     caption: "Structured outcome submitted",
     steps: [
-      { id: "p1", lane: "agent", kind: "agent", required: true, label: "Select disposition" },
-      { id: "p2", lane: "system", kind: "decision", required: true, label: "Validate required disposition fields" },
-      { id: "p3", lane: "agent", kind: "agent", required: true, label: "Submit — wrap-up marked complete" },
-      { id: "p4", lane: "system", kind: "automated", required: true, label: "Persist disposition + close ACW" },
+      {
+        id: "p1", lane: "agent", kind: "agent", required: true,
+        label: "Select disposition",
+        impl: [{ kind: "hook", name: "useDispositions" }],
+      },
+      {
+        id: "p2", lane: "system", kind: "decision", required: true,
+        label: "Validate required disposition fields",
+        impl: [{ kind: "lib", name: "supabase/functions/_shared/disposition-mapping-engine.ts" }],
+      },
+      {
+        id: "p3", lane: "agent", kind: "agent", required: true,
+        label: "Submit — wrap-up marked complete",
+        impl: [{ kind: "hook", name: "useCallOutcomes" }],
+      },
+      {
+        id: "p4", lane: "system", kind: "automated", required: true,
+        label: "Persist disposition + close ACW",
+        impl: [
+          { kind: "table", name: "call_record" },
+          { kind: "event", name: "disposition.committed" },
+        ],
+      },
     ],
   },
   {
@@ -60,13 +190,61 @@ const MASTER_PHASES: FlowPhase[] = [
     title: "Post Disposition",
     caption: "Downstream automations + records",
     steps: [
-      { id: "x1", lane: "system", kind: "automated", required: true, label: "Trigger automation pipeline" },
-      { id: "x2", lane: "external", kind: "external", required: false, label: "Create / update ticket in CRM" },
-      { id: "x3", lane: "external", kind: "external", required: false, label: "Fire outbound webhook (Zapier / Make)" },
-      { id: "x4", lane: "external", kind: "external", required: false, label: "Send SMS / email by disposition template" },
-      { id: "x5", lane: "system", kind: "automated", required: true, label: "Record QA / analytics / compliance events" },
-      { id: "x6", lane: "system", kind: "automated", required: true, label: "Index for history + reporting" },
-      { id: "x7", lane: "system", kind: "automated", required: false, label: "Schedule follow-up tasks / reminders" },
+      {
+        id: "x1", lane: "system", kind: "automated", required: true,
+        label: "Trigger automation pipeline",
+        impl: [
+          { kind: "edge", name: "process-jobs" },
+          { kind: "hook", name: "usePostCallAutomations" },
+        ],
+      },
+      {
+        id: "x2", lane: "external", kind: "external", required: false,
+        label: "Create / update ticket in CRM",
+        impl: [
+          { kind: "edge", name: "five9-main", detail: "Dispatcher" },
+          { kind: "edge", name: "crm-push" },
+          { kind: "edge", name: "clio" },
+          { kind: "edge", name: "mycase" },
+        ],
+      },
+      {
+        id: "x3", lane: "external", kind: "external", required: false,
+        label: "Fire outbound webhook (Zapier / Make)",
+        impl: [{ kind: "edge", name: "send-notification" }],
+      },
+      {
+        id: "x4", lane: "external", kind: "external", required: false,
+        label: "Send SMS / email by disposition template",
+        impl: [
+          { kind: "edge", name: "twilio-sms" },
+          { kind: "hook", name: "useEmailTemplates" },
+        ],
+      },
+      {
+        id: "x5", lane: "system", kind: "automated", required: true,
+        label: "Record QA / analytics / compliance events",
+        impl: [
+          { kind: "hook", name: "useQAReviews" },
+          { kind: "edge", name: "compliance-export" },
+        ],
+      },
+      {
+        id: "x6", lane: "system", kind: "automated", required: true,
+        label: "Index for history + reporting",
+        impl: [
+          { kind: "edge", name: "five9-reporting" },
+          { kind: "hook", name: "useCallLogs" },
+        ],
+      },
+      {
+        id: "x7", lane: "system", kind: "automated", required: false,
+        label: "Schedule follow-up tasks / reminders",
+        impl: [
+          { kind: "hook", name: "useCallbackReminders" },
+          { kind: "hook", name: "useScheduledReports" },
+        ],
+      },
     ],
   },
 ];
