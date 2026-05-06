@@ -6,8 +6,14 @@ interface SEOHeadProps {
   canonical?: string;
   ogTitle?: string;
   ogDescription?: string;
+  ogImage?: string;
+  ogType?: "website" | "article";
   noindex?: boolean;
 }
+
+const DEFAULT_OG_IMAGE = "https://fabric59.com/og-image.png";
+const DEFAULT_TITLE =
+  "Fabric59 | Five9-Native Control Plane & Legal-Intake Bridge";
 
 export function SEOHead({
   title,
@@ -15,6 +21,8 @@ export function SEOHead({
   canonical,
   ogTitle,
   ogDescription,
+  ogImage,
+  ogType = "website",
   noindex,
 }: SEOHeadProps) {
   useEffect(() => {
@@ -22,7 +30,9 @@ export function SEOHead({
 
     const setMeta = (name: string, content: string, property?: boolean) => {
       const attr = property ? "property" : "name";
-      let el = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement | null;
+      let el = document.querySelector(
+        `meta[${attr}="${name}"]`,
+      ) as HTMLMetaElement | null;
       if (!el) {
         el = document.createElement("meta");
         el.setAttribute(attr, name);
@@ -31,37 +41,50 @@ export function SEOHead({
       el.setAttribute("content", content);
     };
 
-    setMeta("description", description);
-
-    if (noindex) {
-      setMeta("robots", "noindex, nofollow");
-    }
-
-    if (ogTitle || title) {
-      setMeta("og:title", ogTitle || title, true);
-      setMeta("twitter:title", ogTitle || title);
-    }
-    if (ogDescription || description) {
-      setMeta("og:description", ogDescription || description, true);
-      setMeta("twitter:description", ogDescription || description);
-    }
-
-    // Canonical
-    if (canonical) {
-      let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-      if (!link) {
-        link = document.createElement("link");
-        link.setAttribute("rel", "canonical");
-        document.head.appendChild(link);
+    const setLink = (rel: string, href: string) => {
+      let el = document.querySelector(
+        `link[rel="${rel}"]`,
+      ) as HTMLLinkElement | null;
+      if (!el) {
+        el = document.createElement("link");
+        el.setAttribute("rel", rel);
+        document.head.appendChild(el);
       }
-      link.setAttribute("href", canonical);
-    }
+      el.setAttribute("href", href);
+    };
+
+    setMeta("description", description);
+    setMeta(
+      "robots",
+      noindex ? "noindex, nofollow" : "index, follow",
+    );
+
+    const finalTitle = ogTitle || title;
+    const finalDesc = ogDescription || description;
+    const finalImage = ogImage || DEFAULT_OG_IMAGE;
+
+    // Open Graph
+    setMeta("og:type", ogType, true);
+    setMeta("og:site_name", "Fabric59", true);
+    setMeta("og:title", finalTitle, true);
+    setMeta("og:description", finalDesc, true);
+    setMeta("og:image", finalImage, true);
+    setMeta("og:image:alt", finalTitle, true);
+    if (canonical) setMeta("og:url", canonical, true);
+
+    // Twitter
+    setMeta("twitter:card", "summary_large_image");
+    setMeta("twitter:site", "@Fabric59");
+    setMeta("twitter:title", finalTitle);
+    setMeta("twitter:description", finalDesc);
+    setMeta("twitter:image", finalImage);
+
+    if (canonical) setLink("canonical", canonical);
 
     return () => {
-      // Reset to defaults on unmount
-      document.title = "Fabric59 | Five9 Integration Hub for CRM & Agent Lifecycle Management";
+      document.title = DEFAULT_TITLE;
     };
-  }, [title, description, canonical, ogTitle, ogDescription, noindex]);
+  }, [title, description, canonical, ogTitle, ogDescription, ogImage, ogType, noindex]);
 
   return null;
 }
