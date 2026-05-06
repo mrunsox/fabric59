@@ -141,10 +141,6 @@ export default function LegalConnectPage() {
   // there is no scope to write a connection against, so silently opening the
   // setup wizard would be misleading.
   const handleConnectProvider = (provider: string) => {
-    if (provider === "mycase") {
-      toast.error(MYCASE_DISABLED_REASON);
-      return;
-    }
     if (!clientId) {
       toast.info("Pick a specific client first to connect a provider.");
       setTab("overview");
