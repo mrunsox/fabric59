@@ -323,6 +323,25 @@ export default function CallFlowPage() {
           complete before the lifecycle can advance.
         </p>
         <SwimlaneFlowchart phases={MASTER_PHASES} />
+
+        {/* Implementation ref legend */}
+        <div className="mt-4 rounded-lg border border-border/60 bg-card p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Code2 className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Implementation refs</h3>
+            <span className="text-xs text-muted-foreground">
+              Each lifecycle step is tagged with the real Edge Function, hook, lib, table, or event that handles it.
+            </span>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+            <div><span className="font-mono uppercase opacity-60 mr-1">edge</span><span className="text-muted-foreground">Supabase Edge Function — <code>supabase/functions/&lt;name&gt;/index.ts</code></span></div>
+            <div><span className="font-mono uppercase opacity-60 mr-1">hook</span><span className="text-muted-foreground">React hook — <code>src/hooks/&lt;name&gt;.ts</code></span></div>
+            <div><span className="font-mono uppercase opacity-60 mr-1">lib</span><span className="text-muted-foreground">Shared module — typically <code>_shared/</code> or <code>src/lib/</code></span></div>
+            <div><span className="font-mono uppercase opacity-60 mr-1">component</span><span className="text-muted-foreground">UI surface in <code>src/components/</code></span></div>
+            <div><span className="font-mono uppercase opacity-60 mr-1">table</span><span className="text-muted-foreground">Database table updated at this step</span></div>
+            <div><span className="font-mono uppercase opacity-60 mr-1">event</span><span className="text-muted-foreground">Internal event name dispatched on the bus</span></div>
+          </div>
+        </div>
       </section>
 
       {/* Scenario flows */}
