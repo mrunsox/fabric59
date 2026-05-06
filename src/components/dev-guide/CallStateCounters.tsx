@@ -14,7 +14,7 @@ const STATES: { key: StateKey; label: string; match: string[]; icon: typeof Phon
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
-export function CallStateCounters() {
+export const CallStateCounters = forwardRef<HTMLDivElement>(function CallStateCounters(_props, ref) {
   const [counts, setCounts] = useState<Record<StateKey, number>>({ connected: 0, ended: 0, acw: 0, disposed: 0 });
   const [other, setOther] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
