@@ -13,7 +13,7 @@ export default function SecurityPage() {
       <SEOHead
         title="Security | Fabric59"
         description="Learn how Fabric59 protects your data with multi-tenant isolation, AES-256 encryption, RBAC, audit logging, and enterprise-grade infrastructure."
-        canonical="https://fabric59.lovable.app/security"
+        canonical="https://fabric59.com/security"
       />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link

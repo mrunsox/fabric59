@@ -91,7 +91,7 @@ export default function DemoSandboxPage() {
       <SEOHead
         title="Interactive Demo | Fabric59"
         description="Try Fabric59 with no signup. Walk through a fake provisioning, mapping, and call flow in a read-only sandbox."
-        canonical="https://fabric59.lovable.app/demo"
+        canonical="https://fabric59.com/demo"
       />
 
       <MegaMenuHeader />

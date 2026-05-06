@@ -76,7 +76,7 @@ export default function ProductTourPage() {
       <SEOHead
         title="Product Tour | Fabric59"
         description="Walk through Fabric59 capabilities, from agent provisioning and CRM field mapping to AI call flow design and Legal Connect."
-        canonical="https://fabric59.lovable.app/product"
+        canonical="https://fabric59.com/product"
       />
 
       <MegaMenuHeader />

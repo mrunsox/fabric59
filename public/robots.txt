@@ -57,4 +57,4 @@ Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /system-access
 
-Sitemap: https://fabric59.lovable.app/sitemap.xml
+Sitemap: https://fabric59.com/sitemap.xml

@@ -66,7 +66,7 @@ export default function FaqPage() {
       <SEOHead
         title="FAQ | Fabric59 Five9 Integration Platform"
         description="Answers to common questions about Fabric59, our Five9 integrations, CRM connectors, agent provisioning, pricing, and security."
-        canonical="https://fabric59.lovable.app/faq"
+        canonical="https://fabric59.com/faq"
       />
       <StructuredData data={faqLD} />
 

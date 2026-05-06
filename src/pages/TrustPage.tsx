@@ -24,7 +24,7 @@ export default function TrustPage() {
       <SEOHead
         title="Trust Center | Fabric59"
         description="Fabric59 Trust Center: compliance status, security controls, data handling, and how to request due diligence documentation."
-        canonical="https://fabric59.lovable.app/trust"
+        canonical="https://fabric59.com/trust"
       />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link

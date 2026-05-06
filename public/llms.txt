@@ -43,11 +43,11 @@ Salesforce, HubSpot, Slack, Twilio, Zapier, Zoom, DocuSign, QuickBooks, Google W
 Fabric59 is an UNSOX Digital solution. Contact: hi@fabric59.com
 
 ## Links
-- Website: https://fabric59.lovable.app
-- Build Outline: https://fabric59.lovable.app/outline
-- Security: https://fabric59.lovable.app/security
-- Privacy: https://fabric59.lovable.app/privacy
-- Trust Center: https://fabric59.lovable.app/trust
-- Terms: https://fabric59.lovable.app/terms
-- Responsible Disclosure: https://fabric59.lovable.app/responsible-disclosure
-- Contact: https://fabric59.lovable.app/contact
+- Website: https://fabric59.com
+- Build Outline: https://fabric59.com/outline
+- Security: https://fabric59.com/security
+- Privacy: https://fabric59.com/privacy
+- Trust Center: https://fabric59.com/trust
+- Terms: https://fabric59.com/terms
+- Responsible Disclosure: https://fabric59.com/responsible-disclosure
+- Contact: https://fabric59.com/contact

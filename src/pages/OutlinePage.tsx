@@ -88,7 +88,7 @@ export default function OutlinePage() {
       <SEOHead
         title="Build Outline | Fabric59 Feature Roadmap"
         description="See every feature planned and built for Fabric59, the Five9 integration platform for agent lifecycle management and CRM field mapping."
-        canonical="https://fabric59.lovable.app/outline"
+        canonical="https://fabric59.com/outline"
       />
       {/* Header */}
       <header className="border-b border-border bg-background/95 backdrop-blur px-6 py-4 sticky top-0 z-10">

@@ -7,7 +7,7 @@ import { SEOHead } from "@/components/seo/SEOHead";
 const COMPLIANCE_EMAIL = "security@fabric59.com";
 
 const inScope = [
-  "Fabric59 web application (fabric59.lovable.app)",
+  "Fabric59 web application (fabric59.com)",
   "Publicly accessible API endpoints",
   "Authentication and authorization flows",
   "Data exposure or leakage vulnerabilities",
@@ -28,7 +28,7 @@ export default function ResponsibleDisclosurePage() {
       <SEOHead
         title="Responsible Disclosure | Fabric59"
         description="Fabric59 responsible disclosure policy. Report security vulnerabilities safely and responsibly."
-        canonical="https://fabric59.lovable.app/responsible-disclosure"
+        canonical="https://fabric59.com/responsible-disclosure"
       />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link
