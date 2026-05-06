@@ -117,22 +117,22 @@ export default function Five9ConnectWizard({ clientId, onComplete }: Props) {
             />
           </div>
 
-          {result && result.ok === false && (
+          {result && result.ok === false ? (
             <Alert variant="destructive">
               <XCircle className="h-4 w-4" />
               <AlertTitle>Connection failed</AlertTitle>
-              <AlertDescription className="text-xs break-words">{result.message}</AlertDescription>
+              <AlertDescription className="text-xs break-words">{(result as { ok: false; message: string }).message}</AlertDescription>
             </Alert>
-          )}
-          {result && result.ok === true && (
+          ) : null}
+          {result && result.ok === true ? (
             <Alert className="border-success/40">
               <CheckCircle2 className="h-4 w-4 text-success" />
               <AlertTitle>Connected</AlertTitle>
               <AlertDescription className="text-xs">
-                Verified Five9 access for {result.username}.
+                Verified Five9 access for {(result as { ok: true; username: string }).username}.
               </AlertDescription>
             </Alert>
-          )}
+          ) : null}
 
           <div className="flex justify-end pt-1">
             <Button type="submit" disabled={working || !username || !password}>
