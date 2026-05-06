@@ -90,6 +90,7 @@ import DocsHubPage from "@/pages/admin/DocsHubPage";
 import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
+import CallFlowPage from "@/pages/admin/CallFlowPage";
 import TreeEditorPage from "@/pages/admin/TreeEditorPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
 import DesignSystemPage from "@/pages/admin/DesignSystemPage";
