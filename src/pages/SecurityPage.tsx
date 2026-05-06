@@ -11,9 +11,10 @@ export default function SecurityPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Security | Fabric59"
-        description="Learn how Fabric59 protects your data with multi-tenant isolation, AES-256 encryption, RBAC, audit logging, and enterprise-grade infrastructure."
+        title="Security — Fabric59"
+        description="How Fabric59 protects your data: AES-256 (pgcrypto) credential vault, Postgres Row-Level Security, SECURITY DEFINER role checks, immutable audit logs, encrypted backups."
         canonical="https://fabric59.com/security"
+        ogTitle="Fabric59 Security — RLS, AES-256, audit-grade controls"
       />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link

@@ -22,9 +22,10 @@ export default function TrustPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Trust Center | Fabric59"
-        description="Fabric59 Trust Center: compliance status, security controls, data handling, and how to request due diligence documentation."
+        title="Trust Center — Fabric59"
+        description="Fabric59 Trust Center: current security posture, AES-256 credential vault, Postgres RLS isolation, audit-grade compliance export. SOC 2 not yet pursued."
         canonical="https://fabric59.com/trust"
+        ogTitle="Fabric59 Trust Center"
       />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link

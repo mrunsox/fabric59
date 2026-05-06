@@ -64,9 +64,10 @@ export default function FaqPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="FAQ | Fabric59 Five9 Integration Platform"
-        description="Answers to common questions about Fabric59, our Five9 integrations, CRM connectors, agent provisioning, pricing, and security."
+        title="FAQ — Fabric59"
+        description="Answers about Fabric59: how the Five9 SOAP integration works, which CRMs are live (MyCase) vs ready (Clio), security and RLS, onboarding, and pricing."
         canonical="https://fabric59.com/faq"
+        ogTitle="Fabric59 FAQ — Five9, CRMs, security, onboarding"
       />
       <StructuredData data={faqLD} />
 

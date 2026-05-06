@@ -149,8 +149,9 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
         title="Fabric59 — Five9-Native Control Plane & Legal-Intake Bridge"
-        description="Fabric59 connects Five9 to legal CRMs (MyCase live, Clio ready), with visual field mapping, decision-tree scripting, multi-tenant ops, and audit-grade compliance export."
+        description="Connect Five9 to MyCase (live) and Clio (ready) with 30+ SOAP actions, visual field mapping, decision-tree scripting, multi-tenant RLS, and audit-grade compliance export."
         canonical="https://fabric59.com/"
+        ogTitle="Fabric59 — The Five9-native bridge to your legal CRM"
       />
       <StructuredData data={[organizationLD, faqLD]} />
 
