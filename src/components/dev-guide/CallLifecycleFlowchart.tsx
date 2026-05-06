@@ -122,6 +122,21 @@ export function SwimlaneFlowchart({
                                   {step.note}
                                 </div>
                               )}
+                              {step.impl && step.impl.length > 0 && (
+                                <div className="mt-1.5 flex flex-wrap gap-1">
+                                  {step.impl.map((ref, i) => (
+                                    <span
+                                      key={i}
+                                      title={ref.detail ?? ref.kind}
+                                      className="inline-flex items-center gap-1 rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[9.5px] font-mono text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                    >
+                                      <Code2 className="h-2.5 w-2.5" />
+                                      <span className="text-[8.5px] uppercase tracking-wider opacity-60">{ref.kind}</span>
+                                      <span className="text-foreground/80">{ref.name}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
