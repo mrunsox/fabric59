@@ -6713,6 +6713,57 @@ export type Database = {
         }
         Relationships: []
       }
+      walkthrough_requests: {
+        Row: {
+          company: string | null
+          created_at: string
+          current_crm: string | null
+          five9_status: string | null
+          id: string
+          message: string | null
+          name: string
+          role: string | null
+          source_url: string | null
+          status: Database["public"]["Enums"]["walkthrough_request_status"]
+          team_size: string | null
+          updated_at: string
+          user_agent: string | null
+          work_email: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          current_crm?: string | null
+          five9_status?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          role?: string | null
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["walkthrough_request_status"]
+          team_size?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          work_email: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          current_crm?: string | null
+          five9_status?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          role?: string | null
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["walkthrough_request_status"]
+          team_size?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          work_email?: string
+        }
+        Relationships: []
+      }
       web_callbacks: {
         Row: {
           call_disposition: string | null
@@ -7330,6 +7381,7 @@ export type Database = {
         | "experimental"
         | "deprecated"
         | "extracted"
+      walkthrough_request_status: "new" | "contacted" | "qualified" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -7505,6 +7557,7 @@ export const Constants = {
         "deprecated",
         "extracted",
       ],
+      walkthrough_request_status: ["new", "contacted", "qualified", "archived"],
     },
   },
 } as const
