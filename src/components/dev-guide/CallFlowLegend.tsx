@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Bot, User, Plug, GitBranch, Asterisk, CircleDashed } from "lucide-react";
 
 type LegendItem = {
