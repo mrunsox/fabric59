@@ -4,16 +4,28 @@
 
 /* Fabric59 - Premium Enterprise Design System */
 
+:root {
+  /* Live header height — updated by useHeaderOffset() so scroll math
+     never depends on hardcoded values, even if the sticky header
+     resizes on scroll (shadow/padding changes). */
+  --header-offset: 72px;
+}
+
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 80px;
+  scroll-padding-top: calc(var(--header-offset) + 12px);
+  /* Avoid bounce/overscroll feeding back into the smooth scroll on
+     iOS Safari and trackpads, which causes jitter at section edges. */
+  overscroll-behavior-y: none;
 }
 
-@media (max-width: 1024px) {
-  html { scroll-padding-top: 72px; }
+[id] {
+  scroll-margin-top: calc(var(--header-offset) + 12px);
 }
 
-[id] { scroll-margin-top: 80px; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
 
 @layer base {
   :root {
