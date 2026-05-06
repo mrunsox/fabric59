@@ -47,9 +47,9 @@ const ITEMS: LegendItem[] = [
   },
 ];
 
-export function CallFlowLegend() {
+export const CallFlowLegend = forwardRef<HTMLDivElement>(function CallFlowLegend(_props, ref) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-4 sm:p-5">
+    <div ref={ref} className="rounded-lg border border-border/60 bg-card p-4 sm:p-5">
       <div className="mb-3 flex items-baseline justify-between">
         <h3 className="text-sm font-semibold text-foreground">Lifecycle legend</h3>
         <span className="text-xs text-muted-foreground">Visual conventions used across every flowchart</span>
