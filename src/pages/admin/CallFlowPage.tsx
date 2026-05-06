@@ -448,5 +448,8 @@ const CallFlowPage = forwardRef<HTMLDivElement>((_props, ref) => {
       </section>
     </div>
   );
-}
+});
+CallFlowPage.displayName = "CallFlowPage";
+
+export default CallFlowPage;
 
