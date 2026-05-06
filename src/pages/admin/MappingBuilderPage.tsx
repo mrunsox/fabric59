@@ -33,6 +33,7 @@ import { TargetFieldsPanel } from "@/components/mapping-builder/TargetFieldsPane
 import { MappingCanvas } from "@/components/mapping-builder/MappingCanvas";
 import { MappingToolbar } from "@/components/mapping-builder/MappingToolbar";
 import { TransformDialog } from "@/components/mapping-builder/TransformDialog";
+import { MappingTestDialog } from "@/components/mapping-builder/MappingTestDialog";
 import type { FieldMapping, FieldDefinition } from "@/types/mapping";
 import type { CRMField } from "@/lib/crm-schemas";
 import { toast } from "sonner";
