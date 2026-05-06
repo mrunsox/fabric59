@@ -117,14 +117,14 @@ export default function Five9ConnectWizard({ clientId, onComplete }: Props) {
             />
           </div>
 
-          {result && !result.ok && (
+          {result && result.ok === false && (
             <Alert variant="destructive">
               <XCircle className="h-4 w-4" />
               <AlertTitle>Connection failed</AlertTitle>
               <AlertDescription className="text-xs break-words">{result.message}</AlertDescription>
             </Alert>
           )}
-          {result && result.ok && (
+          {result && result.ok === true && (
             <Alert className="border-success/40">
               <CheckCircle2 className="h-4 w-4 text-success" />
               <AlertTitle>Connected</AlertTitle>
