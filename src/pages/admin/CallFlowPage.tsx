@@ -1,7 +1,7 @@
 import { CallFlowLegend } from "@/components/dev-guide/CallFlowLegend";
 import { SwimlaneFlowchart, FlowPhase } from "@/components/dev-guide/CallLifecycleFlowchart";
 import { CallFlowScenarioTabs } from "@/components/dev-guide/CallFlowScenarioTabs";
-import { Phone, Workflow, ListChecks, AlertTriangle } from "lucide-react";
+import { Phone, Workflow, ListChecks, AlertTriangle, GitBranch as GitBranchIcon } from "lucide-react";
 
 const MASTER_PHASES: FlowPhase[] = [
   {
