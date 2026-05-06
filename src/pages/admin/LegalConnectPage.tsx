@@ -141,19 +141,34 @@ export default function LegalConnectPage() {
   // there is no scope to write a connection against, so silently opening the
   // setup wizard would be misleading.
   const handleConnectProvider = (provider: string) => {
+    if (provider === "mycase") {
+      toast.error(MYCASE_DISABLED_REASON);
+      return;
+    }
     if (!clientId) {
       toast.info("Pick a specific client first to connect a provider.");
       setTab("overview");
       return;
     }
-    // Send the user to the per-client legal connect setup page for the chosen provider.
     navigate(`/admin/clients/${clientId}/legal-connect/setup/${provider}`);
   };
 
-  // Refresh a single connection's status by invalidating the connections query.
-  const handleRefreshConnection = (provider: string) => {
-    queryClient.invalidateQueries({ queryKey: ["legal-connections"] });
-    toast.success(`Refreshing ${provider} connection status…`);
+  // Real refresh: call legal-connect-test, surface result, then refetch.
+  const handleRefreshConnection = async (connectionId: string, provider: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("legal-connect-test", {
+        body: { connection_id: connectionId },
+      });
+      if (error) throw error;
+      const ok = data?.success !== false;
+      if (ok) toast.success(`${provider}: connection OK`);
+      else toast.error(data?.message || `${provider}: test failed`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ["legal-connections"] });
+      queryClient.invalidateQueries({ queryKey: ["legal-connect", "connections"] });
+    }
   };
 
   // Open the per-client view for a connection.
