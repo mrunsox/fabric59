@@ -1,53 +1,56 @@
 # Fabric59
-> Five9 integration platform for agent lifecycle management and CRM field mapping
+> Five9-native control plane and legal-intake bridge for contact centers and law firms
 
 ## What is Fabric59?
-Fabric59 is an all-in-one platform that automates Five9 agent onboarding, offboarding, CRM field mapping, and 55+ third-party integrations. Built specifically for BPOs and contact centers, Fabric59 eliminates manual provisioning across Five9, Google Workspace, and Slack, reducing agent setup time from hours to minutes.
+Fabric59 sits between Five9 and your CRM stack. It connects Five9 to legal CRMs (MyCase live today, Clio adapter ready to activate), provides multi-tenant operations for BPOs and agencies, and ships visual field mapping, agent decision-tree scripting, dispositions, telephony reconciliation, and an audit-grade compliance export.
 
 ## Who is it for?
-- BPO contact centers managing hundreds of agents across Five9
-- Operations teams that need to onboard/offboard agents quickly
-- Companies integrating Five9 with CRM systems like Salesforce, HubSpot, Clio, or Workiz
-- IT administrators who need audit trails and compliance logging
+- Legal-intake contact centers running Five9 with MyCase or Clio
+- BPOs and agencies that operate Five9 across multiple clients
+- Operations teams that need a hardened Five9 → CRM bridge with audit trails
 
-## Key Features
-- **Agent Provisioning & Deprovisioning**: One-click onboarding and offboarding across Five9, Google Workspace, and Slack with automated credential delivery and grace periods.
-- **Visual CRM Field Mapping Builder**: Drag-and-drop canvas to connect Five9 contact fields to any CRM with custom transformation logic.
-- **55+ Pre-built Integrations**: Connectors for Salesforce, HubSpot, Slack, Twilio, Zapier, Zoom, DocuSign, QuickBooks, and many more.
-- **AI Call Flow Builder**: Design call flows with AI chat assistance. Chat-driven configuration with an interactive step-through simulator for legal, home services, healthcare, and insurance scenarios.
-- **Five9 Domain Management**: Manage multiple Five9 domains with per-domain credentials, branding, IVR settings, and real-time connection testing.
-- **Role-Based Access Control**: Granular permission system with per-user tab access, organization-level isolation, and row-level security at the database layer.
-- **Multi-Tenant Platform**: Manage multiple clients from a single dashboard. Tag tenants by CRM type, configure per-client integrations, and oversee all organizations from the master admin console.
-- **Real-time API Monitoring**: Live API logs, error tracking, and a built-in test console for every integration request.
-- **Audit Logging**: Immutable logs tracking every agent provisioning event, data access, and configuration change.
+## Available Today
+- **Deep Five9 SOAP integration**: 30+ live SOAP actions across agents, campaigns, skills, profiles, DNIS, dispositions, and call variables.
+- **Multi-domain Five9 management**: Per-domain credentials, IVR settings, and connection tests.
+- **Five9 → CRM bridge for legal intake**: MyCase live via per-client API key. Clio adapter built and queued behind activation.
+- **Visual field mapping with Test runner**: Drag-and-drop mapping with transforms and a real Test execution against tenant configs.
+- **Decision-tree script builder**: React Flow scripting with 22 node types, conditional branching, and a runtime simulator.
+- **Multi-tenant Org / Partner / Client hierarchy**: Config inheritance Client > Partner > Org with Postgres RLS isolation.
+- **Encrypted credential vault**: AES-256 (pgcrypto) for Five9 and CRM credentials.
+- **API logs and reconciliation**: Realtime API events with deduplication; reconciliation between Five9 logs and CRM syncs.
+- **Server-side compliance export**: Logs, RLS snapshot, and config history bundled for auditors.
+- **Slack workspace integration**: Workspace provisioning and post-call notifications.
+- **Campaign blueprints and intake automation**: Intake form drives automated SOAP sequences; replicate and reverse-engineer flows.
 
-## How It Works
-1. **Connect**: Link your Five9 account and configure your domain credentials.
-2. **Configure**: Set up integrations, map CRM fields with the visual builder, and define automation rules.
-3. **Automate**: Onboard and offboard agents in one click. Data syncs automatically across all connected platforms.
+## Coming Soon
+- Clio activation (adapter shipped, awaiting OAuth credentials)
+- One-click AI Call Flow export to Five9
+- Disposition email writebacks to CRM
+- Google Workspace agent provisioning
+- Self-serve billing and plan enforcement
 
-## Supported CRMs
-Salesforce, HubSpot, Clio, Workiz, Zendesk, and generic REST API integrations.
+## How We Work With You
+1. **Talk to us**: Short scoping call to map your Five9 footprint, CRMs, and intake workflows.
+2. **Connect Five9 + your legal stack**: We wire Five9 domains, MyCase or Clio, and required CRMs.
+3. **Roll out agent workflows**: Decision-tree scripts, mappings, dispositions, and reconciliation go live.
 
-## Supported Integrations
-Salesforce, HubSpot, Slack, Twilio, Zapier, Zoom, DocuSign, QuickBooks, Google Workspace, Microsoft 365, Asana, Calendly, Dropbox, OneDrive, OpenAI, Stripe, and 40+ more.
+Onboarding is currently founder-led. Self-serve signup will open later.
 
-## Security
-- AES-256 encryption at rest, TLS 1.3 in transit
-- Role-based access control with organization-level data isolation
-- Row-level security policies enforced at the database layer
-- Full audit trails for all actions
-- Working toward SOC 2 Type II certification
+## Security Posture
+- AES-256 credential encryption (pgcrypto)
+- Postgres Row-Level Security with SECURITY DEFINER role checks
+- Full audit trail and server-side compliance export
+- No SOC 2 or ISO 27001 claim today; certifications will be pursued as the business matures
 
 ## Company
 Fabric59 is an UNSOX Digital solution. Contact: hi@fabric59.com
 
 ## Links
 - Website: https://fabric59.com
-- Build Outline: https://fabric59.com/outline
+- Product: https://fabric59.com/product
+- Trust Center: https://fabric59.com/trust
 - Security: https://fabric59.com/security
 - Privacy: https://fabric59.com/privacy
-- Trust Center: https://fabric59.com/trust
 - Terms: https://fabric59.com/terms
 - Responsible Disclosure: https://fabric59.com/responsible-disclosure
 - Contact: https://fabric59.com/contact
