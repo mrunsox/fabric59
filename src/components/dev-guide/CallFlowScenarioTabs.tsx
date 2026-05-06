@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { SwimlaneFlowchart, FlowPhase } from "./CallLifecycleFlowchart";
 import { cn } from "@/lib/utils";
+import { useScenarioDeviations, type ScenarioId } from "@/hooks/useScenarioDeviations";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 interface Scenario {
-  id: string;
+  id: ScenarioId;
   label: string;
   summary: string;
   phases: FlowPhase[];
@@ -167,32 +169,113 @@ const SCENARIOS: Scenario[] = [
   },
 ];
 
+function DeviationBadge({ count, total }: { count: number; total: number }) {
+  if (total === 0) {
+    return (
+      <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+        no data
+      </span>
+    );
+  }
+  if (count === 0) {
+    return (
+      <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+        <CheckCircle2 className="h-2.5 w-2.5" /> 0/{total}
+      </span>
+    );
+  }
+  const pct = Math.round((count / total) * 100);
+  const tone = pct >= 20
+    ? "border-destructive/40 bg-destructive/10 text-destructive"
+    : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
+  return (
+    <span className={`ml-2 inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${tone}`}>
+      <AlertTriangle className="h-2.5 w-2.5" /> {count}/{total} deviated
+    </span>
+  );
+}
+
 export function CallFlowScenarioTabs() {
-  const [active, setActive] = useState(SCENARIOS[0].id);
+  const [active, setActive] = useState<ScenarioId>(SCENARIOS[0].id);
   const scenario = SCENARIOS.find((s) => s.id === active)!;
+  const { data: deviations, loading, error, updatedAt } = useScenarioDeviations(24);
+  const current = deviations[active];
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 border-b border-border/60 pb-2">
-        {SCENARIOS.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setActive(s.id)}
-            className={cn(
-              "px-3 py-1.5 rounded-md text-sm font-medium transition-colors border",
-              active === s.id
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-muted-foreground border-border/60 hover:text-foreground hover:border-border"
-            )}
-          >
-            {s.label}
-          </button>
-        ))}
+        {SCENARIOS.map((s) => {
+          const d = deviations[s.id];
+          return (
+            <button
+              key={s.id}
+              onClick={() => setActive(s.id)}
+              className={cn(
+                "inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors border",
+                active === s.id
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-muted-foreground border-border/60 hover:text-foreground hover:border-border"
+              )}
+            >
+              {s.label}
+              <DeviationBadge count={d.deviations} total={d.total} />
+            </button>
+          );
+        })}
       </div>
       <div className="rounded-md border border-border/40 bg-muted/30 p-3 text-sm text-muted-foreground">
         <span className="font-semibold text-foreground">{scenario.label}: </span>
         {scenario.summary}
       </div>
+
+      {/* Deviation panel */}
+      <div className="rounded-md border border-border/60 bg-card p-3">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <h4 className="text-sm font-semibold text-foreground">Workflow deviations (last 24h)</h4>
+          </div>
+          <span className="text-[11px] text-muted-foreground">
+            {loading ? "Refreshing…" : updatedAt ? `Updated ${updatedAt.toLocaleTimeString()}` : ""}
+          </span>
+        </div>
+        {error && (
+          <div className="text-xs text-destructive">{error}</div>
+        )}
+        {!error && current.total === 0 && (
+          <div className="text-xs text-muted-foreground">No sessions classified as <strong className="text-foreground">{scenario.label}</strong> in this window.</div>
+        )}
+        {!error && current.total > 0 && current.deviations === 0 && (
+          <div className="text-xs text-emerald-600 dark:text-emerald-400">
+            All {current.total} sessions completed required steps. No branching deviations detected.
+          </div>
+        )}
+        {!error && current.deviations > 0 && (
+          <div className="space-y-2">
+            <div className="text-xs text-muted-foreground">
+              <span className="text-foreground font-semibold">{current.deviations}</span> of{" "}
+              <span className="text-foreground font-semibold">{current.total}</span> sessions deviated from the expected flow.
+            </div>
+            <ul className="space-y-1">
+              {current.reasons.map((r) => (
+                <li key={r.reason} className="flex items-center justify-between text-xs">
+                  <code className="text-foreground/90">{r.reason}</code>
+                  <span className="font-mono text-muted-foreground tabular-nums">×{r.count}</span>
+                </li>
+              ))}
+            </ul>
+            {current.sampleSessions.length > 0 && (
+              <div className="text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                Sample sessions:{" "}
+                {current.sampleSessions.map((id) => (
+                  <code key={id} className="ml-1 text-[10px]">{id.slice(0, 8)}</code>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <SwimlaneFlowchart phases={scenario.phases} />
     </div>
   );
