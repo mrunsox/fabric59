@@ -72,4 +72,5 @@ export const CallFlowLegend = forwardRef<HTMLDivElement>(function CallFlowLegend
       </div>
     </div>
   );
-}
+});
+CallFlowLegend.displayName = "CallFlowLegend";
