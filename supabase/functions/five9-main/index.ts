@@ -760,7 +760,7 @@ serve(async (req) => {
         .order('started_at', { ascending: false })
         .limit(5);
 
-      return new Response(JSON.stringify({
+      const lookupResponse = {
         success: true,
         ani: normalizedAni,
         dnis,
@@ -778,7 +778,25 @@ serve(async (req) => {
         },
         recent_calls: recentCalls || [],
         matched: !!(contact || clioMaps?.length || mycaseMaps?.length),
-      }), {
+      };
+
+      // Persist screen-pop lookup to api_logs for /superadmin/logs visibility.
+      try {
+        const lookupTenantId = req.headers.get('x-tenant-id');
+        await supabase.from('api_logs').insert({
+          tenant_id: lookupTenantId,
+          endpoint: 'five9-main/lookup',
+          method: 'POST',
+          status: 'success',
+          request_payload: { ani: normalizedAni, dnis, raw: payload },
+          response: lookupResponse,
+          response_time_ms: Date.now() - startTime,
+        });
+      } catch (logErr) {
+        console.error('lookup api_logs insert error:', logErr);
+      }
+
+      return new Response(JSON.stringify(lookupResponse), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
