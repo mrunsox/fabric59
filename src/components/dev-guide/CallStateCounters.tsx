@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, PhoneCall, PhoneOff, ClipboardCheck, CheckCircle2, RefreshCw } from "lucide-react";
 
@@ -14,7 +14,7 @@ const STATES: { key: StateKey; label: string; match: string[]; icon: typeof Phon
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
-export function CallStateCounters() {
+export const CallStateCounters = forwardRef<HTMLDivElement>(function CallStateCounters(_props, ref) {
   const [counts, setCounts] = useState<Record<StateKey, number>>({ connected: 0, ended: 0, acw: 0, disposed: 0 });
   const [other, setOther] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -64,7 +64,7 @@ export function CallStateCounters() {
   const total = counts.connected + counts.ended + counts.acw + counts.disposed;
 
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-4 sm:p-5">
+    <div ref={ref} className="rounded-lg border border-border/60 bg-card p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-primary" />
@@ -120,4 +120,5 @@ export function CallStateCounters() {
       </div>
     </div>
   );
-}
+});
+CallStateCounters.displayName = "CallStateCounters";

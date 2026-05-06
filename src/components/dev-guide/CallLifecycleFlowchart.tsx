@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Bot, User, Plug, GitBranch, Asterisk, CircleDashed, ChevronRight, Code2 } from "lucide-react";
 
 export type ActorKind = "system" | "agent" | "external" | "customer";
@@ -50,12 +51,12 @@ interface SwimlaneFlowchartProps {
   lanes?: ActorKind[];
 }
 
-export function SwimlaneFlowchart({
-  phases,
-  lanes = ["system", "agent", "external"],
-}: SwimlaneFlowchartProps) {
+export const SwimlaneFlowchart = forwardRef<HTMLDivElement, SwimlaneFlowchartProps>(function SwimlaneFlowchart(
+  { phases, lanes = ["system", "agent", "external"] },
+  ref,
+) {
   return (
-    <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
+    <div ref={ref} className="rounded-lg border border-border/60 bg-card overflow-hidden">
       {/* Phase headers */}
       <div
         className="grid border-b border-border/60 bg-muted/30"
@@ -156,4 +157,5 @@ export function SwimlaneFlowchart({
       ))}
     </div>
   );
-}
+});
+SwimlaneFlowchart.displayName = "SwimlaneFlowchart";

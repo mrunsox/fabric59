@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { SwimlaneFlowchart, FlowPhase } from "./CallLifecycleFlowchart";
 import { cn } from "@/lib/utils";
 import { useScenarioDeviations, type ScenarioId } from "@/hooks/useScenarioDeviations";
@@ -169,40 +169,43 @@ const SCENARIOS: Scenario[] = [
   },
 ];
 
-function DeviationBadge({ count, total }: { count: number; total: number }) {
-  if (total === 0) {
+const DeviationBadge = forwardRef<HTMLSpanElement, { count: number; total: number }>(
+  ({ count, total }, ref) => {
+    if (total === 0) {
+      return (
+        <span ref={ref} className="ml-2 inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          no data
+        </span>
+      );
+    }
+    if (count === 0) {
+      return (
+        <span ref={ref} className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="h-2.5 w-2.5" /> 0/{total}
+        </span>
+      );
+    }
+    const pct = Math.round((count / total) * 100);
+    const tone = pct >= 20
+      ? "border-destructive/40 bg-destructive/10 text-destructive"
+      : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
     return (
-      <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-        no data
+      <span ref={ref} className={`ml-2 inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${tone}`}>
+        <AlertTriangle className="h-2.5 w-2.5" /> {count}/{total} deviated
       </span>
     );
-  }
-  if (count === 0) {
-    return (
-      <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-        <CheckCircle2 className="h-2.5 w-2.5" /> 0/{total}
-      </span>
-    );
-  }
-  const pct = Math.round((count / total) * 100);
-  const tone = pct >= 20
-    ? "border-destructive/40 bg-destructive/10 text-destructive"
-    : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400";
-  return (
-    <span className={`ml-2 inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${tone}`}>
-      <AlertTriangle className="h-2.5 w-2.5" /> {count}/{total} deviated
-    </span>
-  );
-}
+  },
+);
+DeviationBadge.displayName = "DeviationBadge";
 
-export function CallFlowScenarioTabs() {
+export const CallFlowScenarioTabs = forwardRef<HTMLDivElement>(function CallFlowScenarioTabs(_props, ref) {
   const [active, setActive] = useState<ScenarioId>(SCENARIOS[0].id);
   const scenario = SCENARIOS.find((s) => s.id === active)!;
   const { data: deviations, loading, error, updatedAt } = useScenarioDeviations(24);
   const current = deviations[active];
 
   return (
-    <div className="space-y-4">
+    <div ref={ref} className="space-y-4">
       <div className="flex flex-wrap gap-2 border-b border-border/60 pb-2">
         {SCENARIOS.map((s) => {
           const d = deviations[s.id];
@@ -279,4 +282,5 @@ export function CallFlowScenarioTabs() {
       <SwimlaneFlowchart phases={scenario.phases} />
     </div>
   );
-}
+});
+CallFlowScenarioTabs.displayName = "CallFlowScenarioTabs";
