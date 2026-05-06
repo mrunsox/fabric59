@@ -42,6 +42,10 @@ import SimulationPanel from "@/components/five9-overlay/SimulationPanel";
 import Five9HealthPanel from "@/components/five9-overlay/Five9HealthPanel";
 import EventLogViewer from "@/components/five9-overlay/EventLogViewer";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+const MYCASE_DISABLED_REASON =
+  "MyCase connect requires verified API-key provisioning. Contact admin.";
 
 // ── Status badge helper ──────────────────────────────────────────────
 
