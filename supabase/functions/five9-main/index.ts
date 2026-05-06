@@ -1045,6 +1045,10 @@ serve(async (req) => {
       const call = normalizeCallEvent(payload);
       const results: any = { tenantId: context.tenantId, callId: call.id };
 
+      // Sync call_sessions state regardless of CRM dedupe — counters must always reflect telephony.
+      const eventTypeA = (payload.event_type as string | undefined) ?? (call.endedAt ? 'call_ended' : 'call_started');
+      await upsertCallSession(supabase, context.orgId, context.tenantId, call, eventTypeA);
+
       // Idempotency check — skip if this exact call+tenant+disposition was already processed
       const isDuplicate = await checkIdempotency(supabase, call.id, context.tenantId, call.disposition);
       if (isDuplicate) {
