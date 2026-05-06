@@ -333,6 +333,14 @@ export default function MappingBuilderPage() {
         onSave={handleTransformSave}
       />
 
+      {/* Mapping test dialog */}
+      <MappingTestDialog
+        open={testDialogOpen}
+        onOpenChange={setTestDialogOpen}
+        mappings={mappings}
+        destinationLabel={selectedCRM}
+      />
+
       {/* Create new mapping dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent>
