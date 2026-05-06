@@ -1,7 +1,8 @@
 import { CallFlowLegend } from "@/components/dev-guide/CallFlowLegend";
 import { SwimlaneFlowchart, FlowPhase } from "@/components/dev-guide/CallLifecycleFlowchart";
 import { CallFlowScenarioTabs } from "@/components/dev-guide/CallFlowScenarioTabs";
-import { Phone, Workflow, ListChecks, AlertTriangle, GitBranch as GitBranchIcon, Code2 } from "lucide-react";
+import { CallStateCounters } from "@/components/dev-guide/CallStateCounters";
+import { Phone, Workflow, ListChecks, AlertTriangle, GitBranch as GitBranchIcon, Code2, Activity } from "lucide-react";
 
 const MASTER_PHASES: FlowPhase[] = [
   {
@@ -306,6 +307,12 @@ export default function CallFlowPage() {
             Downstream automations triggered <em>after</em> final submission — webhooks, CRM writes, QA, reporting.
           </Term>
         </div>
+      </section>
+
+      {/* Live counters */}
+      <section>
+        <SectionHeader icon={Activity} kicker="02" title="Live state counters" />
+        <CallStateCounters />
       </section>
 
       {/* Legend */}
