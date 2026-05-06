@@ -90,6 +90,7 @@ import DocsHubPage from "@/pages/admin/DocsHubPage";
 import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
+import CallFlowPage from "@/pages/admin/CallFlowPage";
 import TreeEditorPage from "@/pages/admin/TreeEditorPage";
 import UserDashboardPage from "@/pages/admin/UserDashboardPage";
 import DesignSystemPage from "@/pages/admin/DesignSystemPage";
@@ -155,6 +156,7 @@ const App = () => (
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/product" element={<ProductTourPage />} />
             <Route path="/demo" element={<DemoSandboxPage />} />
+            <Route path="/call-flow" element={<Navigate to="/superadmin/call-flow" replace />} />
 
             {/* Legacy /master/* → consolidated under /superadmin */}
             <Route path="/master" element={<Navigate to="/superadmin" replace />} />
@@ -191,6 +193,7 @@ const App = () => (
                 <Route path="exports" element={<SourceExportsPage />} />
                 <Route path="routes" element={<AdvancedRoutesPage />} />
                 <Route path="docs" element={<SystemDocsPage />} />
+                <Route path="call-flow" element={<CallFlowPage />} />
                 <Route path="dev-guide" element={<DevGuidePage />} />
               </Route>
             </Route>
