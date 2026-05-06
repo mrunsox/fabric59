@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Bot, User, Plug, GitBranch, Asterisk, CircleDashed, ChevronRight, Code2 } from "lucide-react";
 
 export type ActorKind = "system" | "agent" | "external" | "customer";
