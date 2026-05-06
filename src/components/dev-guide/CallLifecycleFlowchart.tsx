@@ -1,7 +1,17 @@
-import { Bot, User, Plug, GitBranch, Asterisk, CircleDashed, ChevronRight } from "lucide-react";
+import { Bot, User, Plug, GitBranch, Asterisk, CircleDashed, ChevronRight, Code2 } from "lucide-react";
 
 export type ActorKind = "system" | "agent" | "external" | "customer";
 export type StepKind = "automated" | "agent" | "external" | "decision";
+
+export type ImplKind = "edge" | "hook" | "lib" | "component" | "table" | "event";
+
+export interface ImplRef {
+  kind: ImplKind;
+  /** e.g. "five9-main", "useCallSessionTracking", "supabase/functions/_shared/disposition-mapping-engine.ts" */
+  name: string;
+  /** Short human label of what this ref does in the step. */
+  detail?: string;
+}
 
 export interface FlowStep {
   id: string;
@@ -10,6 +20,8 @@ export interface FlowStep {
   kind: StepKind;
   required?: boolean;
   note?: string;
+  /** Implementation refs so devs can trace this step to real code. */
+  impl?: ImplRef[];
 }
 
 export interface FlowPhase {
@@ -108,6 +120,21 @@ export function SwimlaneFlowchart({
                               {step.note && (
                                 <div className="text-[10.5px] text-muted-foreground mt-0.5 leading-snug">
                                   {step.note}
+                                </div>
+                              )}
+                              {step.impl && step.impl.length > 0 && (
+                                <div className="mt-1.5 flex flex-wrap gap-1">
+                                  {step.impl.map((ref, i) => (
+                                    <span
+                                      key={i}
+                                      title={ref.detail ?? ref.kind}
+                                      className="inline-flex items-center gap-1 rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[9.5px] font-mono text-muted-foreground hover:text-foreground hover:border-primary/40"
+                                    >
+                                      <Code2 className="h-2.5 w-2.5" />
+                                      <span className="text-[8.5px] uppercase tracking-wider opacity-60">{ref.kind}</span>
+                                      <span className="text-foreground/80">{ref.name}</span>
+                                    </span>
+                                  ))}
                                 </div>
                               )}
                             </div>
