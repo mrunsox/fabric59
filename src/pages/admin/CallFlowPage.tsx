@@ -275,9 +275,9 @@ function Term({ name, children }: { name: string; children: React.ReactNode }) {
   );
 }
 
-export default function CallFlowPage() {
+const CallFlowPage = forwardRef<HTMLDivElement>((_props, ref) => {
   return (
-    <div className="space-y-10 pb-16">
+    <div ref={ref} className="space-y-10 pb-16">
       {/* Header */}
       <header className="space-y-2">
         <div className="text-xs uppercase tracking-wider text-muted-foreground">Platform Admin · Dev Reference</div>
