@@ -282,4 +282,5 @@ export const CallFlowScenarioTabs = forwardRef<HTMLDivElement>(function CallFlow
       <SwimlaneFlowchart phases={scenario.phases} />
     </div>
   );
-}
+});
+CallFlowScenarioTabs.displayName = "CallFlowScenarioTabs";
