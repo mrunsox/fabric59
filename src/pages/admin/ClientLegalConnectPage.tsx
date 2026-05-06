@@ -95,6 +95,13 @@ export default function ClientLegalConnectPage() {
 
         {provider ? (
           <div className="max-w-2xl">
+            {provider === "five9" && (
+              <Five9ConnectWizard
+                clientId={clientId!}
+                organizationId={orgId}
+                onComplete={() => navigate(`/admin/clients/${clientId}/legal-connect`)}
+              />
+            )}
             {provider === "clio" && (
               <ClioConnectWizard
                 clientId={clientId!}
@@ -116,7 +123,7 @@ export default function ClientLegalConnectPage() {
                 onComplete={() => navigate(`/admin/clients/${clientId}/legal-connect`)}
               />
             )}
-            {!["clio", "mycase", "smokeball"].includes(provider) && (
+            {!["five9", "clio", "mycase", "smokeball"].includes(provider) && (
               <div className="text-sm text-muted-foreground">Unknown provider: {provider}</div>
             )}
           </div>
@@ -148,7 +155,12 @@ export default function ClientLegalConnectPage() {
                     clientId={clientId!}
                     provider={p}
                     connection={findConn(p)}
-                    onTest={() => toast.success(`${p} test queued`)}
+                    onTest={() => handleTest(p)}
+                    disabledReason={
+                      p === "mycase"
+                        ? "MyCase connect requires verified API-key provisioning. Contact admin."
+                        : null
+                    }
                     onDisconnect={async () => {
                       const c = findConn(p);
                       if (!c) return;
