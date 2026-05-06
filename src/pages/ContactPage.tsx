@@ -45,7 +45,7 @@ export default function ContactPage() {
       <SEOHead
         title="Contact | Fabric59"
         description="Get in touch with Fabric59 for security, compliance, partnership, or support inquiries."
-        canonical="https://fabric59.lovable.app/contact"
+        canonical="https://fabric59.com/contact"
       />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link

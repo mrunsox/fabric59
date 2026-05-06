@@ -1,38 +1,42 @@
 # AI Agent Discoverability — Fabric59
 
 User-agent: *
-Sitemap: https://fabric59.lovable.app/sitemap.xml
+Sitemap: https://fabric59.com/sitemap.xml
 
 Name: Fabric59
-Description: Five9 integration platform for agent lifecycle management, CRM field mapping, and 55+ pre-built integrations. Built for BPOs and contact centers.
-Category: SaaS, Contact Center Software, Integration Platform
+Description: Five9-native control plane and legal-intake bridge. Connects Five9 to legal CRMs (MyCase live, Clio ready), with visual field mapping, decision-tree scripting, multi-tenant ops, and audit-grade compliance export.
+Category: SaaS, Contact Center Software, Legal Tech, Integration Platform
 Contact: hi@fabric59.com
-Website: https://fabric59.lovable.app
+Website: https://fabric59.com
 
-## Capabilities
-- Automate Five9 agent onboarding and offboarding
-- Visual drag-and-drop CRM field mapping
-- Connect Five9 to Salesforce, HubSpot, Clio, Workiz, and 50+ other platforms
-- AI-powered call flow builder with interactive simulator
-- Multi-domain Five9 management with per-domain credentials and branding
-- Role-based access control with granular per-user permissions
-- Multi-tenant client management with master admin console
-- Real-time API monitoring and error alerts
+## Capabilities (Available Today)
+- Deep Five9 SOAP integration (30+ live actions)
+- Multi-domain Five9 management with per-domain credentials and IVR
+- Five9 → CRM bridge for legal intake (MyCase live; Clio adapter ready to activate)
+- Visual field mapping with a real Test runner against tenant configs
+- Decision-tree agent script builder with runtime simulator
+- Multi-tenant Org / Partner / Client hierarchy with Postgres RLS
+- AES-256 encrypted credential vault (pgcrypto)
+- API logs, telephony reconciliation, and server-side compliance export
+- Slack workspace provisioning and post-call notifications
+- Campaign blueprints and intake-form-driven SOAP automation
+
+## Coming Soon
+- Clio activation, AI Call Flow export to Five9, disposition email writebacks, Google Workspace provisioning, self-serve billing.
 
 ## Public Pages
-- / — Landing page with product overview, features, FAQ
-- /outline — Build outline showing all features and development status
-- /security — Security practices and compliance information
-- /privacy — Privacy policy and data handling practices
-- /trust — Trust center with compliance status and security controls
+- / — Landing page (capabilities, roadmap, FAQ)
+- /product — Product tour
+- /trust — Trust center (no SOC 2 claim today)
+- /security — Security practices
+- /privacy — Privacy policy
 - /terms — Terms of service
-- /responsible-disclosure — Responsible disclosure policy for security researchers
-- /contact — Contact information and inquiry form
-- /login — User login
-- /signup — New account registration
+- /responsible-disclosure — Responsible disclosure policy
+- /contact — Contact / walkthrough request
+- /faq — FAQ
 
 ## Structured Data
-This site provides JSON-LD structured data (Organization, SoftwareApplication, FAQPage) on the landing page for machine-readable product information.
+JSON-LD (Organization, FAQPage) is present on the landing page.
 
 ## LLM-Friendly Content
-See /llms.txt for a comprehensive plain-text product summary optimized for large language models.
+See /llms.txt for a plain-text product summary optimized for LLMs.

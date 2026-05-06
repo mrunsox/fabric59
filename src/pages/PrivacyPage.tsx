@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <SEOHead
         title="Privacy Policy | Fabric59"
         description="Learn how Fabric59 collects, uses, and protects your data. Our privacy policy covers data handling, retention, GDPR, and your rights."
-        canonical="https://fabric59.lovable.app/privacy"
+        canonical="https://fabric59.com/privacy"
       />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link

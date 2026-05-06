@@ -14,7 +14,7 @@ export default function TermsPage() {
       <SEOHead
         title="Terms of Service | Fabric59"
         description="Terms of service for Fabric59, the Five9 integration platform by UNSOX Digital."
-        canonical="https://fabric59.lovable.app/terms"
+        canonical="https://fabric59.com/terms"
       />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link

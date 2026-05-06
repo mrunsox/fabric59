@@ -112,8 +112,8 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-10 flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> 50+ contact centers</span>
-            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> 55+ integrations</span>
+            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> AES-256 encrypted</span>
+            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> Row-Level Security</span>
           </div>
         </div>
       </div>
