@@ -10,6 +10,9 @@ import {
   Activity,
   ShieldCheck,
   ChevronRight,
+  ClipboardCheck,
+  CheckCircle2,
+  Circle,
 } from "lucide-react";
 import { ArchitectureFlowchart } from "@/components/dev-guide/ArchitectureFlowchart";
 
@@ -28,6 +31,7 @@ const SECTIONS: Section[] = [
   { id: "deployments", label: "Deployment model", icon: Target },
   { id: "runs", label: "Runs & reliability", icon: Activity },
   { id: "guardrails", label: "Guardrails", icon: ShieldCheck },
+  { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
 function SectionHeader({ id, title, kicker }: { id: string; title: string; kicker?: string }) {
@@ -508,6 +512,90 @@ export default function DevGuidePage() {
                   <p className="text-sm text-muted-foreground">{g.d}</p>
                 </Card>
               ))}
+            </div>
+          </section>
+
+          {/* QA & Implementation Handoff */}
+          <section>
+            <SectionHeader
+              id="qa-handoff"
+              title="QA & Implementation Handoff – Fabric59 (May 2026)"
+              kicker="Baseline · PR #1 · Remaining work"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Baseline status</div>
+                <p className="text-sm text-muted-foreground">
+                  As of <strong>May 5, 2026</strong>, Fabric59 is wired end-to-end for: the 8 Feature
+                  Vault entries and their playbooks, the export pipeline, the Five9 Test Connection
+                  edge function, the superadmin route directory, and the multi-step onboarding
+                  wizard. <strong>PR #1 — "QA handoff fixes"</strong> (merged into <code className="text-xs bg-secondary/60 px-1 py-0.5 rounded">main</code>) is the
+                  baseline this Dev Guide assumes. Build on top of that commit; do not reintroduce
+                  the dead-ends listed below.
+                </p>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">What was fixed in the QA pass</div>
+                <ul className="space-y-2 text-sm text-foreground/90">
+                  {[
+                    <>Top-level routes (<code className="text-xs">/vault</code>, <code className="text-xs">/five9</code>, <code className="text-xs">/legal-connect</code>, <code className="text-xs">/settings</code>, <code className="text-xs">/master/vault/:id</code>) now redirect to their canonical destinations instead of 404.</>,
+                    <>Legal Connect: <Chip>Connect</Chip> <Chip>Refresh</Chip> <Chip>View</Chip> buttons are wired to real navigation and react-query invalidation (no longer inert).</>,
+                    <>Five9 Overview &amp; Legal Connect Overview: webhook/health badges reflect real 24h health from <code className="text-xs">five9_event_log</code> and <code className="text-xs">legal_sync_jobs</code>, not hardcoded "OK".</>,
+                    <>Vault Export <Chip>Download</Chip> now forces a real file download instead of opening a crashing tab.</>,
+                    <>Settings → <Chip>Export Compliance Report</Chip> returns an honest client-side JSON snapshot (no secrets), instead of a toast-only stub.</>,
+                    <><code className="text-xs">/admin/domains/:id</code> surfaces <Chip>Test Connection</Chip> on the locked state for already-connected domains.</>,
+                    <>Feature Vault experimental items (Legal Connect, Five9 Domain Management) show status-aware cards and deep links to live pages instead of misleading "Why archived —".</>,
+                  ].map((item, i) => (
+                    <li key={i} className="flex gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-1">Still to do</div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Future product/engineering work — not gaps in core routing or wiring.
+                </p>
+                <ul className="space-y-2 text-sm text-foreground/90">
+                  {[
+                    "Implement real Clio / MyCase OAuth and Five9 credential save on the Legal Connect Connections tab (replace fake \"connected\" rows).",
+                    "Implement real Test behavior for the Mapping Builder instead of a toast-only stub.",
+                    "Author reason_archived / Status & risks content for Legal Connect and Five9 Domain Management vault entries.",
+                    "Build an audit-grade server-side compliance export (logs, RLS snapshot, etc.) to replace the client-only JSON snapshot.",
+                    "Reduce bundle size via code-splitting (current bundle ~4.3 MB / 1.0 MB gz).",
+                    "Polish Legal Connect empty states across tabs.",
+                    "Move .env Supabase URL/anon-key configuration into the secret store while keeping public client exposure behavior intact.",
+                  ].map((item, i) => (
+                    <li key={i} className="flex gap-2">
+                      <Circle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Quick QA playbook summary</div>
+                <p className="text-sm text-muted-foreground">
+                  The QA pass validated the full navigation surface — admin, superadmin, Feature
+                  Vault, Legal Connect's 11 tabs, Five9 domain detail, Settings tabs, onboarding,
+                  and more. All dead-ends and toast-only actions identified at that time are either
+                  fixed in PR #1 or explicitly listed in the "Still to do" checklist above.
+                </p>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">References</div>
+                <ul className="space-y-1.5 text-sm text-foreground/90">
+                  <li>· Merged PR: <strong>PR #1 — "QA handoff fixes"</strong> (baseline on <code className="text-xs">main</code>).</li>
+                  <li>· Merge commit SHA on <code className="text-xs">main</code> is the canonical baseline for this guide.</li>
+                  <li>· Detailed QA report and Lovable prompts file live in the repo/workspace for deep dives — this Dev Guide section is the canonical day-to-day summary.</li>
+                </ul>
+              </Card>
             </div>
           </section>
         </div>
