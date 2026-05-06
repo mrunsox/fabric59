@@ -695,6 +695,77 @@ async function dispatchToGenericCrm(
   }
 }
 
+// ─── Call session state sync ─────────────────────────────────────────────────
+//
+// Maps Five9 webhook event_type → call_sessions.status so the live counters on
+// /superadmin/call-flow react to real telephony events. Idempotent on
+// (organization_id, five9_call_id).
+function statusForEvent(eventType: string | undefined, fallback: string): string {
+  switch ((eventType || '').toLowerCase()) {
+    case 'call_started':
+    case 'call_connected':
+    case 'agent_connected':
+      return 'connected';
+    case 'call_ringing':
+    case 'call_queued':
+    case 'call_routing':
+      return 'queued';
+    case 'call_ended':
+    case 'agent_disconnected':
+      return 'ended';
+    case 'wrap_up_started':
+    case 'acw_started':
+      return 'acw';
+    case 'disposition_set':
+    case 'call_disposed':
+      return 'disposed';
+    case 'call_failed':
+    case 'call_abandoned':
+      return 'failed';
+    default:
+      return fallback;
+  }
+}
+
+async function upsertCallSession(
+  supabase: any,
+  orgId: string,
+  tenantId: string | null,
+  call: CallEvent,
+  eventType: string | undefined,
+): Promise<void> {
+  if (!call.id) return;
+  const status = statusForEvent(eventType, call.endedAt ? 'ended' : 'in_progress');
+  try {
+    const { data: existing } = await supabase
+      .from('call_sessions')
+      .select('id')
+      .eq('organization_id', orgId)
+      .eq('five9_call_id', call.id)
+      .maybeSingle();
+
+    const row: Record<string, unknown> = {
+      organization_id: orgId,
+      tenant_id: tenantId,
+      five9_call_id: call.id,
+      ani: call.fromNumber || null,
+      dnis: call.toNumber || null,
+      status,
+      ended_at: call.endedAt || null,
+      duration_seconds: call.durationSeconds ?? null,
+      metadata: { event_type: eventType, queue: call.queue, campaign: call.campaign, disposition: call.disposition },
+    };
+
+    if (existing?.id) {
+      await supabase.from('call_sessions').update(row).eq('id', existing.id);
+    } else {
+      await supabase.from('call_sessions').insert({ ...row, started_at: call.startedAt });
+    }
+  } catch (e) {
+    console.error('upsertCallSession error:', e);
+  }
+}
+
 // ─── Main Server ─────────────────────────────────────────────────────────────
 
 serve(async (req) => {
@@ -760,7 +831,7 @@ serve(async (req) => {
         .order('started_at', { ascending: false })
         .limit(5);
 
-      return new Response(JSON.stringify({
+      const lookupResponse = {
         success: true,
         ani: normalizedAni,
         dnis,
@@ -778,7 +849,25 @@ serve(async (req) => {
         },
         recent_calls: recentCalls || [],
         matched: !!(contact || clioMaps?.length || mycaseMaps?.length),
-      }), {
+      };
+
+      // Persist screen-pop lookup to api_logs for /superadmin/logs visibility.
+      try {
+        const lookupTenantId = req.headers.get('x-tenant-id');
+        await supabase.from('api_logs').insert({
+          tenant_id: lookupTenantId,
+          endpoint: 'five9-main/lookup',
+          method: 'POST',
+          status: 'success',
+          request_payload: { ani: normalizedAni, dnis, raw: payload },
+          response: lookupResponse,
+          response_time_ms: Date.now() - startTime,
+        });
+      } catch (logErr) {
+        console.error('lookup api_logs insert error:', logErr);
+      }
+
+      return new Response(JSON.stringify(lookupResponse), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -862,6 +951,25 @@ serve(async (req) => {
       // Downstream notifications
       await handleDownstreamNotifications(supabase, domainId, eventType, eventData);
 
+      // Sync call_sessions state for any lifecycle event so live counters react.
+      const lifecycleEvents = new Set([
+        'call_started', 'call_connected', 'agent_connected',
+        'call_ringing', 'call_queued', 'call_routing',
+        'call_ended', 'agent_disconnected',
+        'wrap_up_started', 'acw_started',
+        'disposition_set', 'call_disposed',
+        'call_failed', 'call_abandoned',
+      ]);
+      if (eventType && lifecycleEvents.has(eventType)) {
+        const stateCall = normalizeCallEvent(eventData);
+        const { data: domainTenants } = await supabase
+          .from('tenants')
+          .select('id')
+          .eq('five9_domain_id', domainId);
+        const firstTenantId = domainTenants?.[0]?.id ?? null;
+        await upsertCallSession(supabase, orgId, firstTenantId, stateCall, eventType);
+      }
+
       // Also process CRM for tenants under this domain
       if (eventType === 'call_ended' || eventType === 'disposition_set') {
         const { data: tenants } = await supabase
@@ -936,6 +1044,10 @@ serve(async (req) => {
     if (context) {
       const call = normalizeCallEvent(payload);
       const results: any = { tenantId: context.tenantId, callId: call.id };
+
+      // Sync call_sessions state regardless of CRM dedupe — counters must always reflect telephony.
+      const eventTypeA = (payload.event_type as string | undefined) ?? (call.endedAt ? 'call_ended' : 'call_started');
+      await upsertCallSession(supabase, context.orgId, context.tenantId, call, eventTypeA);
 
       // Idempotency check — skip if this exact call+tenant+disposition was already processed
       const isDuplicate = await checkIdempotency(supabase, call.id, context.tenantId, call.disposition);
