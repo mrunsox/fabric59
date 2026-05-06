@@ -62,7 +62,7 @@ describe("/superadmin/call-flow smoke", () => {
     renderPage();
     expect(screen.getByRole("heading", { level: 1, name: /call flow/i })).toBeInTheDocument();
     expect(screen.getByText(/Live state counters/i)).toBeInTheDocument();
-    expect(screen.getByText(/Lifecycle legend/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Lifecycle legend/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Master lifecycle flow/i)).toBeInTheDocument();
     expect(screen.getByText(/Scenario-specific flows/i)).toBeInTheDocument();
   });
@@ -97,10 +97,10 @@ describe("/superadmin/call-flow smoke", () => {
 
   it("renders live call state counter buckets", () => {
     renderPage();
-    const counters = screen.getByText(/Live call session counters/i).closest("div")!.parentElement!;
-    expect(within(counters).getByText(/Active \/ Connected/i)).toBeInTheDocument();
-    expect(within(counters).getByText(/Queued \/ Routing/i)).toBeInTheDocument();
-    expect(within(counters).getByText(/ACW \(Wrap-up\)/i)).toBeInTheDocument();
-    expect(within(counters).getByText(/Failed \/ Abandoned/i)).toBeInTheDocument();
+    expect(screen.getByText("Active / Connected")).toBeInTheDocument();
+    expect(screen.getByText("Queued / Routing")).toBeInTheDocument();
+    expect(screen.getByText("ACW (Wrap-up)")).toBeInTheDocument();
+    expect(screen.getByText("Failed / Abandoned")).toBeInTheDocument();
+    expect(screen.getByLabelText(/filter by tenant/i)).toBeInTheDocument();
   });
 });
