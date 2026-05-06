@@ -107,10 +107,8 @@ Deno.serve(async (req) => {
       .then((r) => r, () => ({ data: [] })),
   ]);
 
-  // RLS snapshot via pg_policies (read-only metadata).
-  const { data: policies } = await admin
-    .from("pg_policies" as any).select("schemaname, tablename, policyname, cmd, roles, qual, with_check")
-    .eq("schemaname", "public").in("tablename", RLS_TABLES);
+  // RLS snapshot via SECURITY DEFINER RPC over pg_policies (read-only metadata).
+  const { data: policies } = await admin.rpc("get_rls_policy_snapshot", { _tables: RLS_TABLES });
 
   // Sanitize tenant integration_configs: keep keys + non-secret booleans/metadata.
   const tenantsSanitized = (tenantsQ.data ?? []).map((t: any) => {
