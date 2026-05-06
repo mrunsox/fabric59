@@ -7250,6 +7250,18 @@ export type Database = {
       }
     }
     Functions: {
+      get_rls_policy_snapshot: {
+        Args: { _tables: string[] }
+        Returns: {
+          cmd: string
+          policyname: string
+          qual: string
+          roles: string[]
+          schemaname: string
+          tablename: string
+          with_check: string
+        }[]
+      }
       get_user_org_ids: { Args: { _user_id: string }; Returns: string[] }
       has_role: {
         Args: {
