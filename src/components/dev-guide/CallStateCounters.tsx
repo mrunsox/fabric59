@@ -120,4 +120,5 @@ export const CallStateCounters = forwardRef<HTMLDivElement>(function CallStateCo
       </div>
     </div>
   );
-}
+});
+CallStateCounters.displayName = "CallStateCounters";
