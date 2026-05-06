@@ -277,9 +277,10 @@ export default function ProductTourPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Product Tour | Fabric59"
-        description="A truth-based walkthrough of Fabric59 capabilities — what ships today and what's on the roadmap."
+        title="Product Tour — Fabric59"
+        description="Every Fabric59 capability with an honest status tag — Live, Partial, or Coming soon. Five9 SOAP, MyCase, Clio, mapping, scripting, RLS, audit export."
         canonical="https://fabric59.com/product"
+        ogTitle="Fabric59 Product Tour — every capability, honestly tagged"
       />
 
       <MegaMenuHeader />
