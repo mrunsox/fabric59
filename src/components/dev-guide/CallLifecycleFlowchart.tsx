@@ -1,5 +1,24 @@
 import { forwardRef } from "react";
+import { Link } from "react-router-dom";
 import { Bot, User, Plug, GitBranch, Asterisk, CircleDashed, ChevronRight, Code2 } from "lucide-react";
+
+/**
+ * Map an ImplRef to a dev-nav target inside the app, when one exists.
+ * Keeps refs purely informational when no real destination is available
+ * (so we never produce dead links).
+ */
+function implRefHref(ref: { kind: string; name: string }): string | null {
+  switch (ref.kind) {
+    case "edge":
+      // Edge function logs viewer — filter hint via ?fn= for future use.
+      return `/superadmin/logs?fn=${encodeURIComponent(ref.name)}`;
+    case "table":
+      // Source exports page surfaces table-level data.
+      return `/superadmin/exports?table=${encodeURIComponent(ref.name)}`;
+    default:
+      return null;
+  }
+}
 
 export type ActorKind = "system" | "agent" | "external" | "customer";
 export type StepKind = "automated" | "agent" | "external" | "decision";
