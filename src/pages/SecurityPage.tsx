@@ -150,7 +150,7 @@ export default function SecurityPage() {
         <section className="space-y-4 mb-12">
           <h2 className="text-xl font-semibold">Compliance</h2>
           <p className="text-muted-foreground leading-relaxed">
-            We are actively working toward SOC 2 Type II certification. Our platform follows OWASP security guidelines and undergoes regular security assessments. For more details on our compliance posture, visit our{" "}
+            Fabric59 does not currently hold SOC 2, ISO 27001, or any third-party security certification. We follow OWASP guidelines, encrypt credentials with AES-256 (pgcrypto), and isolate tenants with Postgres Row-Level Security. For our current posture, see the{" "}
             <Link to="/trust" className="text-primary hover:underline">Trust Center</Link>.
           </p>
         </section>

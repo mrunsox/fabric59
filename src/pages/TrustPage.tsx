@@ -41,37 +41,37 @@ export default function TrustPage() {
         </div>
 
         <p className="text-muted-foreground mb-4 leading-relaxed">
-          Fabric59 follows industry standard security controls including AES-256 encryption, row-level security, role-based access control, and immutable audit logging. The platform is designed to support SOC 2 Type II requirements and enforces organization-level data isolation across all tenants.
+          Fabric59 follows baseline security controls: AES-256 credential encryption (pgcrypto), Postgres Row-Level Security with SECURITY DEFINER role checks, role-based access control, and immutable audit logging with a server-side compliance export.
         </p>
         <p className="text-muted-foreground mb-10 leading-relaxed">
-          We are committed to protecting your data and maintaining transparency about our security and compliance posture.
+          We do <strong>not</strong> currently claim SOC 2, ISO 27001, or any third-party certification. Formal certifications will be pursued as the business matures, and this page will be updated when status changes.
         </p>
 
         {/* Compliance Status */}
         <section className="mb-12">
-          <h2 className="text-xl font-semibold mb-4">Compliance Status</h2>
+          <h2 className="text-xl font-semibold mb-4">Certification Status</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <Card className="border-border/40 bg-card/50">
               <CardContent className="p-5 flex items-start gap-3">
-                <Shield className="h-5 w-5 text-primary mt-0.5" />
+                <Shield className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-sm">SOC 2 Type II</span>
-                    <Badge variant="outline" className="text-xs"><Clock className="h-3 w-3 mr-1" />In Progress</Badge>
+                    <Badge variant="outline" className="text-xs"><Clock className="h-3 w-3 mr-1" />Not pursued yet</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">We are actively working toward SOC 2 Type II certification. Our platform is designed to meet the Trust Services Criteria for security, availability, and confidentiality.</p>
+                  <p className="text-xs text-muted-foreground">No SOC 2 audit is in progress today. We will announce on this page when an engagement begins.</p>
                 </div>
               </CardContent>
             </Card>
             <Card className="border-border/40 bg-card/50">
               <CardContent className="p-5 flex items-start gap-3">
-                <Lock className="h-5 w-5 text-primary mt-0.5" />
+                <Lock className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-sm">ISO 27001</span>
-                    <Badge variant="outline" className="text-xs"><Clock className="h-3 w-3 mr-1" />Planned</Badge>
+                    <Badge variant="outline" className="text-xs"><Clock className="h-3 w-3 mr-1" />Not pursued yet</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">ISO 27001 certification is on our roadmap. Current controls are aligned with the framework's requirements.</p>
+                  <p className="text-xs text-muted-foreground">No ISO 27001 engagement is active. Current controls follow the spirit of the framework but are not certified.</p>
                 </div>
               </CardContent>
             </Card>
