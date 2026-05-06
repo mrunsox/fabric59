@@ -57,6 +57,7 @@ export default function MappingBuilderPage() {
   const [selectedMappingForTransform, setSelectedMappingForTransform] = useState<FieldMapping | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newMappingName, setNewMappingName] = useState("");
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
 
   // Data fetching
   const { data: domains = [] } = useDomains();
