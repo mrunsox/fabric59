@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 
 export interface ProviderConnectionCardProps {
   clientId: string;
-  provider: "clio" | "mycase" | "smokeball";
+  provider: "clio" | "mycase" | "smokeball" | "five9";
   connection: {
     id: string;
     status: string;
@@ -27,12 +27,18 @@ export interface ProviderConnectionCardProps {
   onReconnect?: () => void;
   onDisconnect?: () => void;
   testing?: boolean;
+  /** When set, render Connect as disabled with this tooltip explanation. */
+  disabledReason?: string | null;
 }
 
-const providerMeta = {
+const providerMeta: Record<
+  "clio" | "mycase" | "smokeball" | "five9",
+  { label: string; color: string; desc: string }
+> = {
   clio: { label: "Clio", color: "text-primary", desc: "Practice management for law firms" },
   mycase: { label: "MyCase", color: "text-accent-foreground", desc: "Cloud legal case management" },
   smokeball: { label: "Smokeball", color: "text-warning", desc: "Intake-first legal automation" },
+  five9: { label: "Five9", color: "text-primary", desc: "Contact center credentials for this client" },
 };
 
 function fmt(d?: string | null) {
@@ -53,6 +59,7 @@ export default function ProviderConnectionCard({
   onReconnect,
   onDisconnect,
   testing,
+  disabledReason,
 }: ProviderConnectionCardProps) {
   const meta = providerMeta[provider];
   const status = connection?.status ?? "not_connected";
@@ -131,12 +138,19 @@ export default function ProviderConnectionCard({
 
         <div className="mt-5 flex flex-wrap items-center gap-2">
           {!connection ? (
-            <Button asChild size="sm">
-              <Link to={`/admin/clients/${clientId}/legal-connect/setup/${provider}`}>
+            disabledReason ? (
+              <Button size="sm" disabled title={disabledReason}>
                 <Plug className="h-3.5 w-3.5 mr-1.5" />
                 Connect {meta.label}
-              </Link>
-            </Button>
+              </Button>
+            ) : (
+              <Button asChild size="sm">
+                <Link to={`/admin/clients/${clientId}/legal-connect/setup/${provider}`}>
+                  <Plug className="h-3.5 w-3.5 mr-1.5" />
+                  Connect {meta.label}
+                </Link>
+              </Button>
+            )
           ) : (
             <>
               <Button size="sm" variant="outline" onClick={onTest} disabled={testing}>

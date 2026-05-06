@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,20 +10,25 @@ import ProviderConnectionCard from "@/components/legal-connect/ProviderConnectio
 import ClioConnectWizard from "@/components/legal-connect/wizards/ClioConnectWizard";
 import MyCaseConnectWizard from "@/components/legal-connect/wizards/MyCaseConnectWizard";
 import SmokeballConnectWizard from "@/components/legal-connect/wizards/SmokeballConnectWizard";
+import Five9ConnectWizard from "@/components/legal-connect/wizards/Five9ConnectWizard";
 import WebhookSettingsPanel from "@/components/legal-connect/WebhookSettingsPanel";
 import ProviderPoliciesPanel from "@/components/legal-connect/ProviderPoliciesPanel";
 import FieldMappingPanel from "@/components/legal-connect/FieldMappingPanel";
 import ConnectionHealthPanel from "@/components/legal-connect/ConnectionHealthPanel";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useDeleteLegalConnection } from "@/hooks/useLegalConnect";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
-const PROVIDERS: Array<"clio" | "mycase" | "smokeball"> = ["clio", "mycase", "smokeball"];
+const PROVIDERS = ["five9", "clio", "mycase", "smokeball"] as const;
+type ProviderKey = (typeof PROVIDERS)[number];
 
 export default function ClientLegalConnectPage() {
   const { clientId, provider } = useParams<{ clientId: string; provider?: string }>();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const tab = params.get("tab") ?? (provider ? "setup" : "connections");
 
   const { data: tenant } = useTenant(clientId ?? "");
@@ -31,9 +37,39 @@ export default function ClientLegalConnectPage() {
 
   const orgId = tenant?.organization_id ?? "";
 
+  useEffect(() => {
+    const clio = params.get("clio");
+    if (!clio) return;
+    if (clio === "connected") toast.success("Clio connected");
+    else toast.error(`Clio: ${params.get("reason") || clio}`);
+    const next = new URLSearchParams(params);
+    next.delete("clio");
+    next.delete("reason");
+    setParams(next, { replace: true });
+    qc.invalidateQueries({ queryKey: ["legal-connect", "connections"] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const setTab = (t: string) => setParams({ tab: t });
 
   const findConn = (p: string) => connections?.find((c: any) => c.provider === p) ?? null;
+
+  const handleTest = async (p: string) => {
+    const c = findConn(p);
+    if (!c) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("legal-connect-test", {
+        body: { connection_id: c.id },
+      });
+      if (error) throw error;
+      const ok = data?.success !== false;
+      if (ok) toast.success(`${p}: connection OK`);
+      else toast.error(data?.message || `${p}: test failed`);
+      qc.invalidateQueries({ queryKey: ["legal-connect", "connections"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
 
   return (
     <>
@@ -59,6 +95,13 @@ export default function ClientLegalConnectPage() {
 
         {provider ? (
           <div className="max-w-2xl">
+            {provider === "five9" && (
+              <Five9ConnectWizard
+                clientId={clientId!}
+                organizationId={orgId}
+                onComplete={() => navigate(`/admin/clients/${clientId}/legal-connect`)}
+              />
+            )}
             {provider === "clio" && (
               <ClioConnectWizard
                 clientId={clientId!}
@@ -80,7 +123,7 @@ export default function ClientLegalConnectPage() {
                 onComplete={() => navigate(`/admin/clients/${clientId}/legal-connect`)}
               />
             )}
-            {!["clio", "mycase", "smokeball"].includes(provider) && (
+            {!["five9", "clio", "mycase", "smokeball"].includes(provider) && (
               <div className="text-sm text-muted-foreground">Unknown provider: {provider}</div>
             )}
           </div>
@@ -112,7 +155,12 @@ export default function ClientLegalConnectPage() {
                     clientId={clientId!}
                     provider={p}
                     connection={findConn(p)}
-                    onTest={() => toast.success(`${p} test queued`)}
+                    onTest={() => handleTest(p)}
+                    disabledReason={
+                      p === "mycase"
+                        ? "MyCase connect requires verified API-key provisioning. Contact admin."
+                        : null
+                    }
                     onDisconnect={async () => {
                       const c = findConn(p);
                       if (!c) return;

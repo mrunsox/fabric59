@@ -59,3 +59,12 @@ verify_jwt = false
 
 [functions.five9-overlay-test]
 verify_jwt = false
+
+[functions.legal-connect-five9-connect]
+verify_jwt = false
+
+[functions.clio-oauth-start]
+verify_jwt = false
+
+[functions.clio-oauth-callback]
+verify_jwt = false

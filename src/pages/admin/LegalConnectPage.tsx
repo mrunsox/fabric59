@@ -42,6 +42,10 @@ import SimulationPanel from "@/components/five9-overlay/SimulationPanel";
 import Five9HealthPanel from "@/components/five9-overlay/Five9HealthPanel";
 import EventLogViewer from "@/components/five9-overlay/EventLogViewer";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+const MYCASE_DISABLED_REASON =
+  "MyCase connect requires verified API-key provisioning. Contact admin.";
 
 // ── Status badge helper ──────────────────────────────────────────────
 
@@ -137,19 +141,34 @@ export default function LegalConnectPage() {
   // there is no scope to write a connection against, so silently opening the
   // setup wizard would be misleading.
   const handleConnectProvider = (provider: string) => {
+    if (provider === "mycase") {
+      toast.error(MYCASE_DISABLED_REASON);
+      return;
+    }
     if (!clientId) {
       toast.info("Pick a specific client first to connect a provider.");
       setTab("overview");
       return;
     }
-    // Send the user to the per-client legal connect setup page for the chosen provider.
     navigate(`/admin/clients/${clientId}/legal-connect/setup/${provider}`);
   };
 
-  // Refresh a single connection's status by invalidating the connections query.
-  const handleRefreshConnection = (provider: string) => {
-    queryClient.invalidateQueries({ queryKey: ["legal-connections"] });
-    toast.success(`Refreshing ${provider} connection status…`);
+  // Real refresh: call legal-connect-test, surface result, then refetch.
+  const handleRefreshConnection = async (connectionId: string, provider: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("legal-connect-test", {
+        body: { connection_id: connectionId },
+      });
+      if (error) throw error;
+      const ok = data?.success !== false;
+      if (ok) toast.success(`${provider}: connection OK`);
+      else toast.error(data?.message || `${provider}: test failed`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ["legal-connections"] });
+      queryClient.invalidateQueries({ queryKey: ["legal-connect", "connections"] });
+    }
   };
 
   // Open the per-client view for a connection.
@@ -375,6 +394,8 @@ export default function LegalConnectPage() {
                         variant="outline"
                         className="text-xs"
                         onClick={() => handleConnectProvider(provider)}
+                        disabled={provider === "mycase"}
+                        title={provider === "mycase" ? MYCASE_DISABLED_REASON : undefined}
                       >
                         <Plug className="h-3.5 w-3.5 mr-1.5" /> Connect
                       </Button>
@@ -411,7 +432,7 @@ export default function LegalConnectPage() {
                                 size="sm"
                                 variant="ghost"
                                 className="text-xs h-7"
-                                onClick={() => handleRefreshConnection(provider)}
+                                onClick={() => handleRefreshConnection(conn.id, provider)}
                                 aria-label={`Refresh ${provider} connection`}
                               >
                                 <RefreshCw className="h-3 w-3" />
