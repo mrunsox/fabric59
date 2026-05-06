@@ -44,8 +44,6 @@ import EventLogViewer from "@/components/five9-overlay/EventLogViewer";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-const MYCASE_DISABLED_REASON =
-  "MyCase connect requires verified API-key provisioning. Contact admin.";
 
 // ── Status badge helper ──────────────────────────────────────────────
 
@@ -141,10 +139,6 @@ export default function LegalConnectPage() {
   // there is no scope to write a connection against, so silently opening the
   // setup wizard would be misleading.
   const handleConnectProvider = (provider: string) => {
-    if (provider === "mycase") {
-      toast.error(MYCASE_DISABLED_REASON);
-      return;
-    }
     if (!clientId) {
       toast.info("Pick a specific client first to connect a provider.");
       setTab("overview");
@@ -394,8 +388,6 @@ export default function LegalConnectPage() {
                         variant="outline"
                         className="text-xs"
                         onClick={() => handleConnectProvider(provider)}
-                        disabled={provider === "mycase"}
-                        title={provider === "mycase" ? MYCASE_DISABLED_REASON : undefined}
                       >
                         <Plug className="h-3.5 w-3.5 mr-1.5" /> Connect
                       </Button>

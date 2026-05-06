@@ -156,11 +156,7 @@ export default function ClientLegalConnectPage() {
                     provider={p}
                     connection={findConn(p)}
                     onTest={() => handleTest(p)}
-                    disabledReason={
-                      p === "mycase"
-                        ? "MyCase connect requires verified API-key provisioning. Contact admin."
-                        : null
-                    }
+                    disabledReason={null}
                     onDisconnect={async () => {
                       const c = findConn(p);
                       if (!c) return;

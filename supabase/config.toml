@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.clio-oauth-callback]
 verify_jwt = false
+
+[functions.legal-connect-mycase-connect]
+verify_jwt = false
