@@ -156,6 +156,7 @@ const App = () => (
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/product" element={<ProductTourPage />} />
             <Route path="/demo" element={<DemoSandboxPage />} />
+            <Route path="/call-flow" element={<Navigate to="/superadmin/call-flow" replace />} />
 
             {/* Legacy /master/* → consolidated under /superadmin */}
             <Route path="/master" element={<Navigate to="/superadmin" replace />} />
