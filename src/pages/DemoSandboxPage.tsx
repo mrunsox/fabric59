@@ -177,9 +177,10 @@ export default function DemoSandboxPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Book a Live Demo | Fabric59"
-        description="A live, founder-led walkthrough of the real Fabric59 platform. Tell us your stack and pick a few times that work — we will reply with a confirmed slot."
+        title="Book a Live Demo — Fabric59"
+        description="Founder-led, 45-minute live walkthrough of the real Fabric59 platform on a real Five9 domain. Tell us your stack and pick a few times — we confirm by email."
         canonical="https://fabric59.com/demo"
+        ogTitle="Book a live Fabric59 walkthrough"
       />
 
       <MegaMenuHeader />
