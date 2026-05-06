@@ -198,14 +198,14 @@ const DeviationBadge = forwardRef<HTMLSpanElement, { count: number; total: numbe
 );
 DeviationBadge.displayName = "DeviationBadge";
 
-export function CallFlowScenarioTabs() {
+export const CallFlowScenarioTabs = forwardRef<HTMLDivElement>(function CallFlowScenarioTabs(_props, ref) {
   const [active, setActive] = useState<ScenarioId>(SCENARIOS[0].id);
   const scenario = SCENARIOS.find((s) => s.id === active)!;
   const { data: deviations, loading, error, updatedAt } = useScenarioDeviations(24);
   const current = deviations[active];
 
   return (
-    <div className="space-y-4">
+    <div ref={ref} className="space-y-4">
       <div className="flex flex-wrap gap-2 border-b border-border/60 pb-2">
         {SCENARIOS.map((s) => {
           const d = deviations[s.id];
