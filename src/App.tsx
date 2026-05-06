@@ -193,6 +193,7 @@ const App = () => (
                 <Route path="exports" element={<SourceExportsPage />} />
                 <Route path="routes" element={<AdvancedRoutesPage />} />
                 <Route path="docs" element={<SystemDocsPage />} />
+                <Route path="call-flow" element={<CallFlowPage />} />
                 <Route path="dev-guide" element={<DevGuidePage />} />
               </Route>
             </Route>
