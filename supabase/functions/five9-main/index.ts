@@ -695,6 +695,77 @@ async function dispatchToGenericCrm(
   }
 }
 
+// ─── Call session state sync ─────────────────────────────────────────────────
+//
+// Maps Five9 webhook event_type → call_sessions.status so the live counters on
+// /superadmin/call-flow react to real telephony events. Idempotent on
+// (organization_id, five9_call_id).
+function statusForEvent(eventType: string | undefined, fallback: string): string {
+  switch ((eventType || '').toLowerCase()) {
+    case 'call_started':
+    case 'call_connected':
+    case 'agent_connected':
+      return 'connected';
+    case 'call_ringing':
+    case 'call_queued':
+    case 'call_routing':
+      return 'queued';
+    case 'call_ended':
+    case 'agent_disconnected':
+      return 'ended';
+    case 'wrap_up_started':
+    case 'acw_started':
+      return 'acw';
+    case 'disposition_set':
+    case 'call_disposed':
+      return 'disposed';
+    case 'call_failed':
+    case 'call_abandoned':
+      return 'failed';
+    default:
+      return fallback;
+  }
+}
+
+async function upsertCallSession(
+  supabase: any,
+  orgId: string,
+  tenantId: string | null,
+  call: CallEvent,
+  eventType: string | undefined,
+): Promise<void> {
+  if (!call.id) return;
+  const status = statusForEvent(eventType, call.endedAt ? 'ended' : 'in_progress');
+  try {
+    const { data: existing } = await supabase
+      .from('call_sessions')
+      .select('id')
+      .eq('organization_id', orgId)
+      .eq('five9_call_id', call.id)
+      .maybeSingle();
+
+    const row: Record<string, unknown> = {
+      organization_id: orgId,
+      tenant_id: tenantId,
+      five9_call_id: call.id,
+      ani: call.fromNumber || null,
+      dnis: call.toNumber || null,
+      status,
+      ended_at: call.endedAt || null,
+      duration_seconds: call.durationSeconds ?? null,
+      metadata: { event_type: eventType, queue: call.queue, campaign: call.campaign, disposition: call.disposition },
+    };
+
+    if (existing?.id) {
+      await supabase.from('call_sessions').update(row).eq('id', existing.id);
+    } else {
+      await supabase.from('call_sessions').insert({ ...row, started_at: call.startedAt });
+    }
+  } catch (e) {
+    console.error('upsertCallSession error:', e);
+  }
+}
+
 // ─── Main Server ─────────────────────────────────────────────────────────────
 
 serve(async (req) => {
