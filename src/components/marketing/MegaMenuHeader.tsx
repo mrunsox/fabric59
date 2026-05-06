@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Fabric59Logo } from "@/components/brand/Fabric59Logo";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useHeaderOffset } from "@/hooks/useHeaderOffset";
 import {
   NavigationMenu,
   NavigationMenuContent,
