@@ -33,6 +33,7 @@ import { TargetFieldsPanel } from "@/components/mapping-builder/TargetFieldsPane
 import { MappingCanvas } from "@/components/mapping-builder/MappingCanvas";
 import { MappingToolbar } from "@/components/mapping-builder/MappingToolbar";
 import { TransformDialog } from "@/components/mapping-builder/TransformDialog";
+import { MappingTestDialog } from "@/components/mapping-builder/MappingTestDialog";
 import type { FieldMapping, FieldDefinition } from "@/types/mapping";
 import type { CRMField } from "@/lib/crm-schemas";
 import { toast } from "sonner";
@@ -56,6 +57,7 @@ export default function MappingBuilderPage() {
   const [selectedMappingForTransform, setSelectedMappingForTransform] = useState<FieldMapping | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newMappingName, setNewMappingName] = useState("");
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
 
   // Data fetching
   const { data: domains = [] } = useDomains();
@@ -161,7 +163,11 @@ export default function MappingBuilderPage() {
   };
 
   const handleTest = () => {
-    toast.info("Test feature coming soon - will validate mappings with sample data");
+    if (mappings.length === 0) {
+      toast.info("Add at least one mapping before testing.");
+      return;
+    }
+    setTestDialogOpen(true);
   };
 
   const handleExport = () => {
@@ -325,6 +331,14 @@ export default function MappingBuilderPage() {
         onOpenChange={setTransformDialogOpen}
         mapping={selectedMappingForTransform}
         onSave={handleTransformSave}
+      />
+
+      {/* Mapping test dialog */}
+      <MappingTestDialog
+        open={testDialogOpen}
+        onOpenChange={setTestDialogOpen}
+        mappings={mappings}
+        destinationLabel={selectedCRM}
       />
 
       {/* Create new mapping dialog */}
