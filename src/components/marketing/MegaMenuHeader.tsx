@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Fabric59Logo } from "@/components/brand/Fabric59Logo";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useHeaderOffset } from "@/hooks/useHeaderOffset";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -32,6 +33,7 @@ const platformItems = [
 export function MegaMenuHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const headerRef = useHeaderOffset<HTMLElement>();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -41,7 +43,10 @@ export function MegaMenuHeader() {
   }, []);
 
   return (
-    <header className={`border-b sticky top-0 z-50 backdrop-blur-xl transition-all ${scrolled ? "border-border/70 bg-background/95 shadow-sm" : "border-border/40 bg-background/80"}`}>
+    <header
+      ref={headerRef}
+      className={`border-b sticky top-0 z-50 backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-200 ${scrolled ? "border-border/70 bg-background/95 shadow-sm" : "border-border/40 bg-background/80"}`}
+    >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
         <Link to="/">
           <Fabric59Logo iconSize="md" />
