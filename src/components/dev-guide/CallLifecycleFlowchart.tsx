@@ -1,7 +1,17 @@
-import { Bot, User, Plug, GitBranch, Asterisk, CircleDashed, ChevronRight } from "lucide-react";
+import { Bot, User, Plug, GitBranch, Asterisk, CircleDashed, ChevronRight, Code2 } from "lucide-react";
 
 export type ActorKind = "system" | "agent" | "external" | "customer";
 export type StepKind = "automated" | "agent" | "external" | "decision";
+
+export type ImplKind = "edge" | "hook" | "lib" | "component" | "table" | "event";
+
+export interface ImplRef {
+  kind: ImplKind;
+  /** e.g. "five9-main", "useCallSessionTracking", "supabase/functions/_shared/disposition-mapping-engine.ts" */
+  name: string;
+  /** Short human label of what this ref does in the step. */
+  detail?: string;
+}
 
 export interface FlowStep {
   id: string;
@@ -10,6 +20,8 @@ export interface FlowStep {
   kind: StepKind;
   required?: boolean;
   note?: string;
+  /** Implementation refs so devs can trace this step to real code. */
+  impl?: ImplRef[];
 }
 
 export interface FlowPhase {
