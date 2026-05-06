@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 
 type Status = "Live" | "Partial" | "Coming soon";
 
-const sections: {
+type Section = {
   id: string;
   icon: typeof Phone;
   badge: string;
@@ -21,18 +21,28 @@ const sections: {
   title: string;
   body: string;
   bullets: string[];
-}[] = [
+  technical?: string[];
+};
+
+// Order mirrors LandingPage `availableNow`, then Partial, then Coming soon —
+// titles and status tags stay 1:1 with the landing-page audit baseline.
+const sections: Section[] = [
   {
     id: "five9",
     icon: Phone,
     badge: "Five9 SOAP",
     status: "Live",
     title: "Deep Five9 SOAP integration",
-    body: "Fabric59 talks to Five9 through a unified edge function that wraps the Five9 SOAP Admin API. 30+ live actions cover the lifecycle of agents, campaigns, skills, profiles, DNIS, dispositions, and call variables.",
+    body: "Fabric59 wraps the Five9 SOAP Admin API behind one unified edge function. 30+ live actions cover the full lifecycle of agents, campaigns, skills, profiles, DNIS, dispositions, and call variables.",
     bullets: [
-      "30+ live SOAP actions",
-      "Unified five9-main edge function with dedup and audit logging",
+      "30+ live SOAP actions across WsAdminService v13",
+      "Single five9-main edge function with audit logging and dedupe",
       "ANI-based pre-call lookup with sub-500ms screen-pops",
+    ],
+    technical: [
+      "WsAdminService SOAP v13 schema alignment",
+      "Event dedupe key: callId + tenantId + disposition",
+      "Per-tenant Five9 credentials encrypted with pgcrypto",
     ],
   },
   {
@@ -41,11 +51,16 @@ const sections: {
     badge: "Multi-domain Five9",
     status: "Live",
     title: "Multi-domain Five9 management",
-    body: "Manage credentials, IVR settings, and connection tests across multiple Five9 domains. Domain identifiers are derived automatically from configured credentials.",
+    body: "Manage credentials, IVR settings, and connection tests across multiple Five9 domains from one console. Domain identifiers are derived automatically from configured credentials.",
     bullets: [
       "Per-domain credentials and IVR settings",
-      "Live connection testing",
-      "Automated domain identifier derivation",
+      "Live connection-test endpoints per domain",
+      "Automated Five9 domain identifier derivation",
+    ],
+    technical: [
+      "Pabbly proxy bridge for Five9 admin authentication",
+      "Five9 Web Connector registration automated per domain",
+      "Disconnect-domain safeguards before credential rotation",
     ],
   },
   {
@@ -54,11 +69,17 @@ const sections: {
     badge: "Legal Connect",
     status: "Live",
     title: "Five9 → legal CRM bridge",
-    body: "Pre-call ANI lookup matches contacts and resolves matters before the agent says hello. Disposition outcomes drive CRM writebacks under a policy engine that enforces field-level allow, block, and redact rules per campaign. MyCase is live; Clio is built and queued behind activation.",
+    body: "Pre-call ANI lookup matches contacts and resolves matters before the agent says hello. Disposition outcomes drive CRM writebacks under a per-campaign policy engine that enforces field-level allow, block, and redact rules. MyCase is live; Clio is built and queued behind activation.",
     bullets: [
-      "MyCase via per-client API key intake (live)",
-      "Clio adapter built; activates on OAuth provisioning (coming soon)",
+      "MyCase live via per-client API-key intake",
+      "Clio adapter shipped — activates on OAuth provisioning",
       "Per-disposition policy engine with field-level rules",
+    ],
+    technical: [
+      "Adapter pattern: five9-main dispatches to Clio / MyCase",
+      "Clio webhook fast-ack pattern for sync reliability",
+      "MyCase capability fallbacks where API support is missing",
+      "identity_xrefs table maps Five9 ↔ CRM contacts/matters",
     ],
   },
   {
@@ -67,11 +88,16 @@ const sections: {
     badge: "Field Mapping",
     status: "Live",
     title: "Visual field mapping with a real Test runner",
-    body: "Drag a Five9 field to a CRM destination, add transforms if you need formatting or normalization, then run a real Test execution against the tenant config before publishing.",
+    body: "Drag a Five9 field to a CRM destination, attach transforms for formatting or normalization, then run a real Test execution against the tenant config before publishing.",
     bullets: [
-      "Drag-and-drop canvas",
-      "Reusable transforms",
-      "Real Test runner against tenant configs",
+      "Drag-and-drop React Flow canvas",
+      "Reusable transforms (format, normalize, default)",
+      "Real Test runner — executes mappings against live tenant configs",
+    ],
+    technical: [
+      "Mappings stored as JSONB on tenants.integration_configs",
+      "Test runner uses runMappingTest with sample CRM payloads",
+      "Config inheritance: Client overrides Partner overrides Org",
     ],
   },
   {
@@ -80,11 +106,16 @@ const sections: {
     badge: "Agent Scripts",
     status: "Live",
     title: "Decision-tree agent script builder",
-    body: "React Flow scripting with 22 node types, conditional branching, skip and jump logic, data gates, and a runtime simulator. Built for agents working in Five9 Desktop.",
+    body: "React Flow scripting with 22 unified node types, conditional branching, skip and jump logic, data gates, and a runtime simulator. Designed for agents working live in Five9 Desktop.",
     bullets: [
-      "22 unified node types",
+      "22 unified CustomNode types in one canvas",
       "Conditional branching, skip/jump, data gates",
-      "Runtime simulator for QA",
+      "Runtime simulator + interactive call-flow playback for QA",
+    ],
+    technical: [
+      "Mandatory worksheet completion enforced via agentMustCompleteWorksheet",
+      "Script sessions tracked independently from telephony sessions",
+      "AI-assisted node suggestions inside the builder",
     ],
   },
   {
@@ -93,11 +124,16 @@ const sections: {
     badge: "Multi-tenant",
     status: "Live",
     title: "Org / Partner / Client hierarchy with RLS",
-    body: "Three-level tenancy with config inheritance: Client overrides Partner overrides Org. Postgres Row-Level Security plus SECURITY DEFINER role checks fence every tenant query.",
+    body: "Three-level tenancy with config inheritance — Client overrides Partner overrides Org. Postgres Row-Level Security plus SECURITY DEFINER role checks fence every tenant query.",
     bullets: [
       "Three-level config inheritance",
-      "Postgres RLS isolation",
-      "SECURITY DEFINER role checks",
+      "Postgres RLS isolation on every table",
+      "SECURITY DEFINER role checks (no recursion in policies)",
+    ],
+    technical: [
+      "Views use security_invoker = true to honor caller RLS",
+      "Secondary org_id filters in queries as defense-in-depth",
+      "Multi-org membership with switching in AuthContext",
     ],
   },
   {
@@ -105,12 +141,17 @@ const sections: {
     icon: Lock,
     badge: "Security & Audit",
     status: "Live",
-    title: "Encrypted credentials and compliance export",
-    body: "Five9 and CRM credentials are encrypted with pgcrypto (AES-256). A server-side compliance export bundles logs, an RLS snapshot, and config history for auditors.",
+    title: "Encrypted credentials and audit-grade compliance export",
+    body: "Five9 and CRM credentials are encrypted with pgcrypto (AES-256). A server-side compliance export bundles API logs, an RLS snapshot, and config history for auditors. SOC 2 is not claimed.",
     bullets: [
-      "AES-256 credential vault",
-      "Server-side compliance export",
-      "Immutable audit log",
+      "AES-256 credential vault (pgcrypto)",
+      "Server-side compliance export bundle",
+      "Immutable audit log of admin actions",
+    ],
+    technical: [
+      "Master-admin bypass with granular permission checks",
+      "Inbound webhook security via x-webhook-secret headers",
+      "Credential lifecycle safeguards on disconnect",
     ],
   },
   {
@@ -119,37 +160,16 @@ const sections: {
     badge: "API logs & reconciliation",
     status: "Live",
     title: "Realtime API logs and telephony reconciliation",
-    body: "Stream API events in real time with deduplication. The reconciliation layer compares Five9 telephony logs against CRM syncs to catch drift.",
+    body: "Stream API events in real time with deduplication. The reconciliation layer compares Five9 telephony logs against CRM syncs to surface drift before it becomes a billing or compliance issue.",
     bullets: [
-      "Realtime API event stream",
-      "Event deduplication (callId + tenant + disposition)",
-      "Five9 ↔ CRM reconciliation",
+      "Realtime API event stream (Supabase Realtime)",
+      "Event deduplication on callId + tenant + disposition",
+      "Five9 ↔ CRM telephony reconciliation reports",
     ],
-  },
-  {
-    id: "agents",
-    icon: UserCog,
-    badge: "Agent Provisioning",
-    status: "Partial",
-    title: "Agent provisioning across Five9 + Slack",
-    body: "Provision agents into Five9 and Slack workspaces from a single form, with audit logging on every step. Google Workspace provisioning is on the roadmap.",
-    bullets: [
-      "Five9 agent provisioning (live)",
-      "Slack workspace provisioning (live)",
-      "Google Workspace provisioning (coming soon)",
-    ],
-  },
-  {
-    id: "campaigns",
-    icon: Megaphone,
-    badge: "Campaign Blueprints",
-    status: "Live",
-    title: "Campaign blueprints and intake automation",
-    body: "A single intake form drives the provisioning sequence — campaigns, skills, profiles, DNIS, dispositions. Blueprints support replicate and reverse-engineer flows.",
-    bullets: [
-      "Intake-form-driven SOAP automation",
-      "Per-disposition email routing",
-      "Replicate and reverse-engineer existing campaigns",
+    technical: [
+      "Normalized usage + summary views (data-plane contracts)",
+      "disposition_access controls reporting visibility",
+      "Operational outage-mode pause controls",
     ],
   },
   {
@@ -158,23 +178,54 @@ const sections: {
     badge: "Slack",
     status: "Live",
     title: "Slack workspace integration",
-    body: "Real-time Slack provisioning for agent workspaces and post-call notifications routed by urgency.",
+    body: "Real-time Slack provisioning for agent workspaces and post-call notifications routed by urgency. No middleware email logic — Slack is the operational notification channel.",
     bullets: [
-      "Workspace provisioning",
-      "Urgency-based post-call notifications",
+      "Workspace provisioning + member sync",
+      "Urgency-based post-call notification routing",
+      "Hub routes events to the right Slack channel automatically",
+    ],
+    technical: [
+      "Connector uses standard_connectors with rotated tokens",
+      "Notification routing decides channel by urgency tier",
+      "No email notification logic in middleware (by design)",
     ],
   },
   {
-    id: "callflow",
-    icon: Bot,
-    badge: "AI Call Flow Builder",
-    status: "Coming soon",
-    title: "AI Call Flow builder with one-click Five9 export",
-    body: "Chat-driven call flow design with a runtime preview is in place. One-click export to Five9 is in progress.",
+    id: "campaigns",
+    icon: Megaphone,
+    badge: "Campaign Blueprints",
+    status: "Live",
+    title: "Campaign blueprints and intake automation",
+    body: "A single intake form drives the provisioning sequence — campaigns, skills, profiles, DNIS, dispositions, ANI block lists, and queue-callback rules. Blueprints support replicate and reverse-engineer flows from existing Five9 setups.",
     bullets: [
-      "Chat-driven flow design (preview)",
-      "Interactive simulator (preview)",
-      "One-click Five9 export (coming soon)",
+      "Intake-form-driven SOAP automation",
+      "ANI block lists via ModifyCampaignProfile",
+      "Replicate or reverse-engineer existing campaigns",
+    ],
+    technical: [
+      "Queue-callback automation with wait-time thresholds",
+      "Abandon-rate reduction engine injects automated callbacks",
+      "Campaign archiving for safe decommissioning",
+    ],
+  },
+
+  // ---- Partial ----
+  {
+    id: "agents",
+    icon: UserCog,
+    badge: "Agent Provisioning",
+    status: "Partial",
+    title: "Agent provisioning across Five9 + Slack",
+    body: "Provision agents into Five9 and Slack workspaces from a single form, with audit logging on every step. Google Workspace provisioning is on the roadmap.",
+    bullets: [
+      "Five9 agent provisioning — live",
+      "Slack workspace provisioning — live",
+      "Google Workspace provisioning — coming soon",
+    ],
+    technical: [
+      "Privacy-first agent emails: firstlastinitial@domain.com",
+      "Quick Provision auto-credentials with naming policy",
+      "Hard-delete during deprovisioning (no soft-delete drift)",
     ],
   },
   {
@@ -183,10 +234,35 @@ const sections: {
     badge: "Disposition Engine",
     status: "Partial",
     title: "Disposition email engine + CRM writebacks",
-    body: "Branded per-disposition email routing is live today. CRM writebacks driven by disposition are landing next.",
+    body: "Branded per-disposition email routing is live today, including partner-level white-label overrides. CRM writebacks driven by disposition outcomes are landing next.",
     bullets: [
-      "Per-disposition branded emails (live)",
-      "CRM writeback hooks (coming soon)",
+      "Per-disposition branded emails — live",
+      "Partner-level white-label email template overrides — live",
+      "CRM writeback hooks — coming soon",
+    ],
+    technical: [
+      "Gated call reporting limited by disposition_access",
+      "Post-call automation engine fans out by outcome",
+      "Five9 prompt selection restricted to intake-defined set",
+    ],
+  },
+
+  // ---- Coming soon ----
+  {
+    id: "callflow",
+    icon: Bot,
+    badge: "AI Call Flow Builder",
+    status: "Coming soon",
+    title: "AI Call Flow builder with one-click Five9 export",
+    body: "Chat-driven call flow design with a runtime preview is in place. One-click export to Five9 IVR is in active development.",
+    bullets: [
+      "Chat-driven flow design — preview",
+      "Interactive call-flow simulator — preview",
+      "One-click Five9 IVR export — coming soon",
+    ],
+    technical: [
+      "Alex AI persona drives CRM-aware setup prompts",
+      "Deterministic templated outputs for legal-connect tooling",
     ],
   },
 ];
@@ -217,16 +293,19 @@ export default function ProductTourPage() {
             Every capability, with an honest status tag
           </h1>
           <p className="text-muted-foreground text-lg mb-6">
-            Each section below is tagged Live, Partial, or Coming soon — based on what is actually in production today.
+            Each section below mirrors the “Available now” list on the home page and is tagged Live, Partial, or Coming soon — based on what is actually in production today.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             {sections.map((s) => (
               <a
                 key={s.id}
                 href={`#${s.id}`}
-                className="text-xs px-3 py-1.5 rounded-full bg-muted/50 border border-border hover:border-primary/40 hover:text-primary transition-colors"
+                className="text-xs px-3 py-1.5 rounded-full bg-muted/50 border border-border hover:border-primary/40 hover:text-primary transition-colors inline-flex items-center gap-2"
               >
                 {s.badge}
+                <span className={`text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${statusStyle[s.status]}`}>
+                  {s.status}
+                </span>
               </a>
             ))}
           </div>
@@ -261,6 +340,21 @@ export default function ProductTourPage() {
                     </li>
                   ))}
                 </ul>
+                {s.technical && s.technical.length > 0 && (
+                  <div className="mt-5 rounded-lg border border-border/60 bg-muted/30 p-4">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                      Under the hood
+                    </div>
+                    <ul className="space-y-1.5">
+                      {s.technical.map((t) => (
+                        <li key={t} className="text-xs text-muted-foreground leading-relaxed flex gap-2">
+                          <span className="text-primary mt-0.5">›</span>
+                          <span>{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
               <Card className={i % 2 === 1 ? "md:order-1" : ""}>
                 <CardContent className="p-8 aspect-video flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
