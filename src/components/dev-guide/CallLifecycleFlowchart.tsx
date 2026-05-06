@@ -157,4 +157,5 @@ export const SwimlaneFlowchart = forwardRef<HTMLDivElement, SwimlaneFlowchartPro
       ))}
     </div>
   );
-}
+});
+SwimlaneFlowchart.displayName = "SwimlaneFlowchart";
