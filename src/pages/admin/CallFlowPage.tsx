@@ -245,5 +245,3 @@ export default function CallFlowPage() {
   );
 }
 
-// Local re-export to avoid extra import line
-import { GitBranch as GitBranchIcon } from "lucide-react";
