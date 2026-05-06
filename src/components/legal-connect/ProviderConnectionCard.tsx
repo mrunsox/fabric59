@@ -59,6 +59,7 @@ export default function ProviderConnectionCard({
   onReconnect,
   onDisconnect,
   testing,
+  disabledReason,
 }: ProviderConnectionCardProps) {
   const meta = providerMeta[provider];
   const status = connection?.status ?? "not_connected";
