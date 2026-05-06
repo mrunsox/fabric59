@@ -1066,6 +1066,72 @@ export type Database = {
           },
         ]
       }
+      demo_requests: {
+        Row: {
+          company: string
+          created_at: string
+          current_crm: string | null
+          five9_status: string | null
+          focus_areas: string[]
+          id: string
+          name: string
+          notes: string | null
+          role: string | null
+          slot_1: string | null
+          slot_2: string | null
+          slot_3: string | null
+          source_url: string | null
+          status: Database["public"]["Enums"]["demo_request_status"]
+          team_size: string | null
+          timezone: string | null
+          updated_at: string
+          user_agent: string | null
+          work_email: string
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          current_crm?: string | null
+          five9_status?: string | null
+          focus_areas?: string[]
+          id?: string
+          name: string
+          notes?: string | null
+          role?: string | null
+          slot_1?: string | null
+          slot_2?: string | null
+          slot_3?: string | null
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["demo_request_status"]
+          team_size?: string | null
+          timezone?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          work_email: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          current_crm?: string | null
+          five9_status?: string | null
+          focus_areas?: string[]
+          id?: string
+          name?: string
+          notes?: string | null
+          role?: string | null
+          slot_1?: string | null
+          slot_2?: string | null
+          slot_3?: string | null
+          source_url?: string | null
+          status?: Database["public"]["Enums"]["demo_request_status"]
+          team_size?: string | null
+          timezone?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          work_email?: string
+        }
+        Relationships: []
+      }
       deployment_runs: {
         Row: {
           connector_instance_id: string | null
@@ -7346,6 +7412,7 @@ export type Database = {
         | "other"
         | "hubspot"
         | "zendesk"
+      demo_request_status: "new" | "scheduled" | "completed" | "archived"
       failure_classification_type:
         | "invalid_signature"
         | "expired_subscription"
@@ -7519,6 +7586,7 @@ export const Constants = {
         "hubspot",
         "zendesk",
       ],
+      demo_request_status: ["new", "scheduled", "completed", "archived"],
       failure_classification_type: [
         "invalid_signature",
         "expired_subscription",
