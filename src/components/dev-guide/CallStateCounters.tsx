@@ -64,7 +64,7 @@ export const CallStateCounters = forwardRef<HTMLDivElement>(function CallStateCo
   const total = counts.connected + counts.ended + counts.acw + counts.disposed;
 
   return (
-    <div className="rounded-lg border border-border/60 bg-card p-4 sm:p-5">
+    <div ref={ref} className="rounded-lg border border-border/60 bg-card p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-primary" />
