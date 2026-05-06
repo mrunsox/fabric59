@@ -4,6 +4,17 @@
 
 /* Fabric59 - Premium Enterprise Design System */
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+@media (max-width: 1024px) {
+  html { scroll-padding-top: 72px; }
+}
+
+[id] { scroll-margin-top: 80px; }
+
 @layer base {
   :root {
     --background: 0 0% 100%;
