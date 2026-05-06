@@ -251,29 +251,41 @@ const MASTER_PHASES: FlowPhase[] = [
   },
 ];
 
-function SectionHeader({ icon: Icon, title, kicker }: { icon: typeof Phone; title: string; kicker?: string }) {
+const SectionHeader = forwardRef<
+  HTMLDivElement,
+  { icon: typeof Phone; title: string; kicker?: string }
+>(({ icon: Icon, title, kicker }, ref) => {
   return (
-    <div className="mb-4">
+    <div ref={ref} className="mb-4">
       {kicker && <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{kicker}</div>}
       <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
         <Icon className="h-5 w-5 text-primary" /> {title}
       </h2>
     </div>
   );
-}
+});
+SectionHeader.displayName = "SectionHeader";
 
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-lg border border-border/60 bg-card p-4 sm:p-5 ${className}`}>{children}</div>;
-}
+const Card = forwardRef<
+  HTMLDivElement,
+  { children: React.ReactNode; className?: string }
+>(({ children, className = "" }, ref) => {
+  return <div ref={ref} className={`rounded-lg border border-border/60 bg-card p-4 sm:p-5 ${className}`}>{children}</div>;
+});
+Card.displayName = "Card";
 
-function Term({ name, children }: { name: string; children: React.ReactNode }) {
+const Term = forwardRef<
+  HTMLDivElement,
+  { name: string; children: React.ReactNode }
+>(({ name, children }, ref) => {
   return (
-    <div className="rounded-md border border-border/40 bg-background/50 p-3">
+    <div ref={ref} className="rounded-md border border-border/40 bg-background/50 p-3">
       <div className="text-sm font-semibold text-foreground mb-0.5">{name}</div>
       <div className="text-xs text-muted-foreground leading-relaxed">{children}</div>
     </div>
   );
-}
+});
+Term.displayName = "Term";
 
 const CallFlowPage = forwardRef<HTMLDivElement>((_props, ref) => {
   return (
