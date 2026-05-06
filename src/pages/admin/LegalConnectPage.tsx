@@ -394,6 +394,8 @@ export default function LegalConnectPage() {
                         variant="outline"
                         className="text-xs"
                         onClick={() => handleConnectProvider(provider)}
+                        disabled={provider === "mycase"}
+                        title={provider === "mycase" ? MYCASE_DISABLED_REASON : undefined}
                       >
                         <Plug className="h-3.5 w-3.5 mr-1.5" /> Connect
                       </Button>
