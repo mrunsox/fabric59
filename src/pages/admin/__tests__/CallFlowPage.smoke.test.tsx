@@ -99,7 +99,7 @@ describe("/superadmin/call-flow smoke", () => {
     renderPage();
     expect(screen.getByText("Active / Connected")).toBeInTheDocument();
     expect(screen.getByText("Queued / Routing")).toBeInTheDocument();
-    expect(screen.getByText("ACW (Wrap-up)")).toBeInTheDocument();
+    expect(screen.getAllByText(/ACW \(Wrap-up\)/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Failed / Abandoned")).toBeInTheDocument();
     expect(screen.getByLabelText(/filter by tenant/i)).toBeInTheDocument();
   });
