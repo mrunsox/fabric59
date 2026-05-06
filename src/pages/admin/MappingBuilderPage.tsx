@@ -163,7 +163,11 @@ export default function MappingBuilderPage() {
   };
 
   const handleTest = () => {
-    toast.info("Test feature coming soon - will validate mappings with sample data");
+    if (mappings.length === 0) {
+      toast.info("Add at least one mapping before testing.");
+      return;
+    }
+    setTestDialogOpen(true);
   };
 
   const handleExport = () => {
