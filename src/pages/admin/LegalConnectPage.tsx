@@ -432,7 +432,7 @@ export default function LegalConnectPage() {
                                 size="sm"
                                 variant="ghost"
                                 className="text-xs h-7"
-                                onClick={() => handleRefreshConnection(provider)}
+                                onClick={() => handleRefreshConnection(conn.id, provider)}
                                 aria-label={`Refresh ${provider} connection`}
                               >
                                 <RefreshCw className="h-3 w-3" />
