@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { SwimlaneFlowchart, FlowPhase } from "./CallLifecycleFlowchart";
 import { cn } from "@/lib/utils";
+import { useScenarioDeviations, type ScenarioId } from "@/hooks/useScenarioDeviations";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 interface Scenario {
-  id: string;
+  id: ScenarioId;
   label: string;
   summary: string;
   phases: FlowPhase[];
