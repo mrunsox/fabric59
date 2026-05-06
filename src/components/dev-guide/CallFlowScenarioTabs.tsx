@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { SwimlaneFlowchart, FlowPhase } from "./CallLifecycleFlowchart";
 import { cn } from "@/lib/utils";
 import { useScenarioDeviations, type ScenarioId } from "@/hooks/useScenarioDeviations";
