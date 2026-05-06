@@ -951,6 +951,25 @@ serve(async (req) => {
       // Downstream notifications
       await handleDownstreamNotifications(supabase, domainId, eventType, eventData);
 
+      // Sync call_sessions state for any lifecycle event so live counters react.
+      const lifecycleEvents = new Set([
+        'call_started', 'call_connected', 'agent_connected',
+        'call_ringing', 'call_queued', 'call_routing',
+        'call_ended', 'agent_disconnected',
+        'wrap_up_started', 'acw_started',
+        'disposition_set', 'call_disposed',
+        'call_failed', 'call_abandoned',
+      ]);
+      if (eventType && lifecycleEvents.has(eventType)) {
+        const stateCall = normalizeCallEvent(eventData);
+        const { data: domainTenants } = await supabase
+          .from('tenants')
+          .select('id')
+          .eq('five9_domain_id', domainId);
+        const firstTenantId = domainTenants?.[0]?.id ?? null;
+        await upsertCallSession(supabase, orgId, firstTenantId, stateCall, eventType);
+      }
+
       // Also process CRM for tenants under this domain
       if (eventType === 'call_ended' || eventType === 'disposition_set') {
         const { data: tenants } = await supabase
