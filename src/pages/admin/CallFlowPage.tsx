@@ -309,6 +309,12 @@ export default function CallFlowPage() {
         </div>
       </section>
 
+      {/* Live counters */}
+      <section>
+        <SectionHeader icon={Activity} kicker="02" title="Live state counters" />
+        <CallStateCounters />
+      </section>
+
       {/* Legend */}
       <section>
         <SectionHeader icon={ListChecks} kicker="02" title="Lifecycle legend" />
