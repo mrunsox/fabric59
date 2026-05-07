@@ -563,9 +563,17 @@ export default function LegalConnectReportsPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {(data?.recurring ?? []).map((r) => {
-                          const rev = reviews[r.key];
-                          const rem = remediationForRecurring(r.key, r.issue_type);
+                        {(data?.recurring ?? [])
+                          .filter((r) => {
+                            if (ackSource === "all") return true;
+                            const src = reviews[r.key]?.updated_from ?? null;
+                            if (ackSource === "none") return !reviews[r.key];
+                            if (ackSource === "external") return src === "slack" || src === "webhook";
+                            return src === ackSource;
+                          })
+                          .map((r) => {
+                            const rev = reviews[r.key];
+                            const rem = remediationForRecurring(r.key, r.issue_type);
                           return (
                             <TableRow key={r.key}>
                               <TableCell className="text-sm">{r.issue_type}</TableCell>
