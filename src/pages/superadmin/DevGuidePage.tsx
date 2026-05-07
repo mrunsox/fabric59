@@ -169,6 +169,9 @@ export default function DevGuidePage() {
                   This section gives QA a single jumping-off point. The phase-by-phase sections
                   further down remain the deep technical reference.
                 </p>
+                <p>
+                  See <a href="/superadmin/test-cases" className="text-primary hover:underline">/superadmin/test-cases</a> for concrete named test cases (IDs, steps, expected results) mapped to these areas.
+                </p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
