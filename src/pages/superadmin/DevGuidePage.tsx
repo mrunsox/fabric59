@@ -49,6 +49,7 @@ const SECTIONS: Section[] = [
   { id: "phase7", label: "Analytics, Audit Exports & Reporting (Phase 7)", icon: BarChart3 },
   { id: "phase8", label: "Operational Rhythm & Digests (Phase 8)", icon: Activity },
   { id: "phase9", label: "Automated Delivery & Escalation (Phase 9)", icon: Activity },
+  { id: "phase10", label: "External Ack, Per-Tenant Digests (Phase 10)", icon: Activity },
   { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
@@ -1624,7 +1625,59 @@ export default function DevGuidePage() {
               </Card>
             </div>
           </section>
-          {/* Phase 6 — Real Pilot Validation & GA Hardening */}
+          {/* Phase 10 — External Ack, Escalation Actions, Per-Tenant Digests */}
+          <section>
+            <SectionHeader
+              id="phase10"
+              title="Phase 10 — External ack, escalation actions &amp; per-tenant digests"
+              kicker="Close-the-loop acknowledgments from Slack and webhooks, plus targeted per-tenant digests and severity-aware routing"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">External acknowledgment flow</div>
+                <ul className="space-y-1.5">
+                  <li>· New <code className="text-xs">legal-connect-ack</code> edge function (verify_jwt = false) handles Slack action links and signed webhook callbacks.</li>
+                  <li>· Slack escalations now include <Chip>Acknowledge</Chip> / <Chip>Monitoring</Chip> / <Chip>Resolve</Chip> buttons. Each is a one-time, time-limited token (default 48h) stored in <code className="text-xs">legal_connect_ack_tokens</code> and scoped to (org, issue_key, action).</li>
+                  <li>· Webhook callbacks are authenticated by HMAC-SHA256 over <code className="text-xs">organization_id|issue_key|action</code> using the sink&rsquo;s configured <code className="text-xs">hmac_secret</code> and the <code className="text-xs">X-Lc-Signature</code> header.</li>
+                  <li>· All ack paths are idempotent — replaying the same token or signed payload returns success without mutating state.</li>
+                  <li>· Updates land on <code className="text-xs">legal_connect_issue_reviews</code> with new <code className="text-xs">updated_from</code> (app / slack / webhook / system) and <code className="text-xs">external_actor</code> columns, and update the originating <code className="text-xs">legal_connect_escalation_events</code> row with <code className="text-xs">ack_status</code>, <code className="text-xs">acked_at</code>, <code className="text-xs">acked_by</code>, <code className="text-xs">linked_issue_key</code>.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Per-tenant digests</div>
+                <ul className="space-y-1.5">
+                  <li>· <code className="text-xs">legal_connect_digest_subscriptions</code>, <code className="text-xs">_schedules</code>, and <code className="text-xs">_runs</code> gained an optional <code className="text-xs">tenant_id</code>. When set, the digest is built and rendered for that tenant only.</li>
+                  <li>· Cron tick (<code className="text-xs">action: tick</code>) and manual sends both pass <code className="text-xs">tenant_id</code> through to <code className="text-xs">performSend</code> and <code className="text-xs">buildDigest</code>; the GET preview endpoint accepts <code className="text-xs">?tenant_id=</code> as well.</li>
+                  <li>· Subscription uniqueness is now (org, email, cadence, tenant_id) so the same recipient can opt into both org-wide and tenant-specific cadences.</li>
+                  <li>· RLS on all three tables is unchanged — only org members / ops / master admin can manage; tenant scoping prevents cross-tenant leakage in payload contents.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Escalation routing improvements</div>
+                <ul className="space-y-1.5">
+                  <li>· Sinks gained optional <code className="text-xs">tenant_id</code> and <code className="text-xs">cohort_filter</code> (all / design_partners / ops / tenant). Routing in <code className="text-xs">fireEscalations</code> respects severity threshold + tenant scope + cohort.</li>
+                  <li>· Tenant-scoped sinks only fire on per-tenant digest runs. Unscoped sinks continue to receive cohort-level digests.</li>
+                  <li>· Escalation events store the full payload (incl. ack links and event id), delivery status, and ack lifecycle so &ldquo;was it sent / seen / acknowledged / resolved?&rdquo; is answerable from one row.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">UI &amp; safety</div>
+                <ul className="space-y-1.5">
+                  <li>· Recurring issues table on <code className="text-xs">/superadmin/legal-connect-reports</code> now shows the source of the latest review action (e.g. &ldquo;via slack&rdquo;).</li>
+                  <li>· Tokens are random 32-byte hex, single-use, time-limited, and scoped per (org, issue, action). Webhook signatures use timing-safe HMAC compare.</li>
+                  <li>· Per-tenant content isolation is enforced at query time — buildDigest only loads jobs/alerts/GA rows for the supplied tenant.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Out of Phase 10 scope</div>
+                <ul className="space-y-1.5">
+                  <li>· Full Slack interactive-component back-channel (we use action URLs, not <code className="text-xs">interactivity_url</code>).</li>
+                  <li>· Customer-facing status pages or cross-product alert hub.</li>
+                  <li>· Complex policy / rules engine for routing.</li>
+                </ul>
+              </Card>
+            </div>
+          </section>
           <section>
             <SectionHeader
               id="phase6"
