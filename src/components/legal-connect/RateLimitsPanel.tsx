@@ -63,7 +63,8 @@ export default function RateLimitsPanel({ clientId }: { clientId: string }) {
         </CardTitle>
         <CardDescription className="text-xs">
           Per-tenant caps on Legal Connect sync jobs. The worker reschedules excess jobs and opens a
-          warning alert. Defaults: 60/min, 1000/hr.
+          warning alert. Defaults: 60/min, 1000/hr. Guidance — low-volume design partner: 30/min, 500/hr;
+          test-heavy onboarding: 120/min, 2000/hr (reset before live_steady).
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
