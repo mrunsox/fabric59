@@ -45,6 +45,7 @@ const SECTIONS: Section[] = [
   { id: "phase5-slice3", label: "Guardrails & Health (Phase 5 Slice 3)", icon: ShieldCheck },
   { id: "phase5-slice4", label: "Feedback, Release Notes, GA Readiness (Phase 5 Slice 4)", icon: ShieldCheck },
   { id: "phase6", label: "Real Pilot Validation & GA Hardening (Phase 6)", icon: ShieldCheck },
+  { id: "phase7", label: "Analytics, Audit Exports & Reporting (Phase 7)", icon: BarChart3 },
   { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
