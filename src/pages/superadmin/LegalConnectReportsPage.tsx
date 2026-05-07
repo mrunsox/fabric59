@@ -78,6 +78,11 @@ export default function LegalConnectReportsPage() {
   const [search, setSearch] = useState("");
 
   const { data, isLoading, refetch, isFetching } = useLegalConnectReports(organization?.id, window);
+  const digestPreviewQ = useDigestPreview(organization?.id, window);
+  const reviewsQ = useIssueReviews(organization?.id);
+  const upsertReview = useUpsertIssueReview(organization?.id);
+  const reviews = reviewsQ.data ?? {};
+  const deltas = digestPreviewQ.data?.deltas;
 
   const filteredTenants: TenantSummary[] = (data?.tenants ?? []).filter((t) => {
     if (rollout !== "all" && t.rollout_status !== rollout) return false;
