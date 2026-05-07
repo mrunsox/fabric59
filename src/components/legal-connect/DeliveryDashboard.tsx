@@ -135,7 +135,14 @@ export default function DeliveryDashboard() {
   const [outcomeFilter, setOutcomeFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [testFilter, setTestFilter] = useState<string>("exclude");
+  const [errorClassFilter, setErrorClassFilter] = useState<string>("all");
   const [open, setOpen] = useState<JobRow | null>(null);
+
+  const errorClassOf = (j: JobRow): string | null => {
+    const c = j.failure_classification;
+    if (!c) return null;
+    return c.startsWith("adapter:") ? c.slice(8) : c;
+  };
 
   const isTest = (j: JobRow) =>
     !!(j.input_payload as any)?.__test__ ||
