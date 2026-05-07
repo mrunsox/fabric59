@@ -258,7 +258,7 @@ export default function DeliveryDashboard() {
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobs, providerFilter, statusFilter, callerTypeFilter, outcomeFilter, search, eventsByCorr]);
+  }, [jobs, providerFilter, statusFilter, callerTypeFilter, outcomeFilter, testFilter, search, eventsByCorr]);
 
   const counts = useMemo(() => {
     const c = { queued: 0, processing: 0, succeeded: 0, failed: 0, skipped: 0 };
