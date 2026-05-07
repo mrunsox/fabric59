@@ -1243,26 +1243,29 @@ serve(async (req) => {
         });
       }
 
-      // Handle Clio
-      if (context.configs.clio?.enabled && context.configs.clio.rules?.enabled) {
-        try {
-          results.clio = await handleCallForClio({
-            tenantId: context.tenantId, orgId: context.orgId, call, config: context.configs.clio, supabase,
-          });
-        } catch (e) {
-          results.clio = { error: e instanceof Error ? e.message : 'Clio handler error' };
+      // Phase 3: inline Manage/MyCase only run when execution_mode === "inline".
+      const execModeA = (context.configs as any)?.execution_mode ?? "jobs";
+      if (execModeA === "inline") {
+        if (context.configs.clio?.enabled && context.configs.clio.rules?.enabled) {
+          try {
+            results.clio = await handleCallForClio({
+              tenantId: context.tenantId, orgId: context.orgId, call, config: context.configs.clio, supabase,
+            });
+          } catch (e) {
+            results.clio = { error: e instanceof Error ? e.message : 'Clio handler error' };
+          }
         }
-      }
-
-      // Handle MyCase
-      if (context.configs.mycase?.enabled && context.configs.mycase.rules?.enabled) {
-        try {
-          results.mycase = await handleCallForMyCase({
-            tenantId: context.tenantId, orgId: context.orgId, call, config: context.configs.mycase, supabase,
-          });
-        } catch (e) {
-          results.mycase = { error: e instanceof Error ? e.message : 'MyCase handler error' };
+        if (context.configs.mycase?.enabled && context.configs.mycase.rules?.enabled) {
+          try {
+            results.mycase = await handleCallForMyCase({
+              tenantId: context.tenantId, orgId: context.orgId, call, config: context.configs.mycase, supabase,
+            });
+          } catch (e) {
+            results.mycase = { error: e instanceof Error ? e.message : 'MyCase handler error' };
+          }
         }
+      } else {
+        results.execution_mode = "jobs";
       }
 
       const idempotencyKey = `${call.id}:${context.tenantId}:${call.disposition || 'none'}`;
