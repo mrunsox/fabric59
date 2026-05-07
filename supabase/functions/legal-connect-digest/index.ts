@@ -506,7 +506,7 @@ Deno.serve(async (req) => {
         const results: any[] = [];
         for (const sch of due ?? []) {
           try {
-            const r = await performSend(supabase, sch.organization_id, sch.cadence, sch.cohort, false);
+            const r = await performSend(supabase, sch.organization_id, sch.cadence, sch.cohort, false, sch.tenant_id ?? null);
             await supabase.from("legal_connect_digest_schedules").update({
               last_run_at: nowIso,
               next_run_at: nextRunAt(sch),
@@ -534,7 +534,8 @@ Deno.serve(async (req) => {
       }
       const cadence = (body.cadence ?? "weekly") as "weekly" | "daily";
       const cohort = body.cohort ?? "all";
-      const r = await performSend(supabase, orgId, cadence, cohort, !!body.dry_run);
+      const tenantId = (body.tenant_id ?? null) as string | null;
+      const r = await performSend(supabase, orgId, cadence, cohort, !!body.dry_run, tenantId);
 
       return new Response(JSON.stringify({
         ok: true,
