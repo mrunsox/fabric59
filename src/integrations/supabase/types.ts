@@ -270,6 +270,9 @@ export type Database = {
           entity_type: string
           id: string
           ip_address: string | null
+          organization_id: string | null
+          source: string
+          tenant_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -280,6 +283,9 @@ export type Database = {
           entity_type: string
           id?: string
           ip_address?: string | null
+          organization_id?: string | null
+          source?: string
+          tenant_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -290,6 +296,9 @@ export type Database = {
           entity_type?: string
           id?: string
           ip_address?: string | null
+          organization_id?: string | null
+          source?: string
+          tenant_id?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -4983,6 +4992,53 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_connect_retention_policies: {
+        Row: {
+          action: string
+          category: string
+          created_at: string
+          id: string
+          notes: string | null
+          organization_id: string
+          retention_days: number
+          updated_at: string
+          updated_by: string | null
+          updated_by_name: string | null
+        }
+        Insert: {
+          action?: string
+          category: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          retention_days: number
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+        }
+        Update: {
+          action?: string
+          category?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          retention_days?: number
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_retention_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_connect_review_queue: {
         Row: {
           acted_at: string | null
@@ -5082,6 +5138,50 @@ export type Database = {
             columns: ["sync_job_id"]
             isOneToOne: false
             referencedRelation: "legal_connect_sync_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_secret_rotations: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          organization_id: string
+          rotated_by: string | null
+          rotated_by_name: string | null
+          secret_kind: string
+          secret_ref: string | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          rotated_by?: string | null
+          rotated_by_name?: string | null
+          secret_kind: string
+          secret_ref?: string | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          rotated_by?: string | null
+          rotated_by_name?: string | null
+          secret_kind?: string
+          secret_ref?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_secret_rotations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -5522,6 +5622,50 @@ export type Database = {
           },
           {
             foreignKeyName: "legal_connect_test_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_webhook_failures: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          ip_address: string | null
+          organization_id: string | null
+          payload_excerpt: string | null
+          reason: string
+          signature_present: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip_address?: string | null
+          organization_id?: string | null
+          payload_excerpt?: string | null
+          reason: string
+          signature_present?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip_address?: string | null
+          organization_id?: string | null
+          payload_excerpt?: string | null
+          reason?: string
+          signature_present?: boolean
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_webhook_failures_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -8188,6 +8332,24 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_connect_audit_overview: {
+        Row: {
+          action: string | null
+          actor_email: string | null
+          actor_name: string | null
+          created_at: string | null
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string | null
+          organization_id: string | null
+          source: string | null
+          tenant_id: string | null
+          tenant_name: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       legal_connect_connections_safe: {
         Row: {
           access_token_expires_at: string | null
@@ -8424,6 +8586,10 @@ export type Database = {
       is_org_owner_or_admin: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
+      }
+      legal_connect_cleanup_retention: {
+        Args: { _org_id?: string }
+        Returns: Json
       }
       user_has_permission: {
         Args: { _org_id: string; _permission: string; _user_id: string }
