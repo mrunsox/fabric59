@@ -15,6 +15,8 @@ import GuidesPanel from "@/components/legal-connect/GuidesPanel";
 import GuideDrawer from "@/components/legal-connect/GuideDrawer";
 import WhatsNewDrawer from "@/components/legal-connect/WhatsNewDrawer";
 import FeedbackDialog from "@/components/legal-connect/FeedbackDialog";
+import TenantGAReadinessPanel from "@/components/legal-connect/TenantGAReadinessPanel";
+import GoLiveRunbookPanel from "@/components/legal-connect/GoLiveRunbookPanel";
 import ProviderConnectionCard from "@/components/legal-connect/ProviderConnectionCard";
 import ClioConnectWizard from "@/components/legal-connect/wizards/ClioConnectWizard";
 import ClioGrowConnectWizard from "@/components/legal-connect/wizards/ClioGrowConnectWizard";
@@ -99,8 +101,13 @@ export default function ClientLegalConnectPage() {
           }
         >
           <div className="flex items-center gap-2">
-            <WhatsNewDrawer audience="design_partners" />
-            <FeedbackDialog clientId={clientId} organizationId={orgId} source="in_product" />
+            <WhatsNewDrawer audience={(tenant as any)?.is_design_partner ? "design_partners" : "all"} />
+            <FeedbackDialog
+              clientId={clientId}
+              organizationId={orgId}
+              source="in_product"
+              isDesignPartner={!!(tenant as any)?.is_design_partner}
+            />
             <Button variant="outline" size="sm" onClick={() => navigate(`/admin/clients/${clientId}`)}>
               <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Client
             </Button>
@@ -211,6 +218,8 @@ export default function ClientLegalConnectPage() {
               <PilotApprovalPanel clientId={clientId!} />
               <RateLimitsPanel clientId={clientId!} />
               <ClientReadinessPanel clientId={clientId!} />
+              <TenantGAReadinessPanel tenantId={clientId!} />
+              <GoLiveRunbookPanel />
             </TabsContent>
 
             <TabsContent value="tests" className="mt-4">
