@@ -6291,6 +6291,12 @@ export type Database = {
           integration_configs: Json | null
           is_design_partner: boolean
           legal_connect_go_live_checklist: Json
+          legal_connect_pilot_approval: Json
+          legal_connect_pilot_block_reason: string | null
+          legal_connect_pilot_checklist: Json
+          legal_connect_pilot_status: string
+          legal_connect_pilot_template: string | null
+          legal_connect_pilot_updated_at: string | null
           legal_connect_readiness_state: Database["public"]["Enums"]["legal_connect_readiness"]
           legal_connect_readiness_updated_at: string | null
           legal_connect_rollout_status: Database["public"]["Enums"]["legal_connect_rollout_status"]
@@ -6340,6 +6346,12 @@ export type Database = {
           integration_configs?: Json | null
           is_design_partner?: boolean
           legal_connect_go_live_checklist?: Json
+          legal_connect_pilot_approval?: Json
+          legal_connect_pilot_block_reason?: string | null
+          legal_connect_pilot_checklist?: Json
+          legal_connect_pilot_status?: string
+          legal_connect_pilot_template?: string | null
+          legal_connect_pilot_updated_at?: string | null
           legal_connect_readiness_state?: Database["public"]["Enums"]["legal_connect_readiness"]
           legal_connect_readiness_updated_at?: string | null
           legal_connect_rollout_status?: Database["public"]["Enums"]["legal_connect_rollout_status"]
@@ -6389,6 +6401,12 @@ export type Database = {
           integration_configs?: Json | null
           is_design_partner?: boolean
           legal_connect_go_live_checklist?: Json
+          legal_connect_pilot_approval?: Json
+          legal_connect_pilot_block_reason?: string | null
+          legal_connect_pilot_checklist?: Json
+          legal_connect_pilot_status?: string
+          legal_connect_pilot_template?: string | null
+          legal_connect_pilot_updated_at?: string | null
           legal_connect_readiness_state?: Database["public"]["Enums"]["legal_connect_readiness"]
           legal_connect_readiness_updated_at?: string | null
           legal_connect_rollout_status?: Database["public"]["Enums"]["legal_connect_rollout_status"]
