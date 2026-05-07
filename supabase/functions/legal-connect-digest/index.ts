@@ -74,23 +74,31 @@ function delta(curr: number, prev: number) {
   return { current: curr, previous: prev, delta: diff, pct };
 }
 
-async function buildDigest(supabase: any, orgId: string, windowKey: "7d" | "24h" | "30d" = "7d") {
+async function buildDigest(
+  supabase: any, orgId: string, windowKey: "7d" | "24h" | "30d" = "7d", tenantId: string | null = null,
+) {
   const days = WINDOW_DAYS[windowKey] ?? 7;
   const now = Date.now();
   const currStart = new Date(now - days * 86_400_000);
   const prevStart = new Date(now - 2 * days * 86_400_000);
 
+  const tenantsQ = supabase.from("tenants").select("id, name, is_design_partner, legal_connect_rollout_status").eq("organization_id", orgId);
+  const jobsQ = supabase.from("legal_connect_sync_jobs")
+    .select("id, client_id, provider, job_type, status, attempt_count, failure_classification, created_at, input_payload, correlation_id")
+    .eq("organization_id", orgId).gte("created_at", prevStart.toISOString())
+    .order("created_at", { ascending: false }).limit(10000);
+  const alertsQ = supabase.from("legal_connect_alerts").select("id, client_id, alert_kind, severity, status, created_at")
+    .eq("organization_id", orgId).gte("created_at", prevStart.toISOString()).limit(2000);
+  const gaQ = supabase.from("legal_connect_ga_checklist_state").select("tenant_id, item_id, status, updated_at").eq("organization_id", orgId);
+  const releaseQ = supabase.from("legal_connect_release_notes").select("id, title, body, audience, published_at")
+    .gte("published_at", currStart.toISOString()).order("published_at", { ascending: false }).limit(10);
+
   const [tenantsRes, jobsRes, alertsRes, gaRes, releaseRes] = await Promise.all([
-    supabase.from("tenants").select("id, name, is_design_partner, legal_connect_rollout_status").eq("organization_id", orgId),
-    supabase.from("legal_connect_sync_jobs")
-      .select("id, client_id, provider, job_type, status, attempt_count, failure_classification, created_at, input_payload, correlation_id")
-      .eq("organization_id", orgId).gte("created_at", prevStart.toISOString())
-      .order("created_at", { ascending: false }).limit(10000),
-    supabase.from("legal_connect_alerts").select("id, client_id, alert_kind, severity, status, created_at")
-      .eq("organization_id", orgId).gte("created_at", prevStart.toISOString()).limit(2000),
-    supabase.from("legal_connect_ga_checklist_state").select("tenant_id, item_id, status, updated_at").eq("organization_id", orgId),
-    supabase.from("legal_connect_release_notes").select("id, title, body, audience, published_at")
-      .gte("published_at", currStart.toISOString()).order("published_at", { ascending: false }).limit(10),
+    tenantId ? tenantsQ.eq("id", tenantId) : tenantsQ,
+    tenantId ? jobsQ.eq("client_id", tenantId) : jobsQ,
+    tenantId ? alertsQ.eq("client_id", tenantId) : alertsQ,
+    tenantId ? gaQ.eq("tenant_id", tenantId) : gaQ,
+    releaseQ,
   ]);
 
   const tenants = (tenantsRes.data ?? []) as any[];
@@ -158,8 +166,12 @@ async function buildDigest(supabase: any, orgId: string, windowKey: "7d" | "24h"
   const topFailingTenants = Array.from(curr.by_tenant.values()).filter((t) => t.failed > 0).sort((a, b) => b.failed - a.failed).slice(0, 5);
   const topFailingActions = Array.from(curr.by_action.values()).filter((t) => t.failed > 0).sort((a, b) => b.failed - a.failed).slice(0, 5);
 
+  const tenantName = tenantId ? (tenants.find((t) => t.id === tenantId)?.name ?? null) : null;
+
   return {
     window: windowKey,
+    tenant_id: tenantId,
+    tenant_name: tenantName,
     window_start: currStart.toISOString(),
     window_end: new Date(now).toISOString(),
     previous_window_start: prevStart.toISOString(),
