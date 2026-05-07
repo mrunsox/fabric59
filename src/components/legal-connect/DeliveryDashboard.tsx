@@ -334,6 +334,35 @@ export default function DeliveryDashboard() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={callerTypeFilter} onValueChange={setCallerTypeFilter}>
+              <SelectTrigger className="h-8 w-36 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All callers</SelectItem>
+                {["new_lead", "current_client", "former_client", "third_party", "unknown"].map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
+              <SelectTrigger className="h-8 w-44 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All outcomes</SelectItem>
+                {[
+                  "create_intake",
+                  "log_client_note",
+                  "create_followup_task",
+                  "update_contact_or_matter",
+                  "send_post_call_email",
+                  "no_writeback",
+                ].map((o) => (
+                  <SelectItem key={o} value={o}>{o}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="overflow-hidden rounded-md border border-border/60">
