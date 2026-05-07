@@ -484,7 +484,8 @@ Deno.serve(async (req) => {
         });
       }
       const windowKey = (url.searchParams.get("window") ?? "7d") as "24h" | "7d" | "30d";
-      const summary = await buildDigest(supabase, orgId, windowKey);
+      const tenantId = url.searchParams.get("tenant_id");
+      const summary = await buildDigest(supabase, orgId, windowKey, tenantId);
       return new Response(JSON.stringify(summary), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
