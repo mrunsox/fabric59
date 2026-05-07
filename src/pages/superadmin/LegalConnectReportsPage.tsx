@@ -21,6 +21,7 @@ import {
   ArrowUp,
   ArrowDown,
   ExternalLink,
+  ShieldCheck,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +33,7 @@ import {
 import { useDigestPreview } from "@/hooks/useLegalConnectDigest";
 import { useIssueReviews, useUpsertIssueReview, type IssueReviewStatus } from "@/hooks/useIssueReviews";
 import DigestPanel from "@/components/legal-connect/DigestPanel";
+import CompliancePanel from "@/components/legal-connect/CompliancePanel";
 import { remediationForRecurring, remediationForAlertKind } from "@/lib/legal-connect-remediation";
 import { downloadCsv, downloadJson } from "@/lib/csv-export";
 import { formatDistanceToNow } from "date-fns";
@@ -272,6 +274,7 @@ export default function LegalConnectReportsPage() {
             <TabsTrigger value="recurring"><ListChecks className="h-3.5 w-3.5 mr-1.5" />Recurring</TabsTrigger>
             <TabsTrigger value="rollout">Rollout / GA</TabsTrigger>
             <TabsTrigger value="digests"><Mail className="h-3.5 w-3.5 mr-1.5" />Digests</TabsTrigger>
+            <TabsTrigger value="compliance"><ShieldCheck className="h-3.5 w-3.5 mr-1.5" />Compliance</TabsTrigger>
           </TabsList>
 
           {/* Tenants */}
@@ -691,6 +694,9 @@ export default function LegalConnectReportsPage() {
           </TabsContent>
           <TabsContent value="digests">
             <DigestPanel orgId={organization?.id} />
+          </TabsContent>
+          <TabsContent value="compliance">
+            <CompliancePanel orgId={organization?.id} />
           </TabsContent>
         </Tabs>
       </div>
