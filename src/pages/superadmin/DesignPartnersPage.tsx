@@ -10,6 +10,8 @@ import { PILOT_CHECKLIST, PILOT_STATUS_LABEL, PILOT_TEMPLATES, computePilotReadi
 import { SEOHead } from "@/components/seo/SEOHead";
 import { cn } from "@/lib/utils";
 import TenantHealthPanel from "@/components/legal-connect/TenantHealthPanel";
+import FeedbackCapturePanel from "@/components/legal-connect/FeedbackCapturePanel";
+import GAReadinessPanel from "@/components/legal-connect/GAReadinessPanel";
 import { useAuth } from "@/contexts/AuthContext";
 
 const STATUS_BADGE: Record<RolloutStatus, string> = {
