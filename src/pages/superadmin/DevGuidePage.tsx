@@ -203,8 +203,7 @@ export default function DevGuidePage() {
                     <li>· Authoring new release-note copy (ongoing process work)</li>
                     <li>· Operator process discipline outside the UI (training / runbook practice)</li>
                   </ul>
-                </Card>
-              </div>
+                </Card></div>
             </div>
           </section>
 
