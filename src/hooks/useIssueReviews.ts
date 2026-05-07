@@ -13,6 +13,8 @@ export interface IssueReview {
   note: string | null;
   updated_by: string | null;
   updated_by_name: string | null;
+  updated_from?: string | null;
+  external_actor?: string | null;
   updated_at: string;
 }
 
