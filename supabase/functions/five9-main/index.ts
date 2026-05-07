@@ -1082,6 +1082,8 @@ serve(async (req) => {
         organization_id: route.organization_id,
         mapped_actions: {
           actions: mappedActions,
+          outcome_actions: outcomeActionsLog,
+          classification,
           producer_skip_reason: producerSkipReason,
           producer_target: route.provider_target ?? null,
         } as any,
