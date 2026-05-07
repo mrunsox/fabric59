@@ -204,6 +204,7 @@ export default function DevGuidePage() {
                     <li>· Operator process discipline outside the UI (training / runbook practice)</li>
                   </ul>
                 </Card></div>
+              </div>
             </div>
           </section>
 
