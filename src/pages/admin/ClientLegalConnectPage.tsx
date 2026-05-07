@@ -196,6 +196,10 @@ export default function ClientLegalConnectPage() {
               <ClientReadinessPanel clientId={clientId!} />
             </TabsContent>
 
+            <TabsContent value="tests" className="mt-4">
+              <GuidedTestRunner clientId={clientId!} />
+            </TabsContent>
+
             <TabsContent value="webhooks" className="mt-4">
               <WebhookSettingsPanel clientId={clientId!} />
             </TabsContent>
