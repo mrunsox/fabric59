@@ -2507,6 +2507,97 @@ export type Database = {
           },
         ]
       }
+      legal_connect_ack_tokens: {
+        Row: {
+          action: string
+          created_at: string
+          event_id: string | null
+          expires_at: string
+          id: string
+          issue_key: string
+          organization_id: string
+          sink_id: string | null
+          source: string
+          tenant_id: string | null
+          token: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          event_id?: string | null
+          expires_at: string
+          id?: string
+          issue_key: string
+          organization_id: string
+          sink_id?: string | null
+          source?: string
+          tenant_id?: string | null
+          token: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          event_id?: string | null
+          expires_at?: string
+          id?: string
+          issue_key?: string
+          organization_id?: string
+          sink_id?: string | null
+          source?: string
+          tenant_id?: string | null
+          token?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_ack_tokens_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_escalation_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ack_tokens_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ack_tokens_sink_id_fkey"
+            columns: ["sink_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_escalation_sinks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ack_tokens_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ack_tokens_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_ack_tokens_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
       legal_connect_ai_checklists: {
         Row: {
           checklist_items: Json | null
@@ -3304,6 +3395,7 @@ export type Database = {
           organization_id: string
           recipients_count: number
           summary: Json
+          tenant_id: string | null
           triggered_by: string | null
           window_end: string
           window_start: string
@@ -3319,6 +3411,7 @@ export type Database = {
           organization_id: string
           recipients_count?: number
           summary?: Json
+          tenant_id?: string | null
           triggered_by?: string | null
           window_end: string
           window_start: string
@@ -3334,6 +3427,7 @@ export type Database = {
           organization_id?: string
           recipients_count?: number
           summary?: Json
+          tenant_id?: string | null
           triggered_by?: string | null
           window_end?: string
           window_start?: string
@@ -3345,6 +3439,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_digest_runs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_digest_runs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_digest_runs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -3360,6 +3475,7 @@ export type Database = {
           last_run_at: string | null
           next_run_at: string | null
           organization_id: string
+          tenant_id: string | null
           updated_at: string
           weekday: number
         }
@@ -3374,6 +3490,7 @@ export type Database = {
           last_run_at?: string | null
           next_run_at?: string | null
           organization_id: string
+          tenant_id?: string | null
           updated_at?: string
           weekday?: number
         }
@@ -3388,6 +3505,7 @@ export type Database = {
           last_run_at?: string | null
           next_run_at?: string | null
           organization_id?: string
+          tenant_id?: string | null
           updated_at?: string
           weekday?: number
         }
@@ -3398,6 +3516,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_digest_schedules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_digest_schedules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_digest_schedules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -3413,6 +3552,7 @@ export type Database = {
           organization_id: string
           recipient_email: string
           recipient_name: string | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -3426,6 +3566,7 @@ export type Database = {
           organization_id: string
           recipient_email: string
           recipient_name?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -3439,6 +3580,7 @@ export type Database = {
           organization_id?: string
           recipient_email?: string
           recipient_name?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -3448,6 +3590,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_digest_subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_digest_subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_digest_subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -3662,36 +3825,51 @@ export type Database = {
       }
       legal_connect_escalation_events: {
         Row: {
+          ack_status: string
+          acked_at: string | null
+          acked_by: string | null
           created_at: string
           delivery_error: string | null
           delivery_status: string
           id: string
+          linked_issue_key: string | null
           organization_id: string
           payload: Json
           severity: string
           sink_id: string | null
+          tenant_id: string | null
           trigger_kind: string
         }
         Insert: {
+          ack_status?: string
+          acked_at?: string | null
+          acked_by?: string | null
           created_at?: string
           delivery_error?: string | null
           delivery_status?: string
           id?: string
+          linked_issue_key?: string | null
           organization_id: string
           payload: Json
           severity: string
           sink_id?: string | null
+          tenant_id?: string | null
           trigger_kind: string
         }
         Update: {
+          ack_status?: string
+          acked_at?: string | null
+          acked_by?: string | null
           created_at?: string
           delivery_error?: string | null
           delivery_status?: string
           id?: string
+          linked_issue_key?: string | null
           organization_id?: string
           payload?: Json
           severity?: string
           sink_id?: string | null
+          tenant_id?: string | null
           trigger_kind?: string
         }
         Relationships: [
@@ -3709,10 +3887,32 @@ export type Database = {
             referencedRelation: "legal_connect_escalation_sinks"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "legal_connect_escalation_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_escalation_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_escalation_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
         ]
       }
       legal_connect_escalation_sinks: {
         Row: {
+          cohort_filter: string | null
           created_at: string
           created_by: string | null
           enabled: boolean
@@ -3724,9 +3924,11 @@ export type Database = {
           organization_id: string
           severity_threshold: string
           target: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
+          cohort_filter?: string | null
           created_at?: string
           created_by?: string | null
           enabled?: boolean
@@ -3738,9 +3940,11 @@ export type Database = {
           organization_id: string
           severity_threshold?: string
           target: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
+          cohort_filter?: string | null
           created_at?: string
           created_by?: string | null
           enabled?: boolean
@@ -3752,6 +3956,7 @@ export type Database = {
           organization_id?: string
           severity_threshold?: string
           target?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -3761,6 +3966,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_escalation_sinks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_escalation_sinks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_escalation_sinks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
         ]
       }
@@ -4226,6 +4452,7 @@ export type Database = {
       legal_connect_issue_reviews: {
         Row: {
           created_at: string
+          external_actor: string | null
           id: string
           issue_key: string
           note: string | null
@@ -4234,9 +4461,11 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           updated_by_name: string | null
+          updated_from: string
         }
         Insert: {
           created_at?: string
+          external_actor?: string | null
           id?: string
           issue_key: string
           note?: string | null
@@ -4245,9 +4474,11 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           updated_by_name?: string | null
+          updated_from?: string
         }
         Update: {
           created_at?: string
+          external_actor?: string | null
           id?: string
           issue_key?: string
           note?: string | null
@@ -4256,6 +4487,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           updated_by_name?: string | null
+          updated_from?: string
         }
         Relationships: [
           {
