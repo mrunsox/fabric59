@@ -188,6 +188,10 @@ export default function ClientLegalConnectPage() {
               </div>
             </TabsContent>
 
+            <TabsContent value="readiness" className="mt-4">
+              <ClientReadinessPanel clientId={clientId!} />
+            </TabsContent>
+
             <TabsContent value="webhooks" className="mt-4">
               <WebhookSettingsPanel clientId={clientId!} />
             </TabsContent>
