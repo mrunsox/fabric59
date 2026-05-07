@@ -3292,6 +3292,106 @@ export type Database = {
           },
         ]
       }
+      legal_connect_digest_runs: {
+        Row: {
+          cadence: string
+          cohort: string
+          created_at: string
+          delivery_status: string
+          id: string
+          organization_id: string
+          recipients_count: number
+          summary: Json
+          triggered_by: string | null
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          cadence?: string
+          cohort?: string
+          created_at?: string
+          delivery_status?: string
+          id?: string
+          organization_id: string
+          recipients_count?: number
+          summary?: Json
+          triggered_by?: string | null
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          cadence?: string
+          cohort?: string
+          created_at?: string
+          delivery_status?: string
+          id?: string
+          organization_id?: string
+          recipients_count?: number
+          summary?: Json
+          triggered_by?: string | null
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_digest_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_digest_subscriptions: {
+        Row: {
+          cadence: string
+          cohort: string
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          id: string
+          last_sent_at: string | null
+          organization_id: string
+          recipient_email: string
+          recipient_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          cadence?: string
+          cohort?: string
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          last_sent_at?: string | null
+          organization_id: string
+          recipient_email: string
+          recipient_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cadence?: string
+          cohort?: string
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          last_sent_at?: string | null
+          organization_id?: string
+          recipient_email?: string
+          recipient_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_digest_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_connect_disposition_mappings: {
         Row: {
           action_profile_key: string | null
@@ -3957,6 +4057,50 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_client_readiness"
             referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      legal_connect_issue_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          issue_key: string
+          note: string | null
+          organization_id: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+          updated_by_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issue_key: string
+          note?: string | null
+          organization_id: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issue_key?: string
+          note?: string | null
+          organization_id?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_issue_reviews_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }
