@@ -836,7 +836,7 @@ Deno.serve(async (req) => {
           }
         }
 
-        return new Response(JSON.stringify({ processed, failed, deadLettered, total: jobs.length }), {
+        return new Response(JSON.stringify({ processed, failed, deadLettered, rateLimited, total: jobs.length }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
