@@ -16,7 +16,7 @@ export interface AdapterConnectionContext {
   connection_id: string;
   client_id: string;
   organization_id: string;
-  provider: "clio" | "mycase" | "smokeball";
+  provider: "clio" | "clio_grow" | "mycase" | "smokeball";
   access_token?: string;
   refresh_token?: string;
   base_url?: string;
@@ -39,7 +39,7 @@ export interface MatterSearchQuery {
 }
 
 export interface LegalCrmAdapter {
-  readonly provider: "clio" | "mycase" | "smokeball";
+  readonly provider: "clio" | "clio_grow" | "mycase" | "smokeball";
 
   // Auth & lifecycle
   whoAmI(ctx: AdapterConnectionContext): Promise<AdapterResult<{ user_id?: string; account_name?: string }>>;

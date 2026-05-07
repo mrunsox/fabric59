@@ -4,7 +4,7 @@
 
 import type { LegalCrmAdapter } from "./legal-crm-adapter.ts";
 
-type ProviderKey = "clio" | "mycase" | "smokeball";
+type ProviderKey = "clio" | "clio_grow" | "mycase" | "smokeball";
 
 const adapters = new Map<ProviderKey, LegalCrmAdapter>();
 

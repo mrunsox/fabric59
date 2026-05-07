@@ -898,6 +898,73 @@ serve(async (req) => {
           mappedActions = result.actions;
         }
       }
+
+      // Producer: enqueue sync jobs for clio_grow targets only (Phase 1).
+      // Existing inline Clio Manage / MyCase dispatch path is intentionally untouched.
+      const syncJobsCreated: string[] = [];
+      if (
+        route.client_id &&
+        route.organization_id &&
+        route.provider_target === "clio_grow" &&
+        dispositionMapping &&
+        ((dispositionMapping.metadata as any)?.create_lead === true ||
+          (Array.isArray(mappedActions) && mappedActions.some((a: any) => a.action === "create_lead")))
+      ) {
+        try {
+          const cv = (normalized as any).call_variables ?? {};
+          const fullName = (cv.caller_name as string) ?? "";
+          const [fnGuess, ...lnGuess] = fullName.trim().split(/\s+/);
+          const leadInput = {
+            first_name: (cv.caller_first_name ?? cv.first_name ?? fnGuess ?? "") as string,
+            last_name:  (cv.caller_last_name  ?? cv.last_name  ?? lnGuess.join(" ") ?? "") as string,
+            email:      (cv.caller_email ?? cv.email ?? null) as string | null,
+            phone:      (normalized.ani ?? cv.caller_phone ?? cv.phone ?? null) as string | null,
+            message:    normalized.disposition_notes ?? (cv.notes as string) ?? "",
+            referring_url: (cv.referring_url ?? cv.landing_url ?? null) as string | null,
+            source:     (cv.from_source ?? cv.lead_source ?? "Fabric59 / Five9") as string,
+          };
+
+          // Lookup an active Clio Grow connection for this client.
+          const { data: conn } = await supabase
+            .from("legal_connect_connections")
+            .select("id")
+            .eq("client_id", route.client_id)
+            .eq("provider", "clio_grow")
+            .eq("status", "connected")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          const idemKey = `clio_grow:lead.create:${normalized.correlation_id}`;
+          const { data: created, error: jobErr } = await supabase
+            .from("legal_connect_sync_jobs")
+            .insert({
+              organization_id: route.organization_id,
+              client_id: route.client_id,
+              provider: "clio_grow",
+              connection_id: conn?.id ?? null,
+              job_type: "lead.create",
+              direction: "outbound",
+              priority: 50,
+              idempotency_key: idemKey,
+              correlation_id: normalized.correlation_id,
+              status: "queued",
+              input_payload: leadInput,
+              next_attempt_at: new Date().toISOString(),
+            })
+            .select("id")
+            .single();
+          if (jobErr) {
+            // Likely a duplicate idempotency_key — that's fine, it's the dedup guarantee.
+            console.warn("[five9-main] clio_grow sync_job insert:", jobErr.message);
+          } else if (created?.id) {
+            syncJobsCreated.push(created.id);
+          }
+        } catch (producerErr) {
+          console.error("[five9-main] clio_grow producer error:", producerErr);
+        }
+      }
+
       await supabase.from("five9_event_log").insert({
         correlation_id: normalized.correlation_id,
         event_type: normalized.event_type,
@@ -911,7 +978,7 @@ serve(async (req) => {
         resolved_provider: route.provider_target,
         organization_id: route.organization_id,
         mapped_actions: mappedActions as any,
-        sync_jobs_created: [],
+        sync_jobs_created: syncJobsCreated,
         status: route.client_id && route.provider_target ? "processed" : "unresolved",
         processing_time_ms: Date.now() - startTime,
       });
