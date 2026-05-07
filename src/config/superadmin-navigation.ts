@@ -19,4 +19,5 @@ export const SUPERADMIN_SECTIONS: SuperadminNavItem[] = [
   { key: "docs", label: "System Docs", href: "/superadmin/docs", icon: BookOpen },
   { key: "call-flow", label: "Call Flow", href: "/superadmin/call-flow", icon: Phone },
   { key: "dev-guide", label: "Dev Guide", href: "/superadmin/dev-guide", icon: FileText },
+  { key: "test-cases", label: "Test cases", href: "/superadmin/test-cases", icon: ClipboardCheck },
 ];
