@@ -692,8 +692,13 @@ Deno.serve(async (req) => {
             processed++;
           } catch (procErr) {
             const errMsg = procErr instanceof Error ? procErr.message : "Unknown error";
-            const classification = classifyFailure(errMsg);
-            const isRetryable = !NON_RETRYABLE.has(classification);
+            // Phase 3 — also run the adapter classifier for legal CRM providers; merge the
+            // structured "kind" into failure_classification so dashboard filtering aligns
+            // with the adapter contract (auth, rate_limited, validation, upstream_5xx, …).
+            const adapterClass = classifyAdapterError(errMsg);
+            const legalProvider = ["clio", "clio_grow", "mycase", "smokeball"].includes((job.provider || "").toLowerCase());
+            const classification = legalProvider ? `adapter:${adapterClass.kind}` : classifyFailure(errMsg);
+            const isRetryable = legalProvider ? adapterClass.retryable : !NON_RETRYABLE.has(classification);
             const newAttempt = job.attempt_count + 1;
 
             await supabaseAdmin.from("legal_connect_failure_classifications").insert({
