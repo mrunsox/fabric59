@@ -906,8 +906,9 @@ serve(async (req) => {
         route.client_id &&
         route.organization_id &&
         route.provider_target === "clio_grow" &&
-        Array.isArray(mappedActions) &&
-        mappedActions.some((a: any) => a.action === "create_lead")
+        dispositionMapping &&
+        ((dispositionMapping.metadata as any)?.create_lead === true ||
+          (Array.isArray(mappedActions) && mappedActions.some((a: any) => a.action === "create_lead")))
       ) {
         try {
           const cv = (normalized as any).call_variables ?? {};
