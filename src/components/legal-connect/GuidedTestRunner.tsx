@@ -189,9 +189,18 @@ export default function GuidedTestRunner({ clientId }: Props) {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm">{p.label}</CardTitle>
-                  <Badge variant="outline" className="text-[10px]">
-                    {isConnected ? "Available" : "Not connected"}
-                  </Badge>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => openGuideDrawer(p.value)}
+                      className="text-[10px] inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      <BookOpen className="h-3 w-3" /> Guide
+                    </button>
+                    <Badge variant="outline" className="text-[10px]">
+                      {isConnected ? "Available" : "Not connected"}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
