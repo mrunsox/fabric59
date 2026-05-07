@@ -6278,6 +6278,7 @@ export type Database = {
           crm_api_url: string | null
           crm_type: Database["public"]["Enums"]["crm_type"]
           custom_mappings: Json | null
+          design_partner_notes: Json
           docusign_api_key: string | null
           dropbox_api_key: string | null
           five9_campaign_identifier: string | null
@@ -6288,9 +6289,11 @@ export type Database = {
           google_calendar_id: string | null
           id: string
           integration_configs: Json | null
+          is_design_partner: boolean
           legal_connect_go_live_checklist: Json
           legal_connect_readiness_state: Database["public"]["Enums"]["legal_connect_readiness"]
           legal_connect_readiness_updated_at: string | null
+          legal_connect_rollout_status: Database["public"]["Enums"]["legal_connect_rollout_status"]
           legal_connect_safe_mode: Database["public"]["Enums"]["legal_connect_safe_mode"]
           make_webhook_url: string | null
           microsoft365_api_key: string | null
@@ -6324,6 +6327,7 @@ export type Database = {
           crm_api_url?: string | null
           crm_type?: Database["public"]["Enums"]["crm_type"]
           custom_mappings?: Json | null
+          design_partner_notes?: Json
           docusign_api_key?: string | null
           dropbox_api_key?: string | null
           five9_campaign_identifier?: string | null
@@ -6334,9 +6338,11 @@ export type Database = {
           google_calendar_id?: string | null
           id?: string
           integration_configs?: Json | null
+          is_design_partner?: boolean
           legal_connect_go_live_checklist?: Json
           legal_connect_readiness_state?: Database["public"]["Enums"]["legal_connect_readiness"]
           legal_connect_readiness_updated_at?: string | null
+          legal_connect_rollout_status?: Database["public"]["Enums"]["legal_connect_rollout_status"]
           legal_connect_safe_mode?: Database["public"]["Enums"]["legal_connect_safe_mode"]
           make_webhook_url?: string | null
           microsoft365_api_key?: string | null
@@ -6370,6 +6376,7 @@ export type Database = {
           crm_api_url?: string | null
           crm_type?: Database["public"]["Enums"]["crm_type"]
           custom_mappings?: Json | null
+          design_partner_notes?: Json
           docusign_api_key?: string | null
           dropbox_api_key?: string | null
           five9_campaign_identifier?: string | null
@@ -6380,9 +6387,11 @@ export type Database = {
           google_calendar_id?: string | null
           id?: string
           integration_configs?: Json | null
+          is_design_partner?: boolean
           legal_connect_go_live_checklist?: Json
           legal_connect_readiness_state?: Database["public"]["Enums"]["legal_connect_readiness"]
           legal_connect_readiness_updated_at?: string | null
+          legal_connect_rollout_status?: Database["public"]["Enums"]["legal_connect_rollout_status"]
           legal_connect_safe_mode?: Database["public"]["Enums"]["legal_connect_safe_mode"]
           make_webhook_url?: string | null
           microsoft365_api_key?: string | null
@@ -7622,6 +7631,14 @@ export type Database = {
         | "ready_for_live"
         | "live"
         | "paused"
+      legal_connect_rollout_status:
+        | "not_started"
+        | "onboarding_in_progress"
+        | "testing"
+        | "ready_for_live"
+        | "live_pilot"
+        | "live_steady"
+        | "paused"
       legal_connect_safe_mode: "none" | "email_only" | "no_writeback"
       notification_channel:
         | "slack"
@@ -7804,6 +7821,15 @@ export const Constants = {
         "test_passed",
         "ready_for_live",
         "live",
+        "paused",
+      ],
+      legal_connect_rollout_status: [
+        "not_started",
+        "onboarding_in_progress",
+        "testing",
+        "ready_for_live",
+        "live_pilot",
+        "live_steady",
         "paused",
       ],
       legal_connect_safe_mode: ["none", "email_only", "no_writeback"],
