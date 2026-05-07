@@ -29,8 +29,17 @@ const READINESS_BADGE: Record<string, string> = {
   paused: "bg-destructive/15 text-destructive border-destructive/30",
 };
 
+const PILOT_BADGE: Record<PilotStatus, string> = {
+  not_ready: "bg-muted text-muted-foreground border-border",
+  blocked: "bg-destructive/15 text-destructive border-destructive/30",
+  ready_for_pilot: "bg-primary/15 text-primary border-primary/30",
+  approved: "bg-success/15 text-success border-success/30",
+};
+
 export default function DesignPartnersPage() {
   const { data: partners = [], isLoading } = useDesignPartners();
+  const { data: pilots = [] } = usePilotApprovalList();
+  const pilotMap = new Map(pilots.map((p) => [p.id, p]));
 
   return (
     <>
@@ -72,15 +81,37 @@ export default function DesignPartnersPage() {
                     <TableRow>
                       <TableHead>Client</TableHead>
                       <TableHead>Rollout stage</TableHead>
+                      <TableHead>Pilot</TableHead>
+                      <TableHead>Template</TableHead>
                       <TableHead>Readiness</TableHead>
                       <TableHead>Contact</TableHead>
-                      <TableHead>Last update</TableHead>
                       <TableHead className="text-right">Open</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {partners.map((p) => (
+                    {partners.map((p) => {
+                      const pilot = pilotMap.get(p.id);
+                      const ps = (pilot?.pilot_status ?? "not_ready") as PilotStatus;
+                      const readiness = pilot ? computePilotReadiness(pilot.pilot_checklist) : null;
+                      const tpl = PILOT_TEMPLATES.find((t) => t.id === pilot?.pilot_template);
+                      const missingLabels = (readiness?.missingRequired ?? [])
+                        .map((id) => PILOT_CHECKLIST.find((i) => i.id === id)?.label)
+                        .filter(Boolean) as string[];
+                      return (
                       <TableRow key={p.id}>
+                        <TableCell>
+                          <div className="font-medium text-sm">{p.name}</div>
+                          {p.design_partner_notes.constraints && (
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {p.design_partner_notes.constraints}
+                            </div>
+                          )}
+                          {ps === "blocked" && pilot?.pilot_block_reason && (
+                            <div className="text-xs text-destructive mt-0.5">
+                              Block: {pilot.pilot_block_reason}
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <div className="font-medium text-sm">{p.name}</div>
                           {p.design_partner_notes.constraints && (
