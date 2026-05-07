@@ -225,9 +225,9 @@ export default function ClioGrowDeliveryPanel({ clientId }: { clientId?: string 
                         {ev.ani ? ` · ${ev.ani}` : ""}
                       </div>
                     )}
-                    {j.last_error && (
+                    {j.failure_reason && (
                       <div className="text-[11px] text-destructive break-words">
-                        {j.last_error}
+                        {j.failure_reason}
                         {(j.attempt_count ?? 0) > 0 && (
                           <span className="text-muted-foreground"> · attempt {j.attempt_count}</span>
                         )}
