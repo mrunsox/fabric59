@@ -27,6 +27,7 @@ import {
   type DigestCohort,
   type DigestDelta,
 } from "@/hooks/useLegalConnectDigest";
+import { DigestSchedulesPanel, EscalationSinksPanel } from "./AutomationPanels";
 
 function fmtAgo(iso?: string | null) {
   if (!iso) return "—";
@@ -113,6 +114,8 @@ export default function DigestPanel({ orgId }: Props) {
           <TabsList>
             <TabsTrigger value="preview">Preview &amp; deltas</TabsTrigger>
             <TabsTrigger value="subscribers">Subscribers ({subs.length})</TabsTrigger>
+            <TabsTrigger value="schedules">Schedules</TabsTrigger>
+            <TabsTrigger value="escalation">Escalation</TabsTrigger>
             <TabsTrigger value="history">History ({runs.length})</TabsTrigger>
           </TabsList>
 
@@ -385,6 +388,14 @@ export default function DigestPanel({ orgId }: Props) {
                 </Table>
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="schedules">
+            <DigestSchedulesPanel orgId={orgId} />
+          </TabsContent>
+
+          <TabsContent value="escalation">
+            <EscalationSinksPanel orgId={orgId} />
           </TabsContent>
 
           {/* History */}
