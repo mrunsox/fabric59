@@ -134,7 +134,13 @@ export default function DeliveryDashboard() {
   const [callerTypeFilter, setCallerTypeFilter] = useState<string>("all");
   const [outcomeFilter, setOutcomeFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [testFilter, setTestFilter] = useState<string>("exclude");
   const [open, setOpen] = useState<JobRow | null>(null);
+
+  const isTest = (j: JobRow) =>
+    !!(j.input_payload as any)?.__test__ ||
+    !!(j.input_payload as any)?.test_run ||
+    (j.correlation_id ?? "").startsWith("test_");
 
   // Phase 3 helpers — read classification + outcome metadata from the joined event.
   const classificationFor = (j: JobRow) => {
