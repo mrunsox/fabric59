@@ -28,6 +28,7 @@ import {
   type DigestDelta,
 } from "@/hooks/useLegalConnectDigest";
 import { DigestSchedulesPanel, EscalationSinksPanel } from "./AutomationPanels";
+import { useTenants } from "@/hooks/useTenants";
 
 function fmtAgo(iso?: string | null) {
   if (!iso) return "—";
