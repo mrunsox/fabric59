@@ -64,7 +64,12 @@ export type ReleaseNote = {
   published_at: string;
 };
 
-export const GA_READINESS_CHECKLIST = [
+export type GAChecklistSection = {
+  section: string;
+  items: { id: string; label: string }[];
+};
+
+export const GA_READINESS_CHECKLIST: GAChecklistSection[] = [
   {
     section: "Product & integration",
     items: [
