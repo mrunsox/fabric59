@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sparkles, ExternalLink, Users } from "lucide-react";
 import { useDesignPartners, ROLLOUT_LABEL, type RolloutStatus } from "@/hooks/useDesignPartner";
+import { usePilotApprovalList } from "@/hooks/usePilotApproval";
+import { PILOT_CHECKLIST, PILOT_STATUS_LABEL, PILOT_TEMPLATES, computePilotReadiness, type PilotStatus } from "@/data/legal-connect-pilot";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { cn } from "@/lib/utils";
 
