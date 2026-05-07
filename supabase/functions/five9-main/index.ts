@@ -1165,23 +1165,30 @@ serve(async (req) => {
             continue;
           }
 
-          if (configs.clio?.enabled && configs.clio.rules?.enabled) {
-            try {
-              await handleCallForClio({
-                tenantId: tenant.id, orgId, call, config: configs.clio, supabase,
-              });
-            } catch (e) {
-              console.error(`Clio error for tenant ${tenant.id}:`, e);
+          // Phase 3: inline Manage/MyCase dispatch is gated by execution_mode.
+          // Default is "jobs" (opt-out) — outcome-engine producer above already
+          // enqueued the appropriate sync jobs. Tenants explicitly set to
+          // execution_mode="inline" still run the legacy path.
+          const execMode = (configs as any)?.execution_mode ?? "jobs";
+          if (execMode === "inline") {
+            if (configs.clio?.enabled && configs.clio.rules?.enabled) {
+              try {
+                await handleCallForClio({
+                  tenantId: tenant.id, orgId, call, config: configs.clio, supabase,
+                });
+              } catch (e) {
+                console.error(`Clio error for tenant ${tenant.id}:`, e);
+              }
             }
-          }
 
-          if (configs.mycase?.enabled && configs.mycase.rules?.enabled) {
-            try {
-              await handleCallForMyCase({
-                tenantId: tenant.id, orgId, call, config: configs.mycase, supabase,
-              });
-            } catch (e) {
-              console.error(`MyCase error for tenant ${tenant.id}:`, e);
+            if (configs.mycase?.enabled && configs.mycase.rules?.enabled) {
+              try {
+                await handleCallForMyCase({
+                  tenantId: tenant.id, orgId, call, config: configs.mycase, supabase,
+                });
+              } catch (e) {
+                console.error(`MyCase error for tenant ${tenant.id}:`, e);
+              }
             }
           }
 
