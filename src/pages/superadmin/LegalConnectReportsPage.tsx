@@ -271,6 +271,7 @@ export default function LegalConnectReportsPage() {
             <TabsTrigger value="alerts"><AlertTriangle className="h-3.5 w-3.5 mr-1.5" />Alerts</TabsTrigger>
             <TabsTrigger value="recurring"><ListChecks className="h-3.5 w-3.5 mr-1.5" />Recurring</TabsTrigger>
             <TabsTrigger value="rollout">Rollout / GA</TabsTrigger>
+            <TabsTrigger value="digests"><Mail className="h-3.5 w-3.5 mr-1.5" />Digests</TabsTrigger>
           </TabsList>
 
           {/* Tenants */}
