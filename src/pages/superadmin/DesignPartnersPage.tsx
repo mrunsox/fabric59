@@ -9,6 +9,8 @@ import { usePilotApprovalList } from "@/hooks/usePilotApproval";
 import { PILOT_CHECKLIST, PILOT_STATUS_LABEL, PILOT_TEMPLATES, computePilotReadiness, type PilotStatus } from "@/data/legal-connect-pilot";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { cn } from "@/lib/utils";
+import TenantHealthPanel from "@/components/legal-connect/TenantHealthPanel";
+import { useAuth } from "@/contexts/AuthContext";
 
 const STATUS_BADGE: Record<RolloutStatus, string> = {
   not_started: "bg-muted text-muted-foreground border-border",
