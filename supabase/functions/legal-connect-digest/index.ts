@@ -370,11 +370,24 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const cronSecret = req.headers.get("x-cron-secret") ?? "";
-  // We validate cronSecret against app_config below (after admin client is built).
+  // Always have a service-role client available for cron-only operations
+  // (validating the cron secret against app_config and walking schedules
+  // across all orgs). User requests use a JWT-bound anon client to keep
+  // RLS in force.
+  const adminClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+
   let isCron = false;
+  if (cronSecret) {
+    const { data: row } = await adminClient
+      .from("app_config").select("value").eq("key", "legal_connect_cron_secret").maybeSingle();
+    isCron = !!row?.value && row.value === cronSecret;
+  }
 
   const supabase = isCron
-    ? createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)
+    ? adminClient
     : createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
         global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
       });
