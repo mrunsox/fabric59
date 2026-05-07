@@ -1048,6 +1048,61 @@ export default function DevGuidePage() {
               </Card>
             </div>
           </section>
+
+          {/* Phase 5 Slice 3 — Guardrails & Health */}
+          <section>
+            <SectionHeader
+              id="phase5-slice3"
+              title="Phase 5 Slice 3 — Guardrails &amp; health"
+              kicker="Per-tenant rate limits, observability, error taxonomy, and lightweight alerts"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Per-tenant rate limits</div>
+                <ul className="space-y-1.5">
+                  <li>· Stored on <code className="text-xs">tenants.max_jobs_per_minute</code> and <code className="text-xs">tenants.max_jobs_per_hour</code>. Defaults: 60/min, 1000/hr.</li>
+                  <li>· Edited from the Readiness tab → <Chip>Rate limits</Chip> panel.</li>
+                  <li>· Enforced inside <code className="text-xs">supabase/functions/legal-connect-jobs</code> in the <Chip>processQueue</Chip> path. Before executing a job, the worker counts that tenant's recent jobs (1m / 1h windows) and reschedules anything over the cap with <code className="text-xs">failure_classification = adapter:rate_limited</code>.</li>
+                  <li>· Re-queued jobs back off (1m for minute-cap, 5m for hour-cap) and retry naturally — no work is dropped.</li>
+                  <li>· An open <Chip>rate_limited</Chip> alert is created in <code className="text-xs">legal_connect_alerts</code> the first time a tenant hits a cap.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Observability</div>
+                <ul className="space-y-1.5">
+                  <li>· New edge function <code className="text-xs">legal-connect-health</code> returns per-tenant 24h/7d rollups (jobs, success rate, rate-limited count, top error class, open alerts).</li>
+                  <li>· UI: <Chip>TenantHealthPanel</Chip> on <code className="text-xs">/superadmin/design-partners</code> — one row per design partner with rollout, success%, rate-limit hits, top error class, and open alerts.</li>
+                  <li>· Auto-refreshes every 60s; an explicit <Chip>Evaluate alerts</Chip> button reruns alert rules on demand.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Error taxonomy</div>
+                <p className="mb-2">All legal-CRM adapters classify failures via <code className="text-xs">classifyAdapterError</code> in <code className="text-xs">_shared/legal-job-adapters.ts</code>:</p>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {["auth","validation","rate_limited","upstream_4xx","upstream_5xx","network","timeout","unsupported","unknown"].map((k) => (<Chip key={k}>{k}</Chip>))}
+                </div>
+                <p>Stored as <code className="text-xs">failure_classification = adapter:&lt;kind&gt;</code> on each sync job. The Delivery Dashboard now exposes a class filter; the Tenant Health panel surfaces the dominant failure class.</p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Alert rules</div>
+                <ul className="space-y-1.5">
+                  <li>· <strong>high_failure_rate</strong> (critical): tenant in <Chip>ready_for_live</Chip>/<Chip>live_pilot</Chip>/<Chip>live_steady</Chip> with &lt;70% success and ≥3 failures in 24h.</li>
+                  <li>· <strong>auth_failure</strong> (critical): any auth-class failure once tenant is live.</li>
+                  <li>· <strong>rate_limited</strong> (warning): one or more rate-limited jobs in 24h.</li>
+                  <li>· <strong>zero_jobs</strong> (warning): live tenant with 0 jobs in 24h (possible misrouting).</li>
+                </ul>
+                <p className="mt-2">Alerts dedupe by <code className="text-xs">(client_id, alert_kind, status=open)</code>. Ack or resolve from the Open alerts list.</p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Tuning</div>
+                <ul className="space-y-1.5">
+                  <li>· Default limits live in the migration and the worker fallback (60/m, 1000/h).</li>
+                  <li>· Per-tenant overrides via the Readiness → Rate limits panel.</li>
+                  <li>· Adjust thresholds in <code className="text-xs">legal-connect-health/index.ts → evaluateAlerts()</code> if the team wants different sensitivity.</li>
+                </ul>
+              </Card>
+            </div>
+          </section>
         </div>
       </div>
     </div>
