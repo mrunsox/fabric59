@@ -48,6 +48,7 @@ const SECTIONS: Section[] = [
   { id: "phase6", label: "Real Pilot Validation & GA Hardening (Phase 6)", icon: ShieldCheck },
   { id: "phase7", label: "Analytics, Audit Exports & Reporting (Phase 7)", icon: BarChart3 },
   { id: "phase8", label: "Operational Rhythm & Digests (Phase 8)", icon: Activity },
+  { id: "phase9", label: "Automated Delivery & Escalation (Phase 9)", icon: Activity },
   { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
@@ -1559,6 +1560,70 @@ export default function DevGuidePage() {
             </div>
           </section>
 
+          {/* Phase 9 — Automated Digest Delivery & Escalation Sinks */}
+          <section>
+            <SectionHeader
+              id="phase9"
+              title="Phase 9 — Automated digest delivery &amp; escalation sinks"
+              kicker="Turn manual digest sends into a scheduled, branded delivery pipeline with optional Slack/webhook escalation when health thresholds are crossed"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Where it lives</div>
+                <ul className="space-y-1.5">
+                  <li>· New <Chip>Schedules</Chip> and <Chip>Escalation</Chip> tabs inside <Chip>DigestPanel</Chip> on <code className="text-xs">/superadmin/legal-connect-reports</code>.</li>
+                  <li>· Edge function <Chip>legal-connect-digest</Chip> now supports a cron <code className="text-xs">action: "tick"</code> entry-point and renders branded HTML via <code className="text-xs">supabase/functions/_shared/digest-renderer.ts</code>.</li>
+                  <li>· Hooks: <Chip>useLegalConnectAutomation</Chip> (schedules, sinks, events). UI components: <code className="text-xs">src/components/legal-connect/AutomationPanels.tsx</code>.</li>
+                  <li>· New tables: <code className="text-xs">legal_connect_digest_schedules</code>, <code className="text-xs">legal_connect_escalation_sinks</code>, <code className="text-xs">legal_connect_escalation_events</code>. <code className="text-xs">legal_connect_digest_runs</code> gained <code className="text-xs">last_html</code> and <code className="text-xs">delivery_error</code> columns.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Cron scheduling model</div>
+                <ul className="space-y-1.5">
+                  <li>· A pg_cron job <Chip>legal-connect-digest-tick</Chip> runs every 5 minutes and calls the edge function with <Chip>action: tick</Chip>.</li>
+                  <li>· The cron request is authenticated by an <Chip>x-cron-secret</Chip> header. The expected value lives in <code className="text-xs">app_config.legal_connect_cron_secret</code> and is created automatically with a random 32-byte value. Rotate it by updating that row — pg_cron picks it up on the next tick.</li>
+                  <li>· Each schedule row defines (cohort, cadence, hour_utc, weekday). The tick selects rows whose <code className="text-xs">next_run_at</code> ≤ now, dispatches a send, then rolls <code className="text-xs">next_run_at</code> forward.</li>
+                  <li>· Schedules are unique per <code className="text-xs">(organization_id, cohort, cadence)</code> — there's one canonical timing per cohort/cadence combo per org.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Email delivery</div>
+                <ul className="space-y-1.5">
+                  <li>· Branded HTML is rendered server-side: header band in the brand color, stat cards with W/W deltas, top failing tenants &amp; actions, and a CTA back into <code className="text-xs">/superadmin/legal-connect-reports</code>.</li>
+                  <li>· Delivery uses the existing Resend pattern (same <code className="text-xs">resend_api_key</code>, <code className="text-xs">resend_from_email</code>, and <code className="text-xs">brand_*</code> values from <code className="text-xs">app_config</code> as <Chip>error-alert</Chip>). When Resend isn't configured, the run is still recorded with <code className="text-xs">delivery_status = "recorded"</code> so ops still get a history.</li>
+                  <li>· Each run persists the rendered HTML on the run row for forensic review, plus the recipient count and any delivery error string.</li>
+                  <li>· Subject lines are scannable: brand · cadence · failed/total · success%.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Escalation sinks</div>
+                <ul className="space-y-1.5">
+                  <li>· Two sink kinds: <Chip>slack</Chip> (incoming webhook, posts a one-line summary) and <Chip>webhook</Chip> (full digest payload, optionally HMAC-signed via <Chip>X-Lc-Signature</Chip>).</li>
+                  <li>· Each sink declares a severity threshold: <Chip>warn</Chip> (anything ≥ warn) or <Chip>critical</Chip> (only critical).</li>
+                  <li>· Thresholds today: success_rate &lt; 80% (critical &lt; 60%), recurring_issues ≥ 3 (critical ≥ 6), open_alerts ≥ 5 (critical ≥ 15). Tunable inside the function.</li>
+                  <li>· Every fire is logged to <code className="text-xs">legal_connect_escalation_events</code> with delivery status and error string. Visible inline in the Escalation tab.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">How ops manage it</div>
+                <ul className="space-y-1.5">
+                  <li>· Add subscribers under <Chip>Subscribers</Chip>, then add a matching <Chip>Schedule</Chip> with the same cohort + cadence. Cron handles the rest.</li>
+                  <li>· Use the manual <Chip>Send digest</Chip> button under <Chip>Preview</Chip> for ad-hoc sends — same code path, same logging, same escalation evaluation.</li>
+                  <li>· Watch the Escalation tab for real-time delivery status. A red row means the sink rejected the call; the error string is stored verbatim.</li>
+                  <li>· Rotate the cron secret by updating <code className="text-xs">app_config.legal_connect_cron_secret</code>. No infrastructure changes needed.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Out of Phase 9 scope</div>
+                <ul className="space-y-1.5">
+                  <li>· Tenant-facing digest emails (still internal only).</li>
+                  <li>· Per-recipient personalization (each cohort + cadence shares the same render).</li>
+                  <li>· Inline acknowledgement / close-from-Slack workflows.</li>
+                  <li>· Marketing-style templates or scheduled campaigns.</li>
+                </ul>
+              </Card>
+            </div>
+          </section>
           {/* Phase 6 — Real Pilot Validation & GA Hardening */}
           <section>
             <SectionHeader
