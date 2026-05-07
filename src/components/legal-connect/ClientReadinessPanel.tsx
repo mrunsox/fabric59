@@ -285,9 +285,18 @@ export default function ClientReadinessPanel({ clientId }: Props) {
                   <div key={p} className="rounded-lg border border-border bg-card/40 p-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold">{caps.label}</p>
-                      <Badge variant="outline" className="text-[10px]">
-                        Connected
-                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => openGuideDrawer(p)}
+                          className="text-[10px] inline-flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <BookOpen className="h-3 w-3" /> Guide
+                        </button>
+                        <Badge variant="outline" className="text-[10px]">
+                          Connected
+                        </Badge>
+                      </div>
                     </div>
                     <CapabilityRow on={caps.lookup} icon={Search} label="Find caller in legal software" />
                     <CapabilityRow on={caps.intake} icon={PenLine} label="Create new intake / lead" />
