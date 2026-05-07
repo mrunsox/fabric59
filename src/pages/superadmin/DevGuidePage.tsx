@@ -57,7 +57,7 @@ const SECTIONS: Section[] = [
   { id: "phase9", label: "Automated Delivery & Escalation (Phase 9)", icon: Activity },
   { id: "phase10", label: "External Ack, Per-Tenant Digests (Phase 10)", icon: Activity },
   { id: "phase11", label: "Compliance, Retention & Audit (Phase 11)", icon: Activity },
-  { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
+  { id: "qa-pr1-baseline", label: "PR #1 QA baseline (May 2026)", icon: ClipboardCheck },
 ];
 
 function SectionHeader({ id, title, kicker }: { id: string; title: string; kicker?: string }) {
