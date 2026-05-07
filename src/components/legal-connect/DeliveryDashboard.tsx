@@ -236,6 +236,9 @@ export default function DeliveryDashboard() {
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((j) => {
+      const t = isTest(j);
+      if (testFilter === "exclude" && t) return false;
+      if (testFilter === "only" && !t) return false;
       if (providerFilter !== "all" && j.provider !== providerFilter) return false;
       if (statusFilter !== "all" && j.status !== statusFilter) return false;
       if (callerTypeFilter !== "all" || outcomeFilter !== "all") {
