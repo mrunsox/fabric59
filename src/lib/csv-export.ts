@@ -1,10 +1,7 @@
 // Small CSV export helper used by Legal Connect operational reporting.
 // Keeps the API tiny: pass an array of rows + the column order to stamp.
 
-export function toCsv<T extends Record<string, unknown>>(
-  rows: T[],
-  columns: Array<keyof T | string>,
-): string {
+export function toCsv<T>(rows: T[], columns: Array<keyof T | string>): string {
   const escape = (v: unknown): string => {
     if (v === null || v === undefined) return "";
     const s = typeof v === "object" ? JSON.stringify(v) : String(v);
@@ -28,11 +25,7 @@ export function downloadFile(filename: string, content: string, mime = "text/csv
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export function downloadCsv<T extends Record<string, unknown>>(
-  filename: string,
-  rows: T[],
-  columns: Array<keyof T | string>,
-) {
+export function downloadCsv<T>(filename: string, rows: T[], columns: Array<keyof T | string>) {
   downloadFile(filename, toCsv(rows, columns), "text/csv;charset=utf-8");
 }
 
