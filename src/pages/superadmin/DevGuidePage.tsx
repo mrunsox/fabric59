@@ -36,6 +36,7 @@ const SECTIONS: Section[] = [
   { id: "phase3-outcomes", label: "Caller Outcomes & Jobs (Phase 3)", icon: Workflow },
   { id: "phase4-slice2", label: "Guided Test Runner (Phase 4 Slice 2)", icon: ShieldCheck },
   { id: "phase4-slice3", label: "Guides & Playbooks (Phase 4 Slice 3)", icon: BookOpen },
+  { id: "phase5-slice2", label: "Pilot Approval & Templates (Phase 5 Slice 2)", icon: ClipboardCheck },
   { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
@@ -971,6 +972,78 @@ export default function DevGuidePage() {
                   <li>Optionally add an internal playbook describing provider-specific quirks.</li>
                   <li>The Guides tab, drawer, contextual links, and tests pick it up automatically.</li>
                 </ol>
+              </Card>
+            </div>
+          </section>
+
+          {/* Phase 5 Slice 2 — Pilot approval & templates */}
+          <section>
+            <SectionHeader
+              id="phase5-slice2"
+              title="Phase 5 Slice 2 — Pilot approval &amp; templates"
+              kicker="Go / no-go checklist + reusable pilot plans for design partners"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Where it lives</div>
+                <p>
+                  A new <Chip>PilotApprovalPanel</Chip> sits on the Readiness tab between the
+                  Design Partner card and the existing Client Readiness panel. It is internal-only —
+                  clients do not see it.
+                </p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Go / no-go checklist</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li>· Defined in <code className="text-xs">src/data/legal-connect-pilot.ts</code> as <Chip>PILOT_CHECKLIST</Chip>.</li>
+                  <li>· Each item has <Chip>required</Chip>, an ops description, a status (<Chip>pending</Chip>, <Chip>complete</Chip>, <Chip>na</Chip>), and an optional note.</li>
+                  <li>· State stored on <code className="text-xs">tenants.legal_connect_pilot_checklist</code> JSONB. Each entry records who updated it and when.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Approval flow</div>
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  <li>Operator works the checklist, marking items complete or N/A.</li>
+                  <li>Once all required items are complete, <Chip>Mark ready for pilot</Chip> moves <code className="text-xs">pilot_status → ready_for_pilot</code>.</li>
+                  <li><Chip>Approve for pilot</Chip> sets <code className="text-xs">pilot_status → approved</code>, records who approved (and when) on <code className="text-xs">pilot_approval</code>, and auto-advances <code className="text-xs">rollout_status → ready_for_live</code> when behind.</li>
+                  <li>If required items are missing the approver must explicitly confirm an override.</li>
+                  <li><Chip>Block</Chip> requires a reason and sets <code className="text-xs">pilot_status → blocked</code> with the stored block reason visible in the ops view.</li>
+                </ol>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Pilot templates</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li>· Defined as <Chip>PILOT_TEMPLATES</Chip>: <em>New leads only</em>, <em>New leads + client notes</em>, <em>Email-first cautious rollout</em>, <em>Full pilot</em>.</li>
+                  <li>· Each template lists what it allows, what it restricts, and a recommended safe-mode level.</li>
+                  <li>· Assignment stored as <code className="text-xs">tenants.legal_connect_pilot_template</code>; surfaced on the panel and on <code className="text-xs">/superadmin/design-partners</code>.</li>
+                  <li>· Adding a new template = appending one entry to <Chip>PILOT_TEMPLATES</Chip>.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Ops view</div>
+                <p>
+                  <code className="text-xs">/superadmin/design-partners</code> now includes Pilot status, missing required items,
+                  active template, and any block reason — alongside the existing rollout stage and readiness.
+                </p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Example flow</div>
+                <pre className="text-[11px] font-mono p-3 rounded bg-muted/40 border border-border/60 overflow-auto leading-relaxed">{`Design partner connected
+  → guided tests pass (auto-tick checklist + readiness items)
+  → operator finishes pilot checklist
+  → assign pilot template (e.g. "New leads only")
+  → Mark ready for pilot   (pilot_status: ready_for_pilot)
+  → Approve for pilot      (pilot_status: approved, rollout_status: ready_for_live)
+  → operator promotes rollout_status → live_pilot when traffic actually starts`}</pre>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Auditability (lightweight)</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li>· Per-item <code className="text-xs">updated_at</code> + <code className="text-xs">updated_by</code> on the checklist JSONB.</li>
+                  <li>· Approval record on <code className="text-xs">pilot_approval</code>: <code className="text-xs">approved_at</code>, <code className="text-xs">approved_by</code>, notes, template id.</li>
+                  <li>· Last touch time on <code className="text-xs">legal_connect_pilot_updated_at</code>.</li>
+                  <li>· Block reason on <code className="text-xs">legal_connect_pilot_block_reason</code>.</li>
+                </ul>
               </Card>
             </div>
           </section>

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Sparkles, ExternalLink, Users } from "lucide-react";
 import { useDesignPartners, ROLLOUT_LABEL, type RolloutStatus } from "@/hooks/useDesignPartner";
+import { usePilotApprovalList } from "@/hooks/usePilotApproval";
+import { PILOT_CHECKLIST, PILOT_STATUS_LABEL, PILOT_TEMPLATES, computePilotReadiness, type PilotStatus } from "@/data/legal-connect-pilot";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { cn } from "@/lib/utils";
 
@@ -27,8 +29,17 @@ const READINESS_BADGE: Record<string, string> = {
   paused: "bg-destructive/15 text-destructive border-destructive/30",
 };
 
+const PILOT_BADGE: Record<PilotStatus, string> = {
+  not_ready: "bg-muted text-muted-foreground border-border",
+  blocked: "bg-destructive/15 text-destructive border-destructive/30",
+  ready_for_pilot: "bg-primary/15 text-primary border-primary/30",
+  approved: "bg-success/15 text-success border-success/30",
+};
+
 export default function DesignPartnersPage() {
   const { data: partners = [], isLoading } = useDesignPartners();
+  const { data: pilots = [] } = usePilotApprovalList();
+  const pilotMap = new Map(pilots.map((p) => [p.id, p]));
 
   return (
     <>
@@ -70,14 +81,23 @@ export default function DesignPartnersPage() {
                     <TableRow>
                       <TableHead>Client</TableHead>
                       <TableHead>Rollout stage</TableHead>
+                      <TableHead>Pilot</TableHead>
+                      <TableHead>Template</TableHead>
                       <TableHead>Readiness</TableHead>
                       <TableHead>Contact</TableHead>
-                      <TableHead>Last update</TableHead>
                       <TableHead className="text-right">Open</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {partners.map((p) => (
+                    {partners.map((p) => {
+                      const pilot = pilotMap.get(p.id);
+                      const ps = (pilot?.pilot_status ?? "not_ready") as PilotStatus;
+                      const readiness = pilot ? computePilotReadiness(pilot.pilot_checklist) : null;
+                      const tpl = PILOT_TEMPLATES.find((t) => t.id === pilot?.pilot_template);
+                      const missingLabels = (readiness?.missingRequired ?? [])
+                        .map((id) => PILOT_CHECKLIST.find((i) => i.id === id)?.label)
+                        .filter(Boolean) as string[];
+                      return (
                       <TableRow key={p.id}>
                         <TableCell>
                           <div className="font-medium text-sm">{p.name}</div>
@@ -86,11 +106,41 @@ export default function DesignPartnersPage() {
                               {p.design_partner_notes.constraints}
                             </div>
                           )}
+                          {ps === "blocked" && pilot?.pilot_block_reason && (
+                            <div className="text-xs text-destructive mt-0.5">
+                              Block: {pilot.pilot_block_reason}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={cn("capitalize", STATUS_BADGE[p.rollout_status])}>
                             {ROLLOUT_LABEL[p.rollout_status]}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Badge variant="outline" className={cn("capitalize", PILOT_BADGE[ps])}>
+                              {PILOT_STATUS_LABEL[ps]}
+                            </Badge>
+                            {readiness && (
+                              <div className="text-[11px] text-muted-foreground">
+                                {readiness.completeRequired}/{readiness.totalRequired} required
+                              </div>
+                            )}
+                            {missingLabels.length > 0 && (
+                              <div className="text-[11px] text-warning truncate max-w-[180px]" title={missingLabels.join(", ")}>
+                                Missing: {missingLabels.slice(0, 2).join(", ")}
+                                {missingLabels.length > 2 ? `, +${missingLabels.length - 2}` : ""}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {tpl ? (
+                            <div className="font-medium">{tpl.name}</div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -114,11 +164,6 @@ export default function DesignPartnersPage() {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {p.readiness_updated_at
-                            ? new Date(p.readiness_updated_at).toLocaleDateString()
-                            : "—"}
-                        </TableCell>
                         <TableCell className="text-right">
                           <Button asChild size="sm" variant="outline">
                             <Link to={`/admin/clients/${p.id}/legal-connect?tab=readiness`}>
@@ -127,7 +172,8 @@ export default function DesignPartnersPage() {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
