@@ -597,6 +597,7 @@ export default function LegalConnectReportsPage() {
                                     via {rev.updated_from}{rev.external_actor ? ` · ${rev.external_actor}` : ""}
                                   </div>
                                 )}
+                              </TableCell>
                               <TableCell>
                                 <Button asChild size="sm" variant="ghost" className="h-7 px-2">
                                   <Link to={rem.href} title={rem.hint}>
