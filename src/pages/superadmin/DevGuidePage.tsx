@@ -50,6 +50,7 @@ const SECTIONS: Section[] = [
   { id: "phase8", label: "Operational Rhythm & Digests (Phase 8)", icon: Activity },
   { id: "phase9", label: "Automated Delivery & Escalation (Phase 9)", icon: Activity },
   { id: "phase10", label: "External Ack, Per-Tenant Digests (Phase 10)", icon: Activity },
+  { id: "phase11", label: "Compliance, Retention & Audit (Phase 11)", icon: Activity },
   { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
@@ -1674,6 +1675,77 @@ export default function DevGuidePage() {
                   <li>· Full Slack interactive-component back-channel (we use action URLs, not <code className="text-xs">interactivity_url</code>).</li>
                   <li>· Customer-facing status pages or cross-product alert hub.</li>
                   <li>· Complex policy / rules engine for routing.</li>
+                </ul>
+              </Card>
+            </div>
+          </section>
+
+          {/* Phase 11 — Compliance, Retention, Secret Rotation & Audit Hardening */}
+          <section>
+            <SectionHeader
+              id="phase11"
+              title="Phase 11 — Compliance, retention, secret rotation &amp; audit hardening"
+              kicker="Data lifecycle, signed webhooks, rotatable secrets, and a single audit overview before broader rollout"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Retention model</div>
+                <ul className="space-y-1.5">
+                  <li>· Policies live in <code className="text-xs">legal_connect_retention_policies</code> per <code className="text-xs">(organization_id, category)</code>. Each policy has <code className="text-xs">retention_days</code> and an <code className="text-xs">action</code> of <Chip>delete</Chip> or <Chip>redact</Chip>.</li>
+                  <li>· Categories covered: <code className="text-xs">digest_runs</code>, <code className="text-xs">escalation_events</code>, <code className="text-xs">ack_tokens</code>, <code className="text-xs">webhook_failures</code>, <code className="text-xs">sync_jobs</code>, <code className="text-xs">event_log</code>, <code className="text-xs">alerts</code>, <code className="text-xs">feedback_entries</code>, <code className="text-xs">issue_reviews</code>, <code className="text-xs">audit_logs</code>.</li>
+                  <li>· <Chip>redact</Chip> on <code className="text-xs">digest_runs</code> nulls <code className="text-xs">last_html</code> and <code className="text-xs">delivery_error</code> (keeps the row + counts). <Chip>delete</Chip> removes the row entirely.</li>
+                  <li>· Terminal-only deletion: <code className="text-xs">sync_jobs</code> deletes only <code className="text-xs">succeeded</code>/<code className="text-xs">failed</code>; <code className="text-xs">alerts</code> only <code className="text-xs">resolved</code>/<code className="text-xs">acknowledged</code>; <code className="text-xs">issue_reviews</code> only <code className="text-xs">resolved</code>; <code className="text-xs">feedback_entries</code> only <code className="text-xs">shipped</code>/<code className="text-xs">rejected</code>/<code className="text-xs">resolved</code>. Active work is never auto-pruned.</li>
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Cleanup jobs</div>
+                <ul className="space-y-1.5">
+                  <li>· Function: <code className="text-xs">public.legal_connect_cleanup_retention(_org_id uuid default null)</code> (SECURITY DEFINER, search_path locked). Returns a JSON map of <code className="text-xs">category:org_id → {`{ rows, cutoff, action }`}</code>.</li>
+                  <li>· Cron: <code className="text-xs">pg_cron</code> job <Chip>legal-connect-retention-cleanup</Chip> runs daily at 03:15 UTC over all orgs. Manual runs are also exposed in the Compliance panel ("Run cleanup now").</li>
+                  <li>· Always-on safety: expired <code className="text-xs">legal_connect_ack_tokens</code> older than 1 day past <code className="text-xs">expires_at</code> are deleted regardless of policy.</li>
+                  <li>· Operate per-org by passing <code className="text-xs">_org_id</code>; passing <code className="text-xs">null</code> sweeps every policy. Result rows are written to the audit overview as <code className="text-xs">retention.cleanup</code>.</li>
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Secret rotation process</div>
+                <ul className="space-y-1.5">
+                  <li>· Rotations are recorded in <code className="text-xs">legal_connect_secret_rotations</code> with <code className="text-xs">secret_kind</code> (<Chip>cron_secret</Chip>, <Chip>webhook_signature</Chip>), <code className="text-xs">scope</code>, <code className="text-xs">rotated_by</code>, optional note, and timestamp. The actual secret value lives in <code className="text-xs">app_config</code> (cron) or <code className="text-xs">legal_connect_escalation_sinks.hmac_secret</code> (per sink).</li>
+                  <li>· Cadence: cron secret every 90 days, sink HMAC secrets every 180 days or on operator turnover. Use the Compliance → Rotations tab to log each rotation; unlogged rotations show as a gap in the audit overview.</li>
+                  <li>· Procedure: (1) generate a new secret, (2) update the destination (Slack action URL signer, webhook receiver, or <code className="text-xs">app_config.legal_connect_cron_secret</code>), (3) verify a test event arrives, (4) record the rotation in the panel.</li>
+                  <li>· Old secrets are not retained server-side. Treat any in-flight ack token signed by the old secret as expired after rotation.</li>
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Webhook validation rules</div>
+                <ul className="space-y-1.5">
+                  <li>· <code className="text-xs">legal-connect-ack</code> POST requires <code className="text-xs">x-lc-timestamp</code> (unix seconds) and <code className="text-xs">x-lc-signature</code> = <code className="text-xs">hex(HMAC-SHA256(secret, `${`{`}ts{`}`}|${`{`}orgId{`}`}|${`{`}issueKey{`}`}|${`{`}action{`}`}`))</code>.</li>
+                  <li>· Replay protection: requests with <code className="text-xs">|now - ts| &gt; REPLAY_WINDOW_SECONDS</code> (default 300s) are rejected as <code className="text-xs">stale_timestamp</code>.</li>
+                  <li>· Token-based GET (Slack action links) requires a single-use <code className="text-xs">legal_connect_ack_tokens</code> row that is unexpired and unconsumed; consumption marks <code className="text-xs">used_at</code> + <code className="text-xs">used_by</code>.</li>
+                  <li>· Every rejection (bad signature, stale timestamp, unknown token, malformed body) is logged to <code className="text-xs">legal_connect_webhook_failures</code> with the endpoint, reason, headers digest, and IP. The Compliance → Failures tab is where you triage them.</li>
+                  <li>· Idempotency: repeated valid acks with the same outcome are no-ops; conflicting outcomes are recorded as a new review version with <code className="text-xs">updated_from</code> set to the channel.</li>
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Audit expectations</div>
+                <ul className="space-y-1.5">
+                  <li>· <code className="text-xs">audit_logs</code> gained <code className="text-xs">organization_id</code>, <code className="text-xs">tenant_id</code>, and <code className="text-xs">source</code>. All Phase 11 sensitive operations write here: rollout state changes, ack actions, secret rotations, retention runs, sink edits, schedule edits.</li>
+                  <li>· <code className="text-xs">legal_connect_audit_overview</code> is a <Chip>security_invoker</Chip> view that joins audit + ack + rotation events into a single timeline scoped by org.</li>
+                  <li>· Operators are expected to review the overview weekly (it's surfaced in the digest delta when activity spikes), and to attach a note when they manually resolve a webhook failure or skip a rotation.</li>
+                  <li>· No PII in audit metadata: store IDs and short labels only. Free-form notes belong on the underlying issue review, not the audit row.</li>
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Role &amp; permission restrictions</div>
+                <ul className="space-y-1.5">
+                  <li>· Reading retention policies, rotations, failures, and the audit overview: org members via RLS (<code className="text-xs">is_org_member</code>) plus master admins and ops.</li>
+                  <li>· Writing policies, recording rotations, and resolving webhook failures: org owners/admins, ops, master admins. Tenant-only members cannot mutate org-wide compliance state.</li>
+                  <li>· Running cleanup manually: ops + master admin only. The cron job runs as service-role; results are still bound to org by the policy row.</li>
+                  <li>· External ack callbacks (Slack/webhook) never receive cross-tenant data: each token and sink is bound to its <code className="text-xs">organization_id</code> (and optional <code className="text-xs">tenant_id</code>) and the function refuses to update reviews outside that scope.</li>
                 </ul>
               </Card>
             </div>
