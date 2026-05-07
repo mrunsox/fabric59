@@ -9,6 +9,7 @@ import { ArrowLeft, Plug, Webhook, Shield, Map, HeartPulse, Sparkles, Rocket, Te
 import ClientReadinessPanel from "@/components/legal-connect/ClientReadinessPanel";
 import DesignPartnerPanel from "@/components/legal-connect/DesignPartnerPanel";
 import PilotApprovalPanel from "@/components/legal-connect/PilotApprovalPanel";
+import RateLimitsPanel from "@/components/legal-connect/RateLimitsPanel";
 import GuidedTestRunner from "@/components/legal-connect/GuidedTestRunner";
 import GuidesPanel from "@/components/legal-connect/GuidesPanel";
 import GuideDrawer from "@/components/legal-connect/GuideDrawer";
