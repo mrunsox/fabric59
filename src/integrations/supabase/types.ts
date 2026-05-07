@@ -6288,6 +6288,10 @@ export type Database = {
           google_calendar_id: string | null
           id: string
           integration_configs: Json | null
+          legal_connect_go_live_checklist: Json
+          legal_connect_readiness_state: Database["public"]["Enums"]["legal_connect_readiness"]
+          legal_connect_readiness_updated_at: string | null
+          legal_connect_safe_mode: Database["public"]["Enums"]["legal_connect_safe_mode"]
           make_webhook_url: string | null
           microsoft365_api_key: string | null
           n8n_webhook_url: string | null
@@ -6330,6 +6334,10 @@ export type Database = {
           google_calendar_id?: string | null
           id?: string
           integration_configs?: Json | null
+          legal_connect_go_live_checklist?: Json
+          legal_connect_readiness_state?: Database["public"]["Enums"]["legal_connect_readiness"]
+          legal_connect_readiness_updated_at?: string | null
+          legal_connect_safe_mode?: Database["public"]["Enums"]["legal_connect_safe_mode"]
           make_webhook_url?: string | null
           microsoft365_api_key?: string | null
           n8n_webhook_url?: string | null
@@ -6372,6 +6380,10 @@ export type Database = {
           google_calendar_id?: string | null
           id?: string
           integration_configs?: Json | null
+          legal_connect_go_live_checklist?: Json
+          legal_connect_readiness_state?: Database["public"]["Enums"]["legal_connect_readiness"]
+          legal_connect_readiness_updated_at?: string | null
+          legal_connect_safe_mode?: Database["public"]["Enums"]["legal_connect_safe_mode"]
           make_webhook_url?: string | null
           microsoft365_api_key?: string | null
           n8n_webhook_url?: string | null
@@ -7603,6 +7615,14 @@ export type Database = {
         | "dead_lettered"
       five9_domain_status: "active" | "inactive" | "pending_verification"
       five9_ownership_mode: "client" | "workspace"
+      legal_connect_readiness:
+        | "draft"
+        | "setup_in_progress"
+        | "test_passed"
+        | "ready_for_live"
+        | "live"
+        | "paused"
+      legal_connect_safe_mode: "none" | "email_only" | "no_writeback"
       notification_channel:
         | "slack"
         | "email"
@@ -7778,6 +7798,15 @@ export const Constants = {
       ],
       five9_domain_status: ["active", "inactive", "pending_verification"],
       five9_ownership_mode: ["client", "workspace"],
+      legal_connect_readiness: [
+        "draft",
+        "setup_in_progress",
+        "test_passed",
+        "ready_for_live",
+        "live",
+        "paused",
+      ],
+      legal_connect_safe_mode: ["none", "email_only", "no_writeback"],
       notification_channel: [
         "slack",
         "email",
