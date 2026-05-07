@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import {
   BarChart3,
   Download,
@@ -15,6 +17,10 @@ import {
   ListChecks,
   TrendingDown,
   Building2,
+  Mail,
+  ArrowUp,
+  ArrowDown,
+  ExternalLink,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +29,10 @@ import {
   type ReportWindow,
   type TenantSummary,
 } from "@/hooks/useLegalConnectReports";
+import { useDigestPreview } from "@/hooks/useLegalConnectDigest";
+import { useIssueReviews, useUpsertIssueReview, type IssueReviewStatus } from "@/hooks/useIssueReviews";
+import DigestPanel from "@/components/legal-connect/DigestPanel";
+import { remediationForRecurring, remediationForAlertKind } from "@/lib/legal-connect-remediation";
 import { downloadCsv, downloadJson } from "@/lib/csv-export";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
