@@ -370,7 +370,9 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const cronSecret = req.headers.get("x-cron-secret") ?? "";
-  const isCron = cronSecret && cronSecret === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const expectedCron =
+    Deno.env.get("LEGAL_CONNECT_CRON_SECRET") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const isCron = !!cronSecret && cronSecret === expectedCron;
 
   const supabase = isCron
     ? createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)
