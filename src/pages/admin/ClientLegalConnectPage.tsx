@@ -15,6 +15,8 @@ import GuidesPanel from "@/components/legal-connect/GuidesPanel";
 import GuideDrawer from "@/components/legal-connect/GuideDrawer";
 import WhatsNewDrawer from "@/components/legal-connect/WhatsNewDrawer";
 import FeedbackDialog from "@/components/legal-connect/FeedbackDialog";
+import TenantGAReadinessPanel from "@/components/legal-connect/TenantGAReadinessPanel";
+import GoLiveRunbookPanel from "@/components/legal-connect/GoLiveRunbookPanel";
 import ProviderConnectionCard from "@/components/legal-connect/ProviderConnectionCard";
 import ClioConnectWizard from "@/components/legal-connect/wizards/ClioConnectWizard";
 import ClioGrowConnectWizard from "@/components/legal-connect/wizards/ClioGrowConnectWizard";
