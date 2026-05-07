@@ -195,7 +195,7 @@ export default function DevGuidePage() {
                     <li>· No cross-tenant leakage in reports, digests, callbacks or filters</li>
                   </ul>
                 </Card>
-                <Card className="md:col-span-2">
+                <div className="md:col-span-2"><Card>
                   <div className="font-semibold text-foreground mb-2">Out of scope for this QA pass</div>
                   <ul className="text-sm space-y-1 text-foreground/90">
                     <li>· Re-deriving the build plan or roadmap</li>
