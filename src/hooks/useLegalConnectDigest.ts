@@ -8,6 +8,7 @@ export type DigestCadence = "weekly" | "daily";
 export interface DigestSubscription {
   id: string;
   organization_id: string;
+  tenant_id: string | null;
   recipient_email: string;
   recipient_name: string | null;
   cohort: DigestCohort;
