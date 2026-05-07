@@ -203,6 +203,7 @@ export default function ClientLegalConnectPage() {
             <TabsContent value="readiness" className="mt-4 space-y-4">
               <DesignPartnerPanel clientId={clientId!} />
               <PilotApprovalPanel clientId={clientId!} />
+              <RateLimitsPanel clientId={clientId!} />
               <ClientReadinessPanel clientId={clientId!} />
             </TabsContent>
 
