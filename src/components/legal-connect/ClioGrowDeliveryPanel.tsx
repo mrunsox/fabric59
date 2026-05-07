@@ -35,7 +35,7 @@ interface SyncJob {
   correlation_id: string | null;
   created_at: string;
   attempt_count: number | null;
-  last_error: string | null;
+  failure_reason: string | null;
   client_id: string | null;
   connection_id: string | null;
 }
@@ -54,9 +54,10 @@ interface EventLogRow {
 
 interface ReviewItem {
   id: string;
-  reason: string;
+  title: string;
+  description: string | null;
   status: string;
-  correlation_id: string | null;
+  review_type: string;
   created_at: string;
   client_id: string | null;
 }
