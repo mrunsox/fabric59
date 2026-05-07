@@ -1,26 +1,33 @@
-// Phase 8 — Legal Connect operational digest.
+// Phase 8/9 — Legal Connect operational digest.
 //
 // GET  /?organization_id=...&window=7d
-//   Returns a digest summary (current window + previous-window deltas) for
-//   preview in the UI. Read-only.
+//   Returns a digest summary (current window + previous-window deltas).
 //
 // POST /?organization_id=...
-//   Body: { action: "send", cadence?: "weekly" | "daily", cohort?: string,
-//           dry_run?: boolean }
-//   Builds the same summary, looks up enabled subscribers in
-//   legal_connect_digest_subscriptions matching the cohort/cadence, and
-//   records a row in legal_connect_digest_runs. Email send is a stub the
-//   UI surfaces as "recorded" — actual delivery can be wired to
-//   send-transactional-email later without changing this contract.
+//   Body:
+//     { action: "send",  cadence?, cohort?, dry_run? }
+//       Sends to all enabled subscribers matching cadence/cohort. Renders
+//       branded HTML, attempts delivery via Resend (alert_email/resend_*
+//       app_config), and records a row in legal_connect_digest_runs with
+//       delivery_status = "sent" | "recorded" | "failed". Also evaluates
+//       digest summary against escalation thresholds and fires sinks.
 //
-// All access is bound to the caller's JWT/RLS via the anon-key client.
+//     { action: "tick" }
+//       Cron entry-point. Iterates legal_connect_digest_schedules, finds
+//       schedules whose next_run_at is due, dispatches "send" for each,
+//       and rolls next_run_at forward. Auth via x-cron-secret header
+//       (SUPABASE_SERVICE_ROLE_KEY) so pg_cron can call without a JWT.
+//
+// All app-user access uses the caller JWT/RLS via anon-key client. Cron
+// path uses service-role for cross-org iteration.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.93.3";
+import { renderDigestHtml } from "../_shared/digest-renderer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-cron-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const WINDOW_DAYS: Record<string, number> = { "24h": 1, "7d": 7, "30d": 30 };
@@ -56,14 +63,8 @@ interface WindowAgg {
 
 function emptyAgg(): WindowAgg {
   return {
-    total: 0,
-    succeeded: 0,
-    failed: 0,
-    rate_limited: 0,
-    open_alerts: 0,
-    recurring: 0,
-    by_tenant: new Map(),
-    by_action: new Map(),
+    total: 0, succeeded: 0, failed: 0, rate_limited: 0, open_alerts: 0, recurring: 0,
+    by_tenant: new Map(), by_action: new Map(),
   };
 }
 
@@ -73,44 +74,23 @@ function delta(curr: number, prev: number) {
   return { current: curr, previous: prev, delta: diff, pct };
 }
 
-async function buildDigest(
-  supabase: any,
-  orgId: string,
-  windowKey: "7d" | "24h" | "30d" = "7d",
-) {
+async function buildDigest(supabase: any, orgId: string, windowKey: "7d" | "24h" | "30d" = "7d") {
   const days = WINDOW_DAYS[windowKey] ?? 7;
   const now = Date.now();
   const currStart = new Date(now - days * 86_400_000);
   const prevStart = new Date(now - 2 * days * 86_400_000);
 
   const [tenantsRes, jobsRes, alertsRes, gaRes, releaseRes] = await Promise.all([
-    supabase
-      .from("tenants")
-      .select("id, name, is_design_partner, legal_connect_rollout_status")
-      .eq("organization_id", orgId),
-    supabase
-      .from("legal_connect_sync_jobs")
+    supabase.from("tenants").select("id, name, is_design_partner, legal_connect_rollout_status").eq("organization_id", orgId),
+    supabase.from("legal_connect_sync_jobs")
       .select("id, client_id, provider, job_type, status, attempt_count, failure_classification, created_at, input_payload, correlation_id")
-      .eq("organization_id", orgId)
-      .gte("created_at", prevStart.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(10000),
-    supabase
-      .from("legal_connect_alerts")
-      .select("id, client_id, alert_kind, severity, status, created_at")
-      .eq("organization_id", orgId)
-      .gte("created_at", prevStart.toISOString())
-      .limit(2000),
-    supabase
-      .from("legal_connect_ga_checklist_state")
-      .select("tenant_id, item_id, status, updated_at")
-      .eq("organization_id", orgId),
-    supabase
-      .from("legal_connect_release_notes")
-      .select("id, title, body, audience, published_at")
-      .gte("published_at", currStart.toISOString())
-      .order("published_at", { ascending: false })
-      .limit(10),
+      .eq("organization_id", orgId).gte("created_at", prevStart.toISOString())
+      .order("created_at", { ascending: false }).limit(10000),
+    supabase.from("legal_connect_alerts").select("id, client_id, alert_kind, severity, status, created_at")
+      .eq("organization_id", orgId).gte("created_at", prevStart.toISOString()).limit(2000),
+    supabase.from("legal_connect_ga_checklist_state").select("tenant_id, item_id, status, updated_at").eq("organization_id", orgId),
+    supabase.from("legal_connect_release_notes").select("id, title, body, audience, published_at")
+      .gte("published_at", currStart.toISOString()).order("published_at", { ascending: false }).limit(10),
   ]);
 
   const tenants = (tenantsRes.data ?? []) as any[];
@@ -143,7 +123,6 @@ async function buildDigest(
       a.by_action.set(k, ag);
     }
     a.open_alerts = windowAlerts.filter((al) => al.status === "open" || al.status === "acknowledged").length;
-    // Recurring: ≥3 failures of same class on same tenant
     const tcKey = new Map<string, number>();
     for (const j of list) {
       if (j.status !== "failed" && j.status !== "dead_letter") continue;
@@ -173,18 +152,11 @@ async function buildDigest(
     return denom === 0 ? null : Math.round((a.succeeded / denom) * 100);
   };
 
-  // GA done now vs same point one window ago.
   const gaDoneNow = ga.filter((g) => g.status === "done").length;
   const gaDonePrev = ga.filter((g) => g.status === "done" && new Date(g.updated_at) < currStart).length;
 
-  const topFailingTenants = Array.from(curr.by_tenant.values())
-    .filter((t) => t.failed > 0)
-    .sort((a, b) => b.failed - a.failed)
-    .slice(0, 5);
-  const topFailingActions = Array.from(curr.by_action.values())
-    .filter((t) => t.failed > 0)
-    .sort((a, b) => b.failed - a.failed)
-    .slice(0, 5);
+  const topFailingTenants = Array.from(curr.by_tenant.values()).filter((t) => t.failed > 0).sort((a, b) => b.failed - a.failed).slice(0, 5);
+  const topFailingActions = Array.from(curr.by_action.values()).filter((t) => t.failed > 0).sort((a, b) => b.failed - a.failed).slice(0, 5);
 
   return {
     window: windowKey,
@@ -216,101 +188,291 @@ async function buildDigest(
   };
 }
 
+async function loadAppConfig(supabase: any): Promise<Record<string, string>> {
+  const { data } = await supabase.from("app_config").select("key, value")
+    .in("key", ["resend_api_key", "resend_from_email", "alert_email", "brand_name", "brand_color", "app_url"]);
+  const map: Record<string, string> = {};
+  for (const r of data ?? []) map[r.key] = r.value;
+  return map;
+}
+
+async function sendEmailViaResend(cfg: Record<string, string>, to: string[], subject: string, html: string, text: string) {
+  if (!cfg.resend_api_key || to.length === 0) {
+    return { ok: false, reason: "missing_resend_key_or_recipients" };
+  }
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${cfg.resend_api_key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: cfg.resend_from_email || "alerts@fabric59.com",
+        to, subject, html, text,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      return { ok: false, reason: `resend_${res.status}:${body.slice(0, 200)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+function evaluateEscalation(summary: any): { severity: "warn" | "critical" | null; reasons: string[] } {
+  const reasons: string[] = [];
+  let severity: "warn" | "critical" | null = null;
+  const sr = summary?.deltas?.success_rate?.current;
+  if (typeof sr === "number" && sr < 80) {
+    reasons.push(`Success rate ${sr}% (below 80%)`);
+    severity = sr < 60 ? "critical" : "warn";
+  }
+  const recurring = summary?.totals?.recurring ?? 0;
+  if (recurring >= 3) {
+    reasons.push(`${recurring} recurring issue patterns`);
+    severity = severity === "critical" ? severity : "warn";
+    if (recurring >= 6) severity = "critical";
+  }
+  const openAlerts = summary?.totals?.open_alerts ?? 0;
+  if (openAlerts >= 5) {
+    reasons.push(`${openAlerts} open alerts`);
+    severity = severity === "critical" ? severity : "warn";
+    if (openAlerts >= 15) severity = "critical";
+  }
+  return { severity, reasons };
+}
+
+async function fireEscalations(supabase: any, orgId: string, summary: any) {
+  const ev = evaluateEscalation(summary);
+  if (!ev.severity) return { fired: 0, severity: null, reasons: [] };
+  const { data: sinks } = await supabase
+    .from("legal_connect_escalation_sinks")
+    .select("*").eq("organization_id", orgId).eq("enabled", true);
+  let fired = 0;
+  for (const sink of sinks ?? []) {
+    if (sink.severity_threshold === "critical" && ev.severity !== "critical") continue;
+    const payload = {
+      source: "legal-connect-digest",
+      severity: ev.severity,
+      organization_id: orgId,
+      reasons: ev.reasons,
+      window: { start: summary.window_start, end: summary.window_end },
+      totals: summary.totals,
+      deltas: summary.deltas,
+      top_failing_tenants: summary.top_failing_tenants,
+      top_failing_actions: summary.top_failing_actions,
+      ts: new Date().toISOString(),
+    };
+    let status = "pending";
+    let err: string | null = null;
+    try {
+      if (sink.kind === "slack") {
+        const text = `:rotating_light: *Legal Connect ${ev.severity}* — ${ev.reasons.join(" · ")} (${summary.totals.failed} failed / ${summary.totals.jobs} jobs)`;
+        const r = await fetch(sink.target, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        status = r.ok ? "sent" : `http_${r.status}`;
+        if (!r.ok) err = (await r.text()).slice(0, 300);
+      } else {
+        const body = JSON.stringify(payload);
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (sink.hmac_secret) {
+          const enc = new TextEncoder();
+          const key = await crypto.subtle.importKey("raw", enc.encode(sink.hmac_secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+          const sig = await crypto.subtle.sign("HMAC", key, enc.encode(body));
+          headers["X-Lc-Signature"] = "sha256=" + Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+        }
+        const r = await fetch(sink.target, { method: "POST", headers, body });
+        status = r.ok ? "sent" : `http_${r.status}`;
+        if (!r.ok) err = (await r.text()).slice(0, 300);
+      }
+      fired += 1;
+    } catch (e) {
+      status = "failed";
+      err = e instanceof Error ? e.message : String(e);
+    }
+    await supabase.from("legal_connect_escalation_events").insert({
+      organization_id: orgId, sink_id: sink.id,
+      trigger_kind: "digest", severity: ev.severity, payload,
+      delivery_status: status, delivery_error: err,
+    });
+    await supabase.from("legal_connect_escalation_sinks").update({ last_fired_at: new Date().toISOString() }).eq("id", sink.id);
+  }
+  return { fired, severity: ev.severity, reasons: ev.reasons };
+}
+
+function nextRunAt(schedule: { cadence: string; hour_utc: number; weekday: number }): string {
+  const now = new Date();
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), schedule.hour_utc, 0, 0));
+  if (schedule.cadence === "daily") {
+    if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1);
+  } else {
+    // weekly: 0=Sunday..6=Saturday
+    const dayDiff = (schedule.weekday - next.getUTCDay() + 7) % 7;
+    next.setUTCDate(next.getUTCDate() + dayDiff);
+    if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 7);
+  }
+  return next.toISOString();
+}
+
+async function performSend(
+  supabase: any, orgId: string, cadence: "weekly" | "daily", cohort: string, dryRun = false,
+) {
+  const summary = await buildDigest(supabase, orgId, cadence === "daily" ? "24h" : "7d");
+  const { data: subs } = await supabase
+    .from("legal_connect_digest_subscriptions")
+    .select("id, recipient_email, cohort, cadence, enabled")
+    .eq("organization_id", orgId).eq("enabled", true).eq("cadence", cadence);
+  const recipients = (subs ?? []).filter((s: any) => cohort === "all" || s.cohort === cohort || s.cohort === "all");
+
+  const cfg = await loadAppConfig(supabase);
+  const { html, text, subject } = renderDigestHtml({
+    brand_name: cfg.brand_name, brand_color: cfg.brand_color,
+    cohort, cadence, summary, app_url: cfg.app_url,
+  });
+
+  let deliveryStatus = "recorded";
+  let deliveryError: string | null = null;
+  let sendResult: { ok: boolean; reason?: string } = { ok: false, reason: "dry_run" };
+
+  if (!dryRun && recipients.length > 0) {
+    sendResult = await sendEmailViaResend(cfg, recipients.map((r: any) => r.recipient_email), subject, html, text);
+    deliveryStatus = sendResult.ok ? "sent" : "failed";
+    if (!sendResult.ok) deliveryError = sendResult.reason ?? null;
+  } else if (recipients.length === 0) {
+    deliveryStatus = "no_recipients";
+  }
+
+  let runId: string | null = null;
+  if (!dryRun) {
+    const { data: inserted } = await supabase.from("legal_connect_digest_runs").insert({
+      organization_id: orgId, cohort, cadence,
+      window_start: summary.window_start, window_end: summary.window_end,
+      summary, recipients_count: recipients.length,
+      delivery_status: deliveryStatus, delivery_error: deliveryError, last_html: html,
+    }).select("id").single();
+    runId = inserted?.id ?? null;
+
+    if (sendResult.ok) {
+      await supabase.from("legal_connect_digest_subscriptions").update({ last_sent_at: new Date().toISOString() })
+        .in("id", recipients.map((r: any) => r.id));
+    }
+  }
+
+  const escalation = await fireEscalations(supabase, orgId, summary);
+
+  return { runId, recipients, summary, deliveryStatus, deliveryError, escalation, subject };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const supabase = createClient(
+  const url = new URL(req.url);
+  const cronSecret = req.headers.get("x-cron-secret") ?? "";
+  // Always have a service-role client available for cron-only operations
+  // (validating the cron secret against app_config and walking schedules
+  // across all orgs). User requests use a JWT-bound anon client to keep
+  // RLS in force.
+  const adminClient = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: authHeader } } },
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  try {
-    const url = new URL(req.url);
-    const orgId = url.searchParams.get("organization_id");
-    if (!orgId) {
-      return new Response(JSON.stringify({ error: "organization_id required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+  let isCron = false;
+  if (cronSecret) {
+    const { data: row } = await adminClient
+      .from("app_config").select("value").eq("key", "legal_connect_cron_secret").maybeSingle();
+    isCron = !!row?.value && row.value === cronSecret;
+  }
+
+  const supabase = isCron
+    ? adminClient
+    : createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
       });
-    }
-    const windowKey = (url.searchParams.get("window") ?? "7d") as "24h" | "7d" | "30d";
+
+  try {
+    const orgId = url.searchParams.get("organization_id");
 
     if (req.method === "GET") {
+      if (!orgId) {
+        return new Response(JSON.stringify({ error: "organization_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const windowKey = (url.searchParams.get("window") ?? "7d") as "24h" | "7d" | "30d";
       const summary = await buildDigest(supabase, orgId, windowKey);
-      return new Response(JSON.stringify(summary), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify(summary), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (req.method === "POST") {
       const body = await req.json().catch(() => ({}));
-      if (body.action !== "send") {
-        return new Response(JSON.stringify({ error: "unknown action" }), {
-          status: 400,
+
+      // Cron tick: walk schedules across all orgs
+      if (body.action === "tick") {
+        if (!isCron) {
+          return new Response(JSON.stringify({ error: "cron only" }), {
+            status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const nowIso = new Date().toISOString();
+        const { data: due } = await supabase
+          .from("legal_connect_digest_schedules")
+          .select("*").eq("enabled", true).lte("next_run_at", nowIso);
+        let processed = 0;
+        const results: any[] = [];
+        for (const sch of due ?? []) {
+          try {
+            const r = await performSend(supabase, sch.organization_id, sch.cadence, sch.cohort, false);
+            await supabase.from("legal_connect_digest_schedules").update({
+              last_run_at: nowIso,
+              next_run_at: nextRunAt(sch),
+            }).eq("id", sch.id);
+            processed += 1;
+            results.push({ schedule_id: sch.id, run_id: r.runId, status: r.deliveryStatus, escalation: r.escalation });
+          } catch (e) {
+            results.push({ schedule_id: sch.id, error: e instanceof Error ? e.message : String(e) });
+          }
+        }
+        return new Response(JSON.stringify({ ok: true, processed, results }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const cadence = body.cadence ?? "weekly";
-      const cohort = body.cohort ?? "all";
-      const summary = await buildDigest(supabase, orgId, cadence === "daily" ? "24h" : "7d");
 
-      const { data: subs } = await supabase
-        .from("legal_connect_digest_subscriptions")
-        .select("id, recipient_email, cohort, cadence, enabled")
-        .eq("organization_id", orgId)
-        .eq("enabled", true)
-        .eq("cadence", cadence);
-      const recipients = (subs ?? []).filter((s: any) => cohort === "all" || s.cohort === cohort || s.cohort === "all");
-
-      let runId: string | null = null;
-      if (!body.dry_run) {
-        const { data: inserted } = await supabase
-          .from("legal_connect_digest_runs")
-          .insert({
-            organization_id: orgId,
-            cohort,
-            cadence,
-            window_start: summary.window_start,
-            window_end: summary.window_end,
-            summary,
-            recipients_count: recipients.length,
-            delivery_status: "recorded",
-          })
-          .select("id")
-          .single();
-        runId = inserted?.id ?? null;
-
-        if (recipients.length) {
-          const nowIso = new Date().toISOString();
-          await supabase
-            .from("legal_connect_digest_subscriptions")
-            .update({ last_sent_at: nowIso })
-            .in("id", recipients.map((r: any) => r.id));
-        }
+      if (body.action !== "send") {
+        return new Response(JSON.stringify({ error: "unknown action" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
+      if (!orgId) {
+        return new Response(JSON.stringify({ error: "organization_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const cadence = (body.cadence ?? "weekly") as "weekly" | "daily";
+      const cohort = body.cohort ?? "all";
+      const r = await performSend(supabase, orgId, cadence, cohort, !!body.dry_run);
 
-      return new Response(
-        JSON.stringify({
-          ok: true,
-          run_id: runId,
-          recipients_count: recipients.length,
-          recipients: recipients.map((r: any) => r.recipient_email),
-          summary,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({
+        ok: true,
+        run_id: r.runId,
+        recipients_count: r.recipients.length,
+        recipients: r.recipients.map((x: any) => x.recipient_email),
+        delivery_status: r.deliveryStatus,
+        delivery_error: r.deliveryError,
+        escalation: r.escalation,
+        subject: r.subject,
+        summary: r.summary,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ error: "method not allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

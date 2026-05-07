@@ -3297,8 +3297,10 @@ export type Database = {
           cadence: string
           cohort: string
           created_at: string
+          delivery_error: string | null
           delivery_status: string
           id: string
+          last_html: string | null
           organization_id: string
           recipients_count: number
           summary: Json
@@ -3310,8 +3312,10 @@ export type Database = {
           cadence?: string
           cohort?: string
           created_at?: string
+          delivery_error?: string | null
           delivery_status?: string
           id?: string
+          last_html?: string | null
           organization_id: string
           recipients_count?: number
           summary?: Json
@@ -3323,8 +3327,10 @@ export type Database = {
           cadence?: string
           cohort?: string
           created_at?: string
+          delivery_error?: string | null
           delivery_status?: string
           id?: string
+          last_html?: string | null
           organization_id?: string
           recipients_count?: number
           summary?: Json
@@ -3335,6 +3341,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "legal_connect_digest_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_digest_schedules: {
+        Row: {
+          cadence: string
+          cohort: string
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          hour_utc: number
+          id: string
+          last_run_at: string | null
+          next_run_at: string | null
+          organization_id: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          cadence?: string
+          cohort?: string
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          hour_utc?: number
+          id?: string
+          last_run_at?: string | null
+          next_run_at?: string | null
+          organization_id: string
+          updated_at?: string
+          weekday?: number
+        }
+        Update: {
+          cadence?: string
+          cohort?: string
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          hour_utc?: number
+          id?: string
+          last_run_at?: string | null
+          next_run_at?: string | null
+          organization_id?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_digest_schedules_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -3594,6 +3653,110 @@ export type Database = {
           },
           {
             foreignKeyName: "legal_connect_entity_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_escalation_events: {
+        Row: {
+          created_at: string
+          delivery_error: string | null
+          delivery_status: string
+          id: string
+          organization_id: string
+          payload: Json
+          severity: string
+          sink_id: string | null
+          trigger_kind: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_error?: string | null
+          delivery_status?: string
+          id?: string
+          organization_id: string
+          payload: Json
+          severity: string
+          sink_id?: string | null
+          trigger_kind: string
+        }
+        Update: {
+          created_at?: string
+          delivery_error?: string | null
+          delivery_status?: string
+          id?: string
+          organization_id?: string
+          payload?: Json
+          severity?: string
+          sink_id?: string | null
+          trigger_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_escalation_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_escalation_events_sink_id_fkey"
+            columns: ["sink_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_escalation_sinks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legal_connect_escalation_sinks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          hmac_secret: string | null
+          id: string
+          kind: string
+          last_fired_at: string | null
+          name: string
+          organization_id: string
+          severity_threshold: string
+          target: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          hmac_secret?: string | null
+          id?: string
+          kind: string
+          last_fired_at?: string | null
+          name: string
+          organization_id: string
+          severity_threshold?: string
+          target: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          hmac_secret?: string | null
+          id?: string
+          kind?: string
+          last_fired_at?: string | null
+          name?: string
+          organization_id?: string
+          severity_threshold?: string
+          target?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_escalation_sinks_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
