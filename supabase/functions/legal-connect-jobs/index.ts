@@ -428,6 +428,39 @@ async function executeJob(
 ): Promise<{ status: string; output: any }> {
   const provider = (job.provider || "").toLowerCase();
 
+  // Phase 3: post_call_email pseudo-provider — delegates to existing
+  // post-call automations / disposition email engine. No CRM connection
+  // needed. The engine resolves the matching automation by client +
+  // disposition and fires the configured email template.
+  if (provider === "post_call_email") {
+    const input = job.input_payload || {};
+    const { data: automations } = await supabase
+      .from("post_call_automations")
+      .select("id, name, action_type, config, enabled")
+      .eq("organization_id", job.organization_id)
+      .or(`tenant_id.eq.${job.client_id},tenant_id.is.null`)
+      .eq("enabled", true);
+    const matches = (automations ?? []).filter((a: any) => {
+      const dm = (a.disposition_match ?? "").toLowerCase();
+      if (!dm || dm === "*") return true;
+      return dm === String(input.disposition ?? "").toLowerCase();
+    });
+    if (matches.length === 0) {
+      return { status: "succeeded", output: { delegated: "post_call_automations", matched: 0, note: "no matching automation" } };
+    }
+    // Engine is the source of truth for actually sending — we record intent.
+    return {
+      status: "succeeded",
+      output: {
+        delegated: "post_call_automations",
+        matched: matches.length,
+        automation_ids: matches.map((m: any) => m.id),
+        correlation_id: job.correlation_id,
+      },
+    };
+  }
+
+
   // 1) Prefer legal_connect_connections (new path)
   let connection: any = null;
   if (job.connection_id) {
