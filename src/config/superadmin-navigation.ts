@@ -1,4 +1,4 @@
-import { LayoutDashboard, Archive, Download, Route, BookOpen, Building2, Users, FileText, Phone } from "lucide-react";
+import { LayoutDashboard, Archive, Download, Route, BookOpen, Building2, Users, FileText, Phone, Sparkles } from "lucide-react";
 
 export type SuperadminNavItem = {
   key: string;
