@@ -101,8 +101,13 @@ export default function ClientLegalConnectPage() {
           }
         >
           <div className="flex items-center gap-2">
-            <WhatsNewDrawer audience="design_partners" />
-            <FeedbackDialog clientId={clientId} organizationId={orgId} source="in_product" />
+            <WhatsNewDrawer audience={(tenant as any)?.is_design_partner ? "design_partners" : "all"} />
+            <FeedbackDialog
+              clientId={clientId}
+              organizationId={orgId}
+              source="in_product"
+              isDesignPartner={!!(tenant as any)?.is_design_partner}
+            />
             <Button variant="outline" size="sm" onClick={() => navigate(`/admin/clients/${clientId}`)}>
               <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Client
             </Button>
