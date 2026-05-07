@@ -255,14 +255,15 @@ export default function ClioGrowDeliveryPanel({ clientId }: { clientId?: string 
                   className="rounded-md border border-warning/30 bg-warning/5 p-2 text-[11px]"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-foreground break-words">{r.reason}</span>
+                    <span className="text-foreground break-words">{r.title}</span>
                     <span className="text-muted-foreground shrink-0">{fmt(r.created_at)}</span>
                   </div>
-                  {r.correlation_id && (
-                    <div className="font-mono text-[10px] text-muted-foreground mt-0.5">
-                      {r.correlation_id}
-                    </div>
+                  {r.description && (
+                    <div className="text-muted-foreground mt-0.5 break-words">{r.description}</div>
                   )}
+                  <div className="font-mono text-[10px] text-muted-foreground mt-0.5">
+                    {r.review_type} · {r.status}
+                  </div>
                 </div>
               ))}
             </div>
