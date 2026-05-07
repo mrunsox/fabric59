@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 
 export interface ProviderConnectionCardProps {
   clientId: string;
-  provider: "clio" | "mycase" | "smokeball" | "five9";
+  provider: "clio" | "clio_grow" | "mycase" | "smokeball" | "five9";
   connection: {
     id: string;
     status: string;
@@ -32,10 +32,11 @@ export interface ProviderConnectionCardProps {
 }
 
 const providerMeta: Record<
-  "clio" | "mycase" | "smokeball" | "five9",
+  "clio" | "clio_grow" | "mycase" | "smokeball" | "five9",
   { label: string; color: string; desc: string }
 > = {
   clio: { label: "Clio", color: "text-primary", desc: "Practice management for law firms" },
+  clio_grow: { label: "Clio Grow", color: "text-primary", desc: "Lead intake & client conversion" },
   mycase: { label: "MyCase", color: "text-accent-foreground", desc: "Cloud legal case management" },
   smokeball: { label: "Smokeball", color: "text-warning", desc: "Intake-first legal automation" },
   five9: { label: "Five9", color: "text-primary", desc: "Contact center credentials for this client" },
