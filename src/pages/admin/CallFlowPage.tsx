@@ -458,6 +458,86 @@ const CallFlowPage = forwardRef<HTMLDivElement>((_props, ref) => {
           </Card>
         </div>
       </section>
+
+      {/* Legal Connect runtime overlay — DOCUMENTATION ONLY */}
+      <section>
+        <SectionHeader icon={Workflow} kicker="07" title="Legal Connect runtime overlay (documentation)" />
+
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 mb-4">
+          <div className="text-xs uppercase tracking-wider text-amber-600 dark:text-amber-400 font-medium mb-1">
+            QA / reference overlay
+          </div>
+          <p className="text-sm text-foreground/90 leading-relaxed">
+            This section is a <strong>QA and reference overlay only</strong>. It is{" "}
+            <strong>not the runtime source of truth</strong> and it does <strong>not change actual call routing,
+            outcome selection or execution logic</strong>. The canonical runtime lives in the unified{" "}
+            <code className="text-xs">five9-main</code> edge function, the outcome engine, the mapping resolver
+            and the job worker. Use this page to orient QA testing and reviews; trust the code and the live
+            event log for behavior.
+          </p>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-2 text-[11px] mb-4">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-border/60 bg-secondary/40">runtime</span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-border/60 bg-secondary/40">admin / setup</span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-border/60 bg-secondary/40">health / ops</span>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-amber-500/40 bg-amber-500/10">governance overlay</span>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Sequential stages */}
+          <Card>
+            <h3 className="text-sm font-semibold text-foreground mb-2">Sequential Legal Connect stages</h3>
+            <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal pl-4 leading-relaxed">
+              <li><span className="text-foreground">Five9 event received</span> — webhook hits <code>five9-main</code>. <em className="text-[10px]">runtime</em></li>
+              <li><span className="text-foreground">Event normalized</span> — shape and headers validated. <em className="text-[10px]">runtime</em></li>
+              <li><span className="text-foreground">Route / provider context resolved</span> — workspace → partner → client. <em className="text-[10px]">runtime</em></li>
+              <li><span className="text-foreground">Mapping values resolved</span> — Five9 values + constants + worksheet values. <em className="text-[10px]">runtime</em></li>
+              <li><span className="text-foreground">Caller classification</span> — caller_type, call_reason. <em className="text-[10px]">runtime</em></li>
+              <li><span className="text-foreground">Outcome selected</span> — from configured matrix. <em className="text-[10px]">runtime</em></li>
+              <li><span className="text-foreground">Execution path chosen</span> — provider job · email-only · no-writeback / skip. <em className="text-[10px]">runtime</em></li>
+              <li><span className="text-foreground">Event log + sync job persisted</span>. <em className="text-[10px]">runtime</em></li>
+              <li><span className="text-foreground">Worker executes provider action</span>. <em className="text-[10px]">runtime</em></li>
+              <li><span className="text-foreground">Result written back</span> to health / alerts / dashboard / review surfaces. <em className="text-[10px]">health / ops</em></li>
+            </ol>
+          </Card>
+
+          {/* Governance overlays */}
+          <Card>
+            <h3 className="text-sm font-semibold text-foreground mb-2">Governance &amp; operations overlays</h3>
+            <p className="text-[11px] text-muted-foreground mb-2">
+              These are not stages of the call; they wrap, gate and observe the runtime above.
+            </p>
+            <ul className="text-xs text-muted-foreground space-y-1.5 list-disc pl-4 leading-relaxed">
+              <li><span className="text-foreground">Readiness &amp; safe mode</span> — gates risky actions per tenant.</li>
+              <li><span className="text-foreground">Guided tests</span> — admin-initiated runs that update checklist state.</li>
+              <li><span className="text-foreground">Pilot approval &amp; rollout state</span> — design-partner flag, rollout_status.</li>
+              <li><span className="text-foreground">Rate limits</span> — per-tenant, surface in alerts when hit.</li>
+              <li><span className="text-foreground">Alerts</span> — open / ack / resolve lifecycle.</li>
+              <li><span className="text-foreground">Recurring issues</span> — rollups + persistent review state.</li>
+              <li><span className="text-foreground">Digests &amp; escalations</span> — per-tenant scope, escalation sinks.</li>
+              <li><span className="text-foreground">GA checklist &amp; runbook</span> — shared per-tenant; rollback procedure.</li>
+              <li><span className="text-foreground">Compliance</span> — retention, secret rotation, webhook validation, audit overview.</li>
+            </ul>
+          </Card>
+
+          {/* What to validate */}
+          <Card className="md:col-span-2">
+            <h3 className="text-sm font-semibold text-foreground mb-2">What to validate in this flow</h3>
+            <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4 leading-relaxed">
+              <li>Event ingestion is visible end-to-end in the event log.</li>
+              <li>Mapping resolves correctly: Five9 values + constants + worksheet values match payload preview.</li>
+              <li>Expected outcome is chosen for the (caller_type, call_reason) combination.</li>
+              <li>Correct execution branch fires: provider job · email-only · no-writeback / skip.</li>
+              <li>Job appears in the Delivery dashboard with correct status and detail drawer content.</li>
+              <li>Alerts and tenant health update appropriately on success / failure / retry.</li>
+              <li>External ack updates only the targeted issue, never unrelated state.</li>
+              <li>Tenant boundaries are respected in reports, digests, callbacks and filters.</li>
+            </ul>
+          </Card>
+        </div>
+      </section>
     </div>
   );
 });
