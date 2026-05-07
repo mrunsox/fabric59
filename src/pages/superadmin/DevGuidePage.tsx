@@ -34,6 +34,7 @@ const SECTIONS: Section[] = [
   { id: "clio-grow-mvp", label: "Clio Grow MVP (Phase 1)", icon: Plug },
   { id: "clio-grow-phase2", label: "Constants, Worksheets & Preview (Phase 2)", icon: Plug },
   { id: "phase3-outcomes", label: "Caller Outcomes & Jobs (Phase 3)", icon: Workflow },
+  { id: "phase4-slice2", label: "Guided Test Runner (Phase 4 Slice 2)", icon: ShieldCheck },
   { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
