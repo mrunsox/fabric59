@@ -1917,6 +1917,7 @@ export type Database = {
           status: string
           sync_jobs_created: string[]
           updated_at: string
+          worksheet_payload: Json
         }
         Insert: {
           ani?: string | null
@@ -1938,6 +1939,7 @@ export type Database = {
           status?: string
           sync_jobs_created?: string[]
           updated_at?: string
+          worksheet_payload?: Json
         }
         Update: {
           ani?: string | null
@@ -1959,6 +1961,7 @@ export type Database = {
           status?: string
           sync_jobs_created?: string[]
           updated_at?: string
+          worksheet_payload?: Json
         }
         Relationships: [
           {
@@ -6943,6 +6946,177 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_client_readiness"
             referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      worksheet_field_definitions: {
+        Row: {
+          campaign_id: string | null
+          category: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          field_key: string
+          field_type: string
+          id: string
+          is_active: boolean
+          label: string
+          options: Json | null
+          organization_id: string
+          position: number
+          required: boolean
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          category?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          field_key: string
+          field_type?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          options?: Json | null
+          organization_id: string
+          position?: number
+          required?: boolean
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          category?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          field_key?: string
+          field_type?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          options?: Json | null
+          organization_id?: string
+          position?: number
+          required?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worksheet_field_definitions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worksheet_field_definitions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "worksheet_field_definitions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worksheet_field_definitions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "worksheet_field_definitions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      worksheet_responses: {
+        Row: {
+          call_session_id: string | null
+          campaign_id: string | null
+          captured_by: string | null
+          captured_phase: string
+          client_id: string
+          correlation_id: string | null
+          created_at: string
+          id: string
+          is_complete: boolean
+          organization_id: string
+          responses: Json
+          updated_at: string
+        }
+        Insert: {
+          call_session_id?: string | null
+          campaign_id?: string | null
+          captured_by?: string | null
+          captured_phase?: string
+          client_id: string
+          correlation_id?: string | null
+          created_at?: string
+          id?: string
+          is_complete?: boolean
+          organization_id: string
+          responses?: Json
+          updated_at?: string
+        }
+        Update: {
+          call_session_id?: string | null
+          campaign_id?: string | null
+          captured_by?: string | null
+          captured_phase?: string
+          client_id?: string
+          correlation_id?: string | null
+          created_at?: string
+          id?: string
+          is_complete?: boolean
+          organization_id?: string
+          responses?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worksheet_responses_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worksheet_responses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "worksheet_responses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worksheet_responses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "worksheet_responses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }

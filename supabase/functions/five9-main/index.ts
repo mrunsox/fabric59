@@ -925,18 +925,36 @@ serve(async (req) => {
           producerSkipReason = "mapping_did_not_request_lead";
         } else {
           try {
-            const cv = (normalized as any).call_variables ?? {};
-            const fullName = (cv.caller_name as string) ?? "";
-            const [fnGuess, ...lnGuess] = fullName.trim().split(/\s+/);
+            // Phase 2: pull call-variable mappings + latest worksheet snapshot
+            // for this client/correlation, then resolve via shared resolver so
+            // constants and worksheet values participate in the payload.
+            const { data: mappingRows } = await supabase
+              .from("legal_connect_call_variable_mappings")
+              .select("variable_name, source_location, default_value, provider_field_path, required")
+              .eq("client_id", route.client_id);
+            const { data: wsRow } = await supabase
+              .from("worksheet_responses")
+              .select("responses")
+              .eq("client_id", route.client_id)
+              .eq("correlation_id", normalized.correlation_id)
+              .order("updated_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            const worksheetSnapshot = (wsRow?.responses as any) ?? {};
+            const { resolveGrowLead } = await import("../_shared/resolve-grow-lead.ts");
+            const resolved = resolveGrowLead(normalized as any, worksheetSnapshot, (mappingRows ?? []) as any);
             const leadInput = {
-              first_name: (cv.caller_first_name ?? cv.first_name ?? fnGuess ?? "") as string,
-              last_name:  (cv.caller_last_name  ?? cv.last_name  ?? lnGuess.join(" ") ?? "") as string,
-              email:      (cv.caller_email ?? cv.email ?? null) as string | null,
-              phone:      (normalized.ani ?? cv.caller_phone ?? cv.phone ?? null) as string | null,
-              message:    normalized.disposition_notes ?? (cv.notes as string) ?? "",
-              referring_url: (cv.referring_url ?? cv.landing_url ?? null) as string | null,
-              source:     (cv.from_source ?? cv.lead_source ?? "Fabric59 / Five9") as string,
+              first_name: resolved.first_name,
+              last_name: resolved.last_name,
+              email: resolved.email || null,
+              phone: resolved.phone || null,
+              message: resolved.message,
+              referring_url: resolved.referring_url,
+              source: resolved.source,
             };
+            // Stash worksheet snapshot for event log (used by dashboard inspector).
+            (normalized as any)._worksheet_snapshot = worksheetSnapshot;
+
 
             // Pre-flight: require name + (email or phone). Mirrors adapter validation
             // so we surface review-queue items instead of queuing dead jobs.
@@ -1030,6 +1048,7 @@ serve(async (req) => {
         dnis: normalized.dnis ?? null,
         raw_payload: payload,
         normalized_payload: normalized as any,
+        worksheet_payload: ((normalized as any)._worksheet_snapshot ?? {}) as any,
         resolved_client_id: route.client_id,
         resolved_provider: route.provider_target,
         organization_id: route.organization_id,
