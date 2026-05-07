@@ -106,7 +106,7 @@ export default function ClioGrowDeliveryPanel({ clientId }: { clientId?: string 
       let jq = supabase
         .from("legal_connect_sync_jobs")
         .select(
-          "id, status, job_type, correlation_id, created_at, attempt_count, last_error, client_id, connection_id",
+          "id, status, job_type, correlation_id, created_at, attempt_count, failure_reason, client_id, connection_id",
         )
         .eq("organization_id", organization.id)
         .eq("provider", "clio_grow")
@@ -127,7 +127,7 @@ export default function ClioGrowDeliveryPanel({ clientId }: { clientId?: string 
 
       let rq = supabase
         .from("legal_connect_review_queue")
-        .select("id, reason, status, correlation_id, created_at, client_id")
+        .select("id, title, description, status, review_type, created_at, client_id")
         .eq("organization_id", organization.id)
         .eq("provider", "clio_grow")
         .order("created_at", { ascending: false })
@@ -135,9 +135,9 @@ export default function ClioGrowDeliveryPanel({ clientId }: { clientId?: string 
       if (clientId) rq = rq.eq("client_id", clientId);
 
       const [jr, er, rr] = await Promise.all([jq, eq, rq]);
-      setJobs((jr.data as SyncJob[]) ?? []);
-      setEvents((er.data as EventLogRow[]) ?? []);
-      setReview((rr.data as ReviewItem[]) ?? []);
+      setJobs(((jr.data ?? []) as unknown) as SyncJob[]);
+      setEvents(((er.data ?? []) as unknown) as EventLogRow[]);
+      setReview(((rr.data ?? []) as unknown) as ReviewItem[]);
     } finally {
       setLoading(false);
     }
