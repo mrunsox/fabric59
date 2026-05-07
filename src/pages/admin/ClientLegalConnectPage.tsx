@@ -151,6 +151,9 @@ export default function ClientLegalConnectPage() {
               <TabsTrigger value="tests" className="gap-1.5">
                 <TestTube2 className="h-3.5 w-3.5" /> Tests
               </TabsTrigger>
+              <TabsTrigger value="guides" className="gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" /> Guides
+              </TabsTrigger>
               <TabsTrigger value="webhooks" className="gap-1.5">
                 <Webhook className="h-3.5 w-3.5" /> Webhooks
               </TabsTrigger>
