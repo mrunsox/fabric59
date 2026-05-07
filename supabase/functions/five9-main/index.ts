@@ -1029,7 +1029,11 @@ serve(async (req) => {
         resolved_client_id: route.client_id,
         resolved_provider: route.provider_target,
         organization_id: route.organization_id,
-        mapped_actions: mappedActions as any,
+        mapped_actions: {
+          actions: mappedActions,
+          producer_skip_reason: producerSkipReason,
+          producer_target: route.provider_target ?? null,
+        } as any,
         sync_jobs_created: syncJobsCreated,
         status: route.client_id && route.provider_target ? "processed" : "unresolved",
         processing_time_ms: Date.now() - startTime,
