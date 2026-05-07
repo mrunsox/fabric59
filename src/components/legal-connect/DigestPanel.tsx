@@ -70,7 +70,8 @@ export default function DigestPanel({ orgId }: Props) {
 
   const subsQ = useDigestSubscriptions(orgId);
   const runsQ = useDigestRuns(orgId);
-  const previewQ = useDigestPreview(orgId, previewWindow);
+  const previewTenantId = tenantScope === "__all__" ? null : tenantScope;
+  const previewQ = useDigestPreview(orgId, previewWindow, previewTenantId);
   const upsert = useUpsertDigestSubscription(orgId);
   const remove = useDeleteDigestSubscription(orgId);
   const send = useSendDigest(orgId);
@@ -168,8 +169,24 @@ export default function DigestPanel({ orgId }: Props) {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label className="text-xs">Tenant scope</Label>
+                <Select value={tenantScope} onValueChange={setTenantScope}>
+                  <SelectTrigger className="w-[220px] mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Org-wide (all tenants)</SelectItem>
+                    {tenantsForOrg.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="text-xs text-muted-foreground">
-                {cohortCount} active recipient(s) match this cohort + cadence
+                {previewTenantId ? (
+                  <>Scoped to <span className="font-medium text-foreground">{tenantNameById.get(previewTenantId) ?? "tenant"}</span> — only this tenant's data is included.</>
+                ) : (
+                  <>{cohortCount} active recipient(s) match this cohort + cadence</>
+                )}
               </div>
               <div className="ml-auto flex gap-2">
                 <Button
@@ -182,7 +199,7 @@ export default function DigestPanel({ orgId }: Props) {
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => send.mutate({ cadence, cohort })}
+                  onClick={() => send.mutate({ cadence, cohort, tenant_id: previewTenantId })}
                   disabled={send.isPending}
                 >
                   <Send className="h-3.5 w-3.5 mr-1.5" />
