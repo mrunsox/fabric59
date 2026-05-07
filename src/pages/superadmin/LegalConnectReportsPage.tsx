@@ -78,6 +78,7 @@ export default function LegalConnectReportsPage() {
   const [provider, setProvider] = useState<string>("all");
   const [rollout, setRollout] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [ackSource, setAckSource] = useState<string>("all");
 
   const { data, isLoading, refetch, isFetching } = useLegalConnectReports(organization?.id, window);
   const digestPreviewQ = useDigestPreview(organization?.id, window);
@@ -236,6 +237,18 @@ export default function LegalConnectReportsPage() {
                 {providerOptions.map((p) => (
                   <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+            <Select value={ackSource} onValueChange={setAckSource}>
+              <SelectTrigger className="w-[200px]"><SelectValue placeholder="Ack source" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All ack sources</SelectItem>
+                <SelectItem value="external">External (Slack + Webhook)</SelectItem>
+                <SelectItem value="slack">Slack only</SelectItem>
+                <SelectItem value="webhook">Webhook only</SelectItem>
+                <SelectItem value="app">In-app only</SelectItem>
+                <SelectItem value="system">System / automated</SelectItem>
+                <SelectItem value="none">Not yet reviewed</SelectItem>
               </SelectContent>
             </Select>
             <div className="text-xs text-muted-foreground">
@@ -550,9 +563,17 @@ export default function LegalConnectReportsPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {(data?.recurring ?? []).map((r) => {
-                          const rev = reviews[r.key];
-                          const rem = remediationForRecurring(r.key, r.issue_type);
+                        {(data?.recurring ?? [])
+                          .filter((r) => {
+                            if (ackSource === "all") return true;
+                            const src = reviews[r.key]?.updated_from ?? null;
+                            if (ackSource === "none") return !reviews[r.key];
+                            if (ackSource === "external") return src === "slack" || src === "webhook";
+                            return src === ackSource;
+                          })
+                          .map((r) => {
+                            const rev = reviews[r.key];
+                            const rem = remediationForRecurring(r.key, r.issue_type);
                           return (
                             <TableRow key={r.key}>
                               <TableCell className="text-sm">{r.issue_type}</TableCell>
