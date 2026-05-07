@@ -272,6 +272,13 @@ export default function GuidedTestRunner({ clientId }: Props) {
                 {lastResult.next_step && (
                   <p className="text-xs text-muted-foreground">Next step: {lastResult.next_step}</p>
                 )}
+                <button
+                  type="button"
+                  onClick={() => openGuideDrawer(provider, SECTION.ISSUES)}
+                  className="text-xs inline-flex items-center gap-1 text-primary hover:underline mt-1"
+                >
+                  <BookOpen className="h-3 w-3" /> Open “Common issues” for this provider
+                </button>
               </div>
             )}
             <Separator />
