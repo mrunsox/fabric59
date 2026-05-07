@@ -644,6 +644,24 @@ Deno.serve(async (req) => {
 
         let processed = 0, failed = 0, deadLettered = 0;
 
+        // Phase 5 Slice 3 — load per-tenant rate limits up front so we can
+        // throttle without re-querying for every job.
+        const tenantIds = Array.from(new Set(jobs.map((j: any) => j.client_id).filter(Boolean)));
+        const tenantLimits = new Map<string, { perMin: number; perHour: number }>();
+        if (tenantIds.length) {
+          const { data: tenantRows } = await supabaseAdmin
+            .from("tenants")
+            .select("id, max_jobs_per_minute, max_jobs_per_hour")
+            .in("id", tenantIds);
+          for (const t of tenantRows ?? []) {
+            tenantLimits.set((t as any).id, {
+              perMin: (t as any).max_jobs_per_minute ?? 60,
+              perHour: (t as any).max_jobs_per_hour ?? 1000,
+            });
+          }
+        }
+        let rateLimited = 0;
+
         for (const job of jobs) {
           const { data: config } = await supabaseAdmin
             .from("legal_connect_tenant_configs")
@@ -657,6 +675,71 @@ Deno.serve(async (req) => {
               .from("legal_connect_sync_jobs")
               .update({ status: "paused", next_attempt_at: null })
               .eq("id", job.id);
+            continue;
+          }
+
+          // ── Per-tenant rate limits (Phase 5 Slice 3) ──────────────────
+          const limit = tenantLimits.get(job.client_id) ?? { perMin: 60, perHour: 1000 };
+          const nowMs = Date.now();
+          const minuteAgo = new Date(nowMs - 60_000).toISOString();
+          const hourAgo = new Date(nowMs - 3_600_000).toISOString();
+
+          const [{ count: minCount }, { count: hourCount }] = await Promise.all([
+            supabaseAdmin
+              .from("legal_connect_sync_jobs")
+              .select("id", { count: "exact", head: true })
+              .eq("client_id", job.client_id)
+              .gte("last_attempt_at", minuteAgo)
+              .in("status", ["processing", "succeeded", "failed", "dead_letter"]),
+            supabaseAdmin
+              .from("legal_connect_sync_jobs")
+              .select("id", { count: "exact", head: true })
+              .eq("client_id", job.client_id)
+              .gte("last_attempt_at", hourAgo)
+              .in("status", ["processing", "succeeded", "failed", "dead_letter"]),
+          ]);
+
+          const overMinute = (minCount ?? 0) >= limit.perMin;
+          const overHour = (hourCount ?? 0) >= limit.perHour;
+          if (overMinute || overHour) {
+            const retryAt = new Date(nowMs + (overHour ? 5 * 60_000 : 60_000)).toISOString();
+            const reason = overHour
+              ? `rate_limited_per_tenant: hourly cap (${limit.perHour}) reached`
+              : `rate_limited_per_tenant: minute cap (${limit.perMin}) reached`;
+            await supabaseAdmin
+              .from("legal_connect_sync_jobs")
+              .update({
+                status: "queued",
+                failure_reason: reason,
+                failure_classification: "adapter:rate_limited",
+                next_attempt_at: retryAt,
+              })
+              .eq("id", job.id);
+            await supabaseAdmin.from("legal_connect_failure_classifications").insert({
+              organization_id: job.organization_id,
+              client_id: job.client_id,
+              sync_job_id: job.id,
+              source_event_log_id: job.source_event_log_id,
+              classification: "adapter:rate_limited",
+              is_retryable: true,
+              notes: reason,
+            });
+            // Open / refresh an alert so ops sees it
+            await supabaseAdmin.from("legal_connect_alerts").insert({
+              organization_id: job.organization_id,
+              client_id: job.client_id,
+              alert_kind: "rate_limited",
+              severity: "warning",
+              title: "Per-tenant rate limit hit",
+              details: {
+                cap: overHour ? "hour" : "minute",
+                limit: overHour ? limit.perHour : limit.perMin,
+                window_count: overHour ? hourCount : minCount,
+                job_id: job.id,
+              },
+              status: "open",
+            });
+            rateLimited++;
             continue;
           }
 
