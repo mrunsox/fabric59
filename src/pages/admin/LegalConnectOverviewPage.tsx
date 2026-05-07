@@ -179,6 +179,7 @@ export default function LegalConnectOverviewPage() {
       </div>
 
       <ClioGrowDeliveryPanel />
+      <DeliveryDashboard />
     </div>
   );
 }
