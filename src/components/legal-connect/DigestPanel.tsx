@@ -28,6 +28,7 @@ import {
   type DigestDelta,
 } from "@/hooks/useLegalConnectDigest";
 import { DigestSchedulesPanel, EscalationSinksPanel } from "./AutomationPanels";
+import { useTenants } from "@/hooks/useTenants";
 
 function fmtAgo(iso?: string | null) {
   if (!iso) return "—";
@@ -63,6 +64,7 @@ export default function DigestPanel({ orgId }: Props) {
   const [previewWindow, setPreviewWindow] = useState<"24h" | "7d" | "30d">("7d");
   const [cohort, setCohort] = useState<DigestCohort>("ops");
   const [cadence, setCadence] = useState<DigestCadence>("weekly");
+  const [tenantScope, setTenantScope] = useState<string>("__all__");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
 
@@ -72,10 +74,21 @@ export default function DigestPanel({ orgId }: Props) {
   const upsert = useUpsertDigestSubscription(orgId);
   const remove = useDeleteDigestSubscription(orgId);
   const send = useSendDigest(orgId);
+  const tenantsQ = useTenants();
 
   const subs = subsQ.data ?? [];
   const runs = runsQ.data ?? [];
   const summary = previewQ.data;
+  // Only tenants that belong to this org — never expose cross-tenant data.
+  const tenantsForOrg = useMemo(
+    () => (tenantsQ.data ?? []).filter((t) => t.organization_id === orgId),
+    [tenantsQ.data, orgId],
+  );
+  const tenantNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const t of tenantsForOrg) m.set(t.id, t.name);
+    return m;
+  }, [tenantsForOrg]);
 
   const cohortCount = useMemo(() => {
     const map = new Map<string, number>();
@@ -90,8 +103,9 @@ export default function DigestPanel({ orgId }: Props) {
 
   const handleAdd = () => {
     if (!email.trim()) return;
+    const tenant_id = tenantScope === "__all__" ? null : tenantScope;
     upsert.mutate(
-      { recipient_email: email, recipient_name: name || undefined, cohort, cadence, enabled: true },
+      { recipient_email: email, recipient_name: name || undefined, cohort, cadence, enabled: true, tenant_id },
       { onSuccess: () => { setEmail(""); setName(""); } },
     );
   };
@@ -288,33 +302,33 @@ export default function DigestPanel({ orgId }: Props) {
 
           {/* Subscribers */}
           <TabsContent value="subscribers" className="space-y-4">
-            <div className="rounded-lg border border-border p-3 grid md:grid-cols-5 gap-3 items-end">
-              <div className="md:col-span-2">
-                <Label className="text-xs">Email</Label>
-                <Input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ops@yourco.com"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Name (optional)</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs">Cohort</Label>
-                <Select value={cohort} onValueChange={(v) => setCohort(v as DigestCohort)}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ops">Ops</SelectItem>
-                    <SelectItem value="design_partners">Design partners</SelectItem>
-                    <SelectItem value="all">All</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex gap-2 items-end">
-                <div className="flex-1">
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <div className="grid md:grid-cols-5 gap-3 items-end">
+                <div className="md:col-span-2">
+                  <Label className="text-xs">Email</Label>
+                  <Input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="ops@yourco.com"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Name (optional)</Label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">Cohort</Label>
+                  <Select value={cohort} onValueChange={(v) => setCohort(v as DigestCohort)}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ops">Ops / superadmin</SelectItem>
+                      <SelectItem value="design_partners">Design partners</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label className="text-xs">Cadence</Label>
                   <Select value={cadence} onValueChange={(v) => setCadence(v as DigestCadence)}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
@@ -324,9 +338,26 @@ export default function DigestPanel({ orgId }: Props) {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="grid md:grid-cols-5 gap-3 items-end">
+                <div className="md:col-span-4">
+                  <Label className="text-xs">Tenant scope</Label>
+                  <Select value={tenantScope} onValueChange={setTenantScope}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">Org-wide (all tenants in cohort)</SelectItem>
+                      {tenantsForOrg.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Tenant-scoped recipients only see data for that tenant. Cross-tenant data is never included.
+                  </p>
+                </div>
                 <Button size="sm" onClick={handleAdd} disabled={upsert.isPending || !email.trim()}>
                   <Plus className="h-3.5 w-3.5 mr-1" />
-                  Add
+                  Add subscriber
                 </Button>
               </div>
             </div>
@@ -339,6 +370,7 @@ export default function DigestPanel({ orgId }: Props) {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Email</TableHead>
+                      <TableHead>Scope</TableHead>
                       <TableHead>Cohort</TableHead>
                       <TableHead>Cadence</TableHead>
                       <TableHead>Enabled</TableHead>
@@ -355,6 +387,15 @@ export default function DigestPanel({ orgId }: Props) {
                             <div className="text-[11px] text-muted-foreground">{s.recipient_name}</div>
                           )}
                         </TableCell>
+                        <TableCell className="text-xs">
+                          {s.tenant_id ? (
+                            <Badge variant="outline" className="font-normal">
+                              {tenantNameById.get(s.tenant_id) ?? "Tenant"}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">Org-wide</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-xs capitalize">{s.cohort.replace(/_/g, " ")}</TableCell>
                         <TableCell className="text-xs capitalize">{s.cadence}</TableCell>
                         <TableCell>
@@ -362,11 +403,13 @@ export default function DigestPanel({ orgId }: Props) {
                             checked={s.enabled}
                             onCheckedChange={(v) =>
                               upsert.mutate({
+                                id: s.id,
                                 recipient_email: s.recipient_email,
                                 recipient_name: s.recipient_name ?? undefined,
                                 cohort: s.cohort,
                                 cadence: s.cadence,
                                 enabled: v,
+                                tenant_id: s.tenant_id,
                               })
                             }
                           />

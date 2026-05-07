@@ -8,6 +8,7 @@ export type DigestCadence = "weekly" | "daily";
 export interface DigestSubscription {
   id: string;
   organization_id: string;
+  tenant_id: string | null;
   recipient_email: string;
   recipient_name: string | null;
   cohort: DigestCohort;
@@ -96,6 +97,7 @@ export function useUpsertDigestSubscription(orgId: string | undefined | null) {
       cohort: DigestCohort;
       cadence: DigestCadence;
       enabled?: boolean;
+      tenant_id?: string | null;
     }) => {
       if (!orgId) throw new Error("organization required");
       const payload: any = {
@@ -105,11 +107,35 @@ export function useUpsertDigestSubscription(orgId: string | undefined | null) {
         cohort: input.cohort,
         cadence: input.cadence,
         enabled: input.enabled ?? true,
+        tenant_id: input.tenant_id ?? null,
       };
-      const { error } = await (supabase as any)
-        .from("legal_connect_digest_subscriptions")
-        .upsert(payload, { onConflict: "organization_id,recipient_email,cadence" });
-      if (error) throw error;
+      if (input.id) {
+        const { error } = await (supabase as any)
+          .from("legal_connect_digest_subscriptions")
+          .update(payload).eq("id", input.id);
+        if (error) throw error;
+      } else {
+        // Find existing match (tenant_id NULL-safe) before insert.
+        const q = (supabase as any)
+          .from("legal_connect_digest_subscriptions")
+          .select("id")
+          .eq("organization_id", orgId)
+          .eq("recipient_email", payload.recipient_email)
+          .eq("cadence", payload.cadence);
+        const { data: existing } = payload.tenant_id
+          ? await q.eq("tenant_id", payload.tenant_id).maybeSingle()
+          : await q.is("tenant_id", null).maybeSingle();
+        if (existing?.id) {
+          const { error } = await (supabase as any)
+            .from("legal_connect_digest_subscriptions")
+            .update(payload).eq("id", existing.id);
+          if (error) throw error;
+        } else {
+          const { error } = await (supabase as any)
+            .from("legal_connect_digest_subscriptions").insert(payload);
+          if (error) throw error;
+        }
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_SUBS(orgId) }),
     onError: (e: Error) => toast.error(e.message),
