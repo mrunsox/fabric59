@@ -3735,6 +3735,96 @@ export type Database = {
           },
         ]
       }
+      legal_connect_feedback_entries: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          entry_type: string
+          id: string
+          logged_by: string | null
+          logged_by_name: string | null
+          message: string
+          metadata: Json
+          organization_id: string
+          severity: string | null
+          shipped_release_note_id: string | null
+          source: string
+          status: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          entry_type?: string
+          id?: string
+          logged_by?: string | null
+          logged_by_name?: string | null
+          message: string
+          metadata?: Json
+          organization_id: string
+          severity?: string | null
+          shipped_release_note_id?: string | null
+          source?: string
+          status?: string
+          topic?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          entry_type?: string
+          id?: string
+          logged_by?: string | null
+          logged_by_name?: string | null
+          message?: string
+          metadata?: Json
+          organization_id?: string
+          severity?: string | null
+          shipped_release_note_id?: string | null
+          source?: string
+          status?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_feedback_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_feedback_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_feedback_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_feedback_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_feedback_entries_shipped_release_note_id_fkey"
+            columns: ["shipped_release_note_id"]
+            isOneToOne: false
+            referencedRelation: "legal_connect_release_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_connect_field_policies: {
         Row: {
           canonical_field: string | null
@@ -4247,6 +4337,48 @@ export type Database = {
           provider?: string
           support_mode?: string
           supported?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      legal_connect_release_notes: {
+        Row: {
+          audience: string
+          created_at: string
+          details: Json
+          dev_guide_link: string | null
+          highlights: Json
+          id: string
+          published_at: string
+          slug: string
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          created_at?: string
+          details?: Json
+          dev_guide_link?: string | null
+          highlights?: Json
+          id?: string
+          published_at?: string
+          slug: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          created_at?: string
+          details?: Json
+          dev_guide_link?: string | null
+          highlights?: Json
+          id?: string
+          published_at?: string
+          slug?: string
+          summary?: string | null
+          title?: string
           updated_at?: string
         }
         Relationships: []
