@@ -1443,6 +1443,60 @@ export default function DevGuidePage() {
             </div>
           </section>
 
+          {/* Phase 7 — Analytics, Audit Exports & Reporting */}
+          <section>
+            <SectionHeader
+              id="phase7"
+              title="Phase 7 — Analytics, audit exports &amp; operational reporting"
+              kicker="Practical reporting layer for operators and leadership: tenant rollups, provider scorecards, recurring issues, rollout/GA distribution, CSV + JSON exports"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Where it lives</div>
+                <ul className="space-y-1.5">
+                  <li>· New superadmin route: <code className="text-xs">/superadmin/legal-connect-reports</code> (sidebar entry “Legal Connect Reports”).</li>
+                  <li>· Powered by the read-only aggregator hook <Chip>useLegalConnectReports</Chip> in <code className="text-xs">src/hooks/useLegalConnectReports.ts</code>.</li>
+                  <li>· No new tables. Reads from <code className="text-xs">tenants</code>, <code className="text-xs">legal_connect_sync_jobs</code>, <code className="text-xs">legal_connect_alerts</code>, and <code className="text-xs">legal_connect_ga_checklist_state</code> within the caller's org. RLS is unchanged.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Reporting dimensions &amp; metrics</div>
+                <ul className="space-y-1.5">
+                  <li>· Dimensions: tenant, provider, action (job_type), error class, rollout status, pilot status, time window (24h / 7d / 30d).</li>
+                  <li>· Metrics: total jobs, succeeded, failed, retried (attempt_count &gt; 1), rate-limited, test vs live, success rate, top error class, alert count, last activity, GA checklist done/total.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Surfaces (tabs on the reports page)</div>
+                <ul className="space-y-1.5">
+                  <li>· <Chip>Tenants</Chip> — per-tenant activity rollup with success rate, alerts, GA progress.</li>
+                  <li>· <Chip>Scorecards</Chip> — provider × action breakdown (e.g., clio_grow / lead.create, clio_manage / note.create, mycase / task.create, email_only outcomes).</li>
+                  <li>· <Chip>Errors</Chip> — failure counts by classification + tenants affected.</li>
+                  <li>· <Chip>Alerts</Chip> — alert history (open, acknowledged, resolved) inside the window.</li>
+                  <li>· <Chip>Recurring</Chip> — same tenant + same error class hit 3+ times, or same alert kind reopening, with latest occurrence.</li>
+                  <li>· <Chip>Rollout / GA</Chip> — distribution by rollout_status / pilot_status and per-tenant GA checklist completion.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Exports</div>
+                <ul className="space-y-1.5">
+                  <li>· Per-tab CSV: tenant activity, alerts, scorecards, error classes, rollout / GA status.</li>
+                  <li>· Full JSON snapshot of the rolled-up dataset (useful for internal audit).</li>
+                  <li>· Exports respect the active filters (time window, tenant search, rollout status, provider) so what you see is what you ship.</li>
+                  <li>· Helpers live in <code className="text-xs">src/lib/csv-export.ts</code> (<Chip>toCsv</Chip>, <Chip>downloadCsv</Chip>, <Chip>downloadJson</Chip>).</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Who it's for</div>
+                <p>Internal operators reviewing pilot tenants, leadership tracking GA readiness, and on-call engineers triaging recurring issues. Not for clients — there is no client-facing analytics here.</p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Likely next phase</div>
+                <p>Phase 8 will likely turn this reporting layer into actionable operations: scheduled digest emails for design partners, a “week-over-week” diff on the same metrics, and per-provider runbook deep links from recurring issues straight into the matching guided test.</p>
+              </Card>
+            </div>
+          </section>
+
           {/* Phase 6 — Real Pilot Validation & GA Hardening */}
           <section>
             <SectionHeader
