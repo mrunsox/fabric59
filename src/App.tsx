@@ -130,6 +130,7 @@ import AdvancedRoutesPage from "@/pages/superadmin/AdvancedRoutesPage";
 import SystemDocsPage from "@/pages/superadmin/SystemDocsPage";
 import DesignPartnersPage from "@/pages/superadmin/DesignPartnersPage";
 import LegalConnectReportsPage from "@/pages/superadmin/LegalConnectReportsPage";
+import TestCasesPage from "@/pages/superadmin/TestCasesPage";
 
 const queryClient = new QueryClient();
 
@@ -199,6 +200,7 @@ const App = () => (
                 <Route path="docs" element={<SystemDocsPage />} />
                 <Route path="call-flow" element={<CallFlowPage />} />
                 <Route path="dev-guide" element={<DevGuidePage />} />
+                <Route path="test-cases" element={<TestCasesPage />} />
               </Route>
             </Route>
 
