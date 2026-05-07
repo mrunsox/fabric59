@@ -200,6 +200,7 @@ const App = () => (
                 <Route path="docs" element={<SystemDocsPage />} />
                 <Route path="call-flow" element={<CallFlowPage />} />
                 <Route path="dev-guide" element={<DevGuidePage />} />
+                <Route path="test-cases" element={<TestCasesPage />} />
               </Route>
             </Route>
 
