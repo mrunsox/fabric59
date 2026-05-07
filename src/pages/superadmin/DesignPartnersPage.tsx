@@ -187,6 +187,8 @@ export default function DesignPartnersPage() {
         </Card>
 
         <TenantHealthPanel organizationId={organization?.id} />
+        <FeedbackCapturePanel />
+        <GAReadinessPanel />
       </div>
     </>
   );
