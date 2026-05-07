@@ -714,6 +714,51 @@ export default function DevGuidePage() {
               </Card>
             </div>
           </section>
+
+          {/* Phase 2 — Constants, Worksheets, Preview, Delivery */}
+          <section>
+            <SectionHeader
+              id="clio-grow-phase2"
+              title="Phase 2 — Constants, Worksheets, Preview & Delivery"
+              kicker="Operational extensions on top of the Phase 1 MVP"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Mapping source model</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li><Chip>five9_call_variable</Chip> Native call variables flattened by the normalizer.</li>
+                  <li><Chip>five9_disposition_field</Chip> Disposition + agent notes.</li>
+                  <li><Chip>five9_connector_param</Chip> Connector inputs.</li>
+                  <li><Chip>derived</Chip> Runtime values (e.g. <code className="text-xs">ani</code>).</li>
+                  <li><Chip>constant</Chip> Static admin-defined values stored on <code className="text-xs">default_value</code> with <code className="text-xs">source_location='constant'</code>.</li>
+                  <li><Chip>worksheet</Chip> Structured intake responses captured during ACW.</li>
+                </ul>
+                <p className="mt-2 text-muted-foreground text-xs">
+                  <code className="text-xs">legal_connect_call_variable_mappings</code> remains the
+                  execution source of truth.
+                </p>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Worksheet lifecycle</div>
+                <ol className="list-decimal pl-5 space-y-1 text-sm">
+                  <li>Admin defines fields in <code className="text-xs">worksheet_field_definitions</code> (per client/campaign).</li>
+                  <li>During the call or (typically) ACW, an agent fills the <Chip>WorksheetCapturePanel</Chip>; the responses are saved to <code className="text-xs">worksheet_responses</code> keyed by <code className="text-xs">correlation_id</code>.</li>
+                  <li>When Five9 fires the post-call event, <code className="text-xs">five9-main</code> looks up the latest worksheet response for the correlation id and passes it to <Chip>resolveGrowLead</Chip> alongside the mapping rows.</li>
+                  <li>The resolved snapshot is stored on <code className="text-xs">five9_event_log.worksheet_payload</code> for replay/inspection.</li>
+                </ol>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Payload preview &amp; delivery dashboard</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li><Chip>PayloadPreviewPanel</Chip> dry-runs the resolver client-side: editable sample event + worksheet, per-field provenance, validation errors, and the redacted final payload that would POST to <code className="text-xs">grow.clio.com/inbox_leads</code>.</li>
+                  <li><Chip>DeliveryDashboard</Chip> joins <code className="text-xs">legal_connect_sync_jobs</code>, <code className="text-xs">five9_event_log</code>, and <code className="text-xs">legal_connect_review_queue</code>. Filter by provider/status, search by correlation id, click-through opens an inspector with normalized event, worksheet snapshot, review items, and redacted payload.</li>
+                  <li>Skip reasons (no_connection, validation, duplicate_event, etc.) are aggregated from <code className="text-xs">mapped_actions.producer_skip_reason</code>.</li>
+                </ul>
+              </Card>
+            </div>
+          </section>
         </div>
       </div>
     </div>
