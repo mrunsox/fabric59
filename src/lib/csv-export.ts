@@ -5,7 +5,7 @@ export function toCsv<T>(rows: T[], columns: Array<keyof T | string>): string {
   const escape = (v: unknown): string => {
     if (v === null || v === undefined) return "";
     const s = typeof v === "object" ? JSON.stringify(v) : String(v);
-    if (/["\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
     return s;
   };
   const header = columns.map((c) => escape(String(c))).join(",");
