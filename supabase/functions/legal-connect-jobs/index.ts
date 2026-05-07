@@ -1,5 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.93.3";
 import { resolveLegacyConnection } from "../_shared/legacy-config-bridge.ts";
+import {
+  classifyAdapterError,
+  runAdapter,
+  type AdapterFailureKind,
+  type AdapterResult,
+} from "../_shared/legal-job-adapters.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
