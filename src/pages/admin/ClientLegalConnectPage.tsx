@@ -98,9 +98,13 @@ export default function ClientLegalConnectPage() {
             </div>
           }
         >
-          <Button variant="outline" size="sm" onClick={() => navigate(`/admin/clients/${clientId}`)}>
-            <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Client
-          </Button>
+          <div className="flex items-center gap-2">
+            <WhatsNewDrawer audience="design_partners" />
+            <FeedbackDialog clientId={clientId} organizationId={orgId} source="in_product" />
+            <Button variant="outline" size="sm" onClick={() => navigate(`/admin/clients/${clientId}`)}>
+              <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back to Client
+            </Button>
+          </div>
         </PageHeader>
 
         {provider ? (
