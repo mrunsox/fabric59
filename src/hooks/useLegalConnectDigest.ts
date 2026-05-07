@@ -69,7 +69,7 @@ export interface DigestSummary {
 
 const QK_SUBS = (org?: string | null) => ["lc-digest-subs", org];
 const QK_RUNS = (org?: string | null) => ["lc-digest-runs", org];
-const QK_PREVIEW = (org?: string | null, w?: string) => ["lc-digest-preview", org, w];
+const QK_PREVIEW = (org?: string | null, w?: string, tenant?: string | null) => ["lc-digest-preview", org, w, tenant ?? null];
 
 export function useDigestSubscriptions(orgId: string | undefined | null) {
   return useQuery({
@@ -174,13 +174,18 @@ export function useDigestRuns(orgId: string | undefined | null) {
   });
 }
 
-export function useDigestPreview(orgId: string | undefined | null, window: "24h" | "7d" | "30d" = "7d") {
+export function useDigestPreview(
+  orgId: string | undefined | null,
+  window: "24h" | "7d" | "30d" = "7d",
+  tenantId: string | null = null,
+) {
   return useQuery<DigestSummary>({
-    queryKey: QK_PREVIEW(orgId, window),
+    queryKey: QK_PREVIEW(orgId, window, tenantId),
     enabled: !!orgId,
     queryFn: async () => {
+      const tenantParam = tenantId ? `&tenant_id=${tenantId}` : "";
       const { data, error } = await supabase.functions.invoke(
-        `legal-connect-digest?organization_id=${orgId}&window=${window}`,
+        `legal-connect-digest?organization_id=${orgId}&window=${window}${tenantParam}`,
         { method: "GET" },
       );
       if (error) throw error;
