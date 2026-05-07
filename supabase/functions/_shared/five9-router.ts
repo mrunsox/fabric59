@@ -6,7 +6,7 @@ import type { Five9NormalizedEvent } from "./five9-event-normalizer.ts";
 export interface Five9RouteResolution {
   client_id: string | null;
   organization_id: string | null;
-  provider_target: "clio" | "mycase" | "smokeball" | null;
+  provider_target: "clio" | "clio_grow" | "mycase" | "smokeball" | null;
   matched_route_id?: string;
   default_disposition_policy?: string;
   reason: "domain_only" | "domain_campaign" | "domain_dnis" | "domain_queue" | "unresolved";
