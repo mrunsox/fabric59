@@ -373,7 +373,9 @@ export default function DeliveryDashboard() {
                   <th className="text-left p-2 font-medium">Provider</th>
                   <th className="text-left p-2 font-medium">Job</th>
                   <th className="text-left p-2 font-medium">Correlation</th>
-                  <th className="text-left p-2 font-medium">Disposition</th>
+                  <th className="text-left p-2 font-medium">Caller</th>
+                  <th className="text-left p-2 font-medium">Outcome</th>
+                  <th className="text-left p-2 font-medium">Mode</th>
                   <th className="text-left p-2 font-medium">Attempts</th>
                   <th className="text-left p-2 font-medium">When</th>
                   <th className="w-8" />
@@ -382,17 +384,13 @@ export default function DeliveryDashboard() {
               <tbody>
                 {filteredJobs.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={10} className="p-6 text-center text-muted-foreground">
                       No jobs match the current filters.
                     </td>
                   </tr>
                 )}
                 {filteredJobs.map((j) => {
-                  const ev = j.correlation_id ? eventsByCorr.get(j.correlation_id) : null;
-                  const dispo =
-                    (ev?.normalized_payload as any)?.disposition ??
-                    (ev?.mapped_actions as any)?.actions?.[0]?.payload?.disposition ??
-                    "—";
+                  const meta = classificationFor(j);
                   return (
                     <tr
                       key={j.id}
@@ -409,7 +407,22 @@ export default function DeliveryDashboard() {
                       <td className="p-2 font-mono text-[10px] text-muted-foreground">
                         {j.correlation_id?.slice(0, 16) ?? "—"}
                       </td>
-                      <td className="p-2 text-muted-foreground">{String(dispo).slice(0, 28)}</td>
+                      <td className="p-2 text-muted-foreground text-[11px]">
+                        {meta.caller_type ?? "—"}
+                        {meta.call_reason && (
+                          <div className="text-[10px] text-muted-foreground/70">
+                            {meta.call_reason}
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-2 text-muted-foreground text-[11px]">
+                        {meta.outcome ?? "—"}
+                      </td>
+                      <td className="p-2">
+                        <Badge variant="outline" className="text-[10px]">
+                          {meta.execution_mode}
+                        </Badge>
+                      </td>
                       <td className="p-2 text-muted-foreground">{j.attempt_count ?? 0}</td>
                       <td className="p-2 text-muted-foreground">{fmt(j.created_at)}</td>
                       <td className="p-2">
