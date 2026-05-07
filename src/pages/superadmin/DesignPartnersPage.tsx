@@ -9,6 +9,8 @@ import { usePilotApprovalList } from "@/hooks/usePilotApproval";
 import { PILOT_CHECKLIST, PILOT_STATUS_LABEL, PILOT_TEMPLATES, computePilotReadiness, type PilotStatus } from "@/data/legal-connect-pilot";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { cn } from "@/lib/utils";
+import TenantHealthPanel from "@/components/legal-connect/TenantHealthPanel";
+import { useAuth } from "@/contexts/AuthContext";
 
 const STATUS_BADGE: Record<RolloutStatus, string> = {
   not_started: "bg-muted text-muted-foreground border-border",
@@ -37,6 +39,7 @@ const PILOT_BADGE: Record<PilotStatus, string> = {
 };
 
 export default function DesignPartnersPage() {
+  const { organization } = useAuth();
   const { data: partners = [], isLoading } = useDesignPartners();
   const { data: pilots = [] } = usePilotApprovalList();
   const pilotMap = new Map(pilots.map((p) => [p.id, p]));
@@ -180,6 +183,8 @@ export default function DesignPartnersPage() {
             )}
           </CardContent>
         </Card>
+
+        <TenantHealthPanel organizationId={organization?.id} />
       </div>
     </>
   );

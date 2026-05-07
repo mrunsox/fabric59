@@ -135,7 +135,14 @@ export default function DeliveryDashboard() {
   const [outcomeFilter, setOutcomeFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [testFilter, setTestFilter] = useState<string>("exclude");
+  const [errorClassFilter, setErrorClassFilter] = useState<string>("all");
   const [open, setOpen] = useState<JobRow | null>(null);
+
+  const errorClassOf = (j: JobRow): string | null => {
+    const c = j.failure_classification;
+    if (!c) return null;
+    return c.startsWith("adapter:") ? c.slice(8) : c;
+  };
 
   const isTest = (j: JobRow) =>
     !!(j.input_payload as any)?.__test__ ||
@@ -246,6 +253,10 @@ export default function DeliveryDashboard() {
         if (callerTypeFilter !== "all" && meta.caller_type !== callerTypeFilter) return false;
         if (outcomeFilter !== "all" && meta.outcome !== outcomeFilter) return false;
       }
+      if (errorClassFilter !== "all") {
+        const k = errorClassOf(j);
+        if (k !== errorClassFilter) return false;
+      }
       if (search) {
         const q = search.toLowerCase();
         if (
@@ -258,7 +269,7 @@ export default function DeliveryDashboard() {
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobs, providerFilter, statusFilter, callerTypeFilter, outcomeFilter, testFilter, search, eventsByCorr]);
+  }, [jobs, providerFilter, statusFilter, callerTypeFilter, outcomeFilter, testFilter, errorClassFilter, search, eventsByCorr]);
 
   const counts = useMemo(() => {
     const c = { queued: 0, processing: 0, succeeded: 0, failed: 0, skipped: 0 };
@@ -369,6 +380,17 @@ export default function DeliveryDashboard() {
                   "no_writeback",
                 ].map((o) => (
                   <SelectItem key={o} value={o}>{o}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={errorClassFilter} onValueChange={setErrorClassFilter}>
+              <SelectTrigger className="h-8 w-40 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All error classes</SelectItem>
+                {["auth", "validation", "rate_limited", "upstream_4xx", "upstream_5xx", "network", "timeout", "unsupported", "unknown"].map((k) => (
+                  <SelectItem key={k} value={k}>{k}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
