@@ -145,10 +145,12 @@ export function buildActionChain(
     enqueue("lookup_matter", { status: "open" });
   }
 
-  // Smokeball-first: create lead when configured (intake-style mapping flag in metadata)
-  if ((mapping.metadata as any)?.create_lead && provider === "smokeball") {
+  // Capability-driven lead creation. Any provider whose capabilities include
+  // lead_sync (Smokeball, Clio Grow, ...) gets create_lead enqueued when the
+  // mapping requests it via metadata.create_lead.
+  if ((mapping.metadata as any)?.create_lead) {
     enqueue("create_lead", {
-      source: "five9",
+      source: (evt.call_variables["from_source"] ?? "five9") as string,
       intake_type: evt.call_variables["intake_type"] as string,
       notes: evt.disposition_notes,
     });
