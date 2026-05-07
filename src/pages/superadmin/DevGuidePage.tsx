@@ -13,6 +13,7 @@ import {
   ClipboardCheck,
   CheckCircle2,
   Circle,
+  BarChart3,
 } from "lucide-react";
 import { ArchitectureFlowchart } from "@/components/dev-guide/ArchitectureFlowchart";
 
