@@ -383,6 +383,17 @@ export default function DeliveryDashboard() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={errorClassFilter} onValueChange={setErrorClassFilter}>
+              <SelectTrigger className="h-8 w-40 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All error classes</SelectItem>
+                {["auth", "validation", "rate_limited", "upstream_4xx", "upstream_5xx", "network", "timeout", "unsupported", "unknown"].map((k) => (
+                  <SelectItem key={k} value={k}>{k}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={testFilter} onValueChange={setTestFilter}>
               <SelectTrigger className="h-8 w-36 text-xs">
                 <SelectValue />
