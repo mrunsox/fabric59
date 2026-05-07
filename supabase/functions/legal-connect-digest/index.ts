@@ -254,35 +254,101 @@ function evaluateEscalation(summary: any): { severity: "warn" | "critical" | nul
   return { severity, reasons };
 }
 
-async function fireEscalations(supabase: any, orgId: string, summary: any) {
+async function mintAckToken(
+  admin: any, orgId: string, tenantId: string | null, sinkId: string | null,
+  eventId: string | null, issueKey: string, action: "acknowledged" | "monitoring" | "resolved",
+  source: "slack" | "webhook", ttlMinutes = 60 * 48,
+): Promise<string> {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  const token = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const expires = new Date(Date.now() + ttlMinutes * 60_000).toISOString();
+  await admin.from("legal_connect_ack_tokens").insert({
+    organization_id: orgId, tenant_id: tenantId, sink_id: sinkId, event_id: eventId,
+    issue_key: issueKey, action, token, expires_at: expires, source,
+  });
+  return token;
+}
+
+async function fireEscalations(admin: any, orgId: string, summary: any, opts: { tenantId?: string | null; cohort?: string }) {
   const ev = evaluateEscalation(summary);
   if (!ev.severity) return { fired: 0, severity: null, reasons: [] };
-  const { data: sinks } = await supabase
-    .from("legal_connect_escalation_sinks")
+  const tenantId = opts.tenantId ?? null;
+  const cohort = opts.cohort ?? "ops";
+
+  let q = admin.from("legal_connect_escalation_sinks")
     .select("*").eq("organization_id", orgId).eq("enabled", true);
+  const { data: allSinks } = await q;
+
+  // Severity-aware + tenant-aware + cohort-aware filter
+  const sinks = (allSinks ?? []).filter((s: any) => {
+    if (s.severity_threshold === "critical" && ev.severity !== "critical") return false;
+    if (s.tenant_id && tenantId && s.tenant_id !== tenantId) return false;
+    if (s.tenant_id && !tenantId) return false; // tenant-scoped sinks only fire for tenant digests
+    if (s.cohort_filter && s.cohort_filter !== "all" && s.cohort_filter !== cohort && s.cohort_filter !== "tenant") return false;
+    return true;
+  });
+
+  const cfg = await loadAppConfig(admin);
+  const appUrl = cfg.app_url || "";
+  const ackBase = `${Deno.env.get("SUPABASE_URL")}/functions/v1/legal-connect-ack`;
+
   let fired = 0;
-  for (const sink of sinks ?? []) {
-    if (sink.severity_threshold === "critical" && ev.severity !== "critical") continue;
+  for (const sink of sinks) {
+    // Synthesize an issue key from the worst signal so an external ack can land somewhere meaningful
+    const issueKey = `digest:${tenantId ?? "org"}:${ev.severity}:${new Date(summary.window_end).toISOString().slice(0, 10)}`;
+
+    // Insert event first to get id for token linkage
+    const { data: insertedEvent } = await admin.from("legal_connect_escalation_events").insert({
+      organization_id: orgId, sink_id: sink.id, tenant_id: tenantId,
+      trigger_kind: "digest", severity: ev.severity, payload: {},
+      delivery_status: "pending", linked_issue_key: issueKey, ack_status: "pending",
+    }).select("id").single();
+    const eventId = insertedEvent?.id ?? null;
+
+    let ackLinks: Record<string, string> = {};
+    if (sink.kind === "slack" && eventId) {
+      for (const action of ["acknowledged", "monitoring", "resolved"] as const) {
+        const tk = await mintAckToken(admin, orgId, tenantId, sink.id, eventId, issueKey, action, "slack");
+        ackLinks[action] = `${ackBase}?token=${tk}&action=${action}`;
+      }
+    }
+
     const payload = {
       source: "legal-connect-digest",
-      severity: ev.severity,
-      organization_id: orgId,
+      severity: ev.severity, organization_id: orgId, tenant_id: tenantId, cohort,
+      issue_key: issueKey, event_id: eventId,
       reasons: ev.reasons,
       window: { start: summary.window_start, end: summary.window_end },
-      totals: summary.totals,
-      deltas: summary.deltas,
+      totals: summary.totals, deltas: summary.deltas,
       top_failing_tenants: summary.top_failing_tenants,
       top_failing_actions: summary.top_failing_actions,
+      ack: ackLinks,
+      ack_endpoint: ackBase,
+      reports_url: appUrl ? `${appUrl}/superadmin/legal-connect-reports` : null,
       ts: new Date().toISOString(),
     };
+
     let status = "pending";
     let err: string | null = null;
     try {
       if (sink.kind === "slack") {
-        const text = `:rotating_light: *Legal Connect ${ev.severity}* — ${ev.reasons.join(" · ")} (${summary.totals.failed} failed / ${summary.totals.jobs} jobs)`;
+        const tenantLabel = summary.tenant_name ? ` · ${summary.tenant_name}` : "";
+        const text = `:rotating_light: *Legal Connect ${ev.severity}*${tenantLabel} — ${ev.reasons.join(" · ")} (${summary.totals.failed} failed / ${summary.totals.jobs} jobs)`;
+        const blocks: any[] = [
+          { type: "section", text: { type: "mrkdwn", text } },
+          {
+            type: "actions",
+            elements: [
+              { type: "button", text: { type: "plain_text", text: "Acknowledge" }, url: ackLinks.acknowledged },
+              { type: "button", text: { type: "plain_text", text: "Monitoring" }, url: ackLinks.monitoring },
+              { type: "button", text: { type: "plain_text", text: "Resolve" }, url: ackLinks.resolved, style: "primary" },
+            ],
+          },
+        ];
         const r = await fetch(sink.target, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text, blocks }),
         });
         status = r.ok ? "sent" : `http_${r.status}`;
         if (!r.ok) err = (await r.text()).slice(0, 300);
@@ -304,12 +370,12 @@ async function fireEscalations(supabase: any, orgId: string, summary: any) {
       status = "failed";
       err = e instanceof Error ? e.message : String(e);
     }
-    await supabase.from("legal_connect_escalation_events").insert({
-      organization_id: orgId, sink_id: sink.id,
-      trigger_kind: "digest", severity: ev.severity, payload,
-      delivery_status: status, delivery_error: err,
-    });
-    await supabase.from("legal_connect_escalation_sinks").update({ last_fired_at: new Date().toISOString() }).eq("id", sink.id);
+    if (eventId) {
+      await admin.from("legal_connect_escalation_events").update({
+        payload, delivery_status: status, delivery_error: err,
+      }).eq("id", eventId);
+    }
+    await admin.from("legal_connect_escalation_sinks").update({ last_fired_at: new Date().toISOString() }).eq("id", sink.id);
   }
   return { fired, severity: ev.severity, reasons: ev.reasons };
 }
