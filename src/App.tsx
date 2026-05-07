@@ -129,6 +129,7 @@ import SourceExportsPage from "@/pages/superadmin/SourceExportsPage";
 import AdvancedRoutesPage from "@/pages/superadmin/AdvancedRoutesPage";
 import SystemDocsPage from "@/pages/superadmin/SystemDocsPage";
 import DesignPartnersPage from "@/pages/superadmin/DesignPartnersPage";
+import LegalConnectReportsPage from "@/pages/superadmin/LegalConnectReportsPage";
 
 const queryClient = new QueryClient();
 
@@ -190,6 +191,7 @@ const App = () => (
                 <Route path="workspaces" element={<OrganizationsOverviewPage />} />
                 <Route path="users" element={<UsersManagementPage />} />
                 <Route path="design-partners" element={<DesignPartnersPage />} />
+                <Route path="legal-connect-reports" element={<LegalConnectReportsPage />} />
                 <Route path="vault" element={<FeatureVaultPage />} />
                 <Route path="vault/:id" element={<FeatureVaultDetailPage />} />
                 <Route path="exports" element={<SourceExportsPage />} />
