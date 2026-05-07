@@ -899,143 +899,171 @@ serve(async (req) => {
         }
       }
 
-      // Producer: enqueue sync jobs for clio_grow targets only (Phase 1).
-      // Existing inline Clio Manage / MyCase dispatch path is intentionally untouched.
-      //
-      // Skip states recorded on the event log via mapped_actions.producer_skip:
-      //   - not_clio_grow_target           (route is something else)
-      //   - no_disposition_mapping
-      //   - mapping_did_not_request_lead
-      //   - no_connection                  (also opens a review queue item)
-      //   - validation                     (missing required field; review queue item)
-      //   - duplicate_event                (idempotency_key collision; expected on replay)
+      // ── Phase 3 producer ─────────────────────────────────────────────
+      // Provider-agnostic outcome-engine: classify caller, resolve outcome
+      // actions, then enqueue one sync job per action via legal-connect-jobs.
+      // send_post_call_email is enqueued as provider="post_call_email" with
+      // job_type="email.send" — the worker delegates to the existing
+      // post-call automations / disposition email engine.
       const syncJobsCreated: string[] = [];
       let producerSkipReason: string | null = null;
+      let outcomeActionsLog: any[] = [];
+      let classification: { caller_type: string | null; call_reason: string | null } = {
+        caller_type: null, call_reason: null,
+      };
 
-      const wantsLead =
-        !!dispositionMapping &&
-        ((dispositionMapping.metadata as any)?.create_lead === true ||
-          (Array.isArray(mappedActions) &&
-            mappedActions.some((a: any) => a.action === "create_lead")));
+      if (route.client_id && route.organization_id) {
+        try {
+          // 1) Pull worksheet snapshot for classification + payload resolution.
+          const { data: wsRow } = await supabase
+            .from("worksheet_responses")
+            .select("responses")
+            .eq("client_id", route.client_id)
+            .eq("correlation_id", normalized.correlation_id)
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          const worksheetSnapshot = (wsRow?.responses as any) ?? {};
+          (normalized as any)._worksheet_snapshot = worksheetSnapshot;
 
-      if (route.client_id && route.organization_id && route.provider_target === "clio_grow") {
-        if (!dispositionMapping) {
-          producerSkipReason = "no_disposition_mapping";
-        } else if (!wantsLead) {
-          producerSkipReason = "mapping_did_not_request_lead";
-        } else {
-          try {
-            // Phase 2: pull call-variable mappings + latest worksheet snapshot
-            // for this client/correlation, then resolve via shared resolver so
-            // constants and worksheet values participate in the payload.
-            const { data: mappingRows } = await supabase
-              .from("legal_connect_call_variable_mappings")
-              .select("variable_name, source_location, default_value, provider_field_path, required")
-              .eq("client_id", route.client_id);
-            const { data: wsRow } = await supabase
-              .from("worksheet_responses")
-              .select("responses")
-              .eq("client_id", route.client_id)
-              .eq("correlation_id", normalized.correlation_id)
-              .order("updated_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            const worksheetSnapshot = (wsRow?.responses as any) ?? {};
-            const { resolveGrowLead } = await import("../_shared/resolve-grow-lead.ts");
-            const resolved = resolveGrowLead(normalized as any, worksheetSnapshot, (mappingRows ?? []) as any);
-            const leadInput = {
-              first_name: resolved.first_name,
-              last_name: resolved.last_name,
-              email: resolved.email || null,
-              phone: resolved.phone || null,
-              message: resolved.message,
-              referring_url: resolved.referring_url,
-              source: resolved.source,
-            };
-            // Stash worksheet snapshot for event log (used by dashboard inspector).
-            (normalized as any)._worksheet_snapshot = worksheetSnapshot;
+          // 2) Extract caller_type + call_reason and resolve outcome actions.
+          const { extractClassification, resolveOutcomeActions, actionToJobType } =
+            await import("../_shared/outcome-engine.ts");
+          classification = extractClassification(
+            worksheetSnapshot,
+            (normalized as any).call_variables ?? {},
+            (dispositionMapping as any)?.metadata ?? null,
+          );
+          const outcomeActions = resolveOutcomeActions({
+            caller_type: classification.caller_type as any,
+            call_reason: classification.call_reason as any,
+            disposition: normalized.disposition ?? null,
+            overrides:
+              ((dispositionMapping as any)?.metadata?.outcome_overrides as any) ?? null,
+          });
+          outcomeActionsLog = outcomeActions;
 
+          // 3) Resolve provider connection (only needed for CRM-bound actions).
+          const { data: conn } = route.provider_target
+            ? await supabase
+                .from("legal_connect_connections")
+                .select("id, provider, status")
+                .eq("client_id", route.client_id)
+                .eq("provider", route.provider_target)
+                .eq("status", "connected")
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle()
+            : { data: null };
 
-            // Pre-flight: require name + (email or phone). Mirrors adapter validation
-            // so we surface review-queue items instead of queuing dead jobs.
-            const hasName =
-              (leadInput.first_name ?? "").trim().length > 0 &&
-              (leadInput.last_name ?? "").trim().length > 0;
-            const hasContact =
-              !!(leadInput.email ?? "").toString().trim() ||
-              !!(leadInput.phone ?? "").toString().trim();
+          // 4) Resolve a base CRM payload (Grow lead resolver covers create_intake
+          //    for clio_grow today; other providers fall back to normalized fields).
+          const { data: mappingRows } = await supabase
+            .from("legal_connect_call_variable_mappings")
+            .select("variable_name, source_location, default_value, provider_field_path, required")
+            .eq("client_id", route.client_id);
+          const { resolveGrowLead } = await import("../_shared/resolve-grow-lead.ts");
+          const resolvedLead = resolveGrowLead(
+            normalized as any,
+            worksheetSnapshot,
+            (mappingRows ?? []) as any,
+          );
+          const basePayload = {
+            first_name: resolvedLead.first_name,
+            last_name: resolvedLead.last_name,
+            email: resolvedLead.email || null,
+            phone: resolvedLead.phone || null,
+            message: resolvedLead.message,
+            referring_url: resolvedLead.referring_url,
+            source: resolvedLead.source,
+            disposition: normalized.disposition ?? null,
+            ani: normalized.ani ?? null,
+            dnis: normalized.dnis ?? null,
+            campaign_name: normalized.campaign_name ?? null,
+            agent_username: (normalized as any).agent_username ?? null,
+            classification,
+          };
 
-            // Lookup an active Clio Grow connection for this client.
-            const { data: conn } = await supabase
-              .from("legal_connect_connections")
-              .select("id")
-              .eq("client_id", route.client_id)
-              .eq("provider", "clio_grow")
-              .eq("status", "connected")
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
+          // 5) Enqueue one job per outcome action.
+          for (const oa of outcomeActions) {
+            const mapping = actionToJobType(oa.type, route.provider_target);
+            if (!mapping) {
+              // no_writeback or unmappable — record skip on the event log.
+              if (!producerSkipReason) producerSkipReason = `outcome:${oa.type}`;
+              continue;
+            }
 
-            if (!conn?.id) {
+            // CRM-bound actions need a connection; email-only does not.
+            if (mapping.provider !== "post_call_email" && !conn?.id) {
               producerSkipReason = "no_connection";
               await supabase.from("legal_connect_review_queue").insert({
                 organization_id: route.organization_id,
                 client_id: route.client_id,
-                provider: "clio_grow",
+                provider: route.provider_target,
                 review_type: "no_connection",
-                title: "Clio Grow not connected",
-                description: "Five9 disposition asked to create a Grow lead, but no active Clio Grow inbox is connected for this client.",
+                title: `${route.provider_target} not connected`,
+                description: `Outcome ${oa.type} requires an active ${route.provider_target} connection.`,
                 recommended_action: "connect_provider",
-                action_payload: { lead: leadInput, correlation_id: normalized.correlation_id },
+                action_payload: { outcome: oa, payload: basePayload, correlation_id: normalized.correlation_id },
                 status: "pending",
               });
-            } else if (!hasName || !hasContact) {
-              producerSkipReason = "validation";
-              await supabase.from("legal_connect_review_queue").insert({
-                organization_id: route.organization_id,
-                client_id: route.client_id,
-                provider: "clio_grow",
-                review_type: "validation_failure",
-                title: !hasName ? "Missing caller name" : "Missing email and phone",
-                description: !hasName
-                  ? "Cannot create a Grow lead without first_name and last_name on the call."
-                  : "Cannot create a Grow lead without at least one of email or phone.",
-                recommended_action: "fix_mapping",
-                action_payload: { lead: leadInput, correlation_id: normalized.correlation_id },
-                status: "pending",
-              });
-            } else {
-              const idemKey = `clio_grow:lead.create:${normalized.correlation_id}`;
-              const { data: created, error: jobErr } = await supabase
-                .from("legal_connect_sync_jobs")
-                .insert({
+              continue;
+            }
+
+            // Validation guard for create_intake on Grow.
+            if (mapping.provider === "clio_grow" && mapping.job_type === "lead.create") {
+              const hasName =
+                (basePayload.first_name ?? "").trim().length > 0 &&
+                (basePayload.last_name ?? "").trim().length > 0;
+              const hasContact = !!basePayload.email || !!basePayload.phone;
+              if (!hasName || !hasContact) {
+                producerSkipReason = "validation";
+                await supabase.from("legal_connect_review_queue").insert({
                   organization_id: route.organization_id,
                   client_id: route.client_id,
                   provider: "clio_grow",
-                  connection_id: conn.id,
-                  job_type: "lead.create",
-                  direction: "outbound",
-                  priority: 50,
-                  idempotency_key: idemKey,
-                  correlation_id: normalized.correlation_id,
-                  status: "queued",
-                  input_payload: leadInput,
-                  next_attempt_at: new Date().toISOString(),
-                })
-                .select("id")
-                .single();
-              if (jobErr) {
-                // Most common cause: duplicate idempotency_key on event replay.
-                producerSkipReason = "duplicate_event";
-                console.warn("[five9-main] clio_grow sync_job insert:", jobErr.message);
-              } else if (created?.id) {
-                syncJobsCreated.push(created.id);
+                  review_type: "validation_failure",
+                  title: !hasName ? "Missing caller name" : "Missing email and phone",
+                  description: !hasName
+                    ? "Cannot create a Grow lead without first_name and last_name on the call."
+                    : "Cannot create a Grow lead without at least one of email or phone.",
+                  recommended_action: "fix_mapping",
+                  action_payload: { lead: basePayload, correlation_id: normalized.correlation_id },
+                  status: "pending",
+                });
+                continue;
               }
             }
-          } catch (producerErr) {
-            producerSkipReason = "producer_error";
-            console.error("[five9-main] clio_grow producer error:", producerErr);
+
+            const idemKey = `${mapping.provider}:${mapping.job_type}:${normalized.correlation_id}`;
+            const { data: created, error: jobErr } = await supabase
+              .from("legal_connect_sync_jobs")
+              .insert({
+                organization_id: route.organization_id,
+                client_id: route.client_id,
+                provider: mapping.provider,
+                connection_id: mapping.provider === "post_call_email" ? null : conn?.id ?? null,
+                job_type: mapping.job_type,
+                direction: "outbound",
+                priority: 50,
+                idempotency_key: idemKey,
+                correlation_id: normalized.correlation_id,
+                status: "queued",
+                input_payload: { ...basePayload, outcome: oa },
+                next_attempt_at: new Date().toISOString(),
+              })
+              .select("id")
+              .single();
+            if (jobErr) {
+              producerSkipReason = "duplicate_event";
+              console.warn(`[five9-main] sync_job insert (${mapping.provider}):`, jobErr.message);
+            } else if (created?.id) {
+              syncJobsCreated.push(created.id);
+            }
           }
+        } catch (producerErr) {
+          producerSkipReason = "producer_error";
+          console.error("[five9-main] outcome producer error:", producerErr);
         }
       }
 
