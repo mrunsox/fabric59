@@ -111,4 +111,4 @@ export const GA_READINESS_CHECKLIST: GAChecklistSection[] = [
       { id: "retention-documented", label: "Data retention and access basics documented" },
     ],
   },
-] as const;
+];
