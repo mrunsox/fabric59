@@ -684,6 +684,9 @@ export default function LegalConnectReportsPage() {
               </CardContent>
             </Card>
           </TabsContent>
+          <TabsContent value="digests">
+            <DigestPanel orgId={organization?.id} />
+          </TabsContent>
         </Tabs>
       </div>
     </>
