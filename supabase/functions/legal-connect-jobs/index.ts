@@ -1,5 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.93.3";
 import { resolveLegacyConnection } from "../_shared/legacy-config-bridge.ts";
+import {
+  classifyAdapterError,
+  runAdapter,
+  type AdapterFailureKind,
+  type AdapterResult,
+} from "../_shared/legal-job-adapters.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -239,6 +245,52 @@ async function executeClioJob(
     return { status: "succeeded", output: { activity_id: res.data?.data?.id } };
   }
 
+  if (jobType === "task.create") {
+    const due = input.due_at || input.due_date || new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/tasks.json`, authHeaders, {
+      data: {
+        name: input.name || input.subject || "Five9 follow-up",
+        description: input.description || input.body || "",
+        due_at: due,
+        priority: input.priority || "Normal",
+        ...(input.matter_id ? { matter: { id: Number(input.matter_id) } } : {}),
+        ...(input.assignee_id ? { assignee: { id: Number(input.assignee_id), type: "User" } } : {}),
+      },
+    });
+    if (!res.ok) throw new Error(`Clio task create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { task_id: res.data?.data?.id } };
+  }
+
+  if (jobType === "note.create") {
+    // Alias to communication.create with PhoneCall body
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/communications.json`, authHeaders, {
+      data: {
+        type: "PhoneCall",
+        subject: input.subject || "Five9 Phone Call note",
+        body: input.body || input.content || input.note || "",
+        date: new Date().toISOString(),
+        received_at: new Date().toISOString(),
+        ...(input.contact_id ? { senders: [{ id: Number(input.contact_id), type: "Contact" }] } : {}),
+        ...(input.matter_id ? { matter: { id: Number(input.matter_id) } } : {}),
+      },
+    });
+    if (!res.ok) throw new Error(`Clio note create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { note_id: res.data?.data?.id } };
+  }
+
+  if (jobType === "contact.update") {
+    const contactId = input.contact_id;
+    if (!contactId) throw new Error("validation: contact_id required for contact.update");
+    const patch: any = { data: {} };
+    if (input.first_name) patch.data.first_name = input.first_name;
+    if (input.last_name) patch.data.last_name = input.last_name;
+    if (input.email) patch.data.email_addresses = [{ name: "Work", address: input.email, default_email: true }];
+    if (input.phone) patch.data.phone_numbers = [{ name: "Work", number: normalizePhone(input.phone), default_number: true }];
+    const res = await apiFetchWithRetry("PATCH", `${baseUrl}/contacts/${contactId}.json`, authHeaders, patch);
+    if (!res.ok) throw new Error(`Clio contact update failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { contact_id: res.data?.data?.id } };
+  }
+
   throw new Error(`Unsupported Clio job type: ${jobType}`);
 }
 
@@ -310,6 +362,35 @@ async function executeMyCaseJob(
     const res = await apiFetchWithRetry("POST", `${baseUrl}/notes`, authHeaders, notePayload);
     if (!res.ok) throw new Error(`MyCase note create failed [${res.status}]: ${JSON.stringify(res.data)}`);
     return { status: "succeeded", output: { note_id: res.data?.note?.id } };
+  }
+
+  if (jobType === "task.create") {
+    const taskPayload: any = {
+      task: {
+        name: input.name || input.subject || "Five9 follow-up",
+        description: input.description || input.body || "",
+        due_date: input.due_date || input.due_at || new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 10),
+        priority: input.priority || "normal",
+      },
+    };
+    if (input.case_id || input.matter_id) taskPayload.task.case_id = Number(input.case_id || input.matter_id);
+    else if (input.contact_id) taskPayload.task.contact_id = Number(input.contact_id);
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/tasks`, authHeaders, taskPayload);
+    if (!res.ok) throw new Error(`MyCase task create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { task_id: res.data?.task?.id } };
+  }
+
+  if (jobType === "contact.update") {
+    const contactId = input.contact_id;
+    if (!contactId) throw new Error("validation: contact_id required for contact.update");
+    const patch: any = { contact: {} };
+    if (input.first_name) patch.contact.first_name = input.first_name;
+    if (input.last_name) patch.contact.last_name = input.last_name;
+    if (input.email) patch.contact.email = input.email;
+    if (input.phone) patch.contact.phone = normalizePhone(input.phone);
+    const res = await apiFetchWithRetry("PATCH", `${baseUrl}/contacts/${contactId}`, authHeaders, patch);
+    if (!res.ok) throw new Error(`MyCase contact update failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { contact_id: res.data?.contact?.id } };
   }
 
   throw new Error(`Unsupported MyCase job type: ${jobType}`);
@@ -611,8 +692,13 @@ Deno.serve(async (req) => {
             processed++;
           } catch (procErr) {
             const errMsg = procErr instanceof Error ? procErr.message : "Unknown error";
-            const classification = classifyFailure(errMsg);
-            const isRetryable = !NON_RETRYABLE.has(classification);
+            // Phase 3 — also run the adapter classifier for legal CRM providers; merge the
+            // structured "kind" into failure_classification so dashboard filtering aligns
+            // with the adapter contract (auth, rate_limited, validation, upstream_5xx, …).
+            const adapterClass = classifyAdapterError(errMsg);
+            const legalProvider = ["clio", "clio_grow", "mycase", "smokeball"].includes((job.provider || "").toLowerCase());
+            const classification = legalProvider ? `adapter:${adapterClass.kind}` : classifyFailure(errMsg);
+            const isRetryable = legalProvider ? adapterClass.retryable : !NON_RETRYABLE.has(classification);
             const newAttempt = job.attempt_count + 1;
 
             await supabaseAdmin.from("legal_connect_failure_classifications").insert({

@@ -131,8 +131,27 @@ export default function DeliveryDashboard() {
 
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [callerTypeFilter, setCallerTypeFilter] = useState<string>("all");
+  const [outcomeFilter, setOutcomeFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState<JobRow | null>(null);
+
+  // Phase 3 helpers — read classification + outcome metadata from the joined event.
+  const classificationFor = (j: JobRow) => {
+    const ev = j.correlation_id ? eventsByCorr.get(j.correlation_id) : null;
+    const ws = (ev?.worksheet_payload as any) ?? {};
+    const cls = (ev?.mapped_actions as any)?.classification ?? {};
+    return {
+      caller_type: ws.caller_type ?? cls.caller_type ?? null,
+      call_reason: ws.call_reason ?? cls.call_reason ?? null,
+      execution_mode:
+        (ev?.mapped_actions as any)?.execution_mode ?? (j.input_payload as any)?.execution_mode ?? "jobs",
+      outcome:
+        (j.input_payload as any)?.outcome?.type ??
+        ((ev?.mapped_actions as any)?.outcome_actions ?? [])[0]?.type ??
+        null,
+    };
+  };
 
   const load = async () => {
     if (!organization) return;
@@ -213,6 +232,11 @@ export default function DeliveryDashboard() {
     return jobs.filter((j) => {
       if (providerFilter !== "all" && j.provider !== providerFilter) return false;
       if (statusFilter !== "all" && j.status !== statusFilter) return false;
+      if (callerTypeFilter !== "all" || outcomeFilter !== "all") {
+        const meta = classificationFor(j);
+        if (callerTypeFilter !== "all" && meta.caller_type !== callerTypeFilter) return false;
+        if (outcomeFilter !== "all" && meta.outcome !== outcomeFilter) return false;
+      }
       if (search) {
         const q = search.toLowerCase();
         if (
@@ -224,7 +248,8 @@ export default function DeliveryDashboard() {
       }
       return true;
     });
-  }, [jobs, providerFilter, statusFilter, search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs, providerFilter, statusFilter, callerTypeFilter, outcomeFilter, search, eventsByCorr]);
 
   const counts = useMemo(() => {
     const c = { queued: 0, processing: 0, succeeded: 0, failed: 0, skipped: 0 };
@@ -309,6 +334,35 @@ export default function DeliveryDashboard() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={callerTypeFilter} onValueChange={setCallerTypeFilter}>
+              <SelectTrigger className="h-8 w-36 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All callers</SelectItem>
+                {["new_lead", "current_client", "former_client", "third_party", "unknown"].map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
+              <SelectTrigger className="h-8 w-44 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All outcomes</SelectItem>
+                {[
+                  "create_intake",
+                  "log_client_note",
+                  "create_followup_task",
+                  "update_contact_or_matter",
+                  "send_post_call_email",
+                  "no_writeback",
+                ].map((o) => (
+                  <SelectItem key={o} value={o}>{o}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="overflow-hidden rounded-md border border-border/60">
@@ -319,7 +373,9 @@ export default function DeliveryDashboard() {
                   <th className="text-left p-2 font-medium">Provider</th>
                   <th className="text-left p-2 font-medium">Job</th>
                   <th className="text-left p-2 font-medium">Correlation</th>
-                  <th className="text-left p-2 font-medium">Disposition</th>
+                  <th className="text-left p-2 font-medium">Caller</th>
+                  <th className="text-left p-2 font-medium">Outcome</th>
+                  <th className="text-left p-2 font-medium">Mode</th>
                   <th className="text-left p-2 font-medium">Attempts</th>
                   <th className="text-left p-2 font-medium">When</th>
                   <th className="w-8" />
@@ -328,17 +384,13 @@ export default function DeliveryDashboard() {
               <tbody>
                 {filteredJobs.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-6 text-center text-muted-foreground">
+                    <td colSpan={10} className="p-6 text-center text-muted-foreground">
                       No jobs match the current filters.
                     </td>
                   </tr>
                 )}
                 {filteredJobs.map((j) => {
-                  const ev = j.correlation_id ? eventsByCorr.get(j.correlation_id) : null;
-                  const dispo =
-                    (ev?.normalized_payload as any)?.disposition ??
-                    (ev?.mapped_actions as any)?.actions?.[0]?.payload?.disposition ??
-                    "—";
+                  const meta = classificationFor(j);
                   return (
                     <tr
                       key={j.id}
@@ -355,7 +407,22 @@ export default function DeliveryDashboard() {
                       <td className="p-2 font-mono text-[10px] text-muted-foreground">
                         {j.correlation_id?.slice(0, 16) ?? "—"}
                       </td>
-                      <td className="p-2 text-muted-foreground">{String(dispo).slice(0, 28)}</td>
+                      <td className="p-2 text-muted-foreground text-[11px]">
+                        {meta.caller_type ?? "—"}
+                        {meta.call_reason && (
+                          <div className="text-[10px] text-muted-foreground/70">
+                            {meta.call_reason}
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-2 text-muted-foreground text-[11px]">
+                        {meta.outcome ?? "—"}
+                      </td>
+                      <td className="p-2">
+                        <Badge variant="outline" className="text-[10px]">
+                          {meta.execution_mode}
+                        </Badge>
+                      </td>
                       <td className="p-2 text-muted-foreground">{j.attempt_count ?? 0}</td>
                       <td className="p-2 text-muted-foreground">{fmt(j.created_at)}</td>
                       <td className="p-2">
@@ -416,6 +483,25 @@ export default function DeliveryDashboard() {
                   </p>
                 )}
               </section>
+
+              {open && (() => {
+                const meta = classificationFor(open);
+                return (
+                  <section>
+                    <h4 className="font-semibold text-foreground mb-1.5">Classification &amp; outcome</h4>
+                    <dl className="grid grid-cols-2 gap-1 text-[11px]">
+                      <dt className="text-muted-foreground">Caller type</dt>
+                      <dd>{meta.caller_type ?? "—"}</dd>
+                      <dt className="text-muted-foreground">Call reason</dt>
+                      <dd>{meta.call_reason ?? "—"}</dd>
+                      <dt className="text-muted-foreground">Outcome action</dt>
+                      <dd>{meta.outcome ?? "—"}</dd>
+                      <dt className="text-muted-foreground">Execution mode</dt>
+                      <dd>{meta.execution_mode}</dd>
+                    </dl>
+                  </section>
+                );
+              })()}
 
               {openEvent && (
                 <section>
