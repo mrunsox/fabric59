@@ -24,6 +24,11 @@ interface Section {
 
 const SECTIONS: Section[] = [
   { id: "overview", label: "Overview", icon: BookOpen },
+  { id: "current-state", label: "Current implemented state", icon: CheckCircle2 },
+  { id: "remaining-ga", label: "What remains before broader GA", icon: Circle },
+  { id: "roadmap-alignment", label: "Roadmap alignment", icon: GitBranch },
+  { id: "next-phase", label: "Recommended next phase", icon: Target },
+  { id: "do-now", label: "What the team should do now", icon: ClipboardCheck },
   { id: "flowchart", label: "Architecture flowchart", icon: GitBranch },
   { id: "architecture", label: "Core architecture", icon: Layers },
   { id: "flow-types", label: "Flow types", icon: Workflow },
