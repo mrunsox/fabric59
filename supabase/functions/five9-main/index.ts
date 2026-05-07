@@ -964,9 +964,11 @@ serve(async (req) => {
                 organization_id: route.organization_id,
                 client_id: route.client_id,
                 provider: "clio_grow",
-                reason: "no_connection: no active Clio Grow inbox connected for this client",
-                payload: { lead: leadInput, route_id: route.id ?? null },
-                correlation_id: normalized.correlation_id,
+                review_type: "no_connection",
+                title: "Clio Grow not connected",
+                description: "Five9 disposition asked to create a Grow lead, but no active Clio Grow inbox is connected for this client.",
+                recommended_action: "connect_provider",
+                action_payload: { lead: leadInput, correlation_id: normalized.correlation_id },
                 status: "pending",
               });
             } else if (!hasName || !hasContact) {
@@ -975,11 +977,13 @@ serve(async (req) => {
                 organization_id: route.organization_id,
                 client_id: route.client_id,
                 provider: "clio_grow",
-                reason: !hasName
-                  ? "validation: missing first_name/last_name on call"
-                  : "validation: missing email and phone on call",
-                payload: { lead: leadInput, route_id: route.id ?? null },
-                correlation_id: normalized.correlation_id,
+                review_type: "validation_failure",
+                title: !hasName ? "Missing caller name" : "Missing email and phone",
+                description: !hasName
+                  ? "Cannot create a Grow lead without first_name and last_name on the call."
+                  : "Cannot create a Grow lead without at least one of email or phone.",
+                recommended_action: "fix_mapping",
+                action_payload: { lead: leadInput, correlation_id: normalized.correlation_id },
                 status: "pending",
               });
             } else {
