@@ -370,6 +370,7 @@ export default function DigestPanel({ orgId }: Props) {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Email</TableHead>
+                      <TableHead>Scope</TableHead>
                       <TableHead>Cohort</TableHead>
                       <TableHead>Cadence</TableHead>
                       <TableHead>Enabled</TableHead>
@@ -386,6 +387,15 @@ export default function DigestPanel({ orgId }: Props) {
                             <div className="text-[11px] text-muted-foreground">{s.recipient_name}</div>
                           )}
                         </TableCell>
+                        <TableCell className="text-xs">
+                          {s.tenant_id ? (
+                            <Badge variant="outline" className="font-normal">
+                              {tenantNameById.get(s.tenant_id) ?? "Tenant"}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">Org-wide</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-xs capitalize">{s.cohort.replace(/_/g, " ")}</TableCell>
                         <TableCell className="text-xs capitalize">{s.cadence}</TableCell>
                         <TableCell>
@@ -393,11 +403,13 @@ export default function DigestPanel({ orgId }: Props) {
                             checked={s.enabled}
                             onCheckedChange={(v) =>
                               upsert.mutate({
+                                id: s.id,
                                 recipient_email: s.recipient_email,
                                 recipient_name: s.recipient_name ?? undefined,
                                 cohort: s.cohort,
                                 cadence: s.cadence,
                                 enabled: v,
+                                tenant_id: s.tenant_id,
                               })
                             }
                           />
