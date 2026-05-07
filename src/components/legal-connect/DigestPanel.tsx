@@ -199,7 +199,7 @@ export default function DigestPanel({ orgId }: Props) {
                 </Button>
                 <Button
                   size="sm"
-                  onClick={() => send.mutate({ cadence, cohort })}
+                  onClick={() => send.mutate({ cadence, cohort, tenant_id: previewTenantId })}
                   disabled={send.isPending}
                 >
                   <Send className="h-3.5 w-3.5 mr-1.5" />
