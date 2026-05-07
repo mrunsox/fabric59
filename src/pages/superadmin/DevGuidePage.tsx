@@ -24,6 +24,12 @@ interface Section {
 }
 
 const SECTIONS: Section[] = [
+  { id: "qa-handoff-summary", label: "QA handoff", icon: ClipboardCheck },
+  { id: "qa-built-now", label: "Built and testable now", icon: CheckCircle2 },
+  { id: "qa-traceability", label: "QA traceability table", icon: ClipboardCheck },
+  { id: "qa-test-matrix", label: "What QA should test", icon: ClipboardCheck },
+  { id: "qa-deferred", label: "Known deferred / not primary", icon: Circle },
+  { id: "qa-regression", label: "High-risk regression areas", icon: ShieldCheck },
   { id: "overview", label: "Overview", icon: BookOpen },
   { id: "current-state", label: "Current implemented state", icon: CheckCircle2 },
   { id: "remaining-ga", label: "What remains before broader GA", icon: Circle },
@@ -51,7 +57,7 @@ const SECTIONS: Section[] = [
   { id: "phase9", label: "Automated Delivery & Escalation (Phase 9)", icon: Activity },
   { id: "phase10", label: "External Ack, Per-Tenant Digests (Phase 10)", icon: Activity },
   { id: "phase11", label: "Compliance, Retention & Audit (Phase 11)", icon: Activity },
-  { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
+  { id: "qa-pr1-baseline", label: "PR #1 QA baseline (May 2026)", icon: ClipboardCheck },
 ];
 
 function SectionHeader({ id, title, kicker }: { id: string; title: string; kicker?: string }) {
@@ -143,6 +149,291 @@ export default function DevGuidePage() {
 
         {/* Content */}
         <div className="max-w-3xl space-y-12">
+          {/* ============================================================
+              QA HANDOFF — top-of-page documentation block
+              Documentation only. No runtime / DB / edge / outcome / job /
+              provider / rollout logic was modified to produce these sections.
+              ============================================================ */}
+          <section>
+            <SectionHeader id="qa-handoff-summary" title="QA handoff" kicker="Read this first" />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-2">
+                <div className="text-xs uppercase tracking-wider text-primary font-medium">QA handoff · documentation pass</div>
+                <p>
+                  Legal Connect is a Five9-native integration layer that turns inbound and outbound
+                  Five9 call events into structured outcomes inside legal CRMs (Clio, MyCase and similar).
+                  Agents work entirely in the Five9 Desktop; this platform is the configuration,
+                  routing, execution, health and rollout surface around it.
+                </p>
+                <p>
+                  This section gives QA a single jumping-off point. The phase-by-phase sections
+                  further down remain the deep technical reference.
+                </p>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <Card>
+                  <div className="font-semibold text-foreground mb-2">Major systems implemented</div>
+                  <ul className="text-sm space-y-1 text-foreground/90">
+                    <li>· Core ingestion, mappings, constants, worksheet values, payload preview, event log, sync jobs</li>
+                    <li>· Outcome engine (caller_type + call_reason → provider/email/no-writeback)</li>
+                    <li>· Readiness, safe mode, go-live checklist, guided tests, quick-start guides, onboarding templates</li>
+                    <li>· Rollout controls: design-partner flag, rollout status, pilot checklist/templates/approval</li>
+                    <li>· Health & ops: rate limits, tenant health, alerts, recurring issues, reports, exports, digests, escalation sinks, external ack</li>
+                    <li>· GA hardening: shared GA checklist, runbook, release notes, feedback capture, per-tenant digests</li>
+                    <li>· Compliance: retention, secret rotation, webhook validation, audit overview (Phase 11)</li>
+                  </ul>
+                </Card>
+                <Card>
+                  <div className="font-semibold text-foreground mb-2">QA is expected to validate</div>
+                  <ul className="text-sm space-y-1 text-foreground/90">
+                    <li>· Surfaces load with correct data and respect tenant boundaries</li>
+                    <li>· Mappings, constants and worksheet values resolve in payload preview and at runtime</li>
+                    <li>· Outcome engine routes to the expected provider / email / skip branch</li>
+                    <li>· Readiness, pilot and rollout state transitions display and gate correctly</li>
+                    <li>· Health, alerts, recurring issues, digests and external acks behave as documented</li>
+                    <li>· No cross-tenant leakage in reports, digests, callbacks or filters</li>
+                  </ul>
+                </Card>
+                <div className="md:col-span-2"><Card>
+                  <div className="font-semibold text-foreground mb-2">Out of scope for this QA pass</div>
+                  <ul className="text-sm space-y-1 text-foreground/90">
+                    <li>· Re-deriving the build plan or roadmap</li>
+                    <li>· Live-tenant traffic threshold tuning (needs real volume)</li>
+                    <li>· Authoring new release-note copy (ongoing process work)</li>
+                    <li>· Operator process discipline outside the UI (training / runbook practice)</li>
+                  </ul>
+                </Card></div>
+              </div>
+            </div>
+          </section>
+
+          {/* Built and testable now */}
+          <section>
+            <SectionHeader id="qa-built-now" title="Built and testable now" kicker="By functional area" />
+            <div className="space-y-3 text-sm text-foreground/90 leading-relaxed">
+              {[
+                {
+                  title: "Core ingestion and execution",
+                  exists: "Five9 event normalization, mapping resolution, constants, worksheet values, payload preview, event log, sync jobs, provider jobs path, email-only outcomes.",
+                  works: "Inbound Five9 events appear in the event log; mappings render in payload preview; sync jobs queue, run and surface result state; email-only outcomes deliver without writeback.",
+                  verify: "Event ingestion is visible end-to-end; preview matches what the worker actually sends; failed jobs are visible with class + retry context.",
+                },
+                {
+                  title: "Outcome logic",
+                  exists: "Caller classification (caller_type, call_reason), outcome routing matrix, provider/action routing, execution_mode flag.",
+                  works: "Each (caller_type, call_reason) selects an outcome; outcome maps cleanly to provider job, email-only or no-writeback; execution_mode toggles legacy inline vs job-based path.",
+                  verify: "Spot-check matrix entries against the visible execution path; confirm execution_mode toggle changes behavior in event log only, not classification.",
+                },
+                {
+                  title: "Admin setup and readiness",
+                  exists: "Readiness tab, safe mode, go-live checklist, guided tests, quick-start guides, onboarding templates, readiness gating.",
+                  works: "Readiness reflects current tenant state; guided test results update checklist items where intended; safe mode visibly gates risky actions.",
+                  verify: "Toggling safe mode and running guided tests produces the right checklist movement and gate behavior.",
+                },
+                {
+                  title: "Rollout controls",
+                  exists: "Design-partner flag, rollout_status enum, pilot checklist, pilot templates, pilot approval controls, status transitions.",
+                  works: "Design-partner-only controls are gated; rollout status transitions through approve / hold / blocked correctly.",
+                  verify: "Non-design-partner users do not see gated controls; transitions persist and display in the superadmin ops view.",
+                },
+                {
+                  title: "Health and operations",
+                  exists: "Per-tenant rate limits, tenant health, alerts, recurring issues, reports, exports, digests, escalation sinks, issue review state, external ack flow.",
+                  works: "Rate-limit hits surface in alerts; recurring issues roll up; digests preview/send/history work; external acks update issue review state.",
+                  verify: "Open/ack/resolve an alert; review state persists; preview and send a digest scoped to one tenant; confirm external ack updates only the targeted issue.",
+                },
+                {
+                  title: "GA and launch hardening",
+                  exists: "Shared per-tenant GA checklist, go-live / rollback runbook panel, release notes, feedback capture, per-tenant digests, routing/escalation rules, compliance (retention, secret rotation, webhook validation, audit overview).",
+                  works: "GA checklist persists; runbook is visible from readiness; feedback button visibility follows gating; compliance panel shows retention/rotation/webhook-failure data.",
+                  verify: "Complete GA checklist items; trigger a feedback entry; open compliance panel and verify rotations + webhook failure rows render with no cross-tenant leakage.",
+                },
+              ].map((g) => (
+                <Card key={g.title}>
+                  <div className="font-semibold text-foreground mb-1">{g.title}</div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div><span className="text-foreground font-medium">Exists:</span> {g.exists}</div>
+                    <div><span className="text-foreground font-medium">Should visibly work:</span> {g.works}</div>
+                    <div><span className="text-foreground font-medium">QA verifies:</span> {g.verify}</div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* QA traceability table */}
+          <section>
+            <SectionHeader id="qa-traceability" title="QA traceability table" kicker="Area → surface → validation" />
+            <Card>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border/60">
+                    <tr>
+                      <th className="py-2 pr-3">Area</th>
+                      <th className="py-2 pr-3">Built now</th>
+                      <th className="py-2 pr-3">QA validates</th>
+                      <th className="py-2 pr-3">Main page / panel</th>
+                      <th className="py-2 pr-3">High-risk regression</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40 text-foreground/90">
+                    {[
+                      ["Ingestion & event log", "Normalized events, sync jobs", "Events appear, status accurate", "Legal Connect → Delivery / Event log", "Yes"],
+                      ["Mappings + constants + worksheet", "Resolution + payload preview", "Preview matches runtime payload", "Mapping Builder, Payload Preview", "Yes"],
+                      ["Outcome engine", "caller_type + call_reason matrix", "Correct provider/email/skip branch", "Outcomes config, Delivery dashboard", "Yes"],
+                      ["Provider execution", "Job worker, email-only path", "Job runs, result captured", "Delivery dashboard, detail drawer", "Yes"],
+                      ["Readiness & safe mode", "Checklist + gating", "Gating + checklist transitions", "Tenant → Readiness tab", "Med"],
+                      ["Guided tests / guides", "Templated runs", "Result updates checklist", "Readiness → Guided tests", "Low"],
+                      ["Rollout & pilot approval", "Flags, status, approval", "Gating + transitions display", "Superadmin ops view", "Med"],
+                      ["Rate limits & tenant health", "Per-tenant limits, health rollup", "Limits surface, health accurate", "Health / Reports", "Yes"],
+                      ["Alerts & recurring issues", "Open/ack/resolve, review state", "State persists, no leakage", "Reports → Recurring issues", "Yes"],
+                      ["Digests & escalations", "Preview/send/history, sinks", "Tenant-scoped, sinks correct", "Reports → Digest panel", "Yes"],
+                      ["External ack flow", "Token + signature, replay-safe", "Ack updates only target issue", "External ack callback", "Yes"],
+                      ["GA checklist & runbook", "Shared per-tenant checklist", "Items persist; runbook visible", "Readiness → GA / Runbook", "Med"],
+                      ["Feedback & release notes", "Entries, What's New drawer", "Visibility follows gating", "Header drawer / Feedback", "Low"],
+                      ["Compliance (Phase 11)", "Retention, rotation, webhook fails, audit", "Panel renders, scoped to org", "Reports → Compliance tab", "Med"],
+                    ].map((row, i) => (
+                      <tr key={i}>
+                        {row.map((cell, j) => (
+                          <td key={j} className="py-2 pr-3 align-top">{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-3">
+                Use this table to map a QA finding back to the area, surface and risk band it belongs to.
+              </p>
+            </Card>
+          </section>
+
+          {/* What QA should test */}
+          <section>
+            <SectionHeader id="qa-test-matrix" title="What QA should test" kicker="Practical checklists" />
+            <div className="grid gap-3 md:grid-cols-2 text-sm text-foreground/90 leading-relaxed">
+              {[
+                {
+                  title: "Functional QA",
+                  items: [
+                    "Connection setup surfaces load correctly",
+                    "Mappings save correctly and persist after reload",
+                    "Constants resolve in payload preview",
+                    "Worksheet values resolve in payload preview and runtime snapshots",
+                    "Outcome engine routes to the expected provider/action",
+                    "Email-only path works where configured",
+                    "Test runs are clearly marked and do not look like live outcomes unless intended",
+                    "Dashboard rows show expected event / job / review / redacted payload detail",
+                  ],
+                },
+                {
+                  title: "Rollout & readiness QA",
+                  items: [
+                    "Readiness state updates as expected",
+                    "Guided tests affect checklist state where intended",
+                    "Pilot approval controls work correctly",
+                    "Blocked / hold / approved states are clear",
+                    "Rollout status transitions display correctly",
+                    "Runbook panels and readiness controls are visible in the right places",
+                  ],
+                },
+                {
+                  title: "Operations QA",
+                  items: [
+                    "Rate limits surface correctly",
+                    "Health reporting loads",
+                    "Alerts open / ack / resolve correctly",
+                    "Recurring issue review state persists",
+                    "Digests preview / send / history behave correctly",
+                    "Escalation sink configuration behaves correctly in UI",
+                    "External ack updates issue state correctly",
+                    "Per-tenant digests stay tenant-specific",
+                  ],
+                },
+                {
+                  title: "Security / boundary QA",
+                  items: [
+                    "Non-design-partner users do not see design-partner-only controls where gated",
+                    "Feedback button visibility follows gating rules",
+                    "Per-tenant data is not leaking across tenant/report views",
+                    "External ack links/callbacks do not mutate unrelated issue state",
+                    "Filters and exports respect the scoped tenant/org context",
+                  ],
+                },
+                {
+                  title: "Regression QA",
+                  items: [
+                    "DeliveryDashboard still works after later phases",
+                    "Older failure classifications still appear correctly alongside canonical ones",
+                    "Historical tabs / pages still render after Phase 7/8/9/10/11 additions",
+                    "Admin navigation remains coherent",
+                  ],
+                },
+              ].map((g) => (
+                <Card key={g.title}>
+                  <div className="font-semibold text-foreground mb-2">{g.title}</div>
+                  <ul className="space-y-1 text-sm">
+                    {g.items.map((it, i) => (
+                      <li key={i} className="flex gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-1" />
+                        <span>{it}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* Known deferred */}
+          <section>
+            <SectionHeader id="qa-deferred" title="Known deferred or not primary for this QA pass" kicker="Not broken — just not the focus" />
+            <Card>
+              <ul className="space-y-2 text-sm text-foreground/90">
+                {[
+                  "Broader GA requires real-tenant proof accumulated over time.",
+                  "Some thresholds (rate limits, alert sensitivity) may still need tuning from live traffic.",
+                  "Release-note content is ongoing process work, not a build gap.",
+                  "Operator process discipline still matters in addition to UI correctness.",
+                  "Anything intentionally lightweight is labeled as such in its area; treat it as documented, not as a defect.",
+                ].map((it, i) => (
+                  <li key={i} className="flex gap-2">
+                    <Circle className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-1" />
+                    <span>{it}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </section>
+
+          {/* High-risk regression areas */}
+          <section>
+            <SectionHeader id="qa-regression" title="High-risk regression areas" kicker="Most likely breakpoints" />
+            <Card>
+              <ul className="space-y-2 text-sm text-foreground/90">
+                {[
+                  "Payload resolution across mapping + constants + worksheet values.",
+                  "Outcome routing and provider/action branching.",
+                  "DeliveryDashboard joins and detail drawer.",
+                  "Readiness + pilot + GA checklist state interactions.",
+                  "Rate limits + alerts + recurring issue rollups.",
+                  "Digest automation and escalation routing.",
+                  "External ack flow (replay protection, signature, single-issue scope).",
+                  "Tenant-boundary isolation in reports, digests and callbacks.",
+                ].map((it, i) => (
+                  <li key={i} className="flex gap-2">
+                    <ShieldCheck className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-1" />
+                    <span>{it}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-[11px] text-muted-foreground mt-3">
+                If a single area in this list regresses, treat it as release-blocking until reproduced or cleared.
+              </p>
+            </Card>
+          </section>
+
           {/* Overview */}
           <section>
             <SectionHeader id="overview" title="Overview" kicker="What we're building" />
@@ -937,9 +1228,9 @@ export default function DevGuidePage() {
 
           <section>
             <SectionHeader
-              id="qa-handoff"
-              title="QA & Implementation Handoff – Fabric59 (May 2026)"
-              kicker="Baseline · PR #1 · Remaining work"
+              id="qa-pr1-baseline"
+              title="PR #1 QA baseline (May 2026)"
+              kicker="Historical baseline · superseded by QA handoff sections above"
             />
             <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
               <Card>
