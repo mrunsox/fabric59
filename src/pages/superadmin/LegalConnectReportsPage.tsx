@@ -245,10 +245,22 @@ export default function LegalConnectReportsPage() {
         {/* Summary cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <SummaryCard label="Tenants" value={data?.totals.tenants ?? 0} />
-          <SummaryCard label="Jobs" value={data?.totals.jobs ?? 0} hint={WINDOW_LABELS[window]} />
+          <SummaryCard
+            label="Jobs"
+            value={data?.totals.jobs ?? 0}
+            hint={deltas ? `${deltas.total_jobs.delta >= 0 ? "+" : ""}${deltas.total_jobs.delta} vs prev (${deltas.total_jobs.pct >= 0 ? "+" : ""}${deltas.total_jobs.pct}%)` : WINDOW_LABELS[window]}
+          />
           <SummaryCard label="Succeeded" value={data?.totals.succeeded ?? 0} />
-          <SummaryCard label="Failed" value={data?.totals.failed ?? 0} />
-          <SummaryCard label="Open / ack alerts" value={data?.totals.open_alerts ?? 0} />
+          <SummaryCard
+            label="Failed"
+            value={data?.totals.failed ?? 0}
+            hint={deltas ? `${deltas.failed_jobs.delta >= 0 ? "+" : ""}${deltas.failed_jobs.delta} vs prev` : undefined}
+          />
+          <SummaryCard
+            label="Open / ack alerts"
+            value={data?.totals.open_alerts ?? 0}
+            hint={deltas ? `${deltas.open_alerts.delta >= 0 ? "+" : ""}${deltas.open_alerts.delta} vs prev` : undefined}
+          />
         </div>
 
         <Tabs defaultValue="tenants" className="space-y-4">
