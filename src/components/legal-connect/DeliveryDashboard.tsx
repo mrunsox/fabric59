@@ -372,6 +372,16 @@ export default function DeliveryDashboard() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={testFilter} onValueChange={setTestFilter}>
+              <SelectTrigger className="h-8 w-36 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="exclude">Hide test runs</SelectItem>
+                <SelectItem value="all">Include test runs</SelectItem>
+                <SelectItem value="only">Test runs only</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="overflow-hidden rounded-md border border-border/60">
