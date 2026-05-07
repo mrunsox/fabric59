@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
-  ShieldCheck, Search, PenLine, Mail, CheckCircle2, XCircle, Loader2, RefreshCw, AlertTriangle,
+  ShieldCheck, Search, PenLine, Mail, CheckCircle2, XCircle, Loader2, RefreshCw, AlertTriangle, BookOpen,
 } from "lucide-react";
+import { openGuideDrawer } from "./GuideDrawer";
+import { SECTION } from "@/data/legal-connect-guides";
 import { cn } from "@/lib/utils";
 import {
   useLegalConnections, useLegalTestHistory, useRunTest,
