@@ -183,6 +183,8 @@ export default function DesignPartnersPage() {
             )}
           </CardContent>
         </Card>
+
+        <TenantHealthPanel organizationId={organization?.id} />
       </div>
     </>
   );
