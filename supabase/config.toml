@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.compliance-export]
 verify_jwt = false
+
+[functions.legal-connect-digest]
+verify_jwt = false
