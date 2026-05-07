@@ -189,6 +189,7 @@ const App = () => (
                 <Route index element={<SuperadminOverviewPage />} />
                 <Route path="workspaces" element={<OrganizationsOverviewPage />} />
                 <Route path="users" element={<UsersManagementPage />} />
+                <Route path="design-partners" element={<DesignPartnersPage />} />
                 <Route path="vault" element={<FeatureVaultPage />} />
                 <Route path="vault/:id" element={<FeatureVaultDetailPage />} />
                 <Route path="exports" element={<SourceExportsPage />} />
