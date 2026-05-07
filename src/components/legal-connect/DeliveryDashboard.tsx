@@ -253,6 +253,10 @@ export default function DeliveryDashboard() {
         if (callerTypeFilter !== "all" && meta.caller_type !== callerTypeFilter) return false;
         if (outcomeFilter !== "all" && meta.outcome !== outcomeFilter) return false;
       }
+      if (errorClassFilter !== "all") {
+        const k = errorClassOf(j);
+        if (k !== errorClassFilter) return false;
+      }
       if (search) {
         const q = search.toLowerCase();
         if (
@@ -265,7 +269,7 @@ export default function DeliveryDashboard() {
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobs, providerFilter, statusFilter, callerTypeFilter, outcomeFilter, testFilter, search, eventsByCorr]);
+  }, [jobs, providerFilter, statusFilter, callerTypeFilter, outcomeFilter, testFilter, errorClassFilter, search, eventsByCorr]);
 
   const counts = useMemo(() => {
     const c = { queued: 0, processing: 0, succeeded: 0, failed: 0, skipped: 0 };
