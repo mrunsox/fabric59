@@ -117,6 +117,13 @@ export default function ClientLegalConnectPage() {
                 onComplete={() => navigate(`/admin/clients/${clientId}/legal-connect`)}
               />
             )}
+            {provider === "clio_grow" && (
+              <ClioGrowConnectWizard
+                clientId={clientId!}
+                organizationId={orgId}
+                onComplete={() => navigate(`/admin/clients/${clientId}/legal-connect`)}
+              />
+            )}
             {provider === "smokeball" && (
               <SmokeballConnectWizard
                 clientId={clientId!}
@@ -124,7 +131,7 @@ export default function ClientLegalConnectPage() {
                 onComplete={() => navigate(`/admin/clients/${clientId}/legal-connect`)}
               />
             )}
-            {!["five9", "clio", "mycase", "smokeball"].includes(provider) && (
+            {!["five9", "clio", "clio_grow", "mycase", "smokeball"].includes(provider) && (
               <div className="text-sm text-muted-foreground">Unknown provider: {provider}</div>
             )}
           </div>
