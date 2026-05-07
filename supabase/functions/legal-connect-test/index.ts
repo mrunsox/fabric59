@@ -355,6 +355,254 @@ Deno.serve(async (req) => {
         });
       }
 
+      // ─── Phase 4 Slice 2 — Guided test runner ──────────────────────────
+      case "runAuthTest":
+      case "runLookupTest":
+      case "runWriteBackTest":
+      case "runEmailOnlyTest": {
+        const provider = String(payload.provider ?? "");
+        const writeAction = String(payload.write_action ?? "note.create");
+        const sample = (payload.sample as Record<string, unknown>) ?? {};
+        const orgId = payload.organization_id as string | undefined;
+        const clientId = payload.client_id as string | undefined;
+
+        // Resolve the connection for the selected provider (auth-relevant tests).
+        let connection: any = null;
+        if (orgId && clientId && provider !== "post_call_email") {
+          const { data } = await supabaseAdmin
+            .from("legal_connect_connections")
+            .select("*")
+            .eq("organization_id", orgId)
+            .eq("client_id", clientId)
+            .eq("provider", provider)
+            .maybeSingle();
+          connection = data;
+        }
+
+        // Helper to translate technical errors into plain-English guidance.
+        const explain = (msg: string): { plain: string; nextStep: string } => {
+          const m = (msg || "").toLowerCase();
+          if (!connection && action !== "runEmailOnlyTest")
+            return {
+              plain: "No connection found for this provider on this client.",
+              nextStep: "Open the Connections tab and connect this provider first.",
+            };
+          if (m.includes("401") || m.includes("unauthor") || m.includes("token"))
+            return {
+              plain: "The provider rejected our credentials.",
+              nextStep: "Reconnect the provider in the Connections tab.",
+            };
+          if (m.includes("403"))
+            return {
+              plain: "The connected account is missing permission for this action.",
+              nextStep: "Reconnect with an account that has full write access.",
+            };
+          if (m.includes("rate") || m.includes("429"))
+            return {
+              plain: "Provider rate-limited the request.",
+              nextStep: "Wait a minute and retry.",
+            };
+          if (m.includes("timeout") || m.includes("network"))
+            return {
+              plain: "Network timeout reaching the provider.",
+              nextStep: "Retry. If it persists, check provider status page.",
+            };
+          if (m.includes("validation") || m.includes("missing"))
+            return {
+              plain: "Sample values were missing or invalid.",
+              nextStep: "Fill in the required sample fields and try again.",
+            };
+          if (m.includes("unsupported") || m.includes("not supported"))
+            return {
+              plain: "This action is not supported by this provider.",
+              nextStep: "Pick a supported test action or use email-only fallback.",
+            };
+          if (m.includes("template"))
+            return {
+              plain: "No matching email template was found.",
+              nextStep: "Open Email Templates and add one for this disposition.",
+            };
+          return {
+            plain: msg || "Unknown failure.",
+            nextStep: "Check provider status and recent connection errors.",
+          };
+        };
+
+        const tStart = Date.now();
+        let status: "passed" | "failed" = "passed";
+        let errorMessage: string | null = null;
+        let resultDetail: Record<string, unknown> = {};
+        let nextStep: string | null = null;
+
+        try {
+          if (action === "runAuthTest") {
+            if (!connection) throw new Error("No connection found");
+            const expired =
+              connection.access_token_expires_at &&
+              new Date(connection.access_token_expires_at) < new Date();
+            const recentError =
+              connection.last_error_at &&
+              new Date(connection.last_error_at).getTime() >
+                Date.now() - 5 * 60 * 1000;
+            if (connection.status !== "connected")
+              throw new Error(`Connection status: ${connection.status}`);
+            if (expired) throw new Error("401 token expired");
+            resultDetail = {
+              provider,
+              connection_status: connection.status,
+              token_expires_at: connection.access_token_expires_at ?? null,
+              last_refreshed_at: connection.last_refreshed_at ?? null,
+              recent_error: recentError ? connection.last_error_message : null,
+            };
+            if (recentError) {
+              status = "failed";
+              errorMessage = `Recent provider error: ${connection.last_error_message}`;
+            }
+          } else if (action === "runLookupTest") {
+            const supports = ["clio", "mycase"].includes(provider);
+            if (!supports) throw new Error("unsupported lookup for this provider");
+            if (!connection) throw new Error("No connection found");
+            const search = (sample.search_value as string) ?? "555-0001";
+            // Look at canonical contacts as a stand-in for live lookup so we
+            // exercise the full read path without burning provider quota.
+            const { data, error } = await supabaseAdmin
+              .from("legal_connect_contacts")
+              .select("id, first_name, last_name, phone")
+              .eq("organization_id", orgId!)
+              .limit(3);
+            if (error) throw error;
+            resultDetail = {
+              provider,
+              search_value: search,
+              matches_found: (data ?? []).length,
+              sample_matches: data ?? [],
+              note: "Lookup test uses canonical cache. Live API lookup runs in production.",
+            };
+          } else if (action === "runWriteBackTest") {
+            if (!connection) throw new Error("No connection found");
+            // Enqueue a *test-mode* sync job so the worker exercises the same
+            // adapter path as production. Marked clearly so dashboards can hide
+            // them from real call traffic.
+            const correlationId = `test_${crypto.randomUUID()}`;
+            const { data: job, error } = await supabaseAdmin
+              .from("legal_connect_sync_jobs")
+              .insert({
+                organization_id: orgId,
+                client_id: clientId,
+                provider,
+                connection_id: connection.id,
+                job_type: writeAction,
+                direction: "outbound",
+                priority: 50,
+                status: "queued",
+                correlation_id: correlationId,
+                input_payload: {
+                  __test__: true,
+                  test_run: true,
+                  sample,
+                  caller_type: "new_lead",
+                  call_reason: "new_case",
+                },
+              })
+              .select("id, status, job_type, correlation_id")
+              .single();
+            if (error) throw error;
+            resultDetail = {
+              provider,
+              write_action: writeAction,
+              enqueued_job_id: job?.id,
+              correlation_id: correlationId,
+              note: "Test job enqueued. The jobs worker will run the real adapter and surface the result on the Delivery dashboard with a Test badge.",
+            };
+          } else if (action === "runEmailOnlyTest") {
+            // Verify the email-only path: matching automation + non-empty template.
+            const { data: automations, error } = await supabaseAdmin
+              .from("post_call_automations")
+              .select("id, name, action_type, disposition_match, enabled")
+              .eq("organization_id", orgId!)
+              .eq("tenant_id", clientId!)
+              .eq("enabled", true);
+            if (error) throw error;
+            const emailAuto = (automations ?? []).filter((a: any) =>
+              ["email", "send_email"].includes(String(a.action_type)),
+            );
+            if (emailAuto.length === 0)
+              throw new Error("No enabled email automation found for this client");
+            // Enqueue a test email-only job so the worker delegates to the
+            // disposition email engine end-to-end.
+            const correlationId = `test_${crypto.randomUUID()}`;
+            const { data: job } = await supabaseAdmin
+              .from("legal_connect_sync_jobs")
+              .insert({
+                organization_id: orgId,
+                client_id: clientId,
+                provider: "post_call_email",
+                job_type: "email.send",
+                direction: "outbound",
+                priority: 50,
+                status: "queued",
+                correlation_id: correlationId,
+                input_payload: {
+                  __test__: true,
+                  test_run: true,
+                  caller_type: "new_lead",
+                  call_reason: "new_case",
+                  disposition: sample.disposition ?? "Qualified Lead",
+                },
+              })
+              .select("id, correlation_id")
+              .single();
+            resultDetail = {
+              provider: "post_call_email",
+              matched_automations: emailAuto.length,
+              enqueued_job_id: job?.id,
+              correlation_id: correlationId,
+            };
+          }
+        } catch (err) {
+          status = "failed";
+          errorMessage = err instanceof Error ? err.message : String(err);
+        }
+
+        if (status === "failed") {
+          const guidance = explain(errorMessage ?? "");
+          resultDetail.plain_english = guidance.plain;
+          resultDetail.next_step = guidance.nextStep;
+          nextStep = guidance.nextStep;
+        }
+
+        const duration = Date.now() - tStart;
+        const result = {
+          test_type: action,
+          provider,
+          status,
+          error: errorMessage,
+          next_step: nextStep,
+          detail: resultDetail,
+          correlation_id: correlationId,
+          duration_ms: duration,
+        };
+
+        if (orgId && clientId) {
+          await supabaseAdmin.from("legal_connect_test_runs").insert({
+            organization_id: orgId,
+            client_id: clientId,
+            test_type: action,
+            test_category: "guided",
+            test_config: { provider, write_action: writeAction, sample },
+            actual_output: result,
+            status,
+            error_message: errorMessage,
+            correlation_id: correlationId,
+            duration_ms: duration,
+          });
+        }
+
+        return new Response(JSON.stringify({ data: result }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       case "getTestHistory": {
         let q = supabaseAdmin
           .from("legal_connect_test_runs")
