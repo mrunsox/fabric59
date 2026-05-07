@@ -13,6 +13,8 @@ export interface IssueReview {
   note: string | null;
   updated_by: string | null;
   updated_by_name: string | null;
+  updated_from?: string | null;
+  external_actor?: string | null;
   updated_at: string;
 }
 
@@ -51,6 +53,8 @@ export function useUpsertIssueReview(orgId: string | undefined | null) {
             note: patch.note ?? null,
             updated_by: user?.id ?? null,
             updated_by_name: user?.email ?? null,
+            updated_from: "app",
+            external_actor: null,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "organization_id,issue_key" },

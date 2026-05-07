@@ -592,6 +592,11 @@ export default function LegalConnectReportsPage() {
                                     });
                                   }}
                                 />
+                                {rev?.updated_from && rev.updated_from !== "app" && (
+                                  <div className="text-[10px] text-muted-foreground mt-1 capitalize">
+                                    via {rev.updated_from}{rev.external_actor ? ` · ${rev.external_actor}` : ""}
+                                  </div>
+                                )}
                               </TableCell>
                               <TableCell>
                                 <Button asChild size="sm" variant="ghost" className="h-7 px-2">

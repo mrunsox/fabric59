@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.legal-connect-digest]
 verify_jwt = false
+
+[functions.legal-connect-ack]
+verify_jwt = false

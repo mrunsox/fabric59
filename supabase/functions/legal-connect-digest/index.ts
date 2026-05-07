@@ -74,23 +74,31 @@ function delta(curr: number, prev: number) {
   return { current: curr, previous: prev, delta: diff, pct };
 }
 
-async function buildDigest(supabase: any, orgId: string, windowKey: "7d" | "24h" | "30d" = "7d") {
+async function buildDigest(
+  supabase: any, orgId: string, windowKey: "7d" | "24h" | "30d" = "7d", tenantId: string | null = null,
+) {
   const days = WINDOW_DAYS[windowKey] ?? 7;
   const now = Date.now();
   const currStart = new Date(now - days * 86_400_000);
   const prevStart = new Date(now - 2 * days * 86_400_000);
 
+  const tenantsQ = supabase.from("tenants").select("id, name, is_design_partner, legal_connect_rollout_status").eq("organization_id", orgId);
+  const jobsQ = supabase.from("legal_connect_sync_jobs")
+    .select("id, client_id, provider, job_type, status, attempt_count, failure_classification, created_at, input_payload, correlation_id")
+    .eq("organization_id", orgId).gte("created_at", prevStart.toISOString())
+    .order("created_at", { ascending: false }).limit(10000);
+  const alertsQ = supabase.from("legal_connect_alerts").select("id, client_id, alert_kind, severity, status, created_at")
+    .eq("organization_id", orgId).gte("created_at", prevStart.toISOString()).limit(2000);
+  const gaQ = supabase.from("legal_connect_ga_checklist_state").select("tenant_id, item_id, status, updated_at").eq("organization_id", orgId);
+  const releaseQ = supabase.from("legal_connect_release_notes").select("id, title, body, audience, published_at")
+    .gte("published_at", currStart.toISOString()).order("published_at", { ascending: false }).limit(10);
+
   const [tenantsRes, jobsRes, alertsRes, gaRes, releaseRes] = await Promise.all([
-    supabase.from("tenants").select("id, name, is_design_partner, legal_connect_rollout_status").eq("organization_id", orgId),
-    supabase.from("legal_connect_sync_jobs")
-      .select("id, client_id, provider, job_type, status, attempt_count, failure_classification, created_at, input_payload, correlation_id")
-      .eq("organization_id", orgId).gte("created_at", prevStart.toISOString())
-      .order("created_at", { ascending: false }).limit(10000),
-    supabase.from("legal_connect_alerts").select("id, client_id, alert_kind, severity, status, created_at")
-      .eq("organization_id", orgId).gte("created_at", prevStart.toISOString()).limit(2000),
-    supabase.from("legal_connect_ga_checklist_state").select("tenant_id, item_id, status, updated_at").eq("organization_id", orgId),
-    supabase.from("legal_connect_release_notes").select("id, title, body, audience, published_at")
-      .gte("published_at", currStart.toISOString()).order("published_at", { ascending: false }).limit(10),
+    tenantId ? tenantsQ.eq("id", tenantId) : tenantsQ,
+    tenantId ? jobsQ.eq("client_id", tenantId) : jobsQ,
+    tenantId ? alertsQ.eq("client_id", tenantId) : alertsQ,
+    tenantId ? gaQ.eq("tenant_id", tenantId) : gaQ,
+    releaseQ,
   ]);
 
   const tenants = (tenantsRes.data ?? []) as any[];
@@ -158,8 +166,12 @@ async function buildDigest(supabase: any, orgId: string, windowKey: "7d" | "24h"
   const topFailingTenants = Array.from(curr.by_tenant.values()).filter((t) => t.failed > 0).sort((a, b) => b.failed - a.failed).slice(0, 5);
   const topFailingActions = Array.from(curr.by_action.values()).filter((t) => t.failed > 0).sort((a, b) => b.failed - a.failed).slice(0, 5);
 
+  const tenantName = tenantId ? (tenants.find((t) => t.id === tenantId)?.name ?? null) : null;
+
   return {
     window: windowKey,
+    tenant_id: tenantId,
+    tenant_name: tenantName,
     window_start: currStart.toISOString(),
     window_end: new Date(now).toISOString(),
     previous_window_start: prevStart.toISOString(),
@@ -242,35 +254,101 @@ function evaluateEscalation(summary: any): { severity: "warn" | "critical" | nul
   return { severity, reasons };
 }
 
-async function fireEscalations(supabase: any, orgId: string, summary: any) {
+async function mintAckToken(
+  admin: any, orgId: string, tenantId: string | null, sinkId: string | null,
+  eventId: string | null, issueKey: string, action: "acknowledged" | "monitoring" | "resolved",
+  source: "slack" | "webhook", ttlMinutes = 60 * 48,
+): Promise<string> {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  const token = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const expires = new Date(Date.now() + ttlMinutes * 60_000).toISOString();
+  await admin.from("legal_connect_ack_tokens").insert({
+    organization_id: orgId, tenant_id: tenantId, sink_id: sinkId, event_id: eventId,
+    issue_key: issueKey, action, token, expires_at: expires, source,
+  });
+  return token;
+}
+
+async function fireEscalations(admin: any, orgId: string, summary: any, opts: { tenantId?: string | null; cohort?: string }) {
   const ev = evaluateEscalation(summary);
   if (!ev.severity) return { fired: 0, severity: null, reasons: [] };
-  const { data: sinks } = await supabase
-    .from("legal_connect_escalation_sinks")
+  const tenantId = opts.tenantId ?? null;
+  const cohort = opts.cohort ?? "ops";
+
+  let q = admin.from("legal_connect_escalation_sinks")
     .select("*").eq("organization_id", orgId).eq("enabled", true);
+  const { data: allSinks } = await q;
+
+  // Severity-aware + tenant-aware + cohort-aware filter
+  const sinks = (allSinks ?? []).filter((s: any) => {
+    if (s.severity_threshold === "critical" && ev.severity !== "critical") return false;
+    if (s.tenant_id && tenantId && s.tenant_id !== tenantId) return false;
+    if (s.tenant_id && !tenantId) return false; // tenant-scoped sinks only fire for tenant digests
+    if (s.cohort_filter && s.cohort_filter !== "all" && s.cohort_filter !== cohort && s.cohort_filter !== "tenant") return false;
+    return true;
+  });
+
+  const cfg = await loadAppConfig(admin);
+  const appUrl = cfg.app_url || "";
+  const ackBase = `${Deno.env.get("SUPABASE_URL")}/functions/v1/legal-connect-ack`;
+
   let fired = 0;
-  for (const sink of sinks ?? []) {
-    if (sink.severity_threshold === "critical" && ev.severity !== "critical") continue;
+  for (const sink of sinks) {
+    // Synthesize an issue key from the worst signal so an external ack can land somewhere meaningful
+    const issueKey = `digest:${tenantId ?? "org"}:${ev.severity}:${new Date(summary.window_end).toISOString().slice(0, 10)}`;
+
+    // Insert event first to get id for token linkage
+    const { data: insertedEvent } = await admin.from("legal_connect_escalation_events").insert({
+      organization_id: orgId, sink_id: sink.id, tenant_id: tenantId,
+      trigger_kind: "digest", severity: ev.severity, payload: {},
+      delivery_status: "pending", linked_issue_key: issueKey, ack_status: "pending",
+    }).select("id").single();
+    const eventId = insertedEvent?.id ?? null;
+
+    let ackLinks: Record<string, string> = {};
+    if (sink.kind === "slack" && eventId) {
+      for (const action of ["acknowledged", "monitoring", "resolved"] as const) {
+        const tk = await mintAckToken(admin, orgId, tenantId, sink.id, eventId, issueKey, action, "slack");
+        ackLinks[action] = `${ackBase}?token=${tk}&action=${action}`;
+      }
+    }
+
     const payload = {
       source: "legal-connect-digest",
-      severity: ev.severity,
-      organization_id: orgId,
+      severity: ev.severity, organization_id: orgId, tenant_id: tenantId, cohort,
+      issue_key: issueKey, event_id: eventId,
       reasons: ev.reasons,
       window: { start: summary.window_start, end: summary.window_end },
-      totals: summary.totals,
-      deltas: summary.deltas,
+      totals: summary.totals, deltas: summary.deltas,
       top_failing_tenants: summary.top_failing_tenants,
       top_failing_actions: summary.top_failing_actions,
+      ack: ackLinks,
+      ack_endpoint: ackBase,
+      reports_url: appUrl ? `${appUrl}/superadmin/legal-connect-reports` : null,
       ts: new Date().toISOString(),
     };
+
     let status = "pending";
     let err: string | null = null;
     try {
       if (sink.kind === "slack") {
-        const text = `:rotating_light: *Legal Connect ${ev.severity}* — ${ev.reasons.join(" · ")} (${summary.totals.failed} failed / ${summary.totals.jobs} jobs)`;
+        const tenantLabel = summary.tenant_name ? ` · ${summary.tenant_name}` : "";
+        const text = `:rotating_light: *Legal Connect ${ev.severity}*${tenantLabel} — ${ev.reasons.join(" · ")} (${summary.totals.failed} failed / ${summary.totals.jobs} jobs)`;
+        const blocks: any[] = [
+          { type: "section", text: { type: "mrkdwn", text } },
+          {
+            type: "actions",
+            elements: [
+              { type: "button", text: { type: "plain_text", text: "Acknowledge" }, url: ackLinks.acknowledged },
+              { type: "button", text: { type: "plain_text", text: "Monitoring" }, url: ackLinks.monitoring },
+              { type: "button", text: { type: "plain_text", text: "Resolve" }, url: ackLinks.resolved, style: "primary" },
+            ],
+          },
+        ];
         const r = await fetch(sink.target, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text, blocks }),
         });
         status = r.ok ? "sent" : `http_${r.status}`;
         if (!r.ok) err = (await r.text()).slice(0, 300);
@@ -292,12 +370,12 @@ async function fireEscalations(supabase: any, orgId: string, summary: any) {
       status = "failed";
       err = e instanceof Error ? e.message : String(e);
     }
-    await supabase.from("legal_connect_escalation_events").insert({
-      organization_id: orgId, sink_id: sink.id,
-      trigger_kind: "digest", severity: ev.severity, payload,
-      delivery_status: status, delivery_error: err,
-    });
-    await supabase.from("legal_connect_escalation_sinks").update({ last_fired_at: new Date().toISOString() }).eq("id", sink.id);
+    if (eventId) {
+      await admin.from("legal_connect_escalation_events").update({
+        payload, delivery_status: status, delivery_error: err,
+      }).eq("id", eventId);
+    }
+    await admin.from("legal_connect_escalation_sinks").update({ last_fired_at: new Date().toISOString() }).eq("id", sink.id);
   }
   return { fired, severity: ev.severity, reasons: ev.reasons };
 }
@@ -318,18 +396,22 @@ function nextRunAt(schedule: { cadence: string; hour_utc: number; weekday: numbe
 
 async function performSend(
   supabase: any, orgId: string, cadence: "weekly" | "daily", cohort: string, dryRun = false,
+  tenantId: string | null = null,
 ) {
-  const summary = await buildDigest(supabase, orgId, cadence === "daily" ? "24h" : "7d");
-  const { data: subs } = await supabase
-    .from("legal_connect_digest_subscriptions")
-    .select("id, recipient_email, cohort, cadence, enabled")
+  const summary = await buildDigest(supabase, orgId, cadence === "daily" ? "24h" : "7d", tenantId);
+  let subQ = supabase.from("legal_connect_digest_subscriptions")
+    .select("id, recipient_email, cohort, cadence, enabled, tenant_id")
     .eq("organization_id", orgId).eq("enabled", true).eq("cadence", cadence);
+  subQ = tenantId ? subQ.eq("tenant_id", tenantId) : subQ.is("tenant_id", null);
+  const { data: subs } = await subQ;
   const recipients = (subs ?? []).filter((s: any) => cohort === "all" || s.cohort === cohort || s.cohort === "all");
 
   const cfg = await loadAppConfig(supabase);
   const { html, text, subject } = renderDigestHtml({
     brand_name: cfg.brand_name, brand_color: cfg.brand_color,
-    cohort, cadence, summary, app_url: cfg.app_url,
+    org_name: summary.tenant_name ?? undefined,
+    cohort: tenantId ? `tenant:${summary.tenant_name ?? tenantId}` : cohort,
+    cadence, summary, app_url: cfg.app_url,
   });
 
   let deliveryStatus = "recorded";
@@ -347,7 +429,7 @@ async function performSend(
   let runId: string | null = null;
   if (!dryRun) {
     const { data: inserted } = await supabase.from("legal_connect_digest_runs").insert({
-      organization_id: orgId, cohort, cadence,
+      organization_id: orgId, cohort, cadence, tenant_id: tenantId,
       window_start: summary.window_start, window_end: summary.window_end,
       summary, recipients_count: recipients.length,
       delivery_status: deliveryStatus, delivery_error: deliveryError, last_html: html,
@@ -360,7 +442,7 @@ async function performSend(
     }
   }
 
-  const escalation = await fireEscalations(supabase, orgId, summary);
+  const escalation = await fireEscalations(supabase, orgId, summary, { tenantId, cohort });
 
   return { runId, recipients, summary, deliveryStatus, deliveryError, escalation, subject };
 }
@@ -402,7 +484,8 @@ Deno.serve(async (req) => {
         });
       }
       const windowKey = (url.searchParams.get("window") ?? "7d") as "24h" | "7d" | "30d";
-      const summary = await buildDigest(supabase, orgId, windowKey);
+      const tenantId = url.searchParams.get("tenant_id");
+      const summary = await buildDigest(supabase, orgId, windowKey, tenantId);
       return new Response(JSON.stringify(summary), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -424,7 +507,7 @@ Deno.serve(async (req) => {
         const results: any[] = [];
         for (const sch of due ?? []) {
           try {
-            const r = await performSend(supabase, sch.organization_id, sch.cadence, sch.cohort, false);
+            const r = await performSend(supabase, sch.organization_id, sch.cadence, sch.cohort, false, sch.tenant_id ?? null);
             await supabase.from("legal_connect_digest_schedules").update({
               last_run_at: nowIso,
               next_run_at: nextRunAt(sch),
@@ -452,7 +535,8 @@ Deno.serve(async (req) => {
       }
       const cadence = (body.cadence ?? "weekly") as "weekly" | "daily";
       const cohort = body.cohort ?? "all";
-      const r = await performSend(supabase, orgId, cadence, cohort, !!body.dry_run);
+      const tenantId = (body.tenant_id ?? null) as string | null;
+      const r = await performSend(supabase, orgId, cadence, cohort, !!body.dry_run, tenantId);
 
       return new Response(JSON.stringify({
         ok: true,

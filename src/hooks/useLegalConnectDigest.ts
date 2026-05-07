@@ -166,7 +166,7 @@ export function useDigestPreview(orgId: string | undefined | null, window: "24h"
 export function useSendDigest(orgId: string | undefined | null) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { cadence: DigestCadence; cohort: DigestCohort; dry_run?: boolean }) => {
+    mutationFn: async (input: { cadence: DigestCadence; cohort: DigestCohort; dry_run?: boolean; tenant_id?: string | null }) => {
       const { data, error } = await supabase.functions.invoke(
         `legal-connect-digest?organization_id=${orgId}`,
         { method: "POST", body: { action: "send", ...input } },
