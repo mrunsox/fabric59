@@ -39,6 +39,7 @@ const PILOT_BADGE: Record<PilotStatus, string> = {
 };
 
 export default function DesignPartnersPage() {
+  const { organization } = useAuth();
   const { data: partners = [], isLoading } = useDesignPartners();
   const { data: pilots = [] } = usePilotApprovalList();
   const pilotMap = new Map(pilots.map((p) => [p.id, p]));
