@@ -396,18 +396,22 @@ function nextRunAt(schedule: { cadence: string; hour_utc: number; weekday: numbe
 
 async function performSend(
   supabase: any, orgId: string, cadence: "weekly" | "daily", cohort: string, dryRun = false,
+  tenantId: string | null = null,
 ) {
-  const summary = await buildDigest(supabase, orgId, cadence === "daily" ? "24h" : "7d");
-  const { data: subs } = await supabase
-    .from("legal_connect_digest_subscriptions")
-    .select("id, recipient_email, cohort, cadence, enabled")
+  const summary = await buildDigest(supabase, orgId, cadence === "daily" ? "24h" : "7d", tenantId);
+  let subQ = supabase.from("legal_connect_digest_subscriptions")
+    .select("id, recipient_email, cohort, cadence, enabled, tenant_id")
     .eq("organization_id", orgId).eq("enabled", true).eq("cadence", cadence);
+  subQ = tenantId ? subQ.eq("tenant_id", tenantId) : subQ.is("tenant_id", null);
+  const { data: subs } = await subQ;
   const recipients = (subs ?? []).filter((s: any) => cohort === "all" || s.cohort === cohort || s.cohort === "all");
 
   const cfg = await loadAppConfig(supabase);
   const { html, text, subject } = renderDigestHtml({
     brand_name: cfg.brand_name, brand_color: cfg.brand_color,
-    cohort, cadence, summary, app_url: cfg.app_url,
+    org_name: summary.tenant_name ?? undefined,
+    cohort: tenantId ? `tenant:${summary.tenant_name ?? tenantId}` : cohort,
+    cadence, summary, app_url: cfg.app_url,
   });
 
   let deliveryStatus = "recorded";
@@ -425,7 +429,7 @@ async function performSend(
   let runId: string | null = null;
   if (!dryRun) {
     const { data: inserted } = await supabase.from("legal_connect_digest_runs").insert({
-      organization_id: orgId, cohort, cadence,
+      organization_id: orgId, cohort, cadence, tenant_id: tenantId,
       window_start: summary.window_start, window_end: summary.window_end,
       summary, recipients_count: recipients.length,
       delivery_status: deliveryStatus, delivery_error: deliveryError, last_html: html,
@@ -438,7 +442,7 @@ async function performSend(
     }
   }
 
-  const escalation = await fireEscalations(supabase, orgId, summary);
+  const escalation = await fireEscalations(supabase, orgId, summary, { tenantId, cohort });
 
   return { runId, recipients, summary, deliveryStatus, deliveryError, escalation, subject };
 }
