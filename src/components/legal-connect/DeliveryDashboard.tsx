@@ -134,7 +134,13 @@ export default function DeliveryDashboard() {
   const [callerTypeFilter, setCallerTypeFilter] = useState<string>("all");
   const [outcomeFilter, setOutcomeFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [testFilter, setTestFilter] = useState<string>("exclude");
   const [open, setOpen] = useState<JobRow | null>(null);
+
+  const isTest = (j: JobRow) =>
+    !!(j.input_payload as any)?.__test__ ||
+    !!(j.input_payload as any)?.test_run ||
+    (j.correlation_id ?? "").startsWith("test_");
 
   // Phase 3 helpers — read classification + outcome metadata from the joined event.
   const classificationFor = (j: JobRow) => {
@@ -230,6 +236,9 @@ export default function DeliveryDashboard() {
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((j) => {
+      const t = isTest(j);
+      if (testFilter === "exclude" && t) return false;
+      if (testFilter === "only" && !t) return false;
       if (providerFilter !== "all" && j.provider !== providerFilter) return false;
       if (statusFilter !== "all" && j.status !== statusFilter) return false;
       if (callerTypeFilter !== "all" || outcomeFilter !== "all") {
@@ -249,7 +258,7 @@ export default function DeliveryDashboard() {
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobs, providerFilter, statusFilter, callerTypeFilter, outcomeFilter, search, eventsByCorr]);
+  }, [jobs, providerFilter, statusFilter, callerTypeFilter, outcomeFilter, testFilter, search, eventsByCorr]);
 
   const counts = useMemo(() => {
     const c = { queued: 0, processing: 0, succeeded: 0, failed: 0, skipped: 0 };
@@ -363,6 +372,16 @@ export default function DeliveryDashboard() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={testFilter} onValueChange={setTestFilter}>
+              <SelectTrigger className="h-8 w-36 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="exclude">Hide test runs</SelectItem>
+                <SelectItem value="all">Include test runs</SelectItem>
+                <SelectItem value="only">Test runs only</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="overflow-hidden rounded-md border border-border/60">
@@ -399,9 +418,16 @@ export default function DeliveryDashboard() {
                     >
                       <td className="p-2"><StatusBadge status={j.status} /></td>
                       <td className="p-2">
-                        <Badge variant="outline" className="text-[10px]">
-                          {j.provider}
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="outline" className="text-[10px]">
+                            {j.provider}
+                          </Badge>
+                          {isTest(j) && (
+                            <Badge variant="outline" className="text-[10px] bg-warning/10 text-warning border-warning/30">
+                              Test
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="p-2 font-mono text-[11px]">{j.job_type}</td>
                       <td className="p-2 font-mono text-[10px] text-muted-foreground">
