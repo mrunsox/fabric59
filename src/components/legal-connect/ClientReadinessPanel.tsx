@@ -19,7 +19,9 @@ import {
   PenLine,
   ListChecks,
   Sparkles,
+  BookOpen,
 } from "lucide-react";
+import { openGuideDrawer } from "./GuideDrawer";
 import { cn } from "@/lib/utils";
 import {
   CHECKLIST_ITEMS,
