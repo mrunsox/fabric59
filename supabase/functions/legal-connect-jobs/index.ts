@@ -364,6 +364,35 @@ async function executeMyCaseJob(
     return { status: "succeeded", output: { note_id: res.data?.note?.id } };
   }
 
+  if (jobType === "task.create") {
+    const taskPayload: any = {
+      task: {
+        name: input.name || input.subject || "Five9 follow-up",
+        description: input.description || input.body || "",
+        due_date: input.due_date || input.due_at || new Date(Date.now() + 24 * 3600 * 1000).toISOString().slice(0, 10),
+        priority: input.priority || "normal",
+      },
+    };
+    if (input.case_id || input.matter_id) taskPayload.task.case_id = Number(input.case_id || input.matter_id);
+    else if (input.contact_id) taskPayload.task.contact_id = Number(input.contact_id);
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/tasks`, authHeaders, taskPayload);
+    if (!res.ok) throw new Error(`MyCase task create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { task_id: res.data?.task?.id } };
+  }
+
+  if (jobType === "contact.update") {
+    const contactId = input.contact_id;
+    if (!contactId) throw new Error("validation: contact_id required for contact.update");
+    const patch: any = { contact: {} };
+    if (input.first_name) patch.contact.first_name = input.first_name;
+    if (input.last_name) patch.contact.last_name = input.last_name;
+    if (input.email) patch.contact.email = input.email;
+    if (input.phone) patch.contact.phone = normalizePhone(input.phone);
+    const res = await apiFetchWithRetry("PATCH", `${baseUrl}/contacts/${contactId}`, authHeaders, patch);
+    if (!res.ok) throw new Error(`MyCase contact update failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { contact_id: res.data?.contact?.id } };
+  }
+
   throw new Error(`Unsupported MyCase job type: ${jobType}`);
 }
 
