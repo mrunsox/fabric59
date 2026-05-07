@@ -484,6 +484,25 @@ export default function DeliveryDashboard() {
                 )}
               </section>
 
+              {open && (() => {
+                const meta = classificationFor(open);
+                return (
+                  <section>
+                    <h4 className="font-semibold text-foreground mb-1.5">Classification &amp; outcome</h4>
+                    <dl className="grid grid-cols-2 gap-1 text-[11px]">
+                      <dt className="text-muted-foreground">Caller type</dt>
+                      <dd>{meta.caller_type ?? "—"}</dd>
+                      <dt className="text-muted-foreground">Call reason</dt>
+                      <dd>{meta.call_reason ?? "—"}</dd>
+                      <dt className="text-muted-foreground">Outcome action</dt>
+                      <dd>{meta.outcome ?? "—"}</dd>
+                      <dt className="text-muted-foreground">Execution mode</dt>
+                      <dd>{meta.execution_mode}</dd>
+                    </dl>
+                  </section>
+                );
+              })()}
+
               {openEvent && (
                 <section>
                   <h4 className="font-semibold text-foreground mb-1.5">Normalized event</h4>
