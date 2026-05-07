@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import {
   BarChart3,
   Download,
@@ -15,6 +17,10 @@ import {
   ListChecks,
   TrendingDown,
   Building2,
+  Mail,
+  ArrowUp,
+  ArrowDown,
+  ExternalLink,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +29,10 @@ import {
   type ReportWindow,
   type TenantSummary,
 } from "@/hooks/useLegalConnectReports";
+import { useDigestPreview } from "@/hooks/useLegalConnectDigest";
+import { useIssueReviews, useUpsertIssueReview, type IssueReviewStatus } from "@/hooks/useIssueReviews";
+import DigestPanel from "@/components/legal-connect/DigestPanel";
+import { remediationForRecurring, remediationForAlertKind } from "@/lib/legal-connect-remediation";
 import { downloadCsv, downloadJson } from "@/lib/csv-export";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -68,6 +78,11 @@ export default function LegalConnectReportsPage() {
   const [search, setSearch] = useState("");
 
   const { data, isLoading, refetch, isFetching } = useLegalConnectReports(organization?.id, window);
+  const digestPreviewQ = useDigestPreview(organization?.id, window);
+  const reviewsQ = useIssueReviews(organization?.id);
+  const upsertReview = useUpsertIssueReview(organization?.id);
+  const reviews = reviewsQ.data ?? {};
+  const deltas = digestPreviewQ.data?.deltas;
 
   const filteredTenants: TenantSummary[] = (data?.tenants ?? []).filter((t) => {
     if (rollout !== "all" && t.rollout_status !== rollout) return false;
@@ -230,10 +245,22 @@ export default function LegalConnectReportsPage() {
         {/* Summary cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <SummaryCard label="Tenants" value={data?.totals.tenants ?? 0} />
-          <SummaryCard label="Jobs" value={data?.totals.jobs ?? 0} hint={WINDOW_LABELS[window]} />
+          <SummaryCard
+            label="Jobs"
+            value={data?.totals.jobs ?? 0}
+            hint={deltas ? `${deltas.total_jobs.delta >= 0 ? "+" : ""}${deltas.total_jobs.delta} vs prev (${deltas.total_jobs.pct >= 0 ? "+" : ""}${deltas.total_jobs.pct}%)` : WINDOW_LABELS[window]}
+          />
           <SummaryCard label="Succeeded" value={data?.totals.succeeded ?? 0} />
-          <SummaryCard label="Failed" value={data?.totals.failed ?? 0} />
-          <SummaryCard label="Open / ack alerts" value={data?.totals.open_alerts ?? 0} />
+          <SummaryCard
+            label="Failed"
+            value={data?.totals.failed ?? 0}
+            hint={deltas ? `${deltas.failed_jobs.delta >= 0 ? "+" : ""}${deltas.failed_jobs.delta} vs prev` : undefined}
+          />
+          <SummaryCard
+            label="Open / ack alerts"
+            value={data?.totals.open_alerts ?? 0}
+            hint={deltas ? `${deltas.open_alerts.delta >= 0 ? "+" : ""}${deltas.open_alerts.delta} vs prev` : undefined}
+          />
         </div>
 
         <Tabs defaultValue="tenants" className="space-y-4">
@@ -244,6 +271,7 @@ export default function LegalConnectReportsPage() {
             <TabsTrigger value="alerts"><AlertTriangle className="h-3.5 w-3.5 mr-1.5" />Alerts</TabsTrigger>
             <TabsTrigger value="recurring"><ListChecks className="h-3.5 w-3.5 mr-1.5" />Recurring</TabsTrigger>
             <TabsTrigger value="rollout">Rollout / GA</TabsTrigger>
+            <TabsTrigger value="digests"><Mail className="h-3.5 w-3.5 mr-1.5" />Digests</TabsTrigger>
           </TabsList>
 
           {/* Tenants */}
@@ -454,23 +482,35 @@ export default function LegalConnectReportsPage() {
                           <TableHead>Status</TableHead>
                           <TableHead>Title</TableHead>
                           <TableHead>When</TableHead>
+                          <TableHead>Next step</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredAlerts.map((a) => (
-                          <TableRow key={a.id}>
-                            <TableCell className="text-sm">{a.client_name}</TableCell>
-                            <TableCell className="text-xs">{a.alert_kind}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn("capitalize", SEVERITY_CLASS[a.severity])}>
-                                {a.severity}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-xs capitalize">{a.status}</TableCell>
-                            <TableCell className="text-xs">{a.title}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{fmtAgo(a.created_at)}</TableCell>
-                          </TableRow>
-                        ))}
+                        {filteredAlerts.map((a) => {
+                          const rem = remediationForAlertKind(a.alert_kind, a.client_id);
+                          return (
+                            <TableRow key={a.id}>
+                              <TableCell className="text-sm">{a.client_name}</TableCell>
+                              <TableCell className="text-xs">{a.alert_kind}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={cn("capitalize", SEVERITY_CLASS[a.severity])}>
+                                  {a.severity}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-xs capitalize">{a.status}</TableCell>
+                              <TableCell className="text-xs">{a.title}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{fmtAgo(a.created_at)}</TableCell>
+                              <TableCell>
+                                <Button asChild size="sm" variant="ghost" className="h-7 px-2">
+                                  <Link to={rem.href} title={rem.hint}>
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    <span className="text-xs">{rem.label}</span>
+                                  </Link>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -486,6 +526,7 @@ export default function LegalConnectReportsPage() {
                 <CardTitle className="text-base">Recurring issues</CardTitle>
                 <CardDescription className="text-xs">
                   Patterns worth attention: 3+ failures of the same class on a tenant, or repeating alert kinds.
+                  Acknowledge or move into monitoring as you triage.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -499,20 +540,70 @@ export default function LegalConnectReportsPage() {
                           <TableHead>Issue</TableHead>
                           <TableHead>Scope</TableHead>
                           <TableHead className="text-right">Count</TableHead>
-                          <TableHead>Status</TableHead>
                           <TableHead>Latest</TableHead>
+                          <TableHead>Review</TableHead>
+                          <TableHead>Note</TableHead>
+                          <TableHead>Next step</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {(data?.recurring ?? []).map((r) => (
-                          <TableRow key={r.key}>
-                            <TableCell className="text-sm">{r.issue_type}</TableCell>
-                            <TableCell className="text-sm">{r.scope}</TableCell>
-                            <TableCell className="text-right tabular-nums">{r.count}</TableCell>
-                            <TableCell className="text-xs capitalize">{r.status}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{fmtAgo(r.latest)}</TableCell>
-                          </TableRow>
-                        ))}
+                        {(data?.recurring ?? []).map((r) => {
+                          const rev = reviews[r.key];
+                          const rem = remediationForRecurring(r.key, r.issue_type);
+                          return (
+                            <TableRow key={r.key}>
+                              <TableCell className="text-sm">{r.issue_type}</TableCell>
+                              <TableCell className="text-sm">{r.scope}</TableCell>
+                              <TableCell className="text-right tabular-nums">{r.count}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{fmtAgo(r.latest)}</TableCell>
+                              <TableCell>
+                                <Select
+                                  value={(rev?.status ?? "new") as IssueReviewStatus}
+                                  onValueChange={(v) =>
+                                    upsertReview.mutate({
+                                      issue_key: r.key,
+                                      status: v as IssueReviewStatus,
+                                      note: rev?.note ?? null,
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger className="h-7 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="new">New</SelectItem>
+                                    <SelectItem value="acknowledged">Acknowledged</SelectItem>
+                                    <SelectItem value="monitoring">Monitoring</SelectItem>
+                                    <SelectItem value="resolved">Resolved</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell className="min-w-[180px]">
+                                <Textarea
+                                  defaultValue={rev?.note ?? ""}
+                                  placeholder="Internal note…"
+                                  className="text-xs min-h-[32px] py-1"
+                                  rows={1}
+                                  onBlur={(e) => {
+                                    const next = e.currentTarget.value.trim();
+                                    if ((rev?.note ?? "") === next) return;
+                                    upsertReview.mutate({
+                                      issue_key: r.key,
+                                      status: rev?.status ?? "acknowledged",
+                                      note: next || null,
+                                    });
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Button asChild size="sm" variant="ghost" className="h-7 px-2">
+                                  <Link to={rem.href} title={rem.hint}>
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    <span className="text-xs">{rem.label}</span>
+                                  </Link>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -592,6 +683,9 @@ export default function LegalConnectReportsPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+          <TabsContent value="digests">
+            <DigestPanel orgId={organization?.id} />
           </TabsContent>
         </Tabs>
       </div>

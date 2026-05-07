@@ -47,6 +47,7 @@ const SECTIONS: Section[] = [
   { id: "phase5-slice4", label: "Feedback, Release Notes, GA Readiness (Phase 5 Slice 4)", icon: ShieldCheck },
   { id: "phase6", label: "Real Pilot Validation & GA Hardening (Phase 6)", icon: ShieldCheck },
   { id: "phase7", label: "Analytics, Audit Exports & Reporting (Phase 7)", icon: BarChart3 },
+  { id: "phase8", label: "Operational Rhythm & Digests (Phase 8)", icon: Activity },
   { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
@@ -1493,6 +1494,67 @@ export default function DevGuidePage() {
               <Card>
                 <div className="font-semibold text-foreground mb-2">Likely next phase</div>
                 <p>Phase 8 will likely turn this reporting layer into actionable operations: scheduled digest emails for design partners, a “week-over-week” diff on the same metrics, and per-provider runbook deep links from recurring issues straight into the matching guided test.</p>
+              </Card>
+            </div>
+          </section>
+
+          {/* Phase 8 — Operational Rhythm, Digests & Guided Remediation */}
+          <section>
+            <SectionHeader
+              id="phase8"
+              title="Phase 8 — Operational rhythm, scheduled digests &amp; guided remediation"
+              kicker="Move from manual review to a regular operating cadence: digests, week-over-week deltas, next-step links, and a lightweight review workflow"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Where it lives</div>
+                <ul className="space-y-1.5">
+                  <li>· New <Chip>Digests</Chip> tab on <code className="text-xs">/superadmin/legal-connect-reports</code> (component <Chip>DigestPanel</Chip> in <code className="text-xs">src/components/legal-connect/DigestPanel.tsx</code>).</li>
+                  <li>· Edge function <Chip>legal-connect-digest</Chip> (<code className="text-xs">supabase/functions/legal-connect-digest/index.ts</code>) builds the summary and records send runs.</li>
+                  <li>· Hooks: <Chip>useLegalConnectDigest</Chip> (preview, subscriptions, send, history), <Chip>useIssueReviews</Chip> (per-issue review state).</li>
+                  <li>· New tables: <code className="text-xs">legal_connect_digest_subscriptions</code>, <code className="text-xs">legal_connect_digest_runs</code>, <code className="text-xs">legal_connect_issue_reviews</code> (RLS scoped to org members + ops/master admin).</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Digest audiences &amp; cadence</div>
+                <ul className="space-y-1.5">
+                  <li>· Cohorts: <Chip>ops</Chip> (default), <Chip>design_partners</Chip>, <Chip>all</Chip>. Each subscription is an email + cohort + cadence.</li>
+                  <li>· Cadence: <Chip>weekly</Chip> (primary) and optional <Chip>daily</Chip> for high-attention cohorts.</li>
+                  <li>· A digest is "recorded" today — recipients are matched by cohort + cadence, the run is persisted with the rolled-up summary, and <code className="text-xs">last_sent_at</code> updates per recipient. Hook into <Chip>send-transactional-email</Chip> later without changing the UI contract.</li>
+                  <li>· Internal-only by design. No tenant-facing email blasts.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Week-over-week deltas</div>
+                <ul className="space-y-1.5">
+                  <li>· Computed in the edge function by aggregating two adjacent equal-length windows (current vs previous).</li>
+                  <li>· Tracked deltas: total jobs, success rate, failed jobs, rate-limited, open alerts, recurring issues, GA items done.</li>
+                  <li>· Surfaced in the Digests preview and in the summary cards on the main reports page (Jobs / Failed / Open alerts show "± vs prev").</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Guided remediation links</div>
+                <ul className="space-y-1.5">
+                  <li>· Mapping lives in <code className="text-xs">src/lib/legal-connect-remediation.ts</code> (<Chip>remediationForErrorClass</Chip>, <Chip>remediationForAlertKind</Chip>, <Chip>remediationForRecurring</Chip>).</li>
+                  <li>· auth → connection test · rate_limited → RateLimitsPanel · validation/mapping → mapping preview · upstream/timeout → runbook · zero_jobs → readiness/routing · high_failure_rate → guided tests.</li>
+                  <li>· Surfaced as inline "Next step" buttons on the Recurring tab and the Alerts tab. Buttons deep-link into the tenant's Legal Connect surface (<code className="text-xs">/admin/legal-connect/&lt;clientId&gt;</code>) at the right tab/anchor.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Lightweight review workflow</div>
+                <ul className="space-y-1.5">
+                  <li>· Per-issue state machine: <Chip>new</Chip> → <Chip>acknowledged</Chip> → <Chip>monitoring</Chip> → <Chip>resolved</Chip>. Stored per <code className="text-xs">(organization_id, issue_key)</code> so multiple operators see the same status.</li>
+                  <li>· Short internal note per issue ("Watching after rate-limit increase", "Auth reset completed"). Saves on textarea blur.</li>
+                  <li>· Applied to recurring issues today; alert-cluster review can reuse the same table by adopting an <code className="text-xs">issue_key</code> convention.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Future follow-ons (out of Phase 8 scope)</div>
+                <ul className="space-y-1.5">
+                  <li>· Scheduled cron trigger (pg_cron → edge function) to fire weekly/daily digests automatically.</li>
+                  <li>· Real email delivery via <Chip>send-transactional-email</Chip> with a branded React Email template.</li>
+                  <li>· External sinks (Slack/Teams/webhooks), escalation routing, richer cohort filters, per-tenant digests for design partners.</li>
+                </ul>
               </Card>
             </div>
           </section>
