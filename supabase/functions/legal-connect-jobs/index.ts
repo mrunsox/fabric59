@@ -379,6 +379,49 @@ async function executeSmokeballJob(
   throw new Error(`Unsupported Smokeball job type: ${jobType}`);
 }
 
+// ─── Clio Grow ───────────────────────────────────────────────────────────────
+async function executeClioGrowJob(
+  job: any,
+  connection: any,
+): Promise<{ status: string; output: any }> {
+  const input = job.input_payload || {};
+  const jobType = job.job_type;
+
+  if (jobType !== "lead.create") {
+    throw new Error(`unsupported: clio_grow does not support ${jobType}`);
+  }
+
+  const url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/clio-grow`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+    },
+    body: JSON.stringify({
+      action: "createLead",
+      connection_id: connection.id,
+      lead: {
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email,
+        phone: input.phone,
+        message: input.message ?? input.notes ?? input.body,
+        referring_url: input.referring_url,
+        source: input.source ?? "Fabric59 / Five9",
+      },
+    }),
+  });
+
+  let data: any = null;
+  try { data = await res.json(); } catch { /* ignore */ }
+
+  if (!res.ok || data?.ok === false) {
+    throw new Error(data?.error || `clio_grow lead.create failed [${res.status}]`);
+  }
+  return { status: "succeeded", output: { lead: data?.data ?? null } };
+}
+
 async function executeJob(
   supabase: any,
   job: any
