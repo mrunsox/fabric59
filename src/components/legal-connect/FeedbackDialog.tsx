@@ -15,6 +15,9 @@ interface Props {
   source?: string;
   triggerLabel?: string;
   triggerVariant?: "default" | "outline" | "ghost";
+  /** When true, only render for design-partner tenants or workspace admins / master admins. */
+  requireDesignPartnerOrAdmin?: boolean;
+  isDesignPartner?: boolean;
 }
 
 export default function FeedbackDialog({
@@ -23,10 +26,16 @@ export default function FeedbackDialog({
   source = "in_product",
   triggerLabel = "Share feedback",
   triggerVariant = "outline",
+  requireDesignPartnerOrAdmin = true,
+  isDesignPartner = false,
 }: Props) {
-  const { user, organization } = useAuth();
+  const { user, organization, isWorkspaceAdmin, isMasterAdmin } = useAuth();
   const orgId = organizationId ?? organization?.id ?? "";
   const create = useCreateFeedbackEntry();
+
+  if (requireDesignPartnerOrAdmin && !isDesignPartner && !isWorkspaceAdmin && !isMasterAdmin) {
+    return null;
+  }
 
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<string>("idea");
