@@ -562,6 +562,9 @@ export default function LegalConnectPage() {
                 <TabsTrigger value="dispositions" className="text-xs">Dispositions</TabsTrigger>
                 <TabsTrigger value="variables" className="text-xs">Call Variables</TabsTrigger>
                 <TabsTrigger value="fields" className="text-xs">Field Policies</TabsTrigger>
+                <TabsTrigger value="worksheets" className="text-xs">Worksheets</TabsTrigger>
+                <TabsTrigger value="preview" className="text-xs">Payload Preview</TabsTrigger>
+                <TabsTrigger value="delivery" className="text-xs">Delivery</TabsTrigger>
               </TabsList>
               <TabsContent value="dispositions" className="mt-4">
                 <DispositionMappingEditor clientId={clientId} />
@@ -571,6 +574,16 @@ export default function LegalConnectPage() {
               </TabsContent>
               <TabsContent value="fields" className="mt-4">
                 <FieldPolicyEditor clientId={clientId} />
+              </TabsContent>
+              <TabsContent value="worksheets" className="mt-4 space-y-4">
+                <WorksheetFieldsEditor clientId={clientId} />
+                <WorksheetCapturePanel clientId={clientId} phase="acw" />
+              </TabsContent>
+              <TabsContent value="preview" className="mt-4">
+                <PayloadPreviewPanel clientId={clientId} />
+              </TabsContent>
+              <TabsContent value="delivery" className="mt-4">
+                <DeliveryDashboard />
               </TabsContent>
             </Tabs>
           </TabsContent>
