@@ -943,9 +943,9 @@ export default function DevGuidePage() {
 
           <section>
             <SectionHeader
-              id="qa-handoff"
-              title="QA & Implementation Handoff – Fabric59 (May 2026)"
-              kicker="Baseline · PR #1 · Remaining work"
+              id="qa-pr1-baseline"
+              title="PR #1 QA baseline (May 2026)"
+              kicker="Historical baseline · superseded by QA handoff sections above"
             />
             <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
               <Card>
