@@ -1048,6 +1048,7 @@ serve(async (req) => {
         dnis: normalized.dnis ?? null,
         raw_payload: payload,
         normalized_payload: normalized as any,
+        worksheet_payload: ((normalized as any)._worksheet_snapshot ?? {}) as any,
         resolved_client_id: route.client_id,
         resolved_provider: route.provider_target,
         organization_id: route.organization_id,
