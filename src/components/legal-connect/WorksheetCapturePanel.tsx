@@ -7,8 +7,31 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Save } from "lucide-react";
+import { ClipboardList, Save, UserCheck } from "lucide-react";
 import { useWorksheetFields, useUpsertWorksheetResponse } from "@/hooks/useWorksheets";
+
+// Phase 3 — controlled vocabularies consumed by the outcome engine
+// (supabase/functions/_shared/outcome-engine.ts). Keep these keys in sync.
+export const CALLER_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "new_lead", label: "New lead" },
+  { value: "current_client", label: "Current client" },
+  { value: "former_client", label: "Former client" },
+  { value: "third_party", label: "Third party" },
+  { value: "unknown", label: "Unknown" },
+];
+
+export const CALL_REASON_OPTIONS: { value: string; label: string }[] = [
+  { value: "new_case", label: "New case" },
+  { value: "case_update", label: "Case update" },
+  { value: "send_information", label: "Send information" },
+  { value: "appointment_request", label: "Appointment request" },
+  { value: "billing_question", label: "Billing question" },
+  { value: "status_check", label: "Status check" },
+  { value: "attorney_callback_request", label: "Attorney callback request" },
+  { value: "general_question", label: "General question" },
+  { value: "wrong_number", label: "Wrong number" },
+  { value: "spam", label: "Spam" },
+];
 
 interface Props {
   clientId: string;
