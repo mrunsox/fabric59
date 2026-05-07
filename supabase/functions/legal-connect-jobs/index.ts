@@ -245,6 +245,52 @@ async function executeClioJob(
     return { status: "succeeded", output: { activity_id: res.data?.data?.id } };
   }
 
+  if (jobType === "task.create") {
+    const due = input.due_at || input.due_date || new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/tasks.json`, authHeaders, {
+      data: {
+        name: input.name || input.subject || "Five9 follow-up",
+        description: input.description || input.body || "",
+        due_at: due,
+        priority: input.priority || "Normal",
+        ...(input.matter_id ? { matter: { id: Number(input.matter_id) } } : {}),
+        ...(input.assignee_id ? { assignee: { id: Number(input.assignee_id), type: "User" } } : {}),
+      },
+    });
+    if (!res.ok) throw new Error(`Clio task create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { task_id: res.data?.data?.id } };
+  }
+
+  if (jobType === "note.create") {
+    // Alias to communication.create with PhoneCall body
+    const res = await apiFetchWithRetry("POST", `${baseUrl}/communications.json`, authHeaders, {
+      data: {
+        type: "PhoneCall",
+        subject: input.subject || "Five9 Phone Call note",
+        body: input.body || input.content || input.note || "",
+        date: new Date().toISOString(),
+        received_at: new Date().toISOString(),
+        ...(input.contact_id ? { senders: [{ id: Number(input.contact_id), type: "Contact" }] } : {}),
+        ...(input.matter_id ? { matter: { id: Number(input.matter_id) } } : {}),
+      },
+    });
+    if (!res.ok) throw new Error(`Clio note create failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { note_id: res.data?.data?.id } };
+  }
+
+  if (jobType === "contact.update") {
+    const contactId = input.contact_id;
+    if (!contactId) throw new Error("validation: contact_id required for contact.update");
+    const patch: any = { data: {} };
+    if (input.first_name) patch.data.first_name = input.first_name;
+    if (input.last_name) patch.data.last_name = input.last_name;
+    if (input.email) patch.data.email_addresses = [{ name: "Work", address: input.email, default_email: true }];
+    if (input.phone) patch.data.phone_numbers = [{ name: "Work", number: normalizePhone(input.phone), default_number: true }];
+    const res = await apiFetchWithRetry("PATCH", `${baseUrl}/contacts/${contactId}.json`, authHeaders, patch);
+    if (!res.ok) throw new Error(`Clio contact update failed [${res.status}]: ${JSON.stringify(res.data)}`);
+    return { status: "succeeded", output: { contact_id: res.data?.data?.id } };
+  }
+
   throw new Error(`Unsupported Clio job type: ${jobType}`);
 }
 
