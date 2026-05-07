@@ -418,9 +418,16 @@ export default function DeliveryDashboard() {
                     >
                       <td className="p-2"><StatusBadge status={j.status} /></td>
                       <td className="p-2">
-                        <Badge variant="outline" className="text-[10px]">
-                          {j.provider}
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="outline" className="text-[10px]">
+                            {j.provider}
+                          </Badge>
+                          {isTest(j) && (
+                            <Badge variant="outline" className="text-[10px] bg-warning/10 text-warning border-warning/30">
+                              Test
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="p-2 font-mono text-[11px]">{j.job_type}</td>
                       <td className="p-2 font-mono text-[10px] text-muted-foreground">
