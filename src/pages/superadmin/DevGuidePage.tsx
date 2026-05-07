@@ -141,34 +141,39 @@ export default function DevGuidePage() {
           <section>
             <SectionHeader id="overview" title="Overview" kicker="What we're building" />
             <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
-              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-1">
                 <div className="text-xs uppercase tracking-wider text-primary mb-1 font-medium">
                   Current status
                 </div>
-                <p className="text-sm text-foreground">
-                  Legal Connect is <strong>pilot-ready, not yet GA-ready</strong>. Phases 1–5 are shipped
-                  (foundation, outcome engine, onboarding/readiness, rollout controls, health, feedback,
-                  GA readiness checklist). The next implementation phase is{" "}
-                  <a href="#phase6" className="text-primary hover:underline">Phase 6 — Real Pilot Validation &amp; GA Hardening</a>.
-                  The remaining risk is real-tenant validation and threshold tuning, not missing product surfaces.
-                  Do not restart the roadmap from a generic Phase 1.
+                <p className="text-sm text-foreground"><strong>Current state:</strong> Pilot-ready, not yet broadly GA-validated.</p>
+                <p className="text-sm text-foreground"><strong>Next phase:</strong> <a href="#phase6" className="text-primary hover:underline">Phase 6 — Real Pilot Validation and GA Launch Hardening</a>.</p>
+                <p className="text-sm text-foreground"><strong>Primary risk now:</strong> real-tenant validation, threshold tuning, and final rollout discipline.</p>
+                <p className="text-sm text-foreground"><strong>Primary recommendation:</strong> continue the current roadmap; do not restart from a generic phase plan.</p>
+                <p className="text-xs text-muted-foreground pt-1">
+                  Jump to: <a href="#current-state" className="text-primary hover:underline">Current implemented state</a> ·{" "}
+                  <a href="#remaining-ga" className="text-primary hover:underline">What remains before broader GA</a> ·{" "}
+                  <a href="#roadmap-alignment" className="text-primary hover:underline">Roadmap alignment</a> ·{" "}
+                  <a href="#next-phase" className="text-primary hover:underline">Recommended next phase</a> ·{" "}
+                  <a href="#do-now" className="text-primary hover:underline">What the team should do now</a>
                 </p>
               </div>
               <p>
-                Fabric59 is being built as a <strong>Five9-native integration configurator</strong> for legal
-                operations. Five9 is the event spine and call engine. Legal systems such as Clio, MyCase,
-                Lawmatics, Litify, CosmoLex, PracticePanther, and Smokeball are downstream or bi-directional
-                systems of record.
+                Legal Connect is no longer in early architecture or discovery mode. The product has already moved
+                through core foundation work, provider execution consolidation, onboarding/readiness tooling,
+                design-partner rollout controls, health monitoring, feedback capture, release notes, and
+                GA-readiness preparation. Treat it as <strong>pilot-ready and entering real-world validation</strong>,
+                not as a project that still needs a new generic foundation phase.
               </p>
               <p>
-                The chain we're building, end to end, is:{" "}
-                <Chip>Five9</Chip> → <Chip>Flow Templates</Chip> → <Chip>Flows</Chip> →{" "}
-                <Chip>Deployments</Chip> → <Chip>Connectors</Chip> → <Chip>Runs</Chip>.
+                The work remaining is no longer "build the basic platform." It is real tenant validation,
+                threshold tuning, access-control tightening, the final go-live procedure, and confirmation
+                that the current system behaves correctly under real pilot usage.
               </p>
-              <p>
-                Every other surface in the admin (FlowBuilder, Connectors catalog, Deployments page, Runs page)
-                is just a view onto one of those entities. This guide explains each link in that chain using the
-                same names the UI already uses.
+              <p className="text-muted-foreground">
+                Fabric59 is built as a Five9-native integration configurator for legal operations. Five9 is the
+                event spine and call engine. Legal systems such as Clio, MyCase, Lawmatics, Litify, CosmoLex,
+                PracticePanther, and Smokeball are downstream or bi-directional systems of record. Detailed
+                phase-by-phase implementation lives further down the page.
               </p>
             </div>
           </section>
@@ -182,49 +187,84 @@ export default function DevGuidePage() {
             />
             <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
               <Card>
-                <div className="font-semibold text-foreground mb-2">Phase 1–2 — Core foundation</div>
+                <div className="font-semibold text-foreground mb-1">Phase 1–2 — Core foundation</div>
+                <p className="text-xs text-muted-foreground mb-2">Established the base Legal Connect architecture and data flow.</p>
                 <ul className="space-y-1.5">
-                  <li>· Base Legal Connect architecture and event ingestion path.</li>
-                  <li>· Mapping system with constants support.</li>
-                  <li>· Worksheet schema, storage, and worksheet-driven payload resolution.</li>
-                  <li>· Payload preview surface.</li>
-                  <li>· Event log and sync jobs foundation.</li>
+                  <li>· Five9 event ingestion and normalization path.</li>
+                  <li>· Base event logging and sync-job architecture.</li>
+                  <li>· Mapping system for provider payload construction.</li>
+                  <li>· Constants support in call variable mappings.</li>
+                  <li>· Worksheet schema and response storage.</li>
+                  <li>· Worksheet-driven value resolution.</li>
+                  <li>· Payload preview tooling.</li>
                   <li>· Delivery dashboard foundation.</li>
+                  <li>· Single execution architecture preserved (no branching into parallel paths).</li>
                 </ul>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Result: the system can already receive call outcomes, resolve values, and prepare downstream provider actions.
+                </p>
               </Card>
               <Card>
-                <div className="font-semibold text-foreground mb-2">Phase 3 — Outcome engine + provider execution consolidation</div>
+                <div className="font-semibold text-foreground mb-1">Phase 3 — Outcome engine and provider execution consolidation</div>
+                <p className="text-xs text-muted-foreground mb-2">Moved Legal Connect from a narrow provider path into a consistent, outcome-driven execution model.</p>
                 <ul className="space-y-1.5">
-                  <li>· Caller classification: <code className="text-xs">caller_type</code>, <code className="text-xs">call_reason</code>.</li>
-                  <li>· Outcome engine matrix (caller_type × call_reason → outcome actions).</li>
-                  <li>· Provider-agnostic producer + jobs-based execution path.</li>
-                  <li>· <Chip>execution_mode</Chip> opt-out for legacy inline dispatch.</li>
-                  <li>· Email-only outcomes and adapter contract.</li>
-                  <li>· Clio Manage and MyCase job support behind the same adapter shape.</li>
-                  <li>· Dashboard outcome / classification visibility + Dev Guide architecture section.</li>
+                  <li>· Caller classification using <code className="text-xs">caller_type</code> and <code className="text-xs">call_reason</code>.</li>
+                  <li>· Outcome engine that maps call context to actions.</li>
+                  <li>· Provider-agnostic producer flow in <code className="text-xs">five9-main</code>.</li>
+                  <li>· Jobs-based execution across providers.</li>
+                  <li>· <Chip>execution_mode</Chip> support.</li>
+                  <li>· Email-only outcomes for cases where CRM write-back is not appropriate.</li>
+                  <li>· Shared adapter contract.</li>
+                  <li>· Clio Manage / MyCase execution support aligned to the jobs model.</li>
+                  <li>· Dashboard visibility for classification and outcome actions.</li>
+                  <li>· Dev Guide documentation for the Phase 3 architecture.</li>
                 </ul>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Result: behaves as a proper multi-provider routing and action system, not a hardcoded single-path integration.
+                </p>
               </Card>
               <Card>
-                <div className="font-semibold text-foreground mb-2">Phase 4 — Onboarding, readiness, testing, and guides</div>
+                <div className="font-semibold text-foreground mb-1">Phase 4 — Onboarding, readiness, testing, and guides</div>
+                <p className="text-xs text-muted-foreground mb-2">Made the system understandable and operable.</p>
                 <ul className="space-y-1.5">
-                  <li>· Readiness state, safe mode, go-live checklist, Readiness tab on the client page.</li>
-                  <li>· Guided test runner with test filtering and badges.</li>
-                  <li>· Auto-checklist ticking from passing tests.</li>
-                  <li>· In-product quick-start guides and guide drawer.</li>
-                  <li>· Internal onboarding playbooks and reusable onboarding template structure.</li>
+                  <li>· Readiness state on tenants.</li>
+                  <li>· Safe mode controls.</li>
+                  <li>· Go-live checklist.</li>
+                  <li>· Readiness tab and readiness panel.</li>
+                  <li>· Guided test runner.</li>
+                  <li>· Test badges and dashboard filtering for test runs.</li>
+                  <li>· Auto-checklist updates from successful tests.</li>
+                  <li>· In-product provider quick-start guides.</li>
+                  <li>· Internal onboarding playbooks.</li>
+                  <li>· Reusable onboarding template for future providers.</li>
                 </ul>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Result: not just connected — the admin UX and internal guidance needed to set clients up and verify the setup.
+                </p>
               </Card>
               <Card>
-                <div className="font-semibold text-foreground mb-2">Phase 5 — Rollout controls, health, feedback, GA prep</div>
+                <div className="font-semibold text-foreground mb-1">Phase 5 — Rollout controls, health, feedback, and GA prep</div>
+                <p className="text-xs text-muted-foreground mb-2">Added rollout discipline, operational visibility, and product feedback loops.</p>
                 <ul className="space-y-1.5">
-                  <li>· Design-partner flag, rollout status enum, design-partner ops view (<code className="text-xs">/superadmin/design-partners</code>).</li>
-                  <li>· Pilot approval checklist (11 items), pilot status model, reusable pilot templates.</li>
-                  <li>· Per-tenant rate limits (<code className="text-xs">max_jobs_per_minute</code>, <code className="text-xs">max_jobs_per_hour</code>).</li>
-                  <li>· Observability via <code className="text-xs">legal-connect-health</code> + alerts (high_failure_rate, auth_failure, rate_limited, zero_jobs).</li>
-                  <li>· Error taxonomy surfaced in the Delivery dashboard filter.</li>
-                  <li>· Feedback capture (in-product + interview), release notes / What's new drawer.</li>
-                  <li>· GA readiness checklist + panel; shared per-tenant checklist state landed in Phase 6 Slice 1.</li>
+                  <li>· Design-partner flags.</li>
+                  <li>· Rollout status model.</li>
+                  <li>· Design-partner ops view (<code className="text-xs">/superadmin/design-partners</code>).</li>
+                  <li>· Formal pilot approval checklist.</li>
+                  <li>· Pilot status model.</li>
+                  <li>· Reusable pilot templates.</li>
+                  <li>· Pilot approval controls.</li>
+                  <li>· Per-tenant rate limits.</li>
+                  <li>· Tenant health and observability surfaces.</li>
+                  <li>· Alerting and alert acknowledgment.</li>
+                  <li>· Canonical error taxonomy surfaced in UI.</li>
+                  <li>· Structured feedback capture.</li>
+                  <li>· In-product "What's new" / release notes.</li>
+                  <li>· GA readiness checklist and panel (per-tenant shared state landed in Phase 6 Slice 1).</li>
+                  <li>· Dev Guide documentation for rollout, health, feedback, and GA prep.</li>
                 </ul>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Result: the internal controls expected of an early live product, not just a backend integration.
+                </p>
               </Card>
             </div>
           </section>
@@ -234,36 +274,46 @@ export default function DevGuidePage() {
             <SectionHeader
               id="remaining-ga"
               title="What remains before broader GA"
-              kicker="Honest list of gaps, by type of work"
+              kicker="Close to GA, but not broadly launch-ready until this is done"
             />
             <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
               <Card>
                 <div className="font-semibold text-foreground mb-2">Real-tenant validation work</div>
                 <ul className="space-y-1.5">
-                  <li>· Walk all 16 GA checklist items against at least one real tenant with notes/evidence.</li>
-                  <li>· Validate live pilot traffic across the Grow / Manage / MyCase combinations the tenant actually uses.</li>
-                  <li>· Confirm health, alerts, dashboard, and pilot approval surfaces match real behavior under traffic.</li>
-                  <li>· Operator dry-run of the rollback runbook on a test tenant.</li>
+                  <li>· Run the full 16-item GA checklist against at least one real tenant.</li>
+                  <li>· Validate real pilot traffic through the actual provider mix in use.</li>
+                  <li>· Confirm dashboards, alerts, readiness state, and rollout state all reflect real-world behavior correctly.</li>
+                  <li>· Validate final go-live and rollback flow from actual pilot usage, not only from wiring and controlled tests.</li>
                 </ul>
               </Card>
               <Card>
-                <div className="font-semibold text-foreground mb-2">Ops / process work</div>
+                <div className="font-semibold text-foreground mb-2">Ops and tuning work</div>
                 <ul className="space-y-1.5">
-                  <li>· Tune alert thresholds (success%, evaluation window, zero_jobs window) from observed traffic.</li>
-                  <li>· Tune default per-tenant rate limits from observed traffic.</li>
-                  <li>· Establish weekly cadence for: feedback triage → release note → checklist update.</li>
-                  <li>· Record release notes whenever real shipped changes land. Audience-target each note.</li>
-                  <li>· Document final go-live and rollback procedure as it actually plays out in pilot.</li>
+                  <li>· Tune alert thresholds based on real traffic patterns.</li>
+                  <li>· Tune default per-tenant minute/hour rate limits based on real pilot behavior.</li>
+                  <li>· Confirm whether checklist state should remain operator-local or move to shared persisted state for multi-operator use (per-tenant already shared; superadmin-level still localStorage).</li>
+                  <li>· Keep writing release notes for real changes that affect operators or tenants.</li>
                 </ul>
               </Card>
               <Card>
-                <div className="font-semibold text-foreground mb-2">Code work</div>
+                <div className="font-semibold text-foreground mb-2">Access-control and policy work</div>
                 <ul className="space-y-1.5">
-                  <li>· Decide whether the superadmin-level GA checklist (currently localStorage in <Chip>GAReadinessPanel</Chip>) needs to be promoted to a shared org-level row. Per-tenant state already moved to <code className="text-xs">legal_connect_ga_checklist_state</code>.</li>
-                  <li>· Tighten role / audience gating for: <Chip>Share feedback</Chip> button (already gated to design partners + admins), <Chip>What's new</Chip> drawer (audience: all vs design_partners), and any superadmin-only controls embedded in shared pages.</li>
-                  <li>· Confirm any future cohort (e.g. early-access) has its own audience value before adding broad-launch release notes.</li>
+                  <li>· Tighten visibility rules for <Chip>Share feedback</Chip> if needed (currently gated to design partners + admins).</li>
+                  <li>· Confirm whether <Chip>What's new</Chip> is shown to all tenants, design partners only, or controlled by tenant state.</li>
+                  <li>· Reconfirm that internal-only rollout/health panels stay restricted to the correct audience.</li>
                 </ul>
               </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Process work</div>
+                <ul className="space-y-1.5">
+                  <li>· Continue logging real design-partner feedback.</li>
+                  <li>· Continue shipping updates tied back to real feedback items.</li>
+                  <li>· Document the final go-live checklist and rollback procedure as the operational source of truth.</li>
+                </ul>
+              </Card>
+              <p className="text-xs text-muted-foreground">
+                The remaining work is mostly about proving and tightening the existing system, not replacing it.
+              </p>
             </div>
           </section>
 
@@ -276,11 +326,18 @@ export default function DevGuidePage() {
             />
             <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
               <Card>
+                <p className="mb-2">A generic phase structure was recently suggested:</p>
+                <ol className="space-y-1 list-decimal pl-5 mb-3 text-xs text-muted-foreground">
+                  <li>Foundation and Core Infrastructure</li>
+                  <li>Core Connector Development</li>
+                  <li>Flow Engine Development</li>
+                  <li>Templates and Automation Flows</li>
+                  <li>Admin Dashboard and Flow Builder UI</li>
+                  <li>Production Hardening</li>
+                </ol>
                 <p className="mb-3">
-                  A separate dev suggestion proposed a generic 6-phase plan starting from foundation. That plan
-                  is directionally reasonable, but each suggested phase mostly maps to work that is already
-                  complete in the current Legal Connect roadmap. We continue from where we are; we do not
-                  restart from a new generic Phase 1.
+                  That structure is directionally reasonable at a high level, but it mostly describes work that
+                  has already been completed in the current Legal Connect roadmap.
                 </p>
                 <table className="w-full text-xs border border-border/60 rounded-md overflow-hidden">
                   <thead className="bg-secondary/40 text-foreground">
@@ -291,27 +348,27 @@ export default function DevGuidePage() {
                   </thead>
                   <tbody>
                     <tr className="border-b border-border/40">
-                      <td className="p-2">Phase 1 — Foundation &amp; Core Infrastructure</td>
+                      <td className="p-2">Foundation and Core Infrastructure</td>
                       <td className="p-2">Current Phases 1–2 (architecture, mappings, worksheets, event log, sync jobs, delivery dashboard).</td>
                     </tr>
                     <tr className="border-b border-border/40">
-                      <td className="p-2">Phase 2 — Core Connector Development</td>
-                      <td className="p-2">Current Phase 3 (provider jobs + adapter contract for Clio Grow, Clio Manage, MyCase, Smokeball, email-only).</td>
+                      <td className="p-2">Core Connector Development</td>
+                      <td className="p-2">Current Phase 3 jobs / adapters / provider execution work (Clio Grow, Clio Manage, MyCase, Smokeball, email-only).</td>
                     </tr>
                     <tr className="border-b border-border/40">
-                      <td className="p-2">Phase 3 — Flow Engine Development</td>
-                      <td className="p-2">Current Phase 3 outcome engine, caller classification, provider routing, execution_mode.</td>
+                      <td className="p-2">Flow Engine Development</td>
+                      <td className="p-2">Current Phase 3 caller classification and outcome engine.</td>
                     </tr>
                     <tr className="border-b border-border/40">
-                      <td className="p-2">Phase 4 — Templates &amp; Automation Flows</td>
-                      <td className="p-2">Phase 4 onboarding template + guides, Phase 5 pilot templates, email-only automation behavior.</td>
+                      <td className="p-2">Templates and Automation Flows</td>
+                      <td className="p-2">Phase 4 guides + onboarding template, Phase 5 pilot templates, email-only automation behavior.</td>
                     </tr>
                     <tr className="border-b border-border/40">
-                      <td className="p-2">Phase 5 — Admin Dashboard &amp; Flow Builder UI</td>
-                      <td className="p-2">Already substantially shipped: Delivery dashboard, Readiness, Tests, Guides, Pilot Approval, Tenant Health, Feedback, Release Notes, Design Partners ops view.</td>
+                      <td className="p-2">Admin Dashboard and Flow Builder UI</td>
+                      <td className="p-2">Substantially shipped: Delivery dashboard, Readiness, Tests, Guides, Pilot Approval, Health, Feedback, Release Notes, Design Partners ops view.</td>
                     </tr>
                     <tr>
-                      <td className="p-2">Phase 6 — Production Hardening</td>
+                      <td className="p-2">Production Hardening</td>
                       <td className="p-2">Started in Phase 5 Slice 3 (rate limits, alerts, health) and Slice 4 (feedback, release notes, GA checklist). Continues in current Phase 6.</td>
                     </tr>
                   </tbody>
@@ -319,11 +376,13 @@ export default function DevGuidePage() {
               </Card>
               <Card>
                 <div className="font-semibold text-foreground mb-2">Guidance</div>
-                <ul className="space-y-1.5">
-                  <li>· Do <strong>not</strong> restart the roadmap from a new generic Phase 1.</li>
-                  <li>· Continue from the existing Legal Connect phase numbering so the codebase, migrations, Dev Guide sections, and shipped surfaces stay aligned.</li>
-                  <li>· When new product surfaces are needed, add them as a new slice under the next active phase.</li>
-                </ul>
+                <p className="mb-2">
+                  Legal Connect should not restart from a new generic Phase 1. The current roadmap, implementation
+                  history, and Dev Guide sections are already aligned around the existing phase sequence.
+                  Restarting under a new naming system would create confusion between what is already shipped and
+                  what still remains.
+                </p>
+                <p>The correct move is to continue from the current roadmap and document the next phase clearly.</p>
               </Card>
             </div>
           </section>
@@ -333,26 +392,26 @@ export default function DevGuidePage() {
             <SectionHeader
               id="next-phase"
               title="Recommended next phase"
-              kicker="Phase 6 — Real Pilot Validation &amp; GA Launch Hardening"
+              kicker="Phase 6 — Real Pilot Validation and GA Launch Hardening"
             />
             <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
               <Card>
                 <div className="font-semibold text-foreground mb-2">Focus</div>
                 <ul className="space-y-1.5">
-                  <li>· Execute the GA checklist against real tenants (not just internally).</li>
-                  <li>· Validate real pilot traffic for Grow / Manage / MyCase / email-only / wrong-number paths.</li>
-                  <li>· Tune alert thresholds and per-tenant rate-limit defaults from observed behavior.</li>
-                  <li>· Tighten access / gating where shared surfaces could leak to the wrong audience.</li>
-                  <li>· Document the final go-live and rollback procedure as it actually played out in pilot.</li>
-                  <li>· Confirm broad-launch readiness with two consecutive calm weeks of <Chip>live_steady</Chip>.</li>
+                  <li>· Executing the GA checklist against real tenants.</li>
+                  <li>· Validating real provider behavior under pilot traffic.</li>
+                  <li>· Tuning rate limits and alerts based on observed traffic.</li>
+                  <li>· Tightening audience / role gating where needed.</li>
+                  <li>· Documenting the final go-live and rollback procedure.</li>
+                  <li>· Confirming what is still blocking broader GA, if anything.</li>
                 </ul>
               </Card>
               <Card>
                 <div className="font-semibold text-foreground mb-2">Why this is next</div>
                 <p>
-                  The product is now feature-complete enough for pilots — every surface needed to onboard,
-                  observe, approve, and roll back a tenant exists. The remaining risk is real-world validation,
-                  not missing product. Phase 6 closes that gap before broad GA.
+                  Legal Connect is already feature-complete enough for pilots. Every surface needed to onboard,
+                  observe, approve, and roll back a tenant exists. The main remaining risk is real-world
+                  validation, not missing product surfaces.
                 </p>
               </Card>
               <p className="text-xs text-muted-foreground">
@@ -373,16 +432,17 @@ export default function DevGuidePage() {
               <Card>
                 <ol className="space-y-1.5 list-decimal pl-5">
                   <li>Do not restart the roadmap under a new generic phase structure.</li>
-                  <li>Keep the current Legal Connect phase history (1 → 6) intact.</li>
+                  <li>Keep the current Legal Connect phase history intact.</li>
+                  <li>Treat the project as pilot-ready and in GA-hardening mode.</li>
                   <li>Use Phase 6 as the next implementation phase.</li>
-                  <li>Validate the 16 GA checklist items against at least one real tenant.</li>
-                  <li>Tune alerts, rate limits, and gating from real pilot behavior.</li>
-                  <li>Record release notes and feedback as part of the live rollout process.</li>
-                  <li>Promote the superadmin-level GA checklist to shared state only if more than one operator co-drives GA.</li>
+                  <li>Validate the 16-item GA checklist against at least one real tenant.</li>
+                  <li>Tune thresholds, limits, and gating based on actual pilot behavior.</li>
+                  <li>Continue using feedback and release notes as part of the live rollout process.</li>
                 </ol>
               </Card>
             </div>
           </section>
+
 
 
           {/* Architecture flowchart */}
