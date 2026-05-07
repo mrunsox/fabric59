@@ -859,6 +859,62 @@ export default function DevGuidePage() {
               </Card>
             </div>
           </section>
+
+          {/* Phase 4 Slice 2 — Guided test runner & live credential validation */}
+          <section>
+            <SectionHeader
+              id="phase4-slice2"
+              title="Phase 4 Slice 2 — Guided test runner"
+              kicker="Live credential validation, write-back probes, and email-only verification"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">What it does</div>
+                <p>
+                  The Tests tab inside <code className="text-xs">/admin/clients/:id/legal-connect</code> exposes a
+                  guided runner for each provider connection. The team can run four
+                  test types: <Chip>runAuthTest</Chip>, <Chip>runLookupTest</Chip>, <Chip>runWriteBackTest</Chip>,{" "}
+                  <Chip>runEmailOnlyTest</Chip>. All four are routed through the existing{" "}
+                  <code className="text-xs">legal-connect-test</code> edge function.
+                </p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">How test runs are recorded</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li>· Every guided run inserts into <code className="text-xs">legal_connect_test_runs</code> with <code className="text-xs">test_category="guided"</code>.</li>
+                  <li>· Write-back and email-only tests enqueue real <code className="text-xs">legal_connect_sync_jobs</code> with <code className="text-xs">input_payload.__test__ = true</code> and a <code className="text-xs">correlation_id</code> prefixed <code className="text-xs">test_</code>.</li>
+                  <li>· The Delivery dashboard shows a <Chip>Test</Chip> badge on those rows and defaults to hiding them via the new "Hide test runs" filter.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Readiness impact</div>
+                <p>
+                  Passing tests automatically tick the matching go-live checklist item:
+                  auth → <Chip>auth_valid</Chip>, write-back → <Chip>test_call_verified</Chip>, email →{" "}
+                  <Chip>email_templates</Chip>. The rest stay manual.
+                </p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Reading failures</div>
+                <p>
+                  Errors are translated into plain English (<em>"Provider rejected our credentials"</em>) plus
+                  a next-step hint (<em>"Reconnect the provider in the Connections tab."</em>). Raw error text is
+                  preserved on the test run row for engineers but hidden from the main UX.
+                </p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Internal client validation flow</div>
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  <li>Connect the provider in the Connections tab.</li>
+                  <li>Open the Tests tab → run <Chip>Test connection</Chip>.</li>
+                  <li>For Clio Manage / MyCase, run <Chip>Test caller lookup</Chip>.</li>
+                  <li>Run <Chip>Test note or task write-back</Chip> — verify the row appears on the Delivery dashboard with a Test badge and reaches <Chip>succeeded</Chip>.</li>
+                  <li>Run <Chip>Test email-only outcome</Chip> if the client has email templates.</li>
+                  <li>Confirm the readiness checklist auto-ticked the relevant items, then promote the client to <Chip>ready_for_live</Chip>.</li>
+                </ol>
+              </Card>
+            </div>
+          </section>
         </div>
       </div>
     </div>
