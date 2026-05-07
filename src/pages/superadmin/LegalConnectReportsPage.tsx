@@ -482,23 +482,35 @@ export default function LegalConnectReportsPage() {
                           <TableHead>Status</TableHead>
                           <TableHead>Title</TableHead>
                           <TableHead>When</TableHead>
+                          <TableHead>Next step</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredAlerts.map((a) => (
-                          <TableRow key={a.id}>
-                            <TableCell className="text-sm">{a.client_name}</TableCell>
-                            <TableCell className="text-xs">{a.alert_kind}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn("capitalize", SEVERITY_CLASS[a.severity])}>
-                                {a.severity}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-xs capitalize">{a.status}</TableCell>
-                            <TableCell className="text-xs">{a.title}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{fmtAgo(a.created_at)}</TableCell>
-                          </TableRow>
-                        ))}
+                        {filteredAlerts.map((a) => {
+                          const rem = remediationForAlertKind(a.alert_kind, a.client_id);
+                          return (
+                            <TableRow key={a.id}>
+                              <TableCell className="text-sm">{a.client_name}</TableCell>
+                              <TableCell className="text-xs">{a.alert_kind}</TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className={cn("capitalize", SEVERITY_CLASS[a.severity])}>
+                                  {a.severity}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-xs capitalize">{a.status}</TableCell>
+                              <TableCell className="text-xs">{a.title}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{fmtAgo(a.created_at)}</TableCell>
+                              <TableCell>
+                                <Button asChild size="sm" variant="ghost" className="h-7 px-2">
+                                  <Link to={rem.href} title={rem.hint}>
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    <span className="text-xs">{rem.label}</span>
+                                  </Link>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
