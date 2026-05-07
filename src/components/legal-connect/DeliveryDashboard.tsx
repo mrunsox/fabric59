@@ -232,6 +232,11 @@ export default function DeliveryDashboard() {
     return jobs.filter((j) => {
       if (providerFilter !== "all" && j.provider !== providerFilter) return false;
       if (statusFilter !== "all" && j.status !== statusFilter) return false;
+      if (callerTypeFilter !== "all" || outcomeFilter !== "all") {
+        const meta = classificationFor(j);
+        if (callerTypeFilter !== "all" && meta.caller_type !== callerTypeFilter) return false;
+        if (outcomeFilter !== "all" && meta.outcome !== outcomeFilter) return false;
+      }
       if (search) {
         const q = search.toLowerCase();
         if (
@@ -243,7 +248,8 @@ export default function DeliveryDashboard() {
       }
       return true;
     });
-  }, [jobs, providerFilter, statusFilter, search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs, providerFilter, statusFilter, callerTypeFilter, outcomeFilter, search, eventsByCorr]);
 
   const counts = useMemo(() => {
     const c = { queued: 0, processing: 0, succeeded: 0, failed: 0, skipped: 0 };
