@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useTenant } from "@/hooks/useTenants";
 import { useLegalConnections } from "@/hooks/useLegalConnect";
 import { PageHeader } from "@/components/ui/page-header";
-import { ArrowLeft, Plug, Webhook, Shield, Map, HeartPulse, Sparkles } from "lucide-react";
+import { ArrowLeft, Plug, Webhook, Shield, Map, HeartPulse, Sparkles, Rocket } from "lucide-react";
+import ClientReadinessPanel from "@/components/legal-connect/ClientReadinessPanel";
 import ProviderConnectionCard from "@/components/legal-connect/ProviderConnectionCard";
 import ClioConnectWizard from "@/components/legal-connect/wizards/ClioConnectWizard";
 import ClioGrowConnectWizard from "@/components/legal-connect/wizards/ClioGrowConnectWizard";
@@ -141,6 +142,9 @@ export default function ClientLegalConnectPage() {
               <TabsTrigger value="connections" className="gap-1.5">
                 <Plug className="h-3.5 w-3.5" /> Connections
               </TabsTrigger>
+              <TabsTrigger value="readiness" className="gap-1.5">
+                <Rocket className="h-3.5 w-3.5" /> Readiness
+              </TabsTrigger>
               <TabsTrigger value="webhooks" className="gap-1.5">
                 <Webhook className="h-3.5 w-3.5" /> Webhooks
               </TabsTrigger>
@@ -182,6 +186,10 @@ export default function ClientLegalConnectPage() {
                   connected providers.
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="readiness" className="mt-4">
+              <ClientReadinessPanel clientId={clientId!} />
             </TabsContent>
 
             <TabsContent value="webhooks" className="mt-4">
