@@ -39,7 +39,7 @@ export interface MatterSearchQuery {
 }
 
 export interface LegalCrmAdapter {
-  readonly provider: "clio" | "mycase" | "smokeball";
+  readonly provider: "clio" | "clio_grow" | "mycase" | "smokeball";
 
   // Auth & lifecycle
   whoAmI(ctx: AdapterConnectionContext): Promise<AdapterResult<{ user_id?: string; account_name?: string }>>;
