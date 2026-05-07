@@ -98,11 +98,13 @@ export async function resolveFive9Route(
     const cfg = (t.integration_configs as any) ?? {};
     const provider = cfg.clio?.enabled
       ? "clio"
-      : cfg.mycase?.enabled
-        ? "mycase"
-        : cfg.smokeball?.enabled
-          ? "smokeball"
-          : null;
+      : cfg.clio_grow?.enabled
+        ? "clio_grow"
+        : cfg.mycase?.enabled
+          ? "mycase"
+          : cfg.smokeball?.enabled
+            ? "smokeball"
+            : null;
     return {
       client_id: t.id,
       organization_id: domain.organization_id,
