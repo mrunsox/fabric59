@@ -24,6 +24,12 @@ interface Section {
 }
 
 const SECTIONS: Section[] = [
+  { id: "qa-handoff-summary", label: "QA handoff", icon: ClipboardCheck },
+  { id: "qa-built-now", label: "Built and testable now", icon: CheckCircle2 },
+  { id: "qa-traceability", label: "QA traceability table", icon: ClipboardCheck },
+  { id: "qa-test-matrix", label: "What QA should test", icon: ClipboardCheck },
+  { id: "qa-deferred", label: "Known deferred / not primary", icon: Circle },
+  { id: "qa-regression", label: "High-risk regression areas", icon: ShieldCheck },
   { id: "overview", label: "Overview", icon: BookOpen },
   { id: "current-state", label: "Current implemented state", icon: CheckCircle2 },
   { id: "remaining-ga", label: "What remains before broader GA", icon: Circle },
