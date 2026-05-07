@@ -38,6 +38,7 @@ const SECTIONS: Section[] = [
   { id: "phase4-slice3", label: "Guides & Playbooks (Phase 4 Slice 3)", icon: BookOpen },
   { id: "phase5-slice2", label: "Pilot Approval & Templates (Phase 5 Slice 2)", icon: ClipboardCheck },
   { id: "phase5-slice3", label: "Guardrails & Health (Phase 5 Slice 3)", icon: ShieldCheck },
+  { id: "phase5-slice4", label: "Feedback, Release Notes, GA Readiness (Phase 5 Slice 4)", icon: ShieldCheck },
   { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
@@ -1099,6 +1100,51 @@ export default function DevGuidePage() {
                   <li>· Default limits live in the migration and the worker fallback (60/m, 1000/h).</li>
                   <li>· Per-tenant overrides via the Readiness → Rate limits panel.</li>
                   <li>· Adjust thresholds in <code className="text-xs">legal-connect-health/index.ts → evaluateAlerts()</code> if the team wants different sensitivity.</li>
+                </ul>
+              </Card>
+            </div>
+          </section>
+
+          {/* Phase 5 Slice 4 — Feedback, Release Notes, GA Readiness */}
+          <section>
+            <SectionHeader
+              id="phase5-slice4"
+              title="Phase 5 Slice 4 — Feedback, release notes, GA readiness"
+              kicker="Capture design-partner feedback, communicate what shipped, and track GA prep"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Feedback entries</div>
+                <ul className="space-y-1.5">
+                  <li>· Stored in <code className="text-xs">legal_connect_feedback_entries</code> with source, topic, type, severity, message, status, and optional <code className="text-xs">shipped_release_note_id</code>.</li>
+                  <li>· Logged from two places: superadmin <Chip>FeedbackCapturePanel</Chip> on <code className="text-xs">/superadmin/design-partners</code> (for calls/interviews), and the in-product <Chip>Share feedback</Chip> button in the Legal Connect header for any client.</li>
+                  <li>· Status flow: <Chip>new</Chip> → <Chip>triaged</Chip> → <Chip>in_progress</Chip> → <Chip>shipped</Chip> (or <Chip>wont_fix</Chip>). Edit inline from the table.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Release notes / What's new</div>
+                <ul className="space-y-1.5">
+                  <li>· Stored in <code className="text-xs">legal_connect_release_notes</code> (slug, title, summary, highlights[], details[], audience, dev_guide_link).</li>
+                  <li>· Audience values: <Chip>all</Chip>, <Chip>design_partners</Chip>, <Chip>internal</Chip>. The drawer filters automatically.</li>
+                  <li>· Surface: <Chip>WhatsNewDrawer</Chip> button in the Legal Connect header opens a side sheet, newest first.</li>
+                  <li>· Add a new entry with a SQL <code className="text-xs">INSERT</code> into <code className="text-xs">legal_connect_release_notes</code>. Keep highlights to 1–3 bullets; details for the changelog body.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Closing the loop</div>
+                <p>When you ship work that came from feedback, set the entry's status to <Chip>shipped</Chip> and (optionally) populate <code className="text-xs">shipped_release_note_id</code>. This lets you trace any release note back to the conversations that drove it without building public roadmap UI.</p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">GA readiness checklist</div>
+                <p className="mb-2">Lives in <code className="text-xs">src/data/legal-connect-feedback.ts → GA_READINESS_CHECKLIST</code> and renders via <Chip>GAReadinessPanel</Chip> on <code className="text-xs">/superadmin/design-partners</code>. Sections cover Product &amp; integration, Operations &amp; safety, Onboarding &amp; docs, Feedback &amp; communication, Security &amp; compliance.</p>
+                <p className="text-xs text-muted-foreground">State is currently per-operator (localStorage). Promote to a shared row when more than one person is driving GA.</p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Process</div>
+                <ul className="space-y-1.5">
+                  <li>· Weekly: review new feedback entries, mark triaged, group by topic.</li>
+                  <li>· When you ship a meaningful change: add a release note, mark the source feedback shipped.</li>
+                  <li>· Before broad rollout: walk the GA readiness checklist; nothing left in red.</li>
                 </ul>
               </Card>
             </div>
