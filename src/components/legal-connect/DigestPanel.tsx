@@ -64,6 +64,7 @@ export default function DigestPanel({ orgId }: Props) {
   const [previewWindow, setPreviewWindow] = useState<"24h" | "7d" | "30d">("7d");
   const [cohort, setCohort] = useState<DigestCohort>("ops");
   const [cadence, setCadence] = useState<DigestCadence>("weekly");
+  const [tenantScope, setTenantScope] = useState<string>("__all__");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
 
@@ -73,10 +74,21 @@ export default function DigestPanel({ orgId }: Props) {
   const upsert = useUpsertDigestSubscription(orgId);
   const remove = useDeleteDigestSubscription(orgId);
   const send = useSendDigest(orgId);
+  const tenantsQ = useTenants();
 
   const subs = subsQ.data ?? [];
   const runs = runsQ.data ?? [];
   const summary = previewQ.data;
+  // Only tenants that belong to this org — never expose cross-tenant data.
+  const tenantsForOrg = useMemo(
+    () => (tenantsQ.data ?? []).filter((t) => t.organization_id === orgId),
+    [tenantsQ.data, orgId],
+  );
+  const tenantNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const t of tenantsForOrg) m.set(t.id, t.name);
+    return m;
+  }, [tenantsForOrg]);
 
   const cohortCount = useMemo(() => {
     const map = new Map<string, number>();
@@ -91,8 +103,9 @@ export default function DigestPanel({ orgId }: Props) {
 
   const handleAdd = () => {
     if (!email.trim()) return;
+    const tenant_id = tenantScope === "__all__" ? null : tenantScope;
     upsert.mutate(
-      { recipient_email: email, recipient_name: name || undefined, cohort, cadence, enabled: true },
+      { recipient_email: email, recipient_name: name || undefined, cohort, cadence, enabled: true, tenant_id },
       { onSuccess: () => { setEmail(""); setName(""); } },
     );
   };
