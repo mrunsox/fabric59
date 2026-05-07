@@ -2637,6 +2637,83 @@ export type Database = {
           },
         ]
       }
+      legal_connect_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_kind: string
+          client_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          organization_id: string
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_kind: string
+          client_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          organization_id: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_kind?: string
+          client_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          organization_id?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_connect_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legal_connect_alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "legal_connect_alerts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_connect_call_variable_mappings: {
         Row: {
           campaign_id: string | null
@@ -6302,6 +6379,8 @@ export type Database = {
           legal_connect_rollout_status: Database["public"]["Enums"]["legal_connect_rollout_status"]
           legal_connect_safe_mode: Database["public"]["Enums"]["legal_connect_safe_mode"]
           make_webhook_url: string | null
+          max_jobs_per_hour: number
+          max_jobs_per_minute: number
           microsoft365_api_key: string | null
           n8n_webhook_url: string | null
           name: string
@@ -6357,6 +6436,8 @@ export type Database = {
           legal_connect_rollout_status?: Database["public"]["Enums"]["legal_connect_rollout_status"]
           legal_connect_safe_mode?: Database["public"]["Enums"]["legal_connect_safe_mode"]
           make_webhook_url?: string | null
+          max_jobs_per_hour?: number
+          max_jobs_per_minute?: number
           microsoft365_api_key?: string | null
           n8n_webhook_url?: string | null
           name: string
@@ -6412,6 +6493,8 @@ export type Database = {
           legal_connect_rollout_status?: Database["public"]["Enums"]["legal_connect_rollout_status"]
           legal_connect_safe_mode?: Database["public"]["Enums"]["legal_connect_safe_mode"]
           make_webhook_url?: string | null
+          max_jobs_per_hour?: number
+          max_jobs_per_minute?: number
           microsoft365_api_key?: string | null
           n8n_webhook_url?: string | null
           name?: string
