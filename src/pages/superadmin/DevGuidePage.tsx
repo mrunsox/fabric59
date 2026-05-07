@@ -31,6 +31,7 @@ const SECTIONS: Section[] = [
   { id: "deployments", label: "Deployment model", icon: Target },
   { id: "runs", label: "Runs & reliability", icon: Activity },
   { id: "guardrails", label: "Guardrails", icon: ShieldCheck },
+  { id: "clio-grow-mvp", label: "Clio Grow MVP (Phase 1)", icon: Plug },
   { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
@@ -515,7 +516,121 @@ export default function DevGuidePage() {
             </div>
           </section>
 
-          {/* QA & Implementation Handoff */}
+          {/* Clio Grow MVP — Phase 1.1 hardened */}
+          <section>
+            <SectionHeader
+              id="clio-grow-mvp"
+              title="Clio Grow MVP (Phase 1)"
+              kicker="Native Five9 → Clio Grow Lead Inbox"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Why these decisions</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li>
+                    <Chip>Auth</Chip> Phase 1 uses the Clio Grow <strong>Lead Inbox token</strong>
+                    {" "}(per-inbox value pasted in the wizard) — Grow does not expose an OAuth
+                    refresh flow for inbound lead creation.
+                  </li>
+                  <li>
+                    <Chip>Mapping</Chip> The canonical mapping store is{" "}
+                    <code className="text-xs">legal_connect_call_variable_mappings</code> + the{" "}
+                    <code className="text-xs">legal_connect_disposition_mappings.metadata.create_lead</code>
+                    {" "}flag. <code className="text-xs">field_mappings</code> + the visual builder
+                    remain a parallel UI to be reconciled later.
+                  </li>
+                  <li>
+                    <Chip>Inline dispatch</Chip> Existing inline Clio Manage / MyCase paths in{" "}
+                    <code className="text-xs">five9-main</code> are intentionally untouched. Clio
+                    Grow runs alongside them through the adapter + sync-job path only.
+                  </li>
+                  <li>
+                    <Chip>Idempotency</Chip> Producer key is{" "}
+                    <code className="text-xs">clio_grow:lead.create:&lt;correlation_id&gt;</code>. A
+                    duplicate Five9 event for the same correlation id is rejected at insert time
+                    and recorded as <code className="text-xs">producer_skip_reason = duplicate_event</code>.
+                  </li>
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Runtime path</div>
+                <ol className="list-decimal pl-5 space-y-1.5 text-sm">
+                  <li>Five9 ESS posts the disposition event to <Chip>five9-main</Chip>.</li>
+                  <li><Chip>normalizer</Chip> shapes the payload, <Chip>router</Chip> resolves tenant + provider_target.</li>
+                  <li><Chip>disposition engine</Chip> evaluates capability-driven actions (capability <code className="text-xs">create_lead</code>).</li>
+                  <li>Producer enqueues a row in <Chip>legal_connect_sync_jobs</Chip> (provider <code className="text-xs">clio_grow</code>, type <code className="text-xs">lead.create</code>).</li>
+                  <li><Chip>five9_event_log</Chip> row records correlation id, mapped actions, sync_jobs_created and any <code className="text-xs">producer_skip_reason</code>.</li>
+                  <li><Chip>legal-connect-jobs</Chip> picks up the queued job, calls the <Chip>clio-grow</Chip> adapter.</li>
+                  <li>Adapter POSTs to <code className="text-xs">https://grow.clio.com/inbox_leads</code> with the inbox_lead_token from the connection.</li>
+                  <li>Result + connection health pointers are written back to <Chip>legal_connect_connections</Chip>.</li>
+                </ol>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Failures bypassing job creation (no connection / missing required field) open a
+                  <code className="mx-1 px-1 rounded bg-secondary/60">legal_connect_review_queue</code>
+                  item with <code className="text-xs">review_type = no_connection | validation_failure</code>.
+                </p>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Failure classification</div>
+                <ul className="space-y-1 text-sm">
+                  <li><Chip>validation</Chip> 400/422 or local pre-flight failure — non-retryable.</li>
+                  <li><Chip>auth</Chip> 401/403 from Grow — non-retryable, surface "bad token".</li>
+                  <li><Chip>rate_limited</Chip> 429 — retryable with backoff.</li>
+                  <li><Chip>upstream_5xx</Chip> 5xx from Grow — retryable.</li>
+                  <li><Chip>timeout</Chip> 15s adapter cutoff — retryable.</li>
+                  <li><Chip>network</Chip> fetch failure — retryable.</li>
+                </ul>
+                <p className="text-xs text-muted-foreground mt-3">
+                  The wizard maps these <code className="text-xs">failure_kind</code> values to
+                  human copy. The token is never echoed in logs or errors.
+                </p>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">End-to-end test flow</div>
+                <ol className="list-decimal pl-5 space-y-1 text-sm">
+                  <li>Connect Grow token via the client-level wizard at{" "}
+                    <code className="text-xs">/admin/clients/:id/legal-connect/setup/clio_grow</code>.
+                  </li>
+                  <li>Run the wizard's <strong>Send test lead</strong> step and confirm a
+                    <code className="mx-1 px-1 rounded bg-secondary/60">fabric59:test</code> lead appears in Grow.
+                  </li>
+                  <li>Configure a route with <code className="text-xs">provider_target = clio_grow</code> in{" "}
+                    <code className="text-xs">five9_campaign_routes</code> (or via the UI).</li>
+                  <li>Add a disposition mapping with{" "}
+                    <code className="text-xs">metadata.create_lead = true</code> in{" "}
+                    <code className="text-xs">legal_connect_disposition_mappings</code>.</li>
+                  <li>Trigger or replay an ESS-style <code className="text-xs">disposition</code>
+                    event against <Chip>five9-main</Chip>.</li>
+                  <li>Inspect the <strong>Clio Grow delivery</strong> panel on{" "}
+                    <code className="text-xs">/admin/legal-connect/overview</code>: the job row,
+                    matched event, review queue items and skip reasons all join by{" "}
+                    <code className="text-xs">correlation_id</code>.</li>
+                  <li>Verify the lead lands in the Grow inbox.</li>
+                </ol>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Call lifecycle reminder</div>
+                <p className="text-sm">
+                  In the MVP, lead creation runs from the <strong>post-disposition</strong> phase
+                  only — not pre-call, during-call, or ACW. This matches the Lead Inbox use case
+                  (final outcome → lead) and keeps the producer idempotent against
+                  <code className="mx-1 px-1 rounded bg-secondary/60">correlation_id</code>.
+                </p>
+                <ul className="text-xs text-muted-foreground space-y-1 mt-2">
+                  <li><Chip>Pre-call</Chip> ANI lookup / screen-pop (untouched in this phase).</li>
+                  <li><Chip>During call</Chip> agent script + call variables.</li>
+                  <li><Chip>ACW</Chip> agent finalises disposition + notes.</li>
+                  <li><Chip>Post disposition</Chip> Five9 emits ESS event → producer fires.</li>
+                </ul>
+              </Card>
+            </div>
+          </section>
+
+
           <section>
             <SectionHeader
               id="qa-handoff"

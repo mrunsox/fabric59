@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Scale, CheckCircle2, AlertCircle, Webhook } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import ClioGrowDeliveryPanel from "@/components/legal-connect/ClioGrowDeliveryPanel";
 
 const PROVIDERS = [
   { key: "clio", label: "Clio" },
@@ -175,6 +176,8 @@ export default function LegalConnectOverviewPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ClioGrowDeliveryPanel />
     </div>
   );
 }
