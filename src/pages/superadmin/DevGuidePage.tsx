@@ -760,6 +760,105 @@ export default function DevGuidePage() {
               </Card>
             </div>
           </section>
+
+          {/* Phase 3 — Caller Outcomes & Jobs Consolidation */}
+          <section>
+            <SectionHeader
+              id="phase3-outcomes"
+              title="Phase 3 — Caller Outcomes & Jobs Consolidation"
+              kicker="Classification, outcome routing, and provider-agnostic execution"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Why classification matters</div>
+                <p>
+                  Every Five9 call now carries two classification fields the agent (or admin)
+                  sets in the worksheet at wrap-up: <Chip>caller_type</Chip> and{" "}
+                  <Chip>call_reason</Chip>. These are the only inputs the outcome engine needs to
+                  decide what should happen downstream — create an intake, log a note, fire a
+                  follow-up task, send an email, or do nothing at all. They live inside{" "}
+                  <code className="text-xs">worksheet_responses.responses</code> under the exact
+                  keys the engine expects.
+                </p>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">How the outcome engine decides</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li>· <strong>New leads</strong> with a real reason (new_case, appointment_request) → <Chip>create_intake</Chip> + email.</li>
+                  <li>· <strong>Current clients</strong> are <strong>never</strong> turned into intakes. They get notes, follow-up tasks, or email-only outcomes (status_check, billing_question).</li>
+                  <li>· <strong>Third parties</strong> (adjusters, providers) → notes only.</li>
+                  <li>· <strong>Wrong number / spam</strong> → <Chip>no_writeback</Chip> regardless of caller type.</li>
+                  <li>· Per-client overrides live in <code className="text-xs">legal_connect_disposition_mappings.metadata.outcome_overrides</code> keyed by <code className="text-xs">caller_type:call_reason</code>.</li>
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Adapters &amp; jobs path</div>
+                <p>
+                  The producer (<code className="text-xs">five9-main</code>) no longer dispatches
+                  to Clio Manage / MyCase inline by default. It enqueues one row per outcome
+                  action into <code className="text-xs">legal_connect_sync_jobs</code> with a
+                  normalized job type (<Chip>lead.create</Chip>, <Chip>note.create</Chip>,{" "}
+                  <Chip>task.create</Chip>, <Chip>contact.update</Chip>, <Chip>email.send</Chip>).
+                  The worker resolves a connection, picks the matching adapter, and runs it
+                  through <Chip>runAdapter()</Chip> from{" "}
+                  <code className="text-xs">_shared/legal-job-adapters.ts</code>. Failures are
+                  classified into <Chip>auth</Chip>, <Chip>rate_limited</Chip>,{" "}
+                  <Chip>validation</Chip>, <Chip>upstream_4xx/5xx</Chip>, <Chip>network</Chip>,{" "}
+                  <Chip>timeout</Chip>, <Chip>unsupported</Chip> — the dashboard surfaces the
+                  same vocabulary.
+                </p>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">execution_mode flag</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li>· <Chip>jobs</Chip> (default for all tenants) — outcome producer enqueues jobs; legacy inline Manage/MyCase dispatch is skipped.</li>
+                  <li>· <Chip>inline</Chip> — escape hatch, runs the legacy inline Manage/MyCase path. Used only for rollback scenarios.</li>
+                  <li>· Stored on <code className="text-xs">tenants.integration_configs.execution_mode</code>; visible per-row in the Delivery dashboard "Mode" column.</li>
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Email-only outcomes</div>
+                <p>
+                  Outcomes resolving to <Chip>send_post_call_email</Chip> enqueue a job with{" "}
+                  <code className="text-xs">provider="post_call_email"</code> and{" "}
+                  <code className="text-xs">job_type="email.send"</code>. The worker delegates to
+                  the existing post-call automations engine (matched on client +
+                  disposition) and records the matched automation ids on the job output. No CRM
+                  write happens for these calls.
+                </p>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Reading the dashboard</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li>· Filter by provider (clio_grow, clio_manage, mycase, post_call_email), status, caller_type, and outcome action.</li>
+                  <li>· Each row shows the resolved caller_type, call_reason, outcome action, and execution_mode for the call.</li>
+                  <li>· Click any row to inspect the classification, normalized event, worksheet snapshot, redacted payload, provider response, and any review-queue items.</li>
+                  <li>· Failure classes prefixed with <code className="text-xs">adapter:</code> (e.g. <code className="text-xs">adapter:rate_limited</code>) come from the new adapter contract.</li>
+                </ul>
+              </Card>
+
+              <Card>
+                <div className="font-semibold text-foreground mb-2">End-to-end flow</div>
+                <pre className="text-[11px] font-mono p-3 rounded bg-muted/40 border border-border/60 overflow-auto leading-relaxed">{`Five9 ESS event
+  → five9-main
+       ├── normalize + worksheet snapshot
+       ├── extractClassification (caller_type, call_reason)
+       ├── resolveOutcomeActions(...)
+       └── enqueue 1 job per action
+             ├── provider job (clio_grow / clio_manage / mycase)
+             └── post_call_email job
+  → legal-connect-jobs worker
+       ├── runAdapter(executor) per provider
+       └── classifyAdapterError → failure_classification
+  → Delivery dashboard + review queue`}</pre>
+              </Card>
+            </div>
+          </section>
         </div>
       </div>
     </div>
