@@ -205,6 +205,10 @@ export default function ClientLegalConnectPage() {
               <GuidedTestRunner clientId={clientId!} />
             </TabsContent>
 
+            <TabsContent value="guides" className="mt-4">
+              <GuidesPanel />
+            </TabsContent>
+
             <TabsContent value="webhooks" className="mt-4">
               <WebhookSettingsPanel clientId={clientId!} />
             </TabsContent>
