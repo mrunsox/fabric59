@@ -1150,6 +1150,65 @@ export default function DevGuidePage() {
               </Card>
             </div>
           </section>
+
+          {/* Phase 6 — Real Pilot Validation & GA Hardening */}
+          <section>
+            <SectionHeader
+              id="phase6"
+              title="Phase 6 — Real pilot validation &amp; GA hardening"
+              kicker="Move from feature-complete to proven-ready: real-tenant checklist, shared state, tuned thresholds, gating, and the go-live runbook"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Shared GA checklist (per tenant)</div>
+                <ul className="space-y-1.5">
+                  <li>· Stored in <code className="text-xs">legal_connect_ga_checklist_state</code> keyed by <code className="text-xs">(tenant_id, item_id)</code>. Each row carries status, note, updated_by, updated_by_name, updated_at.</li>
+                  <li>· Rendered by <Chip>TenantGAReadinessPanel</Chip> on the client's Legal Connect → Readiness tab. Multiple operators see the same source of truth.</li>
+                  <li>· The superadmin <Chip>GAReadinessPanel</Chip> on <code className="text-xs">/superadmin/design-partners</code> remains for cross-cutting org-level prep (still localStorage-scoped).</li>
+                  <li>· RLS: org members can read; org owners/admins, ops, and master admins can write.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Real pilot validation</div>
+                <ul className="space-y-1.5">
+                  <li>· For each design-partner tenant, walk the 16-item checklist against live traffic. Tick items with notes that reference call IDs / job IDs as evidence.</li>
+                  <li>· Validate the live provider scenarios: Clio Grow lead intake, Clio Manage note/task/contact write-back, MyCase note/task/contact, email-only path, wrong-number path, burst rate-limit behavior, transient-failure retry.</li>
+                  <li>· Confirm UI surfaces match reality: Delivery dashboard, Readiness, Pilot approval, Design partners ops view, Tenant health, Alerts.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Threshold tuning</div>
+                <ul className="space-y-1.5">
+                  <li>· Defaults: <code className="text-xs">max_jobs_per_minute = 60</code>, <code className="text-xs">max_jobs_per_hour = 1000</code>. Guidance:</li>
+                  <li>· Low-volume design partners: 30/min · 500/hr is plenty and surfaces accidental loops faster.</li>
+                  <li>· Moderate pilots: keep defaults.</li>
+                  <li>· Test-heavy onboarding: temporarily 120/min · 2000/hr; reset before going live_steady.</li>
+                  <li>· Alerts (in <code className="text-xs">legal-connect-health</code>): <Chip>high_failure_rate</Chip> &lt; 70% over 24h with ≥ 3 failures (live tenants only). <Chip>auth_failure</Chip> on first occurrence. <Chip>rate_limited</Chip> if ≥ 5 in 1h. <Chip>zero_jobs</Chip> if a live tenant logs 0 jobs in 24h.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Access-control tightening</div>
+                <ul className="space-y-1.5">
+                  <li>· <Chip>FeedbackDialog</Chip> now hides for non-design-partner non-admin users (<code className="text-xs">requireDesignPartnerOrAdmin</code>). Admins, master admins, and design-partner tenants still see it everywhere.</li>
+                  <li>· <Chip>WhatsNewDrawer</Chip> picks audience per tenant: <Chip>design_partners</Chip> for flagged tenants, <Chip>all</Chip> for general rollout. Future cohorts only need a new audience value + INSERTs into <code className="text-xs">legal_connect_release_notes</code>.</li>
+                  <li>· Superadmin pages (Design partners, Dev guide) remain wrapped by master/superadmin route guards — confirmed unchanged.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Go-live &amp; rollback runbook</div>
+                <p className="mb-2">Rendered as <Chip>GoLiveRunbookPanel</Chip> on the Readiness tab. Covers: approved → live pilot → steady, pause, safe-mode downgrade, email-only fallback, provider outage / auth break, full rollback. Use this exact ordering during incidents — it matches what the UI controls do.</p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Remaining before broad GA</div>
+                <ul className="space-y-1.5">
+                  <li>· At least 2 tenants with the shared checklist 100% green and a published release note from each pilot loop.</li>
+                  <li>· Two consecutive weeks of <Chip>live_steady</Chip> with no critical alerts on a real tenant.</li>
+                  <li>· Operator dry-run of every step in the rollback runbook on a test tenant.</li>
+                  <li>· Promote the superadmin GA checklist (currently localStorage) to a shared org-level row if more than one person is co-driving GA.</li>
+                </ul>
+              </Card>
+            </div>
+          </section>
         </div>
       </div>
     </div>
