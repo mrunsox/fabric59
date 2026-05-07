@@ -53,6 +53,8 @@ export function useUpsertIssueReview(orgId: string | undefined | null) {
             note: patch.note ?? null,
             updated_by: user?.id ?? null,
             updated_by_name: user?.email ?? null,
+            updated_from: "app",
+            external_actor: null,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "organization_id,issue_key" },
