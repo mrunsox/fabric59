@@ -456,6 +456,12 @@ async function executeJob(
     return await executeSmokeballJob(job);
   }
 
+  // 2b) Clio Grow — dispatch via the clio-grow edge function (HTTP)
+  if (provider === "clio_grow") {
+    if (!connection) throw new Error("No Clio Grow connection found for this client");
+    return await executeClioGrowJob(job, connection);
+  }
+
   // 3) Clio / MyCase — keep existing executors but resolve config via legacy bridge fallback
   let configs: any;
   const { data: tenant } = await supabase
