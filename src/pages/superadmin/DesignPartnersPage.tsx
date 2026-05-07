@@ -113,17 +113,34 @@ export default function DesignPartnersPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium text-sm">{p.name}</div>
-                          {p.design_partner_notes.constraints && (
-                            <div className="text-xs text-muted-foreground mt-0.5">
-                              {p.design_partner_notes.constraints}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
                           <Badge variant="outline" className={cn("capitalize", STATUS_BADGE[p.rollout_status])}>
                             {ROLLOUT_LABEL[p.rollout_status]}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Badge variant="outline" className={cn("capitalize", PILOT_BADGE[ps])}>
+                              {PILOT_STATUS_LABEL[ps]}
+                            </Badge>
+                            {readiness && (
+                              <div className="text-[11px] text-muted-foreground">
+                                {readiness.completeRequired}/{readiness.totalRequired} required
+                              </div>
+                            )}
+                            {missingLabels.length > 0 && (
+                              <div className="text-[11px] text-warning truncate max-w-[180px]" title={missingLabels.join(", ")}>
+                                Missing: {missingLabels.slice(0, 2).join(", ")}
+                                {missingLabels.length > 2 ? `, +${missingLabels.length - 2}` : ""}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {tpl ? (
+                            <div className="font-medium">{tpl.name}</div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -147,11 +164,6 @@ export default function DesignPartnersPage() {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {p.readiness_updated_at
-                            ? new Date(p.readiness_updated_at).toLocaleDateString()
-                            : "—"}
-                        </TableCell>
                         <TableCell className="text-right">
                           <Button asChild size="sm" variant="outline">
                             <Link to={`/admin/clients/${p.id}/legal-connect?tab=readiness`}>
@@ -160,7 +172,8 @@ export default function DesignPartnersPage() {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
