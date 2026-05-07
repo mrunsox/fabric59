@@ -227,6 +227,7 @@ export default function ClientLegalConnectPage() {
           </Tabs>
         )}
       </div>
+      <GuideDrawer />
     </>
   );
 }
