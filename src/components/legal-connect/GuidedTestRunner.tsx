@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
-  ShieldCheck, Search, PenLine, Mail, CheckCircle2, XCircle, Loader2, RefreshCw, AlertTriangle,
+  ShieldCheck, Search, PenLine, Mail, CheckCircle2, XCircle, Loader2, RefreshCw, AlertTriangle, BookOpen,
 } from "lucide-react";
+import { openGuideDrawer } from "./GuideDrawer";
+import { SECTION } from "@/data/legal-connect-guides";
 import { cn } from "@/lib/utils";
 import {
   useLegalConnections, useLegalTestHistory, useRunTest,
@@ -187,9 +189,18 @@ export default function GuidedTestRunner({ clientId }: Props) {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm">{p.label}</CardTitle>
-                  <Badge variant="outline" className="text-[10px]">
-                    {isConnected ? "Available" : "Not connected"}
-                  </Badge>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => openGuideDrawer(p.value)}
+                      className="text-[10px] inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      <BookOpen className="h-3 w-3" /> Guide
+                    </button>
+                    <Badge variant="outline" className="text-[10px]">
+                      {isConnected ? "Available" : "Not connected"}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -261,6 +272,13 @@ export default function GuidedTestRunner({ clientId }: Props) {
                 {lastResult.next_step && (
                   <p className="text-xs text-muted-foreground">Next step: {lastResult.next_step}</p>
                 )}
+                <button
+                  type="button"
+                  onClick={() => openGuideDrawer(provider, SECTION.ISSUES)}
+                  className="text-xs inline-flex items-center gap-1 text-primary hover:underline mt-1"
+                >
+                  <BookOpen className="h-3 w-3" /> Open “Common issues” for this provider
+                </button>
               </div>
             )}
             <Separator />

@@ -35,6 +35,7 @@ const SECTIONS: Section[] = [
   { id: "clio-grow-phase2", label: "Constants, Worksheets & Preview (Phase 2)", icon: Plug },
   { id: "phase3-outcomes", label: "Caller Outcomes & Jobs (Phase 3)", icon: Workflow },
   { id: "phase4-slice2", label: "Guided Test Runner (Phase 4 Slice 2)", icon: ShieldCheck },
+  { id: "phase4-slice3", label: "Guides & Playbooks (Phase 4 Slice 3)", icon: BookOpen },
   { id: "qa-handoff", label: "QA & Handoff (May 2026)", icon: ClipboardCheck },
 ];
 
@@ -912,6 +913,63 @@ export default function DevGuidePage() {
                   <li>Run <Chip>Test note or task write-back</Chip> — verify the row appears on the Delivery dashboard with a Test badge and reaches <Chip>succeeded</Chip>.</li>
                   <li>Run <Chip>Test email-only outcome</Chip> if the client has email templates.</li>
                   <li>Confirm the readiness checklist auto-ticked the relevant items, then promote the client to <Chip>ready_for_live</Chip>.</li>
+                </ol>
+              </Card>
+            </div>
+          </section>
+
+          {/* Phase 4 Slice 3 — In-product guides, internal playbooks, reusable templates */}
+          <section>
+            <SectionHeader
+              id="phase4-slice3"
+              title="Phase 4 Slice 3 — Guides &amp; playbooks"
+              kicker="Built-in quick-starts for clients, procedural playbooks for operators"
+            />
+            <div className="space-y-4 text-sm text-foreground/90 leading-relaxed">
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Where guides live</div>
+                <p>
+                  A new <Chip>Guides</Chip> tab on{" "}
+                  <code className="text-xs">/admin/clients/:id/legal-connect</code> hosts both client quick-starts
+                  and internal playbooks. A reusable <code className="text-xs">GuideDrawer</code> can be popped from
+                  anywhere via <code className="text-xs">openGuideDrawer(provider, sectionId?)</code>.
+                </p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Client vs internal</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li>· <strong>Client guides</strong> live in <code className="text-xs">CLIENT_GUIDES</code> in <code className="text-xs">src/data/legal-connect-guides.ts</code>. Plain English, scannable, six fixed sections (what, prereq, connect, test, success, issues).</li>
+                  <li>· <strong>Internal playbooks</strong> live in <code className="text-xs">INTERNAL_PLAYBOOKS</code>. Step-by-step procedures for ops — onboarding, safe-mode, outcome routing, pause/recover.</li>
+                  <li>· The two never mix in the UI: separate tabs inside <Chip>GuidesPanel</Chip>, separate badges (Client vs Internal).</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Contextual links</div>
+                <ul className="space-y-1.5 text-sm">
+                  <li>· Connected provider capability cards in Readiness expose a <Chip>Guide</Chip> link → opens the matching client guide.</li>
+                  <li>· Each provider card in the guided test runner exposes a <Chip>Guide</Chip> link.</li>
+                  <li>· On a failed test, the result card links straight to the <Chip>Common issues</Chip> section of that provider's guide.</li>
+                </ul>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">Reusable template structure</div>
+                <p>
+                  Both <code className="text-xs">ProviderGuide</code> and <code className="text-xs">InternalPlaybook</code>
+                  are typed structures. Adding a new legal software provider means appending one entry to{" "}
+                  <code className="text-xs">CLIENT_GUIDES</code> using the same six-section shape — no new screens or
+                  routes are required. Section IDs are exported as <code className="text-xs">SECTION</code> so
+                  contextual deep-links stay consistent across providers.
+                </p>
+              </Card>
+              <Card>
+                <div className="font-semibold text-foreground mb-2">How we onboard a new legal software provider in the future</div>
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  <li>Add a connection wizard under <code className="text-xs">components/legal-connect/wizards/</code>.</li>
+                  <li>Add provider capabilities to <Chip>PROVIDER_CAPS</Chip> in the Readiness panel.</li>
+                  <li>Add a job adapter in <code className="text-xs">supabase/functions/_shared/legal-job-adapters.ts</code>.</li>
+                  <li>Append an entry to <Chip>CLIENT_GUIDES</Chip> with the six standard sections.</li>
+                  <li>Optionally add an internal playbook describing provider-specific quirks.</li>
+                  <li>The Guides tab, drawer, contextual links, and tests pick it up automatically.</li>
                 </ol>
               </Card>
             </div>

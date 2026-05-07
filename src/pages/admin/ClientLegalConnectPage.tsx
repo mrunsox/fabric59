@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { useTenant } from "@/hooks/useTenants";
 import { useLegalConnections } from "@/hooks/useLegalConnect";
 import { PageHeader } from "@/components/ui/page-header";
-import { ArrowLeft, Plug, Webhook, Shield, Map, HeartPulse, Sparkles, Rocket, TestTube2 } from "lucide-react";
+import { ArrowLeft, Plug, Webhook, Shield, Map, HeartPulse, Sparkles, Rocket, TestTube2, BookOpen } from "lucide-react";
 import ClientReadinessPanel from "@/components/legal-connect/ClientReadinessPanel";
 import GuidedTestRunner from "@/components/legal-connect/GuidedTestRunner";
+import GuidesPanel from "@/components/legal-connect/GuidesPanel";
+import GuideDrawer from "@/components/legal-connect/GuideDrawer";
 import ProviderConnectionCard from "@/components/legal-connect/ProviderConnectionCard";
 import ClioConnectWizard from "@/components/legal-connect/wizards/ClioConnectWizard";
 import ClioGrowConnectWizard from "@/components/legal-connect/wizards/ClioGrowConnectWizard";
@@ -149,6 +151,9 @@ export default function ClientLegalConnectPage() {
               <TabsTrigger value="tests" className="gap-1.5">
                 <TestTube2 className="h-3.5 w-3.5" /> Tests
               </TabsTrigger>
+              <TabsTrigger value="guides" className="gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" /> Guides
+              </TabsTrigger>
               <TabsTrigger value="webhooks" className="gap-1.5">
                 <Webhook className="h-3.5 w-3.5" /> Webhooks
               </TabsTrigger>
@@ -200,6 +205,10 @@ export default function ClientLegalConnectPage() {
               <GuidedTestRunner clientId={clientId!} />
             </TabsContent>
 
+            <TabsContent value="guides" className="mt-4">
+              <GuidesPanel />
+            </TabsContent>
+
             <TabsContent value="webhooks" className="mt-4">
               <WebhookSettingsPanel clientId={clientId!} />
             </TabsContent>
@@ -218,6 +227,7 @@ export default function ClientLegalConnectPage() {
           </Tabs>
         )}
       </div>
+      <GuideDrawer />
     </>
   );
 }
