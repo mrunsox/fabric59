@@ -13,6 +13,8 @@ import RateLimitsPanel from "@/components/legal-connect/RateLimitsPanel";
 import GuidedTestRunner from "@/components/legal-connect/GuidedTestRunner";
 import GuidesPanel from "@/components/legal-connect/GuidesPanel";
 import GuideDrawer from "@/components/legal-connect/GuideDrawer";
+import WhatsNewDrawer from "@/components/legal-connect/WhatsNewDrawer";
+import FeedbackDialog from "@/components/legal-connect/FeedbackDialog";
 import ProviderConnectionCard from "@/components/legal-connect/ProviderConnectionCard";
 import ClioConnectWizard from "@/components/legal-connect/wizards/ClioConnectWizard";
 import ClioGrowConnectWizard from "@/components/legal-connect/wizards/ClioGrowConnectWizard";
