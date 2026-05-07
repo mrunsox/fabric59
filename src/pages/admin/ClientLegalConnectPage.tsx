@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ArrowLeft, Plug, Webhook, Shield, Map, HeartPulse, Sparkles } from "lucide-react";
 import ProviderConnectionCard from "@/components/legal-connect/ProviderConnectionCard";
 import ClioConnectWizard from "@/components/legal-connect/wizards/ClioConnectWizard";
+import ClioGrowConnectWizard from "@/components/legal-connect/wizards/ClioGrowConnectWizard";
 import MyCaseConnectWizard from "@/components/legal-connect/wizards/MyCaseConnectWizard";
 import SmokeballConnectWizard from "@/components/legal-connect/wizards/SmokeballConnectWizard";
 import Five9ConnectWizard from "@/components/legal-connect/wizards/Five9ConnectWizard";
@@ -21,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
-const PROVIDERS = ["five9", "clio", "mycase", "smokeball"] as const;
+const PROVIDERS = ["five9", "clio", "clio_grow", "mycase", "smokeball"] as const;
 type ProviderKey = (typeof PROVIDERS)[number];
 
 export default function ClientLegalConnectPage() {
