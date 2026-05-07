@@ -131,8 +131,27 @@ export default function DeliveryDashboard() {
 
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [callerTypeFilter, setCallerTypeFilter] = useState<string>("all");
+  const [outcomeFilter, setOutcomeFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState<JobRow | null>(null);
+
+  // Phase 3 helpers — read classification + outcome metadata from the joined event.
+  const classificationFor = (j: JobRow) => {
+    const ev = j.correlation_id ? eventsByCorr.get(j.correlation_id) : null;
+    const ws = (ev?.worksheet_payload as any) ?? {};
+    const cls = (ev?.mapped_actions as any)?.classification ?? {};
+    return {
+      caller_type: ws.caller_type ?? cls.caller_type ?? null,
+      call_reason: ws.call_reason ?? cls.call_reason ?? null,
+      execution_mode:
+        (ev?.mapped_actions as any)?.execution_mode ?? (j.input_payload as any)?.execution_mode ?? "jobs",
+      outcome:
+        (j.input_payload as any)?.outcome?.type ??
+        ((ev?.mapped_actions as any)?.outcome_actions ?? [])[0]?.type ??
+        null,
+    };
+  };
 
   const load = async () => {
     if (!organization) return;
