@@ -526,6 +526,7 @@ export default function LegalConnectReportsPage() {
                 <CardTitle className="text-base">Recurring issues</CardTitle>
                 <CardDescription className="text-xs">
                   Patterns worth attention: 3+ failures of the same class on a tenant, or repeating alert kinds.
+                  Acknowledge or move into monitoring as you triage.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -539,20 +540,70 @@ export default function LegalConnectReportsPage() {
                           <TableHead>Issue</TableHead>
                           <TableHead>Scope</TableHead>
                           <TableHead className="text-right">Count</TableHead>
-                          <TableHead>Status</TableHead>
                           <TableHead>Latest</TableHead>
+                          <TableHead>Review</TableHead>
+                          <TableHead>Note</TableHead>
+                          <TableHead>Next step</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {(data?.recurring ?? []).map((r) => (
-                          <TableRow key={r.key}>
-                            <TableCell className="text-sm">{r.issue_type}</TableCell>
-                            <TableCell className="text-sm">{r.scope}</TableCell>
-                            <TableCell className="text-right tabular-nums">{r.count}</TableCell>
-                            <TableCell className="text-xs capitalize">{r.status}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{fmtAgo(r.latest)}</TableCell>
-                          </TableRow>
-                        ))}
+                        {(data?.recurring ?? []).map((r) => {
+                          const rev = reviews[r.key];
+                          const rem = remediationForRecurring(r.key, r.issue_type);
+                          return (
+                            <TableRow key={r.key}>
+                              <TableCell className="text-sm">{r.issue_type}</TableCell>
+                              <TableCell className="text-sm">{r.scope}</TableCell>
+                              <TableCell className="text-right tabular-nums">{r.count}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{fmtAgo(r.latest)}</TableCell>
+                              <TableCell>
+                                <Select
+                                  value={(rev?.status ?? "new") as IssueReviewStatus}
+                                  onValueChange={(v) =>
+                                    upsertReview.mutate({
+                                      issue_key: r.key,
+                                      status: v as IssueReviewStatus,
+                                      note: rev?.note ?? null,
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger className="h-7 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="new">New</SelectItem>
+                                    <SelectItem value="acknowledged">Acknowledged</SelectItem>
+                                    <SelectItem value="monitoring">Monitoring</SelectItem>
+                                    <SelectItem value="resolved">Resolved</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell className="min-w-[180px]">
+                                <Textarea
+                                  defaultValue={rev?.note ?? ""}
+                                  placeholder="Internal note…"
+                                  className="text-xs min-h-[32px] py-1"
+                                  rows={1}
+                                  onBlur={(e) => {
+                                    const next = e.currentTarget.value.trim();
+                                    if ((rev?.note ?? "") === next) return;
+                                    upsertReview.mutate({
+                                      issue_key: r.key,
+                                      status: rev?.status ?? "acknowledged",
+                                      note: next || null,
+                                    });
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Button asChild size="sm" variant="ghost" className="h-7 px-2">
+                                  <Link to={rem.href} title={rem.hint}>
+                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                    <span className="text-xs">{rem.label}</span>
+                                  </Link>
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
