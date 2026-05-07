@@ -130,6 +130,7 @@ import AdvancedRoutesPage from "@/pages/superadmin/AdvancedRoutesPage";
 import SystemDocsPage from "@/pages/superadmin/SystemDocsPage";
 import DesignPartnersPage from "@/pages/superadmin/DesignPartnersPage";
 import LegalConnectReportsPage from "@/pages/superadmin/LegalConnectReportsPage";
+import TestCasesPage from "@/pages/superadmin/TestCasesPage";
 
 const queryClient = new QueryClient();
 
