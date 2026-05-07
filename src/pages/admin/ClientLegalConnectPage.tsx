@@ -7,6 +7,7 @@ import { useLegalConnections } from "@/hooks/useLegalConnect";
 import { PageHeader } from "@/components/ui/page-header";
 import { ArrowLeft, Plug, Webhook, Shield, Map, HeartPulse, Sparkles, Rocket, TestTube2, BookOpen } from "lucide-react";
 import ClientReadinessPanel from "@/components/legal-connect/ClientReadinessPanel";
+import DesignPartnerPanel from "@/components/legal-connect/DesignPartnerPanel";
 import GuidedTestRunner from "@/components/legal-connect/GuidedTestRunner";
 import GuidesPanel from "@/components/legal-connect/GuidesPanel";
 import GuideDrawer from "@/components/legal-connect/GuideDrawer";
@@ -197,7 +198,8 @@ export default function ClientLegalConnectPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="readiness" className="mt-4">
+            <TabsContent value="readiness" className="mt-4 space-y-4">
+              <DesignPartnerPanel clientId={clientId!} />
               <ClientReadinessPanel clientId={clientId!} />
             </TabsContent>
 

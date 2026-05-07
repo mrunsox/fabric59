@@ -128,6 +128,7 @@ import FeatureVaultDetailPage from "@/pages/superadmin/FeatureVaultDetailPage";
 import SourceExportsPage from "@/pages/superadmin/SourceExportsPage";
 import AdvancedRoutesPage from "@/pages/superadmin/AdvancedRoutesPage";
 import SystemDocsPage from "@/pages/superadmin/SystemDocsPage";
+import DesignPartnersPage from "@/pages/superadmin/DesignPartnersPage";
 
 const queryClient = new QueryClient();
 
@@ -188,6 +189,7 @@ const App = () => (
                 <Route index element={<SuperadminOverviewPage />} />
                 <Route path="workspaces" element={<OrganizationsOverviewPage />} />
                 <Route path="users" element={<UsersManagementPage />} />
+                <Route path="design-partners" element={<DesignPartnersPage />} />
                 <Route path="vault" element={<FeatureVaultPage />} />
                 <Route path="vault/:id" element={<FeatureVaultDetailPage />} />
                 <Route path="exports" element={<SourceExportsPage />} />
