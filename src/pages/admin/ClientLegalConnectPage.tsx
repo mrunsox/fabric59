@@ -142,6 +142,9 @@ export default function ClientLegalConnectPage() {
               <TabsTrigger value="connections" className="gap-1.5">
                 <Plug className="h-3.5 w-3.5" /> Connections
               </TabsTrigger>
+              <TabsTrigger value="readiness" className="gap-1.5">
+                <Rocket className="h-3.5 w-3.5" /> Readiness
+              </TabsTrigger>
               <TabsTrigger value="webhooks" className="gap-1.5">
                 <Webhook className="h-3.5 w-3.5" /> Webhooks
               </TabsTrigger>
