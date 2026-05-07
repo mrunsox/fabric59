@@ -302,33 +302,33 @@ export default function DigestPanel({ orgId }: Props) {
 
           {/* Subscribers */}
           <TabsContent value="subscribers" className="space-y-4">
-            <div className="rounded-lg border border-border p-3 grid md:grid-cols-5 gap-3 items-end">
-              <div className="md:col-span-2">
-                <Label className="text-xs">Email</Label>
-                <Input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ops@yourco.com"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Name (optional)</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" />
-              </div>
-              <div>
-                <Label className="text-xs">Cohort</Label>
-                <Select value={cohort} onValueChange={(v) => setCohort(v as DigestCohort)}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ops">Ops</SelectItem>
-                    <SelectItem value="design_partners">Design partners</SelectItem>
-                    <SelectItem value="all">All</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex gap-2 items-end">
-                <div className="flex-1">
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <div className="grid md:grid-cols-5 gap-3 items-end">
+                <div className="md:col-span-2">
+                  <Label className="text-xs">Email</Label>
+                  <Input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="ops@yourco.com"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Name (optional)</Label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">Cohort</Label>
+                  <Select value={cohort} onValueChange={(v) => setCohort(v as DigestCohort)}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ops">Ops / superadmin</SelectItem>
+                      <SelectItem value="design_partners">Design partners</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label className="text-xs">Cadence</Label>
                   <Select value={cadence} onValueChange={(v) => setCadence(v as DigestCadence)}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
@@ -338,9 +338,26 @@ export default function DigestPanel({ orgId }: Props) {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="grid md:grid-cols-5 gap-3 items-end">
+                <div className="md:col-span-4">
+                  <Label className="text-xs">Tenant scope</Label>
+                  <Select value={tenantScope} onValueChange={setTenantScope}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">Org-wide (all tenants in cohort)</SelectItem>
+                      {tenantsForOrg.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Tenant-scoped recipients only see data for that tenant. Cross-tenant data is never included.
+                  </p>
+                </div>
                 <Button size="sm" onClick={handleAdd} disabled={upsert.isPending || !email.trim()}>
                   <Plus className="h-3.5 w-3.5 mr-1" />
-                  Add
+                  Add subscriber
                 </Button>
               </div>
             </div>
