@@ -38,10 +38,9 @@ export function useClientReadiness(clientId: string | undefined) {
     queryKey: QK(clientId ?? ""),
     enabled: !!clientId,
     queryFn: async (): Promise<ClientReadiness> => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("tenants")
         .select(
-          // @ts-expect-error new columns added by migration; types regen on next sync
           "legal_connect_readiness_state, legal_connect_safe_mode, legal_connect_go_live_checklist, legal_connect_readiness_updated_at",
         )
         .eq("id", clientId!)
