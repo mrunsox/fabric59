@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { Phone, Scale, MessageSquare, Webhook, ArrowRight } from "lucide-react";
+import { integrationsIndexDescription } from "@/seo/marketingMetadata";
 
 const PROVIDERS = [
   { logo: "/integration-logos/salesforce.svg", name: "Five9", status: "Live", note: "30+ SOAP actions, multi-domain, sync engine.", icon: Phone },
