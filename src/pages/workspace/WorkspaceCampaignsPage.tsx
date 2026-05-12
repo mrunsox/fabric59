@@ -41,9 +41,6 @@ export default function WorkspaceCampaignsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link to="/admin/campaigns">Legacy view</Link>
-          </Button>
           <Button asChild size="sm">
             <Link to={`${base}/new`}>
               <Plus className="h-3.5 w-3.5 mr-1" /> New campaign
