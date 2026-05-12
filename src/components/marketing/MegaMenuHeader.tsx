@@ -16,18 +16,29 @@ import {
   UserCog, GitFork, Mail, Lock, FileSearch, Phone, Building2,
 } from "lucide-react";
 
+// Canonical IA — Slice A. All hrefs point at canonical routes
+// (/product#section or top-level marketing pages). No /#anchor links.
 const platformItems = [
-  { icon: Phone, title: "Five9 SOAP integration", desc: "30+ live SOAP actions across agents, campaigns, skills, profiles, DNIS.", href: "/#available-now", badge: "Live" },
-  { icon: Globe, title: "Multi-domain Five9 management", desc: "Credentials, IVR, and connection tests across multiple Five9 domains.", href: "/#available-now", badge: "Live" },
-  { icon: Scale, title: "Legal Connect (MyCase / Clio)", desc: "MyCase live via per-client API key. Clio adapter ready to activate.", href: "/#legal-connect", badge: "Live" },
-  { icon: GitBranch, title: "Visual field mapping + Test runner", desc: "Drag-and-drop CRM mapping with a real Test runner against tenant configs.", href: "/#available-now", badge: "Live" },
-  { icon: GitFork, title: "Decision-tree script builder", desc: "React Flow scripting with conditional branching and runtime simulator.", href: "/#available-now", badge: "Live" },
-  { icon: Building2, title: "Multi-tenant hierarchy + RLS", desc: "Org / Partner / Client config inheritance with Postgres RLS isolation.", href: "/#security", badge: "Live" },
-  { icon: FileSearch, title: "API logs & compliance export", desc: "Realtime API events, telephony reconciliation, audit-grade export.", href: "/#security", badge: "Live" },
-  { icon: Bot, title: "AI Call Flow builder", desc: "Chat-driven flow design. One-click Five9 export coming soon.", href: "/#coming-soon", badge: "Coming soon" },
-  { icon: Megaphone, title: "Campaign blueprints", desc: "Intake form drives automated SOAP sequences and reverse-engineering.", href: "/#available-now", badge: "Live" },
-  { icon: UserCog, title: "Agent provisioning (Five9 + Slack)", desc: "One-form provisioning for Five9 and Slack workspaces.", href: "/#available-now", badge: "Live" },
-  { icon: Mail, title: "Disposition email engine", desc: "Per-disposition branded emails. CRM writebacks coming soon.", href: "/#available-now", badge: "Partial" },
+  { icon: Phone, title: "Five9 SOAP integration", desc: "30+ live SOAP actions across agents, campaigns, skills, profiles, DNIS.", href: "/product#five9", badge: "Live" },
+  { icon: Globe, title: "Multi-domain Five9 management", desc: "Credentials, IVR, and connection tests across multiple Five9 domains.", href: "/product#domains", badge: "Live" },
+  { icon: Scale, title: "Legal Connect (MyCase / Clio)", desc: "MyCase live via per-client API key. Clio adapter ready to activate.", href: "/product#legal", badge: "Live" },
+  { icon: GitBranch, title: "Visual field mapping + Test runner", desc: "Drag-and-drop CRM mapping with a real Test runner against tenant configs.", href: "/product#mappings", badge: "Live" },
+  { icon: GitFork, title: "Decision-tree script builder", desc: "React Flow scripting with conditional branching and runtime simulator.", href: "/product#scripts", badge: "Live" },
+  { icon: Building2, title: "Multi-tenant hierarchy + RLS", desc: "Org / Partner / Client config inheritance with Postgres RLS isolation.", href: "/product#tenancy", badge: "Live" },
+  { icon: FileSearch, title: "API logs & compliance export", desc: "Realtime API events, telephony reconciliation, audit-grade export.", href: "/product#logs", badge: "Live" },
+  { icon: Megaphone, title: "Campaign blueprints", desc: "Intake form drives automated SOAP sequences and reverse-engineering.", href: "/product#campaigns", badge: "Live" },
+  { icon: UserCog, title: "Agent provisioning (Five9 + Slack)", desc: "One-form provisioning for Five9 and Slack workspaces.", href: "/product#agents", badge: "Partial" },
+  { icon: Mail, title: "Disposition email engine", desc: "Per-disposition branded emails. CRM writebacks coming soon.", href: "/product#dispositions", badge: "Partial" },
+  { icon: Bot, title: "AI Call Flow builder", desc: "Chat-driven flow design. One-click Five9 export coming soon.", href: "/product#callflow", badge: "Coming soon" },
+];
+
+const primaryLinks = [
+  { to: "/solutions", label: "Solutions" },
+  { to: "/personas", label: "Personas" },
+  { to: "/pricing", label: "Pricing" },
+  { to: "/integrations", label: "Integrations" },
+  { to: "/customers", label: "Customers" },
+  { to: "/trust", label: "Trust" },
 ];
 
 export function MegaMenuHeader() {
@@ -63,9 +74,9 @@ export function MegaMenuHeader() {
                 <div className="w-[680px] p-6">
                   <div className="grid grid-cols-2 gap-3">
                     {platformItems.map((item) => (
-                      <a
+                      <Link
                         key={item.title}
-                        href={item.href}
+                        to={item.href}
                         className="group flex items-start gap-3 rounded-lg p-3 hover:bg-muted/50 transition-colors"
                       >
                         <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
@@ -86,29 +97,22 @@ export function MegaMenuHeader() {
                           </div>
                           <div className="text-xs text-muted-foreground leading-relaxed">{item.desc}</div>
                         </div>
-                      </a>
+                      </Link>
                     ))}
                   </div>
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between">
                     <Link to="/product" className="text-xs text-primary hover:underline flex items-center gap-1">
-                      Full product tour <ArrowRight className="h-3 w-3" />
+                      Full product overview <ArrowRight className="h-3 w-3" />
                     </Link>
-                    <a href="/#coming-soon" className="text-xs text-muted-foreground hover:text-foreground">
-                      Roadmap →
-                    </a>
+                    <Link to="/integrations" className="text-xs text-muted-foreground hover:text-foreground">
+                      Integrations →
+                    </Link>
                   </div>
                 </div>
               </NavigationMenuContent>
             </NavigationMenuItem>
 
-            {[
-              { to: "/solutions", label: "Solutions" },
-              { to: "/personas", label: "Personas" },
-              { to: "/pricing", label: "Pricing" },
-              { to: "/integrations", label: "Integrations" },
-              { to: "/customers", label: "Customers" },
-              { to: "/trust", label: "Trust" },
-            ].map((item) => (
+            {primaryLinks.map((item) => (
               <NavigationMenuItem key={item.to}>
                 <Link to={item.to} className="inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                   {item.label}
@@ -142,22 +146,16 @@ export function MegaMenuHeader() {
               <div className="space-y-1">
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Platform</div>
                 {platformItems.slice(0, 6).map((item) => (
-                  <a key={item.title} href={item.href} onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm text-foreground hover:text-primary transition-colors">
+                  <Link key={item.title} to={item.href} onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm text-foreground hover:text-primary transition-colors">
                     <item.icon className="h-4 w-4 text-primary" />
                     {item.title}
-                  </a>
+                  </Link>
                 ))}
               </div>
               <div className="space-y-1">
                 {[
-                  { to: "/solutions", label: "Solutions" },
-                  { to: "/personas", label: "Personas" },
-                  { to: "/pricing", label: "Pricing" },
-                  { to: "/integrations", label: "Integrations" },
-                  { to: "/customers", label: "Customers" },
-                  { to: "/trust", label: "Trust" },
-                  { to: "/product", label: "Product tour" },
-                  { to: "/faq", label: "FAQ" },
+                  ...primaryLinks,
+                  { to: "/product", label: "Product overview" },
                   { to: "/contact", label: "Contact" },
                 ].map((item) => (
                   <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-foreground">{item.label}</Link>
