@@ -778,6 +778,8 @@ export default function OutlinePage() {
                 <li>Canonical templates(kind=prompt) already in place from Phase 5 — AI prompts can ride that surface.</li>
               </ul>
             </Section>
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );
