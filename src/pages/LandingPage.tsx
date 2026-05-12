@@ -14,9 +14,18 @@ import {
 import {
   ArrowRight, ChevronRight, HelpCircle, Phone, Shield, Database,
   Workflow, Scale, GitBranch, GitFork, Building2, FileSearch,
-  MessageSquare, Layers, Lock, Sparkles, Clock, Calendar, Bot,
-  Globe, Mail, Megaphone,
+  Layers, Lock, Clock, Calendar, Globe, Megaphone,
 } from "lucide-react";
+import {
+  comingSoonIntegrations,
+  queuedIntegrations,
+  liveIntegrations,
+  byCategory,
+  crmSupportAnswer,
+  liveCrmSeoPhrase,
+  liveCrmSubheadPhrase,
+  STATUS_LABEL,
+} from "@/data/integrationStatus";
 
 // --- Available now (audit-verified shipped capabilities) ---
 const availableNow = [
