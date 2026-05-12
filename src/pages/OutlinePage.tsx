@@ -112,7 +112,7 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "demoted to /integrations-legacy compatibility surface; stub provider edge functions queued for deletion.",
   },
   {
-    id: "p8", name: "Phase 8 — Analytics, QA, billing, launch polish", status: "in_progress",
+    id: "p8", name: "Phase 8 — Analytics, QA, billing, launch polish", status: "done",
     objectives:
       "Make the canonical workspace product operationally launch-ready. Canonical workspace analytics, QA/review, " +
       "and billing surfaces under /app/workspaces/:id/{analytics,qa,billing}. Shared polish primitives (KpiCard, " +
@@ -124,11 +124,14 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "subscription primitives; launch polish checklist green.",
   },
   {
-    id: "p9", name: "Phase 9 — Marketing site + onboarding + workspace bootstrap", status: "todo",
+    id: "p9", name: "Phase 9 — Marketing site + onboarding + workspace bootstrap", status: "in_progress",
     objectives:
-      "Persona/solution/integrations/pricing/case-study marketing pages, rebuilt onboarding, and a workspace bootstrap " +
-      "flow that lands a new user inside a canonical workspace. Final pre-AI go-to-market phase.",
-    exit: "Marketing surface and onboarding boot a new user into a working canonical workspace end-to-end.",
+      "Rebuild the public-facing entry and first-run path so Fabric59 moves from internally coherent product to " +
+      "market-ready product. Canonical marketing IA (personas, solutions, pricing, integrations, customers), " +
+      "onboarding that bootstraps a canonical workspace, invite-accept landing, and role-aware first-run routing.",
+    exit:
+      "Marketing surface and onboarding boot a new user into a working canonical workspace end-to-end; no new user " +
+      "lands in legacy /admin/* sprawl as the primary path; AI knowledge remains explicitly deferred to Phase 10.",
   },
   {
     id: "p10", name: "Phase 10 — AI knowledge layer + agent assist + GA polish", status: "todo",
