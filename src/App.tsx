@@ -201,7 +201,11 @@ const App = () => (
                 <Route path="call-flow" element={<CallFlowPage />} />
                 <Route path="dev-guide" element={<DevGuidePage />} />
                 <Route path="test-cases" element={<TestCasesPage />} />
+                {/* CANONICAL: internal build doc, no longer public. */}
+                <Route path="docs/outline" element={<OutlinePage />} />
               </Route>
+              {/* CANONICAL: gated /outline — same component, master-admin only. */}
+              <Route path="/outline" element={<OutlinePage />} />
             </Route>
 
             {/* Protected routes */}
