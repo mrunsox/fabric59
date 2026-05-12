@@ -296,6 +296,16 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p8-billing-backend", label: "Phase 8 follow-up — billing backend: subscription/plan/payment-method primitives", status: "todo" },
   { id: "p8-qa-rubrics", label: "Phase 8 follow-up — detailed QA scoring rubrics, calibration, reviewer assignment", status: "todo" },
   { id: "p8-mobile", label: "Phase 8 follow-up — responsive/mobile pass on heavy workspace flows (builders, tables)", status: "todo" },
+  { id: "p9-marketing-ia", label: "Phase 9 — canonical public marketing IA: /personas, /solutions, /pricing, /integrations, /customers", status: "done" },
+  { id: "p9-marketing-layout", label: "Phase 9 — shared MarketingLayout (mega header + footer + SEO) used by every new public page", status: "done" },
+  { id: "p9-bootstrap", label: "Phase 9 — workspace bootstrap at /onboarding/workspace (creates or selects canonical workspace)", status: "done" },
+  { id: "p9-onboarding-route", label: "Phase 9 — onboarding completion routes into /onboarding/workspace, never directly into /admin/*", status: "done" },
+  { id: "p9-invite-landing", label: "Phase 9 — /accept-invite landing forwards authenticated users into workspace bootstrap", status: "done" },
+  { id: "p9-protected-onboarding", label: "Phase 9 — ProtectedRoute allows /onboarding/* through for users without an org", status: "done" },
+  { id: "p9-role-routing", label: "Phase 9 — role-aware first-run: master-admin → /superadmin, member → /admin/dashboard, default → /onboarding/workspace → /app/workspaces/:id/home", status: "done" },
+  { id: "p9-billing-backend", label: "Phase 9 follow-up — real billing backend (subscription/plan/payment-method) — DEFERRED", status: "todo" },
+  { id: "p9-tokenized-invites", label: "Phase 9 follow-up — tokenized self-serve invite link backend (today: admin invites in-app)", status: "todo" },
+  { id: "p9-customer-stories", label: "Phase 9 follow-up — real published customer stories once design partners go GA", status: "todo" },
   { id: "p10-deferred", label: "AI knowledge layer (grounded chat, ingestion, embeddings, editable prompts) — DEFERRED to Phase 10", status: "blocked" },
 ];
 
