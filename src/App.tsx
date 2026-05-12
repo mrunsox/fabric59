@@ -149,7 +149,7 @@ const App = () => (
             <Route path="/system-access" element={<SystemAccessPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/outline" element={<OutlinePage />} />
+            {/* CANONICAL: /outline is now an internal master-admin doc (see MasterProtectedRoute below). */}
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
