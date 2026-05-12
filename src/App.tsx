@@ -18,7 +18,8 @@ import WorkspaceCampaignDetailPage from "@/pages/workspace/WorkspaceCampaignDeta
 import WorkspaceCampaignNewPage from "@/pages/workspace/WorkspaceCampaignNewPage";
 import WorkspaceGuidesPage from "@/pages/workspace/WorkspaceGuidesPage";
 import WorkspaceGuideDetailPage from "@/pages/workspace/WorkspaceGuideDetailPage";
-import WorkspaceGuideEditRedirect from "@/pages/workspace/WorkspaceGuideEditRedirect";
+import WorkspaceGuideEditPage from "@/pages/workspace/WorkspaceGuideEditPage";
+import WorkspaceGuideNewPage from "@/pages/workspace/WorkspaceGuideNewPage";
 import WorkspaceGuidePreviewPage from "@/pages/workspace/WorkspaceGuidePreviewPage";
 import WorkspaceTemplatesPage from "@/pages/workspace/WorkspaceTemplatesPage";
 import WorkspaceTemplateDetailPage from "@/pages/workspace/WorkspaceTemplateDetailPage";
@@ -373,8 +374,9 @@ const App = () => (
                     survivor; legacy script surfaces (scripter, tree-editor, scriptflow, script-routing)
                     remain routable as compatibility/deferred during Phase 4. */}
                 <Route path="guides" element={<WorkspaceGuidesPage />} />
+                <Route path="guides/new" element={<WorkspaceGuideNewPage />} />
                 <Route path="guides/:guideId" element={<WorkspaceGuideDetailPage />} />
-                <Route path="guides/:guideId/edit" element={<WorkspaceGuideEditRedirect />} />
+                <Route path="guides/:guideId/edit" element={<WorkspaceGuideEditPage />} />
                 <Route path="guides/:guideId/preview" element={<WorkspaceGuidePreviewPage />} />
                 <Route
                   path="forms"

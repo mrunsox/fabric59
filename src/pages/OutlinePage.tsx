@@ -79,19 +79,27 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "guides + guide_versions live; canonical routes live; ScriptBuilderPage promoted as survivor; campaign assignment functional under workspace scope.",
   },
   {
-    id: "p5", name: "Phase 5 — Templates unification", status: "in_progress",
+    id: "p5", name: "Phase 5 — Templates unification", status: "done",
     objectives:
-      "Collapse 7 legacy template tables (script_templates, flow_templates, email_templates, report_templates, " +
-      "call_summary_templates, legal_connect_prompt_templates, campaign_blueprints) into one canonical `templates` table " +
-      "keyed by scope_type (platform/org/partner/client/workspace) + kind (guide/flow/campaign/email/summary/prompt/report). " +
-      "Mirror triggers + backfill from each legacy writer; parent_template_id provides fork lineage; canonical workspace " +
-      "routes /app/workspaces/:id/templates{,/:id} expose the unified gallery and fork action.",
+      "Collapsed 7 legacy template tables into one canonical `templates` + `template_versions` model keyed by scope + kind, " +
+      "with mirror triggers, backfill, parent_template_id lineage, and workspace gallery + fork routes.",
     exit:
-      "templates + template_versions live with backfill from all 7 legacy tables; canonical workspace template routes live; " +
-      "fork-into-workspace flow functional; legacy template pages remain authoritative writers (mirrored, not yet purged).",
+      "templates + template_versions live; canonical workspace template routes live; fork-into-workspace functional; legacy template pages remain mirrored writers.",
   },
   {
-    id: "p6", name: "Phase 6 — Forms (new)", status: "todo",
+    id: "p6", name: "Phase 6 — Native guide builder + publish/version", status: "in_progress",
+    objectives:
+      "Make Guide fully canonical in authoring lifecycle. Native canonical guide editor at " +
+      "/app/workspaces/:id/guides/:id/edit (no longer primarily a bridge to ScriptBuilderPage). " +
+      "Real publish / rollback workflow over guide_versions with is_current flag and atomic transitions. " +
+      "Create-from-template flow that consumes canonical templates(kind=guide) and preserves lineage. " +
+      "Legacy script-source guides keep ScriptBuilderPage as compatibility-only deep link.",
+    exit:
+      "Native guide create + edit live; publish + rollback over guide_versions live; create-from-template live; " +
+      "legacy ScriptBuilderPage demoted to compatibility-only for guides whose source_type='script'.",
+  },
+  {
+    id: "p7", name: "Phase 7 — Forms (new)", status: "todo",
     objectives: "Build canonical Form artifact: schema, conditions, validation, mapping targets, versioning.",
     exit: "Form library + builder live; forms assignable to campaigns/guides; submissions captured.",
   },
@@ -192,17 +200,24 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p4-routes", label: "Phase 4 — /app/workspaces/:id/guides list+detail+edit+preview live", status: "done" },
   { id: "p4-survivor", label: "Phase 4 — ScriptBuilderPage promoted as canonical builder survivor", status: "done" },
   { id: "p4-assignment", label: "Phase 4 — guide-to-campaign assignment via guides.campaign_id", status: "done" },
-  { id: "p4-write-canonical", label: "Phase 4 follow-up — native canonical guide create + edit (no script bridge)", status: "todo" },
+  { id: "p4-write-canonical", label: "Phase 4 follow-up — native canonical guide create + edit (no script bridge)", status: "done" },
   { id: "p4-vault-legacy", label: "Phase 4 follow-up — vault TreeEditor / Scripter / ScriptFlowHub / ScriptRouting once canonical builder is feature-complete", status: "todo" },
-  { id: "p4-version-publish", label: "Phase 4 follow-up — canonical publish path writes guide_versions (current-version flag, rollback)", status: "todo" },
+  { id: "p4-version-publish", label: "Phase 4 follow-up — canonical publish path writes guide_versions (current-version flag, rollback)", status: "done" },
   { id: "p5-templates-table", label: "Phase 5 — canonical templates + template_versions tables (scope+kind enums, parent lineage, RLS)", status: "done" },
   { id: "p5-mirror-triggers", label: "Phase 5 — mirror triggers from 7 legacy template tables + backfill", status: "done" },
   { id: "p5-routes", label: "Phase 5 — /app/workspaces/:id/templates list+detail live with kind+scope filters", status: "done" },
   { id: "p5-fork", label: "Phase 5 — fork-into-workspace flow with parent_template_id lineage", status: "done" },
   { id: "p5-consume-campaigns", label: "Phase 5 follow-up — campaigns can be created from canonical campaign templates", status: "todo" },
-  { id: "p5-consume-guides", label: "Phase 5 follow-up — guides can be created from canonical guide templates", status: "todo" },
+  { id: "p5-consume-guides", label: "Phase 5 follow-up — guides can be created from canonical guide templates", status: "done" },
   { id: "p5-write-canonical", label: "Phase 5 follow-up — canonical native template create + edit (no legacy bridge)", status: "todo" },
   { id: "p5-vault-legacy", label: "Phase 5 follow-up — vault legacy template editors once canonical UI is feature-complete", status: "todo" },
+  { id: "p6-native-builder", label: "Phase 6 — native canonical guide editor at /app/workspaces/:id/guides/:id/edit (writes guides + guide_versions directly)", status: "done" },
+  { id: "p6-new-page", label: "Phase 6 — /app/workspaces/:id/guides/new with blank + from-template paths", status: "done" },
+  { id: "p6-publish-rollback", label: "Phase 6 — publish + rollback over guide_versions with is_current flip + status transition", status: "done" },
+  { id: "p6-from-template", label: "Phase 6 — create-guide-from-template flow consumes canonical templates(kind=guide) and stores lineage", status: "done" },
+  { id: "p6-bridge-demoted", label: "Phase 6 — ScriptBuilderPage demoted to compatibility-only deep link for source_type='script' guides", status: "done" },
+  { id: "p6-visual-editor", label: "Phase 6 follow-up — visual node editor for native guide content (currently raw JSON surface)", status: "todo" },
+  { id: "p6-vault-legacy", label: "Phase 6 follow-up — vault Scripter / TreeEditor / ScriptFlowHub / ScriptRouting once visual editor lands", status: "todo" },
 ];
 
 const NON_GOALS = [
@@ -534,6 +549,54 @@ export default function OutlinePage() {
                 <li>Decide canonical Form storage shape (likely as a new entity, not a template kind).</li>
                 <li>Native canonical template create + edit so Forms can both consume templates and be templated themselves.</li>
                 <li>Stable template versioning + rollback before Forms attach to a specific version.</li>
+              </ul>
+            </Section>
+
+            <Section id="phase-6-decisions" title="14. Phase 6 — Native guide builder and publish/version decisions">
+              <h3 className="text-sm font-semibold text-foreground">Authoring debt cleared</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Edit route <span className="font-mono">/app/workspaces/:id/guides/:id/edit</span> is now the real owner for canonical native guides — no longer primarily a bridge.</li>
+                <li>ScriptBuilderPage remains a compatibility-only deep link, used solely for guides whose <span className="font-mono">source_type='script'</span>.</li>
+                <li><span className="font-mono">guide_versions</span> is now operational: every save produces a new version row; publish flips <span className="font-mono">is_current</span> and updates <span className="font-mono">guides.current_version</span> + <span className="font-mono">status</span>.</li>
+                <li>Rollback republishes a prior version atomically without discarding newer drafts.</li>
+                <li>Create-from-template consumes canonical <span className="font-mono">templates(kind=guide)</span> and stores <span className="font-mono">metadata.from_template_id</span> for lineage.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Lifecycle model</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Status enum unchanged: <span className="font-mono">draft | published | archived</span>.</li>
+                <li>Save draft: insert new <span className="font-mono">guide_versions</span> row with <span className="font-mono">is_current=false</span>, version = max+1.</li>
+                <li>Publish: clear all <span className="font-mono">is_current</span> for the guide, set on target version, update <span className="font-mono">guides.status='published'</span> + <span className="font-mono">current_version</span>.</li>
+                <li>Rollback: same as publish but targets a prior version; newer drafts are preserved.</li>
+                <li>Native content surface today: raw JSON in <span className="font-mono">guide_versions.content</span>. Visual node editor is a documented Phase 6 follow-up.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Surface disposition after Phase 6</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead><tr className="border-b"><th className="text-left p-2">Surface</th><th className="text-left p-2">Status</th><th className="text-left p-2">Notes</th></tr></thead>
+                <tbody>
+                  {[
+                    { s: "/app/workspaces/:id/guides/new", k: "Canonical (new)", n: "Blank or seed-from-template flow." },
+                    { s: "/app/workspaces/:id/guides/:id/edit", k: "Canonical (native)", n: "Real authoring surface; deep-links to ScriptBuilderPage only when source_type='script'." },
+                    { s: "/app/workspaces/:id/guides/:id (detail)", k: "Canonical", n: "Now exposes version history with publish + rollback actions." },
+                    { s: "/admin/scripts/:id/builder (ScriptBuilderPage)", k: "Compatibility-only", n: "Authoritative writer for legacy script-source guides. Re-mirrors via trigger." },
+                    { s: "/admin/scripter, /admin/tree-editor, /admin/scriptflow, /admin/script-routing", k: "Deferred / vault candidate", n: "Routable but not part of canonical lifecycle. Vault target after visual editor lands." },
+                    { s: "guides + guide_versions", k: "Canonical authoring path", n: "Now both read AND write surface for native canonical guides." },
+                  ].map((r) => (
+                    <tr key={r.s} className="border-b border-border/40">
+                      <td className="p-2 font-mono text-[11px] text-muted-foreground">{r.s}</td>
+                      <td className="p-2">{r.k}</td>
+                      <td className="p-2">{r.n}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Phase 7 prerequisites</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Visual node editor over <span className="font-mono">guide_versions.content</span> so legacy ScriptBuilderPage can be vaulted.</li>
+                <li>Decide whether canonical templates need a native edit surface before mappings/provider normalization begins.</li>
+                <li>Mappings + provider normalization (Clio / MyCase) is the next product-critical move once authoring is canonical end-to-end.</li>
               </ul>
             </Section>
           </div>

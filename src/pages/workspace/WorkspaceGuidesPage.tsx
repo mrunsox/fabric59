@@ -3,7 +3,7 @@ import { useWorkspaceGuides } from "@/hooks/useWorkspaceGuides";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, FileText } from "lucide-react";
+import { ExternalLink, FilePlus, FileText } from "lucide-react";
 
 const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
   published: "default",
@@ -24,12 +24,20 @@ export default function WorkspaceGuidesPage() {
             Canonical agent guides scoped to this workspace. Mirrored from legacy scripts during Phase 4.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link to="/admin/scripts">
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Legacy scripts
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild>
+            <Link to={`/app/workspaces/${workspaceId}/guides/new`}>
+              <FilePlus className="h-4 w-4 mr-2" />
+              New guide
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/admin/scripts">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Legacy scripts
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
