@@ -13,7 +13,7 @@ interface SEOHeadProps {
 
 const DEFAULT_OG_IMAGE = "https://fabric59.com/og-image.png";
 const DEFAULT_TITLE =
-  "Fabric59 | Five9-Native Control Plane & Legal-Intake Bridge";
+  "Fabric59 — Operational Intelligence For Five9 Contact Centers";
 
 export function SEOHead({
   title,
