@@ -5,6 +5,10 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle2, Circle, Clock, ShieldAlert } from "lucide-react";
 import { GLOBAL_SECTIONS, WORKSPACE_SECTIONS } from "@/config/navigation";
+import {
+  SURFACE_INVENTORY, LINGERING_ITEMS, COPY_INCONSISTENCIES,
+  CTA_ALIGNMENT, REDIRECT_TABLE, SLICE_SEQUENCE, summarizeAudit,
+} from "@/data/surfaceAudit";
 
 /**
  * /outline — Internal Canonical Build Doc
