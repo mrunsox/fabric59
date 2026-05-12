@@ -129,7 +129,7 @@ export function ScriptEditorContent() {
                         <Button variant="ghost" size="icon" className="h-8 w-8" title="Visual Builder" onClick={() => navigate(`/admin/scripts/${script.id}/builder`)}>
                           <PenTool className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Preview" onClick={() => navigate(`/admin/scripter`)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Preview" onClick={() => navigate(`/admin/scripts/${script.id}/builder`)}>
                           <Play className="h-3.5 w-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteScript.mutate(script.id)}>

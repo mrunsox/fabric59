@@ -328,10 +328,17 @@ const App = () => (
                 <Route path="campaign-blueprints" element={<Navigate to="/admin/templates" replace />} />
                 <Route path="reports" element={<ReportsPage />} />
                 
-                {/* CANONICAL: scripts/guides cluster — scripter, scripts, tree-editor, scriptflow,
-                    script-routing all merge into the canonical Guide artifact in Phase 4.
-                    Kept routable; de-surfaced from primary nav this pass. */}
-                <Route path="scripter" element={<ScripterPage />} />
+                {/* CANONICAL (Phase C): Guide builder family collapses to one entry point.
+                    - Canonical org-level guide list:    /admin/scripts
+                    - Canonical org-level guide builder: /admin/scripts/:scriptId/builder (ScriptBuilderPage)
+                    - Canonical workspace guide editor:  /app/workspaces/:workspaceId/guides/:guideId/edit
+                    Legacy aliases (scripter, scriptflow, tree-editor base, call-flow base) redirect into the
+                    canonical guide list. Param-bearing legacy routes (tree-editor/:scriptId, script-routing)
+                    remain compatibility-only — reachable, de-surfaced from primary nav and CTAs. */}
+                <Route path="scripter" element={<Navigate to="/admin/scripts" replace />} />
+                <Route path="scriptflow" element={<Navigate to="/admin/scripts" replace />} />
+                <Route path="tree-editor" element={<Navigate to="/admin/scripts" replace />} />
+                <Route path="call-flow" element={<Navigate to="/admin/flows" replace />} />
                 {/* CANONICAL: kept routable as an active operational surface; de-surfaced from nav. */}
                 <Route path="agent-dashboard" element={<AgentDashboardPage />} />
                 <Route path="supervisor" element={<SupervisorPage />} />
@@ -350,16 +357,17 @@ const App = () => (
                 <Route path="kb" element={<KnowledgeBasePage />} />
                 <Route path="training" element={<TrainingPage />} />
                 <Route path="feedback" element={<FeedbackPage />} />
+                {/* Phase C: compatibility-only — operational deep-link surface, de-surfaced from nav. */}
                 <Route path="script-routing" element={<ScriptRoutingPage />} />
                 <Route path="goals" element={<GoalsPage />} />
                 <Route path="summary-templates" element={<CallSummaryTemplatesPage />} />
-                <Route path="scriptflow" element={<ScriptFlowHubPage />} />
+                {/* Phase C: scriptflow base redirects above; param surface kept for legacy deep links handled by hub. */}
                 <Route path="email-templates" element={<EmailTemplatesPage />} />
-                <Route path="call-flow" element={<CallFlowBuilderPage />} />
+                {/* Phase C: call-flow base redirects above; this param route is compatibility-only. */}
                 <Route path="legal-connect" element={<LegalConnectPage />} />
                 <Route path="qr-routing" element={<QrRoutingPage />} />
+                {/* Phase C: tree-editor base redirects above; param surface kept compatibility-only. */}
                 <Route path="tree-editor/:scriptId" element={<TreeEditorPage />} />
-                <Route path="tree-editor" element={<TreeEditorPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="design-system" element={<DesignSystemPage />} />
