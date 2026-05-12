@@ -328,10 +328,17 @@ const App = () => (
                 <Route path="campaign-blueprints" element={<Navigate to="/admin/templates" replace />} />
                 <Route path="reports" element={<ReportsPage />} />
                 
-                {/* CANONICAL: scripts/guides cluster — scripter, scripts, tree-editor, scriptflow,
-                    script-routing all merge into the canonical Guide artifact in Phase 4.
-                    Kept routable; de-surfaced from primary nav this pass. */}
-                <Route path="scripter" element={<ScripterPage />} />
+                {/* CANONICAL (Phase C): Guide builder family collapses to one entry point.
+                    - Canonical org-level guide list:    /admin/scripts
+                    - Canonical org-level guide builder: /admin/scripts/:scriptId/builder (ScriptBuilderPage)
+                    - Canonical workspace guide editor:  /app/workspaces/:workspaceId/guides/:guideId/edit
+                    Legacy aliases (scripter, scriptflow, tree-editor base, call-flow base) redirect into the
+                    canonical guide list. Param-bearing legacy routes (tree-editor/:scriptId, script-routing)
+                    remain compatibility-only — reachable, de-surfaced from primary nav and CTAs. */}
+                <Route path="scripter" element={<Navigate to="/admin/scripts" replace />} />
+                <Route path="scriptflow" element={<Navigate to="/admin/scripts" replace />} />
+                <Route path="tree-editor" element={<Navigate to="/admin/scripts" replace />} />
+                <Route path="call-flow" element={<Navigate to="/admin/flows" replace />} />
                 {/* CANONICAL: kept routable as an active operational surface; de-surfaced from nav. */}
                 <Route path="agent-dashboard" element={<AgentDashboardPage />} />
                 <Route path="supervisor" element={<SupervisorPage />} />
