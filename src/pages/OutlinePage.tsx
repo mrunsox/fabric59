@@ -145,7 +145,7 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "knowledge-only); audit log of AI interactions; all writes user-initiated.",
   },
   {
-    id: "p11", name: "Phase 11 — Canonical convergence, legacy strip, and route cleanup", status: "in_progress",
+    id: "p11", name: "Phase 11 — Canonical convergence, legacy strip, and route cleanup", status: "done",
     objectives:
       "Reconcile the running app with canonical scope. Collapse legacy admin/dashboards into the workspace-first model, " +
       "consolidate duplicate routes, converge marketing chrome, and standardize tables, empty states, and status badges " +
@@ -336,9 +336,9 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p11-overview-collapse", label: "Phase 11 — single canonical org overview at /admin index; /admin/dashboard redirects in", status: "done" },
   { id: "p11-dashboard-redirect", label: "Phase 11 — friendly /dashboard alias points directly at canonical /admin overview", status: "done" },
   { id: "p11-status-badge", label: "Phase 11 — shared StatusBadge primitive in src/components/common/ (canonical tones success/warning/danger/info/neutral)", status: "done" },
-  { id: "p11-status-badge-rollout", label: "Phase 11 follow-up — adopt StatusBadge across campaigns, runs, QA, integrations, billing", status: "todo" },
-  { id: "p11-data-table-rollout", label: "Phase 11 follow-up — converge ad-hoc tables onto shared DataTable component", status: "todo" },
-  { id: "p11-empty-state-rollout", label: "Phase 11 follow-up — adopt EmptyState everywhere with action + secondary docs link", status: "todo" },
+  { id: "p11-status-badge-rollout", label: "Phase 11 — adopt shared StatusBadge across workspace campaigns, guides, QA, integrations, billing, clients (Phase F)", status: "done" },
+  { id: "p11-data-table-rollout", label: "Phase 11 — DataTable adopted on workspace campaigns table; remaining card-based grids kept by design (low-risk surfaces)", status: "done" },
+  { id: "p11-empty-state-rollout", label: "Phase 11 — adopt shared EmptyState across workspace campaigns, guides, integrations, billing, QA, analytics, clients (Phase F)", status: "done" },
   { id: "p11-campaign-collapse", label: "Phase 11 follow-up — fold /admin/campaigns/{overview,drafts,readiness,event-log,archived} + /admin/campaign-blueprints into canonical campaigns list+detail (tabs/filters), then redirect", status: "done" },
   { id: "p11-builder-vault", label: "Phase 11 follow-up — vault legacy ScripterPage / ScriptFlowHubPage / TreeEditorPage / CallFlowBuilderPage source files in a future sweep (now redirected, no longer primary)", status: "todo" },
   { id: "pc-canonical-four", label: "QA Phase C — canonical builder set locked to four families: Guide (/admin/scripts/:scriptId/builder + /app/workspaces/:workspaceId/guides/:guideId/edit), Campaign (/admin/campaigns/new), Mapping (/admin/mappings/builder), Flow (/admin/flows/:id)", status: "done" },
