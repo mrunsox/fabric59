@@ -51,7 +51,7 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
     exit: "Workspace shell renders all 13 canonical sections; breadcrumb Org > Workspace > Section works; legacy /admin/* untouched.",
   },
   {
-    id: "p2b", name: "Phase 2B — Real workspace foundation + data binding", status: "in_progress",
+    id: "p2b", name: "Phase 2B — Real workspace foundation + data binding", status: "done",
     objectives:
       "Real workspaces + workspace_members tables (RLS, default-per-org backfill, auto-create trigger). " +
       "WorkspaceContext rebinds to canonical workspace data. Workspace-aware Clients page lands as the first " +
@@ -59,9 +59,14 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
     exit: "workspaces table live with backfill; WorkspaceContext sources from DB; /app/workspaces/:id/clients resolves via workspace context; /admin/* untouched.",
   },
   {
-    id: "p3", name: "Phase 3 — Canonical campaigns", status: "todo",
-    objectives: "Collapse all campaign tables/surfaces into one model + one builder + one status machine.",
-    exit: "Single campaigns entity; legacy campaign tables vaulted or aliased; campaign list/detail unified.",
+    id: "p3", name: "Phase 3 — Canonical campaigns", status: "in_progress",
+    objectives:
+      "Introduce canonical workspace-owned `campaigns` table with status enum (draft/ready/live/paused/archived). " +
+      "One-way mirror trigger from legacy `campaign_setups` keeps both surfaces in sync. " +
+      "Canonical list/detail/new pages live under /app/workspaces/:id/campaigns. " +
+      "CampaignIntakePage chosen as the canonical surviving creation flow.",
+    exit:
+      "campaigns table backfilled and live; canonical list+detail+new routed under workspace; legacy /admin/campaigns* preserved as compatibility writers; other legacy campaign tables (drafts, archives, blueprints, scripts, legal_connect_campaigns, five9_campaign_routes) untouched and queued for Phase 4+.",
   },
   {
     id: "p4", name: "Phase 4 — Guides", status: "todo",
@@ -161,8 +166,15 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "ws-context-real", label: "Phase 2B — WorkspaceContext sources from canonical workspaces table", status: "done" },
   { id: "ws-clients-bound", label: "Phase 2B — workspace-scoped clients listing live at /app/workspaces/:id/clients", status: "done" },
   { id: "ws-roles-scaffold", label: "Phase 2B — WORKSPACE_ROLES constants + workspace_role enum (no auth rewrite)", status: "done" },
-  { id: "ws-rebind-rest", label: "Phase 2B follow-ups — rebind campaigns/agents/supervisor/qa/analytics/integrations/settings to workspace context", status: "in_progress" },
+  { id: "ws-rebind-rest", label: "Phase 2B follow-ups — rebind agents/supervisor/qa/analytics/integrations/settings to workspace context", status: "in_progress" },
   { id: "ws-client-fk", label: "Phase 2B follow-up — add workspace_id to clients (tenants) and switch hook predicate", status: "todo" },
+  { id: "p3-campaigns-table", label: "Phase 3 — canonical campaigns table (workspace-owned, RLS, status enum)", status: "done" },
+  { id: "p3-mirror-trigger", label: "Phase 3 — one-way mirror trigger campaign_setups → campaigns", status: "done" },
+  { id: "p3-backfill", label: "Phase 3 — backfill canonical campaigns from existing campaign_setups", status: "done" },
+  { id: "p3-routes", label: "Phase 3 — canonical /app/workspaces/:id/campaigns list+detail+new live", status: "done" },
+  { id: "p3-canonical-create", label: "Phase 3 — CampaignIntakePage chosen as the canonical surviving creation flow", status: "done" },
+  { id: "p3-other-tables", label: "Phase 3 follow-up — fold campaign_archives/blueprints/builder_drafts/scripts/legal_connect_campaigns/five9_campaign_routes into canonical model", status: "todo" },
+  { id: "p3-write-canonical", label: "Phase 3 follow-up — canonical write path (insert into campaigns directly, deprecate campaign_setups writes)", status: "todo" },
 ];
 
 const NON_GOALS = [

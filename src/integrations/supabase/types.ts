@@ -1013,6 +1013,80 @@ export type Database = {
         }
         Relationships: []
       }
+      campaigns: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          legacy_status: string | null
+          metadata: Json
+          name: string
+          source_id: string | null
+          source_type: string | null
+          status: Database["public"]["Enums"]["campaign_status"]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          legacy_status?: string | null
+          metadata?: Json
+          name: string
+          source_id?: string | null
+          source_type?: string | null
+          status?: Database["public"]["Enums"]["campaign_status"]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          legacy_status?: string | null
+          metadata?: Json
+          name?: string
+          source_id?: string | null
+          source_type?: string | null
+          status?: Database["public"]["Enums"]["campaign_status"]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "campaigns_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clio_mappings: {
         Row: {
           contact_id: string | null
@@ -8666,6 +8740,10 @@ export type Database = {
         Args: { _org_id?: string }
         Returns: Json
       }
+      map_legacy_campaign_status: {
+        Args: { _legacy: string }
+        Returns: Database["public"]["Enums"]["campaign_status"]
+      }
       user_has_permission: {
         Args: { _org_id: string; _permission: string; _user_id: string }
         Returns: boolean
@@ -8673,6 +8751,7 @@ export type Database = {
     }
     Enums: {
       app_role: "master_admin" | "admin" | "ops_team" | "viewer"
+      campaign_status: "draft" | "ready" | "live" | "paused" | "archived"
       crm_type:
         | "clio"
         | "workiz"
@@ -8863,6 +8942,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["master_admin", "admin", "ops_team", "viewer"],
+      campaign_status: ["draft", "ready", "live", "paused", "archived"],
       crm_type: [
         "clio",
         "workiz",
