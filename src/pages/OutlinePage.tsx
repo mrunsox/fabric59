@@ -36,19 +36,24 @@ const Section = ({ id, title, children }: { id: string; title: string; children:
 
 const PHASES: { id: string; name: string; status: Status; objectives: string; exit: string }[] = [
   {
-    id: "p0", name: "Phase 0 — Freeze + vault prep", status: "in_progress",
+    id: "p0", name: "Phase 0 — Freeze + vault prep", status: "done",
     objectives: "Document current state. Identify duplicates. Mark vault candidates. No deletions.",
     exit: "Every soon-to-be-deleted artifact has a vault record; cleanup matrix exists; regression baseline captured.",
   },
   {
-    id: "p1", name: "Phase 1 — Route + nav strip", status: "in_progress",
+    id: "p1", name: "Phase 1 — Route + nav strip", status: "done",
     objectives: "Collapse primary nav to canonical seven; de-surface duplicates; add safe redirects.",
     exit: "Org-level nav matches spec; no duplicate entry points in nav; all legacy URLs redirect or remain reachable.",
   },
   {
-    id: "p2", name: "Phase 2 — Workspace + client foundations", status: "todo",
-    objectives: "Introduce workspaces entity; mount /app/workspaces/:id shell; normalize client noun.",
-    exit: "Real workspace table exists; workspace shell renders WORKSPACE_SECTIONS; clients live inside workspaces.",
+    id: "p2a", name: "Phase 2A — Workspace shell + route scaffolding", status: "in_progress",
+    objectives: "Mount canonical /app/workspaces/:workspaceId/* shell with WORKSPACE_SECTIONS, breadcrumbs, switcher; reuse legacy pages where safe; placeholders elsewhere; no DB changes.",
+    exit: "Workspace shell renders all 13 canonical sections; breadcrumb Org > Workspace > Section works; legacy /admin/* untouched.",
+  },
+  {
+    id: "p2b", name: "Phase 2B — Workspace data foundation", status: "todo",
+    objectives: "Introduce real workspaces entity (table or canonical view); migrate WorkspaceContext off the Organization adapter; bind workspace-scoped data sources.",
+    exit: "Real workspace identity exists in the data layer; sections read workspace-scoped data; clients live inside workspaces.",
   },
   {
     id: "p3", name: "Phase 3 — Canonical campaigns", status: "todo",
@@ -146,6 +151,10 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "integration-freeze", label: "Integration freeze — stub providers listed", status: "done" },
   { id: "vault-candidates", label: "Vault candidates documented", status: "done" },
   { id: "redirect-candidates", label: "Redirect candidates documented + safe redirects added", status: "done" },
+  { id: "ws-shell", label: "Phase 2A — canonical workspace shell mounted at /app/workspaces/:workspaceId/*", status: "in_progress" },
+  { id: "ws-context", label: "Phase 2A — WorkspaceContext adapter (Organization → Workspace) live", status: "in_progress" },
+  { id: "ws-bridging", label: "Phase 2A — legacy admin pages reused under canonical shell where safe", status: "in_progress" },
+  { id: "ws-entity", label: "Phase 2B — real workspaces entity in the data layer", status: "todo" },
 ];
 
 const NON_GOALS = [
