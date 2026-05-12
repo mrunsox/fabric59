@@ -37,6 +37,8 @@ import SystemAccessPage from "@/pages/auth/SystemAccessPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import OnboardingPage from "@/pages/onboarding/OnboardingPage";
+import WorkspaceBootstrapPage from "@/pages/onboarding/WorkspaceBootstrapPage";
+import AcceptInvitePage from "@/pages/auth/AcceptInvitePage";
 import OutlinePage from "@/pages/OutlinePage";
 import LandingPage from "@/pages/LandingPage";
 import TermsPage from "@/pages/TermsPage";
@@ -48,6 +50,12 @@ import ContactPage from "@/pages/ContactPage";
 import FaqPage from "@/pages/FaqPage";
 import ProductTourPage from "@/pages/ProductTourPage";
 import DemoSandboxPage from "@/pages/DemoSandboxPage";
+// Phase 9 — canonical marketing IA
+import PersonasPage from "@/pages/marketing/PersonasPage";
+import SolutionsPage from "@/pages/marketing/SolutionsPage";
+import PricingPage from "@/pages/marketing/PricingPage";
+import IntegrationsIndexPage from "@/pages/marketing/IntegrationsIndexPage";
+import CustomersPage from "@/pages/marketing/CustomersPage";
 
 // Admin pages
 import TenantsPage from "@/pages/admin/TenantsPage";
