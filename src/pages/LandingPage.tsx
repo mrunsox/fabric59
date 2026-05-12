@@ -113,7 +113,7 @@ const faqItems = [
   },
   {
     question: "Which CRMs are supported today?",
-    answer: "MyCase is live using per-client API key intake. Clio Grow is live as an MVP Lead Inbox via the clio-grow edge function with idempotent sync jobs. The full Clio Manage adapter is queued behind OAuth provisioning. Additional CRMs are added per engagement through the same adapter pattern.",
+    answer: crmSupportAnswer(),
   },
   {
     question: "How do I get started?",
