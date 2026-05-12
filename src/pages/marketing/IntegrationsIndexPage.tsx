@@ -8,7 +8,8 @@ import { Phone, Scale, MessageSquare, Webhook, ArrowRight } from "lucide-react";
 const PROVIDERS = [
   { logo: "/integration-logos/salesforce.svg", name: "Five9", status: "Live", note: "30+ SOAP actions, multi-domain, sync engine.", icon: Phone },
   { logo: "/integration-logos/google.svg", name: "MyCase", status: "Live", note: "Per-client API key intake, contact + matter writeback.", icon: Scale },
-  { logo: "/integration-logos/google.svg", name: "Clio", status: "Adapter ready", note: "Adapter shipped + Clio Grow lead inbox MVP. Awaiting OAuth secrets.", icon: Scale },
+  { logo: "/integration-logos/google.svg", name: "Clio Grow", status: "Live", note: "Lead Inbox MVP via clio-grow edge function with idempotent sync jobs.", icon: Scale },
+  { logo: "/integration-logos/google.svg", name: "Clio Manage", status: "Coming soon", note: "Adapter shipped; activates on OAuth credential provisioning.", icon: Scale },
   { logo: "/integration-logos/slack.svg", name: "Slack", status: "Live", note: "Real-time agent workspace + post-call notifications.", icon: MessageSquare },
   { logo: "/integration-logos/zapier.svg", name: "Zapier / Make", status: "Live", note: "Outbound webhooks + workflow automations dispatch.", icon: Webhook },
   { logo: "/integration-logos/hubspot.svg", name: "HubSpot, Salesforce, Zendesk, Pipedrive…", status: "Stub", note: "Provider stubs marked for deletion in Phase 7 follow-up. Not exposed in product.", icon: Webhook },

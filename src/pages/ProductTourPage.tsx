@@ -69,10 +69,11 @@ const sections: Section[] = [
     badge: "Legal Connect",
     status: "Live",
     title: "Five9 → legal CRM bridge",
-    body: "Pre-call ANI lookup matches contacts and resolves matters before the agent says hello. Disposition outcomes drive CRM writebacks under a per-campaign policy engine that enforces field-level allow, block, and redact rules. MyCase is live; Clio is built and queued behind activation.",
+    body: "Pre-call ANI lookup matches contacts and resolves matters before the agent says hello. Disposition outcomes drive CRM writebacks under a per-campaign policy engine that enforces field-level allow, block, and redact rules. MyCase is live; Clio Grow Lead Inbox shipped as MVP via the clio-grow edge function with idempotent sync jobs. The full Clio Manage adapter is queued behind OAuth provisioning.",
     bullets: [
       "MyCase live via per-client API-key intake",
-      "Clio adapter shipped — activates on OAuth provisioning",
+      "Clio Grow Lead Inbox MVP — live via clio-grow edge function",
+      "Clio Manage adapter — activates on OAuth provisioning",
       "Per-disposition policy engine with field-level rules",
     ],
     technical: [
