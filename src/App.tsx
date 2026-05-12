@@ -12,6 +12,7 @@ import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
 import WorkspaceHomePage from "@/pages/workspace/WorkspaceHomePage";
 import WorkspaceSectionPlaceholder from "@/pages/workspace/WorkspaceSectionPlaceholder";
+import WorkspaceClientsPage from "@/pages/workspace/WorkspaceClientsPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
