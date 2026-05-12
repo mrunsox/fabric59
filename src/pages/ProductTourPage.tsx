@@ -285,10 +285,11 @@ export default function ProductTourPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
         title="Product Overview — Fabric59"
-        description="The canonical Fabric59 product overview. Every capability tagged Live, Partial, or Coming soon — Five9 SOAP, MyCase, Clio, mapping, scripting, RLS, audit export."
+        description={productOverviewDescription()}
         canonical="https://fabric59.com/product"
         ogTitle="Fabric59 Product Overview — every capability, honestly tagged"
       />
+      <StructuredData data={[organizationLD, softwareApplicationLD()]} />
 
       <MegaMenuHeader />
 
