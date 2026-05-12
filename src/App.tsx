@@ -357,16 +357,17 @@ const App = () => (
                 <Route path="kb" element={<KnowledgeBasePage />} />
                 <Route path="training" element={<TrainingPage />} />
                 <Route path="feedback" element={<FeedbackPage />} />
+                {/* Phase C: compatibility-only — operational deep-link surface, de-surfaced from nav. */}
                 <Route path="script-routing" element={<ScriptRoutingPage />} />
                 <Route path="goals" element={<GoalsPage />} />
                 <Route path="summary-templates" element={<CallSummaryTemplatesPage />} />
-                <Route path="scriptflow" element={<ScriptFlowHubPage />} />
+                {/* Phase C: scriptflow base redirects above; param surface kept for legacy deep links handled by hub. */}
                 <Route path="email-templates" element={<EmailTemplatesPage />} />
-                <Route path="call-flow" element={<CallFlowBuilderPage />} />
+                {/* Phase C: call-flow base redirects above; this param route is compatibility-only. */}
                 <Route path="legal-connect" element={<LegalConnectPage />} />
                 <Route path="qr-routing" element={<QrRoutingPage />} />
+                {/* Phase C: tree-editor base redirects above; param surface kept compatibility-only. */}
                 <Route path="tree-editor/:scriptId" element={<TreeEditorPage />} />
-                <Route path="tree-editor" element={<TreeEditorPage />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="design-system" element={<DesignSystemPage />} />
