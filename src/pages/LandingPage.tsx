@@ -191,7 +191,7 @@ export default function LandingPage() {
             <motion.p custom={2} initial="hidden" animate="visible" variants={fadeUp}
               className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
             >
-              Fabric59 is the multi-tenant control plane around Five9 — unifying SOAP operations, {liveCrmSubheadPhrase()}, visual mapping, agent scripting, post-call automations, and audit-grade reporting under one Org / Partner / Client hierarchy.
+              Fabric59 is the multi-tenant control plane around Five9 — unifying SOAP operations, {canonicalCrmSubhead()}, visual mapping, agent scripting, post-call automations, and audit-grade reporting under one Org / Partner / Client hierarchy.
             </motion.p>
 
             <motion.div custom={3} initial="hidden" animate="visible" variants={fadeUp}
