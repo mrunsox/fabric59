@@ -26,11 +26,8 @@ export function ProtectedRoute() {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Non-admin members landing on /admin index → redirect to personalized dashboard
-  const isLimitedMember = orgRole === "member" && !isMasterAdmin;
-  if (isLimitedMember && location.pathname === "/admin") {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
+  // Phase A (QA Readiness): /admin is the single canonical org overview for ALL roles.
+  // Previous member→/admin/dashboard redirect removed (would now loop, since /admin/dashboard → /admin).
 
   return <Outlet />;
 }
