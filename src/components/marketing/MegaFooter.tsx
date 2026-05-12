@@ -39,7 +39,7 @@ export function MegaFooter() {
   return (
     <footer className="border-t border-border/30 bg-background pt-20 pb-8">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-16">
           {/* Brand */}
           <div className="lg:col-span-1 flex flex-col gap-4">
             <div className="flex items-center gap-2.5">
@@ -57,7 +57,19 @@ export function MegaFooter() {
             </a>
           </div>
 
-          {/* Platform */}
+          {/* Product (canonical IA) */}
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-4">Product</h4>
+            <nav className="flex flex-col gap-2.5">
+              {productLinks.map((link) => (
+                <Link key={link.label} to={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* Platform highlights */}
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-4">Platform</h4>
             <nav className="grid grid-cols-1 gap-2.5">
