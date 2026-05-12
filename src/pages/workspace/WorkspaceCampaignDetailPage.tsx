@@ -1,0 +1,109 @@
+import { Link, useParams } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, ExternalLink } from "lucide-react";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useWorkspaceCampaign } from "@/hooks/useWorkspaceCampaigns";
+
+/**
+ * Canonical Campaign Detail shell — /app/workspaces/:id/campaigns/:campaignId.
+ * Phase 3: thin canonical shell. Deeper builder/checklist surfaces remain in the legacy
+ * /admin/campaigns/:id page until Phase 4+. When the source is a campaign_setup we link
+ * out to the legacy detail surface so operators can keep using existing tooling.
+ */
+export default function WorkspaceCampaignDetailPage() {
+  const { campaignId } = useParams<{ campaignId: string }>();
+  const { workspace } = useWorkspace();
+  const { data: campaign, isLoading } = useWorkspaceCampaign(campaignId);
+  if (!workspace) return null;
+  const base = `/app/workspaces/${workspace.id}/campaigns`;
+
+  if (isLoading) return <p className="text-sm text-muted-foreground">Loading campaign…</p>;
+  if (!campaign) {
+    return (
+      <Card>
+        <CardContent className="pt-6 space-y-3">
+          <h1 className="text-lg font-semibold">Campaign not found</h1>
+          <Button asChild variant="outline" size="sm">
+            <Link to={base}><ArrowLeft className="h-4 w-4 mr-1.5" /> Back to campaigns</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const legacyHref =
+    campaign.source_type === "campaign_setup" && campaign.source_id
+      ? `/admin/campaigns/${campaign.source_id}`
+      : null;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Link to={base} className="hover:text-foreground">Campaigns</Link>
+        <span>/</span>
+        <span className="text-foreground">{campaign.name}</span>
+      </div>
+
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <Badge variant="secondary" className="mb-2">{campaign.status}</Badge>
+          <h1 className="text-2xl font-semibold tracking-tight">{campaign.name}</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Workspace: {workspace.name} · Updated {new Date(campaign.updated_at).toLocaleString()}
+          </p>
+        </div>
+        {legacyHref && (
+          <Button asChild variant="outline" size="sm">
+            <Link to={legacyHref}>
+              Open legacy detail <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+            </Link>
+          </Button>
+        )}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Status</CardTitle></CardHeader>
+          <CardContent className="text-sm">
+            Canonical: <span className="font-medium">{campaign.status}</span>
+            {campaign.legacy_status && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Legacy: {campaign.legacy_status}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Client</CardTitle></CardHeader>
+          <CardContent className="text-sm">
+            {campaign.client_id ? (
+              <Link className="hover:text-primary" to={`/admin/clients/${campaign.client_id}`}>
+                Open client
+              </Link>
+            ) : (
+              <span className="text-muted-foreground">Not linked</span>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Source</CardTitle></CardHeader>
+          <CardContent className="text-sm">
+            <span className="text-muted-foreground">{campaign.source_type ?? "canonical"}</span>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Phase 3 note</CardTitle></CardHeader>
+        <CardContent className="text-xs text-muted-foreground space-y-1">
+          <p>This is the canonical campaign detail shell. Builder, checklist, provisioning, and
+            archive workflows remain in the legacy admin page until Phase 4+.</p>
+          <p>Status, client linkage, and workspace ownership are now sourced from the canonical
+            <code className="px-1">campaigns</code> table.</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
