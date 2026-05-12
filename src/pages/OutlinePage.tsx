@@ -79,19 +79,27 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "guides + guide_versions live; canonical routes live; ScriptBuilderPage promoted as survivor; campaign assignment functional under workspace scope.",
   },
   {
-    id: "p5", name: "Phase 5 — Templates unification", status: "in_progress",
+    id: "p5", name: "Phase 5 — Templates unification", status: "done",
     objectives:
-      "Collapse 7 legacy template tables (script_templates, flow_templates, email_templates, report_templates, " +
-      "call_summary_templates, legal_connect_prompt_templates, campaign_blueprints) into one canonical `templates` table " +
-      "keyed by scope_type (platform/org/partner/client/workspace) + kind (guide/flow/campaign/email/summary/prompt/report). " +
-      "Mirror triggers + backfill from each legacy writer; parent_template_id provides fork lineage; canonical workspace " +
-      "routes /app/workspaces/:id/templates{,/:id} expose the unified gallery and fork action.",
+      "Collapsed 7 legacy template tables into one canonical `templates` + `template_versions` model keyed by scope + kind, " +
+      "with mirror triggers, backfill, parent_template_id lineage, and workspace gallery + fork routes.",
     exit:
-      "templates + template_versions live with backfill from all 7 legacy tables; canonical workspace template routes live; " +
-      "fork-into-workspace flow functional; legacy template pages remain authoritative writers (mirrored, not yet purged).",
+      "templates + template_versions live; canonical workspace template routes live; fork-into-workspace functional; legacy template pages remain mirrored writers.",
   },
   {
-    id: "p6", name: "Phase 6 — Forms (new)", status: "todo",
+    id: "p6", name: "Phase 6 — Native guide builder + publish/version", status: "in_progress",
+    objectives:
+      "Make Guide fully canonical in authoring lifecycle. Native canonical guide editor at " +
+      "/app/workspaces/:id/guides/:id/edit (no longer primarily a bridge to ScriptBuilderPage). " +
+      "Real publish / rollback workflow over guide_versions with is_current flag and atomic transitions. " +
+      "Create-from-template flow that consumes canonical templates(kind=guide) and preserves lineage. " +
+      "Legacy script-source guides keep ScriptBuilderPage as compatibility-only deep link.",
+    exit:
+      "Native guide create + edit live; publish + rollback over guide_versions live; create-from-template live; " +
+      "legacy ScriptBuilderPage demoted to compatibility-only for guides whose source_type='script'.",
+  },
+  {
+    id: "p7", name: "Phase 7 — Forms (new)", status: "todo",
     objectives: "Build canonical Form artifact: schema, conditions, validation, mapping targets, versioning.",
     exit: "Form library + builder live; forms assignable to campaigns/guides; submissions captured.",
   },
