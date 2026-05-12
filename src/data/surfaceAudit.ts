@@ -419,9 +419,9 @@ export const REDIRECT_TABLE: RedirectRow[] = [
   { id: "R-15", from: "/admin/dev-guide", to: "/superadmin/dev-guide", kind: "permanent" },
   { id: "R-16", from: "/vault, /feature-vault", to: "/superadmin/vault", kind: "permanent" },
   { id: "R-17", from: "/five9, /domains, /five9-domains, /legal-connect, /settings, /call-flow, /onboarding/legal-connect", to: "/admin/* equivalents", kind: "permanent" },
-  // Slice A planned additions:
-  { id: "R-18", from: "/demo", to: "/contact?intent=demo", kind: "reconsider" },
-  { id: "R-19", from: "/faq", to: "/contact#faq", kind: "reconsider" },
+  // Slice A — implemented:
+  { id: "R-18", from: "/demo", to: "/contact?intent=demo", kind: "permanent" },
+  { id: "R-19", from: "/faq", to: "/trust", kind: "permanent" },
 ];
 
 /* ────────────────────────────────────────────────────────────────────────── */
