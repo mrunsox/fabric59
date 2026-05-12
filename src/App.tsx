@@ -342,7 +342,8 @@ const App = () => (
                 {/* Reused legacy pages — wrapped under canonical workspace shell.
                     These pages still read org-scoped data from AuthContext today;
                     workspace-scoped data binding lands in Phase 2B/3. */}
-                <Route path="clients" element={<ClientsPage />} />
+                {/* Phase 2B: workspace-scoped clients (real workspace context). */}
+                <Route path="clients" element={<WorkspaceClientsPage />} />
                 <Route path="campaigns" element={<CampaignsPage />} />
                 <Route path="templates" element={<TemplatesPage />} />
                 <Route path="runs" element={<RunsPage />} />
