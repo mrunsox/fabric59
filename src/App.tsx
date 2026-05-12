@@ -277,7 +277,11 @@ const App = () => (
                 <Route path="campaign-blueprints" element={<CampaignBlueprintsPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 
+                {/* CANONICAL: scripts/guides cluster — scripter, scripts, tree-editor, scriptflow,
+                    script-routing all merge into the canonical Guide artifact in Phase 4.
+                    Kept routable; de-surfaced from primary nav this pass. */}
                 <Route path="scripter" element={<ScripterPage />} />
+                {/* CANONICAL: kept routable as an active operational surface; de-surfaced from nav. */}
                 <Route path="agent-dashboard" element={<AgentDashboardPage />} />
                 <Route path="supervisor" element={<SupervisorPage />} />
                 <Route path="qa" element={<QAAnalyticsPage />} />
