@@ -75,8 +75,7 @@ import IntegrationsPage from "@/pages/admin/IntegrationsPage";
 import CampaignsPage from "@/pages/admin/CampaignsPage";
 import CampaignIntakePage from "@/pages/admin/CampaignIntakePage";
 import CampaignDetailPage from "@/pages/admin/CampaignDetailPage";
-import ArchivedCampaignsPage from "@/pages/admin/ArchivedCampaignsPage";
-import CampaignBlueprintsPage from "@/pages/admin/CampaignBlueprintsPage";
+// ArchivedCampaignsPage + CampaignBlueprintsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns?status=archived and /admin/templates).
 import ReportsPage from "@/pages/admin/ReportsPage";
 import ClientOverviewPage from "@/pages/admin/ClientOverviewPage";
 import PartnersPage from "@/pages/admin/PartnersPage";
@@ -111,8 +110,7 @@ import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
 import CampaignBuilderPage from "@/pages/admin/CampaignBuilderPage";
 import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
 import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
-import CampaignsOverviewPage from "@/pages/admin/CampaignsOverviewPage";
-import CampaignDraftsPage from "@/pages/admin/CampaignDraftsPage";
+// CampaignsOverviewPage + CampaignDraftsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns and /admin/campaigns?status=draft).
 import CampaignReadinessBoardPage from "@/pages/admin/CampaignReadinessBoardPage";
 import CampaignEventLogPage from "@/pages/admin/CampaignEventLogPage";
 import TestingHubPage from "@/pages/admin/TestingHubPage";
@@ -288,10 +286,12 @@ const App = () => (
                 <Route path="five9/campaign-builder" element={<CampaignBuilderPage />} />
                 <Route path="five9/campaign-builder/:draftId" element={<CampaignBuilderPage />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
-                {/* CANONICAL: campaign cluster — collapses into one canonical campaigns entity in Phase 3.
-                    Kept routable until then; de-surfaced from primary nav. */}
-                <Route path="campaigns/overview" element={<CampaignsOverviewPage />} />
-                <Route path="campaigns/drafts" element={<CampaignDraftsPage />} />
+                {/* CANONICAL (Phase B): campaign cluster collapsed.
+                    overview/drafts → /admin/campaigns (with optional ?status= filter).
+                    readiness + event-log remain compatibility-only — reachable via direct URL,
+                    de-surfaced from primary campaign nav, still linked from operational hubs (Five9, Monitoring, Legal Connect). */}
+                <Route path="campaigns/overview" element={<Navigate to="/admin/campaigns" replace />} />
+                <Route path="campaigns/drafts" element={<Navigate to="/admin/campaigns?status=draft" replace />} />
                 <Route path="campaigns/readiness" element={<CampaignReadinessBoardPage />} />
                 <Route path="campaigns/event-log" element={<CampaignEventLogPage />} />
                 <Route path="testing" element={<TestingHubPage />} />
@@ -323,8 +323,9 @@ const App = () => (
                 <Route path="campaigns/new" element={<CampaignIntakePage />} />
                 <Route path="campaigns/edit/:id" element={<CampaignIntakePage />} />
                 <Route path="campaigns/:id" element={<CampaignDetailPage />} />
-                <Route path="campaigns/archived" element={<ArchivedCampaignsPage />} />
-                <Route path="campaign-blueprints" element={<CampaignBlueprintsPage />} />
+                {/* CANONICAL (Phase B): archived collapses into list filter; blueprints fold into templates. */}
+                <Route path="campaigns/archived" element={<Navigate to="/admin/campaigns?status=archived" replace />} />
+                <Route path="campaign-blueprints" element={<Navigate to="/admin/templates" replace />} />
                 <Route path="reports" element={<ReportsPage />} />
                 
                 {/* CANONICAL: scripts/guides cluster — scripter, scripts, tree-editor, scriptflow,

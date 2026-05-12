@@ -339,7 +339,7 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p11-status-badge-rollout", label: "Phase 11 follow-up — adopt StatusBadge across campaigns, runs, QA, integrations, billing", status: "todo" },
   { id: "p11-data-table-rollout", label: "Phase 11 follow-up — converge ad-hoc tables onto shared DataTable component", status: "todo" },
   { id: "p11-empty-state-rollout", label: "Phase 11 follow-up — adopt EmptyState everywhere with action + secondary docs link", status: "todo" },
-  { id: "p11-campaign-collapse", label: "Phase 11 follow-up — fold /admin/campaigns/{overview,drafts,readiness,event-log,archived} + /admin/campaign-blueprints into canonical campaigns list+detail (tabs/filters), then redirect", status: "todo" },
+  { id: "p11-campaign-collapse", label: "Phase 11 follow-up — fold /admin/campaigns/{overview,drafts,readiness,event-log,archived} + /admin/campaign-blueprints into canonical campaigns list+detail (tabs/filters), then redirect", status: "done" },
   { id: "p11-builder-vault", label: "Phase 11 follow-up — vault & redirect /admin/scripter, /admin/scripts, /admin/tree-editor, /admin/scriptflow once visual guide editor lands", status: "todo" },
   { id: "p11-marketing-converge", label: "Phase 11 follow-up — audit /product, /demo, /faq, /contact for legacy story; redirect or refactor into canonical IA", status: "todo" },
   { id: "p11-breadcrumbs", label: "Phase 11 follow-up — breadcrumb pattern Org > Workspace > Campaign > Guide on nested pages", status: "todo" },
@@ -348,6 +348,12 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "pa-protectedroute-loop", label: "QA Phase A — removed ProtectedRoute member→/admin/dashboard hop (was a redirect loop after Phase 11 collapse)", status: "done" },
   { id: "pa-redirects-verified", label: "QA Phase A — /dashboard, /admin/dashboard both redirect to /admin; /admin/agent-dashboard reachable but de-surfaced", status: "done" },
   { id: "pa-workspace-home", label: "QA Phase A — /app/workspaces/:workspaceId/home confirmed as canonical workspace cockpit (index also resolves to it)", status: "done" },
+  { id: "pb-canonical-list", label: "QA Phase B — /admin/campaigns is the single canonical org-level list with status tabs (all/draft/submitted/provisioning/live/archived) driven by ?status=", status: "done" },
+  { id: "pb-workspace-list", label: "QA Phase B — /app/workspaces/:workspaceId/campaigns is the single canonical workspace-scoped list (legacy-view CTA removed)", status: "done" },
+  { id: "pb-builder", label: "QA Phase B — /admin/campaigns/new (CampaignIntakePage) is the single canonical campaign builder; /admin/campaigns/edit/:id reuses it", status: "done" },
+  { id: "pb-redirects", label: "QA Phase B — campaigns/overview→/admin/campaigns, campaigns/drafts→?status=draft, campaigns/archived→?status=archived, campaign-blueprints→/admin/templates", status: "done" },
+  { id: "pb-compat", label: "QA Phase B — /admin/campaigns/readiness + /admin/campaigns/event-log kept as compatibility-only (de-surfaced from primary nav, still linked from Five9/Monitoring/Legal Connect operational hubs)", status: "done" },
+  { id: "pb-imports-vault", label: "QA Phase B — vault legacy CampaignsOverviewPage / CampaignDraftsPage / ArchivedCampaignsPage / CampaignBlueprintsPage in next sweep (files retained, no longer routed)", status: "todo" },
   { id: "p11-legacy-route-sweep", label: "Phase 11 follow-up — final pass to delete redirects past their grace window (one release after Phase 11)", status: "todo" },
 ];
 
