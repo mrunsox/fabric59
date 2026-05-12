@@ -145,7 +145,7 @@ export default function LegalConnectOverviewPage() {
               <Badge variant="outline" className={cb.className}>{cb.label}</Badge>
             </div>
             <Button variant="outline" size="sm" asChild className="w-full mt-3">
-              <Link to="/admin/integrations">Open integrations</Link>
+              <Link to="/admin/connectors">Open connectors</Link>
             </Button>
           </CardContent>
         </Card>
