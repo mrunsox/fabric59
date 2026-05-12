@@ -1,14 +1,24 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCampaignSetups } from "@/hooks/useCampaignSetup";
-import { Plus, Megaphone, Archive, Play, Square, Loader2 } from "lucide-react";
+import { Plus, Megaphone, Play, Square, Loader2 } from "lucide-react";
 import { DEFAULT_CHECKLIST } from "@/types/campaign";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+
+const STATUS_TABS: Array<{ value: string; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "draft", label: "Drafts" },
+  { value: "submitted", label: "Submitted" },
+  { value: "provisioning", label: "Provisioning" },
+  { value: "live", label: "Live" },
+  { value: "archived", label: "Archived" },
+];
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
