@@ -101,21 +101,20 @@ export function MegaMenuHeader() {
               </NavigationMenuContent>
             </NavigationMenuItem>
 
-            <NavigationMenuItem>
-              <Link to="/product" className="inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Product
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link to="/trust" className="inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Trust
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link to="/contact" className="inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Contact
-              </Link>
-            </NavigationMenuItem>
+            {[
+              { to: "/solutions", label: "Solutions" },
+              { to: "/personas", label: "Personas" },
+              { to: "/pricing", label: "Pricing" },
+              { to: "/integrations", label: "Integrations" },
+              { to: "/customers", label: "Customers" },
+              { to: "/trust", label: "Trust" },
+            ].map((item) => (
+              <NavigationMenuItem key={item.to}>
+                <Link to={item.to} className="inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  {item.label}
+                </Link>
+              </NavigationMenuItem>
+            ))}
           </NavigationMenuList>
         </NavigationMenu>
 
