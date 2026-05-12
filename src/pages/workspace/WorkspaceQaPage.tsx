@@ -9,33 +9,14 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
-import { ClipboardCheck, CheckCircle2, Clock, Eye } from "lucide-react";
+import { ClipboardCheck, CheckCircle2, Clock } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { KpiCard } from "@/components/common/KpiCard";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import {
   useWorkspaceQaReviews,
   useUpdateQaReviewStatus,
 } from "@/hooks/useWorkspaceQa";
-
-function StatusBadge({ status }: { status: string }) {
-  if (status === "completed")
-    return (
-      <Badge className="bg-success/10 text-success border-success/30 gap-1">
-        <CheckCircle2 className="h-3 w-3" /> Completed
-      </Badge>
-    );
-  if (status === "in_review")
-    return (
-      <Badge variant="outline" className="gap-1">
-        <Eye className="h-3 w-3" /> In review
-      </Badge>
-    );
-  return (
-    <Badge variant="outline" className="gap-1">
-      <Clock className="h-3 w-3" /> Pending
-    </Badge>
-  );
-}
 
 export default function WorkspaceQaPage() {
   useParams<{ workspaceId: string }>();
