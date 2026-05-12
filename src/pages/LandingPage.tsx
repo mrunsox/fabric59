@@ -129,26 +129,9 @@ const faqItems = [
   },
 ];
 
-// --- Structured data ---
-const organizationLD = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Fabric59",
-  url: "https://fabric59.com",
-  description: "Multi-tenant operational-intelligence platform for Five9 contact centers and legal-intake operations.",
-  contactPoint: { "@type": "ContactPoint", email: "hi@fabric59.com", contactType: "customer service" },
-  parentOrganization: { "@type": "Organization", name: "UNSOX Digital", url: "https://unsox.com" },
-};
-
-const faqLD = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqItems.map((item) => ({
-    "@type": "Question",
-    name: item.question,
-    acceptedAnswer: { "@type": "Answer", text: item.answer },
-  })),
-};
+// --- Structured data (canonical, derived from marketingMetadata) ---
+const faqLD = buildFaqLD(faqItems);
+const softwareLD = softwareApplicationLD();
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
