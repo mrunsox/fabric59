@@ -261,10 +261,12 @@ const App = () => (
                 <Route path="mappings/builder/:id" element={<MappingBuilderPage />} />
                 <Route path="logs" element={<ApiLogsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
-                <Route path="tenants" element={<TenantsPage />} />
+                {/* CANONICAL: tenants -> clients (UI label only; DB stays tenant*). */}
+                <Route path="tenants" element={<Navigate to="/admin/clients" replace />} />
                 <Route path="agents" element={<AgentsPage />} />
                 <Route path="dispositions" element={<DispositionsPage />} />
-                <Route path="integrations" element={<IntegrationsPage />} />
+                {/* CANONICAL: integrations folded into connectors (Phase 1). */}
+                <Route path="integrations" element={<Navigate to="/admin/connectors" replace />} />
                 <Route path="campaigns" element={<CampaignsPage />} />
                 <Route path="campaigns/new" element={<CampaignIntakePage />} />
                 <Route path="campaigns/edit/:id" element={<CampaignIntakePage />} />
