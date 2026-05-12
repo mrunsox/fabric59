@@ -14,11 +14,25 @@ import {
 import {
   ArrowRight, ChevronRight, HelpCircle, Phone, Shield, Database,
   Workflow, Scale, GitBranch, GitFork, Building2, FileSearch,
-  MessageSquare, Layers, Lock, Sparkles, Clock, Calendar, Bot,
-  Globe, Mail, Megaphone,
+  Layers, Lock, Clock, Calendar, Globe, Megaphone,
 } from "lucide-react";
+import {
+  comingSoonIntegrations,
+  queuedIntegrations,
+  liveIntegrations,
+  byCategory,
+  crmSupportAnswer,
+  liveCrmSeoPhrase,
+  liveCrmSubheadPhrase,
+  STATUS_LABEL,
+} from "@/data/integrationStatus";
 
 // --- Available now (audit-verified shipped capabilities) ---
+// CRM-bridge + Slack rows are derived from integrationStatus so claims
+// can never drift between this page, the FAQ, and the SEO description.
+const liveCrmsForBridge = byCategory("crm").filter((e) => e.status === "live");
+const liveSlack = liveIntegrations().find((e) => e.id === "slack");
+
 const availableNow = [
   {
     icon: Phone,
@@ -33,7 +47,7 @@ const availableNow = [
   {
     icon: Scale,
     title: "Five9 → CRM bridge for legal intake",
-    desc: "MyCase live with per-client API key intake. Clio Grow Lead Inbox shipped as MVP via the clio-grow edge function with idempotent sync jobs.",
+    desc: liveCrmsForBridge.map((e) => e.statement).join(" "),
   },
   {
     icon: GitBranch,
@@ -60,11 +74,9 @@ const availableNow = [
     title: "API logs & reconciliation",
     desc: "Realtime API event streaming with deduplication and a telephony reconciliation layer comparing Five9 logs against CRM syncs.",
   },
-  {
-    icon: MessageSquare,
-    title: "Slack workspace integration",
-    desc: "Real-time Slack provisioning for agent workspaces and post-call event notifications routed by urgency.",
-  },
+  ...(liveSlack
+    ? [{ icon: liveSlack.icon, title: "Slack workspace integration", desc: liveSlack.statement }]
+    : []),
   {
     icon: Megaphone,
     title: "Campaign blueprints & intake automation",
@@ -73,13 +85,15 @@ const availableNow = [
 ];
 
 // --- Coming soon (built but gated, or actively in progress) ---
-const comingSoon = [
-  { icon: Scale, title: "Clio Manage adapter", note: "Clio Grow lead inbox live; full Clio Manage write-back queued behind OAuth provisioning." },
-  { icon: Bot, title: "AI Call Flow → Five9 export", note: "Builder and runtime simulator live; one-click Five9 IVR export in progress." },
-  { icon: Mail, title: "Disposition → CRM writebacks", note: "Branded disposition emails and post-call automations live; direct CRM field writebacks landing next." },
-  { icon: Building2, title: "Google Workspace provisioning", note: "Five9 + Slack provisioning live; Google Workspace flow on the roadmap." },
-  { icon: Sparkles, title: "Self-serve billing & plans", note: "Usage metering live; founder-led onboarding today, Stripe self-serve coming." },
-];
+// Derived from integrationStatus: anything not yet generally available.
+const comingSoon = [...queuedIntegrations(), ...comingSoonIntegrations()].map(
+  (entry) => ({
+    icon: entry.icon,
+    title: entry.name,
+    note: entry.statement,
+    statusLabel: STATUS_LABEL[entry.status],
+  }),
+);
 
 // --- Process ---
 const processSteps = [
@@ -99,7 +113,7 @@ const faqItems = [
   },
   {
     question: "Which CRMs are supported today?",
-    answer: "MyCase is live using per-client API key intake. Clio Grow is live as an MVP Lead Inbox via the clio-grow edge function with idempotent sync jobs. The full Clio Manage adapter is queued behind OAuth provisioning. Additional CRMs are added per engagement through the same adapter pattern.",
+    answer: crmSupportAnswer(),
   },
   {
     question: "How do I get started?",
@@ -149,7 +163,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
         title="Fabric59 — Operational Intelligence For Five9 Contact Centers"
-        description="The multi-tenant operational-intelligence platform for Five9. Unify Five9 SOAP control, MyCase + Clio Grow, visual mapping, decision-tree scripting, post-call automations, RLS-isolated tenancy, and audit-grade compliance export."
+        description={`The multi-tenant operational-intelligence platform for Five9. Unify Five9 SOAP control, ${liveCrmSeoPhrase()}, visual mapping, decision-tree scripting, post-call automations, RLS-isolated tenancy, and audit-grade compliance export.`}
         canonical="https://fabric59.com/"
         ogTitle="Fabric59 — Operational intelligence for Five9 contact centers"
       />
@@ -188,7 +202,7 @@ export default function LandingPage() {
             <motion.p custom={2} initial="hidden" animate="visible" variants={fadeUp}
               className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
             >
-              Fabric59 is the multi-tenant control plane around Five9 — unifying SOAP operations, MyCase and Clio Grow intake, visual mapping, agent scripting, post-call automations, and audit-grade reporting under one Org / Partner / Client hierarchy.
+              Fabric59 is the multi-tenant control plane around Five9 — unifying SOAP operations, {liveCrmSubheadPhrase()}, visual mapping, agent scripting, post-call automations, and audit-grade reporting under one Org / Partner / Client hierarchy.
             </motion.p>
 
             <motion.div custom={3} initial="hidden" animate="visible" variants={fadeUp}
@@ -269,7 +283,7 @@ export default function LandingPage() {
                     </div>
                     <div className="text-sm font-semibold mb-1">{item.title}</div>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-3">{item.note}</p>
-                    <span className="text-[10px] uppercase tracking-wider text-accent font-medium">Coming soon</span>
+                    <span className="text-[10px] uppercase tracking-wider text-accent font-medium">{item.statusLabel}</span>
                   </CardContent>
                 </Card>
               ))}
@@ -290,11 +304,16 @@ export default function LandingPage() {
                 </p>
                 <div className="space-y-4">
                   {[
-                    { icon: Phone, text: "Sub-500ms ANI-based pre-call lookup with screen-pop", badge: "Live" },
-                    { icon: Scale, text: "MyCase integration via per-client API key intake", badge: "Live" },
-                    { icon: Shield, text: "Per-disposition policy: allow / block / redact fields", badge: "Live" },
-                    { icon: Globe, text: "Clio Grow Lead Inbox MVP via clio-grow edge function", badge: "Live" },
-                    { icon: Globe, text: "Clio Manage adapter — activates on OAuth provisioning", badge: "Coming soon" },
+                    // Static-truth bullets (not integration-status driven).
+                    { icon: Phone, text: "Sub-500ms ANI-based pre-call lookup with screen-pop", badge: STATUS_LABEL.live },
+                    { icon: Shield, text: "Per-disposition policy: allow / block / redact fields", badge: STATUS_LABEL.live },
+                    // CRM bullets derived from integrationStatus so they
+                    // stay in sync with the FAQ + SEO copy.
+                    ...byCategory("crm").map((entry) => ({
+                      icon: entry.icon,
+                      text: entry.bullet ?? entry.statement,
+                      badge: STATUS_LABEL[entry.status],
+                    })),
                   ].map((item) => (
                     <div key={item.text} className="flex items-start gap-3">
                       <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
@@ -302,7 +321,7 @@ export default function LandingPage() {
                       </div>
                       <div className="flex-1 flex items-center justify-between gap-3">
                         <span className="text-sm text-foreground">{item.text}</span>
-                        <Badge variant="outline" className={`text-[10px] shrink-0 ${item.badge === "Live" ? "border-success/40 text-success" : "border-accent/40 text-accent"}`}>
+                        <Badge variant="outline" className={`text-[10px] shrink-0 ${item.badge === STATUS_LABEL.live ? "border-success/40 text-success" : "border-accent/40 text-accent"}`}>
                           {item.badge}
                         </Badge>
                       </div>
