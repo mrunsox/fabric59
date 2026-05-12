@@ -13,6 +13,9 @@ import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
 import WorkspaceHomePage from "@/pages/workspace/WorkspaceHomePage";
 import WorkspaceSectionPlaceholder from "@/pages/workspace/WorkspaceSectionPlaceholder";
 import WorkspaceClientsPage from "@/pages/workspace/WorkspaceClientsPage";
+import WorkspaceCampaignsPage from "@/pages/workspace/WorkspaceCampaignsPage";
+import WorkspaceCampaignDetailPage from "@/pages/workspace/WorkspaceCampaignDetailPage";
+import WorkspaceCampaignNewPage from "@/pages/workspace/WorkspaceCampaignNewPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -344,7 +347,10 @@ const App = () => (
                     workspace-scoped data binding lands in Phase 2B/3. */}
                 {/* Phase 2B: workspace-scoped clients (real workspace context). */}
                 <Route path="clients" element={<WorkspaceClientsPage />} />
-                <Route path="campaigns" element={<CampaignsPage />} />
+                {/* Phase 3: canonical workspace campaigns (workspace-scoped, RLS). */}
+                <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
+                <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
+                <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
                 <Route path="templates" element={<TemplatesPage />} />
                 <Route path="runs" element={<RunsPage />} />
                 <Route path="agents" element={<AgentsPage />} />
