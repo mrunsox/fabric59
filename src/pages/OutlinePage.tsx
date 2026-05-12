@@ -357,6 +357,12 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "pb-redirects", label: "QA Phase B — campaigns/overview→/admin/campaigns, campaigns/drafts→?status=draft, campaigns/archived→?status=archived, campaign-blueprints→/admin/templates", status: "done" },
   { id: "pb-compat", label: "QA Phase B — /admin/campaigns/readiness + /admin/campaigns/event-log kept as compatibility-only (de-surfaced from primary nav, still linked from Five9/Monitoring/Legal Connect operational hubs)", status: "done" },
   { id: "pb-imports-vault", label: "QA Phase B — vault legacy CampaignsOverviewPage / CampaignDraftsPage / ArchivedCampaignsPage / CampaignBlueprintsPage in next sweep (files retained, no longer routed)", status: "todo" },
+  { id: "pd-org-catalog", label: "QA Phase D — /admin/connectors is the canonical org-level integrations catalog (label 'Connectors' in primary nav)", status: "done" },
+  { id: "pd-org-detail", label: "QA Phase D — /admin/connectors/:slug (ConnectorInstancePage; LegalConnectPage for clio/mycase/smokeball) is the single canonical org-level connector detail/instance route", status: "done" },
+  { id: "pd-workspace-canonical", label: "QA Phase D — /app/workspaces/:workspaceId/integrations + /:connectionId remain the canonical workspace-level integrations surface (provider-agnostic, Phase 7)", status: "done" },
+  { id: "pd-redirects", label: "QA Phase D — /admin/integrations → /admin/connectors (alias-only, no longer renders IntegrationsPage); legacy IntegrationsPage import removed from App.tsx", status: "done" },
+  { id: "pd-compat", label: "QA Phase D — compatibility-only: /app/workspaces/:workspaceId/integrations-legacy (ConnectorsCatalogPage, de-surfaced from primary nav, removal queued post-grace-window)", status: "done" },
+  { id: "pd-cta-cleanup", label: "QA Phase D — stale CTAs scrubbed: LegalConnectOverviewPage 'Open integrations' → /admin/connectors; five9DocsIndex routes ref updated; nav label org-level = 'Connectors', workspace-level = 'Integrations'", status: "done" },
   { id: "p11-legacy-route-sweep", label: "Phase 11 follow-up — final pass to delete redirects past their grace window (one release after Phase 11)", status: "todo" },
 ];
 
