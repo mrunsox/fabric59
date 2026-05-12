@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { useAuth, type Organization } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import type { Organization } from "@/types/database";
 
 /**
  * WorkspaceContext (Phase 2A — canonical adapter)
@@ -34,7 +35,7 @@ function orgToWorkspace(o: Organization): CanonicalWorkspace {
 }
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
-  const { organizations, loading } = useAuth();
+  const { organizations, isLoading: loading } = useAuth();
   const { workspaceId } = useParams<{ workspaceId: string }>();
 
   const value = useMemo<WorkspaceContextValue>(() => {
