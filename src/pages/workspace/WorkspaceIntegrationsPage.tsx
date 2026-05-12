@@ -143,12 +143,11 @@ export default function WorkspaceIntegrationsPage() {
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : connections.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-sm text-muted-foreground">
-              <Plug className="h-8 w-8 mx-auto mb-3 opacity-40" />
-              No connections yet. Create one above to begin.
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Plug}
+            title="No connections yet"
+            description="Create your first connection from a provider above to begin syncing data."
+          />
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">
             {connections.map((c) => {
@@ -170,7 +169,7 @@ export default function WorkspaceIntegrationsPage() {
                             {prov?.display_name ?? c.provider_id} · {prov?.category}
                           </div>
                         </div>
-                        <StatusBadge status={c.status} />
+                        <StatusBadge status={c.status} tone={CONNECTION_STATUS_TONE[c.status]} />
                       </div>
                       {c.last_error && (
                         <div className="text-xs text-destructive truncate">{c.last_error}</div>
