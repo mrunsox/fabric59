@@ -221,7 +221,7 @@ const App = () => (
             <Route path="/legal-connect" element={<Navigate to="/admin/legal-connect" replace />} />
             <Route path="/legal-connect/overview" element={<Navigate to="/admin/legal-connect/overview" replace />} />
             <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
-            <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
             <Route path="/onboarding/legal-connect" element={<Navigate to="/admin/legal-connect" replace />} />
 
             {/* Unified platform admin (Superadmin) — gated by master_admin */}
