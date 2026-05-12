@@ -304,11 +304,16 @@ export default function LandingPage() {
                 </p>
                 <div className="space-y-4">
                   {[
-                    { icon: Phone, text: "Sub-500ms ANI-based pre-call lookup with screen-pop", badge: "Live" },
-                    { icon: Scale, text: "MyCase integration via per-client API key intake", badge: "Live" },
-                    { icon: Shield, text: "Per-disposition policy: allow / block / redact fields", badge: "Live" },
-                    { icon: Globe, text: "Clio Grow Lead Inbox MVP via clio-grow edge function", badge: "Live" },
-                    { icon: Globe, text: "Clio Manage adapter — activates on OAuth provisioning", badge: "Coming soon" },
+                    // Static-truth bullets (not integration-status driven).
+                    { icon: Phone, text: "Sub-500ms ANI-based pre-call lookup with screen-pop", badge: STATUS_LABEL.live },
+                    { icon: Shield, text: "Per-disposition policy: allow / block / redact fields", badge: STATUS_LABEL.live },
+                    // CRM bullets derived from integrationStatus so they
+                    // stay in sync with the FAQ + SEO copy.
+                    ...byCategory("crm").map((entry) => ({
+                      icon: entry.icon,
+                      text: entry.bullet ?? entry.statement,
+                      badge: STATUS_LABEL[entry.status],
+                    })),
                   ].map((item) => (
                     <div key={item.text} className="flex items-start gap-3">
                       <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
