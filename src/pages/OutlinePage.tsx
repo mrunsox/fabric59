@@ -134,7 +134,7 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "lands in legacy /admin/* sprawl as the primary path; AI knowledge remains explicitly deferred to Phase 10.",
   },
   {
-    id: "p10", name: "Phase 10 — AI knowledge layer + workspace intelligence", status: "in_progress",
+    id: "p10", name: "Phase 10 — AI knowledge layer + workspace intelligence", status: "done",
     objectives:
       "Three-layer canonical AI: (1) live assist in builders/agents, (2) workspace-scoped knowledge + grounded chat, " +
       "(3) post-call intelligence. Workspace knowledge page, workspace assistant page, prompt + behavior configuration " +
@@ -143,6 +143,17 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "Workspace knowledge + assistant routes live and reachable from workspace nav; grounded chat scoped to workspace " +
       "with KB + guides + templates + call summaries; admin-controlled AI configuration (tone, industry, jurisdiction, " +
       "knowledge-only); audit log of AI interactions; all writes user-initiated.",
+  },
+  {
+    id: "p11", name: "Phase 11 — Canonical convergence, legacy strip, and route cleanup", status: "in_progress",
+    objectives:
+      "Reconcile the running app with canonical scope. Collapse legacy admin/dashboards into the workspace-first model, " +
+      "consolidate duplicate routes, converge marketing chrome, and standardize tables, empty states, and status badges " +
+      "behind shared primitives. Convergence and deletion only — no new product areas.",
+    exit:
+      "One canonical org overview and one canonical workspace home (no orphan dashboards); duplicate campaign/builder " +
+      "routes merged or redirected; integrations/connectors single catalog + instance; marketing IA singular; shared " +
+      "DataTable/EmptyState/StatusBadge primitives in use; legacy routes either redirected within grace window or removed.",
   },
 ];
 
@@ -322,6 +333,17 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p10-postcall", label: "Phase 10 follow-up — post-call intelligence (suggested QA notes, summaries, follow-ups) tied to workspace assistant", status: "todo" },
   { id: "p10-uploads", label: "Phase 10 follow-up — uploaded docs + URL ingestion sources (currently disabled by default)", status: "todo" },
   { id: "p10-embeddings", label: "Phase 10 follow-up — vector embeddings + retrieval (current grounding is bounded keyword/recent fetch)", status: "todo" },
+  { id: "p11-overview-collapse", label: "Phase 11 — single canonical org overview at /admin index; /admin/dashboard redirects in", status: "done" },
+  { id: "p11-dashboard-redirect", label: "Phase 11 — friendly /dashboard alias points directly at canonical /admin overview", status: "done" },
+  { id: "p11-status-badge", label: "Phase 11 — shared StatusBadge primitive in src/components/common/ (canonical tones success/warning/danger/info/neutral)", status: "done" },
+  { id: "p11-status-badge-rollout", label: "Phase 11 follow-up — adopt StatusBadge across campaigns, runs, QA, integrations, billing", status: "todo" },
+  { id: "p11-data-table-rollout", label: "Phase 11 follow-up — converge ad-hoc tables onto shared DataTable component", status: "todo" },
+  { id: "p11-empty-state-rollout", label: "Phase 11 follow-up — adopt EmptyState everywhere with action + secondary docs link", status: "todo" },
+  { id: "p11-campaign-collapse", label: "Phase 11 follow-up — fold /admin/campaigns/{overview,drafts,readiness,event-log,archived} + /admin/campaign-blueprints into canonical campaigns list+detail (tabs/filters), then redirect", status: "todo" },
+  { id: "p11-builder-vault", label: "Phase 11 follow-up — vault & redirect /admin/scripter, /admin/scripts, /admin/tree-editor, /admin/scriptflow once visual guide editor lands", status: "todo" },
+  { id: "p11-marketing-converge", label: "Phase 11 follow-up — audit /product, /demo, /faq, /contact for legacy story; redirect or refactor into canonical IA", status: "todo" },
+  { id: "p11-breadcrumbs", label: "Phase 11 follow-up — breadcrumb pattern Org > Workspace > Campaign > Guide on nested pages", status: "todo" },
+  { id: "p11-legacy-route-sweep", label: "Phase 11 follow-up — final pass to delete redirects past their grace window (one release after Phase 11)", status: "todo" },
 ];
 
 const NON_GOALS = [
@@ -791,6 +813,152 @@ export default function OutlinePage() {
                 <li>Stable canonical workspace landing for every new user (this phase).</li>
                 <li>Workspace-scoped RBAC clear enough to scope AI prompts and ingestion.</li>
                 <li>Canonical templates(kind=prompt) already in place from Phase 5 — AI prompts can ride that surface.</li>
+              </ul>
+            </Section>
+
+            <Section id="phase-11-decisions" title="16. Phase 11 — Canonical convergence, legacy strip, and route cleanup decisions">
+              <h3 className="text-sm font-semibold text-foreground">Phase definition</h3>
+              <p className="text-xs">
+                Reconciles the running app with canonical scope by (1) collapsing legacy admin and dashboard surfaces
+                into the workspace-first model, (2) consolidating duplicate routes, (3) converging marketing chrome
+                onto the canonical story, and (4) standardizing tables, empty states, and status badges behind shared
+                primitives. Convergence and deletion only — no new product areas this phase.
+              </p>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">In-scope</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Admin / dashboard consolidation onto a single canonical org overview.</li>
+                <li>Legacy route cleanup with safe redirects and a one-release grace window before deletion.</li>
+                <li>Navigation + chrome alignment to the canonical hierarchy (org-level + workspace-level).</li>
+                <li>Marketing convergence to the canonical IA — no second, older story alive underneath.</li>
+                <li>Table, empty-state, and status-badge convergence onto shared primitives.</li>
+                <li>Safe removal of dead code already replaced by canonical surfaces.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Out of scope / deferred</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>New integrations or providers.</li>
+                <li>New runtime domains (additional CRMs / telephony providers).</li>
+                <li>New product areas (training/LMS, deep agentic flows).</li>
+                <li>Large schema refactors beyond what Phases 0–10 already planned.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Canonical hierarchy &amp; nav truth table</h3>
+              <pre className="rounded-md bg-muted/40 p-4 text-xs font-mono leading-relaxed">{`Conceptual:
+  Platform → Organization → Workspace → Campaign → Guide → Call/Interaction
+
+Org / admin shell:
+  Overview · Workspaces · Integrations · Reports · Notifications · Settings · Billing
+
+Workspace shell (canonical 15):
+  Home · Clients · Campaigns · Guides · Forms · Templates · Runs · Agents ·
+  Supervisor · QA · Analytics · Integrations · Knowledge · Assistant · Settings`}</pre>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Dashboard convergence</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead><tr className="border-b"><th className="text-left p-2">Surface</th><th className="text-left p-2">Canonical replacement</th><th className="text-left p-2">Action</th></tr></thead>
+                <tbody>
+                  {[
+                    { s: "/admin (index)", c: "OverviewPage (org overview)", a: "Canonical — kept" },
+                    { s: "/admin/dashboard", c: "/admin", a: "Redirect (Phase 11)" },
+                    { s: "/dashboard", c: "/admin", a: "Redirect (collapsed double-hop)" },
+                    { s: "/admin/agent-dashboard", c: "/app/workspaces/:id/agents", a: "Compatibility-only; de-surfaced from nav" },
+                    { s: "/app/workspaces/:id/home", c: "WorkspaceHomePage", a: "Canonical workspace home" },
+                  ].map((r) => (
+                    <tr key={r.s} className="border-b border-border/40">
+                      <td className="p-2 font-mono text-[11px] text-muted-foreground">{r.s}</td>
+                      <td className="p-2 font-mono text-[11px]">{r.c}</td>
+                      <td className="p-2">{r.a}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Campaign cluster convergence (planned)</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead><tr className="border-b"><th className="text-left p-2">Legacy route</th><th className="text-left p-2">Canonical replacement</th><th className="text-left p-2">Action</th></tr></thead>
+                <tbody>
+                  {[
+                    { s: "/admin/campaigns/overview", c: "/admin/campaigns (or workspace campaigns)", a: "merge → redirect" },
+                    { s: "/admin/campaigns/drafts", c: "canonical campaigns list, status=draft filter", a: "merge → redirect" },
+                    { s: "/admin/campaigns/readiness", c: "canonical campaigns list, readiness tab", a: "merge → redirect" },
+                    { s: "/admin/campaigns/event-log", c: "canonical campaign detail → events tab", a: "merge → redirect" },
+                    { s: "/admin/campaigns/archived", c: "canonical campaigns list, status=archived filter", a: "merge → redirect" },
+                    { s: "/admin/campaign-blueprints", c: "canonical Templates(kind=campaign)", a: "merge → redirect" },
+                    { s: "/admin/five9/campaign-builder", c: "canonical campaign builder under workspace", a: "demote to compat-only" },
+                  ].map((r) => (
+                    <tr key={r.s} className="border-b border-border/40">
+                      <td className="p-2 font-mono text-[11px] text-muted-foreground">{r.s}</td>
+                      <td className="p-2 font-mono text-[11px]">{r.c}</td>
+                      <td className="p-2">{r.a}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Builder set after Phase 11 (target)</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead><tr className="border-b"><th className="text-left p-2">Builder</th><th className="text-left p-2">Canonical route</th><th className="text-left p-2">Notes</th></tr></thead>
+                <tbody>
+                  {[
+                    { b: "Guide", r: "/app/workspaces/:id/guides/:id/edit", n: "ScriptBuilderPage compat-only for source_type='script'." },
+                    { b: "Campaign", r: "/app/workspaces/:id/campaigns/new + /:id", n: "CampaignIntakePage canonical creator." },
+                    { b: "Mapping", r: "/admin/mappings/builder/:id", n: "Single mapping foundation." },
+                    { b: "Flow", r: "/admin/flows/:id", n: "Kept for integrations orchestration; one only." },
+                  ].map((r) => (
+                    <tr key={r.b} className="border-b border-border/40">
+                      <td className="p-2 font-medium">{r.b}</td>
+                      <td className="p-2 font-mono text-[11px]">{r.r}</td>
+                      <td className="p-2 text-muted-foreground">{r.n}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Integrations &amp; connectors</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li><span className="font-mono">/admin/connectors</span> — single org-level catalog.</li>
+                <li><span className="font-mono">/admin/connectors/:slug</span> — single connector instance route.</li>
+                <li><span className="font-mono">/admin/integrations</span> — already redirects to <span className="font-mono">/admin/connectors</span>.</li>
+                <li><span className="font-mono">/app/workspaces/:id/integrations</span> + <span className="font-mono">/:connectionId</span> — canonical workspace surface (Phase 7).</li>
+                <li><span className="font-mono">/app/workspaces/:id/integrations-legacy</span> — compat-only ConnectorsCatalogPage; removal queued post-grace-window.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Marketing convergence</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Canonical IA: <span className="font-mono">/, /personas, /solutions, /pricing, /integrations, /customers</span>.</li>
+                <li>Legal/trust: <span className="font-mono">/trust, /security, /privacy, /terms, /responsible-disclosure</span> (kept verbatim).</li>
+                <li>Compatibility (audit + refactor or redirect): <span className="font-mono">/product, /demo, /faq, /contact</span>.</li>
+                <li>No legacy generic-SaaS hero/feature blocks contradicting canonical positioning may remain after this phase.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">UI primitive convergence</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li><span className="font-mono">DataTable</span> (<span className="font-mono">src/components/ui/data-table.tsx</span>) — canonical table; ad-hoc tables to be migrated.</li>
+                <li><span className="font-mono">EmptyState</span> (<span className="font-mono">src/components/common/EmptyState.tsx</span>) — canonical empty-state shell with primary action + optional docs link.</li>
+                <li><span className="font-mono">StatusBadge</span> (<span className="font-mono">src/components/common/StatusBadge.tsx</span>) — canonical status badge; tones <span className="font-mono">success | warning | danger | info | neutral</span>; auto-maps common backend statuses.</li>
+                <li><span className="font-mono">KpiCard</span> (<span className="font-mono">src/components/common/KpiCard.tsx</span>) — canonical KPI tile (Phase 8).</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Guardrails</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Do not modify auth role definitions, ProtectedRoute / MasterProtectedRoute, or core RLS beyond what cleanup strictly requires.</li>
+                <li>Do not modify Phase 10 AI tables, edge function, or assistant behaviors except for display/layout integration.</li>
+                <li>Every public/bookmark-likely route deletion must keep a redirect for at least one release before removal.</li>
+                <li>DB drops must follow vault/snapshot pattern: snapshot, confirm no active callers, dual-read window if renaming.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Exit checklist</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Admin + workspace nav match canonical hierarchy with no stray entries.</li>
+                <li>One canonical org overview, one canonical workspace home, no orphan dashboards.</li>
+                <li>Campaign surfaces collapsed to canonical list/detail/builder; legacy routes merged or redirected.</li>
+                <li>Builder set reduced to canonical four (Guide, Campaign, Mapping, Flow).</li>
+                <li>Integrations have one catalog + one instance route; duplicates removed.</li>
+                <li>Marketing routes converged to canonical IA; no conflicting legacy story.</li>
+                <li>Breadcrumbs / context indicators present on nested pages.</li>
+                <li>Tables, empty states, and status badges standardized via shared primitives.</li>
+                <li>Legacy routes either redirect (within grace window) or are removed.</li>
               </ul>
             </Section>
           </div>

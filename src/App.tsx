@@ -123,7 +123,7 @@ import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import CallFlowPage from "@/pages/admin/CallFlowPage";
 import TreeEditorPage from "@/pages/admin/TreeEditorPage";
-import UserDashboardPage from "@/pages/admin/UserDashboardPage";
+// UserDashboardPage no longer mounted directly — Phase 11 collapsed /admin/dashboard into /admin (OverviewPage re-exports it).
 import DesignSystemPage from "@/pages/admin/DesignSystemPage";
 import DevGuidePage from "@/pages/superadmin/DevGuidePage";
 import NotFound from "./pages/NotFound";
@@ -221,7 +221,7 @@ const App = () => (
             <Route path="/legal-connect" element={<Navigate to="/admin/legal-connect" replace />} />
             <Route path="/legal-connect/overview" element={<Navigate to="/admin/legal-connect/overview" replace />} />
             <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
-            <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
             <Route path="/onboarding/legal-connect" element={<Navigate to="/admin/legal-connect" replace />} />
 
             {/* Unified platform admin (Superadmin) — gated by master_admin */}
@@ -304,7 +304,8 @@ const App = () => (
                 <Route path="clients/:clientId/five9-overlay/campaigns/:campaignRouteId" element={<CampaignOverlayPage />} />
                 <Route path="partners" element={<PartnersPage />} />
                 <Route path="partners/:id" element={<PartnerOverviewPage />} />
-                <Route path="dashboard" element={<UserDashboardPage />} />
+                {/* CANONICAL (Phase 11): single org overview at /admin index. /admin/dashboard collapses into it. */}
+                <Route path="dashboard" element={<Navigate to="/admin" replace />} />
                 <Route path="domains" element={<DomainsPage />} />
                 <Route path="domains/:id" element={<DomainDetailPage />} />
                 <Route path="mappings" element={<MappingsPage />} />
