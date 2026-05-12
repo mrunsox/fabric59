@@ -22,10 +22,16 @@ import {
   liveIntegrations,
   byCategory,
   crmSupportAnswer,
-  liveCrmSeoPhrase,
-  liveCrmSubheadPhrase,
   STATUS_LABEL,
 } from "@/data/integrationStatus";
+import {
+  CANONICAL_TAGLINE,
+  buildFaqLD,
+  canonicalCrmSubhead,
+  canonicalSiteDescription,
+  organizationLD,
+  softwareApplicationLD,
+} from "@/seo/marketingMetadata";
 
 // --- Available now (audit-verified shipped capabilities) ---
 // CRM-bridge + Slack rows are derived from integrationStatus so claims
