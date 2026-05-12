@@ -321,7 +321,7 @@ export default function LandingPage() {
                       </div>
                       <div className="flex-1 flex items-center justify-between gap-3">
                         <span className="text-sm text-foreground">{item.text}</span>
-                        <Badge variant="outline" className={`text-[10px] shrink-0 ${item.badge === "Live" ? "border-success/40 text-success" : "border-accent/40 text-accent"}`}>
+                        <Badge variant="outline" className={`text-[10px] shrink-0 ${item.badge === STATUS_LABEL.live ? "border-success/40 text-success" : "border-accent/40 text-accent"}`}>
                           {item.badge}
                         </Badge>
                       </div>
