@@ -134,7 +134,7 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "lands in legacy /admin/* sprawl as the primary path; AI knowledge remains explicitly deferred to Phase 10.",
   },
   {
-    id: "p10", name: "Phase 10 — AI knowledge layer + workspace intelligence", status: "in_progress",
+    id: "p10", name: "Phase 10 — AI knowledge layer + workspace intelligence", status: "done",
     objectives:
       "Three-layer canonical AI: (1) live assist in builders/agents, (2) workspace-scoped knowledge + grounded chat, " +
       "(3) post-call intelligence. Workspace knowledge page, workspace assistant page, prompt + behavior configuration " +
@@ -143,6 +143,17 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "Workspace knowledge + assistant routes live and reachable from workspace nav; grounded chat scoped to workspace " +
       "with KB + guides + templates + call summaries; admin-controlled AI configuration (tone, industry, jurisdiction, " +
       "knowledge-only); audit log of AI interactions; all writes user-initiated.",
+  },
+  {
+    id: "p11", name: "Phase 11 — Canonical convergence, legacy strip, and route cleanup", status: "in_progress",
+    objectives:
+      "Reconcile the running app with canonical scope. Collapse legacy admin/dashboards into the workspace-first model, " +
+      "consolidate duplicate routes, converge marketing chrome, and standardize tables, empty states, and status badges " +
+      "behind shared primitives. Convergence and deletion only — no new product areas.",
+    exit:
+      "One canonical org overview and one canonical workspace home (no orphan dashboards); duplicate campaign/builder " +
+      "routes merged or redirected; integrations/connectors single catalog + instance; marketing IA singular; shared " +
+      "DataTable/EmptyState/StatusBadge primitives in use; legacy routes either redirected within grace window or removed.",
   },
 ];
 
