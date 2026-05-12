@@ -304,7 +304,8 @@ const App = () => (
                 <Route path="clients/:clientId/five9-overlay/campaigns/:campaignRouteId" element={<CampaignOverlayPage />} />
                 <Route path="partners" element={<PartnersPage />} />
                 <Route path="partners/:id" element={<PartnerOverviewPage />} />
-                <Route path="dashboard" element={<UserDashboardPage />} />
+                {/* CANONICAL (Phase 11): single org overview at /admin index. /admin/dashboard collapses into it. */}
+                <Route path="dashboard" element={<Navigate to="/admin" replace />} />
                 <Route path="domains" element={<DomainsPage />} />
                 <Route path="domains/:id" element={<DomainDetailPage />} />
                 <Route path="mappings" element={<MappingsPage />} />
