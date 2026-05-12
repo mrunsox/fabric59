@@ -284,6 +284,16 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p7-credentials", label: "Phase 7 follow-up — provider OAuth/API key wiring via credentials_ref to vault secrets", status: "todo" },
   { id: "p7-sync-jobs", label: "Phase 7 follow-up — surface sync_jobs/logs/retry under canonical connection detail", status: "todo" },
   { id: "p7-stub-deletion", label: "Phase 7 follow-up — delete ~50 stub integration edge functions (Salesforce/HubSpot/Zendesk/etc.)", status: "todo" },
+  { id: "p8-analytics", label: "Phase 8 — canonical /app/workspaces/:id/analytics with KPI overview + dispositions + drill-downs", status: "done" },
+  { id: "p8-qa", label: "Phase 8 — canonical /app/workspaces/:id/qa review queue (pending/in_review/completed transitions)", status: "done" },
+  { id: "p8-billing", label: "Phase 8 — honest /app/workspaces/:id/billing shell (real invoices + usage snapshot)", status: "done" },
+  { id: "p8-primitives", label: "Phase 8 — shared KpiCard + EmptyState primitives in src/components/common/", status: "done" },
+  { id: "p8-compat", label: "Phase 8 — legacy analytics/QA preserved at /analytics-legacy and /qa-legacy under workspace shell", status: "done" },
+  { id: "p8-workspace-fk", label: "Phase 8 follow-up — strict workspace_id columns on call_sessions/qa_reviews/invoices", status: "todo" },
+  { id: "p8-billing-backend", label: "Phase 8 follow-up — billing backend: subscription/plan/payment-method primitives", status: "todo" },
+  { id: "p8-qa-rubrics", label: "Phase 8 follow-up — detailed QA scoring rubrics, calibration, reviewer assignment", status: "todo" },
+  { id: "p8-mobile", label: "Phase 8 follow-up — responsive/mobile pass on heavy workspace flows (builders, tables)", status: "todo" },
+  { id: "p10-deferred", label: "AI knowledge layer (grounded chat, ingestion, embeddings, editable prompts) — DEFERRED to Phase 10", status: "blocked" },
 ];
 
 const NON_GOALS = [
