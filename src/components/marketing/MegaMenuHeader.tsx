@@ -101,21 +101,20 @@ export function MegaMenuHeader() {
               </NavigationMenuContent>
             </NavigationMenuItem>
 
-            <NavigationMenuItem>
-              <Link to="/product" className="inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Product
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link to="/trust" className="inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Trust
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link to="/contact" className="inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Contact
-              </Link>
-            </NavigationMenuItem>
+            {[
+              { to: "/solutions", label: "Solutions" },
+              { to: "/personas", label: "Personas" },
+              { to: "/pricing", label: "Pricing" },
+              { to: "/integrations", label: "Integrations" },
+              { to: "/customers", label: "Customers" },
+              { to: "/trust", label: "Trust" },
+            ].map((item) => (
+              <NavigationMenuItem key={item.to}>
+                <Link to={item.to} className="inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  {item.label}
+                </Link>
+              </NavigationMenuItem>
+            ))}
           </NavigationMenuList>
         </NavigationMenu>
 
@@ -150,9 +149,19 @@ export function MegaMenuHeader() {
                 ))}
               </div>
               <div className="space-y-1">
-                <Link to="/product" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-foreground">Product</Link>
-                <Link to="/trust" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-foreground">Trust</Link>
-                <Link to="/contact" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-foreground">Contact</Link>
+                {[
+                  { to: "/solutions", label: "Solutions" },
+                  { to: "/personas", label: "Personas" },
+                  { to: "/pricing", label: "Pricing" },
+                  { to: "/integrations", label: "Integrations" },
+                  { to: "/customers", label: "Customers" },
+                  { to: "/trust", label: "Trust" },
+                  { to: "/product", label: "Product tour" },
+                  { to: "/faq", label: "FAQ" },
+                  { to: "/contact", label: "Contact" },
+                ].map((item) => (
+                  <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-foreground">{item.label}</Link>
+                ))}
               </div>
               <div className="space-y-2 pt-4 border-t border-border/50">
                 <Button className="w-full" asChild>
