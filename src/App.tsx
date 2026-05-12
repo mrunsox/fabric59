@@ -25,6 +25,9 @@ import WorkspaceTemplatesPage from "@/pages/workspace/WorkspaceTemplatesPage";
 import WorkspaceTemplateDetailPage from "@/pages/workspace/WorkspaceTemplateDetailPage";
 import WorkspaceIntegrationsPage from "@/pages/workspace/WorkspaceIntegrationsPage";
 import WorkspaceIntegrationDetailPage from "@/pages/workspace/WorkspaceIntegrationDetailPage";
+import WorkspaceAnalyticsPage from "@/pages/workspace/WorkspaceAnalyticsPage";
+import WorkspaceQaPage from "@/pages/workspace/WorkspaceQaPage";
+import WorkspaceBillingPage from "@/pages/workspace/WorkspaceBillingPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -367,8 +370,14 @@ const App = () => (
                 <Route path="runs" element={<RunsPage />} />
                 <Route path="agents" element={<AgentsPage />} />
                 <Route path="supervisor" element={<SupervisorPage />} />
-                <Route path="qa" element={<QAAnalyticsPage />} />
-                <Route path="analytics" element={<ReportsPage />} />
+                {/* Phase 8: canonical workspace QA + analytics surfaces.
+                    Legacy admin pages remain reachable under /admin/* as
+                    compatibility-only; canonical QA/analytics live here. */}
+                <Route path="qa" element={<WorkspaceQaPage />} />
+                <Route path="qa-legacy" element={<QAAnalyticsPage />} />
+                <Route path="analytics" element={<WorkspaceAnalyticsPage />} />
+                <Route path="analytics-legacy" element={<ReportsPage />} />
+                <Route path="billing" element={<WorkspaceBillingPage />} />
                 {/* Phase 7: canonical workspace integrations (provider-agnostic).
                     Reads canonical integration_providers + integration_connections;
                     legacy ConnectorsCatalogPage stays reachable but is no longer the

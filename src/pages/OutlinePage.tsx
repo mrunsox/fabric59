@@ -99,7 +99,7 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "legacy ScriptBuilderPage demoted to compatibility-only for guides whose source_type='script'.",
   },
   {
-    id: "p7", name: "Phase 7 — Integrations canonical layer", status: "in_progress",
+    id: "p7", name: "Phase 7 — Integrations canonical layer", status: "done",
     objectives:
       "Canonical, workspace-owned integration substrate. New `integration_providers` registry + " +
       "`integration_connections` (workspace+provider scoped, status, config, credentials_ref) + " +
@@ -112,21 +112,71 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "demoted to /integrations-legacy compatibility surface; stub provider edge functions queued for deletion.",
   },
   {
-    id: "p8", name: "Phase 8 — Forms (new canonical artifact)", status: "todo",
-    objectives: "Build canonical Form artifact: schema, conditions, validation, mapping targets, versioning.",
-    exit: "Form library + builder live; forms assignable to campaigns/guides; submissions captured.",
+    id: "p8", name: "Phase 8 — Analytics, QA, billing, launch polish", status: "in_progress",
+    objectives:
+      "Make the canonical workspace product operationally launch-ready. Canonical workspace analytics, QA/review, " +
+      "and billing surfaces under /app/workspaces/:id/{analytics,qa,billing}. Shared polish primitives (KpiCard, " +
+      "EmptyState, status badges) standardized across workspace pages. Legacy admin analytics/QA pages preserved as " +
+      "/analytics-legacy and /qa-legacy compatibility surfaces. AI knowledge layer is explicitly deferred to Phase 10.",
+    exit:
+      "Canonical analytics + QA + billing pages live; shared empty-state/KPI primitives in use; legacy analytics/QA " +
+      "remain reachable as compatibility-only; honest billing shell exposes real invoice + usage data without faking " +
+      "subscription primitives; launch polish checklist green.",
   },
   {
-    id: "p9", name: "Phase 9 — Dashboards, QA, analytics, billing, launch polish", status: "todo",
-    objectives: "Operator surfaces: supervisor live ops, QA scoring, workspace analytics, billing.",
-    exit: "Mission-control dashboards live; QA queue functional; billing tied to canonical usage.",
+    id: "p9", name: "Phase 9 — Marketing site + onboarding + workspace bootstrap", status: "todo",
+    objectives:
+      "Persona/solution/integrations/pricing/case-study marketing pages, rebuilt onboarding, and a workspace bootstrap " +
+      "flow that lands a new user inside a canonical workspace. Final pre-AI go-to-market phase.",
+    exit: "Marketing surface and onboarding boot a new user into a working canonical workspace end-to-end.",
   },
   {
     id: "p10", name: "Phase 10 — AI knowledge layer + agent assist + GA polish", status: "todo",
-    objectives: "Workspace-scoped AI: grounded chat, doc/URL ingestion, embeddings, editable prompts, summaries, post-call automations.",
+    objectives:
+      "Workspace-scoped AI: grounded chat, doc/URL ingestion, embeddings, editable prompts in UI, summaries, " +
+      "post-call automations. Explicitly deferred from Phase 8.",
     exit: "AI features versioned, scoped, audited; market-ready checklist green.",
   },
 ];
+
+/**
+ * Phase 8 — Analytics, QA, billing, and launch polish decisions
+ *
+ * Gaps this phase closes:
+ *  - No canonical workspace analytics surface (was buried in /admin/reports).
+ *  - QA/review surfaces lived in /admin/qa, not unified around workspace outcomes.
+ *  - Billing UI was partial / org-only; no honest workspace shell.
+ *  - Inconsistent empty states, status badges, and KPI cards across workspace pages.
+ *  - Desktop-first builder/admin UX debt; weak current-context cues in nav.
+ *
+ * Plan executed:
+ *  - IA: workspace owns three new canonical routes — analytics, qa, billing —
+ *    each rendered under WorkspaceShell with the workspace breadcrumb.
+ *  - Analytics model: KPI overview (calls, outcomes, QA, campaigns, guides),
+ *    7-day rollups, top-10 dispositions over 30d, drill-down cards into QA,
+ *    campaigns, and guides.
+ *  - QA model: pending/completed/all tabs over canonical qa_reviews; status
+ *    transitions (pending → in_review → completed) inline; KPIs (pending,
+ *    completed, avg score). Detailed scoring rubrics deferred to Phase 9.
+ *  - Billing scope: honest shell — real invoices listing + usage snapshot
+ *    derived from canonical KPIs. Plan management, payment methods, and
+ *    self-serve checkout deferred until billing backend lands.
+ *  - Polish primitives: shared <KpiCard /> and <EmptyState /> primitives in
+ *    src/components/common/ standardize KPI tiles and empty states across
+ *    workspace pages; status badge pattern reused across QA and integrations.
+ *  - Compatibility: legacy /admin/reports and /admin/qa pages still mounted;
+ *    workspace versions are now authoritative. Legacy variants reachable at
+ *    /app/workspaces/:id/analytics-legacy and /qa-legacy.
+ *
+ * Out of scope this phase (deferred):
+ *  - Strict workspace_id columns on call_sessions / qa_reviews / invoices
+ *    (analytics still reads at organization_id today; tracked as P8 follow-up).
+ *  - Subscription / plan / payment-method UI (needs billing backend).
+ *  - Detailed QA scoring rubrics, calibration, reviewer assignment (Phase 9).
+ *  - AI knowledge layer (workspace-scoped chat, ingestion, embeddings,
+ *    editable prompts) — explicitly Phase 10.
+ *  - Marketing site rebuild, onboarding flow, workspace bootstrap (Phase 9).
+ */
 
 const ENTITIES = [
   { entity: "Organization", canonical: "Existing — keep", notes: "organizations table survives." },
@@ -234,6 +284,16 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p7-credentials", label: "Phase 7 follow-up — provider OAuth/API key wiring via credentials_ref to vault secrets", status: "todo" },
   { id: "p7-sync-jobs", label: "Phase 7 follow-up — surface sync_jobs/logs/retry under canonical connection detail", status: "todo" },
   { id: "p7-stub-deletion", label: "Phase 7 follow-up — delete ~50 stub integration edge functions (Salesforce/HubSpot/Zendesk/etc.)", status: "todo" },
+  { id: "p8-analytics", label: "Phase 8 — canonical /app/workspaces/:id/analytics with KPI overview + dispositions + drill-downs", status: "done" },
+  { id: "p8-qa", label: "Phase 8 — canonical /app/workspaces/:id/qa review queue (pending/in_review/completed transitions)", status: "done" },
+  { id: "p8-billing", label: "Phase 8 — honest /app/workspaces/:id/billing shell (real invoices + usage snapshot)", status: "done" },
+  { id: "p8-primitives", label: "Phase 8 — shared KpiCard + EmptyState primitives in src/components/common/", status: "done" },
+  { id: "p8-compat", label: "Phase 8 — legacy analytics/QA preserved at /analytics-legacy and /qa-legacy under workspace shell", status: "done" },
+  { id: "p8-workspace-fk", label: "Phase 8 follow-up — strict workspace_id columns on call_sessions/qa_reviews/invoices", status: "todo" },
+  { id: "p8-billing-backend", label: "Phase 8 follow-up — billing backend: subscription/plan/payment-method primitives", status: "todo" },
+  { id: "p8-qa-rubrics", label: "Phase 8 follow-up — detailed QA scoring rubrics, calibration, reviewer assignment", status: "todo" },
+  { id: "p8-mobile", label: "Phase 8 follow-up — responsive/mobile pass on heavy workspace flows (builders, tables)", status: "todo" },
+  { id: "p10-deferred", label: "AI knowledge layer (grounded chat, ingestion, embeddings, editable prompts) — DEFERRED to Phase 10", status: "blocked" },
 ];
 
 const NON_GOALS = [

@@ -1,0 +1,159 @@
+import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
+import { ClipboardCheck, CheckCircle2, Clock, Eye } from "lucide-react";
+import { EmptyState } from "@/components/common/EmptyState";
+import { KpiCard } from "@/components/common/KpiCard";
+import {
+  useWorkspaceQaReviews,
+  useUpdateQaReviewStatus,
+} from "@/hooks/useWorkspaceQa";
+
+function StatusBadge({ status }: { status: string }) {
+  if (status === "completed")
+    return (
+      <Badge className="bg-success/10 text-success border-success/30 gap-1">
+        <CheckCircle2 className="h-3 w-3" /> Completed
+      </Badge>
+    );
+  if (status === "in_review")
+    return (
+      <Badge variant="outline" className="gap-1">
+        <Eye className="h-3 w-3" /> In review
+      </Badge>
+    );
+  return (
+    <Badge variant="outline" className="gap-1">
+      <Clock className="h-3 w-3" /> Pending
+    </Badge>
+  );
+}
+
+export default function WorkspaceQaPage() {
+  useParams<{ workspaceId: string }>();
+  const [tab, setTab] = useState<"pending" | "completed" | "all">("pending");
+  const { data: reviews = [], isLoading } = useWorkspaceQaReviews({
+    status: tab === "all" ? undefined : tab,
+  });
+  const update = useUpdateQaReviewStatus();
+
+  const { data: pendingAll = [] } = useWorkspaceQaReviews({ status: "pending" });
+  const { data: completedAll = [] } = useWorkspaceQaReviews({ status: "completed" });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">QA & Review</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Workspace-scoped review queue tied to call sessions and outcomes.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <KpiCard label="Pending" value={pendingAll.length} icon={Clock} />
+        <KpiCard label="Completed" value={completedAll.length} icon={CheckCircle2} />
+        <KpiCard
+          label="Avg score"
+          value={
+            completedAll.length === 0
+              ? "—"
+              : (
+                  completedAll.reduce((s, r) => s + (r.total_score ?? 0), 0) /
+                  Math.max(1, completedAll.filter((r) => r.total_score !== null).length)
+                ).toFixed(1)
+          }
+          icon={ClipboardCheck}
+        />
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Review queue</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+            <TabsList>
+              <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+              <TabsTrigger value="all">All</TabsTrigger>
+            </TabsList>
+            <TabsContent value={tab} className="mt-4">
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : reviews.length === 0 ? (
+                <EmptyState
+                  icon={ClipboardCheck}
+                  title="No reviews in this view"
+                  description="Reviews surface here as call sessions complete and become eligible for QA."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {reviews.map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex items-center justify-between gap-3 border rounded-md px-3 py-2.5"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium truncate">
+                          Session{" "}
+                          <code className="text-xs text-muted-foreground">
+                            {r.script_session_id?.slice(0, 8) ?? "—"}
+                          </code>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Created {new Date(r.created_at).toLocaleString()}
+                          {r.total_score !== null && (
+                            <> · Score {r.total_score}</>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <StatusBadge status={r.status} />
+                        {r.status === "pending" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              update.mutate({ id: r.id, status: "in_review" })
+                            }
+                          >
+                            Start
+                          </Button>
+                        )}
+                        {r.status !== "completed" && (
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              update.mutate({ id: r.id, status: "completed" })
+                            }
+                          >
+                            Complete
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      <p className="text-[11px] text-muted-foreground">
+        <Badge variant="outline" className="mr-1.5 text-[10px]">
+          Phase 8
+        </Badge>
+        Detailed scoring rubrics, calibration, and reviewer assignment land in Phase 9.
+      </p>
+    </div>
+  );
+}
