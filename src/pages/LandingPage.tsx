@@ -283,7 +283,7 @@ export default function LandingPage() {
                     </div>
                     <div className="text-sm font-semibold mb-1">{item.title}</div>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-3">{item.note}</p>
-                    <span className="text-[10px] uppercase tracking-wider text-accent font-medium">Coming soon</span>
+                    <span className="text-[10px] uppercase tracking-wider text-accent font-medium">{item.statusLabel}</span>
                   </CardContent>
                 </Card>
               ))}
