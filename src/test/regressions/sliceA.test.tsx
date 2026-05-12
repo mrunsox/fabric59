@@ -48,7 +48,7 @@ function renderRoute(initialPath: string, target: string, element: JSX.Element) 
   return captured;
 }
 
-const REPO = path.resolve(__dirname, "../..");
+const REPO = path.resolve(__dirname, "../../..");
 const HEADER_SRC = readFileSync(path.join(REPO, "src/components/marketing/MegaMenuHeader.tsx"), "utf8");
 const FOOTER_SRC = readFileSync(path.join(REPO, "src/components/marketing/MegaFooter.tsx"), "utf8");
 
