@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Building, Plug, FileText, Bell, Settings, CreditCard,
   Home, Users, Megaphone, BookOpen, FormInput, FileStack, PlayCircle,
-  UserCog, Headphones, ClipboardCheck, BarChart3,
+  UserCog, Headphones, ClipboardCheck, BarChart3, Brain, Sparkles,
 } from "lucide-react";
 
 export type SubNavItem = {
@@ -115,6 +115,8 @@ export const WORKSPACE_SECTIONS: WorkspaceNavItem[] = [
   { key: "qa", label: "QA", icon: ClipboardCheck, href: "qa" },
   { key: "analytics", label: "Analytics", icon: BarChart3, href: "analytics" },
   { key: "integrations", label: "Integrations", icon: Plug, href: "integrations" },
+  { key: "knowledge", label: "Knowledge", icon: Brain, href: "knowledge" },
+  { key: "assistant", label: "Assistant", icon: Sparkles, href: "assistant" },
   { key: "settings", label: "Settings", icon: Settings, href: "settings" },
 ];
 

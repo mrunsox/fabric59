@@ -28,6 +28,8 @@ import WorkspaceIntegrationDetailPage from "@/pages/workspace/WorkspaceIntegrati
 import WorkspaceAnalyticsPage from "@/pages/workspace/WorkspaceAnalyticsPage";
 import WorkspaceQaPage from "@/pages/workspace/WorkspaceQaPage";
 import WorkspaceBillingPage from "@/pages/workspace/WorkspaceBillingPage";
+import WorkspaceKnowledgePage from "@/pages/workspace/WorkspaceKnowledgePage";
+import WorkspaceAssistantPage from "@/pages/workspace/WorkspaceAssistantPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -404,6 +406,9 @@ const App = () => (
                 <Route path="analytics" element={<WorkspaceAnalyticsPage />} />
                 <Route path="analytics-legacy" element={<ReportsPage />} />
                 <Route path="billing" element={<WorkspaceBillingPage />} />
+                {/* Phase 10 — AI knowledge layer + workspace assistant. */}
+                <Route path="knowledge" element={<WorkspaceKnowledgePage />} />
+                <Route path="assistant" element={<WorkspaceAssistantPage />} />
                 {/* Phase 7: canonical workspace integrations (provider-agnostic).
                     Reads canonical integration_providers + integration_connections;
                     legacy ConnectorsCatalogPage stays reachable but is no longer the
