@@ -110,8 +110,7 @@ import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
 import CampaignBuilderPage from "@/pages/admin/CampaignBuilderPage";
 import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
 import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
-import CampaignsOverviewPage from "@/pages/admin/CampaignsOverviewPage";
-import CampaignDraftsPage from "@/pages/admin/CampaignDraftsPage";
+// CampaignsOverviewPage + CampaignDraftsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns and /admin/campaigns?status=draft).
 import CampaignReadinessBoardPage from "@/pages/admin/CampaignReadinessBoardPage";
 import CampaignEventLogPage from "@/pages/admin/CampaignEventLogPage";
 import TestingHubPage from "@/pages/admin/TestingHubPage";
