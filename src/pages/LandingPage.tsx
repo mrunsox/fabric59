@@ -28,6 +28,11 @@ import {
 } from "@/data/integrationStatus";
 
 // --- Available now (audit-verified shipped capabilities) ---
+// CRM-bridge + Slack rows are derived from integrationStatus so claims
+// can never drift between this page, the FAQ, and the SEO description.
+const liveCrmsForBridge = byCategory("crm").filter((e) => e.status === "live");
+const liveSlack = liveIntegrations().find((e) => e.id === "slack");
+
 const availableNow = [
   {
     icon: Phone,
@@ -42,7 +47,7 @@ const availableNow = [
   {
     icon: Scale,
     title: "Five9 → CRM bridge for legal intake",
-    desc: "MyCase live with per-client API key intake. Clio Grow Lead Inbox shipped as MVP via the clio-grow edge function with idempotent sync jobs.",
+    desc: liveCrmsForBridge.map((e) => e.statement).join(" "),
   },
   {
     icon: GitBranch,
@@ -69,11 +74,9 @@ const availableNow = [
     title: "API logs & reconciliation",
     desc: "Realtime API event streaming with deduplication and a telephony reconciliation layer comparing Five9 logs against CRM syncs.",
   },
-  {
-    icon: MessageSquare,
-    title: "Slack workspace integration",
-    desc: "Real-time Slack provisioning for agent workspaces and post-call event notifications routed by urgency.",
-  },
+  ...(liveSlack
+    ? [{ icon: liveSlack.icon, title: "Slack workspace integration", desc: liveSlack.statement }]
+    : []),
   {
     icon: Megaphone,
     title: "Campaign blueprints & intake automation",
@@ -82,13 +85,15 @@ const availableNow = [
 ];
 
 // --- Coming soon (built but gated, or actively in progress) ---
-const comingSoon = [
-  { icon: Scale, title: "Clio Manage adapter", note: "Clio Grow lead inbox live; full Clio Manage write-back queued behind OAuth provisioning." },
-  { icon: Bot, title: "AI Call Flow → Five9 export", note: "Builder and runtime simulator live; one-click Five9 IVR export in progress." },
-  { icon: Mail, title: "Disposition → CRM writebacks", note: "Branded disposition emails and post-call automations live; direct CRM field writebacks landing next." },
-  { icon: Building2, title: "Google Workspace provisioning", note: "Five9 + Slack provisioning live; Google Workspace flow on the roadmap." },
-  { icon: Sparkles, title: "Self-serve billing & plans", note: "Usage metering live; founder-led onboarding today, Stripe self-serve coming." },
-];
+// Derived from integrationStatus: anything not yet generally available.
+const comingSoon = [...queuedIntegrations(), ...comingSoonIntegrations()].map(
+  (entry) => ({
+    icon: entry.icon,
+    title: entry.name,
+    note: entry.statement,
+    statusLabel: STATUS_LABEL[entry.status],
+  }),
+);
 
 // --- Process ---
 const processSteps = [
