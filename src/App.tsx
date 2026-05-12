@@ -323,8 +323,9 @@ const App = () => (
                 <Route path="campaigns/new" element={<CampaignIntakePage />} />
                 <Route path="campaigns/edit/:id" element={<CampaignIntakePage />} />
                 <Route path="campaigns/:id" element={<CampaignDetailPage />} />
-                <Route path="campaigns/archived" element={<ArchivedCampaignsPage />} />
-                <Route path="campaign-blueprints" element={<CampaignBlueprintsPage />} />
+                {/* CANONICAL (Phase B): archived collapses into list filter; blueprints fold into templates. */}
+                <Route path="campaigns/archived" element={<Navigate to="/admin/campaigns?status=archived" replace />} />
+                <Route path="campaign-blueprints" element={<Navigate to="/admin/templates" replace />} />
                 <Route path="reports" element={<ReportsPage />} />
                 
                 {/* CANONICAL: scripts/guides cluster — scripter, scripts, tree-editor, scriptflow,
