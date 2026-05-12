@@ -154,10 +154,15 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "integration-freeze", label: "Integration freeze — stub providers listed", status: "done" },
   { id: "vault-candidates", label: "Vault candidates documented", status: "done" },
   { id: "redirect-candidates", label: "Redirect candidates documented + safe redirects added", status: "done" },
-  { id: "ws-shell", label: "Phase 2A — canonical workspace shell mounted at /app/workspaces/:workspaceId/*", status: "in_progress" },
-  { id: "ws-context", label: "Phase 2A — WorkspaceContext adapter (Organization → Workspace) live", status: "in_progress" },
-  { id: "ws-bridging", label: "Phase 2A — legacy admin pages reused under canonical shell where safe", status: "in_progress" },
-  { id: "ws-entity", label: "Phase 2B — real workspaces entity in the data layer", status: "todo" },
+  { id: "ws-shell", label: "Phase 2A — canonical workspace shell mounted at /app/workspaces/:workspaceId/*", status: "done" },
+  { id: "ws-context-adapter", label: "Phase 2A — temporary URL-level workspace=organization adapter", status: "done" },
+  { id: "ws-bridging", label: "Phase 2A — legacy admin pages reused under canonical shell where safe", status: "done" },
+  { id: "ws-entity", label: "Phase 2B — real workspaces + workspace_members tables (RLS, backfill, auto-create trigger)", status: "done" },
+  { id: "ws-context-real", label: "Phase 2B — WorkspaceContext sources from canonical workspaces table", status: "done" },
+  { id: "ws-clients-bound", label: "Phase 2B — workspace-scoped clients listing live at /app/workspaces/:id/clients", status: "done" },
+  { id: "ws-roles-scaffold", label: "Phase 2B — WORKSPACE_ROLES constants + workspace_role enum (no auth rewrite)", status: "done" },
+  { id: "ws-rebind-rest", label: "Phase 2B follow-ups — rebind campaigns/agents/supervisor/qa/analytics/integrations/settings to workspace context", status: "in_progress" },
+  { id: "ws-client-fk", label: "Phase 2B follow-up — add workspace_id to clients (tenants) and switch hook predicate", status: "todo" },
 ];
 
 const NON_GOALS = [
