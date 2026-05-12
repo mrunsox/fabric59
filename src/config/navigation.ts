@@ -45,8 +45,8 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     matches: ["/admin/workspaces", "/admin/clients", "/admin/tenants"],
   },
   {
-    key: "integrations",
-    label: "Integrations",
+    key: "connectors",
+    label: "Connectors",
     icon: Plug,
     href: "/admin/connectors",
     permission: "integrations",
