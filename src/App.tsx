@@ -123,7 +123,7 @@ import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import CallFlowPage from "@/pages/admin/CallFlowPage";
 import TreeEditorPage from "@/pages/admin/TreeEditorPage";
-import UserDashboardPage from "@/pages/admin/UserDashboardPage";
+// UserDashboardPage no longer mounted directly — Phase 11 collapsed /admin/dashboard into /admin (OverviewPage re-exports it).
 import DesignSystemPage from "@/pages/admin/DesignSystemPage";
 import DevGuidePage from "@/pages/superadmin/DevGuidePage";
 import NotFound from "./pages/NotFound";
