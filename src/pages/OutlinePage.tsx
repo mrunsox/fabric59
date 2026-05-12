@@ -46,14 +46,17 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
     exit: "Org-level nav matches spec; no duplicate entry points in nav; all legacy URLs redirect or remain reachable.",
   },
   {
-    id: "p2a", name: "Phase 2A — Workspace shell + route scaffolding", status: "in_progress",
+    id: "p2a", name: "Phase 2A — Workspace shell + route scaffolding", status: "done",
     objectives: "Mount canonical /app/workspaces/:workspaceId/* shell with WORKSPACE_SECTIONS, breadcrumbs, switcher; reuse legacy pages where safe; placeholders elsewhere; no DB changes.",
     exit: "Workspace shell renders all 13 canonical sections; breadcrumb Org > Workspace > Section works; legacy /admin/* untouched.",
   },
   {
-    id: "p2b", name: "Phase 2B — Workspace data foundation", status: "todo",
-    objectives: "Introduce real workspaces entity (table or canonical view); migrate WorkspaceContext off the Organization adapter; bind workspace-scoped data sources.",
-    exit: "Real workspace identity exists in the data layer; sections read workspace-scoped data; clients live inside workspaces.",
+    id: "p2b", name: "Phase 2B — Real workspace foundation + data binding", status: "in_progress",
+    objectives:
+      "Real workspaces + workspace_members tables (RLS, default-per-org backfill, auto-create trigger). " +
+      "WorkspaceContext rebinds to canonical workspace data. Workspace-aware Clients page lands as the first " +
+      "rebinding example. Other reused pages stay org-scoped and rebind incrementally.",
+    exit: "workspaces table live with backfill; WorkspaceContext sources from DB; /app/workspaces/:id/clients resolves via workspace context; /admin/* untouched.",
   },
   {
     id: "p3", name: "Phase 3 — Canonical campaigns", status: "todo",
