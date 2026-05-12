@@ -20,7 +20,6 @@ export default function IntegrationsIndexPage() {
   return (
     <MarketingLayout
       title="Integrations | Fabric59"
-      title="Integrations | Fabric59"
       description={integrationsIndexDescription()}
     >
       <section className="py-20 px-6">
