@@ -185,15 +185,6 @@ const App = () => (
             <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/onboarding/legal-connect" element={<Navigate to="/admin/legal-connect" replace />} />
 
-            {/* CANONICAL Phase 1 redirects — collapse duplicate noun surfaces.
-                Per master spec: tenants/integrations/five9-legacy collapse now;
-                scripter/scripts/tree-editor/scriptflow/script-routing kept routable
-                (de-surfaced from nav only) — they merge into the canonical Guide in Phase 4.
-                /admin/agent-dashboard kept routable as an active operational surface. */}
-            <Route path="/admin/integrations" element={<Navigate to="/admin/connectors" replace />} />
-            <Route path="/admin/tenants" element={<Navigate to="/admin/clients" replace />} />
-            <Route path="/admin/five9/legacy" element={<Navigate to="/admin/five9" replace />} />
-
             {/* Unified platform admin (Superadmin) — gated by master_admin */}
             <Route element={<MasterProtectedRoute />}>
               <Route path="/superadmin" element={<SuperadminShell />}>
