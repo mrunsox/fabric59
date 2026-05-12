@@ -286,10 +286,12 @@ const App = () => (
                 <Route path="five9/campaign-builder" element={<CampaignBuilderPage />} />
                 <Route path="five9/campaign-builder/:draftId" element={<CampaignBuilderPage />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
-                {/* CANONICAL: campaign cluster — collapses into one canonical campaigns entity in Phase 3.
-                    Kept routable until then; de-surfaced from primary nav. */}
-                <Route path="campaigns/overview" element={<CampaignsOverviewPage />} />
-                <Route path="campaigns/drafts" element={<CampaignDraftsPage />} />
+                {/* CANONICAL (Phase B): campaign cluster collapsed.
+                    overview/drafts → /admin/campaigns (with optional ?status= filter).
+                    readiness + event-log remain compatibility-only — reachable via direct URL,
+                    de-surfaced from primary campaign nav, still linked from operational hubs (Five9, Monitoring, Legal Connect). */}
+                <Route path="campaigns/overview" element={<Navigate to="/admin/campaigns" replace />} />
+                <Route path="campaigns/drafts" element={<Navigate to="/admin/campaigns?status=draft" replace />} />
                 <Route path="campaigns/readiness" element={<CampaignReadinessBoardPage />} />
                 <Route path="campaigns/event-log" element={<CampaignEventLogPage />} />
                 <Route path="testing" element={<TestingHubPage />} />
