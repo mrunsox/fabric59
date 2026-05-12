@@ -33,7 +33,7 @@ const availableNow = [
   {
     icon: Scale,
     title: "Five9 → CRM bridge for legal intake",
-    desc: "MyCase live with per-client API key intake. Clio adapter is built and ready to activate when OAuth secrets are provisioned.",
+    desc: "MyCase live with per-client API key intake. Clio Grow Lead Inbox shipped as MVP via the clio-grow edge function with idempotent sync jobs.",
   },
   {
     icon: GitBranch,
@@ -74,11 +74,11 @@ const availableNow = [
 
 // --- Coming soon (built but gated, or actively in progress) ---
 const comingSoon = [
-  { icon: Scale, title: "Clio activation", note: "Adapter shipped — awaiting OAuth credentials." },
-  { icon: Bot, title: "AI Call Flow export", note: "Builder previews live; one-click Five9 export in progress." },
-  { icon: Mail, title: "Disposition email writebacks", note: "Engine routes emails; CRM writeback hooks landing next." },
-  { icon: Building2, title: "Google Workspace provisioning", note: "Schema in place; provisioning flow on the roadmap." },
-  { icon: Sparkles, title: "Self-serve billing & plans", note: "Today onboarding is founder-led. Stripe enforcement coming." },
+  { icon: Scale, title: "Clio Manage adapter", note: "Clio Grow lead inbox live; full Clio Manage write-back queued behind OAuth provisioning." },
+  { icon: Bot, title: "AI Call Flow → Five9 export", note: "Builder and runtime simulator live; one-click Five9 IVR export in progress." },
+  { icon: Mail, title: "Disposition → CRM writebacks", note: "Branded disposition emails and post-call automations live; direct CRM field writebacks landing next." },
+  { icon: Building2, title: "Google Workspace provisioning", note: "Five9 + Slack provisioning live; Google Workspace flow on the roadmap." },
+  { icon: Sparkles, title: "Self-serve billing & plans", note: "Usage metering live; founder-led onboarding today, Stripe self-serve coming." },
 ];
 
 // --- Process ---
@@ -91,7 +91,7 @@ const processSteps = [
 const faqItems = [
   {
     question: "What is Fabric59?",
-    answer: "Fabric59 is a Five9-native control plane and legal-intake bridge. It connects Five9 to legal CRMs (MyCase live today, Clio ready to activate), provides multi-tenant operations for BPOs, and handles agent scripting, mapping, dispositions, reconciliation, and compliance export.",
+    answer: "Fabric59 is the multi-tenant operational-intelligence platform for Five9-powered contact centers. It unifies Five9 control-plane operations, legal-CRM bridges (MyCase live, Clio Grow live as MVP), agent decision-tree scripting, field mapping, post-call automations, telephony reconciliation, and audit-grade compliance export under one Org / Partner / Client hierarchy with Postgres RLS.",
   },
   {
     question: "How does Fabric59 integrate with Five9?",
@@ -99,7 +99,7 @@ const faqItems = [
   },
   {
     question: "Which CRMs are supported today?",
-    answer: "MyCase is live using per-client API key intake. The Clio adapter is built and waiting on OAuth activation. Additional CRMs are added on a per-engagement basis through the same adapter pattern.",
+    answer: "MyCase is live using per-client API key intake. Clio Grow is live as an MVP Lead Inbox via the clio-grow edge function with idempotent sync jobs. The full Clio Manage adapter is queued behind OAuth provisioning. Additional CRMs are added per engagement through the same adapter pattern.",
   },
   {
     question: "How do I get started?",
@@ -121,7 +121,7 @@ const organizationLD = {
   "@type": "Organization",
   name: "Fabric59",
   url: "https://fabric59.com",
-  description: "Five9-native control plane and legal-intake bridge for contact centers and law firms.",
+  description: "Multi-tenant operational-intelligence platform for Five9 contact centers and legal-intake operations.",
   contactPoint: { "@type": "ContactPoint", email: "hi@fabric59.com", contactType: "customer service" },
   parentOrganization: { "@type": "Organization", name: "UNSOX Digital", url: "https://unsox.com" },
 };
@@ -148,10 +148,10 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Fabric59 — Five9-Native Control Plane & Legal-Intake Bridge"
-        description="Connect Five9 to MyCase (live) and Clio (ready) with 30+ SOAP actions, visual field mapping, decision-tree scripting, multi-tenant RLS, and audit-grade compliance export."
+        title="Fabric59 — Operational Intelligence For Five9 Contact Centers"
+        description="The multi-tenant operational-intelligence platform for Five9. Unify Five9 SOAP control, MyCase + Clio Grow, visual mapping, decision-tree scripting, post-call automations, RLS-isolated tenancy, and audit-grade compliance export."
         canonical="https://fabric59.com/"
-        ogTitle="Fabric59 — The Five9-native bridge to your legal CRM"
+        ogTitle="Fabric59 — Operational intelligence for Five9 contact centers"
       />
       <StructuredData data={[organizationLD, faqLD]} />
 
@@ -171,16 +171,16 @@ export default function LandingPage() {
           <div className="relative max-w-5xl mx-auto text-center px-6 pt-28 pb-24">
             <motion.div custom={0} initial="hidden" animate="visible" variants={fadeUp}>
               <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-xs tracking-wide uppercase border border-primary/30 bg-primary/10 text-primary">
-                Five9 control plane · Legal-intake bridge
+                Multi-tenant · Five9-native · Legal-intake ready
               </Badge>
             </motion.div>
 
             <motion.h1 custom={1} initial="hidden" animate="visible" variants={fadeUp}
               className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6"
             >
-              The Five9-native bridge to your{" "}
+              Operational intelligence for{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-                legal CRM
+                Five9 contact centers
               </span>
               .
             </motion.h1>
@@ -188,7 +188,7 @@ export default function LandingPage() {
             <motion.p custom={2} initial="hidden" animate="visible" variants={fadeUp}
               className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
             >
-              Fabric59 sits between Five9 and your CRM stack — wiring multi-domain Five9, MyCase (live) and Clio (ready to activate), visual field mapping, agent scripting, and audit-grade reconciliation into one operations platform.
+              Fabric59 is the multi-tenant control plane around Five9 — unifying SOAP operations, MyCase and Clio Grow intake, visual mapping, agent scripting, post-call automations, and audit-grade reporting under one Org / Partner / Client hierarchy.
             </motion.p>
 
             <motion.div custom={3} initial="hidden" animate="visible" variants={fadeUp}
@@ -286,14 +286,15 @@ export default function LandingPage() {
                 <Badge className="mb-4 bg-accent/10 text-accent border-accent/30">Five9 → Legal CRM</Badge>
                 <h2 className="text-3xl font-bold mb-4">The bridge between your dialer and your case management system</h2>
                 <p className="text-muted-foreground leading-relaxed mb-6">
-                  Agents stay in Five9. Fabric59 handles the rest — pre-call ANI lookup, contact resolution, matter linking, and disposition-driven writebacks against MyCase today, with Clio queued behind a single activation step.
+                  Agents stay in Five9. Fabric59 handles the rest — pre-call ANI lookup, contact resolution, matter linking, and disposition-driven post-call automations. MyCase is live, Clio Grow ships lead-inbox today, and full Clio Manage writebacks are queued behind OAuth provisioning.
                 </p>
                 <div className="space-y-4">
                   {[
                     { icon: Phone, text: "Sub-500ms ANI-based pre-call lookup with screen-pop", badge: "Live" },
                     { icon: Scale, text: "MyCase integration via per-client API key intake", badge: "Live" },
                     { icon: Shield, text: "Per-disposition policy: allow / block / redact fields", badge: "Live" },
-                    { icon: Globe, text: "Clio adapter — activates on OAuth credential provisioning", badge: "Coming soon" },
+                    { icon: Globe, text: "Clio Grow Lead Inbox MVP via clio-grow edge function", badge: "Live" },
+                    { icon: Globe, text: "Clio Manage adapter — activates on OAuth provisioning", badge: "Coming soon" },
                   ].map((item) => (
                     <div key={item.text} className="flex items-start gap-3">
                       <div className="h-8 w-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
