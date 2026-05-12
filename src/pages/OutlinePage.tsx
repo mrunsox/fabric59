@@ -1304,6 +1304,187 @@ Status:    open | in-progress | fixed | wontfix | duplicate`}
                 No cycles recorded yet. First cycle should fill in: date, tester, build SHA, results for 17.1–17.6, defect count by severity, ship/no-ship decision.
               </div>
             </Section>
+
+            <Section id="s18" title="18. Post-Phase-11 Surface Truth Audit (Pass 1)">
+              <p className="text-xs text-muted-foreground">
+                Read-only inventory of every user-facing surface after Phase 11 close-out, classified canonical vs compatibility vs lingering. Source: <span className="font-mono">src/data/surfaceAudit.ts</span>. No user-facing routes/copy were modified to produce this audit. Pass 2 executes the recommended slice sequence (A–D) to revamp.
+              </p>
+
+              {(() => {
+                const s = summarizeAudit();
+                return (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 my-3">
+                    {Object.entries(s.byScope).map(([k, v]) => (
+                      <div key={k} className="rounded-md border p-2 text-xs">
+                        <div className="font-mono text-muted-foreground">{k}</div>
+                        <div className="text-base font-semibold text-foreground">{v}</div>
+                      </div>
+                    ))}
+                    {Object.entries(s.byClassification).map(([k, v]) => (
+                      <div key={k} className="rounded-md border p-2 text-xs">
+                        <div className="font-mono text-muted-foreground">{k}</div>
+                        <div className="text-base font-semibold text-foreground">{v}</div>
+                      </div>
+                    ))}
+                    <div className="rounded-md border p-2 text-xs"><div className="font-mono text-muted-foreground">total routes</div><div className="text-base font-semibold">{s.total}</div></div>
+                    <div className="rounded-md border p-2 text-xs"><div className="font-mono text-muted-foreground">lingering</div><div className="text-base font-semibold">{s.lingering}</div></div>
+                    <div className="rounded-md border p-2 text-xs"><div className="font-mono text-muted-foreground">copy issues</div><div className="text-base font-semibold">{s.copyIssues}</div></div>
+                    <div className="rounded-md border p-2 text-xs"><div className="font-mono text-muted-foreground">cta non-canonical</div><div className="text-base font-semibold">{s.ctaIssues}</div></div>
+                    <div className="rounded-md border p-2 text-xs"><div className="font-mono text-muted-foreground">redirects</div><div className="text-base font-semibold">{s.redirects}</div></div>
+                  </div>
+                );
+              })()}
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">18.1 Surface inventory</h3>
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-[11px]">
+                  <thead className="bg-muted/40 text-muted-foreground">
+                    <tr>
+                      <th className="text-left p-2">Route</th>
+                      <th className="text-left p-2">Scope</th>
+                      <th className="text-left p-2">Current title</th>
+                      <th className="text-left p-2">Canonical</th>
+                      <th className="text-left p-2">Class</th>
+                      <th className="text-left p-2">Action</th>
+                      <th className="text-left p-2">Slice</th>
+                      <th className="text-left p-2">Risk</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {SURFACE_INVENTORY.map((r) => (
+                      <tr key={r.route} className="border-t align-top">
+                        <td className="p-2 font-mono">{r.route}</td>
+                        <td className="p-2">{r.scope}</td>
+                        <td className="p-2">{r.currentTitle}</td>
+                        <td className="p-2">{r.canonicalName}</td>
+                        <td className="p-2">{r.classification}</td>
+                        <td className="p-2">{r.action}</td>
+                        <td className="p-2">{r.slice}</td>
+                        <td className="p-2">{r.risk}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">18.2 Lingering items matrix</h3>
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-[11px]">
+                  <thead className="bg-muted/40 text-muted-foreground">
+                    <tr>
+                      <th className="text-left p-2">ID</th>
+                      <th className="text-left p-2">Area</th>
+                      <th className="text-left p-2">Item</th>
+                      <th className="text-left p-2">Evidence</th>
+                      <th className="text-left p-2">Impact</th>
+                      <th className="text-left p-2">Slice</th>
+                      <th className="text-left p-2">Resolution</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LINGERING_ITEMS.map((l) => (
+                      <tr key={l.id} className="border-t align-top">
+                        <td className="p-2 font-mono">{l.id}</td>
+                        <td className="p-2">{l.area}</td>
+                        <td className="p-2">{l.item}</td>
+                        <td className="p-2 text-muted-foreground">{l.evidence}</td>
+                        <td className="p-2">{l.impact}</td>
+                        <td className="p-2">{l.slice}</td>
+                        <td className="p-2">{l.resolution}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">18.3 Copy / naming inconsistency matrix</h3>
+              <div className="space-y-2">
+                {COPY_INCONSISTENCIES.map((c) => (
+                  <div key={c.id} className="rounded-md border p-3 text-xs">
+                    <div className="font-semibold text-foreground">{c.id} — {c.entity} <span className="ml-2 text-muted-foreground">(slice {c.slice})</span></div>
+                    <ul className="list-disc pl-5 mt-1 text-muted-foreground">
+                      {c.variants.map((v, i) => (
+                        <li key={i}><span className="font-mono">{v.label}</span> — {v.where}</li>
+                      ))}
+                    </ul>
+                    <div className="mt-1"><span className="text-muted-foreground">Canonical:</span> <span className="text-foreground">{c.canonical}</span></div>
+                  </div>
+                ))}
+              </div>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">18.4 CTA / navigation alignment matrix</h3>
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-[11px]">
+                  <thead className="bg-muted/40 text-muted-foreground">
+                    <tr>
+                      <th className="text-left p-2">ID</th>
+                      <th className="text-left p-2">CTA</th>
+                      <th className="text-left p-2">Surface</th>
+                      <th className="text-left p-2">Destination</th>
+                      <th className="text-left p-2">Class</th>
+                      <th className="text-left p-2">Slice</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {CTA_ALIGNMENT.map((t) => (
+                      <tr key={t.id} className="border-t align-top">
+                        <td className="p-2 font-mono">{t.id}</td>
+                        <td className="p-2">{t.cta}</td>
+                        <td className="p-2">{t.surface}</td>
+                        <td className="p-2 font-mono">{t.destination}</td>
+                        <td className="p-2">{t.classification}</td>
+                        <td className="p-2">{t.slice}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">18.5 Redirect / compatibility truth table</h3>
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-[11px]">
+                  <thead className="bg-muted/40 text-muted-foreground">
+                    <tr>
+                      <th className="text-left p-2">ID</th>
+                      <th className="text-left p-2">From</th>
+                      <th className="text-left p-2">To</th>
+                      <th className="text-left p-2">Kind</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {REDIRECT_TABLE.map((r) => (
+                      <tr key={r.id} className="border-t">
+                        <td className="p-2 font-mono">{r.id}</td>
+                        <td className="p-2 font-mono">{r.from}</td>
+                        <td className="p-2 font-mono">{r.to}</td>
+                        <td className="p-2">{r.kind}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">18.6 Recommended slice sequence (Pass 2)</h3>
+              <div className="space-y-3">
+                {SLICE_SEQUENCE.map((s) => (
+                  <div key={s.slice} className="rounded-md border p-3">
+                    <div className="text-sm font-semibold text-foreground">Slice {s.slice} — {s.name}</div>
+                    <div className="mt-2 text-xs">
+                      <div className="font-medium text-foreground">Touches</div>
+                      <ul className="list-disc pl-5 text-muted-foreground">
+                        {s.touches.map((t, i) => <li key={i}>{t}</li>)}
+                      </ul>
+                    </div>
+                    <div className="mt-2 text-xs">
+                      <div className="font-medium text-foreground">Does not touch</div>
+                      <ul className="list-disc pl-5 text-muted-foreground">
+                        {s.doesNotTouch.map((t, i) => <li key={i}>{t}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
           </div>
         </ScrollArea>
       </div>
