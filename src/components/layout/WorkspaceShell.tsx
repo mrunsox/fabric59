@@ -94,7 +94,7 @@ function WorkspaceChrome() {
 
           <div className="ml-auto flex items-center gap-2">
             <Button asChild variant="ghost" size="sm" className="text-xs">
-              <Link to="/admin/dashboard">
+              <Link to="/admin">
                 <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Org admin
               </Link>
             </Button>
