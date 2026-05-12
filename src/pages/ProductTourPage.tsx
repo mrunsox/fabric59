@@ -5,8 +5,14 @@ import {
   Globe, GitFork, Building2, Lock, FileSearch, MessageSquare, UserCog, Mail,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { StructuredData } from "@/components/seo/StructuredData";
 import { MegaMenuHeader } from "@/components/marketing/MegaMenuHeader";
 import { MegaFooter } from "@/components/marketing/MegaFooter";
+import {
+  organizationLD,
+  productOverviewDescription,
+  softwareApplicationLD,
+} from "@/seo/marketingMetadata";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -279,10 +285,11 @@ export default function ProductTourPage() {
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
         title="Product Overview — Fabric59"
-        description="The canonical Fabric59 product overview. Every capability tagged Live, Partial, or Coming soon — Five9 SOAP, MyCase, Clio, mapping, scripting, RLS, audit export."
+        description={productOverviewDescription()}
         canonical="https://fabric59.com/product"
         ogTitle="Fabric59 Product Overview — every capability, honestly tagged"
       />
+      <StructuredData data={[organizationLD, softwareApplicationLD()]} />
 
       <MegaMenuHeader />
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { Phone, Scale, MessageSquare, Webhook, ArrowRight } from "lucide-react";
+import { integrationsIndexDescription } from "@/seo/marketingMetadata";
 
 const PROVIDERS = [
   { logo: "/integration-logos/salesforce.svg", name: "Five9", status: "Live", note: "30+ SOAP actions, multi-domain, sync engine.", icon: Phone },
@@ -19,7 +20,7 @@ export default function IntegrationsIndexPage() {
   return (
     <MarketingLayout
       title="Integrations | Fabric59"
-      description="Five9, MyCase, Clio, Slack, Zapier, Make — all routed through one canonical, provider-agnostic integrations layer."
+      description={integrationsIndexDescription()}
     >
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto text-center mb-14">
