@@ -960,6 +960,71 @@ Workspace shell (canonical 15):
                 <li>Tables, empty states, and status badges standardized via shared primitives.</li>
                 <li>Legacy routes either redirect (within grace window) or are removed.</li>
               </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Phase 11 — Remaining work checklist</h3>
+              <p className="text-xs text-muted-foreground">
+                Tracking the closeout slices still in flight before Phase 11 is marked done.
+              </p>
+
+              <h4 className="text-xs font-semibold text-foreground mt-4">1. Campaign cluster merge</h4>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Confirm canonical campaign surfaces: one list, one detail, one builder.</li>
+                <li>Merge <span className="font-mono">/admin/campaigns/{`{overview,drafts,readiness,event-log,archived}`}</span> into the canonical list (tabs/filters) and detail tabs.</li>
+                <li>Fold <span className="font-mono">/admin/campaign-blueprints</span> into Templates(kind=campaign) if still in scope.</li>
+                <li>Ensure one canonical campaign entity in the data model (compatibility views only where needed).</li>
+                <li>Add/verify redirects for merged routes with planned deletion release in the redirect matrix.</li>
+              </ul>
+
+              <h4 className="text-xs font-semibold text-foreground mt-4">2. Builder vault + consolidation</h4>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Lock canonical builders: Guide, Campaign, Mapping, Flow (kept or explicitly frozen + documented).</li>
+                <li>Vault and delete legacy/duplicate builders: <span className="font-mono">/admin/scripter</span>, <span className="font-mono">/admin/scripts</span> (+ <span className="font-mono">:id</span>), <span className="font-mono">/admin/tree-editor</span> (+ <span className="font-mono">:scriptId</span>), residual scriptflow/script-routing surfaces.</li>
+                <li>Confirm sidebar/nav has no references to deleted builders and no hooks/components import them.</li>
+                <li>Vault entries exist for any non-trivial deleted builder.</li>
+              </ul>
+
+              <h4 className="text-xs font-semibold text-foreground mt-4">3. Table + EmptyState rollout</h4>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Canonical DataTable: <span className="font-mono">src/components/ui/data-table.tsx</span>.</li>
+                <li>Migrate major surfaces: Workspaces/Clients, Campaigns, Guides, Integrations, Analytics &amp; QA, Billing.</li>
+                <li>Replace ad-hoc empty states with shared <span className="font-mono">EmptyState</span> — clear copy, primary CTA, optional docs link.</li>
+                <li>Document canonical table &amp; EmptyState patterns in the UI primitives policy and tick them off.</li>
+              </ul>
+
+              <h4 className="text-xs font-semibold text-foreground mt-4">4. Integrations nav convergence</h4>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Lock canonical routes: <span className="font-mono">/admin/connectors</span> (catalog) and <span className="font-mono">/admin/connectors/:slug</span> (instance config).</li>
+                <li>Remove/redirect legacy <span className="font-mono">/admin/integrations</span> and any other overlaps per cleanup plan.</li>
+                <li>Update sidebar nav and route map so only canonical integrations routes show.</li>
+                <li>Add entries to the redirect matrix (legacy → canonical → release to delete).</li>
+              </ul>
+
+              <h4 className="text-xs font-semibold text-foreground mt-4">5. Marketing convergence sanity check</h4>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Confirm public IA: <span className="font-mono">/, /personas/*, /solutions/*, /integrations, /pricing, /customers, /faq, /contact, /trust, /security, /privacy, /terms, /responsible-disclosure</span>.</li>
+                <li>Identify legacy marketing routes/components in code and decide refactor vs. redirect vs. delete.</li>
+                <li>Ensure no second, conflicting product story is reachable from public nav.</li>
+                <li>Update the marketing table in /outline to reflect the final live vs. deprecated set.</li>
+              </ul>
+
+              <h4 className="text-xs font-semibold text-foreground mt-4">6. Legacy route redirect matrix</h4>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Complete the matrix: legacy route · canonical target · status (redirected/removed) · release after which delete is safe.</li>
+                <li>Implement redirects for legacy Five9 aliases, legacy call-flow routes, legacy integrations lists, stray internal routes.</li>
+                <li>After one release window, delete routes whose redirects have expired per plan.</li>
+              </ul>
+
+              <h4 className="text-xs font-semibold text-foreground mt-4">7. Phase 11 close-out</h4>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Admin &amp; workspace nav match canonical hierarchy (no dead/orphan entries).</li>
+                <li>Campaign cluster fully merged; no stray campaign pages.</li>
+                <li>Builder set reduced to canonical list, with vault coverage for deletions.</li>
+                <li>Tables and EmptyState standardized on shared primitives across major surfaces.</li>
+                <li>Integrations nav converged; no duplicate/legacy routes.</li>
+                <li>Marketing routes aligned to canonical IA; no off-message flows.</li>
+                <li>Redirect matrix implemented; agreed legacy routes redirected or removed.</li>
+                <li>/outline updated with final route + nav map, convergence decisions, UI primitive notes, and removed/redirected route timing — Phase 11 status flipped to <span className="font-mono">done</span>.</li>
+              </ul>
             </Section>
           </div>
         </ScrollArea>
