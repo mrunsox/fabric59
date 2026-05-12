@@ -59,7 +59,7 @@ function WorkspaceChrome() {
         <div className="mx-auto max-w-[1440px] px-8 h-14 flex items-center gap-3">
           {/* Breadcrumb: Organization > Workspace > Section */}
           <nav className="flex items-center gap-2 text-sm min-w-0" aria-label="Breadcrumb">
-            <Link to="/admin/dashboard" className="text-muted-foreground/70 hover:text-foreground truncate">
+            <Link to="/admin" className="text-muted-foreground/70 hover:text-foreground truncate">
               {organization?.name ?? "Organization"}
             </Link>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" />
@@ -94,7 +94,7 @@ function WorkspaceChrome() {
 
           <div className="ml-auto flex items-center gap-2">
             <Button asChild variant="ghost" size="sm" className="text-xs">
-              <Link to="/admin/dashboard">
+              <Link to="/admin">
                 <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Org admin
               </Link>
             </Button>

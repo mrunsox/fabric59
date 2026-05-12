@@ -51,7 +51,7 @@ export function AdminShell() {
         )}
       >
         <Link
-          to="/admin/dashboard"
+          to="/admin"
           className={cn(
             "mb-4 flex items-center gap-2",
             expanded ? "px-2" : "justify-center"

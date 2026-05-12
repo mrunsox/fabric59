@@ -127,7 +127,7 @@ export default function Five9OverviewPage() {
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>Use the AI Guide drawer in any Five9 page for next-best-action recommendations based on your live setup state.</p>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/dashboard">Open Dashboard</Link>
+              <Link to="/admin">Open Dashboard</Link>
             </Button>
           </CardContent>
         </Card>
