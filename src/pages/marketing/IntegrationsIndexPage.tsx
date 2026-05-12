@@ -20,7 +20,8 @@ export default function IntegrationsIndexPage() {
   return (
     <MarketingLayout
       title="Integrations | Fabric59"
-      description="Five9, MyCase, Clio, Slack, Zapier, Make — all routed through one canonical, provider-agnostic integrations layer."
+      title="Integrations | Fabric59"
+      description={integrationsIndexDescription()}
     >
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto text-center mb-14">
