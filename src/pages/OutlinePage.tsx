@@ -69,26 +69,31 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "campaigns table backfilled and live; canonical list+detail+new routed under workspace; legacy /admin/campaigns* preserved as compatibility writers.",
   },
   {
-    id: "p4", name: "Phase 4 — Guides", status: "in_progress",
+    id: "p4", name: "Phase 4 — Guides", status: "done",
     objectives:
       "Canonical workspace-owned `guides` table + `guide_versions` (status enum draft/published/archived). " +
       "One-way mirror trigger `mirror_script_to_guide` backfills/syncs from legacy `scripts`. " +
       "Canonical list/detail/edit/preview routes under /app/workspaces/:id/guides. " +
-      "ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical surviving builder; " +
-      "TreeEditor, Scripter, ScriptFlowHub, ScriptRouting remain as compatibility/deferred surfaces. " +
-      "Guide-to-campaign assignment via guides.campaign_id (0..1 campaign per guide; many guides per campaign).",
+      "ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical surviving builder.",
     exit:
-      "guides + guide_versions live with backfill from scripts; canonical workspace guide routes live; ScriptBuilderPage promoted as survivor; legacy script surfaces routable but de-surfaced; campaign assignment functional under workspace scope.",
+      "guides + guide_versions live; canonical routes live; ScriptBuilderPage promoted as survivor; campaign assignment functional under workspace scope.",
   },
   {
-    id: "p5", name: "Phase 5 — Forms (new)", status: "todo",
+    id: "p5", name: "Phase 5 — Templates unification", status: "in_progress",
+    objectives:
+      "Collapse 7 legacy template tables (script_templates, flow_templates, email_templates, report_templates, " +
+      "call_summary_templates, legal_connect_prompt_templates, campaign_blueprints) into one canonical `templates` table " +
+      "keyed by scope_type (platform/org/partner/client/workspace) + kind (guide/flow/campaign/email/summary/prompt/report). " +
+      "Mirror triggers + backfill from each legacy writer; parent_template_id provides fork lineage; canonical workspace " +
+      "routes /app/workspaces/:id/templates{,/:id} expose the unified gallery and fork action.",
+    exit:
+      "templates + template_versions live with backfill from all 7 legacy tables; canonical workspace template routes live; " +
+      "fork-into-workspace flow functional; legacy template pages remain authoritative writers (mirrored, not yet purged).",
+  },
+  {
+    id: "p6", name: "Phase 6 — Forms (new)", status: "todo",
     objectives: "Build canonical Form artifact: schema, conditions, validation, mapping targets, versioning.",
     exit: "Form library + builder live; forms assignable to campaigns/guides; submissions captured.",
-  },
-  {
-    id: "p6", name: "Phase 6 — Templates unification", status: "todo",
-    objectives: "Collapse 8 template-like tables into one templates model with kind enum + scope tabs.",
-    exit: "One templates table; gallery shows all kinds; inheritance and forking work.",
   },
   {
     id: "p7", name: "Phase 7 — Integrations canonical layer", status: "todo",
