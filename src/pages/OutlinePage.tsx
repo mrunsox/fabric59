@@ -124,7 +124,7 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "subscription primitives; launch polish checklist green.",
   },
   {
-    id: "p9", name: "Phase 9 — Marketing site + onboarding + workspace bootstrap", status: "in_progress",
+    id: "p9", name: "Phase 9 — Marketing site + onboarding + workspace bootstrap", status: "done",
     objectives:
       "Rebuild the public-facing entry and first-run path so Fabric59 moves from internally coherent product to " +
       "market-ready product. Canonical marketing IA (personas, solutions, pricing, integrations, customers), " +
@@ -134,11 +134,15 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "lands in legacy /admin/* sprawl as the primary path; AI knowledge remains explicitly deferred to Phase 10.",
   },
   {
-    id: "p10", name: "Phase 10 — AI knowledge layer + agent assist + GA polish", status: "todo",
+    id: "p10", name: "Phase 10 — AI knowledge layer + workspace intelligence", status: "in_progress",
     objectives:
-      "Workspace-scoped AI: grounded chat, doc/URL ingestion, embeddings, editable prompts in UI, summaries, " +
-      "post-call automations. Explicitly deferred from Phase 8.",
-    exit: "AI features versioned, scoped, audited; market-ready checklist green.",
+      "Three-layer canonical AI: (1) live assist in builders/agents, (2) workspace-scoped knowledge + grounded chat, " +
+      "(3) post-call intelligence. Workspace knowledge page, workspace assistant page, prompt + behavior configuration " +
+      "for admins, and guardrails (scope, logging, explainability, no silent writes).",
+    exit:
+      "Workspace knowledge + assistant routes live and reachable from workspace nav; grounded chat scoped to workspace " +
+      "with KB + guides + templates + call summaries; admin-controlled AI configuration (tone, industry, jurisdiction, " +
+      "knowledge-only); audit log of AI interactions; all writes user-initiated.",
   },
 ];
 
@@ -306,7 +310,18 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p9-billing-backend", label: "Phase 9 follow-up — real billing backend (subscription/plan/payment-method) — DEFERRED", status: "todo" },
   { id: "p9-tokenized-invites", label: "Phase 9 follow-up — tokenized self-serve invite link backend (today: admin invites in-app)", status: "todo" },
   { id: "p9-customer-stories", label: "Phase 9 follow-up — real published customer stories once design partners go GA", status: "todo" },
-  { id: "p10-deferred", label: "AI knowledge layer (grounded chat, ingestion, embeddings, editable prompts) — DEFERRED to Phase 10", status: "blocked" },
+  { id: "p10-knowledge-route", label: "Phase 10 — /app/workspaces/:id/knowledge live (Overview / Sources / AI Configuration)", status: "done" },
+  { id: "p10-assistant-route", label: "Phase 10 — /app/workspaces/:id/assistant live (workspace-scoped grounded chat with grounding indicator)", status: "done" },
+  { id: "p10-ai-config", label: "Phase 10 — workspace_ai_configs (tone, industry, jurisdiction, knowledge_only) editable by org admins, RLS-scoped", status: "done" },
+  { id: "p10-knowledge-sources", label: "Phase 10 — workspace_knowledge_sources registry seeded per workspace (kb/guides/templates/call_summaries/outcomes/uploads/urls)", status: "done" },
+  { id: "p10-assistant-fn", label: "Phase 10 — workspace-assistant edge function: grounded responses via Lovable AI Gateway, returns grounding metadata", status: "done" },
+  { id: "p10-conversations", label: "Phase 10 — workspace_ai_conversations + workspace_ai_messages persisted per workspace, RLS-scoped", status: "done" },
+  { id: "p10-audit", label: "Phase 10 — workspace_ai_logs audit trail for every AI interaction (org-admin readable)", status: "done" },
+  { id: "p10-nav", label: "Phase 10 — Knowledge + Assistant added to canonical workspace secondary nav", status: "done" },
+  { id: "p10-builder-assist", label: "Phase 10 follow-up — guide builder AI assist wired to shared knowledge model (currently uses generate-script edge fn)", status: "in_progress" },
+  { id: "p10-postcall", label: "Phase 10 follow-up — post-call intelligence (suggested QA notes, summaries, follow-ups) tied to workspace assistant", status: "todo" },
+  { id: "p10-uploads", label: "Phase 10 follow-up — uploaded docs + URL ingestion sources (currently disabled by default)", status: "todo" },
+  { id: "p10-embeddings", label: "Phase 10 follow-up — vector embeddings + retrieval (current grounding is bounded keyword/recent fetch)", status: "todo" },
 ];
 
 const NON_GOALS = [
