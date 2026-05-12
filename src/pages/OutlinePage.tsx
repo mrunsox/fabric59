@@ -551,6 +551,54 @@ export default function OutlinePage() {
                 <li>Stable template versioning + rollback before Forms attach to a specific version.</li>
               </ul>
             </Section>
+
+            <Section id="phase-6-decisions" title="14. Phase 6 — Native guide builder and publish/version decisions">
+              <h3 className="text-sm font-semibold text-foreground">Authoring debt cleared</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Edit route <span className="font-mono">/app/workspaces/:id/guides/:id/edit</span> is now the real owner for canonical native guides — no longer primarily a bridge.</li>
+                <li>ScriptBuilderPage remains a compatibility-only deep link, used solely for guides whose <span className="font-mono">source_type='script'</span>.</li>
+                <li><span className="font-mono">guide_versions</span> is now operational: every save produces a new version row; publish flips <span className="font-mono">is_current</span> and updates <span className="font-mono">guides.current_version</span> + <span className="font-mono">status</span>.</li>
+                <li>Rollback republishes a prior version atomically without discarding newer drafts.</li>
+                <li>Create-from-template consumes canonical <span className="font-mono">templates(kind=guide)</span> and stores <span className="font-mono">metadata.from_template_id</span> for lineage.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Lifecycle model</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Status enum unchanged: <span className="font-mono">draft | published | archived</span>.</li>
+                <li>Save draft: insert new <span className="font-mono">guide_versions</span> row with <span className="font-mono">is_current=false</span>, version = max+1.</li>
+                <li>Publish: clear all <span className="font-mono">is_current</span> for the guide, set on target version, update <span className="font-mono">guides.status='published'</span> + <span className="font-mono">current_version</span>.</li>
+                <li>Rollback: same as publish but targets a prior version; newer drafts are preserved.</li>
+                <li>Native content surface today: raw JSON in <span className="font-mono">guide_versions.content</span>. Visual node editor is a documented Phase 6 follow-up.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Surface disposition after Phase 6</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead><tr className="border-b"><th className="text-left p-2">Surface</th><th className="text-left p-2">Status</th><th className="text-left p-2">Notes</th></tr></thead>
+                <tbody>
+                  {[
+                    { s: "/app/workspaces/:id/guides/new", k: "Canonical (new)", n: "Blank or seed-from-template flow." },
+                    { s: "/app/workspaces/:id/guides/:id/edit", k: "Canonical (native)", n: "Real authoring surface; deep-links to ScriptBuilderPage only when source_type='script'." },
+                    { s: "/app/workspaces/:id/guides/:id (detail)", k: "Canonical", n: "Now exposes version history with publish + rollback actions." },
+                    { s: "/admin/scripts/:id/builder (ScriptBuilderPage)", k: "Compatibility-only", n: "Authoritative writer for legacy script-source guides. Re-mirrors via trigger." },
+                    { s: "/admin/scripter, /admin/tree-editor, /admin/scriptflow, /admin/script-routing", k: "Deferred / vault candidate", n: "Routable but not part of canonical lifecycle. Vault target after visual editor lands." },
+                    { s: "guides + guide_versions", k: "Canonical authoring path", n: "Now both read AND write surface for native canonical guides." },
+                  ].map((r) => (
+                    <tr key={r.s} className="border-b border-border/40">
+                      <td className="p-2 font-mono text-[11px] text-muted-foreground">{r.s}</td>
+                      <td className="p-2">{r.k}</td>
+                      <td className="p-2">{r.n}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Phase 7 prerequisites</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Visual node editor over <span className="font-mono">guide_versions.content</span> so legacy ScriptBuilderPage can be vaulted.</li>
+                <li>Decide whether canonical templates need a native edit surface before mappings/provider normalization begins.</li>
+                <li>Mappings + provider normalization (Clio / MyCase) is the next product-critical move once authoring is canonical end-to-end.</li>
+              </ul>
+            </Section>
           </div>
         </ScrollArea>
       </div>
