@@ -348,6 +348,12 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "pa-protectedroute-loop", label: "QA Phase A — removed ProtectedRoute member→/admin/dashboard hop (was a redirect loop after Phase 11 collapse)", status: "done" },
   { id: "pa-redirects-verified", label: "QA Phase A — /dashboard, /admin/dashboard both redirect to /admin; /admin/agent-dashboard reachable but de-surfaced", status: "done" },
   { id: "pa-workspace-home", label: "QA Phase A — /app/workspaces/:workspaceId/home confirmed as canonical workspace cockpit (index also resolves to it)", status: "done" },
+  { id: "pb-canonical-list", label: "QA Phase B — /admin/campaigns is the single canonical org-level list with status tabs (all/draft/submitted/provisioning/live/archived) driven by ?status=", status: "done" },
+  { id: "pb-workspace-list", label: "QA Phase B — /app/workspaces/:workspaceId/campaigns is the single canonical workspace-scoped list (legacy-view CTA removed)", status: "done" },
+  { id: "pb-builder", label: "QA Phase B — /admin/campaigns/new (CampaignIntakePage) is the single canonical campaign builder; /admin/campaigns/edit/:id reuses it", status: "done" },
+  { id: "pb-redirects", label: "QA Phase B — campaigns/overview→/admin/campaigns, campaigns/drafts→?status=draft, campaigns/archived→?status=archived, campaign-blueprints→/admin/templates", status: "done" },
+  { id: "pb-compat", label: "QA Phase B — /admin/campaigns/readiness + /admin/campaigns/event-log kept as compatibility-only (de-surfaced from primary nav, still linked from Five9/Monitoring/Legal Connect operational hubs)", status: "done" },
+  { id: "pb-imports-vault", label: "QA Phase B — vault legacy CampaignsOverviewPage / CampaignDraftsPage / ArchivedCampaignsPage / CampaignBlueprintsPage in next sweep (files retained, no longer routed)", status: "todo" },
   { id: "p11-legacy-route-sweep", label: "Phase 11 follow-up — final pass to delete redirects past their grace window (one release after Phase 11)", status: "todo" },
 ];
 
