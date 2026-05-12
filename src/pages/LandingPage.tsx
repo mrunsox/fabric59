@@ -151,12 +151,12 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Fabric59 — Operational Intelligence For Five9 Contact Centers"
-        description={`The multi-tenant operational-intelligence platform for Five9. Unify Five9 SOAP control, ${liveCrmSeoPhrase()}, visual mapping, decision-tree scripting, post-call automations, RLS-isolated tenancy, and audit-grade compliance export.`}
+        title={`Fabric59 — ${CANONICAL_TAGLINE}`}
+        description={canonicalSiteDescription()}
         canonical="https://fabric59.com/"
         ogTitle="Fabric59 — Operational intelligence for Five9 contact centers"
       />
-      <StructuredData data={[organizationLD, faqLD]} />
+      <StructuredData data={[organizationLD, softwareLD, faqLD]} />
 
       <MegaMenuHeader />
 
