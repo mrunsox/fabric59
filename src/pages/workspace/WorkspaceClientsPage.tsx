@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users } from "lucide-react";
+import { EmptyState } from "@/components/common/EmptyState";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 
@@ -35,11 +37,11 @@ export default function WorkspaceClientsPage() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading clients…</p>
       ) : clients.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6 text-sm text-muted-foreground">
-            No clients in this workspace yet.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Users}
+          title="No clients in this workspace yet"
+          description="Clients added to this workspace will appear here."
+        />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {clients.map((c) => (
@@ -55,9 +57,7 @@ export default function WorkspaceClientsPage() {
                   <ArrowRight className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <Badge variant="outline" className="text-[10px]">
-                    {c.status ?? "active"}
-                  </Badge>
+                  <StatusBadge status={c.status ?? "active"} />
                 </CardContent>
               </Card>
             </Link>

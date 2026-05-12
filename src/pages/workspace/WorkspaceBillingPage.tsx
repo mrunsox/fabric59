@@ -1,10 +1,10 @@
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Receipt, CreditCard, AlertCircle } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { KpiCard } from "@/components/common/KpiCard";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import { useWorkspaceInvoices } from "@/hooks/useWorkspaceBilling";
 import { useWorkspaceKpis } from "@/hooks/useWorkspaceAnalytics";
 
@@ -126,18 +126,7 @@ export default function WorkspaceBillingPage() {
                       {inv.due_date && <> · Due {inv.due_date}</>}
                     </div>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={
-                      inv.status === "paid"
-                        ? "bg-success/10 text-success border-success/30"
-                        : inv.status === "overdue"
-                        ? "bg-destructive/10 text-destructive border-destructive/30"
-                        : ""
-                    }
-                  >
-                    {inv.status}
-                  </Badge>
+                  <StatusBadge status={inv.status} />
                 </div>
               ))}
             </div>

@@ -4,12 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, FilePlus, FileText } from "lucide-react";
-
-const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
-  published: "default",
-  draft: "secondary",
-  archived: "outline",
-};
+import { EmptyState } from "@/components/common/EmptyState";
+import { StatusBadge } from "@/components/common/StatusBadge";
 
 export default function WorkspaceGuidesPage() {
   const { workspaceId } = useParams();
@@ -43,11 +39,19 @@ export default function WorkspaceGuidesPage() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading guides…</p>
       ) : guides.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            No guides yet. Create one in the legacy script builder; it will mirror here automatically.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={FileText}
+          title="No guides yet"
+          description="Create one in the legacy script builder and it will mirror here automatically."
+          action={
+            <Button asChild size="sm">
+              <Link to={`/app/workspaces/${workspaceId}/guides/new`}>
+                <FilePlus className="h-4 w-4 mr-2" />
+                New guide
+              </Link>
+            </Button>
+          }
+        />
       ) : (
         <div className="grid gap-3">
           {guides.map((g) => (
@@ -60,8 +64,8 @@ export default function WorkspaceGuidesPage() {
                       {g.name}
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                      <Badge variant={statusVariant[g.status] ?? "secondary"}>{g.status}</Badge>
-                      <Badge variant="outline">v{g.current_version}</Badge>
+                      <StatusBadge status={g.status} />
+                      <Badge variant="outline" className="text-[10px]">v{g.current_version}</Badge>
                     </div>
                   </div>
                 </CardHeader>

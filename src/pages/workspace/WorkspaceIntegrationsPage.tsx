@@ -20,34 +20,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Plug, Plus, AlertCircle, CheckCircle2, Pause } from "lucide-react";
+import { Plug, Plus } from "lucide-react";
+import { EmptyState } from "@/components/common/EmptyState";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import {
   useIntegrationProviders,
   useWorkspaceIntegrationConnections,
   useCreateIntegrationConnection,
 } from "@/hooks/useWorkspaceIntegrations";
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "connected")
-    return (
-      <Badge className="bg-success/10 text-success border-success/30 gap-1">
-        <CheckCircle2 className="h-3 w-3" /> Connected
-      </Badge>
-    );
-  if (status === "error")
-    return (
-      <Badge variant="destructive" className="gap-1">
-        <AlertCircle className="h-3 w-3" /> Error
-      </Badge>
-    );
-  if (status === "disabled")
-    return (
-      <Badge variant="outline" className="gap-1">
-        <Pause className="h-3 w-3" /> Disabled
-      </Badge>
-    );
-  return <Badge variant="outline">Not connected</Badge>;
-}
+const CONNECTION_STATUS_TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = {
+  connected: "success",
+  error: "danger",
+  disabled: "warning",
+};
 
 export default function WorkspaceIntegrationsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -157,12 +143,11 @@ export default function WorkspaceIntegrationsPage() {
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : connections.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-sm text-muted-foreground">
-              <Plug className="h-8 w-8 mx-auto mb-3 opacity-40" />
-              No connections yet. Create one above to begin.
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Plug}
+            title="No connections yet"
+            description="Create your first connection from a provider above to begin syncing data."
+          />
         ) : (
           <div className="grid sm:grid-cols-2 gap-3">
             {connections.map((c) => {
@@ -184,7 +169,7 @@ export default function WorkspaceIntegrationsPage() {
                             {prov?.display_name ?? c.provider_id} · {prov?.category}
                           </div>
                         </div>
-                        <StatusBadge status={c.status} />
+                        <StatusBadge status={c.status} tone={CONNECTION_STATUS_TONE[c.status]} />
                       </div>
                       {c.last_error && (
                         <div className="text-xs text-destructive truncate">{c.last_error}</div>

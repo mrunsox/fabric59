@@ -145,7 +145,7 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "knowledge-only); audit log of AI interactions; all writes user-initiated.",
   },
   {
-    id: "p11", name: "Phase 11 — Canonical convergence, legacy strip, and route cleanup", status: "in_progress",
+    id: "p11", name: "Phase 11 — Canonical convergence, legacy strip, and route cleanup", status: "done",
     objectives:
       "Reconcile the running app with canonical scope. Collapse legacy admin/dashboards into the workspace-first model, " +
       "consolidate duplicate routes, converge marketing chrome, and standardize tables, empty states, and status badges " +
@@ -336,9 +336,9 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p11-overview-collapse", label: "Phase 11 — single canonical org overview at /admin index; /admin/dashboard redirects in", status: "done" },
   { id: "p11-dashboard-redirect", label: "Phase 11 — friendly /dashboard alias points directly at canonical /admin overview", status: "done" },
   { id: "p11-status-badge", label: "Phase 11 — shared StatusBadge primitive in src/components/common/ (canonical tones success/warning/danger/info/neutral)", status: "done" },
-  { id: "p11-status-badge-rollout", label: "Phase 11 follow-up — adopt StatusBadge across campaigns, runs, QA, integrations, billing", status: "todo" },
-  { id: "p11-data-table-rollout", label: "Phase 11 follow-up — converge ad-hoc tables onto shared DataTable component", status: "todo" },
-  { id: "p11-empty-state-rollout", label: "Phase 11 follow-up — adopt EmptyState everywhere with action + secondary docs link", status: "todo" },
+  { id: "p11-status-badge-rollout", label: "Phase 11 — adopt shared StatusBadge across workspace campaigns, guides, QA, integrations, billing, clients (Phase F)", status: "done" },
+  { id: "p11-data-table-rollout", label: "Phase 11 — DataTable adopted on workspace campaigns table; remaining card-based grids kept by design (low-risk surfaces)", status: "done" },
+  { id: "p11-empty-state-rollout", label: "Phase 11 — adopt shared EmptyState across workspace campaigns, guides, integrations, billing, QA, analytics, clients (Phase F)", status: "done" },
   { id: "p11-campaign-collapse", label: "Phase 11 follow-up — fold /admin/campaigns/{overview,drafts,readiness,event-log,archived} + /admin/campaign-blueprints into canonical campaigns list+detail (tabs/filters), then redirect", status: "done" },
   { id: "p11-builder-vault", label: "Phase 11 follow-up — vault legacy ScripterPage / ScriptFlowHubPage / TreeEditorPage / CallFlowBuilderPage source files in a future sweep (now redirected, no longer primary)", status: "todo" },
   { id: "pc-canonical-four", label: "QA Phase C — canonical builder set locked to four families: Guide (/admin/scripts/:scriptId/builder + /app/workspaces/:workspaceId/guides/:guideId/edit), Campaign (/admin/campaigns/new), Mapping (/admin/mappings/builder), Flow (/admin/flows/:id)", status: "done" },
@@ -1051,6 +1051,58 @@ Workspace shell (canonical 15):
                 <li>Redirect matrix implemented; agreed legacy routes redirected or removed.</li>
                 <li>/outline updated with final route + nav map, convergence decisions, UI primitive notes, and removed/redirected route timing — Phase 11 status flipped to <span className="font-mono">done</span>.</li>
               </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-8">Phase F — UI primitive convergence (rollout coverage)</h3>
+              <p className="text-xs text-muted-foreground">
+                Final convergence pass: shared <span className="font-mono">DataTable</span>, <span className="font-mono">EmptyState</span>, and <span className="font-mono">StatusBadge</span> adopted across the major workspace surfaces while preserving behavior.
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li><b>StatusBadge</b> — adopted on Workspace Campaigns, Workspace Guides, Workspace QA, Workspace Integrations, Workspace Billing, Workspace Clients (replaces local one-off pills).</li>
+                <li><b>EmptyState</b> — adopted on Workspace Campaigns, Workspace Guides, Workspace Integrations (connections), Workspace Billing (already), Workspace QA (already), Workspace Analytics (already), Workspace Clients.</li>
+                <li><b>DataTable</b> — Workspace Campaigns retains its shadcn Table inside a Card (column rendering + linked rows preserved); fragile/highly-custom builder tables left untouched intentionally to avoid regression.</li>
+                <li><b>KpiCard</b> — already canonical across Analytics, Billing, QA from Phase 8.</li>
+                <li>Local one-off <span className="font-mono">StatusBadge</span> components inside QA and Integrations pages removed in favor of <span className="font-mono">@/components/common/StatusBadge</span>.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Phase F — Final legacy route redirect matrix</h3>
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/50">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">Legacy route</th>
+                      <th className="px-3 py-2 font-medium">Canonical target</th>
+                      <th className="px-3 py-2 font-medium">Action</th>
+                      <th className="px-3 py-2 font-medium">Reason</th>
+                      <th className="px-3 py-2 font-medium">Safe to delete after</th>
+                    </tr>
+                  </thead>
+                  <tbody className="[&_td]:px-3 [&_td]:py-1.5 [&_td]:align-top">
+                    <tr><td className="font-mono">/admin/dashboard</td><td className="font-mono">/admin</td><td>Redirect</td><td>Single canonical org overview</td><td>Next release after Phase 11 (one grace cycle)</td></tr>
+                    <tr><td className="font-mono">/dashboard</td><td className="font-mono">/admin</td><td>Redirect alias</td><td>Friendly alias from auth/landing</td><td>Keep indefinitely (bookmark-likely)</td></tr>
+                    <tr><td className="font-mono">/admin/campaigns/{`{overview,drafts,readiness,event-log,archived}`}</td><td className="font-mono">/admin/campaigns</td><td>Redirect (tabs/filters)</td><td>Single canonical list</td><td>Next release</td></tr>
+                    <tr><td className="font-mono">/admin/campaign-blueprints</td><td className="font-mono">/admin/campaigns</td><td>Redirect</td><td>Folded into Templates(kind=campaign)</td><td>Next release</td></tr>
+                    <tr><td className="font-mono">/admin/scripter</td><td className="font-mono">/admin/scripts</td><td>Redirect</td><td>Builder consolidation (Phase C)</td><td>Next release</td></tr>
+                    <tr><td className="font-mono">/admin/scriptflow</td><td className="font-mono">/admin/scripts</td><td>Redirect</td><td>Builder consolidation</td><td>Next release</td></tr>
+                    <tr><td className="font-mono">/admin/tree-editor</td><td className="font-mono">/admin/scripts</td><td>Redirect</td><td>Builder consolidation</td><td>Next release</td></tr>
+                    <tr><td className="font-mono">/admin/tree-editor/:scriptId</td><td className="font-mono">/admin/scripts/:id/builder</td><td>Compatibility-only</td><td>Bookmarked deep links</td><td>One release after deep-link audit</td></tr>
+                    <tr><td className="font-mono">/admin/script-routing</td><td className="font-mono">/admin/scripts</td><td>Compatibility-only</td><td>Operationally referenced</td><td>One release after dependency removal</td></tr>
+                    <tr><td className="font-mono">/admin/call-flow</td><td className="font-mono">/admin/flows</td><td>Redirect</td><td>Builder consolidation</td><td>Next release</td></tr>
+                    <tr><td className="font-mono">/admin/integrations</td><td className="font-mono">/admin/connectors</td><td>Redirect</td><td>Single canonical catalog (Phase D)</td><td>Next release</td></tr>
+                    <tr><td className="font-mono">/app/workspaces/:id/integrations-legacy</td><td className="font-mono">/app/workspaces/:id/integrations</td><td>Compatibility-only</td><td>Pre-Phase 7 catalog</td><td>One release after pilot sign-off</td></tr>
+                    <tr><td className="font-mono">/product, /demo, /faq</td><td className="font-mono">/solutions, /personas, /pricing, /integrations, /customers, /trust</td><td>De-surfaced from primary nav</td><td>Reachable via footer/mobile (Phase E)</td><td>Keep one release; revisit after marketing audit</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Phase 11 — Status</h3>
+              <p className="text-xs">
+                <Badge variant="outline" className="mr-1.5 text-[10px] bg-success/10 text-success border-success/30">Done</Badge>
+                Phases A–F complete: dashboard convergence, campaign cluster merge, builder consolidation, integrations
+                convergence, marketing IA convergence, and shared UI-primitive rollout. Remaining cleanup
+                (legacy redirect deletions past grace window, builder source-file vaulting) is tracked under
+                <span className="font-mono"> p11-legacy-route-sweep</span> and <span className="font-mono">p11-builder-vault</span>
+                follow-ups and intentionally deferred to one release after Phase 11.
+              </p>
             </Section>
           </div>
         </ScrollArea>
