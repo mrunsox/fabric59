@@ -277,10 +277,10 @@ export default function ProductTourPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
-        title="Product Tour — Fabric59"
-        description="Every Fabric59 capability with an honest status tag — Live, Partial, or Coming soon. Five9 SOAP, MyCase, Clio, mapping, scripting, RLS, audit export."
+        title="Product Overview — Fabric59"
+        description="The canonical Fabric59 product overview. Every capability tagged Live, Partial, or Coming soon — Five9 SOAP, MyCase, Clio, mapping, scripting, RLS, audit export."
         canonical="https://fabric59.com/product"
-        ogTitle="Fabric59 Product Tour — every capability, honestly tagged"
+        ogTitle="Fabric59 Product Overview — every capability, honestly tagged"
       />
 
       <MegaMenuHeader />
@@ -288,13 +288,13 @@ export default function ProductTourPage() {
       <main>
         <section className="py-20 text-center max-w-3xl mx-auto px-6">
           <Badge variant="secondary" className="mb-4 border border-primary/30 bg-primary/10 text-primary">
-            Product tour
+            Product overview
           </Badge>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
             Every capability, with an honest status tag
           </h1>
           <p className="text-muted-foreground text-lg mb-6">
-            Each section below mirrors the “Available now” list on the home page and is tagged Live, Partial, or Coming soon — based on what is actually in production today.
+            The canonical Fabric59 product overview. Every section below is tagged Live, Partial, or Coming soon — based on what is actually in production today.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             {sections.map((s) => (
