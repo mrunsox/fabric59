@@ -2375,6 +2375,221 @@ export type Database = {
           },
         ]
       }
+      integration_connections: {
+        Row: {
+          auth_type: string | null
+          client_id: string | null
+          config: Json
+          created_at: string
+          created_by: string | null
+          credentials_ref: string | null
+          display_name: string | null
+          id: string
+          last_error: string | null
+          last_sync_at: string | null
+          organization_id: string
+          provider_id: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          auth_type?: string | null
+          client_id?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          credentials_ref?: string | null
+          display_name?: string | null
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          organization_id: string
+          provider_id: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          auth_type?: string | null
+          client_id?: string | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          credentials_ref?: string | null
+          display_name?: string | null
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          organization_id?: string
+          provider_id?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "integration_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "integration_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_connections_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "integration_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_connections_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_mappings: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          external_ids: Json
+          id: string
+          lookup_key: string
+          lookup_kind: string
+          organization_id: string
+          provider_id: string
+          source: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          external_ids?: Json
+          id?: string
+          lookup_key: string
+          lookup_kind?: string
+          organization_id: string
+          provider_id: string
+          source?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          external_ids?: Json
+          id?: string
+          lookup_key?: string
+          lookup_kind?: string
+          organization_id?: string
+          provider_id?: string
+          source?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "integration_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_mappings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "integration_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_mappings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "integration_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_mappings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_providers: {
+        Row: {
+          auth_type: string
+          capabilities: Json
+          category: string
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          auth_type?: string
+          capabilities?: Json
+          category: string
+          created_at?: string
+          display_name: string
+          id: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          auth_type?: string
+          capabilities?: Json
+          category?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_line_items: {
         Row: {
           amount: number
