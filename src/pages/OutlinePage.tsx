@@ -118,8 +118,8 @@ const ENTITIES = [
   { entity: "Client", canonical: "Rename UI of tenants", notes: "DB stays tenants*; UI says Client." },
   { entity: "Campaign", canonical: "Collapse (Phase 3)", notes: "7 fragmented surfaces → one canonical entity." },
   { entity: "Guide", canonical: "Collapse (Phase 4)", notes: "scripter / tree-editor / scriptflow → one Guide." },
-  { entity: "Form", canonical: "Build (Phase 5)", notes: "Net-new canonical artifact." },
-  { entity: "Template", canonical: "Unify (Phase 6)", notes: "8 template tables → one templates model." },
+  { entity: "Form", canonical: "Build (Phase 6)", notes: "Net-new canonical artifact." },
+  { entity: "Template", canonical: "Unify (Phase 5)", notes: "7 legacy template tables → one canonical templates model with scope+kind+lineage." },
   { entity: "Interaction / Session", canonical: "Existing — keep", notes: "call_sessions + session_events retained." },
   { entity: "Outcome / Task / Sync Event", canonical: "Existing — keep", notes: "Outcome engine + sync_jobs retained." },
 ];
@@ -195,7 +195,14 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p4-write-canonical", label: "Phase 4 follow-up — native canonical guide create + edit (no script bridge)", status: "todo" },
   { id: "p4-vault-legacy", label: "Phase 4 follow-up — vault TreeEditor / Scripter / ScriptFlowHub / ScriptRouting once canonical builder is feature-complete", status: "todo" },
   { id: "p4-version-publish", label: "Phase 4 follow-up — canonical publish path writes guide_versions (current-version flag, rollback)", status: "todo" },
-];
+  { id: "p5-templates-table", label: "Phase 5 — canonical templates + template_versions tables (scope+kind enums, parent lineage, RLS)", status: "done" },
+  { id: "p5-mirror-triggers", label: "Phase 5 — mirror triggers from 7 legacy template tables + backfill", status: "done" },
+  { id: "p5-routes", label: "Phase 5 — /app/workspaces/:id/templates list+detail live with kind+scope filters", status: "done" },
+  { id: "p5-fork", label: "Phase 5 — fork-into-workspace flow with parent_template_id lineage", status: "done" },
+  { id: "p5-consume-campaigns", label: "Phase 5 follow-up — campaigns can be created from canonical campaign templates", status: "todo" },
+  { id: "p5-consume-guides", label: "Phase 5 follow-up — guides can be created from canonical guide templates", status: "todo" },
+  { id: "p5-write-canonical", label: "Phase 5 follow-up — canonical native template create + edit (no legacy bridge)", status: "todo" },
+  { id: "p5-vault-legacy", label: "Phase 5 follow-up — vault legacy template editors once canonical UI is feature-complete", status: "todo" },
 
 const NON_GOALS = [
   "No new workspaces DB entity this phase.",
