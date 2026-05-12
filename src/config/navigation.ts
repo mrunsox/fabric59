@@ -1,6 +1,7 @@
 import {
-  LayoutDashboard, Building, Building2, Phone, Plug, Workflow,
-  Rocket, Activity, FileStack, Settings,
+  LayoutDashboard, Building, Plug, FileText, Bell, Settings, CreditCard,
+  Home, Users, Megaphone, BookOpen, FormInput, FileStack, PlayCircle,
+  UserCog, Headphones, ClipboardCheck, BarChart3,
 } from "lucide-react";
 
 export type SubNavItem = {
@@ -21,6 +22,11 @@ export type SectionDef = {
   matches?: string[];
 };
 
+/**
+ * Org-level primary nav — canonical seven (Phase 1, master spec).
+ * De-surfaced in this pass: Clients, Five9 (now under Integrations), Flows, Deployments, Runs, Templates.
+ * Their routes remain reachable via direct URL or redirect.
+ */
 export const GLOBAL_SECTIONS: SectionDef[] = [
   {
     key: "overview",
@@ -28,7 +34,7 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     icon: LayoutDashboard,
     href: "/admin/dashboard",
     permission: null,
-    matches: ["/admin/dashboard"],
+    matches: ["/admin/dashboard", "/admin/agent-dashboard"],
   },
   {
     key: "workspaces",
@@ -36,78 +42,40 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     icon: Building,
     href: "/admin/workspaces",
     permission: null,
-    matches: ["/admin/workspaces"],
+    matches: ["/admin/workspaces", "/admin/clients", "/admin/tenants"],
   },
   {
-    key: "clients",
-    label: "Clients",
-    icon: Building2,
-    href: "/admin",
-    permission: "tenants",
-    matches: ["/admin", "/admin/clients"],
-  },
-  {
-    key: "five9",
-    label: "Five9",
-    icon: Phone,
-    href: "/admin/five9",
-    permission: "domains",
-    matches: [
-      "/admin/five9", "/admin/domains", "/admin/campaigns",
-      "/admin/dispositions", "/admin/campaign-blueprints",
-    ],
-    subNav: [
-      { label: "Overview", href: "/admin/five9" },
-      { label: "Domains", href: "/admin/domains" },
-      { label: "Campaign Builder", href: "/admin/five9/campaign-builder" },
-      { label: "Campaigns", href: "/admin/campaigns" },
-      { label: "Dispositions", href: "/admin/dispositions" },
-    ],
-  },
-  {
-    key: "connectors",
-    label: "Connectors",
+    key: "integrations",
+    label: "Integrations",
     icon: Plug,
     href: "/admin/connectors",
     permission: "integrations",
-    matches: ["/admin/connectors", "/admin/legal-connect", "/admin/integrations", "/admin/mappings"],
+    matches: [
+      "/admin/connectors", "/admin/integrations", "/admin/legal-connect",
+      "/admin/mappings", "/admin/five9", "/admin/domains",
+    ],
     subNav: [
-      { label: "Overview", href: "/admin/connectors" },
+      { label: "Catalog", href: "/admin/connectors" },
+      { label: "Five9", href: "/admin/five9" },
       { label: "Legal Connect", href: "/admin/legal-connect" },
       { label: "Mappings", href: "/admin/mappings" },
     ],
   },
   {
-    key: "flows",
-    label: "Flows",
-    icon: Workflow,
-    href: "/admin/flows",
+    key: "reports",
+    label: "Reports",
+    icon: FileText,
+    href: "/admin/reports",
     permission: null,
-    matches: ["/admin/flows"],
+    matches: ["/admin/reports", "/admin/qa", "/admin/logs"],
   },
   {
-    key: "deployments",
-    label: "Deployments",
-    icon: Rocket,
-    href: "/admin/deployments",
+    key: "notifications",
+    label: "Notifications",
+    icon: Bell,
+    href: "/admin/notifications",
     permission: null,
-    matches: ["/admin/deployments"],
-  },
-  {
-    key: "runs",
-    label: "Runs",
-    icon: Activity,
-    href: "/admin/runs",
-    permission: null,
-    matches: ["/admin/runs", "/admin/logs", "/admin/monitoring"],
-  },
-  {
-    key: "templates",
-    label: "Templates",
-    icon: FileStack,
-    href: "/admin/templates",
-    permission: null,
-    matches: ["/admin/templates"],
+    matches: ["/admin/notifications"],
   },
   {
     key: "settings",
@@ -117,6 +85,37 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     permission: "settings",
     matches: ["/admin/settings"],
   },
+  {
+    key: "billing",
+    label: "Billing",
+    icon: CreditCard,
+    href: "/admin/billing",
+    permission: null,
+    matches: ["/admin/billing"],
+  },
+];
+
+/**
+ * Workspace-level secondary nav — canonical 13 (Phase 2 target).
+ * Exported for /outline rendering only; NOT yet wired into AdminShell.
+ * Hrefs point at the eventual /app/workspaces/:workspaceId/* routes.
+ */
+export type WorkspaceNavItem = { key: string; label: string; icon: React.ComponentType<{ className?: string }>; href: string };
+
+export const WORKSPACE_SECTIONS: WorkspaceNavItem[] = [
+  { key: "home", label: "Home", icon: Home, href: "home" },
+  { key: "clients", label: "Clients", icon: Users, href: "clients" },
+  { key: "campaigns", label: "Campaigns", icon: Megaphone, href: "campaigns" },
+  { key: "guides", label: "Guides", icon: BookOpen, href: "guides" },
+  { key: "forms", label: "Forms", icon: FormInput, href: "forms" },
+  { key: "templates", label: "Templates", icon: FileStack, href: "templates" },
+  { key: "runs", label: "Runs", icon: PlayCircle, href: "runs" },
+  { key: "agents", label: "Agents", icon: UserCog, href: "agents" },
+  { key: "supervisor", label: "Supervisor", icon: Headphones, href: "supervisor" },
+  { key: "qa", label: "QA", icon: ClipboardCheck, href: "qa" },
+  { key: "analytics", label: "Analytics", icon: BarChart3, href: "analytics" },
+  { key: "integrations", label: "Integrations", icon: Plug, href: "integrations" },
+  { key: "settings", label: "Settings", icon: Settings, href: "settings" },
 ];
 
 export function findActiveSection(pathname: string): SectionDef | null {
