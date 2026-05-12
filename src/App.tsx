@@ -71,7 +71,7 @@ import TestConsolePage from "@/pages/admin/TestConsolePage";
 import SettingsPage from "@/pages/admin/SettingsPage";
 import AgentsPage from "@/pages/admin/AgentsPage";
 import DispositionsPage from "@/pages/admin/DispositionsPage";
-import IntegrationsPage from "@/pages/admin/IntegrationsPage";
+// Phase D: legacy IntegrationsPage import removed; /admin/integrations redirects to /admin/connectors.
 import CampaignsPage from "@/pages/admin/CampaignsPage";
 import CampaignIntakePage from "@/pages/admin/CampaignIntakePage";
 import CampaignDetailPage from "@/pages/admin/CampaignDetailPage";
