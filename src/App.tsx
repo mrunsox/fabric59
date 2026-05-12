@@ -239,6 +239,8 @@ const App = () => (
                 <Route path="five9/campaign-builder" element={<CampaignBuilderPage />} />
                 <Route path="five9/campaign-builder/:draftId" element={<CampaignBuilderPage />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
+                {/* CANONICAL: campaign cluster — collapses into one canonical campaigns entity in Phase 3.
+                    Kept routable until then; de-surfaced from primary nav. */}
                 <Route path="campaigns/overview" element={<CampaignsOverviewPage />} />
                 <Route path="campaigns/drafts" element={<CampaignDraftsPage />} />
                 <Route path="campaigns/readiness" element={<CampaignReadinessBoardPage />} />
