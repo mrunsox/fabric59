@@ -31,6 +31,26 @@ const statusColors: Record<string, string> = {
 export default function CampaignsPage() {
   const { data: campaigns = [], isLoading } = useCampaignSetups();
   const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
+  const [searchParams, setSearchParams] = useSearchParams();
+  const status = searchParams.get("status") ?? "all";
+
+  const filtered = useMemo(() => {
+    if (status === "all") return campaigns;
+    return campaigns.filter((c) => c.status === status);
+  }, [campaigns, status]);
+
+  const counts = useMemo(() => {
+    const map: Record<string, number> = { all: campaigns.length };
+    for (const c of campaigns) map[c.status] = (map[c.status] ?? 0) + 1;
+    return map;
+  }, [campaigns]);
+
+  const setStatus = (next: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "all") params.delete("status");
+    else params.set("status", next);
+    setSearchParams(params, { replace: true });
+  };
 
   const getProgress = (checklist: Record<string, { done: boolean }>) => {
     const total = DEFAULT_CHECKLIST.length;
@@ -62,25 +82,33 @@ export default function CampaignsPage() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Megaphone className="h-6 w-6" /> Campaigns
           </h1>
-          <p className="text-sm text-muted-foreground">Manage inbound campaign setups and provisioning</p>
+          <p className="text-sm text-muted-foreground">One canonical campaign list — filter by status below.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" asChild className="gap-2">
-            <Link to="/admin/campaigns/archived"><Archive className="h-4 w-4" /> Archived</Link>
-          </Button>
           <Button asChild className="gap-2">
             <Link to="/admin/campaigns/new"><Plus className="h-4 w-4" /> New Campaign</Link>
           </Button>
         </div>
       </div>
 
+      <Tabs value={status} onValueChange={setStatus}>
+        <TabsList>
+          {STATUS_TABS.map((t) => (
+            <TabsTrigger key={t.value} value={t.value} className="gap-1.5">
+              {t.label}
+              <span className="text-[10px] text-muted-foreground">{counts[t.value] ?? 0}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading campaigns...</p>
-      ) : campaigns.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-30" />
-          <p className="text-lg font-medium">No campaigns yet</p>
-          <p className="text-sm mb-4">Create your first campaign setup to get started.</p>
+          <p className="text-lg font-medium">No campaigns {status !== "all" ? `with status "${status}"` : "yet"}</p>
+          <p className="text-sm mb-4">{status === "all" ? "Create your first campaign setup to get started." : "Try a different filter or create a new campaign."}</p>
           <Button asChild><Link to="/admin/campaigns/new">Create Campaign</Link></Button>
         </div>
       ) : (
