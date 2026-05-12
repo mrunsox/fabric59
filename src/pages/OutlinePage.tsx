@@ -1104,6 +1104,202 @@ Workspace shell (canonical 15):
                 follow-ups and intentionally deferred to one release after Phase 11.
               </p>
             </Section>
+
+            <Section id="qa-release-readiness" title="17. QA Release Readiness — post-Phase 11 regression pass">
+              <p className="text-xs text-muted-foreground">
+                Source of truth for the release-candidate QA cycle. Phase 11 convergence is locked; this section
+                governs regression validation, redirect verification, compatibility-route smoke testing, and the
+                post-release grace-window deletion plan. Update statuses inline as cycles complete.
+              </p>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">17.1 Route-family regression checklist</h3>
+              <p className="text-xs text-muted-foreground">
+                For every family: happy path, empty state, StatusBadge tones, desktop @ 1280, mobile @ 390, deep-link
+                refresh, redirect dependencies, compatibility-route dependencies, known follow-up risks.
+              </p>
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/50">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">Family</th>
+                      <th className="px-3 py-2 font-medium">Canonical route</th>
+                      <th className="px-3 py-2 font-medium">Owner</th>
+                      <th className="px-3 py-2 font-medium">Key checks</th>
+                      <th className="px-3 py-2 font-medium">Compat / redirect deps</th>
+                      <th className="px-3 py-2 font-medium">Follow-up risks</th>
+                    </tr>
+                  </thead>
+                  <tbody className="[&_td]:px-3 [&_td]:py-1.5 [&_td]:align-top">
+                    <tr><td>Org overview</td><td className="font-mono">/admin</td><td>Admin shell</td><td>KPIs render; quick actions; system health strip; readiness checklist</td><td>/admin/dashboard, /dashboard aliases</td><td>Master-admin gating; org-switch reload</td></tr>
+                    <tr><td>Workspace home</td><td className="font-mono">/app/workspaces/:id</td><td>Workspace shell</td><td>Workspace resolves; sub-nav present; breadcrumb correct</td><td>None</td><td>Workspace switch flicker on slow auth</td></tr>
+                    <tr><td>Clients</td><td className="font-mono">/app/workspaces/:id/clients</td><td>Workspace shell</td><td>List renders; EmptyState; StatusBadge active/inactive; row link → /admin/clients/:id</td><td>Legacy /admin/clients (compat link in header)</td><td>Workspace_id rebinding still TODO; currently org-scoped</td></tr>
+                    <tr><td>Campaigns</td><td className="font-mono">/app/workspaces/:id/campaigns</td><td>Workspace shell</td><td>List + detail + new; StatusBadge draft/ready/live/paused; EmptyState CTA → new</td><td>Legacy /admin/campaigns/* tabs redirect</td><td>Source mirroring from campaign_setups</td></tr>
+                    <tr><td>Guides</td><td className="font-mono">/app/workspaces/:id/guides</td><td>Workspace shell</td><td>Card grid; StatusBadge published/draft/archived; version chip; EmptyState → new</td><td>Legacy /admin/scripts (compat header link)</td><td>Mirror from scripts; AI assist on edit</td></tr>
+                    <tr><td>Templates</td><td className="font-mono">/app/workspaces/:id/templates</td><td>Workspace shell</td><td>Tabs by kind; detail page resolves</td><td>None</td><td>Campaign-blueprints fold-in</td></tr>
+                    <tr><td>Integrations (workspace)</td><td className="font-mono">/app/workspaces/:id/integrations</td><td>Workspace shell</td><td>Provider list; new-connection dialog; StatusBadge connected/error/disabled; EmptyState; detail route resolves</td><td>/app/workspaces/:id/integrations-legacy (compat)</td><td>OAuth round-trip not yet tested per provider</td></tr>
+                    <tr><td>Connectors (org)</td><td className="font-mono">/admin/connectors</td><td>Admin shell</td><td>Catalog grid; instance route; LegalConnect for clio/mycase/smokeball</td><td>/admin/integrations → redirect</td><td>Provider config wizard regressions</td></tr>
+                    <tr><td>Analytics</td><td className="font-mono">/app/workspaces/:id/analytics</td><td>Workspace shell</td><td>KpiCards; dispositions chart; EmptyState; drill-down links</td><td>None</td><td>Org-scoped data until workspace_id plumbing lands</td></tr>
+                    <tr><td>QA</td><td className="font-mono">/app/workspaces/:id/qa</td><td>Workspace shell</td><td>Tabs pending/completed/all; StatusBadge; start/complete actions; EmptyState</td><td>None</td><td>Calibration/rubric scope deferred</td></tr>
+                    <tr><td>Billing</td><td className="font-mono">/app/workspaces/:id/billing</td><td>Workspace shell</td><td>Invoice list; KpiCards; StatusBadge paid/overdue/unpaid; EmptyState</td><td>None</td><td>Subscription plumbing deferred</td></tr>
+                    <tr><td>Public marketing IA</td><td className="font-mono">/, /solutions, /personas, /pricing, /integrations, /customers, /trust</td><td>Marketing chrome</td><td>Header + footer canonical; CTAs route to /contact, /login; no /admin or /master leak</td><td>/product, /demo, /faq (compat, footer-only)</td><td>SEO/meta drift</td></tr>
+                    <tr><td>Auth + onboarding</td><td className="font-mono">/login, /signup, /forgot-password, /reset-password, /accept-invite, /onboarding, /workspace-bootstrap</td><td>Auth shell</td><td>Email/password works; invite token; redirect to /admin or /app on success</td><td>/dashboard alias post-login</td><td>RLS membership race on first login</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">17.2 Redirect smoke matrix</h3>
+              <p className="text-xs text-muted-foreground">
+                Verify each legacy URL hits the canonical target within one client navigation. No 404, no infinite redirect, no auth bounce loop.
+              </p>
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/50">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">Test #</th>
+                      <th className="px-3 py-2 font-medium">Visit</th>
+                      <th className="px-3 py-2 font-medium">Expect to land on</th>
+                      <th className="px-3 py-2 font-medium">Auth required</th>
+                    </tr>
+                  </thead>
+                  <tbody className="[&_td]:px-3 [&_td]:py-1.5 [&_td]:align-top">
+                    <tr><td>R-01</td><td className="font-mono">/admin/dashboard</td><td className="font-mono">/admin</td><td>Yes (admin)</td></tr>
+                    <tr><td>R-02</td><td className="font-mono">/dashboard</td><td className="font-mono">/admin</td><td>Yes (any role)</td></tr>
+                    <tr><td>R-03</td><td className="font-mono">/admin/campaigns/overview</td><td className="font-mono">/admin/campaigns</td><td>Yes</td></tr>
+                    <tr><td>R-04</td><td className="font-mono">/admin/campaigns/drafts</td><td className="font-mono">/admin/campaigns</td><td>Yes</td></tr>
+                    <tr><td>R-05</td><td className="font-mono">/admin/campaigns/readiness</td><td className="font-mono">/admin/campaigns</td><td>Yes</td></tr>
+                    <tr><td>R-06</td><td className="font-mono">/admin/campaigns/event-log</td><td className="font-mono">/admin/campaigns</td><td>Yes</td></tr>
+                    <tr><td>R-07</td><td className="font-mono">/admin/campaigns/archived</td><td className="font-mono">/admin/campaigns</td><td>Yes</td></tr>
+                    <tr><td>R-08</td><td className="font-mono">/admin/campaign-blueprints</td><td className="font-mono">/admin/campaigns</td><td>Yes</td></tr>
+                    <tr><td>R-09</td><td className="font-mono">/admin/scripter</td><td className="font-mono">/admin/scripts</td><td>Yes</td></tr>
+                    <tr><td>R-10</td><td className="font-mono">/admin/scriptflow</td><td className="font-mono">/admin/scripts</td><td>Yes</td></tr>
+                    <tr><td>R-11</td><td className="font-mono">/admin/tree-editor</td><td className="font-mono">/admin/scripts</td><td>Yes</td></tr>
+                    <tr><td>R-12</td><td className="font-mono">/admin/call-flow</td><td className="font-mono">/admin/flows</td><td>Yes</td></tr>
+                    <tr><td>R-13</td><td className="font-mono">/admin/integrations</td><td className="font-mono">/admin/connectors</td><td>Yes</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">17.3 Compatibility smoke matrix</h3>
+              <p className="text-xs text-muted-foreground">
+                These routes are intentionally retained for one grace window. They must remain reachable and functional, but must NOT appear in primary navigation or canonical CTAs.
+              </p>
+              <div className="overflow-x-auto rounded-md border">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/50">
+                    <tr className="text-left">
+                      <th className="px-3 py-2 font-medium">Test #</th>
+                      <th className="px-3 py-2 font-medium">Route</th>
+                      <th className="px-3 py-2 font-medium">Expected behavior</th>
+                      <th className="px-3 py-2 font-medium">Hidden from nav?</th>
+                    </tr>
+                  </thead>
+                  <tbody className="[&_td]:px-3 [&_td]:py-1.5 [&_td]:align-top">
+                    <tr><td>C-01</td><td className="font-mono">/admin/tree-editor/:scriptId</td><td>Loads legacy TreeEditorPage; deep-link bookmark works; no nav pointer</td><td>Yes</td></tr>
+                    <tr><td>C-02</td><td className="font-mono">/admin/script-routing</td><td>Loads ScriptRoutingPage; reachable for ops; no nav pointer</td><td>Yes</td></tr>
+                    <tr><td>C-03</td><td className="font-mono">/app/workspaces/:id/integrations-legacy</td><td>Loads ConnectorsCatalogPage; canonical /integrations is preferred</td><td>Yes</td></tr>
+                    <tr><td>C-04</td><td className="font-mono">/product</td><td>Renders ProductTourPage in marketing chrome; reachable from footer / mobile menu only</td><td>Desktop: yes</td></tr>
+                    <tr><td>C-05</td><td className="font-mono">/demo</td><td>Renders DemoSandboxPage in marketing chrome; footer / mobile menu only</td><td>Desktop: yes</td></tr>
+                    <tr><td>C-06</td><td className="font-mono">/faq</td><td>Renders FaqPage in marketing chrome; footer / mobile menu only</td><td>Desktop: yes</td></tr>
+                    <tr><td>C-07</td><td className="font-mono">/admin/clients</td><td>Legacy client list still works; linked from workspace clients header for transition</td><td>Yes (workspace clients is canonical)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">17.4 Canonical-vs-compatibility truth table</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li><b>Org overview</b>: canonical <span className="font-mono">/admin</span>; compat aliases <span className="font-mono">/admin/dashboard</span>, <span className="font-mono">/dashboard</span>.</li>
+                <li><b>Workspace home</b>: canonical <span className="font-mono">/app/workspaces/:id</span>; no compat aliases.</li>
+                <li><b>Campaigns</b>: canonical <span className="font-mono">/admin/campaigns</span> + <span className="font-mono">/app/workspaces/:id/campaigns</span>; compat: redirected legacy tabs and blueprints.</li>
+                <li><b>Builders</b>: canonical four — Guide / Campaign / Mapping / Flow; compat-only: tree-editor deep links, script-routing.</li>
+                <li><b>Integrations</b>: canonical org <span className="font-mono">/admin/connectors</span>, canonical workspace <span className="font-mono">/app/workspaces/:id/integrations</span>; compat: <span className="font-mono">/admin/integrations</span> (redirect), <span className="font-mono">.../integrations-legacy</span>.</li>
+                <li><b>Marketing</b>: canonical six in desktop nav; compat: <span className="font-mono">/product</span>, <span className="font-mono">/demo</span>, <span className="font-mono">/faq</span> (footer + mobile only).</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">17.5 Nav &amp; CTA consistency checks</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>No item appears twice in primary admin sidebar (campaigns, integrations, builders).</li>
+                <li>Primary marketing nav is exactly: Solutions, Personas, Pricing, Integrations, Customers, Trust.</li>
+                <li>No public CTA targets <span className="font-mono">/admin/*</span>, <span className="font-mono">/master/*</span>, or <span className="font-mono">/superadmin/*</span>.</li>
+                <li>No CTA references stale labels: "Scripter", "Scriptflow", "Tree Editor" (allowed only as compat link text in headers).</li>
+                <li>Builder back/preview CTAs route only to canonical builders (post-Phase C).</li>
+                <li>"Connectors" is the visible nav label; "Integrations" appears only in marketing IA and workspace nav.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">17.6 Responsive / mobile spot-checks</h3>
+              <p className="text-xs text-muted-foreground">Min viewport: 360 × 800. Verify each touched surface:</p>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Workspace shell: sidebar collapses; section header doesn't overflow.</li>
+                <li>Campaign list table: horizontal scroll OK; row tap = navigate.</li>
+                <li>Guide cards: stack vertically; status + version chips wrap cleanly.</li>
+                <li>Integrations: dialog usable on mobile; provider select reachable.</li>
+                <li>Analytics: KpiCard grid 2-col on mobile; disposition bars don't clip.</li>
+                <li>QA: tabs scrollable; action buttons reachable on narrow rows.</li>
+                <li>Billing: invoice list rows wrap; StatusBadge stays inline.</li>
+                <li>Marketing header: mega menu collapses to hamburger; full IA visible in mobile menu.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">17.7 Defect log structure</h3>
+              <p className="text-xs text-muted-foreground">Use this template per finding (track in issue tracker, mirror summary here for the cycle):</p>
+              <div className="rounded-md border bg-muted/30 p-3 text-xs font-mono whitespace-pre-wrap">
+{`ID:        QA-RC-001
+Date:      YYYY-MM-DD
+Reporter:  <name>
+Route:     <path>
+Family:    <campaigns | guides | integrations | ...>
+Severity:  S1 (blocker) | S2 (major) | S3 (minor) | S4 (cosmetic)
+Repro:     1. ...  2. ...  3. ...
+Expected:  ...
+Actual:    ...
+Console:   <yes/no, snippet>
+Network:   <failing request, status>
+Workaround: <if any>
+Owner:     <triaged-to>
+Status:    open | in-progress | fixed | wontfix | duplicate`}
+              </div>
+              <ul className="list-disc pl-5 space-y-1 text-xs mt-2">
+                <li><b>S1 — blocker</b>: canonical route 500/blank, auth loop, data loss, redirect loop, primary CTA broken. Must fix to ship.</li>
+                <li><b>S2 — major</b>: feature broken on canonical route; mobile broken on touched surface; redirect lands on wrong canonical target.</li>
+                <li><b>S3 — minor</b>: empty state copy/icon off; StatusBadge wrong tone; nav label inconsistency.</li>
+                <li><b>S4 — cosmetic</b>: spacing/typography drift; non-critical alignment.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">17.8 Release-candidate checklist</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>17.1 route-family checklist — 100% green on canonical routes.</li>
+                <li>17.2 redirect matrix — all 13 redirects resolve to canonical target with no auth loop.</li>
+                <li>17.3 compatibility matrix — all 7 routes reachable; none surfaced in primary nav.</li>
+                <li>17.5 nav &amp; CTA audit — no duplicates, no stale labels, no public→admin leaks.</li>
+                <li>17.6 mobile pass — every touched workspace surface usable at 390 × 844.</li>
+                <li>No open S1 or S2 defects in 17.7.</li>
+                <li>Build green; lint green; <span className="font-mono">npm test</span> (vitest) green.</li>
+                <li>Console clean on canonical routes (no red errors at navigation).</li>
+                <li>/outline 17.x sections updated with cycle date + sign-off.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">17.9 Post-release deletion checklist (next release after RC)</h3>
+              <p className="text-xs text-muted-foreground">
+                After one full release cycle in production with the redirects/compat routes in place, execute these deletions. Each item must be paired with a release note and verified that no inbound traffic remains in logs.
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Delete redirect entries R-03 through R-08 (legacy <span className="font-mono">/admin/campaigns/*</span> tabs) and R-09 through R-12 (builder aliases) once analytics show &lt;1% traffic for 7 days.</li>
+                <li>Delete <span className="font-mono">/admin/integrations</span> alias (R-13).</li>
+                <li>Vault and remove source files: <span className="font-mono">ScripterPage</span>, <span className="font-mono">ScriptFlowHubPage</span>, <span className="font-mono">CallFlowBuilderPage</span>, legacy <span className="font-mono">IntegrationsPage</span>, legacy campaign tab pages (covered by <span className="font-mono">p11-builder-vault</span>).</li>
+                <li>Decide on <span className="font-mono">/admin/tree-editor/:scriptId</span> + <span className="font-mono">/admin/script-routing</span>: keep as ops compat, or fully remove based on usage data.</li>
+                <li>Decide on <span className="font-mono">/app/workspaces/:id/integrations-legacy</span> removal once pilots confirm Phase 7 catalog parity.</li>
+                <li>Decide on <span className="font-mono">/product</span>, <span className="font-mono">/demo</span>, <span className="font-mono">/faq</span> public-route fate based on marketing/SEO data.</li>
+                <li>Add release note: "Legacy routes removed — canonical replacements in place since &lt;previous release&gt;."</li>
+                <li>Flip <span className="font-mono">p11-legacy-route-sweep</span> and <span className="font-mono">p11-builder-vault</span> follow-ups to <span className="font-mono">done</span> in /outline.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">17.10 Cycle log</h3>
+              <p className="text-xs text-muted-foreground">
+                Append one row per QA cycle: cycle date, tester, build/commit, sections passed, S1/S2 count, sign-off.
+                Empty until the first RC pass runs.
+              </p>
+              <div className="rounded-md border p-3 text-xs text-muted-foreground italic">
+                No cycles recorded yet. First cycle should fill in: date, tester, build SHA, results for 17.1–17.6, defect count by severity, ship/no-ship decision.
+              </div>
+            </Section>
           </div>
         </ScrollArea>
       </div>
