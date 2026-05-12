@@ -16,8 +16,16 @@ const platformLinks = [
   { icon: FileSearch, label: "Compliance Export", href: "/#security" },
 ];
 
+const productLinks = [
+  { label: "Solutions", href: "/solutions" },
+  { label: "Personas", href: "/personas" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Integrations", href: "/integrations" },
+  { label: "Customers", href: "/customers" },
+  { label: "Product tour", href: "/product" },
+];
+
 const companyLinks = [
-  { label: "Product", href: "/product" },
   { label: "Trust", href: "/trust" },
   { label: "Security", href: "/security" },
   { label: "Privacy", href: "/privacy" },
