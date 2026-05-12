@@ -23,6 +23,8 @@ import WorkspaceGuideNewPage from "@/pages/workspace/WorkspaceGuideNewPage";
 import WorkspaceGuidePreviewPage from "@/pages/workspace/WorkspaceGuidePreviewPage";
 import WorkspaceTemplatesPage from "@/pages/workspace/WorkspaceTemplatesPage";
 import WorkspaceTemplateDetailPage from "@/pages/workspace/WorkspaceTemplateDetailPage";
+import WorkspaceIntegrationsPage from "@/pages/workspace/WorkspaceIntegrationsPage";
+import WorkspaceIntegrationDetailPage from "@/pages/workspace/WorkspaceIntegrationDetailPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -367,7 +369,16 @@ const App = () => (
                 <Route path="supervisor" element={<SupervisorPage />} />
                 <Route path="qa" element={<QAAnalyticsPage />} />
                 <Route path="analytics" element={<ReportsPage />} />
-                <Route path="integrations" element={<ConnectorsCatalogPage />} />
+                {/* Phase 7: canonical workspace integrations (provider-agnostic).
+                    Reads canonical integration_providers + integration_connections;
+                    legacy ConnectorsCatalogPage stays reachable but is no longer the
+                    primary surface for workspace-scoped integrations. */}
+                <Route path="integrations" element={<WorkspaceIntegrationsPage />} />
+                <Route
+                  path="integrations/:connectionId"
+                  element={<WorkspaceIntegrationDetailPage />}
+                />
+                <Route path="integrations-legacy" element={<ConnectorsCatalogPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 {/* Phase 4: canonical workspace guides (workspace-scoped, mirrored from legacy scripts).
                     ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical builder
