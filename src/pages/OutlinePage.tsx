@@ -182,6 +182,14 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p3-canonical-create", label: "Phase 3 — CampaignIntakePage chosen as the canonical surviving creation flow", status: "done" },
   { id: "p3-other-tables", label: "Phase 3 follow-up — fold campaign_archives/blueprints/builder_drafts/scripts/legal_connect_campaigns/five9_campaign_routes into canonical model", status: "todo" },
   { id: "p3-write-canonical", label: "Phase 3 follow-up — canonical write path (insert into campaigns directly, deprecate campaign_setups writes)", status: "todo" },
+  { id: "p4-guides-table", label: "Phase 4 — canonical guides + guide_versions tables (workspace-owned, RLS, status enum)", status: "done" },
+  { id: "p4-mirror-trigger", label: "Phase 4 — one-way mirror trigger scripts → guides + backfill", status: "done" },
+  { id: "p4-routes", label: "Phase 4 — /app/workspaces/:id/guides list+detail+edit+preview live", status: "done" },
+  { id: "p4-survivor", label: "Phase 4 — ScriptBuilderPage promoted as canonical builder survivor", status: "done" },
+  { id: "p4-assignment", label: "Phase 4 — guide-to-campaign assignment via guides.campaign_id", status: "done" },
+  { id: "p4-write-canonical", label: "Phase 4 follow-up — native canonical guide create + edit (no script bridge)", status: "todo" },
+  { id: "p4-vault-legacy", label: "Phase 4 follow-up — vault TreeEditor / Scripter / ScriptFlowHub / ScriptRouting once canonical builder is feature-complete", status: "todo" },
+  { id: "p4-version-publish", label: "Phase 4 follow-up — canonical publish path writes guide_versions (current-version flag, rollback)", status: "todo" },
 ];
 
 const NON_GOALS = [
