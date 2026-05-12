@@ -149,9 +149,19 @@ export function MegaMenuHeader() {
                 ))}
               </div>
               <div className="space-y-1">
-                <Link to="/product" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-foreground">Product</Link>
-                <Link to="/trust" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-foreground">Trust</Link>
-                <Link to="/contact" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-foreground">Contact</Link>
+                {[
+                  { to: "/solutions", label: "Solutions" },
+                  { to: "/personas", label: "Personas" },
+                  { to: "/pricing", label: "Pricing" },
+                  { to: "/integrations", label: "Integrations" },
+                  { to: "/customers", label: "Customers" },
+                  { to: "/trust", label: "Trust" },
+                  { to: "/product", label: "Product tour" },
+                  { to: "/faq", label: "FAQ" },
+                  { to: "/contact", label: "Contact" },
+                ].map((item) => (
+                  <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-foreground">{item.label}</Link>
+                ))}
               </div>
               <div className="space-y-2 pt-4 border-t border-border/50">
                 <Button className="w-full" asChild>
