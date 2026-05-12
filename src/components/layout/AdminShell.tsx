@@ -201,7 +201,7 @@ export function AdminShell() {
 
             <div className="flex items-center gap-2 text-sm min-w-0">
               <span className="text-muted-foreground/70 truncate">
-                {organization?.name || "Workspace"}
+                {organization?.name || "Organization"}
               </span>
               {activeSection && (
                 <>
