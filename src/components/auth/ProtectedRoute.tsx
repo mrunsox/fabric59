@@ -18,9 +18,11 @@ export function ProtectedRoute() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If user is authenticated but has no organization, redirect to onboarding
-  // Master admins are exempt — they can access /admin without an org
-  if (!organization && location.pathname !== "/onboarding") {
+  // If user is authenticated but has no organization, redirect to onboarding.
+  // Master admins are exempt — they can access /admin without an org.
+  // Phase 9: any /onboarding/* route is treated as a valid onboarding surface,
+  // so the workspace bootstrap step at /onboarding/workspace is reachable.
+  if (!organization && !location.pathname.startsWith("/onboarding")) {
     return <Navigate to="/onboarding" replace />;
   }
 

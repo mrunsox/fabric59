@@ -37,6 +37,8 @@ import SystemAccessPage from "@/pages/auth/SystemAccessPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import OnboardingPage from "@/pages/onboarding/OnboardingPage";
+import WorkspaceBootstrapPage from "@/pages/onboarding/WorkspaceBootstrapPage";
+import AcceptInvitePage from "@/pages/auth/AcceptInvitePage";
 import OutlinePage from "@/pages/OutlinePage";
 import LandingPage from "@/pages/LandingPage";
 import TermsPage from "@/pages/TermsPage";
@@ -48,6 +50,12 @@ import ContactPage from "@/pages/ContactPage";
 import FaqPage from "@/pages/FaqPage";
 import ProductTourPage from "@/pages/ProductTourPage";
 import DemoSandboxPage from "@/pages/DemoSandboxPage";
+// Phase 9 — canonical marketing IA
+import PersonasPage from "@/pages/marketing/PersonasPage";
+import SolutionsPage from "@/pages/marketing/SolutionsPage";
+import PricingPage from "@/pages/marketing/PricingPage";
+import IntegrationsIndexPage from "@/pages/marketing/IntegrationsIndexPage";
+import CustomersPage from "@/pages/marketing/CustomersPage";
 
 // Admin pages
 import TenantsPage from "@/pages/admin/TenantsPage";
@@ -180,6 +188,14 @@ const App = () => (
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/product" element={<ProductTourPage />} />
             <Route path="/demo" element={<DemoSandboxPage />} />
+            {/* Phase 9 — canonical public marketing IA */}
+            <Route path="/personas" element={<PersonasPage />} />
+            <Route path="/solutions" element={<SolutionsPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/integrations" element={<IntegrationsIndexPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
+            {/* Phase 9 — invite-accept landing target */}
+            <Route path="/accept-invite" element={<AcceptInvitePage />} />
             <Route path="/call-flow" element={<Navigate to="/superadmin/call-flow" replace />} />
 
             {/* Legacy /master/* → consolidated under /superadmin */}
@@ -232,6 +248,16 @@ const App = () => (
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<OnboardingPage />} />
+              {/* Phase 9 — workspace bootstrap (lands user inside canonical workspace) */}
+              <Route
+                path="/onboarding/workspace"
+                element={
+                  <WorkspaceProvider>
+                    <WorkspaceBootstrapPage />
+                  </WorkspaceProvider>
+                }
+              />
+              
               
               {/* Admin routes */}
               <Route path="/admin" element={<AdminShell />}>

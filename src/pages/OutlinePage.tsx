@@ -112,7 +112,7 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "demoted to /integrations-legacy compatibility surface; stub provider edge functions queued for deletion.",
   },
   {
-    id: "p8", name: "Phase 8 — Analytics, QA, billing, launch polish", status: "in_progress",
+    id: "p8", name: "Phase 8 — Analytics, QA, billing, launch polish", status: "done",
     objectives:
       "Make the canonical workspace product operationally launch-ready. Canonical workspace analytics, QA/review, " +
       "and billing surfaces under /app/workspaces/:id/{analytics,qa,billing}. Shared polish primitives (KpiCard, " +
@@ -124,11 +124,14 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "subscription primitives; launch polish checklist green.",
   },
   {
-    id: "p9", name: "Phase 9 — Marketing site + onboarding + workspace bootstrap", status: "todo",
+    id: "p9", name: "Phase 9 — Marketing site + onboarding + workspace bootstrap", status: "in_progress",
     objectives:
-      "Persona/solution/integrations/pricing/case-study marketing pages, rebuilt onboarding, and a workspace bootstrap " +
-      "flow that lands a new user inside a canonical workspace. Final pre-AI go-to-market phase.",
-    exit: "Marketing surface and onboarding boot a new user into a working canonical workspace end-to-end.",
+      "Rebuild the public-facing entry and first-run path so Fabric59 moves from internally coherent product to " +
+      "market-ready product. Canonical marketing IA (personas, solutions, pricing, integrations, customers), " +
+      "onboarding that bootstraps a canonical workspace, invite-accept landing, and role-aware first-run routing.",
+    exit:
+      "Marketing surface and onboarding boot a new user into a working canonical workspace end-to-end; no new user " +
+      "lands in legacy /admin/* sprawl as the primary path; AI knowledge remains explicitly deferred to Phase 10.",
   },
   {
     id: "p10", name: "Phase 10 — AI knowledge layer + agent assist + GA polish", status: "todo",
@@ -293,6 +296,16 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p8-billing-backend", label: "Phase 8 follow-up — billing backend: subscription/plan/payment-method primitives", status: "todo" },
   { id: "p8-qa-rubrics", label: "Phase 8 follow-up — detailed QA scoring rubrics, calibration, reviewer assignment", status: "todo" },
   { id: "p8-mobile", label: "Phase 8 follow-up — responsive/mobile pass on heavy workspace flows (builders, tables)", status: "todo" },
+  { id: "p9-marketing-ia", label: "Phase 9 — canonical public marketing IA: /personas, /solutions, /pricing, /integrations, /customers", status: "done" },
+  { id: "p9-marketing-layout", label: "Phase 9 — shared MarketingLayout (mega header + footer + SEO) used by every new public page", status: "done" },
+  { id: "p9-bootstrap", label: "Phase 9 — workspace bootstrap at /onboarding/workspace (creates or selects canonical workspace)", status: "done" },
+  { id: "p9-onboarding-route", label: "Phase 9 — onboarding completion routes into /onboarding/workspace, never directly into /admin/*", status: "done" },
+  { id: "p9-invite-landing", label: "Phase 9 — /accept-invite landing forwards authenticated users into workspace bootstrap", status: "done" },
+  { id: "p9-protected-onboarding", label: "Phase 9 — ProtectedRoute allows /onboarding/* through for users without an org", status: "done" },
+  { id: "p9-role-routing", label: "Phase 9 — role-aware first-run: master-admin → /superadmin, member → /admin/dashboard, default → /onboarding/workspace → /app/workspaces/:id/home", status: "done" },
+  { id: "p9-billing-backend", label: "Phase 9 follow-up — real billing backend (subscription/plan/payment-method) — DEFERRED", status: "todo" },
+  { id: "p9-tokenized-invites", label: "Phase 9 follow-up — tokenized self-serve invite link backend (today: admin invites in-app)", status: "todo" },
+  { id: "p9-customer-stories", label: "Phase 9 follow-up — real published customer stories once design partners go GA", status: "todo" },
   { id: "p10-deferred", label: "AI knowledge layer (grounded chat, ingestion, embeddings, editable prompts) — DEFERRED to Phase 10", status: "blocked" },
 ];
 
@@ -673,6 +686,96 @@ export default function OutlinePage() {
                 <li>Visual node editor over <span className="font-mono">guide_versions.content</span> so legacy ScriptBuilderPage can be vaulted.</li>
                 <li>Decide whether canonical templates need a native edit surface before mappings/provider normalization begins.</li>
                 <li>Mappings + provider normalization (Clio / MyCase) is the next product-critical move once authoring is canonical end-to-end.</li>
+              </ul>
+            </Section>
+
+            <Section id="phase-9-decisions" title="15. Phase 9 — Marketing, onboarding, and workspace bootstrap decisions">
+              <h3 className="text-sm font-semibold text-foreground">Gaps this phase closes</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Marketing site was off-message / generic SaaS — no canonical positioning around workspace + Five9 + legal CRM.</li>
+                <li>Missing persona pages, solution pages, pricing page, integrations index, and customer proof pages.</li>
+                <li>Onboarding stopped at "go to /admin" and dropped users into legacy admin sprawl.</li>
+                <li>No invite-accept landing target — tokenized invite links would land on a 404.</li>
+                <li>Signup/first-run flow was not aligned to the canonical workspace model.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Public route map (canonical)</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs font-mono">
+                <li>/ — landing (already canonical, kept)</li>
+                <li>/personas — persona index (new)</li>
+                <li>/solutions — solution index (new)</li>
+                <li>/pricing — Pilot / Operator / Platform tiers (new)</li>
+                <li>/integrations — provider index w/ status badges (new)</li>
+                <li>/customers — design-partner stories (new)</li>
+                <li>/product, /demo, /faq, /contact — kept</li>
+                <li>/trust, /security, /privacy, /terms, /responsible-disclosure — kept (compatibility intact)</li>
+                <li>/login, /signup, /forgot-password, /reset-password, /system-access — auth (kept)</li>
+                <li>/accept-invite — new invite landing target</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Onboarding + bootstrap IA</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li><span className="font-mono">/onboarding</span> — existing wizard (org → ownership → domain → intent → tenant → complete). Skip and Complete now both route into the canonical bootstrap step instead of <span className="font-mono">/admin</span>.</li>
+                <li><span className="font-mono">/onboarding/workspace</span> — new canonical bootstrap. Detects the auto-created default workspace from the Phase 2B trigger and lets the user enter it; if missing, creates a workspace against their org and lands them in <span className="font-mono">/app/workspaces/:id/home</span>.</li>
+                <li><span className="font-mono">ProtectedRoute</span> now allows any <span className="font-mono">/onboarding/*</span> path through for users without an organization (was strict-equal <span className="font-mono">/onboarding</span>).</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Role-aware first-run routing</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Master admin without an org → <span className="font-mono">/superadmin</span> (existing redirect, preserved).</li>
+                <li>Limited member landing on <span className="font-mono">/admin</span> → <span className="font-mono">/admin/dashboard</span> (existing ProtectedRoute behavior, preserved).</li>
+                <li>Authenticated user accepting an invite → <span className="font-mono">/onboarding/workspace</span> → workspace home.</li>
+                <li>Unauthenticated user on <span className="font-mono">/accept-invite</span> → <span className="font-mono">/signup?invite=…</span> (token preserved through signup).</li>
+                <li>Default post-onboarding landing → <span className="font-mono">/app/workspaces/:id/home</span> (canonical workspace shell), never <span className="font-mono">/admin/*</span>.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Workspace bootstrap defaults</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Default workspace name: <span className="font-mono">{`{Org name} workspace`}</span>.</li>
+                <li><span className="font-mono">is_default = true</span> when this is the first workspace under the org.</li>
+                <li>Surfaces unlocked on entry: clients, campaigns, guides, templates, integrations, analytics, qa, billing, settings.</li>
+                <li>No fake demo data is seeded. The bootstrap page advertises what the user gets, not invented placeholder content.</li>
+                <li>The Phase 2B auto-create trigger remains the primary path; this page is the secondary safety net + UX surface.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Compatibility disposition</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead><tr className="border-b"><th className="text-left p-2">Surface</th><th className="text-left p-2">Status</th><th className="text-left p-2">Notes</th></tr></thead>
+                <tbody>
+                  {[
+                    { s: "/personas, /solutions, /pricing, /integrations, /customers", k: "Canonical (new)", n: "Built on shared MarketingLayout (MegaMenuHeader + MegaFooter + SEOHead)." },
+                    { s: "/", k: "Canonical", n: "LandingPage already aligned to canonical product story; unchanged this phase." },
+                    { s: "/product, /demo, /faq, /contact", k: "Compatibility (kept)", n: "Reachable; not part of new IA but linked from header/footer." },
+                    { s: "/trust, /security, /privacy, /terms, /responsible-disclosure", k: "Authoritative", n: "Legal/trust pages preserved verbatim." },
+                    { s: "/onboarding", k: "Authoritative (rewired)", n: "Skip and Complete now route into /onboarding/workspace; no direct /admin landings." },
+                    { s: "/onboarding/workspace", k: "Canonical (new)", n: "Workspace bootstrap step. Reads canonical workspaces table; inserts when none exist." },
+                    { s: "/accept-invite", k: "Canonical (new)", n: "Invite-landing target; preserves invite token through signup/login." },
+                    { s: "/admin/*", k: "Compatibility (de-surfaced from primary path)", n: "Still routable for org-level workflows that have not yet rebound to the workspace shell. Not the default first-run destination." },
+                  ].map((r) => (
+                    <tr key={r.s} className="border-b border-border/40">
+                      <td className="p-2 font-mono text-[11px] text-muted-foreground">{r.s}</td>
+                      <td className="p-2">{r.k}</td>
+                      <td className="p-2">{r.n}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Explicit deferrals</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>AI knowledge layer (grounded chat, ingestion, embeddings, editable prompts) — Phase 10.</li>
+                <li>Real billing backend (subscriptions, plans, payment methods, self-serve checkout). Pricing page promises quote/invoice flow.</li>
+                <li>Tokenized self-serve invite link backend. Today invites go through the in-app InviteMemberDialog; <span className="font-mono">/accept-invite</span> is the landing target ready for the future wiring.</li>
+                <li>Strict <span className="font-mono">workspace_id</span> columns on call_sessions / qa_reviews / invoices (Phase 8 follow-up, not blocking Phase 9).</li>
+                <li>Vaulting of legacy script/template editors and stub integration edge functions — tracked in Phases 4/5/7 follow-ups.</li>
+                <li>Real published customer logos / stories — held until design partners go GA.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Phase 10 prerequisites</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Stable canonical workspace landing for every new user (this phase).</li>
+                <li>Workspace-scoped RBAC clear enough to scope AI prompts and ingestion.</li>
+                <li>Canonical templates(kind=prompt) already in place from Phase 5 — AI prompts can ride that surface.</li>
               </ul>
             </Section>
           </div>

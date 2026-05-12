@@ -85,7 +85,8 @@ export default function OnboardingPage() {
 
   const handleSkip = () => {
     if (typeof window !== "undefined") localStorage.setItem(RESUME_KEY, step);
-    navigate("/admin");
+    // Phase 9: never deposit users in legacy admin sprawl on skip.
+    navigate("/onboarding/workspace");
   };
 
   const SkipFooter = () =>
@@ -182,9 +183,10 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = () => {
-    if (intent === "provisioning") window.location.href = "/admin/agents";
-    else if (intent === "integration") window.location.href = "/admin/mappings";
-    else window.location.href = "/admin";
+    // Phase 9: every completed onboarding lands in the canonical workspace
+    // bootstrap, which routes into /app/workspaces/:id/home. Intent only
+    // influences in-workspace next-action hints (not yet wired here).
+    navigate("/onboarding/workspace", { replace: true });
   };
 
   const stepContent: Record<Step, React.ReactNode> = {
