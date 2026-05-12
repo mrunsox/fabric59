@@ -472,6 +472,70 @@ export default function OutlinePage() {
                 <li>Decision on whether <span className="font-mono">script_templates</span> folds into the unified Templates phase or stays guide-local.</li>
               </ul>
             </Section>
+
+            <Section id="phase-5-decisions" title="13. Phase 5 — Template system decisions">
+              <h3 className="text-sm font-semibold text-foreground">Current template fragmentation</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs font-mono">
+                <li>script_templates</li>
+                <li>flow_templates</li>
+                <li>email_templates</li>
+                <li>report_templates</li>
+                <li>call_summary_templates</li>
+                <li>legal_connect_prompt_templates</li>
+                <li>campaign_blueprints</li>
+                <li>admin/templates + admin/templates/:id (generic shell over flow_templates)</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Canonical model chosen</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li><span className="font-mono">templates</span> + <span className="font-mono">template_versions</span> tables.</li>
+                <li>Scope enum: <span className="font-mono">platform | org | partner | client | workspace</span>.</li>
+                <li>Kind enum: <span className="font-mono">guide | flow | campaign | email | summary | prompt | report</span>.</li>
+                <li>Status enum: <span className="font-mono">draft | published | archived</span>.</li>
+                <li>Inheritance: lower scopes can read higher-scope templates; UI shows <span className="font-mono">scope_type</span> badge and lineage.</li>
+                <li>Forking: <span className="font-mono">parent_template_id</span> records lineage; forks land workspace-scoped under the current org.</li>
+                <li>Versioning: <span className="font-mono">templates.current_version</span> + immutable snapshots in <span className="font-mono">template_versions</span> (publish/rollback path is a Phase 5 follow-up).</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Legacy disposition</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead><tr className="border-b"><th className="text-left p-2">Surface / table</th><th className="text-left p-2">Status</th><th className="text-left p-2">Notes</th></tr></thead>
+                <tbody>
+                  {[
+                    { s: "templates + template_versions", k: "Canonical (new)", n: "Workspace-readable; org-admin manageable; master-admin platform writes." },
+                    { s: "/app/workspaces/:id/templates{,/:id}", k: "Canonical", n: "Phase 5 routes — gallery + detail + fork." },
+                    { s: "script_templates", k: "Mirrored (compat writer)", n: "trg_mirror_script_template → templates(kind=guide). Legacy SaveAsTemplateDialog/TemplateGallery still authoritative." },
+                    { s: "flow_templates", k: "Mirrored (compat writer)", n: "trg_mirror_flow_template → templates(kind=flow). /admin/templates editor still authoritative." },
+                    { s: "email_templates", k: "Mirrored (compat writer)", n: "trg_mirror_email_template → templates(kind=email). /admin/email-templates still authoritative." },
+                    { s: "report_templates", k: "Mirrored (compat writer)", n: "trg_mirror_report_template → templates(kind=report)." },
+                    { s: "call_summary_templates", k: "Mirrored (compat writer)", n: "trg_mirror_call_summary_template → templates(kind=summary). Scope picked from tenant_id/partner_id/org_id." },
+                    { s: "legal_connect_prompt_templates", k: "Mirrored (compat writer)", n: "trg_mirror_lc_prompt_template → templates(kind=prompt). Full row stored as content via to_jsonb." },
+                    { s: "campaign_blueprints", k: "Mirrored (compat writer)", n: "trg_mirror_campaign_blueprint → templates(kind=campaign). Replicate/reverse-engineer flows continue against blueprints for now." },
+                    { s: "Native canonical template editor", k: "Deferred", n: "Detail page is read-only this phase; edit/create-from-scratch lands in Phase 5 follow-up." },
+                  ].map((r) => (
+                    <tr key={r.s} className="border-b border-border/40">
+                      <td className="p-2 font-mono text-[11px] text-muted-foreground">{r.s}</td>
+                      <td className="p-2">{r.k}</td>
+                      <td className="p-2">{r.n}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Downstream consumption (this phase)</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Campaigns, guides, flows, emails, summaries, prompts, reports are all represented in the canonical model via mirroring.</li>
+                <li>Native "create campaign from template" + "create guide from template" flows are wired in Phase 5 follow-ups; legacy create paths remain in place.</li>
+                <li>Forking already produces a real canonical, workspace-owned, native (non-mirrored) row that downstream entities can target.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Phase 6 prerequisites</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Decide canonical Form storage shape (likely as a new entity, not a template kind).</li>
+                <li>Native canonical template create + edit so Forms can both consume templates and be templated themselves.</li>
+                <li>Stable template versioning + rollback before Forms attach to a specific version.</li>
+              </ul>
+            </Section>
           </div>
         </ScrollArea>
       </div>
