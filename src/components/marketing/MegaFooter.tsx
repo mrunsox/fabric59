@@ -1,28 +1,26 @@
 import { Link } from "react-router-dom";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
-import {
-  Mail, Heart, Lock, UserCog, GitBranch, Megaphone, Scale, Globe,
-  FileSearch, Phone, Building2,
-} from "lucide-react";
+import { Mail, Heart, Lock, Building2 } from "lucide-react";
 
-const platformLinks = [
-  { icon: Phone, label: "Five9 SOAP", href: "/#available-now" },
-  { icon: Globe, label: "Multi-domain Five9", href: "/#available-now" },
-  { icon: Scale, label: "Legal Connect", href: "/#legal-connect" },
-  { icon: GitBranch, label: "Field Mapping", href: "/#available-now" },
-  { icon: UserCog, label: "Agent Provisioning", href: "/#available-now" },
-  { icon: Megaphone, label: "Campaign Blueprints", href: "/#available-now" },
-  { icon: Building2, label: "Multi-tenant + RLS", href: "/#security" },
-  { icon: FileSearch, label: "Compliance Export", href: "/#security" },
-];
-
+// Canonical IA — Slice A (no /#anchor hrefs).
 const productLinks = [
   { label: "Solutions", href: "/solutions" },
   { label: "Personas", href: "/personas" },
   { label: "Pricing", href: "/pricing" },
   { label: "Integrations", href: "/integrations" },
   { label: "Customers", href: "/customers" },
-  { label: "Product tour", href: "/product" },
+  { label: "Product overview", href: "/product" },
+];
+
+const platformLinks = [
+  { label: "Five9 SOAP integration", href: "/product#five9" },
+  { label: "Multi-domain Five9", href: "/product#domains" },
+  { label: "Legal Connect (MyCase / Clio)", href: "/product#legal" },
+  { label: "Field mapping + Test runner", href: "/product#mappings" },
+  { label: "Decision-tree scripts", href: "/product#scripts" },
+  { label: "Multi-tenant + RLS", href: "/product#tenancy" },
+  { label: "Security & audit export", href: "/product#security" },
+  { label: "API logs & reconciliation", href: "/product#logs" },
 ];
 
 const companyLinks = [
@@ -32,7 +30,6 @@ const companyLinks = [
   { label: "Terms", href: "/terms" },
   { label: "Responsible Disclosure", href: "/responsible-disclosure" },
   { label: "Contact", href: "/contact" },
-  { label: "FAQ", href: "/faq" },
 ];
 
 export function MegaFooter() {
@@ -69,15 +66,14 @@ export function MegaFooter() {
             </nav>
           </div>
 
-          {/* Platform highlights */}
+          {/* Platform highlights → all deep-link into the canonical product overview */}
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-4">Platform</h4>
             <nav className="grid grid-cols-1 gap-2.5">
               {platformLinks.map((link) => (
-                <a key={link.label} href={link.href} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
-                  <link.icon className="h-3.5 w-3.5" />
+                <Link key={link.label} to={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
                   {link.label}
-                </a>
+                </Link>
               ))}
             </nav>
           </div>
