@@ -188,6 +188,14 @@ const App = () => (
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/product" element={<ProductTourPage />} />
             <Route path="/demo" element={<DemoSandboxPage />} />
+            {/* Phase 9 — canonical public marketing IA */}
+            <Route path="/personas" element={<PersonasPage />} />
+            <Route path="/solutions" element={<SolutionsPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/integrations" element={<IntegrationsIndexPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
+            {/* Phase 9 — invite-accept landing target */}
+            <Route path="/accept-invite" element={<AcceptInvitePage />} />
             <Route path="/call-flow" element={<Navigate to="/superadmin/call-flow" replace />} />
 
             {/* Legacy /master/* → consolidated under /superadmin */}
