@@ -21,7 +21,7 @@ import {
 const platformItems = [
   { icon: Phone, title: "Five9 SOAP integration", desc: "30+ live SOAP actions across agents, campaigns, skills, profiles, DNIS.", href: "/product#five9", badge: "Live" },
   { icon: Globe, title: "Multi-domain Five9 management", desc: "Credentials, IVR, and connection tests across multiple Five9 domains.", href: "/product#domains", badge: "Live" },
-  { icon: Scale, title: "Legal Connect (MyCase / Clio)", desc: "MyCase live via per-client API key. Clio adapter ready to activate.", href: "/product#legal", badge: "Live" },
+  { icon: Scale, title: "Legal Connect (MyCase / Clio)", desc: "MyCase and Clio Grow live. Full Clio Manage adapter queued behind OAuth.", href: "/product#legal", badge: "Live" },
   { icon: GitBranch, title: "Visual field mapping + Test runner", desc: "Drag-and-drop CRM mapping with a real Test runner against tenant configs.", href: "/product#mappings", badge: "Live" },
   { icon: GitFork, title: "Decision-tree script builder", desc: "React Flow scripting with conditional branching and runtime simulator.", href: "/product#scripts", badge: "Live" },
   { icon: Building2, title: "Multi-tenant hierarchy + RLS", desc: "Org / Partner / Client config inheritance with Postgres RLS isolation.", href: "/product#tenancy", badge: "Live" },
