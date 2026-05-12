@@ -16,6 +16,10 @@ import WorkspaceClientsPage from "@/pages/workspace/WorkspaceClientsPage";
 import WorkspaceCampaignsPage from "@/pages/workspace/WorkspaceCampaignsPage";
 import WorkspaceCampaignDetailPage from "@/pages/workspace/WorkspaceCampaignDetailPage";
 import WorkspaceCampaignNewPage from "@/pages/workspace/WorkspaceCampaignNewPage";
+import WorkspaceGuidesPage from "@/pages/workspace/WorkspaceGuidesPage";
+import WorkspaceGuideDetailPage from "@/pages/workspace/WorkspaceGuideDetailPage";
+import WorkspaceGuideEditRedirect from "@/pages/workspace/WorkspaceGuideEditRedirect";
+import WorkspaceGuidePreviewPage from "@/pages/workspace/WorkspaceGuidePreviewPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -359,16 +363,14 @@ const App = () => (
                 <Route path="analytics" element={<ReportsPage />} />
                 <Route path="integrations" element={<ConnectorsCatalogPage />} />
                 <Route path="settings" element={<SettingsPage />} />
-                {/* Canonical placeholders — consolidate in Phase 4 (Guides) / Phase 5 (Forms). */}
-                <Route
-                  path="guides"
-                  element={
-                    <WorkspaceSectionPlaceholder
-                      label="Guides"
-                      rationale="Canonical Guide artifact will absorb the legacy scripter, scripts, tree-editor, scriptflow, and script-routing surfaces in Phase 4."
-                    />
-                  }
-                />
+                {/* Phase 4: canonical workspace guides (workspace-scoped, mirrored from legacy scripts).
+                    ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical builder
+                    survivor; legacy script surfaces (scripter, tree-editor, scriptflow, script-routing)
+                    remain routable as compatibility/deferred during Phase 4. */}
+                <Route path="guides" element={<WorkspaceGuidesPage />} />
+                <Route path="guides/:guideId" element={<WorkspaceGuideDetailPage />} />
+                <Route path="guides/:guideId/edit" element={<WorkspaceGuideEditRedirect />} />
+                <Route path="guides/:guideId/preview" element={<WorkspaceGuidePreviewPage />} />
                 <Route
                   path="forms"
                   element={
