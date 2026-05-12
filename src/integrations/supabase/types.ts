@@ -8118,6 +8118,76 @@ export type Database = {
           },
         ]
       }
+      workspace_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["workspace_role"]
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["workspace_role"]
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["workspace_role"]
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspaces: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          organization_id: string
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          organization_id: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          organization_id?: string
+          slug?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspaces_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       fabric59_agent_activity_summary: {
@@ -8570,6 +8640,7 @@ export type Database = {
         }[]
       }
       get_user_org_ids: { Args: { _user_id: string }; Returns: string[] }
+      get_user_workspace_ids: { Args: { _user_id: string }; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -8585,6 +8656,10 @@ export type Database = {
       }
       is_org_owner_or_admin: {
         Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_workspace_member: {
+        Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
       legal_connect_cleanup_retention: {
@@ -8659,6 +8734,7 @@ export type Database = {
         | "deprecated"
         | "extracted"
       walkthrough_request_status: "new" | "contacted" | "qualified" | "archived"
+      workspace_role: "owner" | "admin" | "manager" | "member" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -8854,6 +8930,7 @@ export const Constants = {
         "extracted",
       ],
       walkthrough_request_status: ["new", "contacted", "qualified", "archived"],
+      workspace_role: ["owner", "admin", "manager", "member", "viewer"],
     },
   },
 } as const
