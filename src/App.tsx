@@ -7,6 +7,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
+import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
+import WorkspaceHomePage from "@/pages/workspace/WorkspaceHomePage";
+import WorkspaceSectionPlaceholder from "@/pages/workspace/WorkspaceSectionPlaceholder";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -312,6 +317,59 @@ const App = () => (
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="design-system" element={<DesignSystemPage />} />
+              </Route>
+
+              {/* ============================================================
+                  CANONICAL WORKSPACE TREE (Phase 2A)
+                  Path: /app/workspaces/:workspaceId/*
+                  Workspace identity is currently adapted from Organization
+                  via WorkspaceContext (see src/contexts/WorkspaceContext.tsx).
+                  Real workspaces table arrives in Phase 2B.
+                  Legacy /admin/* routes remain fully active and unchanged.
+                  ============================================================ */}
+              <Route
+                path="/app/workspaces"
+                element={
+                  <WorkspaceProvider>
+                    <WorkspacesIndexPage />
+                  </WorkspaceProvider>
+                }
+              />
+              <Route path="/app/workspaces/:workspaceId" element={<WorkspaceShell />}>
+                <Route index element={<WorkspaceHomePage />} />
+                <Route path="home" element={<WorkspaceHomePage />} />
+                {/* Reused legacy pages — wrapped under canonical workspace shell.
+                    These pages still read org-scoped data from AuthContext today;
+                    workspace-scoped data binding lands in Phase 2B/3. */}
+                <Route path="clients" element={<ClientsPage />} />
+                <Route path="campaigns" element={<CampaignsPage />} />
+                <Route path="templates" element={<TemplatesPage />} />
+                <Route path="runs" element={<RunsPage />} />
+                <Route path="agents" element={<AgentsPage />} />
+                <Route path="supervisor" element={<SupervisorPage />} />
+                <Route path="qa" element={<QAAnalyticsPage />} />
+                <Route path="analytics" element={<ReportsPage />} />
+                <Route path="integrations" element={<ConnectorsCatalogPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                {/* Canonical placeholders — consolidate in Phase 4 (Guides) / Phase 5 (Forms). */}
+                <Route
+                  path="guides"
+                  element={
+                    <WorkspaceSectionPlaceholder
+                      label="Guides"
+                      rationale="Canonical Guide artifact will absorb the legacy scripter, scripts, tree-editor, scriptflow, and script-routing surfaces in Phase 4."
+                    />
+                  }
+                />
+                <Route
+                  path="forms"
+                  element={
+                    <WorkspaceSectionPlaceholder
+                      label="Forms"
+                      rationale="The canonical Forms builder is a new surface introduced in Phase 5."
+                    />
+                  }
+                />
               </Route>
             </Route>
 
