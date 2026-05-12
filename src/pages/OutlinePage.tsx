@@ -69,26 +69,31 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "campaigns table backfilled and live; canonical list+detail+new routed under workspace; legacy /admin/campaigns* preserved as compatibility writers.",
   },
   {
-    id: "p4", name: "Phase 4 — Guides", status: "in_progress",
+    id: "p4", name: "Phase 4 — Guides", status: "done",
     objectives:
       "Canonical workspace-owned `guides` table + `guide_versions` (status enum draft/published/archived). " +
       "One-way mirror trigger `mirror_script_to_guide` backfills/syncs from legacy `scripts`. " +
       "Canonical list/detail/edit/preview routes under /app/workspaces/:id/guides. " +
-      "ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical surviving builder; " +
-      "TreeEditor, Scripter, ScriptFlowHub, ScriptRouting remain as compatibility/deferred surfaces. " +
-      "Guide-to-campaign assignment via guides.campaign_id (0..1 campaign per guide; many guides per campaign).",
+      "ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical surviving builder.",
     exit:
-      "guides + guide_versions live with backfill from scripts; canonical workspace guide routes live; ScriptBuilderPage promoted as survivor; legacy script surfaces routable but de-surfaced; campaign assignment functional under workspace scope.",
+      "guides + guide_versions live; canonical routes live; ScriptBuilderPage promoted as survivor; campaign assignment functional under workspace scope.",
   },
   {
-    id: "p5", name: "Phase 5 — Forms (new)", status: "todo",
+    id: "p5", name: "Phase 5 — Templates unification", status: "in_progress",
+    objectives:
+      "Collapse 7 legacy template tables (script_templates, flow_templates, email_templates, report_templates, " +
+      "call_summary_templates, legal_connect_prompt_templates, campaign_blueprints) into one canonical `templates` table " +
+      "keyed by scope_type (platform/org/partner/client/workspace) + kind (guide/flow/campaign/email/summary/prompt/report). " +
+      "Mirror triggers + backfill from each legacy writer; parent_template_id provides fork lineage; canonical workspace " +
+      "routes /app/workspaces/:id/templates{,/:id} expose the unified gallery and fork action.",
+    exit:
+      "templates + template_versions live with backfill from all 7 legacy tables; canonical workspace template routes live; " +
+      "fork-into-workspace flow functional; legacy template pages remain authoritative writers (mirrored, not yet purged).",
+  },
+  {
+    id: "p6", name: "Phase 6 — Forms (new)", status: "todo",
     objectives: "Build canonical Form artifact: schema, conditions, validation, mapping targets, versioning.",
     exit: "Form library + builder live; forms assignable to campaigns/guides; submissions captured.",
-  },
-  {
-    id: "p6", name: "Phase 6 — Templates unification", status: "todo",
-    objectives: "Collapse 8 template-like tables into one templates model with kind enum + scope tabs.",
-    exit: "One templates table; gallery shows all kinds; inheritance and forking work.",
   },
   {
     id: "p7", name: "Phase 7 — Integrations canonical layer", status: "todo",
@@ -113,8 +118,8 @@ const ENTITIES = [
   { entity: "Client", canonical: "Rename UI of tenants", notes: "DB stays tenants*; UI says Client." },
   { entity: "Campaign", canonical: "Collapse (Phase 3)", notes: "7 fragmented surfaces → one canonical entity." },
   { entity: "Guide", canonical: "Collapse (Phase 4)", notes: "scripter / tree-editor / scriptflow → one Guide." },
-  { entity: "Form", canonical: "Build (Phase 5)", notes: "Net-new canonical artifact." },
-  { entity: "Template", canonical: "Unify (Phase 6)", notes: "8 template tables → one templates model." },
+  { entity: "Form", canonical: "Build (Phase 6)", notes: "Net-new canonical artifact." },
+  { entity: "Template", canonical: "Unify (Phase 5)", notes: "7 legacy template tables → one canonical templates model with scope+kind+lineage." },
   { entity: "Interaction / Session", canonical: "Existing — keep", notes: "call_sessions + session_events retained." },
   { entity: "Outcome / Task / Sync Event", canonical: "Existing — keep", notes: "Outcome engine + sync_jobs retained." },
 ];
@@ -190,6 +195,14 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p4-write-canonical", label: "Phase 4 follow-up — native canonical guide create + edit (no script bridge)", status: "todo" },
   { id: "p4-vault-legacy", label: "Phase 4 follow-up — vault TreeEditor / Scripter / ScriptFlowHub / ScriptRouting once canonical builder is feature-complete", status: "todo" },
   { id: "p4-version-publish", label: "Phase 4 follow-up — canonical publish path writes guide_versions (current-version flag, rollback)", status: "todo" },
+  { id: "p5-templates-table", label: "Phase 5 — canonical templates + template_versions tables (scope+kind enums, parent lineage, RLS)", status: "done" },
+  { id: "p5-mirror-triggers", label: "Phase 5 — mirror triggers from 7 legacy template tables + backfill", status: "done" },
+  { id: "p5-routes", label: "Phase 5 — /app/workspaces/:id/templates list+detail live with kind+scope filters", status: "done" },
+  { id: "p5-fork", label: "Phase 5 — fork-into-workspace flow with parent_template_id lineage", status: "done" },
+  { id: "p5-consume-campaigns", label: "Phase 5 follow-up — campaigns can be created from canonical campaign templates", status: "todo" },
+  { id: "p5-consume-guides", label: "Phase 5 follow-up — guides can be created from canonical guide templates", status: "todo" },
+  { id: "p5-write-canonical", label: "Phase 5 follow-up — canonical native template create + edit (no legacy bridge)", status: "todo" },
+  { id: "p5-vault-legacy", label: "Phase 5 follow-up — vault legacy template editors once canonical UI is feature-complete", status: "todo" },
 ];
 
 const NON_GOALS = [
@@ -457,6 +470,70 @@ export default function OutlinePage() {
                 <li>Native canonical guide create/edit (no script bridge) so Forms can attach to canonical guides directly.</li>
                 <li>Stable <span className="font-mono">guide_versions</span> publish/rollback path so Forms can target a version.</li>
                 <li>Decision on whether <span className="font-mono">script_templates</span> folds into the unified Templates phase or stays guide-local.</li>
+              </ul>
+            </Section>
+
+            <Section id="phase-5-decisions" title="13. Phase 5 — Template system decisions">
+              <h3 className="text-sm font-semibold text-foreground">Current template fragmentation</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs font-mono">
+                <li>script_templates</li>
+                <li>flow_templates</li>
+                <li>email_templates</li>
+                <li>report_templates</li>
+                <li>call_summary_templates</li>
+                <li>legal_connect_prompt_templates</li>
+                <li>campaign_blueprints</li>
+                <li>admin/templates + admin/templates/:id (generic shell over flow_templates)</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Canonical model chosen</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li><span className="font-mono">templates</span> + <span className="font-mono">template_versions</span> tables.</li>
+                <li>Scope enum: <span className="font-mono">platform | org | partner | client | workspace</span>.</li>
+                <li>Kind enum: <span className="font-mono">guide | flow | campaign | email | summary | prompt | report</span>.</li>
+                <li>Status enum: <span className="font-mono">draft | published | archived</span>.</li>
+                <li>Inheritance: lower scopes can read higher-scope templates; UI shows <span className="font-mono">scope_type</span> badge and lineage.</li>
+                <li>Forking: <span className="font-mono">parent_template_id</span> records lineage; forks land workspace-scoped under the current org.</li>
+                <li>Versioning: <span className="font-mono">templates.current_version</span> + immutable snapshots in <span className="font-mono">template_versions</span> (publish/rollback path is a Phase 5 follow-up).</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Legacy disposition</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead><tr className="border-b"><th className="text-left p-2">Surface / table</th><th className="text-left p-2">Status</th><th className="text-left p-2">Notes</th></tr></thead>
+                <tbody>
+                  {[
+                    { s: "templates + template_versions", k: "Canonical (new)", n: "Workspace-readable; org-admin manageable; master-admin platform writes." },
+                    { s: "/app/workspaces/:id/templates{,/:id}", k: "Canonical", n: "Phase 5 routes — gallery + detail + fork." },
+                    { s: "script_templates", k: "Mirrored (compat writer)", n: "trg_mirror_script_template → templates(kind=guide). Legacy SaveAsTemplateDialog/TemplateGallery still authoritative." },
+                    { s: "flow_templates", k: "Mirrored (compat writer)", n: "trg_mirror_flow_template → templates(kind=flow). /admin/templates editor still authoritative." },
+                    { s: "email_templates", k: "Mirrored (compat writer)", n: "trg_mirror_email_template → templates(kind=email). /admin/email-templates still authoritative." },
+                    { s: "report_templates", k: "Mirrored (compat writer)", n: "trg_mirror_report_template → templates(kind=report)." },
+                    { s: "call_summary_templates", k: "Mirrored (compat writer)", n: "trg_mirror_call_summary_template → templates(kind=summary). Scope picked from tenant_id/partner_id/org_id." },
+                    { s: "legal_connect_prompt_templates", k: "Mirrored (compat writer)", n: "trg_mirror_lc_prompt_template → templates(kind=prompt). Full row stored as content via to_jsonb." },
+                    { s: "campaign_blueprints", k: "Mirrored (compat writer)", n: "trg_mirror_campaign_blueprint → templates(kind=campaign). Replicate/reverse-engineer flows continue against blueprints for now." },
+                    { s: "Native canonical template editor", k: "Deferred", n: "Detail page is read-only this phase; edit/create-from-scratch lands in Phase 5 follow-up." },
+                  ].map((r) => (
+                    <tr key={r.s} className="border-b border-border/40">
+                      <td className="p-2 font-mono text-[11px] text-muted-foreground">{r.s}</td>
+                      <td className="p-2">{r.k}</td>
+                      <td className="p-2">{r.n}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Downstream consumption (this phase)</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Campaigns, guides, flows, emails, summaries, prompts, reports are all represented in the canonical model via mirroring.</li>
+                <li>Native "create campaign from template" + "create guide from template" flows are wired in Phase 5 follow-ups; legacy create paths remain in place.</li>
+                <li>Forking already produces a real canonical, workspace-owned, native (non-mirrored) row that downstream entities can target.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Phase 6 prerequisites</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Decide canonical Form storage shape (likely as a new entity, not a template kind).</li>
+                <li>Native canonical template create + edit so Forms can both consume templates and be templated themselves.</li>
+                <li>Stable template versioning + rollback before Forms attach to a specific version.</li>
               </ul>
             </Section>
           </div>

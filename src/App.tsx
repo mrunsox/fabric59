@@ -20,6 +20,8 @@ import WorkspaceGuidesPage from "@/pages/workspace/WorkspaceGuidesPage";
 import WorkspaceGuideDetailPage from "@/pages/workspace/WorkspaceGuideDetailPage";
 import WorkspaceGuideEditRedirect from "@/pages/workspace/WorkspaceGuideEditRedirect";
 import WorkspaceGuidePreviewPage from "@/pages/workspace/WorkspaceGuidePreviewPage";
+import WorkspaceTemplatesPage from "@/pages/workspace/WorkspaceTemplatesPage";
+import WorkspaceTemplateDetailPage from "@/pages/workspace/WorkspaceTemplateDetailPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -355,7 +357,10 @@ const App = () => (
                 <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
                 <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
                 <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
-                <Route path="templates" element={<TemplatesPage />} />
+                {/* Phase 5: canonical workspace templates (workspace-scoped read of canonical
+                    templates table; mirrors all 7 legacy template tables). */}
+                <Route path="templates" element={<WorkspaceTemplatesPage />} />
+                <Route path="templates/:templateId" element={<WorkspaceTemplateDetailPage />} />
                 <Route path="runs" element={<RunsPage />} />
                 <Route path="agents" element={<AgentsPage />} />
                 <Route path="supervisor" element={<SupervisorPage />} />

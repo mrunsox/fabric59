@@ -7396,6 +7396,119 @@ export type Database = {
           },
         ]
       }
+      template_versions: {
+        Row: {
+          content: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          is_current: boolean
+          template_id: string
+          version: number
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_current?: boolean
+          template_id: string
+          version: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_current?: boolean
+          template_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      templates: {
+        Row: {
+          content: Json
+          created_at: string
+          created_by: string | null
+          current_version: number
+          description: string | null
+          id: string
+          kind: Database["public"]["Enums"]["template_kind"]
+          metadata: Json
+          name: string
+          organization_id: string | null
+          parent_template_id: string | null
+          scope_id: string | null
+          scope_type: Database["public"]["Enums"]["template_scope"]
+          source_id: string | null
+          source_type: string | null
+          status: Database["public"]["Enums"]["template_status"]
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          current_version?: number
+          description?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["template_kind"]
+          metadata?: Json
+          name: string
+          organization_id?: string | null
+          parent_template_id?: string | null
+          scope_id?: string | null
+          scope_type: Database["public"]["Enums"]["template_scope"]
+          source_id?: string | null
+          source_type?: string | null
+          status?: Database["public"]["Enums"]["template_status"]
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          current_version?: number
+          description?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["template_kind"]
+          metadata?: Json
+          name?: string
+          organization_id?: string | null
+          parent_template_id?: string | null
+          scope_id?: string | null
+          scope_type?: Database["public"]["Enums"]["template_scope"]
+          source_id?: string | null
+          source_type?: string | null
+          status?: Database["public"]["Enums"]["template_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_parent_template_id_fkey"
+            columns: ["parent_template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           asana_api_key: string | null
@@ -8912,6 +9025,16 @@ export type Database = {
       org_plan: "free" | "starter" | "pro" | "enterprise"
       org_role: "owner" | "admin" | "member"
       org_status: "active" | "suspended" | "cancelled"
+      template_kind:
+        | "guide"
+        | "flow"
+        | "campaign"
+        | "email"
+        | "summary"
+        | "prompt"
+        | "report"
+      template_scope: "platform" | "org" | "partner" | "client" | "workspace"
+      template_status: "draft" | "published" | "archived"
       vault_feature_status:
         | "core"
         | "archived"
@@ -9109,6 +9232,17 @@ export const Constants = {
       org_plan: ["free", "starter", "pro", "enterprise"],
       org_role: ["owner", "admin", "member"],
       org_status: ["active", "suspended", "cancelled"],
+      template_kind: [
+        "guide",
+        "flow",
+        "campaign",
+        "email",
+        "summary",
+        "prompt",
+        "report",
+      ],
+      template_scope: ["platform", "org", "partner", "client", "workspace"],
+      template_status: ["draft", "published", "archived"],
       vault_feature_status: [
         "core",
         "archived",
