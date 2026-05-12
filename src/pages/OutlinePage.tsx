@@ -333,6 +333,17 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p10-postcall", label: "Phase 10 follow-up — post-call intelligence (suggested QA notes, summaries, follow-ups) tied to workspace assistant", status: "todo" },
   { id: "p10-uploads", label: "Phase 10 follow-up — uploaded docs + URL ingestion sources (currently disabled by default)", status: "todo" },
   { id: "p10-embeddings", label: "Phase 10 follow-up — vector embeddings + retrieval (current grounding is bounded keyword/recent fetch)", status: "todo" },
+  { id: "p11-overview-collapse", label: "Phase 11 — single canonical org overview at /admin index; /admin/dashboard redirects in", status: "done" },
+  { id: "p11-dashboard-redirect", label: "Phase 11 — friendly /dashboard alias points directly at canonical /admin overview", status: "done" },
+  { id: "p11-status-badge", label: "Phase 11 — shared StatusBadge primitive in src/components/common/ (canonical tones success/warning/danger/info/neutral)", status: "done" },
+  { id: "p11-status-badge-rollout", label: "Phase 11 follow-up — adopt StatusBadge across campaigns, runs, QA, integrations, billing", status: "todo" },
+  { id: "p11-data-table-rollout", label: "Phase 11 follow-up — converge ad-hoc tables onto shared DataTable component", status: "todo" },
+  { id: "p11-empty-state-rollout", label: "Phase 11 follow-up — adopt EmptyState everywhere with action + secondary docs link", status: "todo" },
+  { id: "p11-campaign-collapse", label: "Phase 11 follow-up — fold /admin/campaigns/{overview,drafts,readiness,event-log,archived} + /admin/campaign-blueprints into canonical campaigns list+detail (tabs/filters), then redirect", status: "todo" },
+  { id: "p11-builder-vault", label: "Phase 11 follow-up — vault & redirect /admin/scripter, /admin/scripts, /admin/tree-editor, /admin/scriptflow once visual guide editor lands", status: "todo" },
+  { id: "p11-marketing-converge", label: "Phase 11 follow-up — audit /product, /demo, /faq, /contact for legacy story; redirect or refactor into canonical IA", status: "todo" },
+  { id: "p11-breadcrumbs", label: "Phase 11 follow-up — breadcrumb pattern Org > Workspace > Campaign > Guide on nested pages", status: "todo" },
+  { id: "p11-legacy-route-sweep", label: "Phase 11 follow-up — final pass to delete redirects past their grace window (one release after Phase 11)", status: "todo" },
 ];
 
 const NON_GOALS = [
