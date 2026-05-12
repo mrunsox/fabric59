@@ -233,9 +233,9 @@ const App = () => (
                 <Route path="templates" element={<TemplatesPage />} />
                 <Route path="templates/:id" element={<TemplateDetailPage />} />
 
-                {/* Five9 (top-level) */}
+                {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
                 <Route path="five9" element={<Five9Page />} />
-                <Route path="five9/legacy" element={<Five9OverviewPage />} />
+                <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
                 <Route path="five9/campaign-builder" element={<CampaignBuilderPage />} />
                 <Route path="five9/campaign-builder/:draftId" element={<CampaignBuilderPage />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
