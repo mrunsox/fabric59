@@ -59,19 +59,26 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
     exit: "workspaces table live with backfill; WorkspaceContext sources from DB; /app/workspaces/:id/clients resolves via workspace context; /admin/* untouched.",
   },
   {
-    id: "p3", name: "Phase 3 — Canonical campaigns", status: "in_progress",
+    id: "p3", name: "Phase 3 — Canonical campaigns", status: "done",
     objectives:
       "Introduce canonical workspace-owned `campaigns` table with status enum (draft/ready/live/paused/archived). " +
       "One-way mirror trigger from legacy `campaign_setups` keeps both surfaces in sync. " +
       "Canonical list/detail/new pages live under /app/workspaces/:id/campaigns. " +
       "CampaignIntakePage chosen as the canonical surviving creation flow.",
     exit:
-      "campaigns table backfilled and live; canonical list+detail+new routed under workspace; legacy /admin/campaigns* preserved as compatibility writers; other legacy campaign tables (drafts, archives, blueprints, scripts, legal_connect_campaigns, five9_campaign_routes) untouched and queued for Phase 4+.",
+      "campaigns table backfilled and live; canonical list+detail+new routed under workspace; legacy /admin/campaigns* preserved as compatibility writers.",
   },
   {
-    id: "p4", name: "Phase 4 — Guides", status: "todo",
-    objectives: "Promote surviving script builder into the canonical Guide artifact. Vault duplicate builders.",
-    exit: "One guide builder; tree-editor / scripter / scriptflow vaulted; guides assignable to campaigns.",
+    id: "p4", name: "Phase 4 — Guides", status: "in_progress",
+    objectives:
+      "Canonical workspace-owned `guides` table + `guide_versions` (status enum draft/published/archived). " +
+      "One-way mirror trigger `mirror_script_to_guide` backfills/syncs from legacy `scripts`. " +
+      "Canonical list/detail/edit/preview routes under /app/workspaces/:id/guides. " +
+      "ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical surviving builder; " +
+      "TreeEditor, Scripter, ScriptFlowHub, ScriptRouting remain as compatibility/deferred surfaces. " +
+      "Guide-to-campaign assignment via guides.campaign_id (0..1 campaign per guide; many guides per campaign).",
+    exit:
+      "guides + guide_versions live with backfill from scripts; canonical workspace guide routes live; ScriptBuilderPage promoted as survivor; legacy script surfaces routable but de-surfaced; campaign assignment functional under workspace scope.",
   },
   {
     id: "p5", name: "Phase 5 — Forms (new)", status: "todo",
@@ -175,6 +182,14 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p3-canonical-create", label: "Phase 3 — CampaignIntakePage chosen as the canonical surviving creation flow", status: "done" },
   { id: "p3-other-tables", label: "Phase 3 follow-up — fold campaign_archives/blueprints/builder_drafts/scripts/legal_connect_campaigns/five9_campaign_routes into canonical model", status: "todo" },
   { id: "p3-write-canonical", label: "Phase 3 follow-up — canonical write path (insert into campaigns directly, deprecate campaign_setups writes)", status: "todo" },
+  { id: "p4-guides-table", label: "Phase 4 — canonical guides + guide_versions tables (workspace-owned, RLS, status enum)", status: "done" },
+  { id: "p4-mirror-trigger", label: "Phase 4 — one-way mirror trigger scripts → guides + backfill", status: "done" },
+  { id: "p4-routes", label: "Phase 4 — /app/workspaces/:id/guides list+detail+edit+preview live", status: "done" },
+  { id: "p4-survivor", label: "Phase 4 — ScriptBuilderPage promoted as canonical builder survivor", status: "done" },
+  { id: "p4-assignment", label: "Phase 4 — guide-to-campaign assignment via guides.campaign_id", status: "done" },
+  { id: "p4-write-canonical", label: "Phase 4 follow-up — native canonical guide create + edit (no script bridge)", status: "todo" },
+  { id: "p4-vault-legacy", label: "Phase 4 follow-up — vault TreeEditor / Scripter / ScriptFlowHub / ScriptRouting once canonical builder is feature-complete", status: "todo" },
+  { id: "p4-version-publish", label: "Phase 4 follow-up — canonical publish path writes guide_versions (current-version flag, rollback)", status: "todo" },
 ];
 
 const NON_GOALS = [
@@ -378,6 +393,70 @@ export default function OutlinePage() {
               <h3 className="text-sm font-semibold text-foreground mt-6">Stub integration surfaces</h3>
               <ul className="list-disc pl-5 space-y-1 text-xs">
                 {STUB_INTEGRATIONS.map((s) => <li key={s}>{s}</li>)}
+              </ul>
+            </Section>
+
+            <Section id="phase-4-decisions" title="12. Phase 4 — Guide consolidation decisions">
+              <h3 className="text-sm font-semibold text-foreground">Current guide / script fragmentation</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs font-mono">
+                <li>/admin/scripts</li>
+                <li>/admin/scripts/:id</li>
+                <li>/admin/scripts/:scriptId/builder ← <span className="not-italic font-sans text-primary">canonical builder survivor</span></li>
+                <li>/admin/scripter</li>
+                <li>/admin/tree-editor</li>
+                <li>/admin/tree-editor/:scriptId</li>
+                <li>/admin/scriptflow</li>
+                <li>/admin/script-routing</li>
+                <li>tables: scripts, script_versions, script_node_links, script_sessions, script_templates, campaign_scripts</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Canonical disposition</h3>
+              <table className="w-full text-xs border-collapse">
+                <thead><tr className="border-b"><th className="text-left p-2">Surface / table</th><th className="text-left p-2">Status</th><th className="text-left p-2">Notes</th></tr></thead>
+                <tbody>
+                  {[
+                    { s: "guides + guide_versions", k: "Canonical (new)", n: "Workspace-owned. RLS via is_workspace_member / is_org_owner_or_admin." },
+                    { s: "/app/workspaces/:id/guides{,/:id,/edit,/preview}", k: "Canonical", n: "Phase 4 routes." },
+                    { s: "/admin/scripts/:scriptId/builder (ScriptBuilderPage)", k: "Canonical builder survivor", n: "Edit route deep-links here for guides sourced from legacy scripts." },
+                    { s: "scripts table", k: "Compatibility writer", n: "Mirror trigger mirror_script_to_guide → guides; backfill ran in Phase 4 migration." },
+                    { s: "/admin/scripts, /admin/scripts/:id", k: "Compatibility (routable, de-surfaced)", n: "Used by ScriptBuilderPage navigation." },
+                    { s: "/admin/scripter", k: "Deferred", n: "Routable; merge target into canonical builder; vault later." },
+                    { s: "/admin/tree-editor{,/:scriptId}", k: "Deferred", n: "Routable; vault after canonical builder is feature-complete." },
+                    { s: "/admin/scriptflow", k: "Deferred", n: "Routable; merge target." },
+                    { s: "/admin/script-routing", k: "Deferred", n: "Routable; campaign↔guide assignment now lives on canonical guide detail." },
+                    { s: "script_node_links / script_sessions / script_templates", k: "Untouched", n: "Phase 5+ template unification will revisit." },
+                  ].map((r) => (
+                    <tr key={r.s} className="border-b border-border/40">
+                      <td className="p-2 font-mono text-[11px] text-muted-foreground">{r.s}</td>
+                      <td className="p-2">{r.k}</td>
+                      <td className="p-2">{r.n}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Guide ↔ Campaign assignment</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Field: <span className="font-mono">guides.campaign_id</span> (nullable FK → campaigns).</li>
+                <li>Cardinality: 0..1 campaign per guide; many guides per campaign.</li>
+                <li>Surface: <span className="font-mono">/app/workspaces/:id/guides/:guideId</span> exposes a campaign select.</li>
+                <li>Workspace scoping enforced by RLS on both <span className="font-mono">guides</span> and <span className="font-mono">campaigns</span>.</li>
+                <li>Long-term: if richer assignment metadata (priority, conditions, A/B) is needed, promote to a <span className="font-mono">campaign_guides</span> join table; for Phase 4 the inline FK is sufficient.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Versioning foundation</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Status enum: <span className="font-mono">draft | published | archived</span>.</li>
+                <li><span className="font-mono">guides.current_version</span> tracks the live version number.</li>
+                <li><span className="font-mono">guide_versions</span> stores immutable content snapshots with <span className="font-mono">is_current</span> flag.</li>
+                <li>Canonical publish path that writes <span className="font-mono">guide_versions</span> + flips <span className="font-mono">is_current</span> is a Phase 4 follow-up; legacy publish via ScriptBuilderPage continues for now and re-mirrors via the trigger.</li>
+              </ul>
+
+              <h3 className="text-sm font-semibold text-foreground mt-6">Phase 5 prerequisites</h3>
+              <ul className="list-disc pl-5 space-y-1 text-xs">
+                <li>Native canonical guide create/edit (no script bridge) so Forms can attach to canonical guides directly.</li>
+                <li>Stable <span className="font-mono">guide_versions</span> publish/rollback path so Forms can target a version.</li>
+                <li>Decision on whether <span className="font-mono">script_templates</span> folds into the unified Templates phase or stays guide-local.</li>
               </ul>
             </Section>
           </div>

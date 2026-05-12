@@ -2236,6 +2236,107 @@ export type Database = {
           },
         ]
       }
+      guide_versions: {
+        Row: {
+          content: Json
+          created_at: string
+          created_by: string | null
+          guide_id: string
+          id: string
+          is_current: boolean
+          version: number
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          guide_id: string
+          id?: string
+          is_current?: boolean
+          version: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          guide_id?: string
+          id?: string
+          is_current?: boolean
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_versions_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guides: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          created_by: string | null
+          current_version: number
+          description: string | null
+          id: string
+          metadata: Json
+          name: string
+          source_id: string | null
+          source_type: string | null
+          status: Database["public"]["Enums"]["guide_status"]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_version?: number
+          description?: string | null
+          id?: string
+          metadata?: Json
+          name: string
+          source_id?: string | null
+          source_type?: string | null
+          status?: Database["public"]["Enums"]["guide_status"]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_version?: number
+          description?: string | null
+          id?: string
+          metadata?: Json
+          name?: string
+          source_id?: string | null
+          source_type?: string | null
+          status?: Database["public"]["Enums"]["guide_status"]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guides_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guides_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       identity_xrefs: {
         Row: {
           external_id: string
@@ -8744,6 +8845,10 @@ export type Database = {
         Args: { _legacy: string }
         Returns: Database["public"]["Enums"]["campaign_status"]
       }
+      map_legacy_script_status: {
+        Args: { _legacy: string }
+        Returns: Database["public"]["Enums"]["guide_status"]
+      }
       user_has_permission: {
         Args: { _org_id: string; _permission: string; _user_id: string }
         Returns: boolean
@@ -8777,6 +8882,7 @@ export type Database = {
         | "dead_lettered"
       five9_domain_status: "active" | "inactive" | "pending_verification"
       five9_ownership_mode: "client" | "workspace"
+      guide_status: "draft" | "published" | "archived"
       legal_connect_readiness:
         | "draft"
         | "setup_in_progress"
@@ -8970,6 +9076,7 @@ export const Constants = {
       ],
       five9_domain_status: ["active", "inactive", "pending_verification"],
       five9_ownership_mode: ["client", "workspace"],
+      guide_status: ["draft", "published", "archived"],
       legal_connect_readiness: [
         "draft",
         "setup_in_progress",
