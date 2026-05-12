@@ -149,7 +149,7 @@ const App = () => (
             <Route path="/system-access" element={<SystemAccessPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/outline" element={<OutlinePage />} />
+            {/* CANONICAL: /outline is now an internal master-admin doc (see MasterProtectedRoute below). */}
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
@@ -201,7 +201,11 @@ const App = () => (
                 <Route path="call-flow" element={<CallFlowPage />} />
                 <Route path="dev-guide" element={<DevGuidePage />} />
                 <Route path="test-cases" element={<TestCasesPage />} />
+                {/* CANONICAL: internal build doc, no longer public. */}
+                <Route path="docs/outline" element={<OutlinePage />} />
               </Route>
+              {/* CANONICAL: gated /outline — same component, master-admin only. */}
+              <Route path="/outline" element={<OutlinePage />} />
             </Route>
 
             {/* Protected routes */}
@@ -229,12 +233,14 @@ const App = () => (
                 <Route path="templates" element={<TemplatesPage />} />
                 <Route path="templates/:id" element={<TemplateDetailPage />} />
 
-                {/* Five9 (top-level) */}
+                {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
                 <Route path="five9" element={<Five9Page />} />
-                <Route path="five9/legacy" element={<Five9OverviewPage />} />
+                <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
                 <Route path="five9/campaign-builder" element={<CampaignBuilderPage />} />
                 <Route path="five9/campaign-builder/:draftId" element={<CampaignBuilderPage />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
+                {/* CANONICAL: campaign cluster — collapses into one canonical campaigns entity in Phase 3.
+                    Kept routable until then; de-surfaced from primary nav. */}
                 <Route path="campaigns/overview" element={<CampaignsOverviewPage />} />
                 <Route path="campaigns/drafts" element={<CampaignDraftsPage />} />
                 <Route path="campaigns/readiness" element={<CampaignReadinessBoardPage />} />
@@ -257,10 +263,12 @@ const App = () => (
                 <Route path="mappings/builder/:id" element={<MappingBuilderPage />} />
                 <Route path="logs" element={<ApiLogsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
-                <Route path="tenants" element={<TenantsPage />} />
+                {/* CANONICAL: tenants -> clients (UI label only; DB stays tenant*). */}
+                <Route path="tenants" element={<Navigate to="/admin/clients" replace />} />
                 <Route path="agents" element={<AgentsPage />} />
                 <Route path="dispositions" element={<DispositionsPage />} />
-                <Route path="integrations" element={<IntegrationsPage />} />
+                {/* CANONICAL: integrations folded into connectors (Phase 1). */}
+                <Route path="integrations" element={<Navigate to="/admin/connectors" replace />} />
                 <Route path="campaigns" element={<CampaignsPage />} />
                 <Route path="campaigns/new" element={<CampaignIntakePage />} />
                 <Route path="campaigns/edit/:id" element={<CampaignIntakePage />} />
@@ -269,7 +277,11 @@ const App = () => (
                 <Route path="campaign-blueprints" element={<CampaignBlueprintsPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 
+                {/* CANONICAL: scripts/guides cluster — scripter, scripts, tree-editor, scriptflow,
+                    script-routing all merge into the canonical Guide artifact in Phase 4.
+                    Kept routable; de-surfaced from primary nav this pass. */}
                 <Route path="scripter" element={<ScripterPage />} />
+                {/* CANONICAL: kept routable as an active operational surface; de-surfaced from nav. */}
                 <Route path="agent-dashboard" element={<AgentDashboardPage />} />
                 <Route path="supervisor" element={<SupervisorPage />} />
                 <Route path="qa" element={<QAAnalyticsPage />} />
