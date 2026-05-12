@@ -106,7 +106,7 @@ export const FIVE9_DOCS: Five9DocTopic[] = [
       "Bind connector to disposition events",
       "Verify with a test call",
     ],
-    routes: ["/admin/integrations", "/admin/domains", "/admin/legal-connect"],
+    routes: ["/admin/connectors", "/admin/domains", "/admin/legal-connect"],
   },
 ];
 
