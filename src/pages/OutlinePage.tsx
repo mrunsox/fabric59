@@ -343,6 +343,11 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p11-builder-vault", label: "Phase 11 follow-up — vault & redirect /admin/scripter, /admin/scripts, /admin/tree-editor, /admin/scriptflow once visual guide editor lands", status: "todo" },
   { id: "p11-marketing-converge", label: "Phase 11 follow-up — audit /product, /demo, /faq, /contact for legacy story; redirect or refactor into canonical IA", status: "todo" },
   { id: "p11-breadcrumbs", label: "Phase 11 follow-up — breadcrumb pattern Org > Workspace > Campaign > Guide on nested pages", status: "todo" },
+  { id: "pa-overview-href", label: "QA Phase A — primary nav 'Overview' href points at canonical /admin (was /admin/dashboard)", status: "done" },
+  { id: "pa-shell-logo", label: "QA Phase A — AdminShell + WorkspaceShell logo/breadcrumb/back-button targets collapsed onto /admin", status: "done" },
+  { id: "pa-protectedroute-loop", label: "QA Phase A — removed ProtectedRoute member→/admin/dashboard hop (was a redirect loop after Phase 11 collapse)", status: "done" },
+  { id: "pa-redirects-verified", label: "QA Phase A — /dashboard, /admin/dashboard both redirect to /admin; /admin/agent-dashboard reachable but de-surfaced", status: "done" },
+  { id: "pa-workspace-home", label: "QA Phase A — /app/workspaces/:workspaceId/home confirmed as canonical workspace cockpit (index also resolves to it)", status: "done" },
   { id: "p11-legacy-route-sweep", label: "Phase 11 follow-up — final pass to delete redirects past their grace window (one release after Phase 11)", status: "todo" },
 ];
 
