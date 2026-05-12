@@ -216,11 +216,21 @@ export default function OutlinePage() {
             <Badge variant="outline">Master admin only</Badge>
             <Badge variant="outline" className="border-accent/40 text-accent">Source of truth</Badge>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Fabric59 — Canonical Build Doc</h1>
-          <p className="text-sm text-muted-foreground max-w-3xl">
-            Living implementation document for the Canonical Strip + Rebuild. Derived from the locked master spec.
-            This page replaces all prior outline content. Public access is removed.
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Fabric59 — Canonical Build Doc</h1>
+              <p className="text-sm text-muted-foreground max-w-3xl mt-2">
+                Living implementation document for the Canonical Strip + Rebuild. Derived from the locked master spec.
+                This page replaces all prior outline content. Public access is removed.
+              </p>
+            </div>
+            <a
+              href="/superadmin"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline whitespace-nowrap"
+            >
+              ← Back to Platform Admin
+            </a>
+          </div>
         </header>
 
         <ScrollArea className="pr-4">

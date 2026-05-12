@@ -78,6 +78,9 @@ export default function SuperadminOverviewPage() {
           <Button asChild variant="outline" size="sm">
             <Link to="/superadmin/routes">Browse advanced routes</Link>
           </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/outline">Canonical Build Doc</Link>
+          </Button>
         </CardContent>
       </Card>
 
