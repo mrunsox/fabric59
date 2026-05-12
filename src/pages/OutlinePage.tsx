@@ -59,19 +59,26 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
     exit: "workspaces table live with backfill; WorkspaceContext sources from DB; /app/workspaces/:id/clients resolves via workspace context; /admin/* untouched.",
   },
   {
-    id: "p3", name: "Phase 3 — Canonical campaigns", status: "in_progress",
+    id: "p3", name: "Phase 3 — Canonical campaigns", status: "done",
     objectives:
       "Introduce canonical workspace-owned `campaigns` table with status enum (draft/ready/live/paused/archived). " +
       "One-way mirror trigger from legacy `campaign_setups` keeps both surfaces in sync. " +
       "Canonical list/detail/new pages live under /app/workspaces/:id/campaigns. " +
       "CampaignIntakePage chosen as the canonical surviving creation flow.",
     exit:
-      "campaigns table backfilled and live; canonical list+detail+new routed under workspace; legacy /admin/campaigns* preserved as compatibility writers; other legacy campaign tables (drafts, archives, blueprints, scripts, legal_connect_campaigns, five9_campaign_routes) untouched and queued for Phase 4+.",
+      "campaigns table backfilled and live; canonical list+detail+new routed under workspace; legacy /admin/campaigns* preserved as compatibility writers.",
   },
   {
-    id: "p4", name: "Phase 4 — Guides", status: "todo",
-    objectives: "Promote surviving script builder into the canonical Guide artifact. Vault duplicate builders.",
-    exit: "One guide builder; tree-editor / scripter / scriptflow vaulted; guides assignable to campaigns.",
+    id: "p4", name: "Phase 4 — Guides", status: "in_progress",
+    objectives:
+      "Canonical workspace-owned `guides` table + `guide_versions` (status enum draft/published/archived). " +
+      "One-way mirror trigger `mirror_script_to_guide` backfills/syncs from legacy `scripts`. " +
+      "Canonical list/detail/edit/preview routes under /app/workspaces/:id/guides. " +
+      "ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical surviving builder; " +
+      "TreeEditor, Scripter, ScriptFlowHub, ScriptRouting remain as compatibility/deferred surfaces. " +
+      "Guide-to-campaign assignment via guides.campaign_id (0..1 campaign per guide; many guides per campaign).",
+    exit:
+      "guides + guide_versions live with backfill from scripts; canonical workspace guide routes live; ScriptBuilderPage promoted as survivor; legacy script surfaces routable but de-surfaced; campaign assignment functional under workspace scope.",
   },
   {
     id: "p5", name: "Phase 5 — Forms (new)", status: "todo",
