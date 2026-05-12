@@ -159,15 +159,20 @@ describe("LandingPage · SEO + OG regression", () => {
 
     // Badge labels: every Queued/Coming-soon entry should render its
     // STATUS_LABEL exactly once on the page in uppercase tracking-style.
+    // Status labels are rendered both in the Coming-soon grid and again
+    // in the legal-intake spotlight bullets — assert "at least N" so we
+    // catch missing labels without locking in render duplication.
     const queuedCount = queuedIntegrations().length;
     const comingCount = comingSoonIntegrations().length;
     if (queuedCount > 0) {
-      expect(screen.getAllByText(STATUS_LABEL.queued).length).toBe(queuedCount);
+      expect(
+        screen.getAllByText(STATUS_LABEL.queued).length,
+      ).toBeGreaterThanOrEqual(queuedCount);
     }
     if (comingCount > 0) {
-      expect(screen.getAllByText(STATUS_LABEL.coming_soon).length).toBe(
-        comingCount,
-      );
+      expect(
+        screen.getAllByText(STATUS_LABEL.coming_soon).length,
+      ).toBeGreaterThanOrEqual(comingCount);
     }
   });
 
