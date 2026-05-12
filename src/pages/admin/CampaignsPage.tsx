@@ -126,7 +126,7 @@ export default function CampaignsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {campaigns.map((c) => {
+              {filtered.map((c) => {
                 const name = c.campaign_name;
                 const loading = actionLoading[name];
                 return (
