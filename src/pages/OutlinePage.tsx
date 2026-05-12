@@ -87,7 +87,7 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "templates + template_versions live; canonical workspace template routes live; fork-into-workspace functional; legacy template pages remain mirrored writers.",
   },
   {
-    id: "p6", name: "Phase 6 — Native guide builder + publish/version", status: "in_progress",
+    id: "p6", name: "Phase 6 — Native guide builder + publish/version", status: "done",
     objectives:
       "Make Guide fully canonical in authoring lifecycle. Native canonical guide editor at " +
       "/app/workspaces/:id/guides/:id/edit (no longer primarily a bridge to ScriptBuilderPage). " +
@@ -99,23 +99,31 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "legacy ScriptBuilderPage demoted to compatibility-only for guides whose source_type='script'.",
   },
   {
-    id: "p7", name: "Phase 7 — Forms (new)", status: "todo",
+    id: "p7", name: "Phase 7 — Integrations canonical layer", status: "in_progress",
+    objectives:
+      "Canonical, workspace-owned integration substrate. New `integration_providers` registry + " +
+      "`integration_connections` (workspace+provider scoped, status, config, credentials_ref) + " +
+      "`integration_mappings` (provider-keyed identity xrefs replacing fragmented clio_mappings/mycase_mappings). " +
+      "Mirror triggers + backfill keep legacy provider-mapping writes flowing into the canonical table. " +
+      "Workspace UI at /app/workspaces/:id/integrations replaces the legacy connectors catalog as the primary surface.",
+    exit:
+      "integration_providers + integration_connections + integration_mappings live; mirror triggers + backfill from " +
+      "clio_mappings/mycase_mappings live; canonical workspace integrations list+detail live; legacy ConnectorsCatalogPage " +
+      "demoted to /integrations-legacy compatibility surface; stub provider edge functions queued for deletion.",
+  },
+  {
+    id: "p8", name: "Phase 8 — Forms (new canonical artifact)", status: "todo",
     objectives: "Build canonical Form artifact: schema, conditions, validation, mapping targets, versioning.",
     exit: "Form library + builder live; forms assignable to campaigns/guides; submissions captured.",
   },
   {
-    id: "p7", name: "Phase 7 — Integrations canonical layer", status: "todo",
-    objectives: "Provider-agnostic adapter contract behind one Integrations UI. Delete stub adapters.",
-    exit: "Single integrations surface; capability registry; sync jobs/logs/retry surfaced; no stub providers.",
-  },
-  {
-    id: "p8", name: "Phase 8 — Dashboards, QA, analytics, billing, launch polish", status: "todo",
+    id: "p9", name: "Phase 9 — Dashboards, QA, analytics, billing, launch polish", status: "todo",
     objectives: "Operator surfaces: supervisor live ops, QA scoring, workspace analytics, billing.",
     exit: "Mission-control dashboards live; QA queue functional; billing tied to canonical usage.",
   },
   {
-    id: "p9", name: "Phase 9 — AI, agent assist, polish, GA", status: "todo",
-    objectives: "Workspace-scoped AI: summaries, node suggestions, post-call automations.",
+    id: "p10", name: "Phase 10 — AI knowledge layer + agent assist + GA polish", status: "todo",
+    objectives: "Workspace-scoped AI: grounded chat, doc/URL ingestion, embeddings, editable prompts, summaries, post-call automations.",
     exit: "AI features versioned, scoped, audited; market-ready checklist green.",
   },
 ];
@@ -218,6 +226,14 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p6-bridge-demoted", label: "Phase 6 — ScriptBuilderPage demoted to compatibility-only deep link for source_type='script' guides", status: "done" },
   { id: "p6-visual-editor", label: "Phase 6 follow-up — visual node editor for native guide content (currently raw JSON surface)", status: "todo" },
   { id: "p6-vault-legacy", label: "Phase 6 follow-up — vault Scripter / TreeEditor / ScriptFlowHub / ScriptRouting once visual editor lands", status: "todo" },
+  { id: "p7-providers", label: "Phase 7 — integration_providers registry seeded (clio, mycase, five9, slack, zapier, make)", status: "done" },
+  { id: "p7-connections", label: "Phase 7 — integration_connections table (workspace-owned, RLS, status enum, config JSONB)", status: "done" },
+  { id: "p7-mappings", label: "Phase 7 — canonical integration_mappings (provider-keyed identity xrefs in JSONB)", status: "done" },
+  { id: "p7-mirror", label: "Phase 7 — mirror triggers + backfill from clio_mappings + mycase_mappings → integration_mappings", status: "done" },
+  { id: "p7-routes", label: "Phase 7 — /app/workspaces/:id/integrations list+detail live; legacy connectors catalog moved to /integrations-legacy", status: "done" },
+  { id: "p7-credentials", label: "Phase 7 follow-up — provider OAuth/API key wiring via credentials_ref to vault secrets", status: "todo" },
+  { id: "p7-sync-jobs", label: "Phase 7 follow-up — surface sync_jobs/logs/retry under canonical connection detail", status: "todo" },
+  { id: "p7-stub-deletion", label: "Phase 7 follow-up — delete ~50 stub integration edge functions (Salesforce/HubSpot/Zendesk/etc.)", status: "todo" },
 ];
 
 const NON_GOALS = [
