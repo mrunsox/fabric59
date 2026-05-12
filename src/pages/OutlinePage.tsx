@@ -339,7 +339,7 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p11-status-badge-rollout", label: "Phase 11 follow-up — adopt StatusBadge across campaigns, runs, QA, integrations, billing", status: "todo" },
   { id: "p11-data-table-rollout", label: "Phase 11 follow-up — converge ad-hoc tables onto shared DataTable component", status: "todo" },
   { id: "p11-empty-state-rollout", label: "Phase 11 follow-up — adopt EmptyState everywhere with action + secondary docs link", status: "todo" },
-  { id: "p11-campaign-collapse", label: "Phase 11 follow-up — fold /admin/campaigns/{overview,drafts,readiness,event-log,archived} + /admin/campaign-blueprints into canonical campaigns list+detail (tabs/filters), then redirect", status: "todo" },
+  { id: "p11-campaign-collapse", label: "Phase 11 follow-up — fold /admin/campaigns/{overview,drafts,readiness,event-log,archived} + /admin/campaign-blueprints into canonical campaigns list+detail (tabs/filters), then redirect", status: "done" },
   { id: "p11-builder-vault", label: "Phase 11 follow-up — vault & redirect /admin/scripter, /admin/scripts, /admin/tree-editor, /admin/scriptflow once visual guide editor lands", status: "todo" },
   { id: "p11-marketing-converge", label: "Phase 11 follow-up — audit /product, /demo, /faq, /contact for legacy story; redirect or refactor into canonical IA", status: "todo" },
   { id: "p11-breadcrumbs", label: "Phase 11 follow-up — breadcrumb pattern Org > Workspace > Campaign > Guide on nested pages", status: "todo" },
