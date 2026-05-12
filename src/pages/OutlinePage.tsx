@@ -203,6 +203,7 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p5-consume-guides", label: "Phase 5 follow-up — guides can be created from canonical guide templates", status: "todo" },
   { id: "p5-write-canonical", label: "Phase 5 follow-up — canonical native template create + edit (no legacy bridge)", status: "todo" },
   { id: "p5-vault-legacy", label: "Phase 5 follow-up — vault legacy template editors once canonical UI is feature-complete", status: "todo" },
+];
 
 const NON_GOALS = [
   "No new workspaces DB entity this phase.",
