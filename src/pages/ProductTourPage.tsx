@@ -5,8 +5,14 @@ import {
   Globe, GitFork, Building2, Lock, FileSearch, MessageSquare, UserCog, Mail,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { StructuredData } from "@/components/seo/StructuredData";
 import { MegaMenuHeader } from "@/components/marketing/MegaMenuHeader";
 import { MegaFooter } from "@/components/marketing/MegaFooter";
+import {
+  organizationLD,
+  productOverviewDescription,
+  softwareApplicationLD,
+} from "@/seo/marketingMetadata";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
