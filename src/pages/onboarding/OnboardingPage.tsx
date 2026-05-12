@@ -85,7 +85,8 @@ export default function OnboardingPage() {
 
   const handleSkip = () => {
     if (typeof window !== "undefined") localStorage.setItem(RESUME_KEY, step);
-    navigate("/admin");
+    // Phase 9: never deposit users in legacy admin sprawl on skip.
+    navigate("/onboarding/workspace");
   };
 
   const SkipFooter = () =>
