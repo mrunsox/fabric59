@@ -248,6 +248,16 @@ const App = () => (
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<OnboardingPage />} />
+              {/* Phase 9 — workspace bootstrap (lands user inside canonical workspace) */}
+              <Route
+                path="/onboarding/workspace"
+                element={
+                  <WorkspaceProvider>
+                    <WorkspaceBootstrapPage />
+                  </WorkspaceProvider>
+                }
+              />
+              
               
               {/* Admin routes */}
               <Route path="/admin" element={<AdminShell />}>
