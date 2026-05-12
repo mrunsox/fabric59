@@ -1,25 +1,21 @@
 import { Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Megaphone, Plus, ArrowRight } from "lucide-react";
+import { EmptyState } from "@/components/common/EmptyState";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
-
-const STATUS_VARIANT: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
-  ready: "bg-primary/10 text-primary",
-  live: "bg-success/10 text-success",
-  paused: "bg-warning/10 text-warning",
-  archived: "bg-muted text-muted-foreground",
-};
 
 /**
  * Canonical Workspace Campaigns — /app/workspaces/:id/campaigns (Phase 3).
  * Reads canonical `campaigns` table (workspace-scoped, RLS enforced).
+ *
+ * Phase F (UI primitive convergence): adopts shared StatusBadge + EmptyState.
  */
 export default function WorkspaceCampaignsPage() {
   const { workspace } = useWorkspace();
@@ -52,12 +48,18 @@ export default function WorkspaceCampaignsPage() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading campaigns…</p>
       ) : campaigns.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6 text-sm text-muted-foreground flex items-center gap-3">
-            <Megaphone className="h-4 w-4" />
-            No campaigns in this workspace yet. Create one to get started.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Megaphone}
+          title="No campaigns in this workspace yet"
+          description="Create your first canonical campaign to get started. Legacy campaign setups will mirror in automatically."
+          action={
+            <Button asChild size="sm">
+              <Link to={`${base}/new`}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> New campaign
+              </Link>
+            </Button>
+          }
+        />
       ) : (
         <Card>
           <Table>
@@ -79,9 +81,7 @@ export default function WorkspaceCampaignsPage() {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge className={STATUS_VARIANT[c.status] ?? ""} variant="secondary">
-                      {c.status}
-                    </Badge>
+                    <StatusBadge status={c.status} />
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {c.source_type ?? "canonical"}
