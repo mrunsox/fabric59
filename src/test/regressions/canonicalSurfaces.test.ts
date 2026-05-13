@@ -237,3 +237,129 @@ describe("Canonical surfaces · CTA guard", () => {
     expect(hits, `Stale vendor-feature claims still on public surface:\n${hits.join("\n")}`).toEqual([]);
   });
 });
+
+/**
+ * Phase G — Canonical experience rebuild assertions.
+ *
+ * Locks in the rebuilt marketing surfaces, mega menu content model, hero
+ * canonical copy, org-level admin quick-action set, and the strict no-status-
+ * badge rule on marketing capability tiles.
+ */
+describe("Phase G · canonical experience rebuild", () => {
+  const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+
+  // ---- Mega menu content model ----------------------------------------------
+  it("mega menu surfaces the 5 canonical operating motions", () => {
+    const src = read("components/marketing/MegaMenuHeader.tsx");
+    const motions = [
+      "Inbound intake",
+      "Outbound reactivation",
+      "QA and review",
+      "CRM sync and handoff",
+      "Monitoring and readiness",
+    ];
+    for (const m of motions) {
+      expect(src, `Mega menu missing canonical motion: ${m}`).toContain(m);
+    }
+    // All motions must anchor into the canonical /solutions sections.
+    expect(src).toMatch(/href:\s*["'`]\/solutions#inbound-intake/);
+    expect(src).toMatch(/href:\s*["'`]\/solutions#outbound-reactivation/);
+    expect(src).toMatch(/href:\s*["'`]\/solutions#crm-sync-handoff/);
+    expect(src).toMatch(/href:\s*["'`]\/solutions#monitoring-readiness/);
+  });
+
+  it("mega menu surfaces the 4 canonical personas", () => {
+    const src = read("components/marketing/MegaMenuHeader.tsx");
+    for (const p of ["Ops leader", "Supervisor", "Implementation / admin", "Intake / service ops owner"]) {
+      expect(src, `Mega menu missing canonical persona: ${p}`).toContain(p);
+    }
+  });
+
+  it("mega menu primary nav exposes the 5 canonical marketing surfaces", () => {
+    const src = read("components/marketing/MegaMenuHeader.tsx");
+    for (const route of ["/solutions", "/personas", "/integrations", "/pricing", "/customers"]) {
+      const re = new RegExp(`to:\\s*["'\`]${route}["'\`]`);
+      expect(src.match(re), `Missing primary nav link: ${route}`).toBeTruthy();
+    }
+  });
+
+  it("mega menu lead magnets route through /contact?topic= only (no self-serve downloads)", () => {
+    const src = read("components/marketing/MegaMenuHeader.tsx");
+    expect(src).toMatch(/\/contact\?topic=pilot-guide/);
+    expect(src).toMatch(/\/contact\?topic=intake-playbook/);
+    expect(src).toMatch(/\/contact\?topic=five9-crm-blueprint/);
+    expect(src).not.toMatch(/href:\s*["'`][^"'`]*\.(pdf|zip|docx)["'`]/i);
+    expect(src).not.toMatch(/href:\s*["'`]\/demo["'`]/);
+  });
+
+  // ---- Hero / canonical landing copy ----------------------------------------
+  it("landing hero uses the canonical operational-intelligence headline", () => {
+    const src = read("pages/LandingPage.tsx");
+    expect(src).toMatch(/Operational intelligence/);
+    expect(src).toMatch(/Five9 contact centers/);
+    expect(src).toMatch(/Multi-tenant\s+·\s+Five9-native/);
+    // Primary hero CTA goes to /contact (concierge), never /signup or /demo.
+    expect(src).toMatch(/to=["'`]\/contact["'`]/);
+    expect(src).not.toMatch(/to=["'`]\/demo["'`]/);
+  });
+
+  // ---- Quick actions canonical set -----------------------------------------
+  it("org-level quick actions are exactly the 4 canonical entries", () => {
+    const src = read("components/dashboard/QuickActionsGrid.tsx");
+    for (const t of ["View workspaces", "Open connectors", "View reports", "Open docs"]) {
+      expect(src, `Org quick action missing: ${t}`).toContain(t);
+    }
+    for (const stale of [
+      "Open Five9",
+      "Open Legal Connect",
+      "Open Scripter",
+      "Open ScriptFlow",
+      "Open Tree Editor",
+      "Open Call Flow",
+      "Open Campaign Builder",
+    ]) {
+      expect(src, `Stale quick action surfaced: ${stale}`).not.toContain(stale);
+    }
+  });
+
+  it("client-scoped quick actions retain canonical setup CTAs", () => {
+    const src = read("components/dashboard/QuickActionsGrid.tsx");
+    expect(src).toMatch(/Create campaign/);
+    expect(src).toMatch(/Connect provider/);
+    expect(src).toMatch(/Run readiness test/);
+    expect(src).toMatch(/\/admin\/clients\/\$\{clientId\}\/legal-connect/);
+  });
+
+  // ---- No status / readiness badges on marketing capability tiles -----------
+  it("CapabilityCard primitive exposes no status/readiness badge surface", () => {
+    const src = read("components/marketing/CapabilityCard.tsx");
+    expect(src).not.toMatch(/\b(status|badge|readiness|lifecycle)\??\s*:/i);
+    for (const word of ["Coming Soon", "Partial", "Beta"]) {
+      const re = new RegExp(`["'>\\s]${word}["'<\\s]`);
+      expect(src, `CapabilityCard must not render status word: ${word}`).not.toMatch(re);
+    }
+  });
+
+  it("rebuilt marketing pages render no status/readiness badges on capability tiles", () => {
+    const pages = [
+      "pages/marketing/SolutionsPage.tsx",
+      "pages/marketing/PersonasPage.tsx",
+      "pages/marketing/IntegrationsIndexPage.tsx",
+      "pages/marketing/PricingPage.tsx",
+      "pages/marketing/CustomersPage.tsx",
+    ];
+    for (const rel of pages) {
+      const src = read(rel);
+      expect(src, `${rel} must not render <StatusBadge />`).not.toMatch(/<StatusBadge\b/);
+      expect(src, `${rel} must not pass status/badge prop to a card`).not.toMatch(
+        /<CapabilityCard\b[^>]*\b(status|badge|readiness)=/,
+      );
+    }
+  });
+
+  it("integrations index removes the 'Stub' provider tile and any status pills", () => {
+    const src = read("pages/marketing/IntegrationsIndexPage.tsx");
+    expect(src, "Stub CRM tile must be gone").not.toMatch(/\bStub\b/);
+    expect(src).not.toMatch(/>\s*Coming Soon\s*</);
+  });
+});
