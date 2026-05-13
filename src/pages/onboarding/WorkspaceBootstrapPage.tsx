@@ -27,7 +27,7 @@ const FIRST_RUN = [
  * Lands a freshly onboarded user into a real canonical workspace. Prefers the
  * auto-created default workspace from the Phase 2B trigger; if none exists,
  * creates one against the user's organization, then routes to
- * /app/workspaces/:id/home.
+ * /w/:id/home.
  */
 export default function WorkspaceBootstrapPage() {
   const { organization, user, isMasterAdmin } = useAuth();
