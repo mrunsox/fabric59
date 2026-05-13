@@ -89,12 +89,13 @@ export default function SolutionsPage() {
         </section>
       }
     >
-      <PageHeader
-        eyebrow="Solutions"
-        title="Five canonical operating motions on Five9"
-        description="Real workflows shipped on the canonical Fabric59 workspace model — not slides, not theme-park demos."
-        align="center"
-      />
+      <section className="pt-20 pb-4 px-6">
+        <SectionIntro
+          eyebrow="Solutions"
+          title="Five canonical operating motions on Five9"
+          lede="Real workflows shipped on the canonical Fabric59 workspace model — not slides, not theme-park demos."
+        />
+      </section>
 
       <section className="py-16 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-5">
