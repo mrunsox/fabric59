@@ -27,7 +27,6 @@ import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } fro
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
 import WorkspaceHomePage from "@/pages/workspace/WorkspaceHomePage";
-import WorkspaceSectionPlaceholder from "@/pages/workspace/WorkspaceSectionPlaceholder";
 import WorkspaceFormsPage from "@/pages/workspace/WorkspaceFormsPage";
 import WorkspaceFormNewPage from "@/pages/workspace/WorkspaceFormNewPage";
 import WorkspaceFormDetailPage from "@/pages/workspace/WorkspaceFormDetailPage";
