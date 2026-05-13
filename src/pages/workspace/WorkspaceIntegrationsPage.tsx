@@ -34,6 +34,7 @@ const CONNECTION_STATUS_TONE: Record<string, "success" | "warning" | "danger" | 
   connected: "success",
   error: "danger",
   disabled: "warning",
+  not_connected: "neutral",
 };
 
 export default function WorkspaceIntegrationsPage() {
