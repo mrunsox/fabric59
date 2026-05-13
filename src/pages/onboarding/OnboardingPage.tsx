@@ -246,17 +246,8 @@ export default function OnboardingPage() {
     }
   };
 
-  const stepHeader = (icon: React.ReactNode, title: string, description: string) => (
-    <CardHeader className="text-center pb-2">
-      <div className="flex justify-center mb-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
-          {icon}
-        </div>
-      </div>
-      <CardTitle className="text-xl tracking-tight">{title}</CardTitle>
-      <CardDescription>{description}</CardDescription>
-    </CardHeader>
-  );
+  // Per-step bodies render inside OnboardingShell — no per-card heading.
+
 
   const stepContent: Record<Step, React.ReactNode> = {
     org: (
