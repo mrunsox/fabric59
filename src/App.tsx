@@ -494,14 +494,14 @@ const App = () => (
                   Master admins are exempt and can still inspect /org/*. */}
               <Route element={<OrgProtectedRoute />}>
                 <Route path="/org" element={<OrgShell />}>
-                  <Route index element={<OverviewPage />} />
-                  <Route path="workspaces" element={<WorkspacesPage />} />
+                  <Route index element={<OrgOverviewPage />} />
+                  <Route path="workspaces" element={<OrgWorkspacesPage />} />
                   <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
                   <Route path="connectors" element={<ConnectorsCatalogPage />} />
                   <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="settings" element={<OrgSettingsPage />} />
                   <Route path="billing" element={<BillingPage />} />
                 </Route>
               </Route>
