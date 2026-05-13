@@ -508,12 +508,12 @@ const App = () => (
                   <Route index element={<OrgOverviewPage />} />
                   <Route path="workspaces" element={<OrgWorkspacesPage />} />
                   <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
-                  <Route path="connectors" element={<ConnectorsCatalogPage />} />
-                  <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
-                  <Route path="reports" element={<ReportsPage />} />
-                  <Route path="notifications" element={<NotificationsPage />} />
+                  <Route path="connectors" element={<OrgConnectorsPage />} />
+                  <Route path="connectors/:slug" element={<OrgConnectorDetailPage />} />
+                  <Route path="reports" element={<OrgReportsPage />} />
+                  <Route path="notifications" element={<OrgNotificationsPage />} />
                   <Route path="settings" element={<OrgSettingsPage />} />
-                  <Route path="billing" element={<BillingPage />} />
+                  <Route path="billing" element={<OrgBillingPage />} />
                 </Route>
               </Route>
 
