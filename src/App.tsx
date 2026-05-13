@@ -91,9 +91,6 @@ import SupervisorPage from "@/pages/admin/SupervisorPage";
 import QAAnalyticsPage from "@/pages/admin/QAAnalyticsPage";
 import BillingPage from "@/pages/admin/BillingPage";
 import PostCallAutomationsPage from "@/pages/admin/PostCallAutomationsPage";
-import ANIBlockListPage from "@/pages/admin/ANIBlockListPage";
-import CallbackQueuePage from "@/pages/admin/CallbackQueuePage";
-import AbandonRatePage from "@/pages/admin/AbandonRatePage";
 import DataPlanePage from "@/pages/admin/DataPlanePage";
 import IdentityResolutionPage from "@/pages/admin/IdentityResolutionPage";
 import PlatformUtilitiesPage from "@/pages/admin/PlatformUtilitiesPage";
@@ -358,9 +355,6 @@ const App = () => (
                 <Route path="qa" element={<QAAnalyticsPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 <Route path="automations" element={<PostCallAutomationsPage />} />
-                <Route path="ani-blocklist" element={<ANIBlockListPage />} />
-                <Route path="callback-queue" element={<CallbackQueuePage />} />
-                <Route path="abandon-rate" element={<AbandonRatePage />} />
                 <Route path="data-plane" element={<DataPlanePage />} />
                 <Route path="identity" element={<IdentityResolutionPage />} />
                 <Route path="utilities" element={<PlatformUtilitiesPage />} />
@@ -426,9 +420,7 @@ const App = () => (
                     Legacy admin pages remain reachable under /admin/* as
                     compatibility-only; canonical QA/analytics live here. */}
                 <Route path="qa" element={<WorkspaceQaPage />} />
-                <Route path="qa-legacy" element={<QAAnalyticsPage />} />
                 <Route path="analytics" element={<WorkspaceAnalyticsPage />} />
-                <Route path="analytics-legacy" element={<ReportsPage />} />
                 <Route path="billing" element={<WorkspaceBillingPage />} />
                 {/* Phase 10 — AI knowledge layer + workspace assistant. */}
                 <Route path="knowledge" element={<WorkspaceKnowledgePage />} />
@@ -442,7 +434,6 @@ const App = () => (
                   path="integrations/:connectionId"
                   element={<WorkspaceIntegrationDetailPage />}
                 />
-                <Route path="integrations-legacy" element={<ConnectorsCatalogPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 {/* Phase 4: canonical workspace guides (workspace-scoped, mirrored from legacy scripts).
                     ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical builder

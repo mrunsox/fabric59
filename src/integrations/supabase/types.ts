@@ -1087,6 +1087,42 @@ export type Database = {
           },
         ]
       }
+      canonical_cleanup_audit: {
+        Row: {
+          actor_id: string
+          counts: Json
+          ended_at: string
+          heuristic: string
+          id: string
+          organization_id: string
+          predicate: string
+          started_at: string
+          workspace_id: string
+        }
+        Insert: {
+          actor_id: string
+          counts?: Json
+          ended_at?: string
+          heuristic: string
+          id?: string
+          organization_id: string
+          predicate: string
+          started_at?: string
+          workspace_id: string
+        }
+        Update: {
+          actor_id?: string
+          counts?: Json
+          ended_at?: string
+          heuristic?: string
+          id?: string
+          organization_id?: string
+          predicate?: string
+          started_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       clio_mappings: {
         Row: {
           contact_id: string | null
@@ -7826,6 +7862,7 @@ export type Database = {
           twilio_from_number: string | null
           updated_at: string
           webhook_url: string | null
+          workspace_id: string | null
           zapier_webhook_url: string | null
           zoom_api_key: string | null
         }
@@ -7883,6 +7920,7 @@ export type Database = {
           twilio_from_number?: string | null
           updated_at?: string
           webhook_url?: string | null
+          workspace_id?: string | null
           zapier_webhook_url?: string | null
           zoom_api_key?: string | null
         }
@@ -7940,6 +7978,7 @@ export type Database = {
           twilio_from_number?: string | null
           updated_at?: string
           webhook_url?: string | null
+          workspace_id?: string | null
           zapier_webhook_url?: string | null
           zoom_api_key?: string | null
         }
@@ -9447,6 +9486,10 @@ export type Database = {
       }
       preview_workspace_demo_data: {
         Args: { _workspace_id: string }
+        Returns: Json
+      }
+      reset_workspace_demo_data: {
+        Args: { _workspace_id: string; _confirm_token: string }
         Returns: Json
       }
       user_has_permission: {

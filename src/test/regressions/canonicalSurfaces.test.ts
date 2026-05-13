@@ -88,9 +88,6 @@ const COMPATIBILITY_ONLY = [
   "/admin/kb",
   // Workspace compatibility-only sections (de-surfaced in WORKSPACE_SECTIONS).
   // Match as suffix segments because workspace URLs are templated.
-  "integrations-legacy",
-  "qa-legacy",
-  "analytics-legacy",
   "/forms",
   "/runs",
   "/agents",
