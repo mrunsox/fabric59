@@ -56,8 +56,6 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     ],
     subNav: [
       { label: "Catalog", href: "/admin/connectors" },
-      { label: "Five9", href: "/admin/five9" },
-      { label: "Legal Connect", href: "/admin/legal-connect" },
       { label: "Mappings", href: "/admin/mappings" },
     ],
   },
