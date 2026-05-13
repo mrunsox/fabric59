@@ -515,39 +515,19 @@ export default function OnboardingPage() {
     ),
   };
 
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <SEOHead title="Concierge onboarding | Fabric59" description="Land your canonical Fabric59 workspace in four guided steps." noindex />
-      <div className="w-full max-w-4xl flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-        <div className="hidden lg:block w-60 flex-shrink-0 pt-4">
-          <div className="flex items-center gap-2.5 mb-8">
-            <Fabric59Icon size="md" />
-            <div>
-              <p className="text-sm font-bold tracking-tight text-foreground">Fabric59</p>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Concierge setup</p>
-            </div>
-          </div>
-          <OnboardingMilestones milestones={milestones} currentIndex={milestoneIndex} />
-          <div className="mt-8 rounded-xl border border-border/60 p-4 bg-muted/20">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">White-glove</p>
-            <p className="text-xs text-foreground mt-1.5 leading-snug">
-              A Fabric59 implementation specialist follows up within one business day to validate adapters, mappings, and routing before go-live.
-            </p>
-          </div>
-        </div>
+  const { heading, subheading } = STEP_HEADINGS[step];
 
-        <div className="flex-1 max-w-xl w-full mx-auto lg:mx-0">
-          <div className="flex lg:hidden items-center justify-center gap-1.5 mb-6">
-            {milestones.map((m, i) => (
-              <div
-                key={m.key}
-                className={cn("h-1.5 rounded-full transition-all", i <= milestoneIndex ? "w-8 bg-primary" : "w-4 bg-muted")}
-              />
-            ))}
-          </div>
-          <div className="animate-fade-up">{stepContent[step]}</div>
-        </div>
-      </div>
-    </div>
+  return (
+    <OnboardingShell
+      title="Concierge onboarding | Fabric59"
+      description="Land your canonical Fabric59 workspace in four guided steps."
+      steps={STEP_DEFS as unknown as { key: string; label: string; description?: string }[]}
+      activeKey={step}
+      heading={heading}
+      subheading={subheading}
+    >
+      <div className="animate-fade-up">{stepContent[step]}</div>
+    </OnboardingShell>
   );
 }
+
