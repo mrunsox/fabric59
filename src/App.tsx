@@ -133,8 +133,7 @@ import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
 import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
 import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
 // CampaignsOverviewPage + CampaignDraftsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns and /admin/campaigns?status=draft).
-import CampaignReadinessBoardPage from "@/pages/admin/CampaignReadinessBoardPage";
-import CampaignEventLogPage from "@/pages/admin/CampaignEventLogPage";
+// CampaignReadinessBoardPage + CampaignEventLogPage deleted in hard-cleanup slice.
 import TestingHubPage from "@/pages/admin/TestingHubPage";
 import MonitoringHubPage from "@/pages/admin/MonitoringHubPage";
 import DocsHubPage from "@/pages/admin/DocsHubPage";
