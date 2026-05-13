@@ -51,6 +51,11 @@ import WorkspaceBillingPage from "@/pages/workspace/WorkspaceBillingPage";
 import WorkspaceKnowledgePage from "@/pages/workspace/WorkspaceKnowledgePage";
 import WorkspaceAssistantPage from "@/pages/workspace/WorkspaceAssistantPage";
 import WorkspaceSettingsPage from "@/pages/workspace/WorkspaceSettingsPage";
+// Additive workspace-shell route completion (May 13 Canonical Build Doc §4):
+// Runs / Agents / Supervisor land inside /w/:workspaceId/* so canonical nav resolves.
+import WorkspaceRunsPage from "@/pages/workspace/WorkspaceRunsPage";
+import WorkspaceAgentsPage from "@/pages/workspace/WorkspaceAgentsPage";
+import WorkspaceSupervisorPage from "@/pages/workspace/WorkspaceSupervisorPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -451,6 +456,9 @@ const App = () => (
                 <Route path="templates" element={<WorkspaceTemplatesPage />} />
                 <Route path="templates/:templateId" element={<WorkspaceTemplateDetailPage />} />
                 <Route path="qa" element={<WorkspaceQaPage />} />
+                <Route path="runs" element={<WorkspaceRunsPage />} />
+                <Route path="agents" element={<WorkspaceAgentsPage />} />
+                <Route path="supervisor" element={<WorkspaceSupervisorPage />} />
                 <Route path="analytics" element={<WorkspaceAnalyticsPage />} />
                 <Route path="integrations" element={<WorkspaceIntegrationsPage />} />
                 <Route path="integrations/:connectionId" element={<WorkspaceIntegrationDetailPage />} />
