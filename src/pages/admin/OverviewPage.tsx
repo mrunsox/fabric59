@@ -5,6 +5,8 @@ import { ReadinessChecklist } from "@/components/dashboard/ReadinessChecklist";
 import { AIGuidanceCard } from "@/components/dashboard/AIGuidanceCard";
 import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
 import { SystemHealthStrip } from "@/components/dashboard/SystemHealthStrip";
+import { WorkspaceSnapshotPanel } from "@/components/dashboard/WorkspaceSnapshotPanel";
+import { ConnectorsReportsPanel } from "@/components/dashboard/ConnectorsReportsPanel";
 import { OnboardingResumeCard } from "@/components/onboarding/OnboardingResumeCard";
 import { fetchClientReadiness, type ClientReadiness } from "@/lib/readiness/computeCampaignReadiness";
 import { Building2 } from "lucide-react";
