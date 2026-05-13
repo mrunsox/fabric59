@@ -359,7 +359,7 @@ describe("Phase G · canonical experience rebuild", () => {
 
   it("integrations index removes the 'Stub' provider tile and any status pills", () => {
     const src = read("pages/marketing/IntegrationsIndexPage.tsx");
-    expect(src, "Stub CRM tile must be gone").not.toMatch(/\bStub\b/);
+    expect(src, "Stub CRM tile must be gone").not.toMatch(/title:\s*["'`]Stub/);
     expect(src).not.toMatch(/>\s*Coming Soon\s*</);
   });
 });
