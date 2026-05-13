@@ -17,13 +17,9 @@ import {
   ClipboardCheck,
   Workflow,
   Activity,
-  ShieldCheck,
   Headphones,
   Wrench,
   Scale,
-  BookOpen,
-  FileText,
-  PlayCircle,
   Building2,
   ArrowRight,
   Menu,
@@ -72,22 +68,8 @@ const personaRoles = [
   { icon: Scale, title: "Intake / service ops owner", desc: "Per-disposition routing, downstream handoff.", href: "/personas#intake-owner" },
 ];
 
-// Lead magnets — Phase G ships these as /contact?topic=<slug> only.
-const leadMagnets = [
-  { icon: FileText, title: "Pilot guide", desc: "How a Fabric59 pilot is scoped and run.", href: "/contact?topic=pilot-guide" },
-  { icon: BookOpen, title: "Intake playbook", desc: "Decision-tree intake patterns we ship.", href: "/contact?topic=intake-playbook" },
-  { icon: PlayCircle, title: "Five9 + CRM blueprint", desc: "Reference architecture for telephony→CRM.", href: "/contact?topic=five9-crm-blueprint" },
-];
-
-const resourceLinks = [
-  { label: "Trust", href: "/trust" },
-  { label: "Customers", href: "/customers" },
-  { label: "Docs", href: "/contact?topic=docs" },
-];
-
+// Canonical primary nav after the mega menus. No duplicates of mega-menu triggers.
 const primaryLinks = [
-  { to: "/solutions", label: "Solutions" },
-  { to: "/personas", label: "Personas" },
   { to: "/integrations", label: "Integrations" },
   { to: "/pricing", label: "Pricing" },
   { to: "/customers", label: "Customers" },
@@ -112,8 +94,8 @@ export function MegaMenuHeader() {
         scrolled ? "border-border/70 bg-background/95 shadow-sm" : "border-border/40 bg-background/80"
       }`}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
-        <Link to="/" aria-label="Fabric59 home">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-6 px-6 py-3">
+        <Link to="/" aria-label="Fabric59 home" className="shrink-0 whitespace-nowrap">
           <Fabric59Logo iconSize="md" />
         </Link>
 
@@ -178,45 +160,6 @@ export function MegaMenuHeader() {
               </NavigationMenuContent>
             </NavigationMenuItem>
 
-            {/* Resources panel */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className="bg-transparent text-muted-foreground hover:text-foreground data-[state=open]:text-foreground text-sm">
-                Resources
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <div className="w-[640px] grid grid-cols-[1fr_220px] gap-6 p-6">
-                  <div className="space-y-1">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-3 mb-1">
-                      Lead with intent
-                    </div>
-                    {leadMagnets.map((item) => (
-                      <Link
-                        key={item.title}
-                        to={item.href}
-                        className="group flex items-start gap-3 rounded-lg p-3 hover:bg-muted/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                      >
-                        <div className="h-9 w-9 rounded-md bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
-                          <item.icon className="h-4 w-4 text-accent" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-foreground">{item.title}</div>
-                          <div className="text-xs text-muted-foreground leading-relaxed mt-0.5">{item.desc}</div>
-                        </div>
-                      </Link>
-                    ))}
-                    <div className="border-t border-border/50 mt-2 pt-2 px-3 flex flex-wrap gap-x-4 gap-y-1.5">
-                      {resourceLinks.map((r) => (
-                        <Link key={r.label} to={r.href} className="text-xs text-muted-foreground hover:text-foreground">
-                          {r.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                  <CtaColumn />
-                </div>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-
             {/* Direct primary links */}
             {primaryLinks.map((item) => (
               <NavigationMenuItem key={item.to}>
@@ -232,7 +175,7 @@ export function MegaMenuHeader() {
         </NavigationMenu>
 
         {/* CTA */}
-        <div className="hidden lg:flex items-center gap-2">
+        <div className="hidden lg:flex items-center gap-2 shrink-0">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/login">Sign in</Link>
           </Button>
@@ -254,7 +197,6 @@ export function MegaMenuHeader() {
             <div className="flex flex-col gap-6 mt-8">
               <MobileGroup label="Solutions" items={solutionMotions} onPick={() => setMobileOpen(false)} />
               <MobileGroup label="Personas" items={personaRoles} onPick={() => setMobileOpen(false)} />
-              <MobileGroup label="Resources" items={leadMagnets} onPick={() => setMobileOpen(false)} />
 
               <div className="space-y-1">
                 {primaryLinks.map((item) => (
@@ -265,11 +207,6 @@ export function MegaMenuHeader() {
                     className="block py-2 text-sm font-medium text-foreground"
                   >
                     {item.label}
-                  </Link>
-                ))}
-                {resourceLinks.map((r) => (
-                  <Link key={r.label} to={r.href} onClick={() => setMobileOpen(false)} className="block py-2 text-sm text-muted-foreground">
-                    {r.label}
                   </Link>
                 ))}
               </div>
