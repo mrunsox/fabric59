@@ -12,6 +12,10 @@ import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
 import WorkspaceHomePage from "@/pages/workspace/WorkspaceHomePage";
 import WorkspaceSectionPlaceholder from "@/pages/workspace/WorkspaceSectionPlaceholder";
+import WorkspaceFormsPage from "@/pages/workspace/WorkspaceFormsPage";
+import WorkspaceFormNewPage from "@/pages/workspace/WorkspaceFormNewPage";
+import WorkspaceFormDetailPage from "@/pages/workspace/WorkspaceFormDetailPage";
+import WorkspaceResetPreviewPage from "@/pages/workspace/WorkspaceResetPreviewPage";
 import WorkspaceClientsPage from "@/pages/workspace/WorkspaceClientsPage";
 import WorkspaceCampaignsPage from "@/pages/workspace/WorkspaceCampaignsPage";
 import WorkspaceCampaignDetailPage from "@/pages/workspace/WorkspaceCampaignDetailPage";
@@ -449,15 +453,10 @@ const App = () => (
                 <Route path="guides/:guideId" element={<WorkspaceGuideDetailPage />} />
                 <Route path="guides/:guideId/edit" element={<WorkspaceGuideEditPage />} />
                 <Route path="guides/:guideId/preview" element={<WorkspaceGuidePreviewPage />} />
-                <Route
-                  path="forms"
-                  element={
-                    <WorkspaceSectionPlaceholder
-                      label="Forms"
-                      rationale="The canonical Forms builder is a new surface introduced in Phase 5."
-                    />
-                  }
-                />
+                <Route path="forms" element={<WorkspaceFormsPage />} />
+                <Route path="forms/new" element={<WorkspaceFormNewPage />} />
+                <Route path="forms/:formId" element={<WorkspaceFormDetailPage />} />
+                <Route path="reset" element={<WorkspaceResetPreviewPage />} />
               </Route>
             </Route>
 
