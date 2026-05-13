@@ -1,5 +1,5 @@
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
-import { PageHeader } from "@/components/ui/page-header";
+
 import { SectionIntro } from "@/components/marketing/SectionIntro";
 import { CapabilityCard } from "@/components/marketing/CapabilityCard";
 import { CtaRow } from "@/components/marketing/CtaRow";
