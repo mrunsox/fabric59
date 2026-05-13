@@ -34,6 +34,7 @@ import WorkspaceFormNewPage from "@/pages/workspace/WorkspaceFormNewPage";
 import WorkspaceFormDetailPage from "@/pages/workspace/WorkspaceFormDetailPage";
 import WorkspaceResetPreviewPage from "@/pages/workspace/WorkspaceResetPreviewPage";
 import WorkspaceClientsPage from "@/pages/workspace/WorkspaceClientsPage";
+import WorkspaceClientDetailPage from "@/pages/workspace/WorkspaceClientDetailPage";
 import WorkspaceCampaignsPage from "@/pages/workspace/WorkspaceCampaignsPage";
 import WorkspaceCampaignDetailPage from "@/pages/workspace/WorkspaceCampaignDetailPage";
 import WorkspaceCampaignNewPage from "@/pages/workspace/WorkspaceCampaignNewPage";
