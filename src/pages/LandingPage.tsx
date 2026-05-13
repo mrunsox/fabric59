@@ -197,29 +197,24 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Available Now */}
-        <section id="available-now" className="py-24 border-t border-border/30">
+        {/* Capability categories */}
+        <section id="capabilities" className="py-24 border-t border-border/30">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-14">
-              <Badge className="mb-4 bg-primary/10 text-primary border-primary/30">Available now</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">What ships today</h2>
+              <Badge className="mb-4 bg-primary/10 text-primary border-primary/30">Platform</Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">What Fabric59 covers</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Every capability below is live in production for active engagements. No mockups, no vapor.
+                Six capability categories sit on top of your Five9 footprint and the systems your business already runs.
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {availableNow.map((item, i) => (
+              {capabilityCategories.map((item, i) => (
                 <motion.div key={item.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
                   <Card className="border-border/50 bg-card/60 h-full hover:border-primary/40 transition-colors">
                     <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <item.icon className="h-5 w-5 text-primary" />
-                        </div>
-                        <Badge variant="secondary" className="text-[10px] uppercase tracking-wide bg-success/10 text-success border-success/30">
-                          Available now
-                        </Badge>
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                        <item.icon className="h-5 w-5 text-primary" />
                       </div>
                       <h3 className="font-semibold text-base mb-2">{item.title}</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
