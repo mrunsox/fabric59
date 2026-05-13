@@ -405,7 +405,7 @@ const App = () => (
                   </WorkspaceProvider>
                 }
               />
-              <Route path="/app/workspaces/:workspaceId" element={<WorkspaceShell />}>
+              <Route path="/app/workspaces/:workspaceId" element={<LegacyWorkspaceShell />}>
                 {/* CANONICAL (Phase 11): /home is the only surfaced workspace home; index redirects. */}
                 <Route index element={<Navigate to="home" replace />} />
                 <Route path="home" element={<WorkspaceHomePage />} />
