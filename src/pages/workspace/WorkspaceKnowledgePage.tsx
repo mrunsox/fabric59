@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Database, Sparkles, ShieldCheck } from "lucide-react";
 import { KpiCard } from "@/components/common/KpiCard";
 import { EmptyState } from "@/components/common/EmptyState";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import {
   useWorkspaceAiConfig,
   useUpdateWorkspaceAiConfig,
