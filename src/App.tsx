@@ -306,7 +306,7 @@ const App = () => (
                 <Route path="templates/:id" element={<TemplateDetailPage />} />
 
                 {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
-                <Route path="five9" element={<Five9Page />} />
+                <Route path="five9" element={<Five9OverviewPage />} />
                 <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
                 {/* VAULTED: legacy-five9-campaign-builder → canonical /admin/campaigns/new */}
                 <Route path="five9/campaign-builder" element={<Navigate to="/admin/campaigns/new" replace />} />
