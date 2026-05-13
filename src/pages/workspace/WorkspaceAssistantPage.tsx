@@ -17,6 +17,7 @@ import {
   useWorkspaceAiConversations,
   useWorkspaceAiMessages,
 } from "@/hooks/useWorkspaceAi";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 
 export default function WorkspaceAssistantPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
