@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   Loader2, ArrowRight, Check, Globe, Building2, Building,
@@ -126,10 +126,6 @@ export default function OnboardingPage() {
     if (!workspaceName && organization?.name) setWorkspaceName(`${organization.name} workspace`);
   }, [organization?.name, workspaceName]);
 
-  const milestoneIndex = useMemo(() => {
-    const map: Record<Step, number> = { org: 0, profile: 1, telephony: 2, land: 3 };
-    return map[step];
-  }, [step]);
 
   const orgId = createdOrgId || organization?.id || null;
 
