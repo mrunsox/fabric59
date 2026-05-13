@@ -50,7 +50,9 @@ import SystemAccessPage from "@/pages/auth/SystemAccessPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import OnboardingPage from "@/pages/onboarding/OnboardingPage";
-import WorkspaceBootstrapPage from "@/pages/onboarding/WorkspaceBootstrapPage";
+// Phase 2 — WorkspaceBootstrapPage no longer routed; /onboarding/workspace
+// redirects into /onboarding (which already owns the workspace bootstrap step).
+// File retained on disk for historical reference and a future cleanup pass.
 import AcceptInvitePage from "@/pages/auth/AcceptInvitePage";
 import OutlinePage from "@/pages/OutlinePage";
 // Phase 1 — canonical marketing HomePage (mounted at "/").
