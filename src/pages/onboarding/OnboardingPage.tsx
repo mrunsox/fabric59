@@ -252,11 +252,6 @@ export default function OnboardingPage() {
   const stepContent: Record<Step, React.ReactNode> = {
     org: (
       <Card className="card-elevated border-0 shadow-lg">
-        {stepHeader(
-          <Building className="h-7 w-7 text-primary" />,
-          "Name your organization",
-          "Your operating tenant — owns workspaces, clients, integrations, and reporting.",
-        )}
         <form onSubmit={handleCreateOrg}>
           <CardContent className="space-y-4 pt-2">
             <div className="space-y-2">
@@ -287,11 +282,6 @@ export default function OnboardingPage() {
 
     profile: (
       <Card className="card-elevated border-0 shadow-lg">
-        {stepHeader(
-          <Users className="h-7 w-7 text-primary" />,
-          "Tell us how you operate",
-          "Your role, telephony ownership, and the motion you want to land first. We tailor your workspace home to match.",
-        )}
         <CardContent className="space-y-5 pt-2">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your role</p>
@@ -405,11 +395,6 @@ export default function OnboardingPage() {
 
     telephony: (
       <Card className="card-elevated border-0 shadow-lg">
-        {stepHeader(
-          <Globe className="h-7 w-7 text-primary" />,
-          "Connect Five9 (optional)",
-          "Drop in admin credentials now or skip — your concierge can wire this up with you later.",
-        )}
         <form onSubmit={handleConnectFive9}>
           <CardContent className="space-y-4 pt-2">
             <div className="space-y-2">
@@ -487,11 +472,6 @@ export default function OnboardingPage() {
 
     land: (
       <Card className="card-elevated border-0 shadow-lg">
-        {stepHeader(
-          <Sparkles className="h-7 w-7 text-primary" />,
-          "Land your workspace",
-          "Workspaces are the canonical operating boundary — clients, scripts, integrations, QA, and analytics live here.",
-        )}
         <CardContent className="space-y-4 pt-2">
           <div className="space-y-2">
             <Label htmlFor="ws-name">Workspace name</Label>
