@@ -199,6 +199,12 @@ describe("Canonical surfaces · CTA guard", () => {
     expect(overview).not.toMatch(/Command Center/);
   });
 
+  it("admin overview cockpit mounts the canonical workspace + connectors/reports panels", () => {
+    const overview = fs.readFileSync(path.join(ROOT, "pages/admin/OverviewPage.tsx"), "utf8");
+    expect(overview).toMatch(/<WorkspaceSnapshotPanel\b/);
+    expect(overview).toMatch(/<ConnectorsReportsPanel\b/);
+  });
+
   it("admin shell header uses canonical Docs and Assistant labels", () => {
     const shell = fs.readFileSync(path.join(ROOT, "components/layout/AdminShell.tsx"), "utf8");
     expect(shell).not.toMatch(/Five9 Docs/);
