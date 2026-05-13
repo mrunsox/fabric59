@@ -177,11 +177,55 @@ describe("Canonical surfaces · CTA guard", () => {
     expect(home).not.toMatch(/(?<!SURFACED_)WORKSPACE_SECTIONS\.filter/);
   });
 
-  it("admin quick actions point at canonical campaign + connector routes", () => {
+  it("admin org-level quick actions surface canonical org destinations only", () => {
     const qa = fs.readFileSync(path.join(ROOT, "components/dashboard/QuickActionsGrid.tsx"), "utf8");
-    expect(qa).toMatch(/\/admin\/campaigns\/new/);
+    // Org-level (no clientId) canonical set: workspaces, connectors, reports, docs.
+    expect(qa).toMatch(/\/admin\/workspaces/);
     expect(qa).toMatch(/\/admin\/connectors/);
+    expect(qa).toMatch(/\/admin\/reports/);
+    expect(qa).toMatch(/\/admin\/docs/);
+    // Client-scoped variant retains operational setup actions.
+    expect(qa).toMatch(/\/admin\/campaigns\/new/);
+    // Vendor-specific or compat targets must not surface as quick actions.
     expect(qa).not.toMatch(/\/admin\/five9\/campaign-builder/);
     expect(qa).not.toMatch(/href:\s*["'`]\/admin\/legal-connect["'`]/);
+  });
+
+  it("admin overview header uses canonical Organization Overview language", () => {
+    const overview = fs.readFileSync(path.join(ROOT, "pages/admin/OverviewPage.tsx"), "utf8");
+    expect(overview).toMatch(/Organization Overview/);
+    expect(overview).not.toMatch(/Command Center/);
+  });
+
+  it("admin shell header uses canonical Docs and Assistant labels", () => {
+    const shell = fs.readFileSync(path.join(ROOT, "components/layout/AdminShell.tsx"), "utf8");
+    expect(shell).not.toMatch(/Five9 Docs/);
+    expect(shell).not.toMatch(/AI Guide/);
+    expect(shell).toMatch(/>Docs</);
+    expect(shell).toMatch(/>Assistant</);
+  });
+
+  it("public marketing surfaces no longer advertise dropped vendor-feature tiles", () => {
+    const files = [
+      "components/marketing/MegaMenuHeader.tsx",
+      "components/marketing/MegaFooter.tsx",
+      "pages/LandingPage.tsx",
+    ];
+    const stalePhrases = [
+      "Five9 SOAP integration",
+      "Multi-domain Five9 management",
+      "Multi-domain Five9",
+      "Disposition email engine",
+      "AI Call Flow builder",
+      "Campaign blueprints",
+    ];
+    const hits: string[] = [];
+    for (const rel of files) {
+      const src = fs.readFileSync(path.join(ROOT, rel), "utf8");
+      for (const p of stalePhrases) {
+        if (src.includes(p)) hits.push(`${rel}: "${p}"`);
+      }
+    }
+    expect(hits, `Stale vendor-feature claims still on public surface:\n${hits.join("\n")}`).toEqual([]);
   });
 });

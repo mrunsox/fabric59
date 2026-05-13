@@ -21,8 +21,8 @@ const SOLUTIONS = [
   {
     icon: PhoneOutgoing,
     title: "Outbound + reactivation",
-    pitch: "Campaign blueprints, intake-form-driven SOAP setup, reverse-engineering of live campaigns.",
-    pieces: ["Campaign intake automation", "Blueprints (replicate / reverse-engineer)", "Disposition email engine"],
+    pitch: "Intake-driven campaign orchestration with reverse-engineering of existing campaigns and post-call automation.",
+    pieces: ["Campaign orchestration", "Workflow automation", "CRM sync"],
   },
   {
     icon: ClipboardCheck,
