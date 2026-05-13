@@ -50,6 +50,8 @@ import WorkspaceBootstrapPage from "@/pages/onboarding/WorkspaceBootstrapPage";
 import AcceptInvitePage from "@/pages/auth/AcceptInvitePage";
 import OutlinePage from "@/pages/OutlinePage";
 import LandingPage from "@/pages/LandingPage";
+// Phase 1 — canonical marketing HomePage (mounted at "/").
+import HomePage from "@/pages/marketing/HomePage";
 import TermsPage from "@/pages/TermsPage";
 import SecurityPage from "@/pages/SecurityPage";
 import PrivacyPage from "@/pages/PrivacyPage";
@@ -511,8 +513,9 @@ const App = () => (
               </Route>
             </Route>
 
-            {/* Redirect root to admin */}
-            <Route path="/" element={<LandingPage />} />
+            {/* Phase 1 — canonical marketing root.
+                Legacy LandingPage is no longer mounted; HomePage uses the new MarketingShell. */}
+            <Route path="/" element={<HomePage />} />
 
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
