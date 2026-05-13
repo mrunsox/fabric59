@@ -33,7 +33,7 @@ const PERSONAS = [
       "Push script changes inline without filing a ticket",
     ],
     motionLabel: "Maps to QA and review",
-    motionHref: "/solutions#qa-review",
+    motionHref: "/solutions#qa-and-review",
   },
   {
     icon: Wrench,

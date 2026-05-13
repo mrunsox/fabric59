@@ -56,7 +56,7 @@ const MOTIONS = [
     icon: ClipboardCheck,
     title: "QA and review",
     outcome: "Workspace-scoped review queue, scoring against shipped guides, supervisor live ops.",
-    href: "/solutions#qa-review",
+    href: "/solutions#qa-and-review",
   },
   {
     icon: GitBranch,

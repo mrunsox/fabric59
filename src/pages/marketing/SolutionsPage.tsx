@@ -49,7 +49,7 @@ const MOTIONS = [
     topic: "outbound-reactivation",
   },
   {
-    anchor: "qa-review",
+    anchor: "qa-and-review",
     icon: ClipboardCheck,
     eyebrow: "QA and review",
     title: "QA scored against the script you actually shipped",
