@@ -11,8 +11,7 @@ import { OrgProtectedRoute } from "@/components/auth/OrgProtectedRoute";
 // Phase 2 — smart post-auth redirect (decides /onboarding vs /w/:id/home).
 import LaunchRedirectPage from "@/pages/auth/LaunchRedirectPage";
 import { AdminShell } from "@/components/layout/AdminShell";
-import { WorkspaceShell as LegacyWorkspaceShell } from "@/components/layout/WorkspaceShell";
-// Phase 0 — canonical shells (additive). Legacy shells remain mounted.
+import LegacyWorkspaceRedirect from "@/pages/workspace/LegacyWorkspaceRedirect";
 import { OrgShell } from "@/shells/OrgShell";
 // Phase 3 — canonical /org surfaces (Overview, Workspaces, Settings).
 import OrgOverviewPage from "@/pages/org/OrgOverviewPage";
