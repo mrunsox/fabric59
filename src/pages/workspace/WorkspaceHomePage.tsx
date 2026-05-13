@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Megaphone, BookOpen, FormInput, FileStack, Plus, ArrowRight,
   BarChart3, ClipboardCheck, Plug, Settings, Sparkles, ShieldAlert,
+  Users,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
@@ -13,6 +13,10 @@ import { useWorkspaceTemplates } from "@/hooks/useWorkspaceTemplates";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
 import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 import { isDemoName } from "@/lib/demoHeuristic";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { KpiCard } from "@/components/common/KpiCard";
+import { EmptyState } from "@/components/common/EmptyState";
+import { StatusBadge } from "@/components/common/StatusBadge";
 
 type RecentItem = {
   key: string;
@@ -32,11 +36,11 @@ const SECONDARY_LINKS = [
 
 export default function WorkspaceHomePage() {
   const { workspace } = useWorkspace();
-  const { data: campaigns = [] } = useWorkspaceCampaigns();
-  const { data: guides = [] } = useWorkspaceGuides();
-  const { data: templates = [] } = useWorkspaceTemplates();
-  const { data: forms = [] } = useWorkspaceForms();
-  const { data: clients = [] } = useWorkspaceClients();
+  const { data: campaigns = [], isLoading: campaignsLoading } = useWorkspaceCampaigns();
+  const { data: guides = [], isLoading: guidesLoading } = useWorkspaceGuides();
+  const { data: templates = [], isLoading: templatesLoading } = useWorkspaceTemplates();
+  const { data: forms = [], isLoading: formsLoading } = useWorkspaceForms();
+  const { data: clients = [], isLoading: clientsLoading } = useWorkspaceClients();
   if (!workspace) return null;
   const base = `/w/${workspace.id}`;
 
@@ -65,24 +69,51 @@ export default function WorkspaceHomePage() {
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <Badge variant="outline" className="border-accent/40 text-accent mb-2">Workspace home</Badge>
-        <h1 className="text-2xl font-semibold tracking-tight">{workspace.name}</h1>
-        {totalReal === 0 ? (
-          <p className="text-sm text-muted-foreground mt-1">
-            Fresh workspace. Start by creating something below.
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground mt-1">
-            {realCampaigns.length} campaign{realCampaigns.length === 1 ? "" : "s"} ·{" "}
-            {realGuides.length} guide{realGuides.length === 1 ? "" : "s"} ·{" "}
-            {realForms.length} form{realForms.length === 1 ? "" : "s"} ·{" "}
-            {realTemplates.length} template{realTemplates.length === 1 ? "" : "s"} ·{" "}
-            {realClients.length} client{realClients.length === 1 ? "" : "s"}
-          </p>
-        )}
+    <div className="space-y-6">
+      <WorkspacePageHeader
+        eyebrow="Workspace"
+        title={workspace.name}
+        lede={
+          totalReal === 0
+            ? "Fresh workspace. Start by creating something below."
+            : "Workspace cockpit. Live counts and recent activity for this workspace."
+        }
+        secondary={<StatusBadge status="Workspace home" tone="info" />}
+      />
+
+      {/* Canonical KPI row — 5 items, outline order. */}
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+        <KpiCard
+          label="Clients"
+          value={realClients.length}
+          icon={Users}
+          loading={clientsLoading}
+          hint={demoClientCount > 0 ? `${demoClientCount} demo hidden` : undefined}
+        />
+        <KpiCard
+          label="Campaigns"
+          value={realCampaigns.length}
+          icon={Megaphone}
+          loading={campaignsLoading}
+        />
+        <KpiCard
+          label="Guides"
+          value={realGuides.length}
+          icon={BookOpen}
+          loading={guidesLoading}
+        />
+        <KpiCard
+          label="Forms"
+          value={realForms.length}
+          icon={FormInput}
+          loading={formsLoading}
+        />
+        <KpiCard
+          label="Templates"
+          value={realTemplates.length}
+          icon={FileStack}
+          loading={templatesLoading}
+        />
       </div>
 
       {/* Primary create actions */}
@@ -117,11 +148,10 @@ export default function WorkspaceHomePage() {
       <section className="space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent</h2>
         {allReal.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
-              Nothing here yet. Recent campaigns, guides, forms, and templates will appear here as you create them.
-            </CardContent>
-          </Card>
+          <EmptyState
+            title="Nothing here yet"
+            description="Recent campaigns, guides, forms, and templates will appear here as you create them."
+          />
         ) : (
           <Card>
             <CardContent className="p-0 divide-y">
@@ -141,23 +171,18 @@ export default function WorkspaceHomePage() {
         )}
       </section>
 
-      {/* Demo data notice */}
+      {/* Demo data notice — uses canonical EmptyState primitive */}
       {demoClientCount > 0 && (
-        <Card className="border-dashed">
-          <CardHeader className="pb-2 flex-row items-center gap-2 space-y-0">
-            <ShieldAlert className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-medium">{demoClientCount} demo / test rows excluded</CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-muted-foreground flex items-center justify-between gap-3">
-            <span>
-              {demoClientCount} client row{demoClientCount === 1 ? "" : "s"} matching the conservative demo heuristic
-              are hidden from these counts. Review the candidates before any cleanup.
-            </span>
+        <EmptyState
+          icon={ShieldAlert}
+          title={`${demoClientCount} demo / test client row${demoClientCount === 1 ? "" : "s"} excluded`}
+          description="These match the conservative demo heuristic and are hidden from workspace counts. Review the candidates before any cleanup."
+          action={
             <Button asChild variant="outline" size="sm">
               <Link to={`${base}/reset`}>Review</Link>
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       )}
 
       {/* Explore */}
