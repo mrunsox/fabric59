@@ -416,12 +416,8 @@ const App = () => (
               </Route>
 
               {/* ============================================================
-                  CANONICAL WORKSPACE TREE (Phase 2A)
-                  Path: /app/workspaces/:workspaceId/*
-                  Workspace identity is currently adapted from Organization
-                  via WorkspaceContext (see src/contexts/WorkspaceContext.tsx).
-                  Real workspaces table arrives in Phase 2B.
-                  Legacy /admin/* routes remain fully active and unchanged.
+                  LEGACY /app/workspaces/* — single-hop redirect to /w/*
+                  Index keeps the canonical workspaces picker.
                   ============================================================ */}
               <Route
                 path="/app/workspaces"
@@ -431,62 +427,7 @@ const App = () => (
                   </WorkspaceProvider>
                 }
               />
-              <Route path="/app/workspaces/:workspaceId" element={<LegacyWorkspaceShell />}>
-                {/* CANONICAL (Phase 11): /home is the only surfaced workspace home; index redirects. */}
-                <Route index element={<Navigate to="home" replace />} />
-                <Route path="home" element={<WorkspaceHomePage />} />
-                {/* Reused legacy pages — wrapped under canonical workspace shell.
-                    These pages still read org-scoped data from AuthContext today;
-                    workspace-scoped data binding lands in Phase 2B/3. */}
-                {/* Phase 2B: workspace-scoped clients (real workspace context). */}
-                <Route path="clients" element={<WorkspaceClientsPage />} />
-                {/* Phase 3: canonical workspace campaigns (workspace-scoped, RLS). */}
-                <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
-                <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
-                <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
-                {/* Phase 5: canonical workspace templates (workspace-scoped read of canonical
-                    templates table; mirrors all 7 legacy template tables). */}
-                <Route path="templates" element={<WorkspaceTemplatesPage />} />
-                <Route path="templates/:templateId" element={<WorkspaceTemplateDetailPage />} />
-                <Route path="runs" element={<RunsPage />} />
-                <Route path="agents" element={<AgentsPage />} />
-                <Route path="supervisor" element={<SupervisorPage />} />
-                {/* Phase 8: canonical workspace QA + analytics surfaces.
-                    Legacy admin pages remain reachable under /admin/* as
-                    compatibility-only; canonical QA/analytics live here. */}
-                <Route path="qa" element={<WorkspaceQaPage />} />
-                <Route path="qa-legacy" element={<QAAnalyticsPage />} />
-                <Route path="analytics" element={<WorkspaceAnalyticsPage />} />
-                <Route path="analytics-legacy" element={<ReportsPage />} />
-                <Route path="billing" element={<WorkspaceBillingPage />} />
-                {/* Phase 10 — AI knowledge layer + workspace assistant. */}
-                <Route path="knowledge" element={<WorkspaceKnowledgePage />} />
-                <Route path="assistant" element={<WorkspaceAssistantPage />} />
-                {/* Phase 7: canonical workspace integrations (provider-agnostic).
-                    Reads canonical integration_providers + integration_connections;
-                    legacy ConnectorsCatalogPage stays reachable but is no longer the
-                    primary surface for workspace-scoped integrations. */}
-                <Route path="integrations" element={<WorkspaceIntegrationsPage />} />
-                <Route
-                  path="integrations/:connectionId"
-                  element={<WorkspaceIntegrationDetailPage />}
-                />
-                <Route path="integrations-legacy" element={<ConnectorsCatalogPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                {/* Phase 4: canonical workspace guides (workspace-scoped, mirrored from legacy scripts).
-                    ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical builder
-                    survivor; legacy script surfaces (scripter, tree-editor, scriptflow, script-routing)
-                    remain routable as compatibility/deferred during Phase 4. */}
-                <Route path="guides" element={<WorkspaceGuidesPage />} />
-                <Route path="guides/new" element={<WorkspaceGuideNewPage />} />
-                <Route path="guides/:guideId" element={<WorkspaceGuideDetailPage />} />
-                <Route path="guides/:guideId/edit" element={<WorkspaceGuideEditPage />} />
-                <Route path="guides/:guideId/preview" element={<WorkspaceGuidePreviewPage />} />
-                <Route path="forms" element={<WorkspaceFormsPage />} />
-                <Route path="forms/new" element={<WorkspaceFormNewPage />} />
-                <Route path="forms/:formId" element={<WorkspaceFormDetailPage />} />
-                <Route path="reset" element={<WorkspaceResetPreviewPage />} />
-              </Route>
+              <Route path="/app/workspaces/:workspaceId/*" element={<LegacyWorkspaceRedirect />} />
 
               {/* ============================================================
                   PHASE 0 — CANONICAL SHELLS (additive)
