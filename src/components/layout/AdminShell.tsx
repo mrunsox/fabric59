@@ -228,7 +228,7 @@ export function AdminShell() {
                 onClick={() => setDocsOpen((o) => !o)}
               >
                 <BookOpen className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Five9 Docs</span>
+                <span className="hidden sm:inline">Docs</span>
               </Button>
 
               {organizations.length > 1 && (
