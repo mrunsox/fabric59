@@ -208,9 +208,7 @@ const App = () => (
             <Route path="/trust" element={<TrustPage />} />
             <Route path="/responsible-disclosure" element={<ResponsibleDisclosurePage />} />
             <Route path="/contact" element={<ContactPage />} />
-            <Route path="/faq" element={<FaqPage />} />
             <Route path="/product" element={<ProductTourPage />} />
-            <Route path="/demo" element={<DemoSandboxPage />} />
             {/* Phase 9 — canonical public marketing IA */}
             <Route path="/personas" element={<PersonasPage />} />
             <Route path="/solutions" element={<SolutionsPage />} />
