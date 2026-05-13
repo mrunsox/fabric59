@@ -29,7 +29,7 @@ const SURFACED_FILES = [
   "pages/workspace/WorkspaceHomePage.tsx",
   "pages/workspace/WorkspacesIndexPage.tsx",
   "pages/admin/OverviewPage.tsx",
-  "pages/admin/UserDashboardPage.tsx",
+  // UserDashboardPage vaulted (slug: legacy-user-dashboard) — body inlined into OverviewPage.
 ];
 
 /**
