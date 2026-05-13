@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -8,6 +7,7 @@ import {
 import { Megaphone, Plus, ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 
