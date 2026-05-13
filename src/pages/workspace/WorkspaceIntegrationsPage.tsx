@@ -64,65 +64,64 @@ export default function WorkspaceIntegrationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Integrations</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Workspace-scoped, provider-agnostic connections. Phase 7 canonical layer.
-          </p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-1.5" /> New connection
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>New connection</DialogTitle>
-              <DialogDescription>
-                Pick a provider from the canonical registry. Credentials are configured after creation.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">Provider</label>
-                <Select value={providerId} onValueChange={setProviderId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {providers.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.display_name}{" "}
-                        <span className="text-xs text-muted-foreground">· {p.category}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Display name (optional)
-                </label>
-                <Input
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="e.g. Production Clio"
-                />
-              </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <WorkspacePageHeader
+          eyebrow="Integrations"
+          title="Integrations"
+          lede="Workspace-scoped, provider-agnostic connections. Org-wide connectors are managed under organization settings."
+          action={
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="h-3.5 w-3.5 mr-1.5" /> New connection
+              </Button>
+            </DialogTrigger>
+          }
+        />
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New connection</DialogTitle>
+            <DialogDescription>
+              Pick a provider from the canonical registry. Credentials are configured after creation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Provider</label>
+              <Select value={providerId} onValueChange={setProviderId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select provider" />
+                </SelectTrigger>
+                <SelectContent>
+                  {providers.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.display_name}{" "}
+                      <span className="text-xs text-muted-foreground">· {p.category}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreate} disabled={!providerId || create.isPending}>
-                Create
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">
+                Display name (optional)
+              </label>
+              <Input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g. Production Clio"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreate} disabled={!providerId || create.isPending}>
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader className="pb-3">
