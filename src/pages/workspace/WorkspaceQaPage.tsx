@@ -32,12 +32,11 @@ export default function WorkspaceQaPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">QA & Review</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Workspace-scoped review queue tied to call sessions and outcomes.
-        </p>
-      </div>
+      <WorkspacePageHeader
+        eyebrow="QA & Review"
+        title="QA & Review"
+        lede="Workspace-scoped review queue tied to call sessions and outcomes."
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <KpiCard label="Pending" value={pendingAll.length} icon={Clock} />
