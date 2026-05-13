@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
-import { Mail, Heart, Lock, Building2 } from "lucide-react";
+import { Mail, Heart } from "lucide-react";
 
 const productLinks = [
   { label: "Solutions", href: "/solutions" },
@@ -84,25 +84,18 @@ export function MegaFooter() {
             </nav>
           </div>
 
-          {/* Security posture */}
+          {/* Trust */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Security posture</h4>
-            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-              Credentials encrypted at rest. Tenants isolated by Postgres Row-Level Security. Full audit trail.
+            <h4 className="text-sm font-semibold text-foreground mb-4">Trust</h4>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Credentials encrypted at rest. Tenants isolated by Postgres row-level security. Full audit trail. Founder-led pilots.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 rounded-lg px-2.5 py-1.5">
-                <Lock className="h-3.5 w-3.5 text-primary" />
-                AES-256
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 rounded-lg px-2.5 py-1.5">
-                <Building2 className="h-3.5 w-3.5 text-primary" />
-                RLS
-              </div>
-            </div>
-            <p className="text-[11px] text-muted-foreground/70 mt-3 leading-relaxed">
-              Formal certifications will be pursued as the business matures.
-            </p>
+            <Link
+              to="/trust"
+              className="text-xs text-primary hover:underline inline-block mt-3"
+            >
+              Read the trust overview →
+            </Link>
           </div>
         </div>
 
