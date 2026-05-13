@@ -1,19 +1,92 @@
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
-import { Phone, Scale, MessageSquare, Webhook, ArrowRight } from "lucide-react";
+import { SectionIntro } from "@/components/marketing/SectionIntro";
+import { CapabilityCard } from "@/components/marketing/CapabilityCard";
+import { CtaRow } from "@/components/marketing/CtaRow";
+import { ProofStrip } from "@/components/marketing/ProofStrip";
 import { integrationsIndexDescription } from "@/seo/marketingMetadata";
+import {
+  Phone,
+  Scale,
+  Briefcase,
+  MessageSquare,
+  Webhook,
+  GitBranch,
+} from "lucide-react";
 
+/**
+ * Phase G — Integrations index.
+ * Capability-language tiles only. No status badges, no "Stub" surface.
+ * Lifecycle/readiness lives on operational surfaces, not marketing.
+ */
 const PROVIDERS = [
-  { logo: "/integration-logos/salesforce.svg", name: "Five9", status: "Live", note: "30+ SOAP actions, multi-domain, sync engine.", icon: Phone },
-  { logo: "/integration-logos/google.svg", name: "MyCase", status: "Live", note: "Per-client API key intake, contact + matter writeback.", icon: Scale },
-  { logo: "/integration-logos/google.svg", name: "Clio Grow", status: "Live", note: "Lead Inbox MVP via clio-grow edge function with idempotent sync jobs.", icon: Scale },
-  { logo: "/integration-logos/google.svg", name: "Clio Manage", status: "Coming soon", note: "Adapter shipped; activates on OAuth credential provisioning.", icon: Scale },
-  { logo: "/integration-logos/slack.svg", name: "Slack", status: "Live", note: "Real-time agent workspace + post-call notifications.", icon: MessageSquare },
-  { logo: "/integration-logos/zapier.svg", name: "Zapier / Make", status: "Live", note: "Outbound webhooks + workflow automations dispatch.", icon: Webhook },
-  { logo: "/integration-logos/hubspot.svg", name: "HubSpot, Salesforce, Zendesk, Pipedrive…", status: "Stub", note: "Provider stubs marked for deletion in Phase 7 follow-up. Not exposed in product.", icon: Webhook },
+  {
+    icon: Phone,
+    title: "Five9 telephony",
+    body: "30+ SOAP Admin actions, multi-domain control, Web Connector automation, pre-call ANI lookup, and post-call event ingestion.",
+    bullets: [
+      "Provisioning, campaigns, skills, profiles, DNIS",
+      "Sub-500ms ANI screen pop",
+      "Realtime API event log",
+    ],
+  },
+  {
+    icon: Scale,
+    title: "MyCase",
+    body: "Per-client API key intake. Contact and matter writeback driven by call dispositions, with idempotent sync jobs.",
+    bullets: [
+      "Contact + matter resolution",
+      "Disposition-driven writeback",
+      "Telephony reconciliation",
+    ],
+  },
+  {
+    icon: Scale,
+    title: "Clio Grow",
+    body: "Lead Inbox MVP via the clio-grow edge function. Idempotent sync jobs land new leads from intake outcomes.",
+    bullets: [
+      "Lead Inbox dispatch",
+      "Idempotent sync workers",
+      "Per-disposition routing rules",
+    ],
+  },
+  {
+    icon: Briefcase,
+    title: "Clio Manage",
+    body: "Adapter shipped. Activates on OAuth credential provisioning so writebacks flow into the firm's case file.",
+    bullets: [
+      "OAuth credential lifecycle",
+      "Capability fallbacks for missing endpoints",
+      "Mappable to existing matter schemas",
+    ],
+  },
+  {
+    icon: MessageSquare,
+    title: "Slack",
+    body: "Real-time agent workspace plus post-call notifications routed by disposition urgency.",
+    bullets: [
+      "Agent workspace channel mgmt",
+      "Post-call event notifications",
+      "Hub urgency-based routing",
+    ],
+  },
+  {
+    icon: Webhook,
+    title: "Zapier + Make",
+    body: "Outbound webhooks dispatch into the workflow tools your business already runs.",
+    bullets: [
+      "Per-workspace webhook targets",
+      "Disposition-scoped triggers",
+      "Test runner before go-live",
+    ],
+  },
+];
+
+const FOUNDATION = [
+  {
+    icon: GitBranch,
+    title: "One canonical integrations layer",
+    body: "Every provider routes through the same integration_providers, integration_connections, and integration_mappings model. New providers slot in without forking the data model.",
+  },
 ];
 
 export default function IntegrationsIndexPage() {
@@ -21,60 +94,56 @@ export default function IntegrationsIndexPage() {
     <MarketingLayout
       title="Integrations | Fabric59"
       description={integrationsIndexDescription()}
+      ctaBanner={
+        <section className="py-16 px-6 bg-muted/20">
+          <SectionIntro
+            title="Need a provider you don't see here?"
+            lede="We scope new adapters with design partners. Tell us the system and the workflow you need it for."
+            cta={
+              <CtaRow
+                primary={{ label: "Ask about a provider", to: "/contact" }}
+                secondary={{ label: "See solutions", to: "/solutions" }}
+              />
+            }
+          />
+        </section>
+      }
     >
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto text-center mb-14">
-          <Badge variant="outline" className="border-primary/40 text-primary mb-4">
-            Integrations
-          </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            One canonical integrations layer
-          </h1>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-            Phase 7 collapsed every provider mapping into <code className="text-xs">integration_providers</code>,{" "}
-            <code className="text-xs">integration_connections</code>, and{" "}
-            <code className="text-xs">integration_mappings</code>. New providers slot in without
-            forking the data model.
-          </p>
-        </div>
+      <section className="pt-20 pb-4 px-6">
+        <SectionIntro
+          eyebrow="Integrations"
+          title="Five9-native, with the systems you already run"
+          lede="Fabric59 is the operational intelligence layer around Five9 that connects into the CRMs, case-management tools, and workflow runners your team already lives in."
+        />
+      </section>
 
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-4">
+      <section className="py-12 px-6">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {PROVIDERS.map((p) => (
-            <Card key={p.name}>
-              <CardContent className="p-5 flex items-start gap-4">
-                <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <p.icon className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-sm font-semibold truncate">{p.name}</h3>
-                    <Badge
-                      variant="outline"
-                      className={
-                        p.status === "Live"
-                          ? "border-success/40 text-success"
-                          : p.status === "Stub"
-                          ? "border-muted-foreground/40 text-muted-foreground"
-                          : "border-primary/40 text-primary"
-                      }
-                    >
-                      {p.status}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{p.note}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <CapabilityCard
+              key={p.title}
+              icon={p.icon}
+              title={p.title}
+              body={p.body}
+              bullets={p.bullets}
+            />
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <Button asChild className="gap-1.5">
-            <Link to="/contact">
-              Ask about a provider <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
+        <div className="max-w-4xl mx-auto mt-16 grid md:grid-cols-1 gap-5">
+          {FOUNDATION.map((f) => (
+            <CapabilityCard key={f.title} icon={f.icon} title={f.title} body={f.body} />
+          ))}
         </div>
+
+        <ProofStrip
+          className="mt-16"
+          items={[
+            "AES-256 credential vault",
+            "Per-tenant rate limits",
+            "Visual mapping with Test runner",
+          ]}
+        />
       </section>
     </MarketingLayout>
   );
