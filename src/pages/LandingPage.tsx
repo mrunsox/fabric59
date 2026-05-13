@@ -389,17 +389,43 @@ export default function LandingPage() {
 
         {/* Early access (replaces pricing) */}
         <section id="pricing" className="py-24 border-t border-border/30 bg-muted/20">
-          <div className="max-w-3xl mx-auto px-6 text-center">
-            <Badge className="mb-4 bg-accent/10 text-accent border-accent/30">Early access</Badge>
-            <h2 className="text-3xl font-bold mb-4">Founder-led pricing, scoped to your program</h2>
-            <p className="text-muted-foreground leading-relaxed mb-8">
-              We’re not publishing list prices yet. Self-serve billing is on the roadmap. For now, we scope each engagement around your Five9 footprint, CRMs, and rollout timeline — and quote accordingly.
+          <div className="max-w-3xl mx-auto px-6">
+            <SectionIntro
+              eyebrow="Early access"
+              title="Founder-led pricing, scoped to your program"
+              lede="We're not publishing list prices yet. Self-serve billing is on the roadmap. For now, we scope each engagement around your Five9 footprint, CRMs, and rollout timeline — and quote accordingly."
+              cta={<CtaRow primary={{ label: "Let's scope your program", to: "/contact" }} secondary={{ label: "See pricing", to: "/pricing" }} />}
+            />
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section id="faq" className="max-w-3xl mx-auto px-6 py-24 border-t border-border/30">
+          <div className="flex items-center justify-center gap-3 mb-10">
+            <HelpCircle className="h-6 w-6 text-primary" />
+            <h2 className="text-3xl font-bold">FAQ</h2>
+          </div>
+          <Accordion type="single" collapsible className="w-full">
+            {faqItems.map((item, i) => (
+              <AccordionItem key={i} value={`faq-${i}`}>
+                <AccordionTrigger className="text-left text-base font-medium">{item.question}</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground leading-relaxed">{item.answer}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-24 border-t border-border/30">
+          <div className="max-w-3xl mx-auto px-6">
+            <SectionIntro
+              title="Ready to wire Five9 into your CRM stack?"
+              lede="Book a walkthrough and we'll show you exactly what ships today, what's on the roadmap, and what your rollout would look like."
+              cta={<CtaRow primary={{ label: "Request a walkthrough", to: "/contact" }} secondary={{ label: "Explore solutions", to: "/solutions" }} />}
+            />
+            <p className="text-xs text-muted-foreground mt-6 flex items-center justify-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" /> Typical response within one business day
             </p>
-            <Button size="lg" className="gap-2" asChild>
-              <Link to="/contact">
-                Let’s scope your program <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
           </div>
         </section>
 
