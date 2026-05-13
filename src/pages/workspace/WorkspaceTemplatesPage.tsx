@@ -86,12 +86,13 @@ export default function WorkspaceTemplatesPage() {
       </div>
 
       {isLoading ? (
-        <Card><CardContent className="pt-6 text-sm text-muted-foreground">Loading templates…</CardContent></Card>
+        <p className="text-sm text-muted-foreground">Loading templates…</p>
       ) : filtered.length === 0 ? (
-        <Card><CardContent className="pt-6 text-sm text-muted-foreground">
-          No templates match these filters. Legacy template tables are mirrored automatically; new canonical
-          templates can be created by forking an existing one.
-        </CardContent></Card>
+        <EmptyState
+          icon={FileStack}
+          title="No templates match"
+          description="Adjust the filters above, or fork an existing template to make a workspace-owned copy."
+        />
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {filtered.map((t) => (
