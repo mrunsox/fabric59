@@ -14,6 +14,10 @@ import { AdminShell } from "@/components/layout/AdminShell";
 import { WorkspaceShell as LegacyWorkspaceShell } from "@/components/layout/WorkspaceShell";
 // Phase 0 — canonical shells (additive). Legacy shells remain mounted.
 import { OrgShell } from "@/shells/OrgShell";
+// Phase 3 — canonical /org surfaces (Overview, Workspaces, Settings).
+import OrgOverviewPage from "@/pages/org/OrgOverviewPage";
+import OrgWorkspacesPage from "@/pages/org/OrgWorkspacesPage";
+import OrgSettingsPage from "@/pages/org/OrgSettingsPage";
 import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } from "@/shells/WorkspaceShell";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
