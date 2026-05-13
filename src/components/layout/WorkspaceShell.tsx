@@ -9,7 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
-import { WORKSPACE_SECTIONS } from "@/config/navigation";
+import { WORKSPACE_SECTIONS, SURFACED_WORKSPACE_SECTIONS } from "@/config/navigation";
 
 /**
  * WorkspaceShell (Phase 2A — canonical /app/workspaces/:workspaceId/*)
@@ -105,7 +105,7 @@ function WorkspaceChrome() {
         <div className="border-t border-border/40">
           <div className="mx-auto max-w-[1440px] px-8">
             <div className="flex items-center gap-1 overflow-x-auto -mb-px">
-              {WORKSPACE_SECTIONS.map((s) => {
+              {SURFACED_WORKSPACE_SECTIONS.map((s) => {
                 const Icon = s.icon;
                 return (
                   <NavLink
