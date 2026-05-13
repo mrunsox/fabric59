@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
-  Loader2, ArrowRight, Check, Globe, Building2, Building,
-  Eye, EyeOff, CheckCircle, Users, Rocket, Sparkles, ShieldCheck,
+  Loader2, ArrowRight, Check, Building2, Building,
+  Eye, EyeOff, CheckCircle, Users, Rocket, ShieldCheck,
   HeadphonesIcon, LineChart, Workflow, PhoneIncoming,
 } from "lucide-react";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
