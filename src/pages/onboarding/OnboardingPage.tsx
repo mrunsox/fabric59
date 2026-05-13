@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,94 +10,111 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { cn } from "@/lib/utils";
 import {
   Loader2, ArrowRight, Check, Globe, Building2, Building,
-  Eye, EyeOff, Wifi, XCircle, CheckCircle, Users, Link2, Rocket,
+  Eye, EyeOff, CheckCircle, Users, Rocket, Sparkles, ShieldCheck,
+  HeadphonesIcon, LineChart, Workflow, PhoneIncoming,
 } from "lucide-react";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { OnboardingMilestones, type Milestone } from "@/components/onboarding/OnboardingMilestones";
 import { OnboardingContextHelper } from "@/components/onboarding/OnboardingContextHelper";
-import { ReadinessScore } from "@/components/onboarding/ReadinessScore";
 import { toast } from "sonner";
 
-type Step = "org" | "ownership" | "domain" | "testing" | "intent" | "tenant" | "complete";
-type ConnectionStatus = "testing" | "success" | "failed";
-type Intent = "provisioning" | "integration";
-type OwnershipMode = "client" | "workspace";
+/**
+ * Phase G — Premium concierge onboarding (4 steps).
+ *
+ * Replaces the legacy 6-step provisioning flow with a role-aware concierge
+ * that bootstraps a canonical workspace inline and lands the user at
+ * /app/workspaces/:id/home on first run. /admin is never the first
+ * destination for a new operator.
+ *
+ * Steps:
+ *   1. Organization — create or confirm the operating tenant.
+ *   2. Operating profile — role + ownership + primary motion.
+ *   3. Connect Five9 — optional credential capture (skippable).
+ *   4. Land workspace — bootstrap default workspace + enter /app/workspaces/:id/home.
+ */
 
-const RESUME_KEY = "fabric59:onboarding:resumeStep";
-const SKIPPABLE_STEPS: Step[] = ["ownership", "domain", "intent", "tenant"];
+type Step = "org" | "profile" | "telephony" | "land";
+
+type OwnershipMode = "workspace" | "client";
+type Role = "ops_leader" | "supervisor" | "implementation" | "intake_owner";
+type Motion = "intake" | "reactivation" | "qa" | "sync" | "monitoring";
+
+const RESUME_KEY = "fabric59:onboarding:step";
 
 const milestones: Milestone[] = [
-  { key: "org", label: "Organization", description: "Create your workspace", icon: Building },
-  { key: "ownership", label: "Five9 Owner", description: "Who owns the Five9 account", icon: Users },
-  { key: "domain", label: "Five9 Domain", description: "Connect your call center", icon: Globe },
-  { key: "intent", label: "Setup Intent", description: "Choose your primary use case", icon: Rocket },
-  { key: "tenant", label: "First Client", description: "Add your first client", icon: Building2 },
-  { key: "complete", label: "Go Live", description: "Launch your command center", icon: CheckCircle },
+  { key: "org", label: "Organization", description: "Name your operating tenant", icon: Building },
+  { key: "profile", label: "Operating profile", description: "Role, ownership, primary motion", icon: Users },
+  { key: "telephony", label: "Connect Five9", description: "Optional — connect later from settings", icon: Globe },
+  { key: "land", label: "Land workspace", description: "Enter your canonical workspace", icon: Rocket },
 ];
 
-const milestoneIndex = (step: Step): number => {
-  const map: Record<Step, number> = { org: 0, ownership: 1, domain: 2, testing: 2, intent: 3, tenant: 4, complete: 5 };
-  return map[step];
-};
+const ROLES: Array<{ key: Role; label: string; helper: string; icon: typeof Users }> = [
+  { key: "ops_leader", label: "Operations leader", helper: "Owns service-ops outcomes across clients and motions.", icon: LineChart },
+  { key: "supervisor", label: "Supervisor", helper: "Runs the floor — QA, coaching, intraday performance.", icon: HeadphonesIcon },
+  { key: "implementation", label: "Implementation / admin", helper: "Sets up integrations, scripts, and routing.", icon: Workflow },
+  { key: "intake_owner", label: "Intake / service-ops owner", helper: "Owns inbound capture and post-call automations.", icon: PhoneIncoming },
+];
+
+const MOTIONS: Array<{ key: Motion; label: string; helper: string }> = [
+  { key: "intake", label: "Inbound intake", helper: "Pre-call lookups, screen pops, intake worksheets." },
+  { key: "reactivation", label: "Reactivation campaigns", helper: "Outbound list orchestration with disposition routing." },
+  { key: "qa", label: "QA & performance", helper: "Scoring, coaching, and consolidated reporting." },
+  { key: "sync", label: "CRM sync & automation", helper: "Adapter mappings, post-call writebacks, webhooks." },
+  { key: "monitoring", label: "Monitoring & reconciliation", helper: "Telephony reconciliation, alerting, runbooks." },
+];
 
 export default function OnboardingPage() {
   const { organization, user, isMasterAdmin } = useAuth();
+  const { workspaces, refetch: refetchWorkspaces } = useWorkspace();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<Step>(() => {
     const resume = typeof window !== "undefined" ? (localStorage.getItem(RESUME_KEY) as Step | null) : null;
     if (resume && organization) return resume;
-    return organization ? "ownership" : "org";
+    return organization ? "profile" : "org";
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
+  // Step 1
   const [orgName, setOrgName] = useState("");
+  const [createdOrgId, setCreatedOrgId] = useState<string | null>(null);
+  // Step 2
+  const [role, setRole] = useState<Role | null>(null);
   const [ownershipMode, setOwnershipMode] = useState<OwnershipMode | null>(null);
+  const [motion, setMotion] = useState<Motion | null>(null);
+  // Step 3
   const [domainDisplayName, setDomainDisplayName] = useState("");
   const [five9Username, setFive9Username] = useState("");
   const [five9Password, setFive9Password] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [createdDomainId, setCreatedDomainId] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus | null>(null);
-  const [connectionMessage, setConnectionMessage] = useState("");
-  const [intent, setIntent] = useState<Intent | null>(null);
-  const [tenantName, setTenantName] = useState("");
-  const [crmType, setCrmType] = useState<"clio" | "workiz" | "salesforce" | "generic_rest" | "other">("other");
-  const [createdOrgId, setCreatedOrgId] = useState<string | null>(null);
+  // Step 4
+  const [workspaceName, setWorkspaceName] = useState("");
 
   useEffect(() => {
     if (isMasterAdmin && !organization) navigate("/superadmin", { replace: true });
   }, [isMasterAdmin, organization, navigate]);
 
   useEffect(() => {
-    if (organization && step === "org") setStep("ownership");
+    if (organization && step === "org") setStep("profile");
   }, [organization, step]);
 
-  // Persist current resumable step; clear once user reaches the end
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (step === "complete") {
-      localStorage.removeItem(RESUME_KEY);
-    } else if (SKIPPABLE_STEPS.includes(step)) {
-      localStorage.setItem(RESUME_KEY, step);
-    }
+    if (step === "land") localStorage.removeItem(RESUME_KEY);
+    else localStorage.setItem(RESUME_KEY, step);
   }, [step]);
 
-  const handleSkip = () => {
-    if (typeof window !== "undefined") localStorage.setItem(RESUME_KEY, step);
-    // Phase 9: never deposit users in legacy admin sprawl on skip.
-    navigate("/onboarding/workspace");
-  };
+  useEffect(() => {
+    if (!workspaceName && organization?.name) setWorkspaceName(`${organization.name} workspace`);
+  }, [organization?.name, workspaceName]);
 
-  const SkipFooter = () =>
-    SKIPPABLE_STEPS.includes(step) ? (
-      <div className="px-6 pb-5 -mt-2 text-center">
-        <button type="button" onClick={handleSkip} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-          Skip for now — finish later from the dashboard
-        </button>
-      </div>
-    ) : null;
+  const milestoneIndex = useMemo(() => {
+    const map: Record<Step, number> = { org: 0, profile: 1, telephony: 2, land: 3 };
+    return map[step];
+  }, [step]);
+
+  const orgId = createdOrgId || organization?.id || null;
 
   if (!user) {
     return (
@@ -106,411 +124,404 @@ export default function OnboardingPage() {
     );
   }
 
-  const getOrgId = () => createdOrgId || organization?.id;
-
   const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setSubmitting(true);
     try {
-      const { data: org, error: orgError } = await supabase.from("organizations").insert({ name: orgName, billing_email: user.email }).select().single();
-      if (orgError) throw orgError;
-      const { error: memberError } = await supabase.from("organization_members").insert({ organization_id: org.id, user_id: user.id, role: "owner" });
+      const { data: org, error } = await supabase
+        .from("organizations")
+        .insert({ name: orgName, billing_email: user.email })
+        .select()
+        .single();
+      if (error) throw error;
+      const { error: memberError } = await supabase
+        .from("organization_members")
+        .insert({ organization_id: org.id, user_id: user.id, role: "owner" });
       if (memberError) throw memberError;
       setCreatedOrgId(org.id);
-      setStep("ownership");
-      toast.success("Organization created!");
-    } catch (error: unknown) {
-      toast.error((error as Error).message || "Failed to create organization");
+      toast.success("Organization created");
+      setStep("profile");
+    } catch (err) {
+      toast.error((err as Error).message || "Could not create organization");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const handleCreateDomain = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    const orgId = getOrgId();
-    if (!orgId) { toast.error("Organization not found"); setIsSubmitting(false); return; }
-    const derivedDomain = five9Username.includes("@") ? five9Username.split("@")[1] : domainDisplayName.toLowerCase().replace(/\s+/g, "-");
+  const handleSaveProfile = async () => {
+    if (!orgId || !ownershipMode || !role || !motion) return;
+    setSubmitting(true);
     try {
-      const { data, error } = await supabase.from("five9_domains").insert({ organization_id: orgId, domain: derivedDomain, display_name: domainDisplayName, five9_username: five9Username, five9_password_encrypted: five9Password }).select().single();
+      const { error } = await supabase
+        .from("organizations")
+        .update({ five9_ownership_mode: ownershipMode })
+        .eq("id", orgId);
       if (error) throw error;
-      setCreatedDomainId(data.id);
-      setStep("testing");
-      setConnectionStatus("testing");
-      setIsSubmitting(false);
-      try {
-        const { data: session } = await supabase.auth.getSession();
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-five9-connection`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${session.session?.access_token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ domain_id: data.id }),
-        });
-        const result = await response.json();
-        if (result.success) {
-          setConnectionStatus("success");
-          setConnectionMessage(result.message || "Successfully connected to Five9");
-          setTimeout(() => setStep("intent"), 1800);
-        } else {
-          setConnectionStatus("failed");
-          setConnectionMessage(result.message || "Authentication failed.");
-        }
-      } catch {
-        setConnectionStatus("failed");
-        setConnectionMessage("Could not reach Five9. Please check your credentials.");
+      // Persist concierge picks locally so the workspace home can react to them.
+      if (typeof window !== "undefined") {
+        localStorage.setItem("fabric59:onboarding:profile", JSON.stringify({ role, motion, ownershipMode }));
       }
-    } catch (error: unknown) {
-      toast.error((error as Error).message || "Failed to connect domain");
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCreateTenant = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    const orgId = getOrgId();
-    if (!orgId) { toast.error("Organization not found"); setIsSubmitting(false); return; }
-    try {
-      const { error } = await supabase.from("tenants").insert([{ name: tenantName, crm_type: crmType, organization_id: orgId, five9_domain_id: createdDomainId }]);
-      if (error) throw error;
-      setStep("complete");
-      toast.success("First client added!");
-    } catch (error: unknown) {
-      toast.error((error as Error).message || "Failed to add client");
+      setStep("telephony");
+    } catch (err) {
+      toast.error((err as Error).message || "Could not save profile");
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const handleComplete = () => {
-    // Phase 9: every completed onboarding lands in the canonical workspace
-    // bootstrap, which routes into /app/workspaces/:id/home. Intent only
-    // influences in-workspace next-action hints (not yet wired here).
-    navigate("/onboarding/workspace", { replace: true });
+  const handleConnectFive9 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orgId) return;
+    setSubmitting(true);
+    try {
+      const derivedDomain = five9Username.includes("@")
+        ? five9Username.split("@")[1]
+        : domainDisplayName.toLowerCase().replace(/\s+/g, "-");
+      const { error } = await supabase.from("five9_domains").insert({
+        organization_id: orgId,
+        domain: derivedDomain,
+        display_name: domainDisplayName,
+        five9_username: five9Username,
+        five9_password_encrypted: five9Password,
+      });
+      if (error) throw error;
+      toast.success("Five9 domain saved — we'll verify in the background.");
+      setStep("land");
+    } catch (err) {
+      toast.error((err as Error).message || "Could not save Five9 domain");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const handleLandWorkspace = async () => {
+    if (!orgId) {
+      toast.error("Finish the organization step first.");
+      setStep("org");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const existing =
+        workspaces.find((w) => w.organization_id === orgId && w.is_default) ??
+        workspaces.find((w) => w.organization_id === orgId);
+      let targetId = existing?.id ?? null;
+      if (!targetId) {
+        const { data, error } = await supabase
+          .from("workspaces")
+          .insert({
+            organization_id: orgId,
+            name: workspaceName.trim() || `${organization?.name ?? "Main"} workspace`,
+            is_default: true,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        targetId = data.id;
+        await refetchWorkspaces();
+      }
+      toast.success("Workspace ready");
+      navigate(`/app/workspaces/${targetId}/home`, { replace: true });
+    } catch (err) {
+      toast.error((err as Error).message || "Could not bootstrap workspace");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const stepHeader = (icon: React.ReactNode, title: string, description: string) => (
+    <CardHeader className="text-center pb-2">
+      <div className="flex justify-center mb-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
+          {icon}
+        </div>
+      </div>
+      <CardTitle className="text-xl tracking-tight">{title}</CardTitle>
+      <CardDescription>{description}</CardDescription>
+    </CardHeader>
+  );
 
   const stepContent: Record<Step, React.ReactNode> = {
     org: (
       <Card className="card-elevated border-0 shadow-lg">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
-              <Building className="h-7 w-7 text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-xl tracking-tight">Create your organization</CardTitle>
-          <CardDescription>This will be your workspace in Fabric59</CardDescription>
-        </CardHeader>
+        {stepHeader(
+          <Building className="h-7 w-7 text-primary" />,
+          "Name your organization",
+          "Your operating tenant — owns workspaces, clients, integrations, and reporting.",
+        )}
         <form onSubmit={handleCreateOrg}>
           <CardContent className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="orgName">Organization Name</Label>
-              <Input id="orgName" placeholder="Your Agency Name" value={orgName} onChange={(e) => setOrgName(e.target.value)} required className="h-11" />
+              <Label htmlFor="orgName">Organization name</Label>
+              <Input
+                id="orgName"
+                placeholder="Your agency or service-ops team"
+                value={orgName}
+                onChange={(e) => setOrgName(e.target.value)}
+                required
+                className="h-11"
+              />
             </div>
-            <OnboardingContextHelper title="Why this matters" description="Your organization is the top-level container for all domains, clients, agents, and integrations. Choose a name that represents your business." />
+            <OnboardingContextHelper
+              title="Concierge setup"
+              description="A Fabric59 implementation specialist will follow up after you finish to validate adapters, mappings, and disposition routing before you go live."
+            />
           </CardContent>
           <div className="px-6 pb-6">
-            <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
-              Create Organization
+            <Button type="submit" className="w-full h-11" disabled={submitting || !orgName.trim()}>
+              {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
+              Create organization
             </Button>
           </div>
         </form>
       </Card>
     ),
 
-    ownership: (
+    profile: (
       <Card className="card-elevated border-0 shadow-lg">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
-              <Users className="h-7 w-7 text-primary" />
+        {stepHeader(
+          <Users className="h-7 w-7 text-primary" />,
+          "Tell us how you operate",
+          "Your role, telephony ownership, and the motion you want to land first. We tailor your workspace home to match.",
+        )}
+        <CardContent className="space-y-5 pt-2">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your role</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {ROLES.map((r) => {
+                const Icon = r.icon;
+                const active = role === r.key;
+                return (
+                  <button
+                    key={r.key}
+                    type="button"
+                    onClick={() => setRole(r.key)}
+                    className={cn(
+                      "text-left rounded-xl border-2 p-3 transition-premium",
+                      active ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10",
+                    )}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/8">
+                        <Icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold truncate">{r.label}</p>
+                          {active && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+                        </div>
+                        <p className="text-[11px] leading-snug text-muted-foreground mt-0.5">{r.helper}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
-          <CardTitle className="text-xl tracking-tight">Who owns the Five9 account?</CardTitle>
-          <CardDescription>This determines how Five9 connections and deployments are scoped.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 pt-2">
-          <button type="button" onClick={() => setOwnershipMode("workspace")} className={cn(
-            "w-full text-left rounded-xl border-2 p-4 transition-premium",
-            ownershipMode === "workspace" ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10"
-          )}>
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8">
-                <Building className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-sm">This workspace / BPO</p>
-                  {ownershipMode === "workspace" && <Check className="h-4 w-4 text-primary" />}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">One shared Five9 account. Clients are scoped by campaign, queue, DNIS, or call variables.</p>
-              </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Five9 ownership</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {([
+                { key: "workspace", label: "Shared workspace account", helper: "One Five9 instance, scoped per client by campaign or DNIS.", icon: Building },
+                { key: "client", label: "Per-client accounts", helper: "Each client connects their own Five9 domain.", icon: Building2 },
+              ] as const).map((opt) => {
+                const Icon = opt.icon;
+                const active = ownershipMode === opt.key;
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setOwnershipMode(opt.key)}
+                    className={cn(
+                      "text-left rounded-xl border-2 p-3 transition-premium",
+                      active ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10",
+                    )}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/8">
+                        <Icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold">{opt.label}</p>
+                          {active && <Check className="h-3.5 w-3.5 text-primary" />}
+                        </div>
+                        <p className="text-[11px] leading-snug text-muted-foreground mt-0.5">{opt.helper}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          </button>
-          <button type="button" onClick={() => setOwnershipMode("client")} className={cn(
-            "w-full text-left rounded-xl border-2 p-4 transition-premium",
-            ownershipMode === "client" ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10"
-          )}>
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8">
-                <Building2 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-sm">Each client owns their Five9</p>
-                  {ownershipMode === "client" && <Check className="h-4 w-4 text-primary" />}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">Clients connect their own Five9 domain. Each client manages its own connection.</p>
-              </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Primary motion to land first</p>
+            <div className="space-y-1.5">
+              {MOTIONS.map((m) => {
+                const active = motion === m.key;
+                return (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => setMotion(m.key)}
+                    className={cn(
+                      "w-full text-left rounded-lg border px-3 py-2.5 transition-premium flex items-center justify-between gap-3",
+                      active ? "border-primary bg-primary/3" : "border-border hover:border-primary/30 hover:bg-muted/10",
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{m.label}</p>
+                      <p className="text-[11px] text-muted-foreground">{m.helper}</p>
+                    </div>
+                    {active && <Check className="h-4 w-4 text-primary shrink-0" />}
+                  </button>
+                );
+              })}
             </div>
-          </button>
+          </div>
         </CardContent>
         <div className="px-6 pb-6">
           <Button
             className="w-full h-11"
-            disabled={!ownershipMode || isSubmitting}
-            onClick={async () => {
-              const orgId = getOrgId();
-              if (!orgId || !ownershipMode) return;
-              setIsSubmitting(true);
-              const { error } = await supabase
-                .from("organizations")
-                .update({ five9_ownership_mode: ownershipMode })
-                .eq("id", orgId);
-              setIsSubmitting(false);
-              if (error) { toast.error(error.message); return; }
-              setStep("domain");
-            }}
+            disabled={!role || !ownershipMode || !motion || submitting}
+            onClick={handleSaveProfile}
           >
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
+            {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
             Continue
           </Button>
         </div>
       </Card>
     ),
 
-    domain: (
+    telephony: (
       <Card className="card-elevated border-0 shadow-lg">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
-              <Globe className="h-7 w-7 text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-xl tracking-tight">Connect your Five9 Domain</CardTitle>
-          <CardDescription>Sign in with your Five9 admin account</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleCreateDomain}>
+        {stepHeader(
+          <Globe className="h-7 w-7 text-primary" />,
+          "Connect Five9 (optional)",
+          "Drop in admin credentials now or skip — your concierge can wire this up with you later.",
+        )}
+        <form onSubmit={handleConnectFive9}>
           <CardContent className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
-              <Input id="displayName" placeholder="Main Call Center" value={domainDisplayName} onChange={(e) => setDomainDisplayName(e.target.value)} required className="h-11" />
+              <Label htmlFor="displayName">Display name</Label>
+              <Input
+                id="displayName"
+                placeholder="Main call center"
+                value={domainDisplayName}
+                onChange={(e) => setDomainDisplayName(e.target.value)}
+                className="h-11"
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="five9Username">Five9 Admin Username</Label>
-              <Input id="five9Username" placeholder="admin@yourcompany.com" value={five9Username} onChange={(e) => setFive9Username(e.target.value)} autoComplete="username" required className="h-11" />
+              <Label htmlFor="five9Username">Five9 admin username</Label>
+              <Input
+                id="five9Username"
+                placeholder="admin@yourcompany.com"
+                value={five9Username}
+                onChange={(e) => setFive9Username(e.target.value)}
+                autoComplete="username"
+                className="h-11"
+              />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="five9Password">Admin Password</Label>
+              <Label htmlFor="five9Password">Admin password</Label>
               <div className="relative">
-                <Input id="five9Password" type={showPassword ? "text" : "password"} placeholder="••••••••••••" value={five9Password} onChange={(e) => setFive9Password(e.target.value)} autoComplete="current-password" className="pr-10 h-11" required />
-                <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
+                <Input
+                  id="five9Password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••••••"
+                  value={five9Password}
+                  onChange={(e) => setFive9Password(e.target.value)}
+                  autoComplete="current-password"
+                  className="pr-10 h-11"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                >
                   {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                 </Button>
               </div>
             </div>
-            <OnboardingContextHelper title="Credential security" description="Your credentials are encrypted at rest and used only to sync agent skills, call variables, and dispositions. They are never stored in plain text." />
+            <OnboardingContextHelper
+              title="Encrypted at rest"
+              description="Credentials are stored encrypted and only used to sync agents, skills, dispositions, and call variables. You can rotate them anytime from Connectors."
+            />
           </CardContent>
-          <div className="px-6 pb-6">
-            <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
-              Connect Domain
+          <div className="px-6 pb-6 grid gap-2 sm:grid-cols-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11"
+              onClick={() => setStep("land")}
+              disabled={submitting}
+            >
+              Skip for now
+            </Button>
+            <Button
+              type="submit"
+              className="h-11"
+              disabled={submitting || !domainDisplayName || !five9Username || !five9Password}
+            >
+              {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
+              Save & continue
             </Button>
           </div>
         </form>
       </Card>
     ),
 
-    testing: (
+    land: (
       <Card className="card-elevated border-0 shadow-lg">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <div className={cn("flex h-14 w-14 items-center justify-center rounded-2xl ring-4",
-              connectionStatus === "success" ? "bg-success/10 ring-success/10" :
-              connectionStatus === "failed" ? "bg-destructive/10 ring-destructive/5" : "bg-primary/8 ring-primary/5"
-            )}>
-              {connectionStatus === "testing" && <Wifi className="h-7 w-7 text-primary animate-pulse" />}
-              {connectionStatus === "success" && <CheckCircle className="h-7 w-7 text-success" />}
-              {connectionStatus === "failed" && <XCircle className="h-7 w-7 text-destructive" />}
-            </div>
+        {stepHeader(
+          <Sparkles className="h-7 w-7 text-primary" />,
+          "Land your workspace",
+          "Workspaces are the canonical operating boundary — clients, scripts, integrations, QA, and analytics live here.",
+        )}
+        <CardContent className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label htmlFor="ws-name">Workspace name</Label>
+            <Input
+              id="ws-name"
+              value={workspaceName}
+              onChange={(e) => setWorkspaceName(e.target.value)}
+              placeholder="Main workspace"
+              className="h-11"
+            />
           </div>
-          <CardTitle className="text-xl tracking-tight">
-            {connectionStatus === "testing" && "Verifying Connection"}
-            {connectionStatus === "success" && "Connected!"}
-            {connectionStatus === "failed" && "Connection Failed"}
-          </CardTitle>
-          <CardDescription>{connectionStatus === "testing" ? "Connecting to Five9…" : connectionMessage}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {connectionStatus === "testing" && (
-            <div className="flex flex-col items-center gap-4 py-6">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <div className="space-y-1.5 w-full max-w-xs">
-                {["Authenticating", "Verifying permissions", "Loading domain config"].map((t, i) => (
-                  <div key={t} className="flex items-center gap-2 text-sm text-muted-foreground animate-fade-up" style={{ animationDelay: `${i * 400}ms` }}>
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary/60" />
-                    {t}
-                  </div>
-                ))}
-              </div>
+          <div className="rounded-xl border border-border/60 p-4 space-y-2 bg-muted/20">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              First-run defaults
             </div>
-          )}
-          {connectionStatus === "success" && (
-            <div className="flex items-center justify-center gap-3 py-6 text-muted-foreground">
-              <span className="text-sm">Moving you forward…</span>
-            </div>
-          )}
-          {connectionStatus === "failed" && (
-            <div className="space-y-3 pt-2">
-              <Button className="w-full h-11" onClick={() => { setConnectionStatus(null); setConnectionMessage(""); setStep("domain"); }}>Try Different Credentials</Button>
-              <Button variant="outline" className="w-full h-11" onClick={() => setStep("intent")}>Continue Anyway</Button>
-              <p className="text-xs text-center text-muted-foreground">You can update credentials later in Domain Settings.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    ),
-
-    intent: (
-      <Card className="card-elevated border-0 shadow-lg">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
-              <Rocket className="h-7 w-7 text-primary" />
-            </div>
+            <ul className="text-xs text-muted-foreground space-y-1.5">
+              {[
+                "Default workspace home tailored to your role + motion",
+                "Canonical guides, templates, and runbooks unlocked",
+                "Adapters available: Five9, Clio Manage, Clio Grow, MyCase, Slack, Zapier / Make",
+                "Concierge follow-up to validate mappings before go-live",
+              ].map((d) => (
+                <li key={d} className="flex items-start gap-2">
+                  <CheckCircle className="h-3.5 w-3.5 text-success mt-0.5 shrink-0" /> {d}
+                </li>
+              ))}
+            </ul>
           </div>
-          <CardTitle className="text-xl tracking-tight">What would you like to set up first?</CardTitle>
-          <CardDescription>Choose your primary use case. You can always use both later.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 pt-2">
-          <button type="button" onClick={() => setIntent("provisioning")} className={cn(
-            "w-full text-left rounded-xl border-2 p-4 transition-premium",
-            intent === "provisioning" ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10"
-          )}>
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-sm">Agent Provisioning</p>
-                  {intent === "provisioning" && <Check className="h-4 w-4 text-primary" />}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">Onboard and offboard call center agents automatically.</p>
-              </div>
-            </div>
-          </button>
-          <button type="button" onClick={() => setIntent("integration")} className={cn(
-            "w-full text-left rounded-xl border-2 p-4 transition-premium",
-            intent === "integration" ? "border-primary bg-primary/3 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/10"
-          )}>
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary/8">
-                <Link2 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-sm">CRM & Campaign Integration</p>
-                  {intent === "integration" && <Check className="h-4 w-4 text-primary" />}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">Connect CRMs to Five9 campaigns. Map fields and sync contacts.</p>
-              </div>
-            </div>
-          </button>
-          <OnboardingContextHelper title="What this determines" description="Your choice here sets your initial dashboard view and recommended next steps. You can always access all features from the sidebar." />
         </CardContent>
         <div className="px-6 pb-6">
-          <Button className="w-full h-11" disabled={!intent} onClick={() => setStep("tenant")}>
-            <ArrowRight className="mr-2 h-4 w-4" /> Continue
+          <Button onClick={handleLandWorkspace} className="w-full h-11" disabled={submitting}>
+            {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Rocket className="mr-2 h-4 w-4" />}
+            Enter workspace
           </Button>
-        </div>
-      </Card>
-    ),
-
-    tenant: (
-      <Card className="card-elevated border-0 shadow-lg">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
-              <Building2 className="h-7 w-7 text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-xl tracking-tight">Add your first client</CardTitle>
-          <CardDescription>Create your first tenant for this domain</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleCreateTenant}>
-          <CardContent className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label htmlFor="tenantName">Client Name</Label>
-              <Input id="tenantName" placeholder="Law Firm Alpha" value={tenantName} onChange={(e) => setTenantName(e.target.value)} required className="h-11" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="crmType">CRM Type</Label>
-              <select id="crmType" value={crmType} onChange={(e) => setCrmType(e.target.value as typeof crmType)} className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <option value="clio">Clio</option>
-                <option value="workiz">Workiz</option>
-                <option value="salesforce">Salesforce</option>
-                <option value="generic_rest">Generic REST API</option>
-                <option value="other">Other / None</option>
-              </select>
-            </div>
-            <OnboardingContextHelper title="CRM recommendation" description={intent === "integration" ? "Since you chose CRM integration, selecting the right CRM type ensures we load the correct field schemas and mapping templates." : "You can configure CRM connections later from the client overview page."} />
-          </CardContent>
-          <div className="px-6 pb-6 flex gap-2">
-            <Button type="button" variant="outline" className="flex-1 h-11" onClick={() => setStep("complete")}>Skip</Button>
-            <Button type="submit" className="flex-1 h-11" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
-              Add Client
-            </Button>
-          </div>
-        </form>
-      </Card>
-    ),
-
-    complete: (
-      <Card className="card-elevated border-0 shadow-lg">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-success/10 ring-4 ring-success/10">
-              <Fabric59Icon size="lg" className="h-12 w-12" />
-            </div>
-          </div>
-          <CardTitle className="text-xl tracking-tight">You're all set!</CardTitle>
-          <CardDescription>Your Fabric59 account is ready to use</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-2">
-          <ReadinessScore
-            score={tenantName ? 100 : 75}
-            items={[
-              { label: `Organization: ${orgName || organization?.name || "Configured"}`, complete: true },
-              { label: `Domain: ${five9Username.includes("@") ? five9Username.split("@")[1] : domainDisplayName || "Configured"}`, complete: true },
-              { label: `Intent: ${intent === "provisioning" ? "Agent Provisioning" : intent === "integration" ? "CRM Integration" : "Selected"}`, complete: !!intent },
-              { label: `First client: ${tenantName || "Skipped"}`, complete: !!tenantName },
-            ]}
-            blockers={!tenantName ? ["No client configured. Add one from the dashboard."] : []}
-          />
-        </CardContent>
-        <div className="px-6 pb-6 space-y-2">
-          <Button onClick={handleComplete} className="w-full h-11">
-            {intent === "provisioning" ? "Go to Agent Provisioning" : intent === "integration" ? "Go to Mapping Builder" : "Launch Dashboard"}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-          {!tenantName && (
-            <Button variant="outline" onClick={() => setStep("tenant")} className="w-full h-11">
-              Add a Client First
-            </Button>
-          )}
+          <p className="text-[11px] text-center text-muted-foreground mt-3">
+            You'll land at <span className="font-mono">/app/workspaces/:id/home</span>. Org admin tools stay one click away.
+          </p>
         </div>
       </Card>
     ),
@@ -518,33 +529,35 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <SEOHead title="Onboarding | Fabric59" description="Set up your Fabric59 account." noindex />
+      <SEOHead title="Concierge onboarding | Fabric59" description="Land your canonical Fabric59 workspace in four guided steps." noindex />
       <div className="w-full max-w-4xl flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-        {/* Left rail — milestones */}
-        <div className="hidden lg:block w-56 flex-shrink-0 pt-4">
+        <div className="hidden lg:block w-60 flex-shrink-0 pt-4">
           <div className="flex items-center gap-2.5 mb-8">
             <Fabric59Icon size="md" />
             <div>
               <p className="text-sm font-bold tracking-tight text-foreground">Fabric59</p>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Setup</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Concierge setup</p>
             </div>
           </div>
-          <OnboardingMilestones milestones={milestones} currentIndex={milestoneIndex(step)} />
+          <OnboardingMilestones milestones={milestones} currentIndex={milestoneIndex} />
+          <div className="mt-8 rounded-xl border border-border/60 p-4 bg-muted/20">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">White-glove</p>
+            <p className="text-xs text-foreground mt-1.5 leading-snug">
+              A Fabric59 implementation specialist follows up within one business day to validate adapters, mappings, and routing before go-live.
+            </p>
+          </div>
         </div>
 
-        {/* Right — step content */}
-        <div className="flex-1 max-w-lg w-full mx-auto lg:mx-0">
-          {/* Mobile progress */}
+        <div className="flex-1 max-w-xl w-full mx-auto lg:mx-0">
           <div className="flex lg:hidden items-center justify-center gap-1.5 mb-6">
             {milestones.map((m, i) => (
-              <div key={m.key} className={cn("h-1.5 rounded-full transition-all", i <= milestoneIndex(step) ? "w-8 bg-primary" : "w-4 bg-muted")} />
+              <div
+                key={m.key}
+                className={cn("h-1.5 rounded-full transition-all", i <= milestoneIndex ? "w-8 bg-primary" : "w-4 bg-muted")}
+              />
             ))}
           </div>
-
-          <div className="animate-fade-up">
-            {stepContent[step]}
-            <SkipFooter />
-          </div>
+          <div className="animate-fade-up">{stepContent[step]}</div>
         </div>
       </div>
     </div>
