@@ -105,8 +105,7 @@ import PartnersPage from "@/pages/admin/PartnersPage";
 import PartnerOverviewPage from "@/pages/admin/PartnerOverviewPage";
 import Report59UploadPage from "@/pages/admin/Report59UploadPage";
 // VAULTED (slug: legacy-scripter-page) — ScripterPage import removed; /admin/scripter redirects.
-import AgentDashboardPage from "@/pages/admin/AgentDashboardPage";
-import SupervisorPage from "@/pages/admin/SupervisorPage";
+// agent-dashboard + supervisor pages deleted (canonical workspace QA covers it).
 import QAAnalyticsPage from "@/pages/admin/QAAnalyticsPage";
 import BillingPage from "@/pages/admin/BillingPage";
 import PostCallAutomationsPage from "@/pages/admin/PostCallAutomationsPage";
