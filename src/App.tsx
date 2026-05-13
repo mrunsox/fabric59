@@ -74,9 +74,7 @@ import PrivacyPage from "@/pages/PrivacyPage";
 import TrustPage from "@/pages/TrustPage";
 import ResponsibleDisclosurePage from "@/pages/ResponsibleDisclosurePage";
 import ContactPage from "@/pages/ContactPage";
-import FaqPage from "@/pages/FaqPage";
 import ProductTourPage from "@/pages/ProductTourPage";
-import DemoSandboxPage from "@/pages/DemoSandboxPage";
 // Phase 9 — canonical marketing IA
 import PersonasPage from "@/pages/marketing/PersonasPage";
 import SolutionsPage from "@/pages/marketing/SolutionsPage";
