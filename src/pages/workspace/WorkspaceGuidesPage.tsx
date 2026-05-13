@@ -22,7 +22,7 @@ export default function WorkspaceGuidesPage() {
         </div>
         <div className="flex gap-2">
           <Button asChild>
-            <Link to={`/app/workspaces/${workspaceId}/guides/new`}>
+            <Link to={`/w/${workspaceId}/guides/new`}>
               <FilePlus className="h-4 w-4 mr-2" />
               New guide
             </Link>
@@ -45,7 +45,7 @@ export default function WorkspaceGuidesPage() {
           description="Create one in the legacy script builder and it will mirror here automatically."
           action={
             <Button asChild size="sm">
-              <Link to={`/app/workspaces/${workspaceId}/guides/new`}>
+              <Link to={`/w/${workspaceId}/guides/new`}>
                 <FilePlus className="h-4 w-4 mr-2" />
                 New guide
               </Link>
@@ -55,7 +55,7 @@ export default function WorkspaceGuidesPage() {
       ) : (
         <div className="grid gap-3">
           {guides.map((g) => (
-            <Link key={g.id} to={`/app/workspaces/${workspaceId}/guides/${g.id}`}>
+            <Link key={g.id} to={`/w/${workspaceId}/guides/${g.id}`}>
               <Card className="hover:border-primary/40 transition-colors">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between gap-2">

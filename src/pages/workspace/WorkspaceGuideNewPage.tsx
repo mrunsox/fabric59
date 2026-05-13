@@ -25,13 +25,13 @@ export default function WorkspaceGuideNewPage() {
     const guide = picked
       ? await createFromTemplate.mutateAsync({ template: picked, name })
       : await createNative.mutateAsync({ name, description: description || undefined });
-    navigate(`/app/workspaces/${workspaceId}/guides/${guide.id}/edit`);
+    navigate(`/w/${workspaceId}/guides/${guide.id}/edit`);
   };
 
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl">
       <Button variant="ghost" size="sm" asChild>
-        <Link to={`/app/workspaces/${workspaceId}/guides`}>
+        <Link to={`/w/${workspaceId}/guides`}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Back to guides
         </Link>
       </Button>
@@ -78,7 +78,7 @@ export default function WorkspaceGuideNewPage() {
             <p className="text-sm text-muted-foreground">Loading guide templates…</p>
           ) : templates.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No guide templates available. Create one in <Link to={`/app/workspaces/${workspaceId}/templates`} className="text-primary hover:underline">Templates</Link>, or start blank.
+              No guide templates available. Create one in <Link to={`/w/${workspaceId}/templates`} className="text-primary hover:underline">Templates</Link>, or start blank.
             </p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
@@ -107,7 +107,7 @@ export default function WorkspaceGuideNewPage() {
 
       <div className="flex justify-end gap-2">
         <Button variant="outline" asChild>
-          <Link to={`/app/workspaces/${workspaceId}/guides`}>Cancel</Link>
+          <Link to={`/w/${workspaceId}/guides`}>Cancel</Link>
         </Button>
         <Button
           onClick={onCreate}

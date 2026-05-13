@@ -15,7 +15,7 @@ export default function WorkspaceGuidePreviewPage() {
   return (
     <div className="space-y-6">
       <Button variant="ghost" size="sm" asChild>
-        <Link to={`/app/workspaces/${workspaceId}/guides/${guide.id}`}>
+        <Link to={`/w/${workspaceId}/guides/${guide.id}`}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Back to guide
         </Link>
       </Button>

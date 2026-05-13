@@ -32,7 +32,7 @@ export default function WorkspaceGuideDetailPage() {
   if (!guide) return <p className="text-sm text-muted-foreground">Guide not found.</p>;
 
   const isLegacyScript = guide.source_type === "script" && guide.source_id;
-  const editHref = `/app/workspaces/${workspaceId}/guides/${guide.id}/edit`;
+  const editHref = `/w/${workspaceId}/guides/${guide.id}/edit`;
   const fromTemplateId = (guide.metadata as Record<string, unknown> | null)?.from_template_id as
     | string
     | undefined;
@@ -40,7 +40,7 @@ export default function WorkspaceGuideDetailPage() {
   return (
     <div className="space-y-6">
       <Button variant="ghost" size="sm" asChild>
-        <Link to={`/app/workspaces/${workspaceId}/guides`}>
+        <Link to={`/w/${workspaceId}/guides`}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Back to guides
         </Link>
       </Button>
@@ -58,7 +58,7 @@ export default function WorkspaceGuideDetailPage() {
             )}
             {fromTemplateId && (
               <Link
-                to={`/app/workspaces/${workspaceId}/templates/${fromTemplateId}`}
+                to={`/w/${workspaceId}/templates/${fromTemplateId}`}
                 className="text-xs text-primary hover:underline"
               >
                 ← from template
@@ -68,7 +68,7 @@ export default function WorkspaceGuideDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <Link to={`/app/workspaces/${workspaceId}/guides/${guide.id}/preview`}>
+            <Link to={`/w/${workspaceId}/guides/${guide.id}/preview`}>
               <Eye className="h-4 w-4 mr-2" /> Preview
             </Link>
           </Button>

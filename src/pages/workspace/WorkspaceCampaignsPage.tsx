@@ -21,7 +21,7 @@ export default function WorkspaceCampaignsPage() {
   const { workspace } = useWorkspace();
   const { data: campaigns = [], isLoading } = useWorkspaceCampaigns();
   if (!workspace) return null;
-  const base = `/app/workspaces/${workspace.id}/campaigns`;
+  const base = `/w/${workspace.id}/campaigns`;
 
   return (
     <div className="space-y-6">

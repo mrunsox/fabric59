@@ -104,7 +104,7 @@ export default function WorkspaceTemplatesPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <Link
-                    to={`/app/workspaces/${workspaceId}/templates/${t.id}`}
+                    to={`/w/${workspaceId}/templates/${t.id}`}
                     className="min-w-0 flex-1"
                   >
                     <CardTitle className="text-base truncate hover:text-primary">{t.name}</CardTitle>

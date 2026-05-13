@@ -46,14 +46,14 @@ export default function WorkspaceIntegrationDetailPage() {
   const handleDelete = async () => {
     if (!confirm("Delete this connection?")) return;
     await remove.mutateAsync(connection.id);
-    navigate(`/app/workspaces/${workspaceId}/integrations`);
+    navigate(`/w/${workspaceId}/integrations`);
   };
 
   return (
     <div className="space-y-6">
       <div>
         <Link
-          to={`/app/workspaces/${workspaceId}/integrations`}
+          to={`/w/${workspaceId}/integrations`}
           className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
         >
           <ArrowLeft className="h-3 w-3" /> Integrations

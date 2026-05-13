@@ -155,7 +155,7 @@ export default function WorkspaceIntegrationsPage() {
               return (
                 <Link
                   key={c.id}
-                  to={`/app/workspaces/${workspaceId}/integrations/${c.id}`}
+                  to={`/w/${workspaceId}/integrations/${c.id}`}
                   className="block"
                 >
                   <Card className="hover:border-primary/40 transition-colors">

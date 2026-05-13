@@ -17,7 +17,7 @@ export default function WorkspaceCampaignDetailPage() {
   const { workspace } = useWorkspace();
   const { data: campaign, isLoading } = useWorkspaceCampaign(campaignId);
   if (!workspace) return null;
-  const base = `/app/workspaces/${workspace.id}/campaigns`;
+  const base = `/w/${workspace.id}/campaigns`;
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading campaign…</p>;
   if (!campaign) {

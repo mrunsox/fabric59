@@ -19,13 +19,13 @@ export default function WorkspaceFormNewPage() {
     e.preventDefault();
     if (!name.trim()) return;
     const created = await create.mutateAsync({ name: name.trim(), description: description.trim() || undefined });
-    navigate(`/app/workspaces/${workspaceId}/forms/${created.id}`);
+    navigate(`/w/${workspaceId}/forms/${created.id}`);
   };
 
   return (
     <div className="max-w-xl space-y-4">
       <Button asChild variant="ghost" size="sm">
-        <Link to={`/app/workspaces/${workspaceId}/forms`}>
+        <Link to={`/w/${workspaceId}/forms`}>
           <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Back to forms
         </Link>
       </Button>

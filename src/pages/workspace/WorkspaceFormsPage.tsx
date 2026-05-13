@@ -10,7 +10,7 @@ import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
 export default function WorkspaceFormsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { data: forms = [], isLoading } = useWorkspaceForms();
-  const base = `/app/workspaces/${workspaceId}/forms`;
+  const base = `/w/${workspaceId}/forms`;
 
   return (
     <div className="space-y-6">

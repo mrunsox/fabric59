@@ -144,21 +144,21 @@ export default function WorkspaceAnalyticsPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
           <Link
-            to={`/app/workspaces/${workspaceId}/qa`}
+            to={`/w/${workspaceId}/qa`}
             className="border rounded-md p-3 hover:border-primary/40 transition-colors"
           >
             <div className="font-medium">QA queue</div>
             <div className="text-xs text-muted-foreground">Review pending sessions</div>
           </Link>
           <Link
-            to={`/app/workspaces/${workspaceId}/campaigns`}
+            to={`/w/${workspaceId}/campaigns`}
             className="border rounded-md p-3 hover:border-primary/40 transition-colors"
           >
             <div className="font-medium">Campaigns</div>
             <div className="text-xs text-muted-foreground">Status + performance</div>
           </Link>
           <Link
-            to={`/app/workspaces/${workspaceId}/guides`}
+            to={`/w/${workspaceId}/guides`}
             className="border rounded-md p-3 hover:border-primary/40 transition-colors"
           >
             <div className="font-medium">Guides</div>

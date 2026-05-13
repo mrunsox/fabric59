@@ -13,7 +13,7 @@ export default function WorkspaceFormDetailPage() {
   return (
     <div className="max-w-3xl space-y-4">
       <Button asChild variant="ghost" size="sm">
-        <Link to={`/app/workspaces/${workspaceId}/forms`}>
+        <Link to={`/w/${workspaceId}/forms`}>
           <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Back to forms
         </Link>
       </Button>
