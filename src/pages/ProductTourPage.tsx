@@ -95,11 +95,11 @@ const sections: Section[] = [
     badge: "Field Mapping",
     status: "Live",
     title: "Visual field mapping with a real Test runner",
-    body: "Drag a Five9 field to a CRM destination, attach transforms for formatting or normalization, then run a real Test execution against the tenant config before publishing.",
+    body: "Drag a Five9 field to a CRM destination, attach transforms for formatting or normalization, then run a real Test execution against the client config before publishing.",
     bullets: [
       "Drag-and-drop React Flow canvas",
       "Reusable transforms (format, normalize, default)",
-      "Real Test runner — executes mappings against live tenant configs",
+      "Real Test runner — executes mappings against live client configs",
     ],
     technical: [
       "Mappings stored as JSONB on tenants.integration_configs",

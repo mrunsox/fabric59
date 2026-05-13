@@ -326,7 +326,7 @@ export default function CallFlowBuilderPage() {
                                 variant="outline"
                                 size="sm"
                                 className="gap-2 text-xs"
-                                onClick={() => navigate("/admin/tenants")}
+                                onClick={() => navigate("/admin/clients")}
                               >
                                 <ExternalLink className="h-3.5 w-3.5" />
                                 View Client

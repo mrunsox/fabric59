@@ -152,7 +152,7 @@ export default function DesignSystemPage() {
           <StepCard icon={Globe} title="Connect Five9 Domain" description="Link your call center" status="active" expandable>
             <p className="text-sm text-muted-foreground">Enter your Five9 admin credentials to establish a secure connection.</p>
           </StepCard>
-          <StepCard icon={Users} title="Add First Client" description="Configure your first tenant" status="upcoming" />
+          <StepCard icon={Users} title="Add First Client" description="Configure your first client" status="upcoming" />
         </div>
       </section>
 

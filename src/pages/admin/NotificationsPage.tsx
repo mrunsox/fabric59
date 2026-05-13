@@ -133,9 +133,9 @@ export default function NotificationsPage() {
           <div className="flex items-center gap-4">
             <div className="w-64">
               <Select value={tenantFilter} onValueChange={setTenantFilter}>
-                <SelectTrigger><SelectValue placeholder="Filter by tenant" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Filter by client" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Tenants</SelectItem>
+                  <SelectItem value="all">All Clients</SelectItem>
                   {tenants?.map((tenant) => (
                     <SelectItem key={tenant.id} value={tenant.id}>{tenant.name}</SelectItem>
                   ))}
@@ -150,7 +150,7 @@ export default function NotificationsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Timestamp</TableHead>
-                  <TableHead>Tenant</TableHead>
+                  <TableHead>Client</TableHead>
                   <TableHead>Channel</TableHead>
                   <TableHead>Trigger</TableHead>
                   <TableHead>Status</TableHead>
@@ -230,7 +230,7 @@ export default function NotificationsPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Tenant:</span>
+                  <span className="text-muted-foreground">Client:</span>
                   <p className="font-medium">{getTenantName(selectedNotification.tenant_id)}</p>
                 </div>
                 <div>

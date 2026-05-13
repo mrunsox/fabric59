@@ -159,6 +159,19 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "routes merged or redirected; integrations/connectors single catalog + instance; marketing IA singular; shared " +
       "DataTable/EmptyState/StatusBadge primitives in use; legacy routes either redirected within grace window or removed.",
   },
+  {
+    id: "p12", name: "Phase 12 — Canonical convergence v2: terminology + data honesty", status: "done",
+    objectives:
+      "Second canonical pass focused on (1) user-facing terminology drift (Tenant → Client in non-architectural labels: " +
+      "table headers, select placeholders, filters, dialog labels, hint copy, marketing outcomes), and (2) data honesty " +
+      "on preview surfaces. Backend tables, RLS, and architectural descriptions retain 'tenant' terminology — DB stays " +
+      "tenant*. No new product areas, no auth/RLS rewrites, no fake data added.",
+    exit:
+      "No user-facing 'Tenant' labels remain in operational pages (ApiLogs, Notifications, Mappings, Settings, DataPlane, " +
+      "DesignSystem, IdentityResolution, marketing personas/outcomes). Preview surfaces with illustrative data " +
+      "(/admin/abandon-rate, /admin/ani-blocklist, /admin/callback-queue) carry an explicit warning banner stating actions " +
+      "don't persist. Stale /admin/tenants navigate() call inside CallFlowBuilder retargeted to canonical /admin/clients.",
+  },
 ];
 
 /**

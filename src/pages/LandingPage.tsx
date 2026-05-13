@@ -67,7 +67,7 @@ const MOTIONS = [
   {
     icon: Activity,
     title: "Monitoring and readiness",
-    outcome: "Telephony reconciliation, tenant health, rate limits, pilot readiness state.",
+    outcome: "Telephony reconciliation, client health, rate limits, pilot readiness state.",
     href: "/solutions#monitoring-readiness",
   },
 ];
@@ -78,7 +78,7 @@ const PERSONAS = [
     role: "Operations leader",
     jobs: [
       "Multi-workspace governance with config inheritance",
-      "Tenant health, rate limits, audit-grade export",
+      "Client health, rate limits, audit-grade export",
     ],
     motionLabel: "See how ops leaders use Fabric59",
     motionHref: "/personas#ops-leader",
@@ -238,7 +238,7 @@ export default function LandingPage() {
           items={[
             "Postgres RLS isolation",
             "AES-256 credential vault",
-            "Per-tenant rate limits",
+            "Per-client rate limits",
             "Visual mapping with Test runner",
           ]}
         />
