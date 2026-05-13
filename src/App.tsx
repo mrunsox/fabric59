@@ -283,8 +283,9 @@ const App = () => (
                 {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
                 <Route path="five9" element={<Five9Page />} />
                 <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
-                <Route path="five9/campaign-builder" element={<CampaignBuilderPage />} />
-                <Route path="five9/campaign-builder/:draftId" element={<CampaignBuilderPage />} />
+                {/* VAULTED: legacy-five9-campaign-builder → canonical /admin/campaigns/new */}
+                <Route path="five9/campaign-builder" element={<Navigate to="/admin/campaigns/new" replace />} />
+                <Route path="five9/campaign-builder/:draftId" element={<Navigate to="/admin/campaigns/new" replace />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
                 {/* CANONICAL (Phase B): campaign cluster collapsed.
                     overview/drafts → /admin/campaigns (with optional ?status= filter).
