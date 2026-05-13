@@ -18,6 +18,12 @@ import { OrgShell } from "@/shells/OrgShell";
 import OrgOverviewPage from "@/pages/org/OrgOverviewPage";
 import OrgWorkspacesPage from "@/pages/org/OrgWorkspacesPage";
 import OrgSettingsPage from "@/pages/org/OrgSettingsPage";
+// Phase 5 — canonical org operational surfaces.
+import OrgConnectorsPage from "@/pages/org/OrgConnectorsPage";
+import OrgConnectorDetailPage from "@/pages/org/OrgConnectorDetailPage";
+import OrgReportsPage from "@/pages/org/OrgReportsPage";
+import OrgNotificationsPage from "@/pages/org/OrgNotificationsPage";
+import OrgBillingPage from "@/pages/org/OrgBillingPage";
 import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } from "@/shells/WorkspaceShell";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
@@ -502,12 +508,12 @@ const App = () => (
                   <Route index element={<OrgOverviewPage />} />
                   <Route path="workspaces" element={<OrgWorkspacesPage />} />
                   <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
-                  <Route path="connectors" element={<ConnectorsCatalogPage />} />
-                  <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
-                  <Route path="reports" element={<ReportsPage />} />
-                  <Route path="notifications" element={<NotificationsPage />} />
+                  <Route path="connectors" element={<OrgConnectorsPage />} />
+                  <Route path="connectors/:slug" element={<OrgConnectorDetailPage />} />
+                  <Route path="reports" element={<OrgReportsPage />} />
+                  <Route path="notifications" element={<OrgNotificationsPage />} />
                   <Route path="settings" element={<OrgSettingsPage />} />
-                  <Route path="billing" element={<BillingPage />} />
+                  <Route path="billing" element={<OrgBillingPage />} />
                 </Route>
               </Route>
 
