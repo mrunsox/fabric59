@@ -98,7 +98,7 @@ import ScriptBuilderPage from "@/pages/admin/ScriptBuilderPage";
 import KnowledgeBasePage from "@/pages/admin/KnowledgeBasePage";
 import TrainingPage from "@/pages/admin/TrainingPage";
 import FeedbackPage from "@/pages/admin/FeedbackPage";
-import ScriptRoutingPage from "@/pages/admin/ScriptRoutingPage";
+// VAULTED (slug: legacy-script-routing) — ScriptRoutingPage import removed; /admin/script-routing redirects.
 import GoalsPage from "@/pages/admin/GoalsPage";
 import CallSummaryTemplatesPage from "@/pages/admin/CallSummaryTemplatesPage";
 import ScriptFlowHubPage from "@/pages/admin/ScriptFlowHubPage";
