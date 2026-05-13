@@ -107,7 +107,7 @@ import LegalConnectPage from "@/pages/admin/LegalConnectPage";
 import ClientLegalConnectPage from "@/pages/admin/ClientLegalConnectPage";
 import CampaignOverlayListPage from "@/pages/admin/CampaignOverlayListPage";
 import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
-import CampaignBuilderPage from "@/pages/admin/CampaignBuilderPage";
+// VAULTED (slug: legacy-five9-campaign-builder) — CampaignBuilderPage import removed; routes redirect to /admin/campaigns/new.
 import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
 import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
 // CampaignsOverviewPage + CampaignDraftsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns and /admin/campaigns?status=draft).
