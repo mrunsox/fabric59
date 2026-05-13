@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FileStack, GitFork, Search } from "lucide-react";
+import { EmptyState } from "@/components/common/EmptyState";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import {
   useWorkspaceTemplates,
   useForkTemplate,
@@ -47,19 +49,12 @@ export default function WorkspaceTemplatesPage() {
   }, [templates, scope, search]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-start gap-4">
-        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <FileStack className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Templates</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Canonical template library — guides, flows, campaigns, emails, summaries, prompts, reports.
-            Inherited from platform and your organization; fork to make a workspace-owned copy.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <WorkspacePageHeader
+        eyebrow="Templates"
+        title="Templates"
+        lede="Reusable building blocks — guides, flows, campaigns, emails, summaries, prompts, reports. Inherited from platform and your organization; fork to make a workspace-owned copy."
+      />
 
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[220px]">
