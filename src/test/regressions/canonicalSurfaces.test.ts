@@ -26,6 +26,8 @@ const SURFACED_FILES = [
   "components/dashboard/ReadinessChecklist.tsx",
   "components/dashboard/SystemHealthStrip.tsx",
   "components/dashboard/AIGuidanceCard.tsx",
+  "components/dashboard/WorkspaceSnapshotPanel.tsx",
+  "components/dashboard/ConnectorsReportsPanel.tsx",
   "pages/workspace/WorkspaceHomePage.tsx",
   "pages/workspace/WorkspacesIndexPage.tsx",
   "pages/admin/OverviewPage.tsx",
@@ -195,6 +197,12 @@ describe("Canonical surfaces · CTA guard", () => {
     const overview = fs.readFileSync(path.join(ROOT, "pages/admin/OverviewPage.tsx"), "utf8");
     expect(overview).toMatch(/Organization Overview/);
     expect(overview).not.toMatch(/Command Center/);
+  });
+
+  it("admin overview cockpit mounts the canonical workspace + connectors/reports panels", () => {
+    const overview = fs.readFileSync(path.join(ROOT, "pages/admin/OverviewPage.tsx"), "utf8");
+    expect(overview).toMatch(/<WorkspaceSnapshotPanel\b/);
+    expect(overview).toMatch(/<ConnectorsReportsPanel\b/);
   });
 
   it("admin shell header uses canonical Docs and Assistant labels", () => {

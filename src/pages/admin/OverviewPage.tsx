@@ -5,6 +5,8 @@ import { ReadinessChecklist } from "@/components/dashboard/ReadinessChecklist";
 import { AIGuidanceCard } from "@/components/dashboard/AIGuidanceCard";
 import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
 import { SystemHealthStrip } from "@/components/dashboard/SystemHealthStrip";
+import { WorkspaceSnapshotPanel } from "@/components/dashboard/WorkspaceSnapshotPanel";
+import { ConnectorsReportsPanel } from "@/components/dashboard/ConnectorsReportsPanel";
 import { OnboardingResumeCard } from "@/components/onboarding/OnboardingResumeCard";
 import { fetchClientReadiness, type ClientReadiness } from "@/lib/readiness/computeCampaignReadiness";
 import { Building2 } from "lucide-react";
@@ -46,6 +48,11 @@ export default function OverviewPage() {
       <SystemHealthStrip organizationId={organization?.id} />
 
       <QuickActionsGrid />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <WorkspaceSnapshotPanel organizationId={organization?.id} />
+        <ConnectorsReportsPanel organizationId={organization?.id} />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ReadinessChecklist readiness={readiness} loading={loading} title="Setup Progress" />
