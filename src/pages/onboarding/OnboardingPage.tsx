@@ -234,7 +234,7 @@ export default function OnboardingPage() {
         await refetchWorkspaces();
       }
       toast.success("Workspace ready");
-      navigate(`/app/workspaces/${targetId}/home`, { replace: true });
+      navigate(`/w/${targetId}/home`, { replace: true });
     } catch (err) {
       toast.error((err as Error).message || "Could not bootstrap workspace");
     } finally {

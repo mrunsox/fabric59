@@ -51,7 +51,7 @@ export default function WorkspaceBootstrapPage() {
 
   const handleEnterExisting = () => {
     if (!existingDefault) return;
-    navigate(`/app/workspaces/${existingDefault.id}/home`, { replace: true });
+    navigate(`/w/${existingDefault.id}/home`, { replace: true });
   };
 
   const handleCreate = async () => {
@@ -73,7 +73,7 @@ export default function WorkspaceBootstrapPage() {
       if (error) throw error;
       await refetch();
       toast.success("Workspace ready");
-      navigate(`/app/workspaces/${data.id}/home`, { replace: true });
+      navigate(`/w/${data.id}/home`, { replace: true });
     } catch (err) {
       toast.error((err as Error).message || "Could not create workspace");
     } finally {
