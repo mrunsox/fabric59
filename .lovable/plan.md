@@ -1,147 +1,150 @@
-# Dashboard Surface Extraction Pass — Plan
 
-## Objective
+# Fabric59 — Hard Delete Cleanup (single slice)
 
-Produce one internal audit document that captures every dashboard-like surface a normal signed-in user can land on, what's actually on each, where every CTA goes, and where the duplicates are — so Phase 2 (client dashboard revamp) and Phase 3 (superadmin redesign) can act with full route truth.
+Default action everywhere below: **delete**. Anything kept is justified inline.
 
-No redesign. No backend, RLS, auth, or superadmin behavior changes. No route deletions.
+## 1. Routes — App.tsx surgery
 
-## Deliverable
+### A. Delete routes outright (no redirect)
+- `/demo` → `DemoSandboxPage` (off-message, not in canonical IA).
+- `/faq` → `FaqPage` (off-message; canonical info lives in marketing IA).
+- `/admin/agent-dashboard`, `/admin/supervisor` (deep-linked legacy, not in canonical nav, no compatibility need).
+- `/admin/campaigns/readiness`, `/admin/campaigns/event-log` (compatibility-only carve-outs from old phases — collapse into `/admin/campaigns` + `/admin/monitoring`).
+- `/admin/scripts/:id` (alias of `/admin/scripts`; only `/admin/scripts` and `/admin/scripts/:scriptId/builder` survive).
+- `/admin/agent-dashboard`, `/admin/supervisor`, `/admin/automations` (legacy — superseded by canonical workspace QA/analytics + `/admin/legal-connect` operational hubs). Keep `/admin/qa`, `/admin/billing`, `/admin/automations` only if outline still classifies them canonical; otherwise delete. Decision: delete `agent-dashboard` and `supervisor`; keep `qa`, `billing`, `automations`.
+- Multi-hop redirects: `/admin/scripts` legacy alias chain (`scripter → scripts`, `scriptflow → scripts`, `tree-editor → scripts`, `call-flow → flows`) — these are already single-hop; **keep** per user policy.
+- `/master/*` redirects → keep `/master`, `/master/users`, `/master/vault` (likely bookmarks). Delete `/master/exports`, `/master/routes`, `/master/docs`, `/master/vault/:id`, `/master/organizations` (obscure).
+- `/admin/dev-guide`, `/admin/settings/dev-guide` redirects — delete (obscure, internal-only).
+- `/onboarding/legal-connect` → `/admin/legal-connect` redirect — delete (obscure, no nav).
+- `/feature-vault`, `/vault` redirects — keep `/vault` only (bookmarked); delete `/feature-vault`.
+- `/five9-domains` → `/admin/domains` — delete (`/domains` already covers it).
+- `/legal-connect/overview` redirect — delete (obscure; `/legal-connect` covers it).
+- `/call-flow` top-level redirect → delete (no nav; superadmin route reachable directly).
+- `/admin/qa-legacy` style routes inside `/app/workspaces/*` — deleted with shell teardown below.
 
-A single new file:
+### B. `/app/workspaces/*` legacy shell — collapse to single-hop redirects
+- Delete the entire `<Route path="/app/workspaces/:workspaceId" element={<LegacyWorkspaceShell />}>` block (App.tsx lines 436–491) and its child routes.
+- Replace with **one** catch-all redirect: `/app/workspaces/:workspaceId/*` → `/w/:workspaceId/*` (single-hop, preserves deep paths via `useParams` + `Navigate replace`).
+- Keep `/app/workspaces` index → `WorkspacesIndexPage` (canonical workspaces picker — same component as `/w` index but at the historical URL). Update `WorkspacesIndexPage` link target from `/app/workspaces/${id}/home` to `/w/${id}/home`.
+- Delete `src/components/layout/WorkspaceShell.tsx` (LegacyWorkspaceShell — no other consumers).
+- Delete `WorkspaceSectionPlaceholder.tsx` import + file (only mounted under legacy shell).
 
-- `docs/dashboard-surface-extraction.md`
+### C. Retained redirects (final list, every one single-hop)
+Justified survivors only:
+| Redirect | Target | Why kept |
+|---|---|---|
+| `/dashboard` | `/admin` | High-bookmark probability |
+| `/settings` | `/admin/settings` | High-bookmark |
+| `/vault` | `/superadmin/vault` | Internal team bookmark |
+| `/five9` | `/admin/five9` | Operational shortcut |
+| `/domains` | `/admin/domains` | Operational shortcut |
+| `/legal-connect` | `/admin/legal-connect` | Operational shortcut |
+| `/master` | `/superadmin` | Migration bookmark |
+| `/master/users` | `/superadmin/users` | Migration bookmark |
+| `/master/vault` | `/superadmin/vault` | Migration bookmark |
+| `/admin/integrations` | `/admin/connectors` | Phase-1 alias, still likely typed |
+| `/admin/dashboard` | `/admin` | Phase-11 collapse |
+| `/admin/tenants` | `/admin/clients` | Label rename |
+| `/admin/scripter` | `/admin/scripts` | Vaulted alias |
+| `/admin/scriptflow` | `/admin/scripts` | Vaulted alias |
+| `/admin/tree-editor` | `/admin/scripts` | Vaulted alias |
+| `/admin/tree-editor/:scriptId` | `/admin/scripts` | Compatibility deep-link (outline-listed) |
+| `/admin/script-routing` | `/admin/scripts` | Compatibility deep-link (outline-listed) |
+| `/admin/call-flow` | `/admin/flows` | Vaulted alias |
+| `/admin/campaigns/overview` | `/admin/campaigns` | Phase-B collapse |
+| `/admin/campaigns/drafts` | `/admin/campaigns?status=draft` | Phase-B collapse |
+| `/admin/campaigns/archived` | `/admin/campaigns?status=archived` | Phase-B collapse |
+| `/admin/campaign-blueprints` | `/admin/templates` | Phase-B collapse |
+| `/admin/five9/legacy` | `/admin/five9` | Phase-1 collapse |
+| `/admin/five9/campaign-builder*` | `/admin/campaigns/new` | Vaulted |
+| `/onboarding/workspace` | `/onboarding` | Phase-2 collapse |
+| `/app/workspaces/:workspaceId/*` | `/w/:workspaceId/*` | Legacy shell teardown (this slice) |
 
-## Scope of surfaces audited
+Everything else listed in section A is deleted.
 
-Confirmed or expected dashboard-like surfaces to verify from `src/App.tsx`, route config, and any surface inventory helpers:
+## 2. Source files deleted
 
-```text
-Canonical
-  /admin                                  → OverviewPage             (org overview)
-  /app/workspaces/:workspaceId            → redirect → /home
-  /app/workspaces/:workspaceId/home       → WorkspaceHomePage        (workspace home)
+- `src/components/layout/WorkspaceShell.tsx`
+- `src/pages/DemoSandboxPage.tsx`
+- `src/pages/FaqPage.tsx`
+- `src/pages/workspace/WorkspaceSectionPlaceholder.tsx`
+- `src/pages/admin/AgentDashboardPage.tsx` (route deleted)
+- `src/pages/admin/SupervisorPage.tsx` (route deleted)
+- `src/pages/admin/CampaignReadinessBoardPage.tsx`
+- `src/pages/admin/CampaignEventLogPage.tsx`
+- `src/pages/admin/Five9Page.tsx` if it's a pure re-export of `Five9OverviewPage` (verify during execution; delete + rewire route)
+- `src/pages/admin/WorkspaceCanonicalPlaceholder.tsx` (legacy placeholder, no route)
+- `src/pages/auth/WorkspaceBootstrapPage.tsx` (no longer routed; commented as "kept for history" — delete now)
+- Legacy `src/pages/LandingPage.tsx` if any — verify; delete if only referenced by tests, then drop the test.
+- Update `src/data/surfaceAudit.ts` — remove `/app/workspaces/*` entries, add deletion notes; or delete the file if no longer surfaced anywhere (verify with `rg`).
 
-Compatibility / redirect
-  /dashboard                              → Navigate /admin
-  /admin/dashboard                        → Navigate /admin
-  /admindashboard                         → verify whether this exists as a compat alias / redirect
-                                            target in current routing or only in historical notes
-                                            (initial grep finds zero references in src/ or public/ —
-                                            will confirm in the doc and mark as "not present")
+For each deletion: `rg` for imports, remove from App.tsx, drop nav references (`src/config/navigation.ts`).
 
-Compatibility-only, de-surfaced from nav
-  /admin/agent-dashboard                  → AgentDashboardPage
+## 3. Workspace integrations — finalize canonical, delete stubs
 
-Adjacent overview-shaped surfaces flagged but not deeply extracted
-  /admin/clients/:id                      → ClientOverviewPage       (per-client cockpit)
-  /admin/clients/:id/workspace            → ClientWorkspacePage = ClientOverviewPage
-  /admin/partners/:id                     → PartnerOverviewPage
-  /admin/five9                            → Five9OverviewPage
-  /admin/legal-connect/overview           → LegalConnectOverviewPage
-  /admin/supervisor                       → SupervisorPage
-  /superadmin                             → SuperadminOverviewPage   (out of scope — note only)
+### Routes (already canonical)
+- Live: `/w/:workspaceId/integrations`, `/w/:workspaceId/integrations/:connectionId`, `/admin/connectors`, `/admin/connectors/:slug`.
+- Delete: `/app/workspaces/:workspaceId/integrations-legacy` route comes out automatically with the legacy shell teardown. Per user note this was listed as "compatibility-only" — overridden by the shell teardown decision; the canonical workspace integrations page already has parity.
+
+### Stub edge functions to DELETE
+After verifying no caller references in `src/` and no active webhook URLs in `tenants.integration_configs`:
+`abacuslaw, actionstep, adobe-sign, asana, calendly, casetext, cosmolex, darrow-ai, diligen, docusign, dropbox, dynamics-365, fastcase, fieldpulse, filevine, google-calendar, google-chat, google-drive, google-workspace, harvey-ai, hellosign, housecall-pro, hubspot, jobber, lastpass, lawpay, leap, lexis-ai, microsoft365, monday, netdocuments, nordpass, oncehub, onedrive, power-automate, practicepanther, quickbooks, quoteiq, ringcentral, smokeball, smokeball-oauth-callback, spellbook, westlaw, zendesk, zenmaid, zoho-crm, zoom-meeting`
+
+Use `supabase--delete_edge_functions` after deleting the source folders.
+
+### Live providers (canonical set)
+`clio, mycase, five9, slack, zapier, make` — Zapier/Make are webhook URL providers (no edge function); the rest have live functions (`clio*`, `mycase`, `five9*`, `slack-agent`).
+
+### Provider DB row purge
+- `integration_providers` currently has only `clio` seeded. Insert/upsert the remaining canonical 5: `mycase, five9, slack, zapier, make`.
+- Delete any other rows that don't match the canonical 6.
+
+### CTA/UI cleanup
+- `rg "admin/connectors"` inside `src/pages/workspace src/components/workspace` already returns no matches per prior phase — re-verify; remove any new ones.
+
+## 4. Data purge — workspace clients
+
+### Schema migration (option 2 — strict, no backfill)
+```sql
+ALTER TABLE public.tenants ADD COLUMN workspace_id uuid REFERENCES public.workspaces(id) ON DELETE SET NULL;
+CREATE INDEX idx_tenants_workspace_id ON public.tenants(workspace_id);
+-- Do NOT backfill. Existing 156 tenants stay NULL.
 ```
+RLS update: existing org-membership policy stays (org admins still see all org tenants in `/admin/clients`). The strictness happens **in the workspace query**, not in RLS.
 
-Verification step in the doc: grep for `dashboard`, `overview`, `home`, `cockpit` page files and reconcile against `src/data/surfaceAudit.ts` so nothing extra is missed; add anything found.
+### Hook update
+Update `useWorkspaceClients` to filter `workspace_id = :workspaceId`. `/admin/clients` continues to read all org tenants (org-scoped surface, intentional).
 
-## Document structure
+### Demo row purge
+Hard delete from `tenants` where `name ~* '(test|demo|sandbox|please_ignore)' OR name ~* '^old_'` (4 rows confirmed via `psql`). Cascade orphans:
+```sql
+DELETE FROM public.campaigns WHERE client_id IN (<doomed ids>);
+DELETE FROM public.guides WHERE source_id IN (...) AND source_type = 'script' AND ...;
+DELETE FROM public.tenants WHERE name ~* '(test|demo|sandbox|please_ignore)' OR name ~* '^old_';
+```
+Also purge matching rows in `campaigns`, `guides`, `forms`, `templates` whose `name` matches the same heuristic AND has no live workspace owner.
 
-`docs/dashboard-surface-extraction.md` will follow the required reply order:
+### Stale `integration_connections` / `integration_mappings`
+Delete rows whose `provider_id` is NOT in the canonical 6.
 
-### 1. Dashboard route inventory
+## 5. Outline + memory updates
+- Update `src/pages/OutlinePage.tsx` (or wherever the runtime outline lives) — reflect: legacy shell removed, integrations canonical, demo data purged, canonical provider list = Clio/MyCase/Five9/Slack/Zapier/Make (drop "Dial" wording).
+- Update `mem://architecture/api-routing` and `mem://features/ui-managed-integrations` if they mention `/app/workspaces` as live.
+- Add a fresh memory: `mem://architecture/canonical-routes-final` summarizing the locked route map.
 
-Table: route · component file · visible heading · scope (org / workspace / compat / agent / other) · canonical vs compat · in nav? · redirects? · redirect target · notes.
+## 6. Verification
+- `rg "/app/workspaces"` in `src` returns 0 hits outside the redirect line, `WorkspacesIndexPage` (now updated to `/w`), and `surfaceAudit.ts` (or that file's deleted).
+- `rg "DemoSandboxPage|FaqPage|LegacyWorkspaceShell|AgentDashboardPage|SupervisorPage|CampaignReadinessBoardPage|CampaignEventLogPage|WorkspaceSectionPlaceholder"` returns 0 hits.
+- Typecheck via build (auto-run by harness).
+- Visit `/w/<id>/clients` — must show empty state (no tenants assigned).
+- Visit `/admin/clients` — still shows the 152 real tenants minus the 4 deleted demo rows.
+- `psql "SELECT count(*) FROM tenants WHERE workspace_id IS NULL"` → 152 (unchanged real tenants).
+- `psql "SELECT count(*) FROM tenants"` → 152 (4 demo rows gone).
 
-### 2. Canonical vs compatibility truth
+## 7. Out of scope (explicit blockers for next slice)
+- Real workspace assignment UX (a "Move client to workspace" action). Not built this slice; the 152 unassigned tenants will only be visible via `/admin/clients` until reassigned.
+- OAuth round-trip QA per provider (already noted blocker).
+- Marketing IA fact-check vs the deleted `/demo` and `/faq` (any inbound link inside marketing copy will need a follow-up).
 
-Restatement of the canonical map plus compat redirects, sourced from `App.tsx` route comments and `src/data/surfaceAudit.ts`. No new claims.
-
-### 3. `/admin` (Org Overview) — full extraction
-
-For `OverviewPage` (`src/pages/admin/OverviewPage.tsx`):
-
-- shell/framing: icon, title `{organization?.name || "Organization Overview"}`, subtitle, no breadcrumb, no tabs, no top-right actions
-- KPI / stat cards: none on the page directly — any KPIs render inside `SystemHealthStrip`
-- sections in render order:
-  1. `SystemHealthStrip`
-  2. `QuickActionsGrid` (org variant)
-  3. `WorkspaceSnapshotPanel`
-  4. `ConnectorsReportsPanel`
-  5. `ReadinessChecklist` ("Setup Progress")
-  6. `AIGuidanceCard`
-  7. `OnboardingResumeCard`
-- per section: file path, hooks/props, data source (real query / hard-coded / mock / mixed), empty/loading state, copy
-- CTA table for `QuickActionsGrid` org variant: View workspaces → `/admin/workspaces`, Open connectors → `/admin/connectors`, View reports → `/admin/reports`, Open docs → `/admin/docs` (all canonical, org-scope)
-- CTA table for `AIGuidanceCard` (from `getNextActions(readiness)`) — every emitted href captured
-- Note: readiness is derived from the first `tenants` row by `organization_id` — flag as "org overview is using a single-tenant readiness as a stand-in"
-
-### 4. `/app/workspaces/:id/home` (Workspace Home) — full extraction
-
-For `WorkspaceHomePage` (`src/pages/workspace/WorkspaceHomePage.tsx`):
-
-- shell: "Canonical" outline badge, title = `workspace.name`, subtitle, no tabs, no KPI strip, no readiness, no AI guidance
-- single section: nav-card grid generated from `SURFACED_WORKSPACE_SECTIONS` (`src/config/navigation.ts`) minus `home`
-- per-card extraction: label, icon, destination `/app/workspaces/:id/{href}`
-- data: zero queries — pure nav scaffold
-- explicit gap list vs `/admin`: no metrics, no readiness, no AI guidance, no system health, no quick actions for create/connect/test, no resume-onboarding card
-
-### 5. `/admin/agent-dashboard` (Legacy Agent Dashboard) — full extraction
-
-For `AgentDashboardPage`:
-
-- header: "Agent Dashboard" + subtitle
-- KPI strip (4 `PremiumStatCard`): Calls Today, Avg Handle Time, Tasks Pending, Sessions
-- Tabs: Overview, Tasks (badge), Notes, Callbacks, AI Assist
-- Overview tab sections: Task Queue, Recent Sessions, Calls by Hour, My Goals, Training Modules
-- per-section: data hooks (`useTasks`, `useScriptSessions`, `useTrainingModules`, `usePerformanceGoals`, `useTrainingProgress`), empty states, mocked vs real (e.g. `MOCK_HOURLY` partly synthetic)
-- duplication call-outs vs `/admin` and `/app/workspaces/:id/home`
-- unique content worth preserving: agent task queue, callbacks, AI node suggestions, training progress — flagged as future workspace `/agents` content, not org overview content
-
-### 6. CTA destination audit
-
-Single table across all three surfaces. Columns: source surface · CTA label · destination · canonical / compat / redirecting / stale · scope correctness (org vs workspace).
-
-Specifically capture:
-
-- `OverviewPage` → `/admin/workspaces`, `/admin/connectors`, `/admin/reports`, `/admin/docs` plus dynamic `AIGuidanceCard` hrefs
-- `WorkspaceHomePage` → every `SURFACED_WORKSPACE_SECTIONS` href under `/app/workspaces/:id/...`
-- `AgentDashboardPage` → no outbound page CTAs from the page itself; sub-panels (`TaskQueuePanel`, `CallbackRemindersPanel`, `AINodeSuggestions`) audited inline
-
-Flag any href that points at a redirect or stale target.
-
-### 7. Dashboard overlap matrix
-
-Two-axis matrix: concept × surface (Org Overview / Workspace Home / Agent Dashboard). Concepts: KPIs, system health, readiness, AI guidance, quick actions, workspace list, connectors snapshot, reports snapshot, onboarding resume, task queue, callbacks, training, recent sessions, goals, calls-by-hour.
-
-Per cell: present / partial / absent + short note. Followed by:
-
-- "Should live only on Org Overview"
-- "Should live only on Workspace Home"
-- "Should live on a future workspace Agent surface, not on either dashboard"
-- "Remove entirely / fold into a section page"
-
-### 8. Recommended canonical split (recommendation only — not implemented this pass)
-
-Three buckets:
-
-- Org Overview (`/admin`): org-wide health, workspace snapshot, connectors+reports snapshot, org-level quick actions, onboarding resume. Drop single-tenant readiness as a stand-in; readiness belongs per-client.
-- Workspace Home (`/app/workspaces/:id/home`): workspace-scoped KPIs, workspace readiness, workspace quick actions, workspace AI guidance, recent activity. Currently empty — biggest revamp target in Phase 2.
-- Agent Dashboard (legacy `/admin/agent-dashboard`): redirect target should become `/app/workspaces/:id/agents` (per outline). Unique content (tasks, callbacks, AI assist, training) migrates into that workspace surface, not into either dashboard.
-
-### 9. Superadmin implications (noted, not implemented)
-
-- `/superadmin` overview overlaps conceptually with org overview and should get its own extraction in Phase 3
-- `AdvancedRoutesPage` and related superadmin inventory pages should be checked for references to compatibility-only dashboard surfaces
-- org/admin gating and role-routing behavior should be re-checked during the superadmin pass, but not changed in this extraction pass
-
-## What I will NOT do in this pass
-
-- No edits to `OverviewPage`, `WorkspaceHomePage`, `AgentDashboardPage`, navigation config, redirects, or any component
-- No DB, RLS, edge function, auth, or superadmin changes
-- No route deletions or new redirects
-- No invented metrics or normalized copy — capture exactly what is on the page today
-
-## Reply format after implementation
-
-When the doc is written I will reply in the exact 9-section structure the brief specifies (dashboard routes found → … → superadmin issues observed for later → files created or updated).
+## Required report-back structure
+After execution I will report exactly per the user's spec: routes deleted, source files deleted, data purged (with rule + counts), integrations cleanup (provider list + deleted functions), retained compatibility items (table above), and any blockers hit.
