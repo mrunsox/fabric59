@@ -461,6 +461,54 @@ const App = () => (
                 <Route path="forms/:formId" element={<WorkspaceFormDetailPage />} />
                 <Route path="reset" element={<WorkspaceResetPreviewPage />} />
               </Route>
+
+              {/* ============================================================
+                  PHASE 0 — CANONICAL SHELLS (additive)
+                  /org/*           → OrgShell (canonical 7-item nav)
+                  /w/:workspaceId/*→ CanonicalWorkspaceShell (canonical 12-item nav)
+                  Legacy /admin/* and /app/workspaces/* remain mounted above
+                  during the rebuild window; cutover deletes them in Phase 10.
+
+                  Children temporarily reuse existing pages to prove the shells.
+                  Phase 1+ replaces children with new canonical surfaces.
+                  ============================================================ */}
+              <Route path="/org" element={<OrgShell />}>
+                <Route index element={<OverviewPage />} />
+                <Route path="workspaces" element={<WorkspacesPage />} />
+                <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
+                <Route path="connectors" element={<ConnectorsCatalogPage />} />
+                <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
+                <Route path="reports" element={<ReportsPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="billing" element={<BillingPage />} />
+              </Route>
+
+              <Route path="/w/:workspaceId" element={<CanonicalWorkspaceShell />}>
+                <Route index element={<WorkspaceIndexRedirect />} />
+                <Route path="home" element={<WorkspaceHomePage />} />
+                <Route path="clients" element={<WorkspaceClientsPage />} />
+                <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
+                <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
+                <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
+                <Route path="guides" element={<WorkspaceGuidesPage />} />
+                <Route path="guides/new" element={<WorkspaceGuideNewPage />} />
+                <Route path="guides/:guideId" element={<WorkspaceGuideDetailPage />} />
+                <Route path="guides/:guideId/edit" element={<WorkspaceGuideEditPage />} />
+                <Route path="guides/:guideId/preview" element={<WorkspaceGuidePreviewPage />} />
+                <Route path="forms" element={<WorkspaceFormsPage />} />
+                <Route path="forms/new" element={<WorkspaceFormNewPage />} />
+                <Route path="forms/:formId" element={<WorkspaceFormDetailPage />} />
+                <Route path="templates" element={<WorkspaceTemplatesPage />} />
+                <Route path="templates/:templateId" element={<WorkspaceTemplateDetailPage />} />
+                <Route path="qa" element={<WorkspaceQaPage />} />
+                <Route path="analytics" element={<WorkspaceAnalyticsPage />} />
+                <Route path="integrations" element={<WorkspaceIntegrationsPage />} />
+                <Route path="integrations/:connectionId" element={<WorkspaceIntegrationDetailPage />} />
+                <Route path="knowledge" element={<WorkspaceKnowledgePage />} />
+                <Route path="assistant" element={<WorkspaceAssistantPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
             </Route>
 
             {/* Redirect root to admin */}
