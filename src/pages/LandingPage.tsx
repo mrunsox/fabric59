@@ -6,6 +6,10 @@ import { SEOHead } from "@/components/seo/SEOHead";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { MegaMenuHeader } from "@/components/marketing/MegaMenuHeader";
 import { MegaFooter } from "@/components/marketing/MegaFooter";
+import { SectionIntro } from "@/components/marketing/SectionIntro";
+import { CapabilityCard } from "@/components/marketing/CapabilityCard";
+import { ProofStrip } from "@/components/marketing/ProofStrip";
+import { CtaRow } from "@/components/marketing/CtaRow";
 import { motion } from "framer-motion";
 import { ScrollToTopButton } from "@/components/layout/ScrollToTopButton";
 import {
@@ -200,29 +204,28 @@ export default function LandingPage() {
         {/* Capability categories */}
         <section id="capabilities" className="py-24 border-t border-border/30">
           <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-14">
-              <Badge className="mb-4 bg-primary/10 text-primary border-primary/30">Platform</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">What Fabric59 covers</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Six capability categories sit on top of your Five9 footprint and the systems your business already runs.
-              </p>
-            </div>
-
+            <SectionIntro
+              eyebrow="Platform"
+              title="What Fabric59 covers"
+              lede="Six capability categories sit on top of your Five9 footprint and the systems your business already runs — workspaces, campaigns, guides, integrations, analytics, and automation."
+              className="mb-14"
+            />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {capabilityCategories.map((item, i) => (
                 <motion.div key={item.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                  <Card className="border-border/50 bg-card/60 h-full hover:border-primary/40 transition-colors">
-                    <CardContent className="p-6">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                        <item.icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <h3 className="font-semibold text-base mb-2">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-                    </CardContent>
-                  </Card>
+                  <CapabilityCard icon={item.icon} title={item.title} body={item.desc} />
                 </motion.div>
               ))}
             </div>
+            <ProofStrip
+              className="mt-14"
+              items={[
+                "Five9-native control plane",
+                "Postgres RLS isolation",
+                "AES-256 credential vault",
+                "30+ Five9 SOAP actions",
+              ]}
+            />
           </div>
         </section>
 
@@ -386,17 +389,13 @@ export default function LandingPage() {
 
         {/* Early access (replaces pricing) */}
         <section id="pricing" className="py-24 border-t border-border/30 bg-muted/20">
-          <div className="max-w-3xl mx-auto px-6 text-center">
-            <Badge className="mb-4 bg-accent/10 text-accent border-accent/30">Early access</Badge>
-            <h2 className="text-3xl font-bold mb-4">Founder-led pricing, scoped to your program</h2>
-            <p className="text-muted-foreground leading-relaxed mb-8">
-              We’re not publishing list prices yet. Self-serve billing is on the roadmap. For now, we scope each engagement around your Five9 footprint, CRMs, and rollout timeline — and quote accordingly.
-            </p>
-            <Button size="lg" className="gap-2" asChild>
-              <Link to="/contact">
-                Let’s scope your program <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+          <div className="max-w-3xl mx-auto px-6">
+            <SectionIntro
+              eyebrow="Early access"
+              title="Founder-led pricing, scoped to your program"
+              lede="We're not publishing list prices yet. Self-serve billing is on the roadmap. For now, we scope each engagement around your Five9 footprint, CRMs, and rollout timeline — and quote accordingly."
+              cta={<CtaRow primary={{ label: "Let's scope your program", to: "/contact" }} secondary={{ label: "See pricing", to: "/pricing" }} />}
+            />
           </div>
         </section>
 
@@ -418,21 +417,18 @@ export default function LandingPage() {
 
         {/* Final CTA */}
         <section className="py-24 border-t border-border/30">
-          <div className="max-w-3xl mx-auto px-6 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to wire Five9 into your CRM stack?</h2>
-            <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Book a walkthrough and we’ll show you exactly what ships today, what’s on the roadmap, and what your rollout would look like.
-            </p>
-            <Button size="lg" className="gap-2 px-8 h-12 shadow-lg shadow-primary/20" asChild>
-              <Link to="/contact">
-                Request a walkthrough <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+          <div className="max-w-3xl mx-auto px-6">
+            <SectionIntro
+              title="Ready to wire Five9 into your CRM stack?"
+              lede="Book a walkthrough and we'll show you exactly what ships today, what's on the roadmap, and what your rollout would look like."
+              cta={<CtaRow primary={{ label: "Request a walkthrough", to: "/contact" }} secondary={{ label: "Explore solutions", to: "/solutions" }} />}
+            />
             <p className="text-xs text-muted-foreground mt-6 flex items-center justify-center gap-1.5">
               <Clock className="h-3.5 w-3.5" /> Typical response within one business day
             </p>
           </div>
         </section>
+
       </main>
 
       <MegaFooter />
