@@ -2236,6 +2236,53 @@ export type Database = {
           },
         ]
       }
+      forms: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          metadata: Json
+          name: string
+          schema: Json
+          status: Database["public"]["Enums"]["form_status"]
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json
+          name: string
+          schema?: Json
+          status?: Database["public"]["Enums"]["form_status"]
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json
+          name?: string
+          schema?: Json
+          status?: Database["public"]["Enums"]["form_status"]
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forms_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guide_versions: {
         Row: {
           content: Json
@@ -9398,6 +9445,10 @@ export type Database = {
         Args: { _legacy: string }
         Returns: Database["public"]["Enums"]["guide_status"]
       }
+      preview_workspace_demo_data: {
+        Args: { _workspace_id: string }
+        Returns: Json
+      }
       user_has_permission: {
         Args: { _org_id: string; _permission: string; _user_id: string }
         Returns: boolean
@@ -9431,6 +9482,7 @@ export type Database = {
         | "dead_lettered"
       five9_domain_status: "active" | "inactive" | "pending_verification"
       five9_ownership_mode: "client" | "workspace"
+      form_status: "draft" | "published" | "archived"
       guide_status: "draft" | "published" | "archived"
       legal_connect_readiness:
         | "draft"
@@ -9635,6 +9687,7 @@ export const Constants = {
       ],
       five9_domain_status: ["active", "inactive", "pending_verification"],
       five9_ownership_mode: ["client", "workspace"],
+      form_status: ["draft", "published", "archived"],
       guide_status: ["draft", "published", "archived"],
       legal_connect_readiness: [
         "draft",

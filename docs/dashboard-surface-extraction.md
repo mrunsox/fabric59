@@ -297,3 +297,20 @@ Where each concept **should** live (recommendation, not implemented):
 - created: `docs/dashboard-surface-extraction.md`
 
 No code changes. No backend, RLS, auth, routing, or superadmin behavior modified.
+
+---
+
+## G1 reset audit (Phase: Fresh Start)
+
+**Sources of stale-feeling data:** None from fixtures, mocks, or fallback constants in the active rendering path. The only source is real DB data:
+
+- `tenants` table: 156 real rows in the single org `24H Virtual`. Includes obvious test rows (`Old_Test_campaign_please_ignore`) alongside real-looking client names.
+- `campaigns`: 1 row. `guides`: 0 rows. `templates`: present via mirrors. `forms`: new table, 0 rows.
+
+**G1 actions taken:**
+- Workspace home rewritten as launchpad (no large client dump). Counts EXCLUDE rows matching the conservative demo heuristic `(test|demo|sandbox|please_ignore)|^old_`.
+- Forms scaffolded as a real canonical surface (table + RLS + list/new/detail routes). Builder UI deferred.
+- Read-only preview RPC `preview_workspace_demo_data(_workspace_id)` added; surfaced at `/app/workspaces/:id/reset`. No destructive action yet.
+- Forms surfaced in workspace nav (`SURFACED_WORKSPACE_SECTIONS`).
+
+**Deferred to G2:** destructive `reset_workspace_demo_data` RPC with typed-name confirmation, scoped strictly to the current workspace's org, returning per-table deleted counts.
