@@ -9,7 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
-import { WORKSPACE_SECTIONS } from "@/config/navigation";
+import { WORKSPACE_SECTIONS, SURFACED_WORKSPACE_SECTIONS } from "@/config/navigation";
 
 /**
  * WorkspaceShell (Phase 2A — canonical /app/workspaces/:workspaceId/*)
