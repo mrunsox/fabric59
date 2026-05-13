@@ -11,8 +11,12 @@ interface EmptyStateProps {
 }
 
 /**
- * Phase 8 — Canonical empty state primitive.
- * Use across all workspace surfaces for consistency.
+ * Phase G — Compact operational empty state.
+ *
+ * Use inside dashboard panels, tables, lists, and dense workspace/admin
+ * surfaces where a small inline placeholder is appropriate. For full-page or
+ * hero-scale empty states (e.g. brand-new workspace landing) prefer
+ * `<PremiumEmptyState />` from `@/components/ui/premium-empty-state`.
  */
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
