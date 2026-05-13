@@ -247,8 +247,16 @@ const App = () => (
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/onboarding" element={<OnboardingPage />} />
-              {/* Phase 9 — workspace bootstrap (lands user inside canonical workspace) */}
+              {/* Phase G — premium concierge onboarding bootstraps workspace inline. */}
+              <Route
+                path="/onboarding"
+                element={
+                  <WorkspaceProvider>
+                    <OnboardingPage />
+                  </WorkspaceProvider>
+                }
+              />
+              {/* Legacy bootstrap kept for backwards-compatible deep links. */}
               <Route
                 path="/onboarding/workspace"
                 element={
