@@ -429,39 +429,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* FAQ */}
-        <section id="faq" className="max-w-3xl mx-auto px-6 py-24 border-t border-border/30">
-          <div className="flex items-center justify-center gap-3 mb-10">
-            <HelpCircle className="h-6 w-6 text-primary" />
-            <h2 className="text-3xl font-bold">FAQ</h2>
-          </div>
-          <Accordion type="single" collapsible className="w-full">
-            {faqItems.map((item, i) => (
-              <AccordionItem key={i} value={`faq-${i}`}>
-                <AccordionTrigger className="text-left text-base font-medium">{item.question}</AccordionTrigger>
-                <AccordionContent className="text-muted-foreground leading-relaxed">{item.answer}</AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </section>
-
-        {/* Final CTA */}
-        <section className="py-24 border-t border-border/30">
-          <div className="max-w-3xl mx-auto px-6 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to wire Five9 into your CRM stack?</h2>
-            <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Book a walkthrough and we’ll show you exactly what ships today, what’s on the roadmap, and what your rollout would look like.
-            </p>
-            <Button size="lg" className="gap-2 px-8 h-12 shadow-lg shadow-primary/20" asChild>
-              <Link to="/contact">
-                Request a walkthrough <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <p className="text-xs text-muted-foreground mt-6 flex items-center justify-center gap-1.5">
-              <Clock className="h-3.5 w-3.5" /> Typical response within one business day
-            </p>
-          </div>
-        </section>
       </main>
 
       <MegaFooter />
