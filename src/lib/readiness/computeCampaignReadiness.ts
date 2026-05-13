@@ -73,8 +73,8 @@ export async function fetchCampaignReadinessForClient(clientId: string): Promise
 export function getClientChecklist(r: ClientReadiness | null) {
   return [
     { key: "domain", label: "Five9 domain connected", done: !!r?.domain_connected, href: "/admin/domains" },
-    { key: "campaign", label: "Campaign created", done: !!r?.campaign_exists, href: "/admin/five9/campaign-builder" },
-    { key: "variables", label: "Variables configured", done: !!r?.variable_group_exists, href: "/admin/five9/campaign-builder" },
+    { key: "campaign", label: "Campaign created", done: !!r?.campaign_exists, href: "/admin/campaigns/new" },
+    { key: "variables", label: "Variables configured", done: !!r?.variable_group_exists, href: "/admin/campaigns/new" },
     { key: "dispositions", label: "Dispositions configured", done: !!r?.dispositions_configured, href: "/admin/dispositions" },
     { key: "provider", label: "Provider connected", done: !!r?.provider_connected, href: "/admin/legal-connect" },
     { key: "ready", label: "At least one ready campaign", done: (r?.ready_route_count ?? 0) > 0, href: "/admin/campaigns" },
@@ -94,14 +94,14 @@ export function getNextActions(r: ClientReadiness | null) {
     actions.push({
       title: "Create your first campaign",
       description: "Use the Campaign Builder to walk through setup in 6 steps.",
-      href: "/admin/five9/campaign-builder",
+      href: "/admin/campaigns/new",
     });
   }
   if (r?.campaign_exists && !r.variable_group_exists) {
     actions.push({
       title: "Add a call variable group",
       description: "Variables drive what agents see and what gets sent to your CRM.",
-      href: "/admin/five9/campaign-builder",
+      href: "/admin/campaigns/new",
     });
   }
   if (r?.campaign_exists && !r.dispositions_configured) {
