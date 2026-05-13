@@ -219,7 +219,7 @@ export function AdminShell() {
                 onClick={() => setGuidanceOpen((o) => !o)}
               >
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span className="hidden sm:inline">AI Guide</span>
+                <span className="hidden sm:inline">Assistant</span>
               </Button>
               <Button
                 variant="ghost"
