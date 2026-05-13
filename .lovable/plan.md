@@ -1,60 +1,48 @@
-# Dev Guide architecture flowchart
+## Problem
 
-Add a visual architecture flowchart to the existing internal `/admin/dev-guide` page so the dev team can understand the Five9 → Fabric59 → Legal systems chain at a glance.
+The current header is cluttered and has duplicates:
 
-## Approach
+- **Solutions** appears twice (mega menu trigger + primary link)
+- **Personas** appears twice (mega menu trigger + primary link)
+- **Customers** appears in both the Resources mega menu and as a primary link
+- **Resources** mega menu surfaces sales/internal items (Pilot guide, Intake playbook, Five9+CRM blueprint, Docs) that route to `/contact?topic=…` — these are not client-facing nav, they are sales artifacts
+- Result: 8 visible nav slots on desktop with overlap, and the `Fabric59 Integration Hub` wordmark wraps awkwardly at this width
 
-Build a **custom React/CSS flowchart** (no new dependencies). Mermaid isn't installed and adding it for one diagram is overkill; React Flow is overkill for a static layered diagram. A semantic-tokened grid of layered "lane" cards with connector arrows fits the Linear-style admin shell, renders crisply in light mode, and stays maintainable (edit an array, the diagram updates).
+## Proposed canonical header (final)
 
-## What to build
+Desktop, after the logo:
 
-### 1. New component: `src/components/dev-guide/ArchitectureFlowchart.tsx`
+1. **Solutions** — mega menu (5 motions, content unchanged)
+2. **Personas** — mega menu (4 personas, content unchanged)
+3. **Integrations** — direct link
+4. **Pricing** — direct link
+5. **Customers** — direct link
 
-A self-contained, responsive layered flowchart with seven horizontal lanes stacked top-to-bottom, each containing labeled chip-style nodes. Between lanes, a thin vertical connector with a downward chevron in primary color indicates flow.
+Right rail (unchanged): `Sign in` + `Start a pilot`.
 
-Layers (top → bottom), with a small Lucide icon and a one-line caption per lane:
+## Removed from the header
 
-1. **Five9 event source** (`PhoneIncoming`) — On Call Dispositioned · On Call Ended · Callback Requested · Inbound ANI Lookup
-2. **Flow Template** (`LayoutTemplate`) — Disposition Webhook · CRM Action · Inbound Lookup · Callback / Task · Custom Relay
-3. **Configured Flow** (`Workflow`) — Trigger · Filters · Mappings · Action · Failure Policy · Test / Review
-4. **Deployment Scope** (`Target`) — Workspace · Client · Five9 Domain · Campaign · Queue · Disposition Conditions
-5. **Connector Layer** (`Plug`) — Clio · MyCase · Smokeball · Webhook · Custom HTTP · Future Connectors
-6. **Execution Run** (`Activity`) — Request Payload · Response Payload · Success / Failure · Retry / Replay · Idempotency / External Record
-7. **Target Outcomes** (`CheckCircle2`) — Create/Update Contact · Create Matter/Case · Create Task · Create Note/Activity · Return Screen-Pop Context · Send Webhook Payload
+- Duplicate "Solutions" primary link (kept only as mega menu)
+- Duplicate "Personas" primary link (kept only as mega menu)
+- Entire "Resources" mega menu, including Pilot guide / Intake playbook / Five9+CRM blueprint / Docs / Trust links
+- Duplicate "Customers" entry inside Resources
 
-Visual structure:
+These items remain reachable from the footer and from in-page CTAs — they are only demoted from the global header.
 
-- Each lane is a rounded card with a header row (icon + lane name + caption) and a flex-wrap row of chip nodes (small bordered pills using `bg-secondary/40`, `border-border/60`).
-- Between lanes: a centered 24px-tall vertical line in `bg-border` topped by a `ChevronDown` glyph in `text-primary`, communicating directional flow without an SVG arrow library.
-- The Connector lane and Deployment lane both feed into Execution; this fan-in is annotated with a small caption under the arrow ("Deployment scope + Connector resolve at run time").
-- Container: `border border-border/60 rounded-xl bg-card p-4 sm:p-6` with `overflow-x-auto` for narrow viewports. Chip rows use `flex-wrap gap-2` and are readable at the current admin width (1202px) without horizontal scroll.
+## Mobile drawer
 
-Color use: cyan primary only on the chevrons, lane icons, and lane name. Chips and lane cards use neutral semantic tokens. No raw hex colors. Fully built from semantic tokens so it inherits future theme work.
+Mirror the desktop nav exactly: Solutions group, Personas group, then direct links Integrations / Pricing / Customers, then Start a pilot + Sign in. Drop the Resources group and the duplicated primary-link block.
 
-A short legend strip below the diagram (3 inline items): primary chevron = directional flow · neutral chip = entity / value · stacked lane = system layer.
+## Logo wrap fix
 
-### 2. Caption block under the diagram
+Lock the wordmark to a single line in the header so "Fabric59 / Integration Hub" cannot wrap at narrow desktop widths. Scoped to the header instance only, no change to `Fabric59Logo`.
 
-Render the brief's prose verbatim:
+## Files touched
 
-> Fabric59 uses Five9 as the event source and orchestration entry point. Admins choose a flow template, configure logic and mappings, scope where the flow is deployed, and route actions through reusable connectors such as Clio, MyCase, Smokeball, or generic webhook/HTTP targets. Every execution is tracked as a run so the system can support monitoring, retry, replay, and safe connector behavior over time.
-
-Plus a one-line reinforcement: *Fabric59 is a reusable Five9-native integration hub, not a one-off Clio connector.*
-
-### 3. Mount it in `src/pages/admin/DevGuidePage.tsx`
-
-Insert a new **"Architecture flowchart"** section as the second section (right after Overview, before Core architecture) so the visual primes the rest of the doc. Add it to the sticky section nav with an icon (`GitBranch`) and id `flowchart`. Section body = `<ArchitectureFlowchart />` followed by the caption block.
-
-## Acceptance check
-
-- The Dev Guide shows a layered flowchart covering all seven layers in the brief, each with the listed nodes.
-- Diagram renders cleanly at 1202px and remains usable down to mobile (chips wrap, container scrolls horizontally only as a last resort).
-- All chips and labels match the FlowBuilder terminology already used in the rest of the guide.
-- Caption block reinforces "reusable integration hub, not a one-off Clio connector".
-- Uses semantic tokens only; no hex colors, no new dependencies.
+- `src/components/marketing/MegaMenuHeader.tsx` — remove Resources mega menu, drop duplicate Solutions/Personas from `primaryLinks`, simplify mobile drawer, fix logo wrap
+- `src/test/regressions/canonicalSurfaces.test.ts` — update Phase H assertions: header no longer renders Resources trigger; Solutions and Personas appear once in header source; remove header-level resource-link routing assertion (footer assertion, if any, kept)
 
 ## Out of scope
 
-- Mermaid runtime, React Flow, or any diagramming library.
-- Interactivity (clicking nodes, zoom/pan).
-- Editing the diagram from the UI.
+- Footer, mega menu internals, marketing page bodies
+- Auth, onboarding, routing, backend, copy beyond the header
