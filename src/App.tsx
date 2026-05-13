@@ -81,7 +81,7 @@ import ClientOverviewPage from "@/pages/admin/ClientOverviewPage";
 import PartnersPage from "@/pages/admin/PartnersPage";
 import PartnerOverviewPage from "@/pages/admin/PartnerOverviewPage";
 import Report59UploadPage from "@/pages/admin/Report59UploadPage";
-import ScripterPage from "@/pages/admin/ScripterPage";
+// VAULTED (slug: legacy-scripter-page) — ScripterPage import removed; /admin/scripter redirects.
 import AgentDashboardPage from "@/pages/admin/AgentDashboardPage";
 import SupervisorPage from "@/pages/admin/SupervisorPage";
 import QAAnalyticsPage from "@/pages/admin/QAAnalyticsPage";
