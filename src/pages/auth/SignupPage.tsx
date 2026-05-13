@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { AuthShell } from "@/shells/AuthShell";
 export default function SignupPage() {
   const { signUp, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const invite = params.get("invite");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -25,8 +27,11 @@ export default function SignupPage() {
     );
   }
 
+  // Phase 2 — already-authenticated visitors flow through /launch so the
+  // smart routing matrix decides between onboarding vs /w/:id/home.
   if (isAuthenticated) {
-    return <Navigate to="/onboarding" replace />;
+    const target = invite ? `/launch?invite=${encodeURIComponent(invite)}` : "/launch";
+    return <Navigate to={target} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,7 +51,8 @@ export default function SignupPage() {
       setError(error.message);
       setIsSubmitting(false);
     } else {
-      navigate("/onboarding");
+      const target = invite ? `/launch?invite=${encodeURIComponent(invite)}` : "/launch";
+      navigate(target);
     }
   };
 
