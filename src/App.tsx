@@ -18,6 +18,12 @@ import { OrgShell } from "@/shells/OrgShell";
 import OrgOverviewPage from "@/pages/org/OrgOverviewPage";
 import OrgWorkspacesPage from "@/pages/org/OrgWorkspacesPage";
 import OrgSettingsPage from "@/pages/org/OrgSettingsPage";
+// Phase 5 — canonical org operational surfaces.
+import OrgConnectorsPage from "@/pages/org/OrgConnectorsPage";
+import OrgConnectorDetailPage from "@/pages/org/OrgConnectorDetailPage";
+import OrgReportsPage from "@/pages/org/OrgReportsPage";
+import OrgNotificationsPage from "@/pages/org/OrgNotificationsPage";
+import OrgBillingPage from "@/pages/org/OrgBillingPage";
 import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } from "@/shells/WorkspaceShell";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
