@@ -34,6 +34,7 @@ import WorkspaceFormNewPage from "@/pages/workspace/WorkspaceFormNewPage";
 import WorkspaceFormDetailPage from "@/pages/workspace/WorkspaceFormDetailPage";
 import WorkspaceResetPreviewPage from "@/pages/workspace/WorkspaceResetPreviewPage";
 import WorkspaceClientsPage from "@/pages/workspace/WorkspaceClientsPage";
+import WorkspaceClientDetailPage from "@/pages/workspace/WorkspaceClientDetailPage";
 import WorkspaceCampaignsPage from "@/pages/workspace/WorkspaceCampaignsPage";
 import WorkspaceCampaignDetailPage from "@/pages/workspace/WorkspaceCampaignDetailPage";
 import WorkspaceCampaignNewPage from "@/pages/workspace/WorkspaceCampaignNewPage";
@@ -521,6 +522,7 @@ const App = () => (
                 <Route index element={<WorkspaceIndexRedirect />} />
                 <Route path="home" element={<WorkspaceHomePage />} />
                 <Route path="clients" element={<WorkspaceClientsPage />} />
+                <Route path="clients/:clientId" element={<WorkspaceClientDetailPage />} />
                 <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
                 <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
                 <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />

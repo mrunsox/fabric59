@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -42,19 +43,21 @@ export default function WorkspaceClientsPage() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {clients.map((c) => (
-            <Card key={c.id} className="h-full">
-              <CardHeader className="flex-row items-center gap-3 space-y-0">
-                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Users className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-sm truncate">{c.name}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <StatusBadge status={c.status ?? "active"} />
-              </CardContent>
-            </Card>
+            <Link key={c.id} to={`./${c.id}`} className="block group">
+              <Card className="h-full transition-colors group-hover:border-primary/40">
+                <CardHeader className="flex-row items-center gap-3 space-y-0">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Users className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-sm truncate group-hover:text-primary">{c.name}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <StatusBadge status={c.status ?? "active"} />
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
