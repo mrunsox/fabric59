@@ -11,6 +11,7 @@ import {
   History, CheckCircle2, Bell, User
 } from "lucide-react";
 import { toast } from "sonner";
+import { ActionBanner } from "@/components/ui/action-banner";
 
 interface BlockedANI {
   id: string;
@@ -75,6 +76,12 @@ export default function ANIBlockListPage() {
 
   return (
     <div className="space-y-6">
+      <ActionBanner
+        icon={AlertTriangle}
+        variant="warning"
+        title="Preview surface — sample data"
+        description="Block list, history and Five9 sync state are illustrative only. Real ANI blocking will be wired to a server-side blocklist + Five9 dispositions in a later phase. Actions here do not persist."
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

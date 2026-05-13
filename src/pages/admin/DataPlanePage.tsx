@@ -94,7 +94,7 @@ export default function DataPlanePage() {
       </div>
 
       <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
-        <ViewCard title="Call Usage" description="Per-tenant call minutes & counts" icon={Phone} count={callUsage.length} viewName="call-usage" />
+        <ViewCard title="Call Usage" description="Per-client call minutes & counts" icon={Phone} count={callUsage.length} viewName="call-usage" />
         <ViewCard title="Agent Activity" description="Talk/hold/wrap time per agent" icon={Activity} count={agentActivity.length} viewName="agent-activity" />
         <ViewCard title="CRM Push Leads" description="Normalized lead events" icon={FileText} count={crmLeads.length} viewName="crm-leads" />
         <ViewCard title="Agents Identity" description="Unified agent directory" icon={Users} count={agentsIdentity.length} viewName="agents-identity" />
@@ -114,7 +114,7 @@ export default function DataPlanePage() {
             </CardTitle>
           </div>
           <CardDescription>
-            {activeTab === "call-usage" && "Per tenant/org/period: total_minutes, total_calls, skill breakdown, billable flags"}
+            {activeTab === "call-usage" && "Per client/org/period: total_minutes, total_calls, skill breakdown, billable flags"}
             {activeTab === "agent-activity" && "Per agent/period: talk_time, ready_time, logged_in_time, call_count"}
             {activeTab === "crm-leads" && "Normalized lead events from api_logs where endpoint matches crm-push/*"}
             {activeTab === "agents-identity" && "Unified agent directory joining agents table with five9/slack/google IDs"}

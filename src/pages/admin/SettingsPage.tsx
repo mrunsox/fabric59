@@ -728,7 +728,7 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="rate-limit">Rate Limit (req/min per tenant)</Label>
+                  <Label htmlFor="rate-limit">Rate Limit (req/min per client)</Label>
                   <Input id="rate-limit" type="number" defaultValue="100" />
                 </div>
                 <div className="space-y-2">
@@ -907,7 +907,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Require API Key Authentication</Label>
-                  <p className="text-sm text-muted-foreground">All API requests must include a valid X-Tenant-Id header</p>
+                  <p className="text-sm text-muted-foreground">All API requests must include a valid X-Tenant-Id header (sent per client)</p>
                 </div>
                 <Switch defaultChecked />
               </div>

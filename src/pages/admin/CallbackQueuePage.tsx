@@ -12,6 +12,7 @@ import {
   PhoneCall, Settings2, Gauge, BarChart3, Repeat, Volume2,
   Clock, AlertTriangle, CheckCircle2, Activity, Wrench, RefreshCw
 } from "lucide-react";
+import { ActionBanner } from "@/components/ui/action-banner";
 
 const MOCK_SKILLS = [
   { name: "PI Intake", callbackEnabled: true, threshold: 5, waitThreshold: 120, callsInQueue: 3, avgWait: 45 },
@@ -48,6 +49,12 @@ export default function CallbackQueuePage() {
 
   return (
     <div className="space-y-6">
+      <ActionBanner
+        icon={AlertTriangle}
+        variant="warning"
+        title="Preview surface — sample data"
+        description="Skill queue thresholds, IVR modules and announcements shown here are illustrative. Real Five9 sync, persistence and policy push land in a later phase. Actions here do not save."
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

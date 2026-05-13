@@ -175,7 +175,7 @@ export default function IdentityResolutionPage() {
             <div className="text-center py-12">
               <Unlink className="h-10 w-10 mx-auto text-muted-foreground/30 mb-3" />
               <p className="text-muted-foreground">No identity cross-references found</p>
-              <p className="text-xs text-muted-foreground mt-1">Click "Sync Identities" to populate from agents and tenants</p>
+              <p className="text-xs text-muted-foreground mt-1">Click "Sync Identities" to populate from agents and clients</p>
             </div>
           ) : (
             <Table>

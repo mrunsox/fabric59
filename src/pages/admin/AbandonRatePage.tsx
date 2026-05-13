@@ -13,6 +13,7 @@ import {
   Loader2, Play, Zap, TrendingDown, BarChart3, FileSearch, Wrench, LayoutTemplate,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
+import { ActionBanner } from "@/components/ui/action-banner";
 
 // Mock data
 const skillAuditData = [
@@ -81,6 +82,12 @@ export default function AbandonRatePage() {
 
   return (
     <div className="space-y-6">
+      <ActionBanner
+        icon={AlertTriangle}
+        variant="warning"
+        title="Preview surface — sample data"
+        description="This page uses illustrative skill, IVR and callback data. Live backend wiring (skill audits, IVR analysis, auto-remediate) lands in a later phase. Actions here do not persist."
+      />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Abandon Rate Reduction Engine</h1>

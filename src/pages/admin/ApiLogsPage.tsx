@@ -134,7 +134,7 @@ export default function ApiLogsPage() {
     },
     {
       key: "tenant_id",
-      header: "Tenant",
+      header: "Client",
       render: (log: ApiLog) => {
         const tenant = tenants.find((t) => t.id === log.tenant_id);
         return <span className="text-sm">{tenant?.name || log.tenant_id?.slice(0, 8) || "—"}</span>;
@@ -273,9 +273,9 @@ export default function ApiLogsPage() {
         )}
 
         <Select value={tenantFilter} onValueChange={setTenantFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Tenants" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Clients" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Tenants</SelectItem>
+            <SelectItem value="all">All Clients</SelectItem>
             {tenants.map((tenant) => (<SelectItem key={tenant.id} value={tenant.id}>{tenant.name}</SelectItem>))}
           </SelectContent>
         </Select>

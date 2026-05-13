@@ -385,10 +385,10 @@ export default function MappingsPage() {
             {/* Tenant Selection & Quick Reference */}
             <div className="space-y-6">
               <Card>
-                <CardHeader><CardTitle className="text-base">Select Tenant</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-base">Select Client</CardTitle></CardHeader>
                 <CardContent>
                   <Select value={selectedTenant} onValueChange={handleTenantChange}>
-                    <SelectTrigger><SelectValue placeholder="Choose a tenant" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Choose a client" /></SelectTrigger>
                     <SelectContent>
                       {tenants.map((tenant) => (
                         <SelectItem key={tenant.id} value={tenant.id}>
@@ -505,7 +505,7 @@ export default function MappingsPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="flex items-center justify-center py-16 text-muted-foreground">Select a tenant to configure field mappings</div>
+                  <div className="flex items-center justify-center py-16 text-muted-foreground">Select a client to configure field mappings</div>
                 )}
               </CardContent>
             </Card>
