@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   BarChart3,
 } from "lucide-react";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import {
   useWorkspaceKpis,
   useWorkspaceDispositions,
