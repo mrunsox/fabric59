@@ -2,24 +2,20 @@ import { Link } from "react-router-dom";
 import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { Mail, Heart, Lock, Building2 } from "lucide-react";
 
-// Canonical IA — Slice A (no /#anchor hrefs).
 const productLinks = [
   { label: "Solutions", href: "/solutions" },
   { label: "Personas", href: "/personas" },
   { label: "Pricing", href: "/pricing" },
   { label: "Integrations", href: "/integrations" },
   { label: "Customers", href: "/customers" },
-  { label: "Product overview", href: "/product" },
 ];
 
-// Canonical capability categories — no vendor-feature inventory.
-const platformLinks = [
-  { label: "Workspace operations", href: "/product#workspace-operations" },
-  { label: "Campaign orchestration", href: "/product#campaign-orchestration" },
-  { label: "Guides and templates", href: "/product#guides-templates" },
-  { label: "Integrations", href: "/integrations" },
-  { label: "Analytics and QA", href: "/product#analytics-qa" },
-  { label: "CRM sync and workflow automation", href: "/product#crm-sync" },
+const resourceLinks = [
+  { label: "Pilot guide", href: "/contact?topic=pilot-guide" },
+  { label: "Intake playbook", href: "/contact?topic=intake-playbook" },
+  { label: "Five9 + CRM blueprint", href: "/contact?topic=five9-crm-blueprint" },
+  { label: "Docs", href: "/contact?topic=docs" },
+  { label: "Contact", href: "/contact" },
 ];
 
 const companyLinks = [
@@ -28,7 +24,6 @@ const companyLinks = [
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
   { label: "Responsible Disclosure", href: "/responsible-disclosure" },
-  { label: "Contact", href: "/contact" },
 ];
 
 export function MegaFooter() {
@@ -43,7 +38,7 @@ export function MegaFooter() {
               <span className="text-base font-extrabold tracking-tight text-foreground">Fabric59</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              The Five9-native control plane and legal-intake bridge for contact centers and law firms.
+              Five9-native operational intelligence connecting telephony to CRM, workflow, QA, and downstream service systems.
             </p>
             <a
               href="mailto:hi@fabric59.com"
@@ -53,7 +48,7 @@ export function MegaFooter() {
             </a>
           </div>
 
-          {/* Product (canonical IA) */}
+          {/* Product */}
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-4">Product</h4>
             <nav className="flex flex-col gap-2.5">
@@ -65,11 +60,11 @@ export function MegaFooter() {
             </nav>
           </div>
 
-          {/* Platform highlights → all deep-link into the canonical product overview */}
+          {/* Resources */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Platform</h4>
-            <nav className="grid grid-cols-1 gap-2.5">
-              {platformLinks.map((link) => (
+            <h4 className="text-sm font-semibold text-foreground mb-4">Resources</h4>
+            <nav className="flex flex-col gap-2.5">
+              {resourceLinks.map((link) => (
                 <Link key={link.label} to={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
                   {link.label}
                 </Link>
@@ -93,7 +88,7 @@ export function MegaFooter() {
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-4">Security posture</h4>
             <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-              Credentials encrypted at rest, tenants isolated by Postgres Row-Level Security, full audit trail.
+              Credentials encrypted at rest. Tenants isolated by Postgres Row-Level Security. Full audit trail.
             </p>
             <div className="flex flex-wrap gap-2">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/40 rounded-lg px-2.5 py-1.5">
@@ -106,12 +101,11 @@ export function MegaFooter() {
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground/70 mt-3 leading-relaxed">
-              No SOC 2 claim today. Formal certifications will be pursued as the business matures.
+              Formal certifications will be pursued as the business matures.
             </p>
           </div>
         </div>
 
-        {/* Bottom bar */}
         <div className="border-t border-border/30 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Fabric59. All rights reserved.

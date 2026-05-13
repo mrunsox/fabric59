@@ -21,11 +21,11 @@ export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 /** Canonical short positioning line, used in titles and OG. */
 export const CANONICAL_TAGLINE =
-  "Operational Intelligence For Five9 Contact Centers";
+  "Five9-native operational intelligence for service teams";
 
 /** Canonical long-form description used on the home OG card. */
 export const canonicalSiteDescription = (): string =>
-  `The multi-tenant operational-intelligence platform for Five9. Unify Five9 SOAP control, ${liveCrmSeoPhrase()}, visual mapping, decision-tree scripting, post-call automations, RLS-isolated tenancy, and audit-grade compliance export.`;
+  `Fabric59 is the Five9-native operational intelligence layer for service teams — connecting telephony to CRM, workflow, QA, and downstream handoff. Multi-tenant by design, with ${liveCrmSeoPhrase()} intake live and a growing connector catalog.`;
 
 /** Short subhead-style phrase, e.g. "MyCase and Clio Grow intake". */
 export const canonicalCrmSubhead = (): string => liveCrmSubheadPhrase();
