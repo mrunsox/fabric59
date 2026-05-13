@@ -49,8 +49,8 @@ import OnboardingPage from "@/pages/onboarding/OnboardingPage";
 import WorkspaceBootstrapPage from "@/pages/onboarding/WorkspaceBootstrapPage";
 import AcceptInvitePage from "@/pages/auth/AcceptInvitePage";
 import OutlinePage from "@/pages/OutlinePage";
-import LandingPage from "@/pages/LandingPage";
 // Phase 1 — canonical marketing HomePage (mounted at "/").
+// Legacy LandingPage file kept on disk (referenced by regression tests) but no longer routed.
 import HomePage from "@/pages/marketing/HomePage";
 import TermsPage from "@/pages/TermsPage";
 import SecurityPage from "@/pages/SecurityPage";
