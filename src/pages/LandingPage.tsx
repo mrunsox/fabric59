@@ -204,29 +204,28 @@ export default function LandingPage() {
         {/* Capability categories */}
         <section id="capabilities" className="py-24 border-t border-border/30">
           <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-14">
-              <Badge className="mb-4 bg-primary/10 text-primary border-primary/30">Platform</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-3">What Fabric59 covers</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Six capability categories sit on top of your Five9 footprint and the systems your business already runs.
-              </p>
-            </div>
-
+            <SectionIntro
+              eyebrow="Platform"
+              title="What Fabric59 covers"
+              lede="Six capability categories sit on top of your Five9 footprint and the systems your business already runs — workspaces, campaigns, guides, integrations, analytics, and automation."
+              className="mb-14"
+            />
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {capabilityCategories.map((item, i) => (
                 <motion.div key={item.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
-                  <Card className="border-border/50 bg-card/60 h-full hover:border-primary/40 transition-colors">
-                    <CardContent className="p-6">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                        <item.icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <h3 className="font-semibold text-base mb-2">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-                    </CardContent>
-                  </Card>
+                  <CapabilityCard icon={item.icon} title={item.title} body={item.desc} />
                 </motion.div>
               ))}
             </div>
+            <ProofStrip
+              className="mt-14"
+              items={[
+                "Five9-native control plane",
+                "Postgres RLS isolation",
+                "AES-256 credential vault",
+                "30+ Five9 SOAP actions",
+              ]}
+            />
           </div>
         </section>
 
