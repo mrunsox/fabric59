@@ -24,7 +24,7 @@ export default function WorkspaceHomePage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {WORKSPACE_SECTIONS.filter((s) => s.key !== "home").map((s) => {
+        {SURFACED_WORKSPACE_SECTIONS.filter((s) => s.key !== "home").map((s) => {
           const Icon = s.icon;
           return (
             <Link key={s.key} to={`${base}/${s.href}`}>
