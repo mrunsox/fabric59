@@ -7826,6 +7826,7 @@ export type Database = {
           twilio_from_number: string | null
           updated_at: string
           webhook_url: string | null
+          workspace_id: string | null
           zapier_webhook_url: string | null
           zoom_api_key: string | null
         }
@@ -7883,6 +7884,7 @@ export type Database = {
           twilio_from_number?: string | null
           updated_at?: string
           webhook_url?: string | null
+          workspace_id?: string | null
           zapier_webhook_url?: string | null
           zoom_api_key?: string | null
         }
@@ -7940,6 +7942,7 @@ export type Database = {
           twilio_from_number?: string | null
           updated_at?: string
           webhook_url?: string | null
+          workspace_id?: string | null
           zapier_webhook_url?: string | null
           zoom_api_key?: string | null
         }
@@ -7963,6 +7966,13 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenants_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]

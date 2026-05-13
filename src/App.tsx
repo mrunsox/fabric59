@@ -11,8 +11,7 @@ import { OrgProtectedRoute } from "@/components/auth/OrgProtectedRoute";
 // Phase 2 — smart post-auth redirect (decides /onboarding vs /w/:id/home).
 import LaunchRedirectPage from "@/pages/auth/LaunchRedirectPage";
 import { AdminShell } from "@/components/layout/AdminShell";
-import { WorkspaceShell as LegacyWorkspaceShell } from "@/components/layout/WorkspaceShell";
-// Phase 0 — canonical shells (additive). Legacy shells remain mounted.
+import LegacyWorkspaceRedirect from "@/pages/workspace/LegacyWorkspaceRedirect";
 import { OrgShell } from "@/shells/OrgShell";
 // Phase 3 — canonical /org surfaces (Overview, Workspaces, Settings).
 import OrgOverviewPage from "@/pages/org/OrgOverviewPage";
@@ -28,7 +27,6 @@ import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } fro
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
 import WorkspaceHomePage from "@/pages/workspace/WorkspaceHomePage";
-import WorkspaceSectionPlaceholder from "@/pages/workspace/WorkspaceSectionPlaceholder";
 import WorkspaceFormsPage from "@/pages/workspace/WorkspaceFormsPage";
 import WorkspaceFormNewPage from "@/pages/workspace/WorkspaceFormNewPage";
 import WorkspaceFormDetailPage from "@/pages/workspace/WorkspaceFormDetailPage";
@@ -76,9 +74,7 @@ import PrivacyPage from "@/pages/PrivacyPage";
 import TrustPage from "@/pages/TrustPage";
 import ResponsibleDisclosurePage from "@/pages/ResponsibleDisclosurePage";
 import ContactPage from "@/pages/ContactPage";
-import FaqPage from "@/pages/FaqPage";
 import ProductTourPage from "@/pages/ProductTourPage";
-import DemoSandboxPage from "@/pages/DemoSandboxPage";
 // Phase 9 — canonical marketing IA
 import PersonasPage from "@/pages/marketing/PersonasPage";
 import SolutionsPage from "@/pages/marketing/SolutionsPage";
@@ -109,8 +105,7 @@ import PartnersPage from "@/pages/admin/PartnersPage";
 import PartnerOverviewPage from "@/pages/admin/PartnerOverviewPage";
 import Report59UploadPage from "@/pages/admin/Report59UploadPage";
 // VAULTED (slug: legacy-scripter-page) — ScripterPage import removed; /admin/scripter redirects.
-import AgentDashboardPage from "@/pages/admin/AgentDashboardPage";
-import SupervisorPage from "@/pages/admin/SupervisorPage";
+// agent-dashboard + supervisor pages deleted (canonical workspace QA covers it).
 import QAAnalyticsPage from "@/pages/admin/QAAnalyticsPage";
 import BillingPage from "@/pages/admin/BillingPage";
 import PostCallAutomationsPage from "@/pages/admin/PostCallAutomationsPage";
@@ -138,8 +133,7 @@ import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
 import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
 import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
 // CampaignsOverviewPage + CampaignDraftsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns and /admin/campaigns?status=draft).
-import CampaignReadinessBoardPage from "@/pages/admin/CampaignReadinessBoardPage";
-import CampaignEventLogPage from "@/pages/admin/CampaignEventLogPage";
+// CampaignReadinessBoardPage + CampaignEventLogPage deleted in hard-cleanup slice.
 import TestingHubPage from "@/pages/admin/TestingHubPage";
 import MonitoringHubPage from "@/pages/admin/MonitoringHubPage";
 import DocsHubPage from "@/pages/admin/DocsHubPage";
@@ -159,7 +153,7 @@ import WorkspacesPage from "@/pages/admin/WorkspacesPage";
 import WorkspaceDetailPage from "@/pages/admin/WorkspaceDetailPage";
 import ClientsPage from "@/pages/admin/ClientsPage";
 import ClientWorkspacePage from "@/pages/admin/ClientWorkspacePage";
-import Five9Page from "@/pages/admin/Five9Page";
+// Five9Page (re-export) deleted; /admin/five9 now uses Five9OverviewPage directly.
 import ConnectorsCatalogPage from "@/pages/admin/ConnectorsCatalogPage";
 import ConnectorInstancePage from "@/pages/admin/ConnectorInstancePage";
 import FlowsPage from "@/pages/admin/FlowsPage";
@@ -212,9 +206,7 @@ const App = () => (
             <Route path="/trust" element={<TrustPage />} />
             <Route path="/responsible-disclosure" element={<ResponsibleDisclosurePage />} />
             <Route path="/contact" element={<ContactPage />} />
-            <Route path="/faq" element={<FaqPage />} />
             <Route path="/product" element={<ProductTourPage />} />
-            <Route path="/demo" element={<DemoSandboxPage />} />
             {/* Phase 9 — canonical public marketing IA */}
             <Route path="/personas" element={<PersonasPage />} />
             <Route path="/solutions" element={<SolutionsPage />} />
@@ -223,31 +215,19 @@ const App = () => (
             <Route path="/customers" element={<CustomersPage />} />
             {/* Phase 9 — invite-accept landing target */}
             <Route path="/accept-invite" element={<AcceptInvitePage />} />
-            <Route path="/call-flow" element={<Navigate to="/superadmin/call-flow" replace />} />
 
-            {/* Legacy /master/* → consolidated under /superadmin */}
+            {/* Legacy /master/* → consolidated under /superadmin (high-bookmark only) */}
             <Route path="/master" element={<Navigate to="/superadmin" replace />} />
-            <Route path="/master/organizations" element={<Navigate to="/superadmin/workspaces" replace />} />
             <Route path="/master/users" element={<Navigate to="/superadmin/users" replace />} />
             <Route path="/master/vault" element={<Navigate to="/superadmin/vault" replace />} />
-            <Route path="/master/vault/:id" element={<Navigate to="/superadmin/vault" replace />} />
-            <Route path="/master/exports" element={<Navigate to="/superadmin/exports" replace />} />
-            <Route path="/master/routes" element={<Navigate to="/superadmin/routes" replace />} />
-            <Route path="/master/docs" element={<Navigate to="/superadmin/docs" replace />} />
-            <Route path="/admin/dev-guide" element={<Navigate to="/superadmin/dev-guide" replace />} />
-            <Route path="/admin/settings/dev-guide" element={<Navigate to="/superadmin/dev-guide" replace />} />
 
-            {/* Friendly top-level shortcuts → real routes (no dead 404s for bookmarks/docs) */}
+            {/* Friendly top-level shortcuts → real routes */}
             <Route path="/vault" element={<Navigate to="/superadmin/vault" replace />} />
-            <Route path="/feature-vault" element={<Navigate to="/superadmin/vault" replace />} />
             <Route path="/five9" element={<Navigate to="/admin/five9" replace />} />
             <Route path="/domains" element={<Navigate to="/admin/domains" replace />} />
-            <Route path="/five9-domains" element={<Navigate to="/admin/domains" replace />} />
             <Route path="/legal-connect" element={<Navigate to="/admin/legal-connect" replace />} />
-            <Route path="/legal-connect/overview" element={<Navigate to="/admin/legal-connect/overview" replace />} />
             <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
             <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
-            <Route path="/onboarding/legal-connect" element={<Navigate to="/admin/legal-connect" replace />} />
 
             {/* Unified platform admin (Superadmin) — gated by master_admin */}
             <Route element={<MasterProtectedRoute />}>
@@ -324,20 +304,16 @@ const App = () => (
                 <Route path="templates/:id" element={<TemplateDetailPage />} />
 
                 {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
-                <Route path="five9" element={<Five9Page />} />
+                <Route path="five9" element={<Five9OverviewPage />} />
                 <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
                 {/* VAULTED: legacy-five9-campaign-builder → canonical /admin/campaigns/new */}
                 <Route path="five9/campaign-builder" element={<Navigate to="/admin/campaigns/new" replace />} />
                 <Route path="five9/campaign-builder/:draftId" element={<Navigate to="/admin/campaigns/new" replace />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
                 {/* CANONICAL (Phase B): campaign cluster collapsed.
-                    overview/drafts → /admin/campaigns (with optional ?status= filter).
-                    readiness + event-log remain compatibility-only — reachable via direct URL,
-                    de-surfaced from primary campaign nav, still linked from operational hubs (Five9, Monitoring, Legal Connect). */}
+                    overview/drafts → /admin/campaigns (with optional ?status= filter). */}
                 <Route path="campaigns/overview" element={<Navigate to="/admin/campaigns" replace />} />
                 <Route path="campaigns/drafts" element={<Navigate to="/admin/campaigns?status=draft" replace />} />
-                <Route path="campaigns/readiness" element={<CampaignReadinessBoardPage />} />
-                <Route path="campaigns/event-log" element={<CampaignEventLogPage />} />
                 <Route path="testing" element={<TestingHubPage />} />
                 <Route path="monitoring" element={<MonitoringHubPage />} />
                 <Route path="docs" element={<DocsHubPage />} />
@@ -383,9 +359,7 @@ const App = () => (
                 <Route path="scriptflow" element={<Navigate to="/admin/scripts" replace />} />
                 <Route path="tree-editor" element={<Navigate to="/admin/scripts" replace />} />
                 <Route path="call-flow" element={<Navigate to="/admin/flows" replace />} />
-                {/* CANONICAL: kept routable as an active operational surface; de-surfaced from nav. */}
-                <Route path="agent-dashboard" element={<AgentDashboardPage />} />
-                <Route path="supervisor" element={<SupervisorPage />} />
+                {/* agent-dashboard + supervisor deleted (canonical workspace QA covers it). */}
                 <Route path="qa" element={<QAAnalyticsPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 <Route path="automations" element={<PostCallAutomationsPage />} />
@@ -396,7 +370,6 @@ const App = () => (
                 <Route path="identity" element={<IdentityResolutionPage />} />
                 <Route path="utilities" element={<PlatformUtilitiesPage />} />
                 <Route path="scripts" element={<ScriptEditorPage />} />
-                <Route path="scripts/:id" element={<ScriptEditorPage />} />
                 <Route path="scripts/:scriptId/builder" element={<ScriptBuilderPage />} />
                 <Route path="kb" element={<KnowledgeBasePage />} />
                 <Route path="training" element={<TrainingPage />} />
@@ -418,12 +391,8 @@ const App = () => (
               </Route>
 
               {/* ============================================================
-                  CANONICAL WORKSPACE TREE (Phase 2A)
-                  Path: /app/workspaces/:workspaceId/*
-                  Workspace identity is currently adapted from Organization
-                  via WorkspaceContext (see src/contexts/WorkspaceContext.tsx).
-                  Real workspaces table arrives in Phase 2B.
-                  Legacy /admin/* routes remain fully active and unchanged.
+                  LEGACY /app/workspaces/* — single-hop redirect to /w/*
+                  Index keeps the canonical workspaces picker.
                   ============================================================ */}
               <Route
                 path="/app/workspaces"
@@ -433,62 +402,7 @@ const App = () => (
                   </WorkspaceProvider>
                 }
               />
-              <Route path="/app/workspaces/:workspaceId" element={<LegacyWorkspaceShell />}>
-                {/* CANONICAL (Phase 11): /home is the only surfaced workspace home; index redirects. */}
-                <Route index element={<Navigate to="home" replace />} />
-                <Route path="home" element={<WorkspaceHomePage />} />
-                {/* Reused legacy pages — wrapped under canonical workspace shell.
-                    These pages still read org-scoped data from AuthContext today;
-                    workspace-scoped data binding lands in Phase 2B/3. */}
-                {/* Phase 2B: workspace-scoped clients (real workspace context). */}
-                <Route path="clients" element={<WorkspaceClientsPage />} />
-                {/* Phase 3: canonical workspace campaigns (workspace-scoped, RLS). */}
-                <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
-                <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
-                <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
-                {/* Phase 5: canonical workspace templates (workspace-scoped read of canonical
-                    templates table; mirrors all 7 legacy template tables). */}
-                <Route path="templates" element={<WorkspaceTemplatesPage />} />
-                <Route path="templates/:templateId" element={<WorkspaceTemplateDetailPage />} />
-                <Route path="runs" element={<RunsPage />} />
-                <Route path="agents" element={<AgentsPage />} />
-                <Route path="supervisor" element={<SupervisorPage />} />
-                {/* Phase 8: canonical workspace QA + analytics surfaces.
-                    Legacy admin pages remain reachable under /admin/* as
-                    compatibility-only; canonical QA/analytics live here. */}
-                <Route path="qa" element={<WorkspaceQaPage />} />
-                <Route path="qa-legacy" element={<QAAnalyticsPage />} />
-                <Route path="analytics" element={<WorkspaceAnalyticsPage />} />
-                <Route path="analytics-legacy" element={<ReportsPage />} />
-                <Route path="billing" element={<WorkspaceBillingPage />} />
-                {/* Phase 10 — AI knowledge layer + workspace assistant. */}
-                <Route path="knowledge" element={<WorkspaceKnowledgePage />} />
-                <Route path="assistant" element={<WorkspaceAssistantPage />} />
-                {/* Phase 7: canonical workspace integrations (provider-agnostic).
-                    Reads canonical integration_providers + integration_connections;
-                    legacy ConnectorsCatalogPage stays reachable but is no longer the
-                    primary surface for workspace-scoped integrations. */}
-                <Route path="integrations" element={<WorkspaceIntegrationsPage />} />
-                <Route
-                  path="integrations/:connectionId"
-                  element={<WorkspaceIntegrationDetailPage />}
-                />
-                <Route path="integrations-legacy" element={<ConnectorsCatalogPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                {/* Phase 4: canonical workspace guides (workspace-scoped, mirrored from legacy scripts).
-                    ScriptBuilderPage at /admin/scripts/:scriptId/builder is the canonical builder
-                    survivor; legacy script surfaces (scripter, tree-editor, scriptflow, script-routing)
-                    remain routable as compatibility/deferred during Phase 4. */}
-                <Route path="guides" element={<WorkspaceGuidesPage />} />
-                <Route path="guides/new" element={<WorkspaceGuideNewPage />} />
-                <Route path="guides/:guideId" element={<WorkspaceGuideDetailPage />} />
-                <Route path="guides/:guideId/edit" element={<WorkspaceGuideEditPage />} />
-                <Route path="guides/:guideId/preview" element={<WorkspaceGuidePreviewPage />} />
-                <Route path="forms" element={<WorkspaceFormsPage />} />
-                <Route path="forms/new" element={<WorkspaceFormNewPage />} />
-                <Route path="forms/:formId" element={<WorkspaceFormDetailPage />} />
-                <Route path="reset" element={<WorkspaceResetPreviewPage />} />
-              </Route>
+              <Route path="/app/workspaces/:workspaceId/*" element={<LegacyWorkspaceRedirect />} />
 
               {/* ============================================================
                   PHASE 0 — CANONICAL SHELLS (additive)

@@ -3,25 +3,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 /**
- * Workspace-scoped client list (Phase 2B).
+ * Workspace-scoped client list (canonical).
  *
- * Until tenants/clients have a workspace_id column (deferred to a later slice),
- * we resolve clients via the workspace's parent organization_id. Once clients
- * gain workspace ownership, this hook is the single point that needs to switch
- * its predicate to .eq("workspace_id", workspace.id).
+ * Strict: only returns tenants explicitly assigned to this workspace via
+ * tenants.workspace_id. A fresh workspace shows empty state until clients are
+ * assigned. Org-wide client roster lives at /admin/clients.
  */
 export function useWorkspaceClients() {
-  const { workspace, organizationId } = useWorkspace();
+  const { workspace } = useWorkspace();
 
   return useQuery({
     queryKey: ["workspace-clients", workspace?.id ?? null],
-    enabled: !!workspace && !!organizationId,
+    enabled: !!workspace,
     queryFn: async () => {
-      // TRANSITIONAL: org-scoped read. Swap to workspace_id filter once clients table gains it.
       const { data, error } = await supabase
         .from("tenants")
         .select("id, name, status, created_at")
-        .eq("organization_id", organizationId!)
+        .eq("workspace_id", workspace!.id)
         .order("name", { ascending: true });
       if (error) throw error;
       return data ?? [];
