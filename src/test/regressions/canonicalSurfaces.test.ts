@@ -275,19 +275,29 @@ describe("Phase G · canonical experience rebuild", () => {
     }
   });
 
-  it("mega menu primary nav exposes the 5 canonical marketing surfaces", () => {
+  it("mega menu primary nav exposes the canonical marketing surfaces", () => {
     const src = read("components/marketing/MegaMenuHeader.tsx");
-    for (const route of ["/solutions", "/personas", "/integrations", "/pricing", "/customers"]) {
+    // Direct primary links (no duplicates of mega-menu triggers).
+    for (const route of ["/integrations", "/pricing", "/customers"]) {
       const re = new RegExp(`to:\\s*["'\`]${route}["'\`]`);
       expect(src.match(re), `Missing primary nav link: ${route}`).toBeTruthy();
     }
+    // /solutions and /personas are surfaced as mega-menu triggers + section anchors,
+    // and must not appear duplicated as direct primary links.
+    expect(src).not.toMatch(/to:\s*["'`]\/solutions["'`]/);
+    expect(src).not.toMatch(/to:\s*["'`]\/personas["'`]/);
   });
 
-  it("mega menu lead magnets route through /contact?topic= only (no self-serve downloads)", () => {
+  it("mega menu surfaces no client-facing Resources/sales-only panel", () => {
     const src = read("components/marketing/MegaMenuHeader.tsx");
-    expect(src).toMatch(/\/contact\?topic=pilot-guide/);
-    expect(src).toMatch(/\/contact\?topic=intake-playbook/);
-    expect(src).toMatch(/\/contact\?topic=five9-crm-blueprint/);
+    // Lead-magnet routes are footer/in-page CTAs only — not header-surfaced.
+    expect(src).not.toMatch(/\/contact\?topic=pilot-guide/);
+    expect(src).not.toMatch(/\/contact\?topic=intake-playbook/);
+    expect(src).not.toMatch(/\/contact\?topic=five9-crm-blueprint/);
+    expect(src).not.toMatch(/\/contact\?topic=docs/);
+    // No "Resources" trigger label remains in the header source.
+    expect(src).not.toMatch(/>\s*Resources\s*</);
+    // Self-serve downloads never appear in the header.
     expect(src).not.toMatch(/href:\s*["'`][^"'`]*\.(pdf|zip|docx)["'`]/i);
     expect(src).not.toMatch(/href:\s*["'`]\/demo["'`]/);
   });
