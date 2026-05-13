@@ -534,7 +534,7 @@ const App = () => (
                 <Route path="integrations/:connectionId" element={<WorkspaceIntegrationDetailPage />} />
                 <Route path="knowledge" element={<WorkspaceKnowledgePage />} />
                 <Route path="assistant" element={<WorkspaceAssistantPage />} />
-                <Route path="settings" element={<SettingsPage />} />
+                <Route path="settings" element={<WorkspaceSettingsPage />} />
               </Route>
             </Route>
 
