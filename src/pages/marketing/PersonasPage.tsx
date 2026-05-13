@@ -1,5 +1,5 @@
 import { Compass, Headphones, Wrench, PhoneIncoming } from "lucide-react";
-import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { MarketingShell as MarketingLayout } from "@/shells/MarketingShell";
 import { MarketingHero } from "@/components/marketing/MarketingHero";
 import { SectionShell } from "@/components/marketing/SectionShell";
 import { SectionIntro } from "@/components/marketing/SectionIntro";
