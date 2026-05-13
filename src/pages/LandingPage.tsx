@@ -6,6 +6,10 @@ import { SEOHead } from "@/components/seo/SEOHead";
 import { StructuredData } from "@/components/seo/StructuredData";
 import { MegaMenuHeader } from "@/components/marketing/MegaMenuHeader";
 import { MegaFooter } from "@/components/marketing/MegaFooter";
+import { SectionIntro } from "@/components/marketing/SectionIntro";
+import { CapabilityCard } from "@/components/marketing/CapabilityCard";
+import { ProofStrip } from "@/components/marketing/ProofStrip";
+import { CtaRow } from "@/components/marketing/CtaRow";
 import { motion } from "framer-motion";
 import { ScrollToTopButton } from "@/components/layout/ScrollToTopButton";
 import {
