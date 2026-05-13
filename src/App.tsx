@@ -367,8 +367,8 @@ const App = () => (
                 {/* Phase C: call-flow base redirects above; this param route is compatibility-only. */}
                 <Route path="legal-connect" element={<LegalConnectPage />} />
                 <Route path="qr-routing" element={<QrRoutingPage />} />
-                {/* Phase C: tree-editor base redirects above; param surface kept compatibility-only. */}
-                <Route path="tree-editor/:scriptId" element={<TreeEditorPage />} />
+                {/* VAULTED: legacy-tree-editor → canonical /admin/scripts */}
+                <Route path="tree-editor/:scriptId" element={<Navigate to="/admin/scripts" replace />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="design-system" element={<DesignSystemPage />} />
