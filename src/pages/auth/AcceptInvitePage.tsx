@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MailCheck } from "lucide-react";
-import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthShell } from "@/shells/AuthShell";
 
 /**
  * Phase 9 — Invite-accept landing.

@@ -13,7 +13,7 @@ import {
   Eye, EyeOff, CheckCircle, Users, Rocket, ShieldCheck,
   HeadphonesIcon, LineChart, Workflow, PhoneIncoming,
 } from "lucide-react";
-import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { OnboardingShell } from "@/shells/OnboardingShell";
 import { OnboardingContextHelper } from "@/components/onboarding/OnboardingContextHelper";
 import { toast } from "sonner";
 

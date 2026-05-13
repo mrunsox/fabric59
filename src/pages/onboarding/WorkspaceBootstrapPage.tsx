@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ArrowRight, CheckCircle } from "lucide-react";
-import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { OnboardingShell } from "@/shells/OnboardingShell";
 import { toast } from "sonner";
 
 const STEPS = [
