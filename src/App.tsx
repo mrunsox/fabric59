@@ -217,31 +217,19 @@ const App = () => (
             <Route path="/customers" element={<CustomersPage />} />
             {/* Phase 9 — invite-accept landing target */}
             <Route path="/accept-invite" element={<AcceptInvitePage />} />
-            <Route path="/call-flow" element={<Navigate to="/superadmin/call-flow" replace />} />
 
-            {/* Legacy /master/* → consolidated under /superadmin */}
+            {/* Legacy /master/* → consolidated under /superadmin (high-bookmark only) */}
             <Route path="/master" element={<Navigate to="/superadmin" replace />} />
-            <Route path="/master/organizations" element={<Navigate to="/superadmin/workspaces" replace />} />
             <Route path="/master/users" element={<Navigate to="/superadmin/users" replace />} />
             <Route path="/master/vault" element={<Navigate to="/superadmin/vault" replace />} />
-            <Route path="/master/vault/:id" element={<Navigate to="/superadmin/vault" replace />} />
-            <Route path="/master/exports" element={<Navigate to="/superadmin/exports" replace />} />
-            <Route path="/master/routes" element={<Navigate to="/superadmin/routes" replace />} />
-            <Route path="/master/docs" element={<Navigate to="/superadmin/docs" replace />} />
-            <Route path="/admin/dev-guide" element={<Navigate to="/superadmin/dev-guide" replace />} />
-            <Route path="/admin/settings/dev-guide" element={<Navigate to="/superadmin/dev-guide" replace />} />
 
-            {/* Friendly top-level shortcuts → real routes (no dead 404s for bookmarks/docs) */}
+            {/* Friendly top-level shortcuts → real routes */}
             <Route path="/vault" element={<Navigate to="/superadmin/vault" replace />} />
-            <Route path="/feature-vault" element={<Navigate to="/superadmin/vault" replace />} />
             <Route path="/five9" element={<Navigate to="/admin/five9" replace />} />
             <Route path="/domains" element={<Navigate to="/admin/domains" replace />} />
-            <Route path="/five9-domains" element={<Navigate to="/admin/domains" replace />} />
             <Route path="/legal-connect" element={<Navigate to="/admin/legal-connect" replace />} />
-            <Route path="/legal-connect/overview" element={<Navigate to="/admin/legal-connect/overview" replace />} />
             <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
             <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
-            <Route path="/onboarding/legal-connect" element={<Navigate to="/admin/legal-connect" replace />} />
 
             {/* Unified platform admin (Superadmin) — gated by master_admin */}
             <Route element={<MasterProtectedRoute />}>
