@@ -116,11 +116,11 @@ export type WorkspaceNavItem = {
  */
 export const WORKSPACE_SECTIONS: WorkspaceNavItem[] = [
   { key: "home", label: "Home", icon: Home, href: "home", surfaced: true },
-  { key: "clients", label: "Clients", icon: Users, href: "clients", surfaced: true },
   { key: "campaigns", label: "Campaigns", icon: Megaphone, href: "campaigns", surfaced: true },
   { key: "guides", label: "Guides", icon: BookOpen, href: "guides", surfaced: true },
-  { key: "forms", label: "Forms", icon: FormInput, href: "forms", surfaced: false },
+  { key: "forms", label: "Forms", icon: FormInput, href: "forms", surfaced: true },
   { key: "templates", label: "Templates", icon: FileStack, href: "templates", surfaced: true },
+  { key: "clients", label: "Clients", icon: Users, href: "clients", surfaced: true },
   { key: "runs", label: "Runs", icon: PlayCircle, href: "runs", surfaced: false },
   { key: "agents", label: "Agents", icon: UserCog, href: "agents", surfaced: false },
   { key: "supervisor", label: "Supervisor", icon: Headphones, href: "supervisor", surfaced: false },
