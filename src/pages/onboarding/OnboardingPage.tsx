@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -6,16 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
-  Loader2, ArrowRight, Check, Globe, Building2, Building,
-  Eye, EyeOff, CheckCircle, Users, Rocket, Sparkles, ShieldCheck,
+  Loader2, ArrowRight, Check, Building2, Building,
+  Eye, EyeOff, CheckCircle, Users, Rocket, ShieldCheck,
   HeadphonesIcon, LineChart, Workflow, PhoneIncoming,
 } from "lucide-react";
-import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
-import { SEOHead } from "@/components/seo/SEOHead";
-import { OnboardingMilestones, type Milestone } from "@/components/onboarding/OnboardingMilestones";
+import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { OnboardingContextHelper } from "@/components/onboarding/OnboardingContextHelper";
 import { toast } from "sonner";
 
@@ -42,12 +40,31 @@ type Motion = "intake" | "reactivation" | "qa" | "sync" | "monitoring";
 
 const RESUME_KEY = "fabric59:onboarding:step";
 
-const milestones: Milestone[] = [
-  { key: "org", label: "Organization", description: "Name your operating tenant", icon: Building },
-  { key: "profile", label: "Operating profile", description: "Role, ownership, primary motion", icon: Users },
-  { key: "telephony", label: "Connect Five9", description: "Optional — connect later from settings", icon: Globe },
-  { key: "land", label: "Land workspace", description: "Enter your canonical workspace", icon: Rocket },
-];
+const STEP_DEFS = [
+  { key: "org", label: "Organization", description: "Name your operating tenant" },
+  { key: "profile", label: "Operating profile", description: "Role, ownership, primary motion" },
+  { key: "telephony", label: "Connect Five9", description: "Optional — connect later from settings" },
+  { key: "land", label: "Land workspace", description: "Enter your canonical workspace" },
+] as const;
+
+const STEP_HEADINGS: Record<Step, { heading: string; subheading: string }> = {
+  org: {
+    heading: "Name your organization",
+    subheading: "Your operating tenant — owns workspaces, clients, integrations, and reporting.",
+  },
+  profile: {
+    heading: "Tell us how you operate",
+    subheading: "Your role, telephony ownership, and the motion you want to land first. We tailor your workspace home to match.",
+  },
+  telephony: {
+    heading: "Connect Five9",
+    subheading: "Drop in admin credentials now or skip — your concierge can wire this up with you later.",
+  },
+  land: {
+    heading: "Land your workspace",
+    subheading: "Workspaces are the canonical operating boundary — clients, scripts, integrations, QA, and analytics live here.",
+  },
+};
 
 const ROLES: Array<{ key: Role; label: string; helper: string; icon: typeof Users }> = [
   { key: "ops_leader", label: "Operations leader", helper: "Owns service-ops outcomes across clients and motions.", icon: LineChart },
@@ -109,10 +126,6 @@ export default function OnboardingPage() {
     if (!workspaceName && organization?.name) setWorkspaceName(`${organization.name} workspace`);
   }, [organization?.name, workspaceName]);
 
-  const milestoneIndex = useMemo(() => {
-    const map: Record<Step, number> = { org: 0, profile: 1, telephony: 2, land: 3 };
-    return map[step];
-  }, [step]);
 
   const orgId = createdOrgId || organization?.id || null;
 
@@ -229,26 +242,12 @@ export default function OnboardingPage() {
     }
   };
 
-  const stepHeader = (icon: React.ReactNode, title: string, description: string) => (
-    <CardHeader className="text-center pb-2">
-      <div className="flex justify-center mb-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/8 ring-4 ring-primary/5">
-          {icon}
-        </div>
-      </div>
-      <CardTitle className="text-xl tracking-tight">{title}</CardTitle>
-      <CardDescription>{description}</CardDescription>
-    </CardHeader>
-  );
+  // Per-step bodies render inside OnboardingShell — no per-card heading.
+
 
   const stepContent: Record<Step, React.ReactNode> = {
     org: (
       <Card className="card-elevated border-0 shadow-lg">
-        {stepHeader(
-          <Building className="h-7 w-7 text-primary" />,
-          "Name your organization",
-          "Your operating tenant — owns workspaces, clients, integrations, and reporting.",
-        )}
         <form onSubmit={handleCreateOrg}>
           <CardContent className="space-y-4 pt-2">
             <div className="space-y-2">
@@ -279,11 +278,6 @@ export default function OnboardingPage() {
 
     profile: (
       <Card className="card-elevated border-0 shadow-lg">
-        {stepHeader(
-          <Users className="h-7 w-7 text-primary" />,
-          "Tell us how you operate",
-          "Your role, telephony ownership, and the motion you want to land first. We tailor your workspace home to match.",
-        )}
         <CardContent className="space-y-5 pt-2">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Your role</p>
@@ -397,11 +391,6 @@ export default function OnboardingPage() {
 
     telephony: (
       <Card className="card-elevated border-0 shadow-lg">
-        {stepHeader(
-          <Globe className="h-7 w-7 text-primary" />,
-          "Connect Five9 (optional)",
-          "Drop in admin credentials now or skip — your concierge can wire this up with you later.",
-        )}
         <form onSubmit={handleConnectFive9}>
           <CardContent className="space-y-4 pt-2">
             <div className="space-y-2">
@@ -479,11 +468,6 @@ export default function OnboardingPage() {
 
     land: (
       <Card className="card-elevated border-0 shadow-lg">
-        {stepHeader(
-          <Sparkles className="h-7 w-7 text-primary" />,
-          "Land your workspace",
-          "Workspaces are the canonical operating boundary — clients, scripts, integrations, QA, and analytics live here.",
-        )}
         <CardContent className="space-y-4 pt-2">
           <div className="space-y-2">
             <Label htmlFor="ws-name">Workspace name</Label>
@@ -527,39 +511,19 @@ export default function OnboardingPage() {
     ),
   };
 
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <SEOHead title="Concierge onboarding | Fabric59" description="Land your canonical Fabric59 workspace in four guided steps." noindex />
-      <div className="w-full max-w-4xl flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-        <div className="hidden lg:block w-60 flex-shrink-0 pt-4">
-          <div className="flex items-center gap-2.5 mb-8">
-            <Fabric59Icon size="md" />
-            <div>
-              <p className="text-sm font-bold tracking-tight text-foreground">Fabric59</p>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Concierge setup</p>
-            </div>
-          </div>
-          <OnboardingMilestones milestones={milestones} currentIndex={milestoneIndex} />
-          <div className="mt-8 rounded-xl border border-border/60 p-4 bg-muted/20">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">White-glove</p>
-            <p className="text-xs text-foreground mt-1.5 leading-snug">
-              A Fabric59 implementation specialist follows up within one business day to validate adapters, mappings, and routing before go-live.
-            </p>
-          </div>
-        </div>
+  const { heading, subheading } = STEP_HEADINGS[step];
 
-        <div className="flex-1 max-w-xl w-full mx-auto lg:mx-0">
-          <div className="flex lg:hidden items-center justify-center gap-1.5 mb-6">
-            {milestones.map((m, i) => (
-              <div
-                key={m.key}
-                className={cn("h-1.5 rounded-full transition-all", i <= milestoneIndex ? "w-8 bg-primary" : "w-4 bg-muted")}
-              />
-            ))}
-          </div>
-          <div className="animate-fade-up">{stepContent[step]}</div>
-        </div>
-      </div>
-    </div>
+  return (
+    <OnboardingShell
+      title="Concierge onboarding | Fabric59"
+      description="Land your canonical Fabric59 workspace in four guided steps."
+      steps={STEP_DEFS as unknown as { key: string; label: string; description?: string }[]}
+      activeKey={step}
+      heading={heading}
+      subheading={subheading}
+    >
+      <div className="animate-fade-up">{stepContent[step]}</div>
+    </OnboardingShell>
   );
 }
+

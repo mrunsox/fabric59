@@ -299,8 +299,8 @@ describe("Phase G · canonical experience rebuild", () => {
     expect(src).toMatch(/Five9 contact centers/);
     expect(src).toMatch(/Multi-tenant\s+·\s+Five9-native/);
     // Primary hero CTA goes to /contact (concierge), never /signup or /demo.
-    expect(src).toMatch(/to=["'`]\/contact["'`]/);
-    expect(src).not.toMatch(/to=["'`]\/demo["'`]/);
+    expect(src).toMatch(/to:\s*["'`]\/contact(\?[^"'`]*)?["'`]/);
+    expect(src).not.toMatch(/to:\s*["'`]\/demo["'`]/);
   });
 
   // ---- Quick actions canonical set -----------------------------------------
@@ -361,5 +361,76 @@ describe("Phase G · canonical experience rebuild", () => {
     const src = read("pages/marketing/IntegrationsIndexPage.tsx");
     expect(src, "Stub CRM tile must be gone").not.toMatch(/title:\s*["'`]Stub/);
     expect(src).not.toMatch(/>\s*Coming Soon\s*</);
+  });
+});
+
+/**
+ * Phase H — Premium marketing + auth + onboarding rebuild assertions.
+ *
+ * Locks in the shared shells (AuthShell, OnboardingShell), tightened footer,
+ * and the rule that onboarding lands users in /app/workspaces/:id/home.
+ */
+describe("Phase H · premium marketing + auth + onboarding rebuild", () => {
+  const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), "utf8");
+
+  it("shared AuthShell primitive exists with grounded product-truth panel", () => {
+    const src = read("components/auth/AuthShell.tsx");
+    expect(src).toMatch(/Operational intelligence/);
+    expect(src).toMatch(/Five9 contact centers/);
+    // Must not fabricate vanity proof.
+    expect(src).not.toMatch(/SOC\s*2/);
+    expect(src).not.toMatch(/\b\d+,?\d*\+\s*(users|customers|teams)\b/i);
+  });
+
+  it("login, signup, forgot, reset, and accept-invite all use AuthShell", () => {
+    const pages = [
+      "pages/auth/LoginPage.tsx",
+      "pages/auth/SignupPage.tsx",
+      "pages/auth/ForgotPasswordPage.tsx",
+      "pages/auth/ResetPasswordPage.tsx",
+      "pages/auth/AcceptInvitePage.tsx",
+    ];
+    for (const rel of pages) {
+      const src = read(rel);
+      expect(src, `${rel} must import AuthShell`).toMatch(/from\s+["']@\/components\/auth\/AuthShell["']/);
+      expect(src, `${rel} must render <AuthShell`).toMatch(/<AuthShell\b/);
+    }
+  });
+
+  it("shared OnboardingShell primitive exists with concierge framing", () => {
+    const src = read("components/onboarding/OnboardingShell.tsx");
+    expect(src).toMatch(/Concierge setup/);
+    expect(src).toMatch(/activeKey/);
+  });
+
+  it("onboarding and workspace bootstrap both use OnboardingShell", () => {
+    for (const rel of [
+      "pages/onboarding/OnboardingPage.tsx",
+      "pages/onboarding/WorkspaceBootstrapPage.tsx",
+    ]) {
+      const src = read(rel);
+      expect(src, `${rel} must use OnboardingShell`).toMatch(/<OnboardingShell\b/);
+    }
+  });
+
+  it("onboarding final handoff lands in /app/workspaces/:id/home, not /admin", () => {
+    const src = read("pages/onboarding/OnboardingPage.tsx");
+    expect(src).toMatch(/\/app\/workspaces\/\$\{[^}]+\}\/home/);
+    // Must not redirect first-run users straight into /admin.
+    expect(src).not.toMatch(/navigate\(\s*["'`]\/admin["'`]/);
+  });
+
+  it("MegaFooter no longer surfaces fabricated AES / RLS marketing capsules", () => {
+    const src = read("components/marketing/MegaFooter.tsx");
+    expect(src).not.toMatch(/AES-256/);
+    expect(src).not.toMatch(/Security posture/);
+    // Trust narrative still reachable.
+    expect(src).toMatch(/\/trust/);
+  });
+
+  it("MegaFooter resource links route only to /contact?topic= (no self-serve downloads)", () => {
+    const src = read("components/marketing/MegaFooter.tsx");
+    expect(src).not.toMatch(/href:\s*["'`][^"'`]*\.(pdf|zip|docx)["'`]/i);
+    expect(src).toMatch(/\/contact\?topic=pilot-guide/);
   });
 });

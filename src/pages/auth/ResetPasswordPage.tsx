@@ -4,10 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
-import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
-import { SEOHead } from "@/components/seo/SEOHead";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -21,44 +19,26 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setIsReady(true);
-      }
+      if (event === "PASSWORD_RECOVERY") setIsReady(true);
     });
-
-    // Also check if we already have a recovery session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setIsReady(true);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
+    if (password !== confirmPassword) return setError("Passwords do not match");
+    if (password.length < 6) return setError("Password must be at least 6 characters");
     setIsSubmitting(true);
-
     const { error } = await supabase.auth.updateUser({ password });
-
-    if (error) {
-      setError(error.message);
-    } else {
+    if (error) setError(error.message);
+    else {
       setIsDone(true);
-      setTimeout(() => navigate("/login"), 2500);
+      setTimeout(() => navigate("/login"), 2000);
     }
-
     setIsSubmitting(false);
   };
 
@@ -71,77 +51,65 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <SEOHead title="Reset Password | Fabric59" description="Set a new password for your Fabric59 account." noindex />
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary glow-primary">
-              <Fabric59Icon size="lg" className="h-12 w-12" />
+    <AuthShell
+      title="Set new password | Fabric59"
+      description="Set a new password for your Fabric59 account."
+      heading="Set a new password"
+      subheading="Choose a strong password for your account."
+      showBack={false}
+    >
+      {isDone ? (
+        <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-5 text-center">
+          <CheckCircle2 className="h-8 w-8 text-success mx-auto" />
+          <p className="text-sm font-medium text-foreground">Password updated</p>
+          <p className="text-sm text-muted-foreground">Redirecting you to sign in…</p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {error && (
+            <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="password">New password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="h-11 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
-          <CardTitle className="text-2xl">Set new password</CardTitle>
-          <CardDescription>Choose a strong password for your account</CardDescription>
-        </CardHeader>
-
-        {isDone ? (
-          <CardContent className="space-y-4">
-            <div className="flex flex-col items-center gap-3 py-4 text-center">
-              <CheckCircle2 className="h-12 w-12 text-success" />
-              <p className="text-sm text-foreground font-medium">Password updated!</p>
-              <p className="text-sm text-muted-foreground">Redirecting you to sign in…</p>
-            </div>
-          </CardContent>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              {error && (
-                <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
-                  <p className="text-sm text-destructive">{error}</p>
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Update password
-              </Button>
-            </CardFooter>
-          </form>
-        )}
-      </Card>
-    </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <Input
+              id="confirmPassword"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="h-11"
+            />
+          </div>
+          <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Update password
+          </Button>
+        </form>
+      )}
+    </AuthShell>
   );
 }
