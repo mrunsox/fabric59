@@ -76,18 +76,7 @@ export function MegaMenuHeader() {
                           <item.icon className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className="text-sm font-medium text-foreground">{item.title}</span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                              item.badge === "Live"
-                                ? "bg-success/10 text-success"
-                                : item.badge === "Partial"
-                                ? "bg-primary/10 text-primary"
-                                : "bg-accent/10 text-accent"
-                            }`}>
-                              {item.badge}
-                            </span>
-                          </div>
+                          <div className="text-sm font-medium text-foreground mb-0.5">{item.title}</div>
                           <div className="text-xs text-muted-foreground leading-relaxed">{item.desc}</div>
                         </div>
                       </Link>
