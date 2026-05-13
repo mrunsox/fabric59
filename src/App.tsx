@@ -120,7 +120,7 @@ import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import CallFlowPage from "@/pages/admin/CallFlowPage";
-import TreeEditorPage from "@/pages/admin/TreeEditorPage";
+// VAULTED (slug: legacy-tree-editor) — TreeEditorPage import removed; /admin/tree-editor/:scriptId redirects.
 // UserDashboardPage no longer mounted directly — Phase 11 collapsed /admin/dashboard into /admin (OverviewPage re-exports it).
 import DesignSystemPage from "@/pages/admin/DesignSystemPage";
 import DevGuidePage from "@/pages/superadmin/DevGuidePage";
