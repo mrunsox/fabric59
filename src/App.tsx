@@ -14,6 +14,10 @@ import { AdminShell } from "@/components/layout/AdminShell";
 import { WorkspaceShell as LegacyWorkspaceShell } from "@/components/layout/WorkspaceShell";
 // Phase 0 — canonical shells (additive). Legacy shells remain mounted.
 import { OrgShell } from "@/shells/OrgShell";
+// Phase 3 — canonical /org surfaces (Overview, Workspaces, Settings).
+import OrgOverviewPage from "@/pages/org/OrgOverviewPage";
+import OrgWorkspacesPage from "@/pages/org/OrgWorkspacesPage";
+import OrgSettingsPage from "@/pages/org/OrgSettingsPage";
 import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } from "@/shells/WorkspaceShell";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
@@ -494,14 +498,14 @@ const App = () => (
                   Master admins are exempt and can still inspect /org/*. */}
               <Route element={<OrgProtectedRoute />}>
                 <Route path="/org" element={<OrgShell />}>
-                  <Route index element={<OverviewPage />} />
-                  <Route path="workspaces" element={<WorkspacesPage />} />
+                  <Route index element={<OrgOverviewPage />} />
+                  <Route path="workspaces" element={<OrgWorkspacesPage />} />
                   <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
                   <Route path="connectors" element={<ConnectorsCatalogPage />} />
                   <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="settings" element={<OrgSettingsPage />} />
                   <Route path="billing" element={<BillingPage />} />
                 </Route>
               </Route>
