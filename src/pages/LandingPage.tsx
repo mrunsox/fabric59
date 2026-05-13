@@ -14,7 +14,7 @@ import {
 import {
   ArrowRight, ChevronRight, HelpCircle, Phone, Shield, Database,
   Workflow, Scale, GitBranch, GitFork, Building2, FileSearch,
-  Layers, Lock, Clock, Calendar, Globe, Megaphone,
+  Layers, Lock, Clock, Calendar, Globe, Megaphone, LayoutGrid, BookOpen, Plug, BarChart3,
 } from "lucide-react";
 import {
   comingSoonIntegrations,
@@ -33,60 +33,38 @@ import {
   softwareApplicationLD,
 } from "@/seo/marketingMetadata";
 
-// --- Available now (audit-verified shipped capabilities) ---
-// CRM-bridge + Slack rows are derived from integrationStatus so claims
-// can never drift between this page, the FAQ, and the SEO description.
-const liveCrmsForBridge = byCategory("crm").filter((e) => e.status === "live");
-const liveSlack = liveIntegrations().find((e) => e.id === "slack");
-
-const availableNow = [
+// --- Canonical capability categories ---
+// High-level platform story. Five9 stays the wedge in hero/proof/FAQ copy.
+const capabilityCategories = [
   {
-    icon: Phone,
-    title: "Deep Five9 SOAP integration",
-    desc: "30+ SOAP actions covering agents, campaigns, skills, profiles, DNIS, dispositions, and call variables — wired through a single unified edge function.",
+    icon: LayoutGrid,
+    title: "Workspace operations",
+    desc: "Org / Partner / Client workspaces with Postgres RLS isolation, shared config inheritance, and SECURITY DEFINER role checks.",
   },
-  {
-    icon: Globe,
-    title: "Multi-domain Five9 management",
-    desc: "Manage credentials, IVR settings, and connection tests across multiple Five9 domains with automated domain identifier derivation.",
-  },
-  {
-    icon: Scale,
-    title: "Five9 → CRM bridge for legal intake",
-    desc: liveCrmsForBridge.map((e) => e.statement).join(" "),
-  },
-  {
-    icon: GitBranch,
-    title: "Visual field mapping with Test runner",
-    desc: "Drag-and-drop CRM field mapping, transforms, and a real Test runner that executes mappings against live tenant configs.",
-  },
-  {
-    icon: GitFork,
-    title: "Decision-tree script builder",
-    desc: "React Flow scripting with 22 node types, conditional branching, skip/jump logic, data gates, and a runtime simulator.",
-  },
-  {
-    icon: Building2,
-    title: "Multi-tenant org / partner / client hierarchy",
-    desc: "Three-level tenancy with config inheritance (Client > Partner > Org), Postgres RLS isolation, and SECURITY DEFINER role checks.",
-  },
-  {
-    icon: Lock,
-    title: "Encrypted credentials & audit-grade compliance export",
-    desc: "AES-256 / pgcrypto for CRM and Five9 credentials. Server-side compliance export bundles logs, RLS snapshots, and config history.",
-  },
-  {
-    icon: FileSearch,
-    title: "API logs & reconciliation",
-    desc: "Realtime API event streaming with deduplication and a telephony reconciliation layer comparing Five9 logs against CRM syncs.",
-  },
-  ...(liveSlack
-    ? [{ icon: liveSlack.icon, title: "Slack workspace integration", desc: liveSlack.statement }]
-    : []),
   {
     icon: Megaphone,
-    title: "Campaign blueprints & intake automation",
-    desc: "Campaign intake form drives automated SOAP API sequences. Blueprints support replicate and reverse-engineer flows.",
+    title: "Campaign orchestration",
+    desc: "Intake-driven campaign setup, decision-tree scripting, runtime simulation, and reverse-engineering of existing campaigns.",
+  },
+  {
+    icon: BookOpen,
+    title: "Guides and templates",
+    desc: "Reusable playbooks, scripts, and call-handling templates so rollouts are repeatable across clients and partners.",
+  },
+  {
+    icon: Plug,
+    title: "Integrations",
+    desc: "Five9 telephony as the wedge, MyCase and Clio for legal intake, plus a growing catalog of CRM and workflow connectors.",
+  },
+  {
+    icon: BarChart3,
+    title: "Analytics and QA",
+    desc: "Realtime API event streaming, telephony reconciliation, audit-grade compliance export, and QA scoring against shipped scripts.",
+  },
+  {
+    icon: Workflow,
+    title: "CRM sync and workflow automation",
+    desc: "Visual field mapping with Test runner, post-call automations, and downstream workflow dispatch into the systems you already run.",
   },
 ];
 
