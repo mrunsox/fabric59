@@ -172,6 +172,25 @@ const PHASES: { id: string; name: string; status: Status; objectives: string; ex
       "(/admin/abandon-rate, /admin/ani-blocklist, /admin/callback-queue) carry an explicit warning banner stating actions " +
       "don't persist. Stale /admin/tenants navigate() call inside CallFlowBuilder retargeted to canonical /admin/clients.",
   },
+  {
+    id: "p13", name: "Phase 13 — Canonical strip final pass: real cleanup + hard route removal", status: "done",
+    objectives:
+      "Finish the canonical strip: (1) wire tenants to the workspace shell via a nullable workspaces FK + backfill so " +
+      "workspace surfaces reflect real workspace data instead of org-as-workspace adapter behaviour; (2) ship a real, " +
+      "user-triggered destructive cleanup path (preview RPC + reset_workspace_demo_data RPC with typed-confirm + audit " +
+      "table) so junk/demo rows can be safely removed by org owners/admins; (3) remove frontend demo-hiding heuristics " +
+      "now that cleanup is the canonical path; (4) hard-remove three workspace -legacy compat routes (qa-legacy, " +
+      "analytics-legacy, integrations-legacy) and three mock-only admin pages (abandon-rate, ani-blocklist, " +
+      "callback-queue) plus their files and audit/test references. No new product areas; no auth/RLS rewrites; no fake " +
+      "data added. DB stays tenant*.",
+    exit:
+      "tenants.workspace_id exists as nullable FK with backfill + assign-default trigger; canonical_cleanup_audit + " +
+      "reset_workspace_demo_data RPC live with typed-confirm and owner/admin/master gating; /app/workspaces/:id/reset " +
+      "renders a 3-phase preview→confirm→result flow; WorkspaceHomePage shows raw counts (no isDemoName filter); three " +
+      "workspace -legacy routes removed from App.tsx, surfaceAudit, and canonicalSurfaces regression; three mock admin " +
+      "pages (Abandon Rate / ANI Block List / Callback Queue) deleted from App.tsx, AdvancedRoutesPage, surfaceAudit, " +
+      "and disk. Build clean (tsc + vite). No data deleted by this PR — cleanup is user-triggered only.",
+  },
 ];
 
 /**
