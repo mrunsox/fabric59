@@ -391,7 +391,8 @@ const App = () => (
                 }
               />
               <Route path="/app/workspaces/:workspaceId" element={<WorkspaceShell />}>
-                <Route index element={<WorkspaceHomePage />} />
+                {/* CANONICAL (Phase 11): /home is the only surfaced workspace home; index redirects. */}
+                <Route index element={<Navigate to="home" replace />} />
                 <Route path="home" element={<WorkspaceHomePage />} />
                 {/* Reused legacy pages — wrapped under canonical workspace shell.
                     These pages still read org-scoped data from AuthContext today;
