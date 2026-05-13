@@ -1,12 +1,10 @@
 import { Link } from "react-router-dom";
-import { Plus, Plug, FlaskConical, BookOpen, type LucideIcon } from "lucide-react";
+import { Plus, Plug, FlaskConical, BookOpen, LayoutGrid, BarChart3, type LucideIcon } from "lucide-react";
 
 export function QuickActionsGrid({ clientId }: { clientId?: string } = {}) {
   // Canonical CTAs only — no compatibility-only or redirect targets.
-  // /admin/campaigns/new = canonical campaign creation
-  // /admin/connectors    = canonical org connector catalog
-  // /admin/docs          = canonical docs hub
-  // /admin/test          = ops test console (kept; operational tool)
+  // Org-level: View workspaces / Open connectors / View reports / Open docs.
+  // Client-scoped variant retains operational setup actions.
   const actions: { title: string; href: string; icon: LucideIcon }[] = clientId
     ? [
         { title: "Create campaign", href: `/admin/campaigns/new?client=${clientId}`, icon: Plus },
@@ -15,9 +13,9 @@ export function QuickActionsGrid({ clientId }: { clientId?: string } = {}) {
         { title: "Open docs", href: "/admin/docs", icon: BookOpen },
       ]
     : [
-        { title: "Create campaign", href: "/admin/campaigns/new", icon: Plus },
-        { title: "Connect provider", href: "/admin/connectors", icon: Plug },
-        { title: "Run readiness test", href: "/admin/test", icon: FlaskConical },
+        { title: "View workspaces", href: "/admin/workspaces", icon: LayoutGrid },
+        { title: "Open connectors", href: "/admin/connectors", icon: Plug },
+        { title: "View reports", href: "/admin/reports", icon: BarChart3 },
         { title: "Open docs", href: "/admin/docs", icon: BookOpen },
       ];
 
