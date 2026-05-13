@@ -52,7 +52,7 @@ export default function OrgSettingsPage() {
 
 function MembersSection({ canManage }: { canManage: boolean }) {
   const { organization } = useAuth();
-  const { data: members = [], isLoading } = useTeamPermissions(organization?.id);
+  const { members, isLoading } = useTeamPermissions(organization?.id);
   const [inviteOpen, setInviteOpen] = useState(false);
 
   return (
