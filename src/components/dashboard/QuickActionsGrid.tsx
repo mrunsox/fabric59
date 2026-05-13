@@ -2,20 +2,23 @@ import { Link } from "react-router-dom";
 import { Plus, Plug, FlaskConical, BookOpen, Play, type LucideIcon } from "lucide-react";
 
 export function QuickActionsGrid({ clientId }: { clientId?: string } = {}) {
+  // Canonical CTAs only — no compatibility-only or redirect targets.
+  // /admin/campaigns/new = canonical campaign creation
+  // /admin/connectors    = canonical org connector catalog
+  // /admin/docs          = canonical docs hub
+  // /admin/test          = ops test console (kept; operational tool)
   const actions: { title: string; href: string; icon: LucideIcon }[] = clientId
     ? [
-        { title: "Create campaign", href: `/admin/five9/campaign-builder?client=${clientId}`, icon: Plus },
+        { title: "Create campaign", href: `/admin/campaigns/new?client=${clientId}`, icon: Plus },
         { title: "Connect provider", href: `/admin/clients/${clientId}/legal-connect`, icon: Plug },
-        { title: "Five9 Overlay", href: `/admin/clients/${clientId}/five9-overlay`, icon: Play },
         { title: "Run readiness test", href: `/admin/test?tenant=${clientId}`, icon: FlaskConical },
-        { title: "Open docs", href: "/admin/kb", icon: BookOpen },
+        { title: "Open docs", href: "/admin/docs", icon: BookOpen },
       ]
     : [
-        { title: "Create campaign", href: "/admin/five9/campaign-builder", icon: Plus },
-        { title: "Connect provider", href: "/admin/legal-connect", icon: Plug },
+        { title: "Create campaign", href: "/admin/campaigns/new", icon: Plus },
+        { title: "Connect provider", href: "/admin/connectors", icon: Plug },
         { title: "Run readiness test", href: "/admin/test", icon: FlaskConical },
-        { title: "Open docs", href: "/admin/kb", icon: BookOpen },
-        { title: "Start simulation", href: "/admin/test", icon: Play },
+        { title: "Open docs", href: "/admin/docs", icon: BookOpen },
       ];
 
   return (
