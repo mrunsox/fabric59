@@ -6,6 +6,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
+// Phase 2 — canonical org membership guard.
+import { OrgProtectedRoute } from "@/components/auth/OrgProtectedRoute";
+// Phase 2 — smart post-auth redirect (decides /onboarding vs /w/:id/home).
+import LaunchRedirectPage from "@/pages/auth/LaunchRedirectPage";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { WorkspaceShell as LegacyWorkspaceShell } from "@/components/layout/WorkspaceShell";
 // Phase 0 — canonical shells (additive). Legacy shells remain mounted.
@@ -256,7 +260,8 @@ const App = () => (
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
-              {/* Phase G — premium concierge onboarding bootstraps workspace inline. */}
+              {/* Phase 2 — canonical first-run flow. /onboarding is the single
+                  obvious entry; /onboarding/workspace is folded into it. */}
               <Route
                 path="/onboarding"
                 element={
@@ -265,17 +270,24 @@ const App = () => (
                   </WorkspaceProvider>
                 }
               />
-              {/* Legacy bootstrap kept for backwards-compatible deep links. */}
+              {/* Phase 2 — legacy /onboarding/workspace redirects into the
+                  canonical onboarding page (workspace bootstrap is its
+                  internal step 4). External deep links keep working. */}
+              <Route path="/onboarding/workspace" element={<Navigate to="/onboarding" replace />} />
+
+              {/* Phase 2 — smart post-auth redirect. All sign-in / sign-up /
+                  invite-accept flows route through here so the org+workspace
+                  decision matrix lives in exactly one place. */}
               <Route
-                path="/onboarding/workspace"
+                path="/launch"
                 element={
                   <WorkspaceProvider>
-                    <WorkspaceBootstrapPage />
+                    <LaunchRedirectPage />
                   </WorkspaceProvider>
                 }
               />
-              
-              
+
+
               {/* Admin routes */}
               <Route path="/admin" element={<AdminShell />}>
                 <Route index element={<OverviewPage />} />
