@@ -6,6 +6,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
+// Phase 2 — canonical org membership guard.
+import { OrgProtectedRoute } from "@/components/auth/OrgProtectedRoute";
+// Phase 2 — smart post-auth redirect (decides /onboarding vs /w/:id/home).
+import LaunchRedirectPage from "@/pages/auth/LaunchRedirectPage";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { WorkspaceShell as LegacyWorkspaceShell } from "@/components/layout/WorkspaceShell";
 // Phase 0 — canonical shells (additive). Legacy shells remain mounted.
@@ -46,7 +50,9 @@ import SystemAccessPage from "@/pages/auth/SystemAccessPage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import OnboardingPage from "@/pages/onboarding/OnboardingPage";
-import WorkspaceBootstrapPage from "@/pages/onboarding/WorkspaceBootstrapPage";
+// Phase 2 — WorkspaceBootstrapPage no longer routed; /onboarding/workspace
+// redirects into /onboarding (which already owns the workspace bootstrap step).
+// File retained on disk for historical reference and a future cleanup pass.
 import AcceptInvitePage from "@/pages/auth/AcceptInvitePage";
 import OutlinePage from "@/pages/OutlinePage";
 // Phase 1 — canonical marketing HomePage (mounted at "/").
@@ -256,7 +262,8 @@ const App = () => (
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
-              {/* Phase G — premium concierge onboarding bootstraps workspace inline. */}
+              {/* Phase 2 — canonical first-run flow. /onboarding is the single
+                  obvious entry; /onboarding/workspace is folded into it. */}
               <Route
                 path="/onboarding"
                 element={
@@ -265,17 +272,24 @@ const App = () => (
                   </WorkspaceProvider>
                 }
               />
-              {/* Legacy bootstrap kept for backwards-compatible deep links. */}
+              {/* Phase 2 — legacy /onboarding/workspace redirects into the
+                  canonical onboarding page (workspace bootstrap is its
+                  internal step 4). External deep links keep working. */}
+              <Route path="/onboarding/workspace" element={<Navigate to="/onboarding" replace />} />
+
+              {/* Phase 2 — smart post-auth redirect. All sign-in / sign-up /
+                  invite-accept flows route through here so the org+workspace
+                  decision matrix lives in exactly one place. */}
               <Route
-                path="/onboarding/workspace"
+                path="/launch"
                 element={
                   <WorkspaceProvider>
-                    <WorkspaceBootstrapPage />
+                    <LaunchRedirectPage />
                   </WorkspaceProvider>
                 }
               />
-              
-              
+
+
               {/* Admin routes */}
               <Route path="/admin" element={<AdminShell />}>
                 <Route index element={<OverviewPage />} />
@@ -474,16 +488,22 @@ const App = () => (
                   Children temporarily reuse existing pages to prove the shells.
                   Phase 1+ replaces children with new canonical surfaces.
                   ============================================================ */}
-              <Route path="/org" element={<OrgShell />}>
-                <Route index element={<OverviewPage />} />
-                <Route path="workspaces" element={<WorkspacesPage />} />
-                <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
-                <Route path="connectors" element={<ConnectorsCatalogPage />} />
-                <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
-                <Route path="reports" element={<ReportsPage />} />
-                <Route path="notifications" element={<NotificationsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="billing" element={<BillingPage />} />
+              {/* Phase 2 — /org/* now sits behind OrgProtectedRoute (real
+                  org membership check), not just generic ProtectedRoute.
+                  Authenticated users with no org are redirected to /onboarding.
+                  Master admins are exempt and can still inspect /org/*. */}
+              <Route element={<OrgProtectedRoute />}>
+                <Route path="/org" element={<OrgShell />}>
+                  <Route index element={<OverviewPage />} />
+                  <Route path="workspaces" element={<WorkspacesPage />} />
+                  <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
+                  <Route path="connectors" element={<ConnectorsCatalogPage />} />
+                  <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
+                  <Route path="reports" element={<ReportsPage />} />
+                  <Route path="notifications" element={<NotificationsPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="billing" element={<BillingPage />} />
+                </Route>
               </Route>
 
               <Route path="/w/:workspaceId" element={<CanonicalWorkspaceShell />}>

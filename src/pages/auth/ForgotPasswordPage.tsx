@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle2 } from "lucide-react";
-import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthShell } from "@/shells/AuthShell";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");

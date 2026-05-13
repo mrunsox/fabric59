@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthShell } from "@/shells/AuthShell";
 
 export default function LoginPage() {
   const { signIn, isAuthenticated, isLoading } = useAuth();
+  const [params] = useSearchParams();
+  const invite = params.get("invite");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,8 +24,12 @@ export default function LoginPage() {
     );
   }
 
+  // Phase 2 — post-auth redirect goes through /launch so the smart
+  // org+workspace routing matrix lives in one canonical place. Invite
+  // tokens are forwarded through so /accept-invite continuity holds.
   if (isAuthenticated) {
-    return <Navigate to="/admin" replace />;
+    const target = invite ? `/launch?invite=${encodeURIComponent(invite)}` : "/launch";
+    return <Navigate to={target} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -13,7 +13,7 @@ import {
   Eye, EyeOff, CheckCircle, Users, Rocket, ShieldCheck,
   HeadphonesIcon, LineChart, Workflow, PhoneIncoming,
 } from "lucide-react";
-import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
+import { OnboardingShell } from "@/shells/OnboardingShell";
 import { OnboardingContextHelper } from "@/components/onboarding/OnboardingContextHelper";
 import { toast } from "sonner";
 
@@ -22,14 +22,14 @@ import { toast } from "sonner";
  *
  * Replaces the legacy 6-step provisioning flow with a role-aware concierge
  * that bootstraps a canonical workspace inline and lands the user at
- * /app/workspaces/:id/home on first run. /admin is never the first
+ * /w/:id/home on first run. /admin is never the first
  * destination for a new operator.
  *
  * Steps:
  *   1. Organization — create or confirm the operating tenant.
  *   2. Operating profile — role + ownership + primary motion.
  *   3. Connect Five9 — optional credential capture (skippable).
- *   4. Land workspace — bootstrap default workspace + enter /app/workspaces/:id/home.
+ *   4. Land workspace — bootstrap default workspace + enter /w/:id/home.
  */
 
 type Step = "org" | "profile" | "telephony" | "land";
@@ -234,7 +234,7 @@ export default function OnboardingPage() {
         await refetchWorkspaces();
       }
       toast.success("Workspace ready");
-      navigate(`/app/workspaces/${targetId}/home`, { replace: true });
+      navigate(`/w/${targetId}/home`, { replace: true });
     } catch (err) {
       toast.error((err as Error).message || "Could not bootstrap workspace");
     } finally {
@@ -504,7 +504,7 @@ export default function OnboardingPage() {
             Enter workspace
           </Button>
           <p className="text-[11px] text-center text-muted-foreground mt-3">
-            You'll land at <span className="font-mono">/app/workspaces/:id/home</span>. Org admin tools stay one click away.
+            You'll land at <span className="font-mono">/w/:id/home</span>. Org admin tools stay one click away.
           </p>
         </div>
       </Card>

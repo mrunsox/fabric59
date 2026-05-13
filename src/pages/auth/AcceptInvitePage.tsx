@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, MailCheck } from "lucide-react";
-import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthShell } from "@/shells/AuthShell";
 
 /**
  * Phase 9 — Invite-accept landing.
@@ -17,10 +17,16 @@ export default function AcceptInvitePage() {
   const navigate = useNavigate();
   const token = params.get("token");
 
+  // Phase 2 — authenticated invite recipients route through /launch so the
+  // smart org+workspace decision matrix lands them in the right canonical
+  // destination. Invite token is preserved for downstream consumption.
   useEffect(() => {
     if (isLoading) return;
-    if (isAuthenticated) navigate("/onboarding/workspace", { replace: true });
-  }, [isAuthenticated, isLoading, navigate]);
+    if (isAuthenticated) {
+      const target = token ? `/launch?invite=${encodeURIComponent(token)}` : "/launch";
+      navigate(target, { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate, token]);
 
   return (
     <AuthShell
