@@ -486,16 +486,22 @@ const App = () => (
                   Children temporarily reuse existing pages to prove the shells.
                   Phase 1+ replaces children with new canonical surfaces.
                   ============================================================ */}
-              <Route path="/org" element={<OrgShell />}>
-                <Route index element={<OverviewPage />} />
-                <Route path="workspaces" element={<WorkspacesPage />} />
-                <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
-                <Route path="connectors" element={<ConnectorsCatalogPage />} />
-                <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
-                <Route path="reports" element={<ReportsPage />} />
-                <Route path="notifications" element={<NotificationsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="billing" element={<BillingPage />} />
+              {/* Phase 2 — /org/* now sits behind OrgProtectedRoute (real
+                  org membership check), not just generic ProtectedRoute.
+                  Authenticated users with no org are redirected to /onboarding.
+                  Master admins are exempt and can still inspect /org/*. */}
+              <Route element={<OrgProtectedRoute />}>
+                <Route path="/org" element={<OrgShell />}>
+                  <Route index element={<OverviewPage />} />
+                  <Route path="workspaces" element={<WorkspacesPage />} />
+                  <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
+                  <Route path="connectors" element={<ConnectorsCatalogPage />} />
+                  <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
+                  <Route path="reports" element={<ReportsPage />} />
+                  <Route path="notifications" element={<NotificationsPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="billing" element={<BillingPage />} />
+                </Route>
               </Route>
 
               <Route path="/w/:workspaceId" element={<CanonicalWorkspaceShell />}>
