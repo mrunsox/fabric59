@@ -38,7 +38,7 @@ export default function WorkspaceHomePage() {
   const { data: forms = [] } = useWorkspaceForms();
   const { data: clients = [] } = useWorkspaceClients();
   if (!workspace) return null;
-  const base = `/app/workspaces/${workspace.id}`;
+  const base = `/w/${workspace.id}`;
 
   // Conservative demo exclusion for fresh-start counts.
   const realCampaigns = campaigns.filter((c) => !isDemoName(c.name));

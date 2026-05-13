@@ -1,17 +1,19 @@
-import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 
 /**
- * Workspace Clients (Phase 2B) — workspace-aware listing.
- * Currently filters by the workspace's parent org (transitional);
- * swaps to workspace_id when clients gain workspace ownership.
+ * Phase 4 — Canonical Workspace Clients.
+ *
+ * NOTE: Until tenants gain a workspace_id column, this list is resolved via the
+ * workspace's parent organization (see useWorkspaceClients). Surface copy is
+ * deliberately honest: clients shown here belong to the parent organization,
+ * not strictly to this workspace. Per-row deep links are intentionally omitted
+ * until canonical client detail surfaces ship.
  */
 export default function WorkspaceClientsPage() {
   const { workspace } = useWorkspace();
@@ -19,51 +21,44 @@ export default function WorkspaceClientsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Badge variant="outline" className="border-accent/40 text-accent mb-2">
-            Workspace clients
-          </Badge>
-          <h1 className="text-2xl font-semibold tracking-tight">Clients</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Clients in <span className="font-medium text-foreground">{workspace?.name}</span>.
-          </p>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/admin/clients">Open legacy clients view</Link>
-        </Button>
-      </div>
+      <WorkspacePageHeader
+        eyebrow="Clients"
+        title="Clients"
+        lede={
+          workspace
+            ? `Clients available to ${workspace.name}. Sourced from the parent organization until per-workspace client ownership ships.`
+            : "Clients available to this workspace."
+        }
+      />
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading clients…</p>
       ) : clients.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="No clients in this workspace yet"
-          description="Clients added to this workspace will appear here."
+          title="No clients available"
+          description="Clients are added at the organization level. Once a client is created, it will appear in every workspace under that organization."
         />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {clients.map((c) => (
-            <Link key={c.id} to={`/admin/clients/${c.id}`}>
-              <Card className="hover:border-primary/40 transition-colors h-full">
-                <CardHeader className="flex-row items-center gap-3 space-y-0">
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Users className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-sm truncate">{c.name}</CardTitle>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <StatusBadge status={c.status ?? "active"} />
-                </CardContent>
-              </Card>
-            </Link>
+            <Card key={c.id} className="h-full">
+              <CardHeader className="flex-row items-center gap-3 space-y-0">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <CardTitle className="text-sm truncate">{c.name}</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <StatusBadge status={c.status ?? "active"} />
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
     </div>
   );
 }
+

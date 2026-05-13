@@ -17,7 +17,7 @@ export default function WorkspaceCampaignDetailPage() {
   const { workspace } = useWorkspace();
   const { data: campaign, isLoading } = useWorkspaceCampaign(campaignId);
   if (!workspace) return null;
-  const base = `/app/workspaces/${workspace.id}/campaigns`;
+  const base = `/w/${workspace.id}/campaigns`;
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading campaign…</p>;
   if (!campaign) {
@@ -79,8 +79,8 @@ export default function WorkspaceCampaignDetailPage() {
           <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Client</CardTitle></CardHeader>
           <CardContent className="text-sm">
             {campaign.client_id ? (
-              <Link className="hover:text-primary" to={`/admin/clients/${campaign.client_id}`}>
-                Open client
+              <Link className="hover:text-primary" to={`/w/${workspace.id}/clients`}>
+                View clients
               </Link>
             ) : (
               <span className="text-muted-foreground">Not linked</span>

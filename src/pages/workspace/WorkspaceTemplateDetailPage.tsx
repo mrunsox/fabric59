@@ -16,7 +16,7 @@ export default function WorkspaceTemplateDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <Link
-        to={`/app/workspaces/${workspaceId}/templates`}
+        to={`/w/${workspaceId}/templates`}
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Back to templates
@@ -54,7 +54,7 @@ export default function WorkspaceTemplateDetailPage() {
           <CardHeader className="pb-3"><CardTitle className="text-sm">Lineage</CardTitle></CardHeader>
           <CardContent>
             <Link
-              to={`/app/workspaces/${workspaceId}/templates/${template.parent_template_id}`}
+              to={`/w/${workspaceId}/templates/${template.parent_template_id}`}
               className="text-sm text-primary hover:underline"
             >
               ← Forked from parent template

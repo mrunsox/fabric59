@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Database, Sparkles, ShieldCheck } from "lucide-react";
 import { KpiCard } from "@/components/common/KpiCard";
 import { EmptyState } from "@/components/common/EmptyState";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import {
   useWorkspaceAiConfig,
   useUpdateWorkspaceAiConfig,
@@ -49,12 +50,11 @@ export default function WorkspaceKnowledgePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Workspace knowledge</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          What this workspace knows, how AI grounds its answers, and which sources are live.
-        </p>
-      </div>
+      <WorkspacePageHeader
+        eyebrow="Workspace knowledge"
+        title="Knowledge"
+        lede="What this workspace knows, how the assistant grounds its answers, and which sources are live."
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard label="Enabled sources" value={`${enabledCount}/${sources.length}`} icon={Database} />

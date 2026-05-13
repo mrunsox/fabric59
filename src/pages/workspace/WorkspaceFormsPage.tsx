@@ -1,36 +1,31 @@
 import { Link, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormInput, Plus, ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
 
 export default function WorkspaceFormsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { data: forms = [], isLoading } = useWorkspaceForms();
-  const base = `/app/workspaces/${workspaceId}/forms`;
+  const base = `/w/${workspaceId}/forms`;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Badge variant="outline" className="border-accent/40 text-accent mb-2">
-            Workspace forms
-          </Badge>
-          <h1 className="text-2xl font-semibold tracking-tight">Forms</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Canonical workspace-scoped forms. Builder UI ships in the next phase; this surface
-            owns the canonical entity and URL.
-          </p>
-        </div>
-        <Button asChild size="sm">
-          <Link to={`${base}/new`}>
-            <Plus className="h-3.5 w-3.5 mr-1" /> New form
-          </Link>
-        </Button>
-      </div>
+      <WorkspacePageHeader
+        eyebrow="Forms"
+        title="Forms"
+        lede="Workspace-scoped intake forms that capture inbound leads and route them into campaigns."
+        action={
+          <Button asChild size="sm">
+            <Link to={`${base}/new`}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> New form
+            </Link>
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading forms…</p>

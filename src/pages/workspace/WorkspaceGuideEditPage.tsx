@@ -92,7 +92,7 @@ export default function WorkspaceGuideEditPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to={`/app/workspaces/${workspaceId}/guides/${guide.id}`}>
+          <Link to={`/w/${workspaceId}/guides/${guide.id}`}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Back to guide
           </Link>
         </Button>
@@ -128,7 +128,7 @@ export default function WorkspaceGuideEditPage() {
         <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base">Content (JSON)</CardTitle>
           <Button variant="link" size="sm" asChild className="h-auto p-0">
-            <Link to={`/app/workspaces/${workspaceId}/guides/${guide.id}/preview`}>
+            <Link to={`/w/${workspaceId}/guides/${guide.id}/preview`}>
               <ExternalLink className="h-3 w-3 mr-1" /> Preview
             </Link>
           </Button>

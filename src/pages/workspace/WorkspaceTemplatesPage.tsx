@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FileStack, GitFork, Search } from "lucide-react";
+import { EmptyState } from "@/components/common/EmptyState";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import {
   useWorkspaceTemplates,
   useForkTemplate,
@@ -47,19 +49,12 @@ export default function WorkspaceTemplatesPage() {
   }, [templates, scope, search]);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-start gap-4">
-        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <FileStack className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Templates</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Canonical template library — guides, flows, campaigns, emails, summaries, prompts, reports.
-            Inherited from platform and your organization; fork to make a workspace-owned copy.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <WorkspacePageHeader
+        eyebrow="Templates"
+        title="Templates"
+        lede="Reusable building blocks — guides, flows, campaigns, emails, summaries, prompts, reports. Inherited from platform and your organization; fork to make a workspace-owned copy."
+      />
 
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[220px]">
@@ -91,12 +86,13 @@ export default function WorkspaceTemplatesPage() {
       </div>
 
       {isLoading ? (
-        <Card><CardContent className="pt-6 text-sm text-muted-foreground">Loading templates…</CardContent></Card>
+        <p className="text-sm text-muted-foreground">Loading templates…</p>
       ) : filtered.length === 0 ? (
-        <Card><CardContent className="pt-6 text-sm text-muted-foreground">
-          No templates match these filters. Legacy template tables are mirrored automatically; new canonical
-          templates can be created by forking an existing one.
-        </CardContent></Card>
+        <EmptyState
+          icon={FileStack}
+          title="No templates match"
+          description="Adjust the filters above, or fork an existing template to make a workspace-owned copy."
+        />
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {filtered.map((t) => (
@@ -104,7 +100,7 @@ export default function WorkspaceTemplatesPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <Link
-                    to={`/app/workspaces/${workspaceId}/templates/${t.id}`}
+                    to={`/w/${workspaceId}/templates/${t.id}`}
                     className="min-w-0 flex-1"
                   >
                     <CardTitle className="text-base truncate hover:text-primary">{t.name}</CardTitle>
