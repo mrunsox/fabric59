@@ -361,9 +361,7 @@ const App = () => (
                 <Route path="scriptflow" element={<Navigate to="/admin/scripts" replace />} />
                 <Route path="tree-editor" element={<Navigate to="/admin/scripts" replace />} />
                 <Route path="call-flow" element={<Navigate to="/admin/flows" replace />} />
-                {/* CANONICAL: kept routable as an active operational surface; de-surfaced from nav. */}
-                <Route path="agent-dashboard" element={<AgentDashboardPage />} />
-                <Route path="supervisor" element={<SupervisorPage />} />
+                {/* agent-dashboard + supervisor deleted (canonical workspace QA covers it). */}
                 <Route path="qa" element={<QAAnalyticsPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 <Route path="automations" element={<PostCallAutomationsPage />} />
