@@ -2,6 +2,7 @@ import {
   LayoutDashboard, Building, Plug, FileText, Bell, Settings, CreditCard,
   Home, Users, Megaphone, BookOpen, FormInput, FileStack,
   ClipboardCheck, BarChart3, Brain, Sparkles,
+  PlayCircle, Headphones, Eye,
   Sparkle, UserSquare2, Tag, Boxes, Heart, Shield,
 } from "lucide-react";
 import type { ComponentType } from "react";
@@ -37,14 +38,20 @@ export const ORG_NAV: NavItem[] = [
   { key: "billing",       label: "Billing",       icon: CreditCard,      to: "billing" },
 ];
 
-/** Canonical Workspace nav — 12 items. Prefix: /w/:workspaceId */
+/**
+ * Canonical Workspace nav — 15 items. Prefix: /w/:workspaceId
+ * Order is locked to the May 13 Canonical Build Doc §4.
+ */
 export const WORKSPACE_NAV: NavItem[] = [
   { key: "home",         label: "Home",         icon: Home,            to: "home" },
-  { key: "clients",      label: "Clients",      icon: Users,           to: "clients" },
   { key: "campaigns",    label: "Campaigns",    icon: Megaphone,       to: "campaigns" },
   { key: "guides",       label: "Guides",       icon: BookOpen,        to: "guides" },
   { key: "forms",        label: "Forms",        icon: FormInput,       to: "forms" },
   { key: "templates",    label: "Templates",    icon: FileStack,       to: "templates" },
+  { key: "clients",      label: "Clients",      icon: Users,           to: "clients" },
+  { key: "runs",         label: "Runs",         icon: PlayCircle,      to: "runs" },
+  { key: "agents",       label: "Agents",       icon: Headphones,      to: "agents" },
+  { key: "supervisor",   label: "Supervisor",   icon: Eye,             to: "supervisor" },
   { key: "qa",           label: "QA",           icon: ClipboardCheck,  to: "qa" },
   { key: "analytics",    label: "Analytics",    icon: BarChart3,       to: "analytics" },
   { key: "integrations", label: "Integrations", icon: Plug,            to: "integrations" },
