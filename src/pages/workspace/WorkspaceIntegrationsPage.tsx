@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Plug, Plus } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import {
   useIntegrationProviders,
   useWorkspaceIntegrationConnections,
