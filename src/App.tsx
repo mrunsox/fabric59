@@ -81,7 +81,7 @@ import ClientOverviewPage from "@/pages/admin/ClientOverviewPage";
 import PartnersPage from "@/pages/admin/PartnersPage";
 import PartnerOverviewPage from "@/pages/admin/PartnerOverviewPage";
 import Report59UploadPage from "@/pages/admin/Report59UploadPage";
-import ScripterPage from "@/pages/admin/ScripterPage";
+// VAULTED (slug: legacy-scripter-page) — ScripterPage import removed; /admin/scripter redirects.
 import AgentDashboardPage from "@/pages/admin/AgentDashboardPage";
 import SupervisorPage from "@/pages/admin/SupervisorPage";
 import QAAnalyticsPage from "@/pages/admin/QAAnalyticsPage";
@@ -98,16 +98,16 @@ import ScriptBuilderPage from "@/pages/admin/ScriptBuilderPage";
 import KnowledgeBasePage from "@/pages/admin/KnowledgeBasePage";
 import TrainingPage from "@/pages/admin/TrainingPage";
 import FeedbackPage from "@/pages/admin/FeedbackPage";
-import ScriptRoutingPage from "@/pages/admin/ScriptRoutingPage";
+// VAULTED (slug: legacy-script-routing) — ScriptRoutingPage import removed; /admin/script-routing redirects.
 import GoalsPage from "@/pages/admin/GoalsPage";
 import CallSummaryTemplatesPage from "@/pages/admin/CallSummaryTemplatesPage";
-import ScriptFlowHubPage from "@/pages/admin/ScriptFlowHubPage";
+// VAULTED (slug: legacy-scriptflow-hub) — ScriptFlowHubPage import removed; /admin/scriptflow redirects.
 import EmailTemplatesPage from "@/pages/admin/EmailTemplatesPage";
 import LegalConnectPage from "@/pages/admin/LegalConnectPage";
 import ClientLegalConnectPage from "@/pages/admin/ClientLegalConnectPage";
 import CampaignOverlayListPage from "@/pages/admin/CampaignOverlayListPage";
 import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
-import CampaignBuilderPage from "@/pages/admin/CampaignBuilderPage";
+// VAULTED (slug: legacy-five9-campaign-builder) — CampaignBuilderPage import removed; routes redirect to /admin/campaigns/new.
 import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
 import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
 // CampaignsOverviewPage + CampaignDraftsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns and /admin/campaigns?status=draft).
@@ -120,7 +120,7 @@ import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 
 import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
 import CallFlowPage from "@/pages/admin/CallFlowPage";
-import TreeEditorPage from "@/pages/admin/TreeEditorPage";
+// VAULTED (slug: legacy-tree-editor) — TreeEditorPage import removed; /admin/tree-editor/:scriptId redirects.
 // UserDashboardPage no longer mounted directly — Phase 11 collapsed /admin/dashboard into /admin (OverviewPage re-exports it).
 import DesignSystemPage from "@/pages/admin/DesignSystemPage";
 import DevGuidePage from "@/pages/superadmin/DevGuidePage";
@@ -283,8 +283,9 @@ const App = () => (
                 {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
                 <Route path="five9" element={<Five9Page />} />
                 <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
-                <Route path="five9/campaign-builder" element={<CampaignBuilderPage />} />
-                <Route path="five9/campaign-builder/:draftId" element={<CampaignBuilderPage />} />
+                {/* VAULTED: legacy-five9-campaign-builder → canonical /admin/campaigns/new */}
+                <Route path="five9/campaign-builder" element={<Navigate to="/admin/campaigns/new" replace />} />
+                <Route path="five9/campaign-builder/:draftId" element={<Navigate to="/admin/campaigns/new" replace />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
                 {/* CANONICAL (Phase B): campaign cluster collapsed.
                     overview/drafts → /admin/campaigns (with optional ?status= filter).
@@ -357,8 +358,8 @@ const App = () => (
                 <Route path="kb" element={<KnowledgeBasePage />} />
                 <Route path="training" element={<TrainingPage />} />
                 <Route path="feedback" element={<FeedbackPage />} />
-                {/* Phase C: compatibility-only — operational deep-link surface, de-surfaced from nav. */}
-                <Route path="script-routing" element={<ScriptRoutingPage />} />
+                {/* VAULTED: legacy-script-routing → canonical /admin/scripts */}
+                <Route path="script-routing" element={<Navigate to="/admin/scripts" replace />} />
                 <Route path="goals" element={<GoalsPage />} />
                 <Route path="summary-templates" element={<CallSummaryTemplatesPage />} />
                 {/* Phase C: scriptflow base redirects above; param surface kept for legacy deep links handled by hub. */}
@@ -366,8 +367,8 @@ const App = () => (
                 {/* Phase C: call-flow base redirects above; this param route is compatibility-only. */}
                 <Route path="legal-connect" element={<LegalConnectPage />} />
                 <Route path="qr-routing" element={<QrRoutingPage />} />
-                {/* Phase C: tree-editor base redirects above; param surface kept compatibility-only. */}
-                <Route path="tree-editor/:scriptId" element={<TreeEditorPage />} />
+                {/* VAULTED: legacy-tree-editor → canonical /admin/scripts */}
+                <Route path="tree-editor/:scriptId" element={<Navigate to="/admin/scripts" replace />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="design-system" element={<DesignSystemPage />} />

@@ -194,7 +194,7 @@ export default function ClientOverviewPage() {
       <div className="rounded-2xl border border-border bg-card p-6">
         <h2 className="text-sm font-semibold tracking-tight text-foreground mb-4">Live Operations</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link to={`/admin/script-routing?tenant=${tenant.id}`} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
+          <Link to={`/admin/scripts?tenant=${tenant.id}`} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
             <PhoneCall className="h-4 w-4 text-foreground" />
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Active campaigns</p>
@@ -317,7 +317,7 @@ export default function ClientOverviewPage() {
                     <Map className="h-4 w-4 text-primary" />
                     <CardTitle className="text-base">DNIS / Campaign → Script mappings</CardTitle>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => navigate("/admin/script-routing")}>
+                  <Button size="sm" variant="outline" onClick={() => navigate("/admin/scripts")}>
                     Manage all routes
                   </Button>
                 </div>
