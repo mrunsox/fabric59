@@ -26,6 +26,8 @@ const SURFACED_FILES = [
   "components/dashboard/ReadinessChecklist.tsx",
   "components/dashboard/SystemHealthStrip.tsx",
   "components/dashboard/AIGuidanceCard.tsx",
+  "components/dashboard/WorkspaceSnapshotPanel.tsx",
+  "components/dashboard/ConnectorsReportsPanel.tsx",
   "pages/workspace/WorkspaceHomePage.tsx",
   "pages/workspace/WorkspacesIndexPage.tsx",
   "pages/admin/OverviewPage.tsx",
