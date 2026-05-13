@@ -13,6 +13,7 @@ import { ClipboardCheck, CheckCircle2, Clock } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { KpiCard } from "@/components/common/KpiCard";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import {
   useWorkspaceQaReviews,
   useUpdateQaReviewStatus,
