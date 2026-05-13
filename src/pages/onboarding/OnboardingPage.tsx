@@ -13,9 +13,7 @@ import {
   Eye, EyeOff, CheckCircle, Users, Rocket, Sparkles, ShieldCheck,
   HeadphonesIcon, LineChart, Workflow, PhoneIncoming,
 } from "lucide-react";
-import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
-import { SEOHead } from "@/components/seo/SEOHead";
-import { OnboardingMilestones, type Milestone } from "@/components/onboarding/OnboardingMilestones";
+import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { OnboardingContextHelper } from "@/components/onboarding/OnboardingContextHelper";
 import { toast } from "sonner";
 
@@ -42,12 +40,31 @@ type Motion = "intake" | "reactivation" | "qa" | "sync" | "monitoring";
 
 const RESUME_KEY = "fabric59:onboarding:step";
 
-const milestones: Milestone[] = [
-  { key: "org", label: "Organization", description: "Name your operating tenant", icon: Building },
-  { key: "profile", label: "Operating profile", description: "Role, ownership, primary motion", icon: Users },
-  { key: "telephony", label: "Connect Five9", description: "Optional — connect later from settings", icon: Globe },
-  { key: "land", label: "Land workspace", description: "Enter your canonical workspace", icon: Rocket },
-];
+const STEP_DEFS = [
+  { key: "org", label: "Organization", description: "Name your operating tenant" },
+  { key: "profile", label: "Operating profile", description: "Role, ownership, primary motion" },
+  { key: "telephony", label: "Connect Five9", description: "Optional — connect later from settings" },
+  { key: "land", label: "Land workspace", description: "Enter your canonical workspace" },
+] as const;
+
+const STEP_HEADINGS: Record<Step, { heading: string; subheading: string }> = {
+  org: {
+    heading: "Name your organization",
+    subheading: "Your operating tenant — owns workspaces, clients, integrations, and reporting.",
+  },
+  profile: {
+    heading: "Tell us how you operate",
+    subheading: "Your role, telephony ownership, and the motion you want to land first. We tailor your workspace home to match.",
+  },
+  telephony: {
+    heading: "Connect Five9",
+    subheading: "Drop in admin credentials now or skip — your concierge can wire this up with you later.",
+  },
+  land: {
+    heading: "Land your workspace",
+    subheading: "Workspaces are the canonical operating boundary — clients, scripts, integrations, QA, and analytics live here.",
+  },
+};
 
 const ROLES: Array<{ key: Role; label: string; helper: string; icon: typeof Users }> = [
   { key: "ops_leader", label: "Operations leader", helper: "Owns service-ops outcomes across clients and motions.", icon: LineChart },
