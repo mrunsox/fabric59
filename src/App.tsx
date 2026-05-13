@@ -522,6 +522,7 @@ const App = () => (
                 <Route index element={<WorkspaceIndexRedirect />} />
                 <Route path="home" element={<WorkspaceHomePage />} />
                 <Route path="clients" element={<WorkspaceClientsPage />} />
+                <Route path="clients/:clientId" element={<WorkspaceClientDetailPage />} />
                 <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
                 <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
                 <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
