@@ -1,59 +1,63 @@
+import { Compass, Headphones, Wrench, PhoneIncoming } from "lucide-react";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { SectionShell } from "@/components/marketing/SectionShell";
 import { SectionIntro } from "@/components/marketing/SectionIntro";
-import { CapabilityCard } from "@/components/marketing/CapabilityCard";
+import { PersonaList } from "@/components/marketing/PersonaList";
 import { CtaRow } from "@/components/marketing/CtaRow";
-import { ProofStrip } from "@/components/marketing/ProofStrip";
-import {
-  Compass,
-  Headphones,
-  Wrench,
-  PhoneIncoming,
-} from "lucide-react";
 
 /**
- * Phase G — Personas page.
- * 4 canonical buyer roles, each tied to product surfaces.
+ * Phase H — Personas page.
+ * 4 canonical roles, each anchored and tied to a real motion.
  */
 const PERSONAS = [
   {
     icon: Compass,
-    title: "Operations leaders",
-    body: "Run multiple Five9 programs across clients. Need workspace-level isolation, honest billing signal, and a single cockpit to see what's healthy.",
-    bullets: [
-      "Org / Partner / Client hierarchy with config inheritance",
-      "Tenant health and per-tenant rate limits",
-      "Audit-grade compliance export",
+    role: "Operations leader",
+    anchorId: "ops-leader",
+    jobs: [
+      "Run multiple Five9 programs across clients with workspace isolation",
+      "Govern config inheritance across Org, Partner, and Client",
+      "See what is healthy: tenant health, rate limits, audit-grade export",
     ],
+    motionLabel: "Maps to monitoring and readiness",
+    motionHref: "/solutions#monitoring-readiness",
   },
   {
     icon: Headphones,
-    title: "Supervisors",
-    body: "Live ops on a single workspace. Need QA review, KPI surfacing, and the ability to push script changes without filing a ticket.",
-    bullets: [
-      "QA review queue scoped to workspace",
-      "KPI overview + top dispositions",
-      "Direct script and guide editing",
+    role: "Supervisor",
+    anchorId: "supervisor",
+    jobs: [
+      "Live ops on a single workspace — callbacks, queues, KPIs",
+      "QA review queue scored against the live decision-tree guide",
+      "Push script changes inline without filing a ticket",
     ],
+    motionLabel: "Maps to QA and review",
+    motionHref: "/solutions#qa-review",
   },
   {
     icon: Wrench,
-    title: "Implementation + admins",
-    body: "Wire Five9 to the CRMs and tools their team already uses. Need a Five9 Web Connector path, visual mapping, and a Test runner before anything goes live.",
-    bullets: [
-      "Five9 Web Connector automation",
-      "Visual field mapping with Test runner",
-      "MyCase, Clio, Slack, Zapier, Make adapters",
+    role: "Implementation / admin",
+    anchorId: "implementation-admin",
+    jobs: [
+      "Wire Five9 to the downstream systems the team already uses",
+      "Visual field mapping with a Test runner before go-live",
+      "Roll out through the shared GA readiness checklist",
     ],
+    motionLabel: "Maps to CRM sync and handoff",
+    motionHref: "/solutions#crm-sync-handoff",
   },
   {
     icon: PhoneIncoming,
-    title: "Intake + service-ops owners",
-    body: "Own outcomes per call. Need decision-tree guides, disposition routing, callback orchestration, and reconciliation against telephony logs.",
-    bullets: [
-      "Visual decision-tree intake guides",
-      "Per-disposition CRM dispatch policies",
-      "Callback queue + ANI block list",
+    role: "Intake / service-ops owner",
+    anchorId: "intake-owner",
+    jobs: [
+      "Own outcomes per call — intake, qualification, handoff",
+      "Decision-tree guides with per-disposition routing",
+      "Reconciliation against telephony logs and downstream writeback",
     ],
+    motionLabel: "Maps to inbound intake",
+    motionHref: "/solutions#inbound-intake",
   },
 ];
 
@@ -61,52 +65,31 @@ export default function PersonasPage() {
   return (
     <MarketingLayout
       title="Who Fabric59 is for | Personas"
-      description="Fabric59 is built for operations leaders, supervisors, implementation admins, and intake owners running real Five9 programs."
+      description="Fabric59 is built for ops leaders, supervisors, implementation admins, and intake owners running real Five9 programs."
       ctaBanner={
-        <section className="py-16 px-6 bg-muted/20">
+        <SectionShell>
           <SectionIntro
-            title="Not sure which fits?"
-            lede="We'll scope your role and program in a single walkthrough."
+            title="Not sure which persona fits?"
+            lede="A single working call usually answers it. We will scope your role and your program together."
             cta={
               <CtaRow
-                primary={{ label: "Talk to us", to: "/contact" }}
+                primary={{ label: "Start a pilot", to: "/contact?topic=pilot" }}
                 secondary={{ label: "Explore solutions", to: "/solutions" }}
               />
             }
           />
-        </section>
+        </SectionShell>
       }
     >
-      <section className="pt-20 pb-4 px-6">
-        <SectionIntro
-          eyebrow="Personas"
-          title="Built for the teams running Five9 in the real world"
-          lede="Fabric59 is opinionated. It is the canonical operating layer for the four roles that own real Five9 programs day to day."
-        />
-      </section>
+      <MarketingHero
+        eyebrow="Personas"
+        title="Built for the four roles that own a Five9 program"
+        lede="Fabric59 is opinionated. Each persona lands in a workspace surface mapped to their day."
+      />
 
-      <section className="py-16 px-6">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-5">
-          {PERSONAS.map((p) => (
-            <CapabilityCard
-              key={p.title}
-              icon={p.icon}
-              title={p.title}
-              body={p.body}
-              bullets={p.bullets}
-            />
-          ))}
-        </div>
-
-        <ProofStrip
-          className="mt-16"
-          items={[
-            "Concierge onboarding",
-            "Workspace-first by design",
-            "Founder-led pilots",
-          ]}
-        />
-      </section>
+      <SectionShell bordered>
+        <PersonaList items={PERSONAS} />
+      </SectionShell>
     </MarketingLayout>
   );
 }

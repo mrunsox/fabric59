@@ -1,34 +1,31 @@
+import { Phone, Scale, Briefcase, MessageSquare, Webhook, GitBranch } from "lucide-react";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { SectionShell } from "@/components/marketing/SectionShell";
 import { SectionIntro } from "@/components/marketing/SectionIntro";
 import { CapabilityCard } from "@/components/marketing/CapabilityCard";
 import { CtaRow } from "@/components/marketing/CtaRow";
 import { ProofStrip } from "@/components/marketing/ProofStrip";
 import { integrationsIndexDescription } from "@/seo/marketingMetadata";
-import {
-  Phone,
-  Scale,
-  Briefcase,
-  MessageSquare,
-  Webhook,
-  GitBranch,
-} from "lucide-react";
 
 /**
- * Phase G — Integrations index.
- * Capability-language tiles only. No status badges, no "Stub" surface.
- * Lifecycle/readiness lives on operational surfaces, not marketing.
+ * Phase H — Integrations index.
+ * Honest categories. No status badges. No stub tile.
  */
-const PROVIDERS = [
+const TELEPHONY = [
   {
     icon: Phone,
     title: "Five9 telephony",
-    body: "30+ SOAP Admin actions, multi-domain control, Web Connector automation, pre-call ANI lookup, and post-call event ingestion.",
+    body: "Multi-domain control via the SOAP Admin API, Web Connector automation, pre-call ANI lookup, and post-call event ingestion.",
     bullets: [
       "Provisioning, campaigns, skills, profiles, DNIS",
       "Sub-500ms ANI screen pop",
       "Realtime API event log",
     ],
   },
+];
+
+const LEGAL_CRM = [
   {
     icon: Scale,
     title: "MyCase",
@@ -59,16 +56,22 @@ const PROVIDERS = [
       "Mappable to existing matter schemas",
     ],
   },
+];
+
+const NOTIFICATIONS = [
   {
     icon: MessageSquare,
     title: "Slack",
     body: "Real-time agent workspace plus post-call notifications routed by disposition urgency.",
     bullets: [
-      "Agent workspace channel mgmt",
+      "Agent workspace channel management",
       "Post-call event notifications",
       "Hub urgency-based routing",
     ],
   },
+];
+
+const WORKFLOW = [
   {
     icon: Webhook,
     title: "Zapier + Make",
@@ -81,13 +84,37 @@ const PROVIDERS = [
   },
 ];
 
-const FOUNDATION = [
-  {
-    icon: GitBranch,
-    title: "One canonical integrations layer",
-    body: "Every provider routes through the same integration_providers, integration_connections, and integration_mappings model. New providers slot in without forking the data model.",
-  },
-];
+const FOUNDATION = {
+  icon: GitBranch,
+  title: "One canonical integrations layer",
+  body: "Every provider routes through the same integration_providers, integration_connections, and integration_mappings model. New adapters slot in without forking the data model.",
+};
+
+function CategoryBlock({
+  eyebrow,
+  title,
+  items,
+}: {
+  eyebrow: string;
+  title: string;
+  items: typeof TELEPHONY;
+}) {
+  return (
+    <div>
+      <div className="mb-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary">
+          {eyebrow}
+        </p>
+        <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground">{title}</h2>
+      </div>
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {items.map((p) => (
+          <CapabilityCard key={p.title} icon={p.icon} title={p.title} body={p.body} bullets={p.bullets} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function IntegrationsIndexPage() {
   return (
@@ -95,56 +122,48 @@ export default function IntegrationsIndexPage() {
       title="Integrations | Fabric59"
       description={integrationsIndexDescription()}
       ctaBanner={
-        <section className="py-16 px-6 bg-muted/20">
+        <SectionShell>
           <SectionIntro
-            title="Need a provider you don't see here?"
-            lede="We scope new adapters with design partners. Tell us the system and the workflow you need it for."
+            title="Need an adapter you don't see here?"
+            lede="We scope new adapters with design partners. Tell us the system and the workflow it has to support."
             cta={
               <CtaRow
-                primary={{ label: "Ask about a provider", to: "/contact" }}
+                primary={{ label: "Ask about a provider", to: "/contact?topic=integrations" }}
                 secondary={{ label: "See solutions", to: "/solutions" }}
               />
             }
           />
-        </section>
+        </SectionShell>
       }
     >
-      <section className="pt-20 pb-4 px-6">
-        <SectionIntro
-          eyebrow="Integrations"
-          title="Five9-native, with the systems you already run"
-          lede="Fabric59 is the operational intelligence layer around Five9 that connects into the CRMs, case-management tools, and workflow runners your team already lives in."
-        />
-      </section>
+      <MarketingHero
+        eyebrow="Integrations"
+        title="Five9-native, with the systems you already run"
+        lede="Telephony lives in Five9. Downstream system-of-record is provider-agnostic by design — Clio first, MyCase next, with an adapter pattern that absorbs the next provider without reshaping the data model."
+      />
 
-      <section className="py-12 px-6">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {PROVIDERS.map((p) => (
-            <CapabilityCard
-              key={p.title}
-              icon={p.icon}
-              title={p.title}
-              body={p.body}
-              bullets={p.bullets}
-            />
-          ))}
+      <SectionShell bordered>
+        <div className="space-y-16">
+          <CategoryBlock eyebrow="Telephony" title="The session and event layer" items={TELEPHONY} />
+          <CategoryBlock eyebrow="Legal CRM" title="Adapter-based downstream system" items={LEGAL_CRM} />
+          <CategoryBlock eyebrow="Notifications" title="Real-time team coordination" items={NOTIFICATIONS} />
+          <CategoryBlock eyebrow="Workflow" title="Outbound dispatch" items={WORKFLOW} />
         </div>
+      </SectionShell>
 
-        <div className="max-w-4xl mx-auto mt-16 grid md:grid-cols-1 gap-5">
-          {FOUNDATION.map((f) => (
-            <CapabilityCard key={f.title} icon={f.icon} title={f.title} body={f.body} />
-          ))}
+      <SectionShell muted bordered>
+        <div className="max-w-4xl mx-auto">
+          <CapabilityCard icon={FOUNDATION.icon} title={FOUNDATION.title} body={FOUNDATION.body} />
+          <ProofStrip
+            className="mt-12"
+            items={[
+              "AES-256 credential vault",
+              "Per-tenant rate limits",
+              "Visual mapping with Test runner",
+            ]}
+          />
         </div>
-
-        <ProofStrip
-          className="mt-16"
-          items={[
-            "AES-256 credential vault",
-            "Per-tenant rate limits",
-            "Visual mapping with Test runner",
-          ]}
-        />
-      </section>
+      </SectionShell>
     </MarketingLayout>
   );
 }

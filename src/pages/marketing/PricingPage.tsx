@@ -1,29 +1,31 @@
 import { Link } from "react-router-dom";
+import { Check, ArrowRight } from "lucide-react";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { SectionShell } from "@/components/marketing/SectionShell";
 import { SectionIntro } from "@/components/marketing/SectionIntro";
 import { CtaRow } from "@/components/marketing/CtaRow";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Check, ArrowRight } from "lucide-react";
 
 /**
- * Phase G — Pricing page.
- * Honest packaging. No self-serve checkout language.
+ * Phase H — Pricing page.
+ *
+ * Concierge-led only. Every CTA routes to /contact?topic=pricing or pilot.
+ * No "buy now", no "subscribe", no "checkout" surface.
  */
 const TIERS = [
   {
     name: "Pilot",
-    blurb: "For design partners and first-engagement firms.",
+    blurb: "For design partners and first-engagement teams.",
     price: "Custom",
     cadence: "Concierge onboarding",
     features: [
-      "1 workspace",
-      "1 Five9 domain",
+      "1 workspace, 1 Five9 domain",
       "MyCase or Clio Grow adapter",
       "Workspace analytics + QA queue",
-      "Direct Slack channel with the team",
+      "Direct channel with the build team",
     ],
-    cta: { label: "Start a pilot", to: "/contact" },
+    cta: { label: "Start a pilot", to: "/contact?topic=pricing" },
     highlight: false,
   },
   {
@@ -32,13 +34,13 @@ const TIERS = [
     price: "Usage-based",
     cadence: "Per call session + per workspace",
     features: [
-      "Unlimited workspaces inside one organization",
+      "Unlimited workspaces in one organization",
       "Full canonical workspace surfaces",
       "Workspace-scoped RBAC",
       "Per-tenant rate limits and tenant health",
-      "Implementation-led rollout with a Fabric59 lead",
+      "Implementation-led rollout",
     ],
-    cta: { label: "Talk to sales", to: "/contact" },
+    cta: { label: "Talk to us", to: "/contact?topic=pricing" },
     highlight: true,
   },
   {
@@ -49,11 +51,10 @@ const TIERS = [
     features: [
       "Multi-org governance",
       "White-label branding overrides",
-      "Superadmin / vault / source exports",
       "Design-partner ops view",
-      "Custom integration provider work",
+      "Custom integration scoping",
     ],
-    cta: { label: "Become a partner", to: "/contact" },
+    cta: { label: "Become a partner", to: "/contact?topic=pricing" },
     highlight: false,
   },
 ];
@@ -62,32 +63,30 @@ export default function PricingPage() {
   return (
     <MarketingLayout
       title="Pricing | Fabric59"
-      description="Honest, usage-based pricing. Pilot, Operator, and Platform tiers built around the canonical workspace model. No self-serve checkout — every engagement is scoped."
+      description="Concierge-led pricing. Every Fabric59 engagement is scoped together — no self-serve checkout."
       ctaBanner={
-        <section className="py-16 px-6 bg-muted/20">
+        <SectionShell>
           <SectionIntro
             title="Every engagement is scoped"
-            lede="Self-serve checkout, plan management, and payment methods are deferred until the billing backend lands. We quote and invoice directly in the meantime."
+            lede="Self-serve checkout, plan management, and payment methods are deferred. Until then we quote and invoice directly so the rollout matches your actual operation."
             cta={
               <CtaRow
-                primary={{ label: "Scope your program", to: "/contact" }}
+                primary={{ label: "Scope your program", to: "/contact?topic=pricing" }}
                 secondary={{ label: "See solutions", to: "/solutions" }}
               />
             }
           />
-        </section>
+        </SectionShell>
       }
     >
-      <section className="pt-20 pb-4 px-6">
-        <SectionIntro
-          eyebrow="Pricing"
-          title="Priced for real operations, not seat-padding"
-          lede="Fabric59 is sold as a working operations layer, not a per-seat dashboard. Pricing is anchored to the canonical workspace and call-session signals already in product."
-        />
-      </section>
+      <MarketingHero
+        eyebrow="Pricing"
+        title="Priced for real operations, not seat padding"
+        lede="Fabric59 is sold as a working operations layer. Pricing is anchored to the canonical workspace and call-session signals already in product."
+      />
 
-      <section className="py-12 px-6">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-5">
+      <SectionShell bordered>
+        <div className="grid md:grid-cols-3 gap-5">
           {TIERS.map((t) => (
             <Card
               key={t.name}
@@ -102,9 +101,9 @@ export default function PricingPage() {
                   <div className="flex items-center gap-2">
                     <h2 className="text-lg font-semibold tracking-tight">{t.name}</h2>
                     {t.highlight && (
-                      <Badge className="bg-primary/10 text-primary border-primary/30">
+                      <span className="text-[10px] uppercase tracking-[0.18em] text-primary">
                         Most teams
-                      </Badge>
+                      </span>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">{t.blurb}</p>
@@ -137,7 +136,10 @@ export default function PricingPage() {
             </Card>
           ))}
         </div>
-      </section>
+        <p className="mt-10 text-center text-xs text-muted-foreground">
+          No self-serve checkout. No credit-card capture. No auto-renew traps.
+        </p>
+      </SectionShell>
     </MarketingLayout>
   );
 }
