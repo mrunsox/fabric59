@@ -12,15 +12,14 @@ const productLinks = [
   { label: "Product overview", href: "/product" },
 ];
 
+// Canonical capability categories — no vendor-feature inventory.
 const platformLinks = [
-  { label: "Five9 SOAP integration", href: "/product#five9" },
-  { label: "Multi-domain Five9", href: "/product#domains" },
-  { label: "Legal Connect (MyCase / Clio)", href: "/product#legal" },
-  { label: "Field mapping + Test runner", href: "/product#mappings" },
-  { label: "Decision-tree scripts", href: "/product#scripts" },
-  { label: "Multi-tenant + RLS", href: "/product#tenancy" },
-  { label: "Security & audit export", href: "/product#security" },
-  { label: "API logs & reconciliation", href: "/product#logs" },
+  { label: "Workspace operations", href: "/product#workspace-operations" },
+  { label: "Campaign orchestration", href: "/product#campaign-orchestration" },
+  { label: "Guides and templates", href: "/product#guides-templates" },
+  { label: "Integrations", href: "/integrations" },
+  { label: "Analytics and QA", href: "/product#analytics-qa" },
+  { label: "CRM sync and workflow automation", href: "/product#crm-sync" },
 ];
 
 const companyLinks = [
