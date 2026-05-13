@@ -6,8 +6,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WORKSPACE_SECTIONS } from "@/config/navigation";
 
 /**
- * Workspaces index — canonical /app/workspaces.
- * Lists workspaces (currently adapted from Organizations) and links into the canonical shell.
+ * Canonical workspaces index. Links into /w/:workspaceId/home.
  */
 export default function WorkspacesIndexPage() {
   const { workspaces, isLoading } = useWorkspace();
@@ -36,7 +35,7 @@ export default function WorkspacesIndexPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {workspaces.map((w) => (
-            <Link key={w.id} to={`/app/workspaces/${w.id}/home`}>
+            <Link key={w.id} to={`/w/${w.id}/home`}>
               <Card className="hover:border-primary/40 transition-colors h-full">
                 <CardHeader className="flex-row items-center gap-3 space-y-0">
                   <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
