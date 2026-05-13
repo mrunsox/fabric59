@@ -168,13 +168,13 @@ describe("Canonical surfaces · CTA guard", () => {
     const shell = fs.readFileSync(path.join(ROOT, "components/layout/WorkspaceShell.tsx"), "utf8");
     expect(shell).toMatch(/SURFACED_WORKSPACE_SECTIONS\.map/);
     // Make sure the unfiltered registry isn't iterated for nav rendering.
-    expect(shell).not.toMatch(/WORKSPACE_SECTIONS\.map\b/);
+    expect(shell).not.toMatch(/(?<!SURFACED_)WORKSPACE_SECTIONS\.map\b/);
   });
 
   it("workspace home renders only surfaced section cards", () => {
     const home = fs.readFileSync(path.join(ROOT, "pages/workspace/WorkspaceHomePage.tsx"), "utf8");
     expect(home).toMatch(/SURFACED_WORKSPACE_SECTIONS/);
-    expect(home).not.toMatch(/WORKSPACE_SECTIONS\.filter/);
+    expect(home).not.toMatch(/(?<!SURFACED_)WORKSPACE_SECTIONS\.filter/);
   });
 
   it("admin quick actions point at canonical campaign + connector routes", () => {
