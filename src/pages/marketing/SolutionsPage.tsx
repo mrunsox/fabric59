@@ -1,9 +1,3 @@
-import { MarketingLayout } from "@/components/marketing/MarketingLayout";
-
-import { SectionIntro } from "@/components/marketing/SectionIntro";
-import { CapabilityCard } from "@/components/marketing/CapabilityCard";
-import { CtaRow } from "@/components/marketing/CtaRow";
-import { ProofStrip } from "@/components/marketing/ProofStrip";
 import {
   PhoneIncoming,
   RotateCcw,
@@ -11,61 +5,90 @@ import {
   GitBranch,
   Activity,
 } from "lucide-react";
+import { MarketingLayout } from "@/components/marketing/MarketingLayout";
+import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { SectionShell } from "@/components/marketing/SectionShell";
+import { SectionIntro } from "@/components/marketing/SectionIntro";
+import { CapabilityCard } from "@/components/marketing/CapabilityCard";
+import { CtaRow } from "@/components/marketing/CtaRow";
 
 /**
- * Phase G — Solutions page.
- * 5 canonical operating motions. Capability language only, no readiness badges.
+ * Phase H — Solutions page.
+ *
+ * Anchored sections per canonical operating motion. Each section maps to a
+ * real workspace surface and routes its CTA to /contact?topic=<slug>.
  */
+
 const MOTIONS = [
   {
+    anchor: "inbound-intake",
     icon: PhoneIncoming,
-    title: "Inbound intake",
-    body: "Sub-500ms ANI lookup, screen pop, decision-tree guides, and disposition-driven CRM writeback the moment the call ends.",
+    eyebrow: "Inbound intake",
+    title: "Capture every inbound call as structured intake",
+    body: "Pre-call ANI lookup matches the caller before screen pop. Decision-tree guides walk the agent through scoring and qualification. Disposition routes the result into the downstream system the moment the call ends.",
     bullets: [
-      "Pre-call ANI lookup with screen pop",
-      "Visual decision-tree intake guides",
-      "Outcome-routed CRM dispatch",
+      "Sub-500ms ANI lookup with screen pop",
+      "Decision-tree guides edited inside the workspace",
+      "Outcome-routed CRM dispatch per disposition",
     ],
+    surfacedIn: "Workspace · Guides, Forms, Campaigns, QA",
+    topic: "inbound-intake",
   },
   {
+    anchor: "outbound-reactivation",
     icon: RotateCcw,
-    title: "Reactivation campaigns",
-    body: "Intake-driven outbound with reverse-engineered campaign blueprints, ANI block lists, and abandon-rate guardrails.",
+    eyebrow: "Outbound reactivation",
+    title: "Win-back motions without spreadsheet ops",
+    body: "Reverse-engineer existing Five9 campaigns into reusable blueprints. Configure callback queues, abandon-rate guardrails, and ANI block lists from one workspace.",
     bullets: [
-      "Campaign orchestration from intake form",
-      "Reverse-engineer existing Five9 campaigns",
-      "Callback queue + ANI block list",
+      "Campaign blueprints replicated across workspaces",
+      "Callback queue with wait-time thresholds",
+      "ANI block list applied via ModifyCampaignProfile",
     ],
+    surfacedIn: "Workspace · Campaigns, Templates",
+    topic: "outbound-reactivation",
   },
   {
+    anchor: "qa-and-review",
     icon: ClipboardCheck,
-    title: "QA + agent performance",
-    body: "Workspace-scoped QA queue, scoring against shipped scripts, and KPI surfacing for supervisors and ops leads.",
+    eyebrow: "QA and review",
+    title: "QA scored against the script you actually shipped",
+    body: "Workspace-scoped review queue with scorecards bound to live decision-tree guides. Supervisors push script changes without filing a ticket.",
     bullets: [
       "Per-workspace QA review queue",
-      "Scorecards aligned to live scripts",
-      "Supervisor KPI overview",
+      "Scorecards bound to live guides",
+      "Supervisor live-ops view",
     ],
+    surfacedIn: "Workspace · QA, Analytics",
+    topic: "qa-review",
   },
   {
+    anchor: "crm-sync-handoff",
     icon: GitBranch,
-    title: "CRM sync + workflow automation",
-    body: "Visual field mapping with a Test runner, post-call automations, and workflow dispatch into the systems you already run.",
+    eyebrow: "CRM sync and handoff",
+    title: "One canonical adapter layer for downstream systems",
+    body: "Visual field mapping with a Test runner before any adapter goes live. Per-disposition policy controls allow / block / redact behavior. Workflow webhooks dispatch into Zapier and Make.",
     bullets: [
       "Visual mapping builder with Test runner",
       "Per-disposition policy: allow / block / redact",
-      "Zapier and Make outbound automations",
+      "Outbound Zapier and Make dispatch",
     ],
+    surfacedIn: "Workspace · Integrations, Settings",
+    topic: "crm-sync",
   },
   {
+    anchor: "monitoring-readiness",
     icon: Activity,
-    title: "Monitoring + reconciliation",
-    body: "Realtime API event streaming, telephony reconciliation against Five9 logs, and audit-grade compliance export.",
+    eyebrow: "Monitoring and readiness",
+    title: "Pilot readiness, not a status page",
+    body: "Telephony reconciliation against Five9 logs, per-tenant rate limits, tenant health, and a shared GA readiness checklist coordinate every pilot from kickoff through go-live.",
     bullets: [
-      "Realtime API event log",
-      "Telephony ↔ CRM reconciliation",
-      "Server-side compliance export bundle",
+      "Telephony reconciliation vs Five9 logs",
+      "Per-tenant rate limits and tenant health",
+      "Shared GA readiness checklist",
     ],
+    surfacedIn: "Admin · Connectors, Reports, Settings",
+    topic: "monitoring",
   },
 ];
 
@@ -73,52 +96,60 @@ export default function SolutionsPage() {
   return (
     <MarketingLayout
       title="Solutions | Fabric59"
-      description="Five canonical operating motions on Fabric59: inbound intake, reactivation, QA, CRM sync, and monitoring — all on the same Five9-native workspace model."
+      description="Five canonical operating motions on Fabric59: inbound intake, outbound reactivation, QA, CRM sync, and monitoring."
       ctaBanner={
-        <section className="py-16 px-6 bg-muted/20">
+        <SectionShell>
           <SectionIntro
-            title="Walk through it with us"
-            lede="Each motion maps directly onto a workspace surface that already ships. We'll show you exactly how it lands in your Five9 footprint."
+            title="Map a motion to your operation"
+            lede="We will walk through the motion in your Five9 footprint and your downstream system, on a working call."
             cta={
               <CtaRow
-                primary={{ label: "Request a walkthrough", to: "/contact" }}
+                primary={{ label: "Start a pilot", to: "/contact?topic=pilot" }}
                 secondary={{ label: "See pricing", to: "/pricing" }}
               />
             }
           />
-        </section>
+        </SectionShell>
       }
     >
-      <section className="pt-20 pb-4 px-6">
-        <SectionIntro
-          eyebrow="Solutions"
-          title="Five canonical operating motions on Five9"
-          lede="Real workflows shipped on the canonical Fabric59 workspace model — not slides, not theme-park demos."
-        />
-      </section>
+      <MarketingHero
+        eyebrow="Solutions"
+        title="Five operating motions on one workspace"
+        lede="Real workflows shipped on the canonical Fabric59 workspace model. Each motion lands in a workspace surface that already exists."
+      />
 
-      <section className="py-16 px-6">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {MOTIONS.map((m) => (
-            <CapabilityCard
-              key={m.title}
-              icon={m.icon}
-              title={m.title}
-              body={m.body}
-              bullets={m.bullets}
-            />
-          ))}
-        </div>
-
-        <ProofStrip
-          className="mt-16"
-          items={[
-            "Five9-native by default",
-            "Workspace-scoped isolation",
-            "Founder-led rollout",
-          ]}
-        />
-      </section>
+      {MOTIONS.map((m, i) => (
+        <SectionShell
+          key={m.anchor}
+          id={m.anchor}
+          muted={i % 2 === 1}
+          bordered
+        >
+          <div className="grid gap-10 lg:grid-cols-[1fr_360px] items-start">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary mb-3">
+                {m.eyebrow}
+              </p>
+              <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+                {m.title}
+              </h2>
+              <p className="mt-4 text-base text-muted-foreground leading-relaxed max-w-2xl">
+                {m.body}
+              </p>
+              <p className="mt-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Surfaced in · <span className="text-foreground/80">{m.surfacedIn}</span>
+              </p>
+              <div className="mt-6">
+                <CtaRow
+                  align="left"
+                  primary={{ label: "Talk about this motion", to: `/contact?topic=${m.topic}` }}
+                />
+              </div>
+            </div>
+            <CapabilityCard icon={m.icon} title={m.eyebrow} body={m.body} bullets={m.bullets} />
+          </div>
+        </SectionShell>
+      ))}
     </MarketingLayout>
   );
 }
