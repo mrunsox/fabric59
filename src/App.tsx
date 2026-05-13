@@ -45,6 +45,7 @@ import WorkspaceQaPage from "@/pages/workspace/WorkspaceQaPage";
 import WorkspaceBillingPage from "@/pages/workspace/WorkspaceBillingPage";
 import WorkspaceKnowledgePage from "@/pages/workspace/WorkspaceKnowledgePage";
 import WorkspaceAssistantPage from "@/pages/workspace/WorkspaceAssistantPage";
+import WorkspaceSettingsPage from "@/pages/workspace/WorkspaceSettingsPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
