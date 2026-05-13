@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Plus, Plug, FlaskConical, BookOpen, Play, type LucideIcon } from "lucide-react";
+import { Plus, Plug, FlaskConical, BookOpen, type LucideIcon } from "lucide-react";
 
 export function QuickActionsGrid({ clientId }: { clientId?: string } = {}) {
   // Canonical CTAs only — no compatibility-only or redirect targets.
