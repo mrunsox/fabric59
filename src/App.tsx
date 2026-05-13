@@ -358,8 +358,8 @@ const App = () => (
                 <Route path="kb" element={<KnowledgeBasePage />} />
                 <Route path="training" element={<TrainingPage />} />
                 <Route path="feedback" element={<FeedbackPage />} />
-                {/* Phase C: compatibility-only — operational deep-link surface, de-surfaced from nav. */}
-                <Route path="script-routing" element={<ScriptRoutingPage />} />
+                {/* VAULTED: legacy-script-routing → canonical /admin/scripts */}
+                <Route path="script-routing" element={<Navigate to="/admin/scripts" replace />} />
                 <Route path="goals" element={<GoalsPage />} />
                 <Route path="summary-templates" element={<CallSummaryTemplatesPage />} />
                 {/* Phase C: scriptflow base redirects above; param surface kept for legacy deep links handled by hub. */}
