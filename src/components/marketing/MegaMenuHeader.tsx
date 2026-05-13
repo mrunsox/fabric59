@@ -12,24 +12,17 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import {
-  GitBranch, Bot, Megaphone, Globe, Scale, ArrowRight, Menu,
-  UserCog, GitFork, Mail, Lock, FileSearch, Phone, Building2,
+  LayoutGrid, Megaphone, BookOpen, Plug, BarChart3, Workflow, ArrowRight, Menu,
 } from "lucide-react";
 
-// Canonical IA — Slice A. All hrefs point at canonical routes
-// (/product#section or top-level marketing pages). No /#anchor links.
+// Canonical capability categories — no vendor-feature inventory.
 const platformItems = [
-  { icon: Phone, title: "Five9 SOAP integration", desc: "30+ live SOAP actions across agents, campaigns, skills, profiles, DNIS.", href: "/product#five9", badge: "Live" },
-  { icon: Globe, title: "Multi-domain Five9 management", desc: "Credentials, IVR, and connection tests across multiple Five9 domains.", href: "/product#domains", badge: "Live" },
-  { icon: Scale, title: "Legal Connect (MyCase / Clio)", desc: "MyCase and Clio Grow live. Full Clio Manage adapter queued behind OAuth.", href: "/product#legal", badge: "Live" },
-  { icon: GitBranch, title: "Visual field mapping + Test runner", desc: "Drag-and-drop CRM mapping with a real Test runner against tenant configs.", href: "/product#mappings", badge: "Live" },
-  { icon: GitFork, title: "Decision-tree script builder", desc: "React Flow scripting with conditional branching and runtime simulator.", href: "/product#scripts", badge: "Live" },
-  { icon: Building2, title: "Multi-tenant hierarchy + RLS", desc: "Org / Partner / Client config inheritance with Postgres RLS isolation.", href: "/product#tenancy", badge: "Live" },
-  { icon: FileSearch, title: "API logs & compliance export", desc: "Realtime API events, telephony reconciliation, audit-grade export.", href: "/product#logs", badge: "Live" },
-  { icon: Megaphone, title: "Campaign blueprints", desc: "Intake form drives automated SOAP sequences and reverse-engineering.", href: "/product#campaigns", badge: "Live" },
-  { icon: UserCog, title: "Agent provisioning (Five9 + Slack)", desc: "One-form provisioning for Five9 and Slack workspaces.", href: "/product#agents", badge: "Partial" },
-  { icon: Mail, title: "Disposition email engine", desc: "Per-disposition branded emails. CRM writebacks coming soon.", href: "/product#dispositions", badge: "Partial" },
-  { icon: Bot, title: "AI Call Flow builder", desc: "Chat-driven flow design. One-click Five9 export coming soon.", href: "/product#callflow", badge: "Coming soon" },
+  { icon: LayoutGrid, title: "Workspace operations", desc: "Org, partner, and client workspaces with RLS-isolated data and shared config inheritance.", href: "/product#workspace-operations" },
+  { icon: Megaphone, title: "Campaign orchestration", desc: "Intake-driven campaign setup, decision-tree scripting, and runtime simulation.", href: "/product#campaign-orchestration" },
+  { icon: BookOpen, title: "Guides and templates", desc: "Reusable playbooks, scripts, and templates for repeatable rollouts.", href: "/product#guides-templates" },
+  { icon: Plug, title: "Integrations", desc: "Five9 telephony, MyCase, Clio, and a growing catalog of CRM and workflow connectors.", href: "/integrations" },
+  { icon: BarChart3, title: "Analytics and QA", desc: "Realtime API events, telephony reconciliation, audit-grade exports, and QA scoring.", href: "/product#analytics-qa" },
+  { icon: Workflow, title: "CRM sync and workflow automation", desc: "Field mapping, post-call automations, and downstream workflow dispatch.", href: "/product#crm-sync" },
 ];
 
 const primaryLinks = [
