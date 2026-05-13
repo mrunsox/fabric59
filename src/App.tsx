@@ -101,7 +101,7 @@ import FeedbackPage from "@/pages/admin/FeedbackPage";
 // VAULTED (slug: legacy-script-routing) — ScriptRoutingPage import removed; /admin/script-routing redirects.
 import GoalsPage from "@/pages/admin/GoalsPage";
 import CallSummaryTemplatesPage from "@/pages/admin/CallSummaryTemplatesPage";
-import ScriptFlowHubPage from "@/pages/admin/ScriptFlowHubPage";
+// VAULTED (slug: legacy-scriptflow-hub) — ScriptFlowHubPage import removed; /admin/scriptflow redirects.
 import EmailTemplatesPage from "@/pages/admin/EmailTemplatesPage";
 import LegalConnectPage from "@/pages/admin/LegalConnectPage";
 import ClientLegalConnectPage from "@/pages/admin/ClientLegalConnectPage";
