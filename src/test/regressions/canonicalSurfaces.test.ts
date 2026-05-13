@@ -299,8 +299,8 @@ describe("Phase G · canonical experience rebuild", () => {
     expect(src).toMatch(/Five9 contact centers/);
     expect(src).toMatch(/Multi-tenant\s+·\s+Five9-native/);
     // Primary hero CTA goes to /contact (concierge), never /signup or /demo.
-    expect(src).toMatch(/to=["'`]\/contact["'`]/);
-    expect(src).not.toMatch(/to=["'`]\/demo["'`]/);
+    expect(src).toMatch(/to:\s*["'`]\/contact(\?[^"'`]*)?["'`]/);
+    expect(src).not.toMatch(/to:\s*["'`]\/demo["'`]/);
   });
 
   // ---- Quick actions canonical set -----------------------------------------
