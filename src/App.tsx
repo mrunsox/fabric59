@@ -7,7 +7,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
 import { AdminShell } from "@/components/layout/AdminShell";
-import { WorkspaceShell } from "@/components/layout/WorkspaceShell";
+import { WorkspaceShell as LegacyWorkspaceShell } from "@/components/layout/WorkspaceShell";
+// Phase 0 — canonical shells (additive). Legacy shells remain mounted.
+import { OrgShell } from "@/shells/OrgShell";
+import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } from "@/shells/WorkspaceShell";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
 import WorkspaceHomePage from "@/pages/workspace/WorkspaceHomePage";
