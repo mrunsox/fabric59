@@ -85,19 +85,16 @@ export default function WorkspaceAssistantPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Workspace assistant</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Workspace-scoped grounded chat. Pulls from KB, guides, templates, and call summaries you enable.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <WorkspacePageHeader
+        eyebrow="Assistant"
+        title="Workspace assistant"
+        lede="Workspace-scoped grounded chat. Pulls from KB, guides, templates, and call summaries you enable."
+        action={
           <Label className="text-xs flex items-center gap-2">
             <Switch checked={knowledgeOnly} onCheckedChange={setKnowledgeOnly} /> Knowledge only
           </Label>
-        </div>
-      </div>
+        }
+      />
 
       <div className="grid md:grid-cols-[260px_1fr] gap-4">
         <Card>
