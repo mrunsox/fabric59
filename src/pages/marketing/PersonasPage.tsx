@@ -1,58 +1,59 @@
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
-import { ArrowRight, Scale, Headphones, ShieldCheck, Building2 } from "lucide-react";
+import { SectionIntro } from "@/components/marketing/SectionIntro";
+import { CapabilityCard } from "@/components/marketing/CapabilityCard";
+import { CtaRow } from "@/components/marketing/CtaRow";
+import { ProofStrip } from "@/components/marketing/ProofStrip";
+import {
+  Compass,
+  Headphones,
+  Wrench,
+  PhoneIncoming,
+} from "lucide-react";
 
+/**
+ * Phase G — Personas page.
+ * 4 canonical buyer roles, each tied to product surfaces.
+ */
 const PERSONAS = [
   {
-    icon: Scale,
-    title: "Law firms running intake on Five9",
-    pitch:
-      "Five9 + canonical Fabric59 workspace + MyCase / Clio adapters. Intake agents work from one console; outcomes flow into the right matter automatically.",
+    icon: Compass,
+    title: "Operations leaders",
+    body: "Run multiple Five9 programs across clients. Need workspace-level isolation, honest billing signal, and a single cockpit to see what's healthy.",
     bullets: [
-      "Per-disposition routing into MyCase / Clio",
-      "Decision-tree intake guides with version history",
-      "Dispositions, callbacks and ANI block lists managed in one place",
+      "Org / Partner / Client hierarchy with config inheritance",
+      "Tenant health and per-tenant rate limits",
+      "Audit-grade compliance export",
     ],
-    cta: "/contact",
   },
   {
     icon: Headphones,
-    title: "BPOs and call centers on Five9",
-    pitch:
-      "One workspace per client, shared Five9 domain, tenant-scoped guides, QA, and analytics. No more spreadsheet-driven client management.",
+    title: "Supervisors",
+    body: "Live ops on a single workspace. Need QA review, KPI surfacing, and the ability to push script changes without filing a ticket.",
     bullets: [
-      "Workspace-per-client isolation with RLS",
-      "Supervisor live ops + QA review queue",
-      "Workspace analytics + honest billing shell",
+      "QA review queue scoped to workspace",
+      "KPI overview + top dispositions",
+      "Direct script and guide editing",
     ],
-    cta: "/contact",
   },
   {
-    icon: ShieldCheck,
-    title: "Design partners and pilots",
-    pitch:
-      "Hands-on rollout with a concierge onboarding checklist, workspace bootstrap, pilot guardrails, feedback drawer, and What's New release notes.",
+    icon: Wrench,
+    title: "Implementation + admins",
+    body: "Wire Five9 to the CRMs and tools their team already uses. Need a Five9 Web Connector path, visual mapping, and a Test runner before anything goes live.",
     bullets: [
-      "Per-tenant rate limits and tenant health view",
-      "Pilot readiness state + safe-mode toggle",
-      "Direct feedback channel into the Fabric59 team",
+      "Five9 Web Connector automation",
+      "Visual field mapping with Test runner",
+      "MyCase, Clio, Slack, Zapier, Make adapters",
     ],
-    cta: "/contact",
   },
   {
-    icon: Building2,
-    title: "Platform / superadmins",
-    pitch:
-      "Multi-org governance, vault, source exports, advanced routes, design-partner ops, and the canonical build doc — all under /superadmin.",
+    icon: PhoneIncoming,
+    title: "Intake + service-ops owners",
+    body: "Own outcomes per call. Need decision-tree guides, disposition routing, callback orchestration, and reconciliation against telephony logs.",
     bullets: [
-      "Master-admin gated /superadmin shell",
-      "Feature vault + source exports",
-      "Canonical build doc at /outline (master only)",
+      "Visual decision-tree intake guides",
+      "Per-disposition CRM dispatch policies",
+      "Callback queue + ANI block list",
     ],
-    cta: "/login",
   },
 ];
 
@@ -60,59 +61,51 @@ export default function PersonasPage() {
   return (
     <MarketingLayout
       title="Who Fabric59 is for | Personas"
-      description="Fabric59 is built for law firms, BPOs, and design partners running intake and operations on Five9 with canonical CRM integration."
+      description="Fabric59 is built for operations leaders, supervisors, implementation admins, and intake owners running real Five9 programs."
+      ctaBanner={
+        <section className="py-16 px-6 bg-muted/20">
+          <SectionIntro
+            title="Not sure which fits?"
+            lede="We'll scope your role and program in a single walkthrough."
+            cta={
+              <CtaRow
+                primary={{ label: "Talk to us", to: "/contact" }}
+                secondary={{ label: "Explore solutions", to: "/solutions" }}
+              />
+            }
+          />
+        </section>
+      }
     >
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto text-center mb-14">
-          <Badge variant="outline" className="border-primary/40 text-primary mb-4">
-            Personas
-          </Badge>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            Built for the teams running Five9 in the real world
-          </h1>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-            Fabric59 is opinionated. It is not a generic SaaS shell — it is the canonical operating
-            layer for legal intake, BPO call operations, and design-partner pilots on Five9.
-          </p>
-        </div>
+      <section className="pt-20 pb-4 px-6">
+        <SectionIntro
+          eyebrow="Personas"
+          title="Built for the teams running Five9 in the real world"
+          lede="Fabric59 is opinionated. It is the canonical operating layer for the four roles that own real Five9 programs day to day."
+        />
+      </section>
 
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-6">
+      <section className="py-16 px-6">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-5">
           {PERSONAS.map((p) => (
-            <Card key={p.title} className="h-full">
-              <CardContent className="p-6 space-y-4">
-                <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <p.icon className="h-5 w-5 text-primary" />
-                </div>
-                <h2 className="text-lg font-semibold">{p.title}</h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">{p.pitch}</p>
-                <ul className="text-sm text-muted-foreground space-y-1.5 list-disc pl-5">
-                  {p.bullets.map((b) => (
-                    <li key={b}>{b}</li>
-                  ))}
-                </ul>
-                <Button asChild size="sm" variant="outline" className="gap-1.5">
-                  <Link to={p.cta}>
-                    Talk to us <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <CapabilityCard
+              key={p.title}
+              icon={p.icon}
+              title={p.title}
+              body={p.body}
+              bullets={p.bullets}
+            />
           ))}
         </div>
 
-        <div className="max-w-3xl mx-auto mt-14 text-center">
-          <p className="text-sm text-muted-foreground mb-4">
-            Not sure which fits? See solutions by use case.
-          </p>
-          <div className="flex justify-center gap-3">
-            <Button asChild variant="outline">
-              <Link to="/solutions">Solutions</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/pricing">See pricing</Link>
-            </Button>
-          </div>
-        </div>
+        <ProofStrip
+          className="mt-16"
+          items={[
+            "Concierge onboarding",
+            "Workspace-first by design",
+            "Founder-led pilots",
+          ]}
+        />
       </section>
     </MarketingLayout>
   );
