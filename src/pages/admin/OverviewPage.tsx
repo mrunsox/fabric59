@@ -50,6 +50,11 @@ export default function OverviewPage() {
       <QuickActionsGrid />
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <WorkspaceSnapshotPanel organizationId={organization?.id} />
+        <ConnectorsReportsPanel organizationId={organization?.id} />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
         <ReadinessChecklist readiness={readiness} loading={loading} title="Setup Progress" />
         <AIGuidanceCard readiness={readiness} />
       </div>
