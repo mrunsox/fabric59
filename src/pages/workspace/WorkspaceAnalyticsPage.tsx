@@ -34,12 +34,11 @@ export default function WorkspaceAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Workspace-scoped operational insight. Last 7 days unless noted.
-        </p>
-      </div>
+      <WorkspacePageHeader
+        eyebrow="Analytics"
+        title="Analytics"
+        lede="Workspace-scoped operational insight. Last 7 days unless noted."
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard
