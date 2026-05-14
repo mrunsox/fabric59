@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FilePlus, FileText } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { ActionCard } from "@/components/common/ActionCard";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 
 export default function WorkspaceGuidesPage() {
@@ -43,6 +44,15 @@ export default function WorkspaceGuidesPage() {
           }
         />
       ) : (
+        <>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ActionCard
+            to={`/w/${workspaceId}/guides/new`}
+            icon={FilePlus}
+            label="New guide"
+            hint="Agent script & decision tree"
+          />
+        </div>
         <div className="grid gap-3">
           {guides.map((g) => (
             <Link key={g.id} to={`/w/${workspaceId}/guides/${g.id}`}>
@@ -74,6 +84,7 @@ export default function WorkspaceGuidesPage() {
             </Link>
           ))}
         </div>
+        </>
       )}
     </div>
   );
