@@ -34,6 +34,7 @@ interface AIBlueprintBuilderProps {
 export function AIBlueprintBuilder({ onClose }: AIBlueprintBuilderProps) {
   const { organization } = useAuth();
   const navigate = useNavigate();
+  const { workspaceId: activeWorkspaceId, isLoading: workspaceLoading } = useActiveWorkspaceId();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>("upload");
