@@ -577,7 +577,18 @@ export default function OnboardingPage() {
     >
       <div className="animate-fade-up">{stepContent[step]}</div>
       {isMasterAdmin && (
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={handleSkipToWorkspace}
+            disabled={submitting}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline disabled:opacity-50"
+            data-testid="onboarding-skip-link"
+          >
+            {submitting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Rocket className="h-3 w-3" />}
+            Skip onboarding — go to workspace dashboard
+            <ArrowRight className="h-3 w-3" />
+          </button>
           <Link
             to="/superadmin"
             className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors"
