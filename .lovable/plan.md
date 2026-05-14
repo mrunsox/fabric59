@@ -1,150 +1,61 @@
+# Revised Outline Compliance Report — Workspace Home Slice (May 13 Canonical Build Doc)
 
-# Fabric59 — Hard Delete Cleanup (single slice)
+Scope: Re-grade the prior audit per reviewer feedback. No source changes. Implementation from the prior slice stands; only the report language is tightened.
 
-Default action everywhere below: **delete**. Anything kept is justified inline.
+Verification performed
+- `src/App.tsx` confirms three relevant live route families: `/admin/*` (AdminShell), `/org/*` (OrgShell, additive Phase 0 mount), `/w/:workspaceId/*` (CanonicalWorkspaceShell), plus `/app/workspaces/:workspaceId/*` → `/w/:workspaceId/*` single-hop redirect.
+- `WORKSPACE_NAV` in `canonicalNav.ts` matches the May 13 outline 15-item order.
+- `WorkspaceHomePage.tsx` uses `KpiCard`, `EmptyState`, `StatusBadge`, `WorkspacePageHeader` for status/KPI/empty-state chrome; create-action tiles and recent-row list remain page-local compositions.
 
-## 1. Routes — App.tsx surgery
+## Category grades (revised)
 
-### A. Delete routes outright (no redirect)
-- `/demo` → `DemoSandboxPage` (off-message, not in canonical IA).
-- `/faq` → `FaqPage` (off-message; canonical info lives in marketing IA).
-- `/admin/agent-dashboard`, `/admin/supervisor` (deep-linked legacy, not in canonical nav, no compatibility need).
-- `/admin/campaigns/readiness`, `/admin/campaigns/event-log` (compatibility-only carve-outs from old phases — collapse into `/admin/campaigns` + `/admin/monitoring`).
-- `/admin/scripts/:id` (alias of `/admin/scripts`; only `/admin/scripts` and `/admin/scripts/:scriptId/builder` survive).
-- `/admin/agent-dashboard`, `/admin/supervisor`, `/admin/automations` (legacy — superseded by canonical workspace QA/analytics + `/admin/legal-connect` operational hubs). Keep `/admin/qa`, `/admin/billing`, `/admin/automations` only if outline still classifies them canonical; otherwise delete. Decision: delete `agent-dashboard` and `supervisor`; keep `qa`, `billing`, `automations`.
-- Multi-hop redirects: `/admin/scripts` legacy alias chain (`scripter → scripts`, `scriptflow → scripts`, `tree-editor → scripts`, `call-flow → flows`) — these are already single-hop; **keep** per user policy.
-- `/master/*` redirects → keep `/master`, `/master/users`, `/master/vault` (likely bookmarks). Delete `/master/exports`, `/master/routes`, `/master/docs`, `/master/vault/:id`, `/master/organizations` (obscure).
-- `/admin/dev-guide`, `/admin/settings/dev-guide` redirects — delete (obscure, internal-only).
-- `/onboarding/legal-connect` → `/admin/legal-connect` redirect — delete (obscure, no nav).
-- `/feature-vault`, `/vault` redirects — keep `/vault` only (bookmarked); delete `/feature-vault`.
-- `/five9-domains` → `/admin/domains` — delete (`/domains` already covers it).
-- `/legal-connect/overview` redirect — delete (obscure; `/legal-connect` covers it).
-- `/call-flow` top-level redirect → delete (no nav; superadmin route reachable directly).
-- `/admin/qa-legacy` style routes inside `/app/workspaces/*` — deleted with shell teardown below.
+| # | Category | Prior | Revised | Reason |
+|---|---|---|---|---|
+| A | Workspace nav order vs outline §4 | PASS | PASS | 15 items in exact outline order, verified in `canonicalNav.ts`. |
+| B | Workspace shell mount completeness | PASS | PASS | Runs, Agents, Supervisor routes mounted under `/w/:workspaceId/*`. |
+| C | Terminology (no user-facing "Tenant") | PASS | PASS | No regressions on touched surfaces. |
+| D | Canonical primitives available | PASS | PASS | `KpiCard`, `EmptyState`, `StatusBadge`, `WorkspacePageHeader` exist and are exported. |
+| **E** | **Workspace home compliance** | PASS | **PARTIAL** | Visual composition uses canonical primitives, but the documented canonical workspace home in the outline is `/app/workspaces/:workspaceId/*` while live code serves `/w/:workspaceId/*`. Route-family compliance is unresolved; tracked under K. |
+| **F** | **UI primitive convergence** | PASS | **PARTIAL** | Status/KPI/empty-state chrome converged, but the create-action tile and the recent-items row are still page-local compositions on `WorkspaceHomePage`, not promoted shared primitives (`ActionCard`, `RecentList`). |
+| G | Supervisor framing | PASS | PASS | Canonical placeholder using `EmptyState`; no `/admin` redirect, no fake CTA. |
+| H | Runs/Agents framing | PARTIAL | PARTIAL | Routes mounted; data layer still org-scoped via the wrapped pages. Honest "Phase 8 follow-up" notice present. |
+| I | Legacy redirect hygiene | PASS | PASS | `/app/workspaces/:workspaceId/*` is single-hop only; no nav links target it. |
+| J | Demo-data hygiene on home | PASS | PASS | Demo heuristic excluded from KPI counts; surfaced via `EmptyState` notice. |
+| **K** | **Outline vs live route-family mismatch** | PARTIAL | **PARTIAL** | Unchanged. Workspace family `/w/:workspaceId/*` (live) vs `/app/workspaces/:workspaceId/*` (outline §17) is a controlled implementation divergence requiring an editorial fix in the build doc. |
 
-### B. `/app/workspaces/*` legacy shell — collapse to single-hop redirects
-- Delete the entire `<Route path="/app/workspaces/:workspaceId" element={<LegacyWorkspaceShell />}>` block (App.tsx lines 436–491) and its child routes.
-- Replace with **one** catch-all redirect: `/app/workspaces/:workspaceId/*` → `/w/:workspaceId/*` (single-hop, preserves deep paths via `useParams` + `Navigate replace`).
-- Keep `/app/workspaces` index → `WorkspacesIndexPage` (canonical workspaces picker — same component as `/w` index but at the historical URL). Update `WorkspacesIndexPage` link target from `/app/workspaces/${id}/home` to `/w/${id}/home`.
-- Delete `src/components/layout/WorkspaceShell.tsx` (LegacyWorkspaceShell — no other consumers).
-- Delete `WorkspaceSectionPlaceholder.tsx` import + file (only mounted under legacy shell).
+## Redirect + Compatibility Check (corrected)
 
-### C. Retained redirects (final list, every one single-hop)
-Justified survivors only:
-| Redirect | Target | Why kept |
-|---|---|---|
-| `/dashboard` | `/admin` | High-bookmark probability |
-| `/settings` | `/admin/settings` | High-bookmark |
-| `/vault` | `/superadmin/vault` | Internal team bookmark |
-| `/five9` | `/admin/five9` | Operational shortcut |
-| `/domains` | `/admin/domains` | Operational shortcut |
-| `/legal-connect` | `/admin/legal-connect` | Operational shortcut |
-| `/master` | `/superadmin` | Migration bookmark |
-| `/master/users` | `/superadmin/users` | Migration bookmark |
-| `/master/vault` | `/superadmin/vault` | Migration bookmark |
-| `/admin/integrations` | `/admin/connectors` | Phase-1 alias, still likely typed |
-| `/admin/dashboard` | `/admin` | Phase-11 collapse |
-| `/admin/tenants` | `/admin/clients` | Label rename |
-| `/admin/scripter` | `/admin/scripts` | Vaulted alias |
-| `/admin/scriptflow` | `/admin/scripts` | Vaulted alias |
-| `/admin/tree-editor` | `/admin/scripts` | Vaulted alias |
-| `/admin/tree-editor/:scriptId` | `/admin/scripts` | Compatibility deep-link (outline-listed) |
-| `/admin/script-routing` | `/admin/scripts` | Compatibility deep-link (outline-listed) |
-| `/admin/call-flow` | `/admin/flows` | Vaulted alias |
-| `/admin/campaigns/overview` | `/admin/campaigns` | Phase-B collapse |
-| `/admin/campaigns/drafts` | `/admin/campaigns?status=draft` | Phase-B collapse |
-| `/admin/campaigns/archived` | `/admin/campaigns?status=archived` | Phase-B collapse |
-| `/admin/campaign-blueprints` | `/admin/templates` | Phase-B collapse |
-| `/admin/five9/legacy` | `/admin/five9` | Phase-1 collapse |
-| `/admin/five9/campaign-builder*` | `/admin/campaigns/new` | Vaulted |
-| `/onboarding/workspace` | `/onboarding` | Phase-2 collapse |
-| `/app/workspaces/:workspaceId/*` | `/w/:workspaceId/*` | Legacy shell teardown (this slice) |
+Workspace family
+- Canonical live route: `/w/:workspaceId/*` (CanonicalWorkspaceShell)
+- Documented canonical route in outline: `/app/workspaces/:workspaceId/*`
+- Compatibility alias: `/app/workspaces/:workspaceId/*` → single-hop redirect to `/w/:workspaceId/*`
+- Status: controlled implementation divergence; outline editorial correction owed.
 
-Everything else listed in section A is deleted.
+Org family (corrected per reviewer)
+- Canonical live route per outline §1/§3: `/admin/*` (AdminShell). This remains the documented canonical org surface and is the family the outline's nav vocabulary anchors on.
+- Additional live route family: `/org/*` (OrgShell). Mounted in `App.tsx` as the Phase 0 additive canonical-shell scaffold. **Not yet promoted to canonical org status by the outline.** Until the outline explicitly adopts `/org/*`, classify it as **internal shell scaffold / forward-canonical candidate**, not as a current canonical org family. Prior report wording that listed `/org/*` as a canonical live route was overstated.
+- Compatibility alias: none today between `/admin/*` and `/org/*`; they coexist as parallel shells. This is a separate documented risk (org-shell duplication) and should be added to Remaining Gaps.
 
-## 2. Source files deleted
+Marketing / auth / superadmin families: unchanged, not in scope of this slice.
 
-- `src/components/layout/WorkspaceShell.tsx`
-- `src/pages/DemoSandboxPage.tsx`
-- `src/pages/FaqPage.tsx`
-- `src/pages/workspace/WorkspaceSectionPlaceholder.tsx`
-- `src/pages/admin/AgentDashboardPage.tsx` (route deleted)
-- `src/pages/admin/SupervisorPage.tsx` (route deleted)
-- `src/pages/admin/CampaignReadinessBoardPage.tsx`
-- `src/pages/admin/CampaignEventLogPage.tsx`
-- `src/pages/admin/Five9Page.tsx` if it's a pure re-export of `Five9OverviewPage` (verify during execution; delete + rewire route)
-- `src/pages/admin/WorkspaceCanonicalPlaceholder.tsx` (legacy placeholder, no route)
-- `src/pages/auth/WorkspaceBootstrapPage.tsx` (no longer routed; commented as "kept for history" — delete now)
-- Legacy `src/pages/LandingPage.tsx` if any — verify; delete if only referenced by tests, then drop the test.
-- Update `src/data/surfaceAudit.ts` — remove `/app/workspaces/*` entries, add deletion notes; or delete the file if no longer surfaced anywhere (verify with `rg`).
+## Remaining Gaps (explicit)
 
-For each deletion: `rg` for imports, remove from App.tsx, drop nav references (`src/config/navigation.ts`).
+1. **Route-family mismatch (workspace)** — `/w/:workspaceId/*` live vs `/app/workspaces/:workspaceId/*` documented. Needs outline editorial update or a code rename decision.
+2. **Org-shell duplication** — `/admin/*` (canonical per outline) and `/org/*` (Phase 0 additive shell) both live. No redirect bridge, no outline statement on which wins. Decision owed.
+3. **Runs/Agents still org-scoped inside workspace wrappers** — workspace routes mount org-level data. Workspace-strict `workspace_id` filtering is deferred (Phase 8 follow-up).
+4. **Supervisor is a placeholder** — canonical empty state only; module deferred.
+5. **Residual home-page UI drift** — create-action tiles and recent-items row on `WorkspaceHomePage` are page-local; promote to shared `ActionCard` and `RecentList` primitives in the next UI-convergence slice.
+6. **Outline editorial debt** — the build doc still references the older workspace route family and does not yet acknowledge `/org/*` shell.
 
-## 3. Workspace integrations — finalize canonical, delete stubs
+## Net verdict
 
-### Routes (already canonical)
-- Live: `/w/:workspaceId/integrations`, `/w/:workspaceId/integrations/:connectionId`, `/admin/connectors`, `/admin/connectors/:slug`.
-- Delete: `/app/workspaces/:workspaceId/integrations-legacy` route comes out automatically with the legacy shell teardown. Per user note this was listed as "compatibility-only" — overridden by the shell teardown decision; the canonical workspace integrations page already has parity.
+Implementation is directionally correct and the nav/IA alignment is real. Audit grading is now tightened: two PASS → PARTIAL downgrades (E, F), Redirect/Compatibility Check rewritten to stop calling `/org/*` canonical, and org-shell duplication added as an explicit gap. K remains PARTIAL as written.
 
-### Stub edge functions to DELETE
-After verifying no caller references in `src/` and no active webhook URLs in `tenants.integration_configs`:
-`abacuslaw, actionstep, adobe-sign, asana, calendly, casetext, cosmolex, darrow-ai, diligen, docusign, dropbox, dynamics-365, fastcase, fieldpulse, filevine, google-calendar, google-chat, google-drive, google-workspace, harvey-ai, hellosign, housecall-pro, hubspot, jobber, lastpass, lawpay, leap, lexis-ai, microsoft365, monday, netdocuments, nordpass, oncehub, onedrive, power-automate, practicepanther, quickbooks, quoteiq, ringcentral, smokeball, smokeball-oauth-callback, spellbook, westlaw, zendesk, zenmaid, zoho-crm, zoom-meeting`
+## Proposed next slice (grounded in outline)
 
-Use `supabase--delete_edge_functions` after deleting the source folders.
+**UI-primitive promotion + org-shell decision.**
+1. Extract `ActionCard` and `RecentList` from `WorkspaceHomePage` into `src/components/common/`, then refactor home and any near-duplicates to consume them. Closes Gap #5 and lifts Category F to PASS.
+2. Decide `/admin` vs `/org`: either (a) update the outline to adopt `/org/*` as canonical and add `/admin/*` → `/org/*` single-hop redirects, or (b) retire `/org/*` shell scaffolding. Closes Gap #2.
+3. Outline editorial pass: reconcile §17 workspace route family with live `/w/:workspaceId/*`. Closes Gap #1 and lifts K + E to PASS.
 
-### Live providers (canonical set)
-`clio, mycase, five9, slack, zapier, make` — Zapier/Make are webhook URL providers (no edge function); the rest have live functions (`clio*`, `mycase`, `five9*`, `slack-agent`).
-
-### Provider DB row purge
-- `integration_providers` currently has only `clio` seeded. Insert/upsert the remaining canonical 5: `mycase, five9, slack, zapier, make`.
-- Delete any other rows that don't match the canonical 6.
-
-### CTA/UI cleanup
-- `rg "admin/connectors"` inside `src/pages/workspace src/components/workspace` already returns no matches per prior phase — re-verify; remove any new ones.
-
-## 4. Data purge — workspace clients
-
-### Schema migration (option 2 — strict, no backfill)
-```sql
-ALTER TABLE public.tenants ADD COLUMN workspace_id uuid REFERENCES public.workspaces(id) ON DELETE SET NULL;
-CREATE INDEX idx_tenants_workspace_id ON public.tenants(workspace_id);
--- Do NOT backfill. Existing 156 tenants stay NULL.
-```
-RLS update: existing org-membership policy stays (org admins still see all org tenants in `/admin/clients`). The strictness happens **in the workspace query**, not in RLS.
-
-### Hook update
-Update `useWorkspaceClients` to filter `workspace_id = :workspaceId`. `/admin/clients` continues to read all org tenants (org-scoped surface, intentional).
-
-### Demo row purge
-Hard delete from `tenants` where `name ~* '(test|demo|sandbox|please_ignore)' OR name ~* '^old_'` (4 rows confirmed via `psql`). Cascade orphans:
-```sql
-DELETE FROM public.campaigns WHERE client_id IN (<doomed ids>);
-DELETE FROM public.guides WHERE source_id IN (...) AND source_type = 'script' AND ...;
-DELETE FROM public.tenants WHERE name ~* '(test|demo|sandbox|please_ignore)' OR name ~* '^old_';
-```
-Also purge matching rows in `campaigns`, `guides`, `forms`, `templates` whose `name` matches the same heuristic AND has no live workspace owner.
-
-### Stale `integration_connections` / `integration_mappings`
-Delete rows whose `provider_id` is NOT in the canonical 6.
-
-## 5. Outline + memory updates
-- Update `src/pages/OutlinePage.tsx` (or wherever the runtime outline lives) — reflect: legacy shell removed, integrations canonical, demo data purged, canonical provider list = Clio/MyCase/Five9/Slack/Zapier/Make (drop "Dial" wording).
-- Update `mem://architecture/api-routing` and `mem://features/ui-managed-integrations` if they mention `/app/workspaces` as live.
-- Add a fresh memory: `mem://architecture/canonical-routes-final` summarizing the locked route map.
-
-## 6. Verification
-- `rg "/app/workspaces"` in `src` returns 0 hits outside the redirect line, `WorkspacesIndexPage` (now updated to `/w`), and `surfaceAudit.ts` (or that file's deleted).
-- `rg "DemoSandboxPage|FaqPage|LegacyWorkspaceShell|AgentDashboardPage|SupervisorPage|CampaignReadinessBoardPage|CampaignEventLogPage|WorkspaceSectionPlaceholder"` returns 0 hits.
-- Typecheck via build (auto-run by harness).
-- Visit `/w/<id>/clients` — must show empty state (no tenants assigned).
-- Visit `/admin/clients` — still shows the 152 real tenants minus the 4 deleted demo rows.
-- `psql "SELECT count(*) FROM tenants WHERE workspace_id IS NULL"` → 152 (unchanged real tenants).
-- `psql "SELECT count(*) FROM tenants"` → 152 (4 demo rows gone).
-
-## 7. Out of scope (explicit blockers for next slice)
-- Real workspace assignment UX (a "Move client to workspace" action). Not built this slice; the 152 unassigned tenants will only be visible via `/admin/clients` until reassigned.
-- OAuth round-trip QA per provider (already noted blocker).
-- Marketing IA fact-check vs the deleted `/demo` and `/faq` (any inbound link inside marketing copy will need a follow-up).
-
-## Required report-back structure
-After execution I will report exactly per the user's spec: routes deleted, source files deleted, data purged (with rule + counts), integrations cleanup (provider list + deleted functions), retained compatibility items (table above), and any blockers hit.
+No code in this turn — this is a report-only revision. Approve to proceed with the next slice as scoped above.
