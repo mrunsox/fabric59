@@ -11,6 +11,8 @@ import LaunchRedirectPage from "@/pages/auth/LaunchRedirectPage";
 import { AdminShell } from "@/components/layout/AdminShell";
 import LegacyWorkspaceRedirect from "@/pages/workspace/LegacyWorkspaceRedirect";
 // Shell convergence (Phase E) — /org/* retired in favor of canonical /admin/*.
+import { OrgParamRedirect } from "@/components/auth/OrgParamRedirect";
+// Shell convergence (Phase E) — /org/* retired in favor of canonical /admin/*.
 // All /org/* paths redirect into their AdminShell equivalents below.
 import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } from "@/shells/WorkspaceShell";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
