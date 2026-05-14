@@ -430,11 +430,17 @@ const App = () => (
                     Legacy aliases (scripter, scriptflow, tree-editor base, call-flow base) redirect into the
                     canonical guide list. Param-bearing legacy routes (tree-editor/:scriptId, script-routing)
                     remain compatibility-only — reachable, de-surfaced from primary nav and CTAs. */}
-                <Route path="scripter" element={<Navigate to="/admin/scripts" replace />} />
-                <Route path="scriptflow" element={<Navigate to="/admin/scripts" replace />} />
-                <Route path="tree-editor" element={<Navigate to="/admin/scripts" replace />} />
-                <Route path="call-flow" element={<Navigate to="/admin/flows" replace />} />
-                {/* agent-dashboard + supervisor deleted (canonical workspace QA covers it). */}
+                {/* CANONICAL: legacy guide builder family resolves to canonical workspace guides surface.
+                    /admin/scripts + /admin/scripts/:id/builder are kept for now (org-level deep links);
+                    the bare bases below redirect into the workspace shell so a fresh user always lands
+                    inside /w/:workspaceId/guides. */}
+                <Route path="scripter" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
+                <Route path="scriptflow" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
+                <Route path="tree-editor" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
+                <Route path="call-flow" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
+                <Route path="call-flow-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
+                {/* CANONICAL: agent-dashboard is compatibility-only (not in nav). Redirects to workspace. */}
+                <Route path="agent-dashboard" element={<WorkspaceResolveRedirect to="/w/:workspaceId/agents" />} />
                 <Route path="qa" element={<QAAnalyticsPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 <Route path="automations" element={<PostCallAutomationsPage />} />
