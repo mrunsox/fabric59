@@ -399,32 +399,21 @@ const App = () => (
               <Route path="/app/workspaces/:workspaceId/*" element={<LegacyWorkspaceRedirect />} />
 
               {/* ============================================================
-                  PHASE 0 — CANONICAL SHELLS (additive)
-                  /org/*           → OrgShell (canonical 7-item nav)
-                  /w/:workspaceId/*→ CanonicalWorkspaceShell (canonical 12-item nav)
-                  Legacy /admin/* and /app/workspaces/* remain mounted above
-                  during the rebuild window; cutover deletes them in Phase 10.
-
-                  Children temporarily reuse existing pages to prove the shells.
-                  Phase 1+ replaces children with new canonical surfaces.
+                  SHELL CONVERGENCE (Phase E) — single canonical org shell.
+                  AdminShell at /admin/* is the canonical organization-level
+                  surface. The previously scaffolded /org/* OrgShell is retired;
+                  every /org/* path single-hop redirects into its /admin/*
+                  equivalent so external links and bookmarks keep working.
                   ============================================================ */}
-              {/* Phase 2 — /org/* now sits behind OrgProtectedRoute (real
-                  org membership check), not just generic ProtectedRoute.
-                  Authenticated users with no org are redirected to /onboarding.
-                  Master admins are exempt and can still inspect /org/*. */}
-              <Route element={<OrgProtectedRoute />}>
-                <Route path="/org" element={<OrgShell />}>
-                  <Route index element={<OrgOverviewPage />} />
-                  <Route path="workspaces" element={<OrgWorkspacesPage />} />
-                  <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
-                  <Route path="connectors" element={<OrgConnectorsPage />} />
-                  <Route path="connectors/:slug" element={<OrgConnectorDetailPage />} />
-                  <Route path="reports" element={<OrgReportsPage />} />
-                  <Route path="notifications" element={<OrgNotificationsPage />} />
-                  <Route path="settings" element={<OrgSettingsPage />} />
-                  <Route path="billing" element={<OrgBillingPage />} />
-                </Route>
-              </Route>
+              <Route path="/org" element={<Navigate to="/admin" replace />} />
+              <Route path="/org/workspaces" element={<Navigate to="/admin/workspaces" replace />} />
+              <Route path="/org/workspaces/:id" element={<Navigate to="/admin/workspaces/:id" replace />} />
+              <Route path="/org/connectors" element={<Navigate to="/admin/connectors" replace />} />
+              <Route path="/org/connectors/:slug" element={<Navigate to="/admin/connectors/:slug" replace />} />
+              <Route path="/org/reports" element={<Navigate to="/admin/reports" replace />} />
+              <Route path="/org/notifications" element={<Navigate to="/admin/notifications" replace />} />
+              <Route path="/org/settings" element={<Navigate to="/admin/settings" replace />} />
+              <Route path="/org/billing" element={<Navigate to="/admin/billing" replace />} />
 
               <Route path="/w/:workspaceId" element={<CanonicalWorkspaceShell />}>
                 <Route index element={<WorkspaceIndexRedirect />} />
