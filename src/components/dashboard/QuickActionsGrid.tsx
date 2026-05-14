@@ -1,13 +1,27 @@
 import { Link } from "react-router-dom";
 import { Plus, Plug, FlaskConical, BookOpen, LayoutGrid, BarChart3, type LucideIcon } from "lucide-react";
+import { useActiveWorkspaceId } from "@/hooks/useActiveWorkspaceId";
 
 export function QuickActionsGrid({ clientId }: { clientId?: string } = {}) {
   // Canonical CTAs only — no compatibility-only or redirect targets.
   // Org-level: View workspaces / Open connectors / View reports / Open docs.
-  // Client-scoped variant retains operational setup actions.
+  // Client-scoped variant retains operational setup actions, with the
+  // "Create campaign" CTA targeting the canonical workspace-scoped intake
+  // (/w/:workspaceId/campaigns/new) so we never link first-class UI at the
+  // /admin/campaigns/new redirect-only write surface. If the user has no
+  // resolvable workspace yet, we fall back to the workspaces index instead
+  // of showing a broken link.
+  const { workspaceId } = useActiveWorkspaceId();
+
+  const createCampaignHref = clientId
+    ? workspaceId
+      ? `/w/${workspaceId}/campaigns/new?client=${clientId}`
+      : `/admin/workspaces`
+    : "";
+
   const actions: { title: string; href: string; icon: LucideIcon }[] = clientId
     ? [
-        { title: "Create campaign", href: `/admin/campaigns/new?client=${clientId}`, icon: Plus },
+        { title: "Create campaign", href: createCampaignHref, icon: Plus },
         { title: "Connect provider", href: `/admin/clients/${clientId}/legal-connect`, icon: Plug },
         { title: "Run readiness test", href: `/admin/test?tenant=${clientId}`, icon: FlaskConical },
         { title: "Open docs", href: "/admin/docs", icon: BookOpen },
