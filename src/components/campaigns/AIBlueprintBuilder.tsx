@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { CampaignIntakeData } from "@/types/campaign";
+import { useActiveWorkspaceId } from "@/hooks/useActiveWorkspaceId";
 
 type Step = "upload" | "extracting" | "analyzing" | "review";
 
