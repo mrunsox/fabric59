@@ -1,9 +1,11 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
 // Phase 2 — smart post-auth redirect (decides /onboarding vs /w/:id/home).
@@ -92,7 +94,7 @@ import AgentsPage from "@/pages/admin/AgentsPage";
 import DispositionsPage from "@/pages/admin/DispositionsPage";
 // Phase D: legacy IntegrationsPage import removed; /admin/integrations redirects to /admin/connectors.
 import CampaignsPage from "@/pages/admin/CampaignsPage";
-import CampaignIntakePage from "@/pages/admin/CampaignIntakePage";
+// CampaignIntakePage no longer routed at /admin/* — create/edit redirected into canonical workspace path.
 import CampaignDetailPage from "@/pages/admin/CampaignDetailPage";
 // ArchivedCampaignsPage + CampaignBlueprintsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns?status=archived and /admin/templates).
 import ReportsPage from "@/pages/admin/ReportsPage";
@@ -135,7 +137,7 @@ import MonitoringHubPage from "@/pages/admin/MonitoringHubPage";
 import DocsHubPage from "@/pages/admin/DocsHubPage";
 import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 
-import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
+// CallFlowBuilderPage import removed — /admin/call-flow-builder now redirects via WorkspaceResolveRedirect.
 import CallFlowPage from "@/pages/admin/CallFlowPage";
 // VAULTED (slug: legacy-tree-editor) — TreeEditorPage import removed; /admin/tree-editor/:scriptId redirects.
 // UserDashboardPage no longer mounted directly — Phase 11 collapsed /admin/dashboard into /admin (OverviewPage re-exports it).
@@ -180,6 +182,78 @@ import LegalConnectReportsPage from "@/pages/superadmin/LegalConnectReportsPage"
 import TestCasesPage from "@/pages/superadmin/TestCasesPage";
 
 const queryClient = new QueryClient();
+
+/**
+ * WorkspaceResolveRedirect — resolves an "active" workspace and redirects.
+ *
+ * Resolution order:
+ *   1. localStorage `lastWorkspaceId` (set by the canonical workspace shell on mount)
+ *   2. The org's `is_default = true` workspace (RLS-scoped query)
+ *   3. The first workspace the user can see
+ *
+ * Used by all legacy `/admin/*` surfaces that have a workspace-scoped canonical
+ * home (legacy guide builders, agent dashboard, five9 campaign builder, and the
+ * /admin/campaigns create+edit endpoints which are no longer first-class).
+ *
+ * Failure mode: shows a controlled message with a link back to /admin so users
+ * never see a blank screen.
+ */
+function WorkspaceResolveRedirect({ to }: { to: string }) {
+  const { user, organization, isLoading: authLoading } = useAuth();
+  const [resolvedId, setResolvedId] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  const { data: workspaces, isLoading } = useQuery({
+    queryKey: ["resolve-active-workspace", user?.id ?? "anon", organization?.id ?? "none"],
+    enabled: !!user && !authLoading,
+    queryFn: async (): Promise<{ id: string; is_default: boolean; organization_id: string }[]> => {
+      const q = supabase
+        .from("workspaces")
+        .select("id, is_default, organization_id")
+        .order("is_default", { ascending: false });
+      const { data, error } = organization?.id ? await q.eq("organization_id", organization.id) : await q;
+      if (error) throw error;
+      return (data ?? []) as { id: string; is_default: boolean; organization_id: string }[];
+    },
+  });
+
+  useEffect(() => {
+    if (authLoading || isLoading) return;
+    const last = typeof window !== "undefined" ? localStorage.getItem("lastWorkspaceId") : null;
+    const candidate =
+      (last && workspaces?.find((w) => w.id === last)?.id) ||
+      workspaces?.find((w) => w.is_default)?.id ||
+      workspaces?.[0]?.id ||
+      null;
+    if (candidate) setResolvedId(candidate);
+    else setFailed(true);
+  }, [authLoading, isLoading, workspaces]);
+
+  if (resolvedId) {
+    return <Navigate to={to.replace(":workspaceId", resolvedId)} replace />;
+  }
+  if (failed) {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center p-8">
+        <div className="max-w-md text-center space-y-3">
+          <h1 className="text-lg font-semibold">No workspace available</h1>
+          <p className="text-sm text-muted-foreground">
+            This page lives inside a workspace, but you don't have access to one yet.
+            Visit the organization overview to create or be invited into a workspace.
+          </p>
+          <a href="/admin" className="text-sm font-medium text-primary underline">
+            Go to organization overview
+          </a>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="min-h-[40vh] flex items-center justify-center text-sm text-muted-foreground">
+      Resolving workspace…
+    </div>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -305,9 +379,9 @@ const App = () => (
                 {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
                 <Route path="five9" element={<Five9OverviewPage />} />
                 <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
-                {/* VAULTED: legacy-five9-campaign-builder → canonical /admin/campaigns/new */}
-                <Route path="five9/campaign-builder" element={<Navigate to="/admin/campaigns/new" replace />} />
-                <Route path="five9/campaign-builder/:draftId" element={<Navigate to="/admin/campaigns/new" replace />} />
+                {/* CANONICAL: Five9 campaign builder writes redirect into the workspace path. */}
+                <Route path="five9/campaign-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
+                <Route path="five9/campaign-builder/:draftId" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
                 {/* CANONICAL (Phase B): campaign cluster collapsed.
                     overview/drafts → /admin/campaigns (with optional ?status= filter). */}
@@ -339,8 +413,10 @@ const App = () => (
                 {/* CANONICAL: integrations folded into connectors (Phase 1). */}
                 <Route path="integrations" element={<Navigate to="/admin/connectors" replace />} />
                 <Route path="campaigns" element={<CampaignsPage />} />
-                <Route path="campaigns/new" element={<CampaignIntakePage />} />
-                <Route path="campaigns/edit/:id" element={<CampaignIntakePage />} />
+                {/* CANONICAL: campaign create/edit lives only at /w/:workspaceId/campaigns/*.
+                    /admin/campaigns is a read-only cross-workspace summary; writes redirect. */}
+                <Route path="campaigns/new" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
+                <Route path="campaigns/edit/:id" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns" />} />
                 <Route path="campaigns/:id" element={<CampaignDetailPage />} />
                 {/* CANONICAL (Phase B): archived collapses into list filter; blueprints fold into templates. */}
                 <Route path="campaigns/archived" element={<Navigate to="/admin/campaigns?status=archived" replace />} />
@@ -354,11 +430,17 @@ const App = () => (
                     Legacy aliases (scripter, scriptflow, tree-editor base, call-flow base) redirect into the
                     canonical guide list. Param-bearing legacy routes (tree-editor/:scriptId, script-routing)
                     remain compatibility-only — reachable, de-surfaced from primary nav and CTAs. */}
-                <Route path="scripter" element={<Navigate to="/admin/scripts" replace />} />
-                <Route path="scriptflow" element={<Navigate to="/admin/scripts" replace />} />
-                <Route path="tree-editor" element={<Navigate to="/admin/scripts" replace />} />
-                <Route path="call-flow" element={<Navigate to="/admin/flows" replace />} />
-                {/* agent-dashboard + supervisor deleted (canonical workspace QA covers it). */}
+                {/* CANONICAL: legacy guide builder family resolves to canonical workspace guides surface.
+                    /admin/scripts + /admin/scripts/:id/builder are kept for now (org-level deep links);
+                    the bare bases below redirect into the workspace shell so a fresh user always lands
+                    inside /w/:workspaceId/guides. */}
+                <Route path="scripter" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
+                <Route path="scriptflow" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
+                <Route path="tree-editor" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
+                <Route path="call-flow" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
+                <Route path="call-flow-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
+                {/* CANONICAL: agent-dashboard is compatibility-only (not in nav). Redirects to workspace. */}
+                <Route path="agent-dashboard" element={<WorkspaceResolveRedirect to="/w/:workspaceId/agents" />} />
                 <Route path="qa" element={<QAAnalyticsPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 <Route path="automations" element={<PostCallAutomationsPage />} />
@@ -373,8 +455,8 @@ const App = () => (
                 <Route path="kb" element={<KnowledgeBasePage />} />
                 <Route path="training" element={<TrainingPage />} />
                 <Route path="feedback" element={<FeedbackPage />} />
-                {/* VAULTED: legacy-script-routing → canonical /admin/scripts */}
-                <Route path="script-routing" element={<Navigate to="/admin/scripts" replace />} />
+                {/* CANONICAL: legacy script-routing redirects into workspace guides. */}
+                <Route path="script-routing" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
                 <Route path="goals" element={<GoalsPage />} />
                 <Route path="summary-templates" element={<CallSummaryTemplatesPage />} />
                 {/* Phase C: scriptflow base redirects above; param surface kept for legacy deep links handled by hub. */}
@@ -382,8 +464,8 @@ const App = () => (
                 {/* Phase C: call-flow base redirects above; this param route is compatibility-only. */}
                 <Route path="legal-connect" element={<LegalConnectPage />} />
                 <Route path="qr-routing" element={<QrRoutingPage />} />
-                {/* VAULTED: legacy-tree-editor → canonical /admin/scripts */}
-                <Route path="tree-editor/:scriptId" element={<Navigate to="/admin/scripts" replace />} />
+                {/* CANONICAL: legacy tree-editor redirects into workspace guides (param dropped). */}
+                <Route path="tree-editor/:scriptId" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="design-system" element={<DesignSystemPage />} />

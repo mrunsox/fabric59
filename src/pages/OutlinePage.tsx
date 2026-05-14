@@ -1499,9 +1499,10 @@ Status:    open | in-progress | fixed | wontfix | duplicate`}
                   <thead className="bg-muted/40 text-muted-foreground">
                     <tr>
                       <th className="text-left p-2">ID</th>
-                      <th className="text-left p-2">From</th>
-                      <th className="text-left p-2">To</th>
-                      <th className="text-left p-2">Kind</th>
+                      <th className="text-left p-2">Route</th>
+                      <th className="text-left p-2">Disposition</th>
+                      <th className="text-left p-2">Canonical target</th>
+                      <th className="text-left p-2">Sunset</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1509,8 +1510,9 @@ Status:    open | in-progress | fixed | wontfix | duplicate`}
                       <tr key={r.id} className="border-t">
                         <td className="p-2 font-mono">{r.id}</td>
                         <td className="p-2 font-mono">{r.from}</td>
+                        <td className="p-2">{r.mode === "compat" ? "compat" : `redirect (${r.kind})`}</td>
                         <td className="p-2 font-mono">{r.to}</td>
-                        <td className="p-2">{r.kind}</td>
+                        <td className="p-2">{r.sunsetPhase}</td>
                       </tr>
                     ))}
                   </tbody>
