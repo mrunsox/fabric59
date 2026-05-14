@@ -413,8 +413,10 @@ const App = () => (
                 {/* CANONICAL: integrations folded into connectors (Phase 1). */}
                 <Route path="integrations" element={<Navigate to="/admin/connectors" replace />} />
                 <Route path="campaigns" element={<CampaignsPage />} />
-                <Route path="campaigns/new" element={<CampaignIntakePage />} />
-                <Route path="campaigns/edit/:id" element={<CampaignIntakePage />} />
+                {/* CANONICAL: campaign create/edit lives only at /w/:workspaceId/campaigns/*.
+                    /admin/campaigns is a read-only cross-workspace summary; writes redirect. */}
+                <Route path="campaigns/new" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
+                <Route path="campaigns/edit/:id" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns" />} />
                 <Route path="campaigns/:id" element={<CampaignDetailPage />} />
                 {/* CANONICAL (Phase B): archived collapses into list filter; blueprints fold into templates. */}
                 <Route path="campaigns/archived" element={<Navigate to="/admin/campaigns?status=archived" replace />} />
