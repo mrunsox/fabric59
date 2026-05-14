@@ -217,9 +217,8 @@ const MASTER_PHASES: FlowPhase[] = [
       },
       {
         id: "x4", lane: "external", kind: "external", required: false,
-        label: "Send SMS / email by disposition template",
+        label: "Send email by disposition template",
         impl: [
-          { kind: "edge", name: "twilio-sms" },
           { kind: "hook", name: "useEmailTemplates" },
         ],
       },
