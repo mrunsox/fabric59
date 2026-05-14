@@ -81,13 +81,14 @@ export default function PublicFormPage() {
       campaignId,
     });
     setSubmitting(false);
-    if (result.ok) {
+    if (result.ok === true) {
       setConfirmation(result.confirmation);
       setValues({});
       return;
     }
-    if (result.fieldErrors) setFieldErrors(result.fieldErrors);
-    else setLoadError(result.error);
+    const failed: Extract<SubmitFormPublicResult, { ok: false }> = result;
+    if (failed.fieldErrors) setFieldErrors(failed.fieldErrors);
+    else setLoadError(failed.error);
   }
 
   if (loading) {
