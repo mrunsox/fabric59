@@ -4,7 +4,7 @@ import { FieldRenderer } from "@/components/forms/FieldRenderer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { isFieldVisible, type FormSchema } from "@/types/form-builder";
-import { submitFormPublic } from "@/lib/forms/submitFormPublic";
+import { submitFormPublic, type SubmitFormPublicResult } from "@/lib/forms/submitFormPublic";
 
 type PublicForm = {
   id: string;
