@@ -59,6 +59,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   switchOrganization: (orgId: string) => void;
+  refreshOrganizations: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -343,6 +344,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     switchOrganization,
+    refreshOrganizations: async () => {
+      if (user) await loadOrganizations(user.id);
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
