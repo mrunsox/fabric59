@@ -6,23 +6,12 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
-// Phase 2 — canonical org membership guard.
-import { OrgProtectedRoute } from "@/components/auth/OrgProtectedRoute";
 // Phase 2 — smart post-auth redirect (decides /onboarding vs /w/:id/home).
 import LaunchRedirectPage from "@/pages/auth/LaunchRedirectPage";
 import { AdminShell } from "@/components/layout/AdminShell";
 import LegacyWorkspaceRedirect from "@/pages/workspace/LegacyWorkspaceRedirect";
-import { OrgShell } from "@/shells/OrgShell";
-// Phase 3 — canonical /org surfaces (Overview, Workspaces, Settings).
-import OrgOverviewPage from "@/pages/org/OrgOverviewPage";
-import OrgWorkspacesPage from "@/pages/org/OrgWorkspacesPage";
-import OrgSettingsPage from "@/pages/org/OrgSettingsPage";
-// Phase 5 — canonical org operational surfaces.
-import OrgConnectorsPage from "@/pages/org/OrgConnectorsPage";
-import OrgConnectorDetailPage from "@/pages/org/OrgConnectorDetailPage";
-import OrgReportsPage from "@/pages/org/OrgReportsPage";
-import OrgNotificationsPage from "@/pages/org/OrgNotificationsPage";
-import OrgBillingPage from "@/pages/org/OrgBillingPage";
+// Shell convergence (Phase E) — /org/* retired in favor of canonical /admin/*.
+// All /org/* paths redirect into their AdminShell equivalents below.
 import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } from "@/shells/WorkspaceShell";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
