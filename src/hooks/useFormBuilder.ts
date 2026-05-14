@@ -177,12 +177,12 @@ export function useAssignFormToCampaign() {
   return useMutation({
     mutationFn: async (input: { formId: string; campaignId: string }) => {
       if (!workspace) throw new Error("No workspace");
-      const { error } = await supabase.from("form_campaign_assignments").insert({
+      const { error } = await supabase.from("form_campaign_assignments").insert([{
         workspace_id: workspace.id,
         form_id: input.formId,
         campaign_id: input.campaignId,
         created_by: user?.id ?? null,
-      });
+      }] as never);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
