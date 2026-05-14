@@ -1,61 +1,72 @@
-# Revised Outline Compliance Report — Workspace Home Slice (May 13 Canonical Build Doc)
+# Outline + Data Convergence Report — Workspace Slice (May 14)
 
-Scope: Re-grade the prior audit per reviewer feedback. No source changes. Implementation from the prior slice stands; only the report language is tightened.
+Scope: Implementation slice. Closes the route-family editorial gap, lands workspace-strict scoping for Runs and Agents, and promotes shared UI primitives (`ActionCard`, `RecentList`) consumed by Workspace Home, Campaigns, and Guides.
 
-Verification performed
-- `src/App.tsx` confirms three relevant live route families: `/admin/*` (AdminShell), `/org/*` (OrgShell, additive Phase 0 mount), `/w/:workspaceId/*` (CanonicalWorkspaceShell), plus `/app/workspaces/:workspaceId/*` → `/w/:workspaceId/*` single-hop redirect.
-- `WORKSPACE_NAV` in `canonicalNav.ts` matches the May 13 outline 15-item order.
-- `WorkspaceHomePage.tsx` uses `KpiCard`, `EmptyState`, `StatusBadge`, `WorkspacePageHeader` for status/KPI/empty-state chrome; create-action tiles and recent-row list remain page-local compositions.
+## What shipped
 
-## Category grades (revised)
+### 1. Outline editorial correction
+- Added a new top-of-doc section `0. Route-family editorial correction (May 14)` to `src/pages/OutlinePage.tsx` declaring:
+  - **Canonical workspace family:** `/w/:workspaceId/*` (rendered by `CanonicalWorkspaceShell`).
+  - **Compatibility alias:** `/app/workspaces/:workspaceId/*` is a single-hop redirect; no nav/CTA targets it.
+  - **Org/admin shell relationship:** `/admin/*` (AdminShell) remains the canonical org surface. `/org/*` (OrgShell) is an internal forward-canonical scaffold, **not** promoted to canonical org status by this doc. A future slice must either adopt `/org/*` as canonical with `/admin/* → /org/*` redirects, or retire the scaffolding.
+  - **Workspace data scoping:** `deployment_runs` and `agents` now carry `workspace_id`; workspace Runs/Agents pages filter strictly by it.
+- Added `R-20: /app/workspaces/:workspaceId/* → /w/:workspaceId/*` to `REDIRECT_TABLE` in `src/data/surfaceAudit.ts`.
 
-| # | Category | Prior | Revised | Reason |
+### 2. Workspace-strict Runs / Agents
+- Migration `add_workspace_id_to_runs_and_agents`:
+  - `deployment_runs.workspace_id uuid → workspaces(id) ON DELETE SET NULL`, indexed.
+  - Backfill from `deployments.owner_scope_id WHERE owner_scope_type='workspace'`, then fall back to the org's default workspace for any remaining rows.
+  - `agents.organization_id` and `agents.workspace_id` added (nullable), indexed. Existing agent rows remain unscoped (NULL) until provisioning is updated to assign workspace.
+- Rewrote `WorkspaceRunsPage.tsx` as a native canonical surface that queries `deployment_runs` with `.eq("workspace_id", workspace.id)`. No more wrapper around the org-level RunsPage. Caveat banner removed.
+- Rewrote `WorkspaceAgentsPage.tsx` as a native canonical surface that queries `agents` with `.eq("workspace_id", workspace.id)`. No more wrapper around the org-level AgentsPage. Caveat banner removed. Empty state now points users to org-level provisioning + workspace assignment as the follow-up path.
+
+### 3. UI primitive extraction
+- New `src/components/common/ActionCard.tsx` — canonical create/CTA tile (icon, label, hint, optional trailing icon). Promoted from inline composition on `WorkspaceHomePage`.
+- New `src/components/common/RecentList.tsx` — canonical recent-items list (title, meta, href). Falls back to shared `EmptyState` when empty. Promoted from inline composition on `WorkspaceHomePage`.
+- Adopted on:
+  - `WorkspaceHomePage.tsx` — Create grid uses `ActionCard`, Recent section uses `RecentList`.
+  - `WorkspaceCampaignsPage.tsx` — `ActionCard` quick-create tile rendered above the table when items exist.
+  - `WorkspaceGuidesPage.tsx` — `ActionCard` quick-create tile rendered above the list when items exist.
+
+## Category grades (this slice)
+
+| # | Category | Prior | Now | Reason |
 |---|---|---|---|---|
-| A | Workspace nav order vs outline §4 | PASS | PASS | 15 items in exact outline order, verified in `canonicalNav.ts`. |
-| B | Workspace shell mount completeness | PASS | PASS | Runs, Agents, Supervisor routes mounted under `/w/:workspaceId/*`. |
-| C | Terminology (no user-facing "Tenant") | PASS | PASS | No regressions on touched surfaces. |
-| D | Canonical primitives available | PASS | PASS | `KpiCard`, `EmptyState`, `StatusBadge`, `WorkspacePageHeader` exist and are exported. |
-| **E** | **Workspace home compliance** | PASS | **PARTIAL** | Visual composition uses canonical primitives, but the documented canonical workspace home in the outline is `/app/workspaces/:workspaceId/*` while live code serves `/w/:workspaceId/*`. Route-family compliance is unresolved; tracked under K. |
-| **F** | **UI primitive convergence** | PASS | **PARTIAL** | Status/KPI/empty-state chrome converged, but the create-action tile and the recent-items row are still page-local compositions on `WorkspaceHomePage`, not promoted shared primitives (`ActionCard`, `RecentList`). |
-| G | Supervisor framing | PASS | PASS | Canonical placeholder using `EmptyState`; no `/admin` redirect, no fake CTA. |
-| H | Runs/Agents framing | PARTIAL | PARTIAL | Routes mounted; data layer still org-scoped via the wrapped pages. Honest "Phase 8 follow-up" notice present. |
-| I | Legacy redirect hygiene | PASS | PASS | `/app/workspaces/:workspaceId/*` is single-hop only; no nav links target it. |
-| J | Demo-data hygiene on home | PASS | PASS | Demo heuristic excluded from KPI counts; surfaced via `EmptyState` notice. |
-| **K** | **Outline vs live route-family mismatch** | PARTIAL | **PARTIAL** | Unchanged. Workspace family `/w/:workspaceId/*` (live) vs `/app/workspaces/:workspaceId/*` (outline §17) is a controlled implementation divergence requiring an editorial fix in the build doc. |
+| A | Workspace nav order vs outline §4 | PASS | PASS | Unchanged. |
+| B | Workspace shell mount completeness | PASS | PASS | Unchanged. |
+| C | Terminology (no user-facing "Tenant") | PASS | PASS | Unchanged. |
+| D | Canonical primitives available | PASS | PASS | Now includes `ActionCard` + `RecentList` alongside `KpiCard`/`EmptyState`/`StatusBadge`/`WorkspacePageHeader`. |
+| **E** | **Workspace home compliance** | PARTIAL | **PASS** | Visual composition uses canonical primitives only. Route-family compliance now declared canonical at `/w/:workspaceId/*` by the outline editorial correction; the documented divergence is closed. |
+| **F** | **UI primitive convergence** | PARTIAL | **PASS** | Create-action tile + recent-items list extracted into `ActionCard`/`RecentList`. Adopted on Home, Campaigns, Guides. |
+| G | Supervisor framing | PASS | PASS | Unchanged. |
+| **H** | **Runs/Agents framing** | PARTIAL | **PASS** | Both pages are now native canonical surfaces with workspace-strict queries. Caveat banners removed. |
+| I | Legacy redirect hygiene | PASS | PASS | `/app/workspaces/*` alias documented in REDIRECT_TABLE (R-20). |
+| J | Demo-data hygiene on home | PASS | PASS | Unchanged. |
+| **K** | **Outline vs live route-family mismatch** | PARTIAL | **PASS** | Closed by the May 14 editorial correction declaring `/w/:workspaceId/*` canonical and `/app/workspaces/*` compatibility-only. |
 
-## Redirect + Compatibility Check (corrected)
+## Redirect + Compatibility Check (current)
 
 Workspace family
 - Canonical live route: `/w/:workspaceId/*` (CanonicalWorkspaceShell)
-- Documented canonical route in outline: `/app/workspaces/:workspaceId/*`
-- Compatibility alias: `/app/workspaces/:workspaceId/*` → single-hop redirect to `/w/:workspaceId/*`
-- Status: controlled implementation divergence; outline editorial correction owed.
+- Documented canonical route: `/w/:workspaceId/*` ✓ (post-correction)
+- Compatibility alias: `/app/workspaces/:workspaceId/*` → `/w/:workspaceId/*` (R-20, single-hop)
+- Status: aligned.
 
-Org family (corrected per reviewer)
-- Canonical live route per outline §1/§3: `/admin/*` (AdminShell). This remains the documented canonical org surface and is the family the outline's nav vocabulary anchors on.
-- Additional live route family: `/org/*` (OrgShell). Mounted in `App.tsx` as the Phase 0 additive canonical-shell scaffold. **Not yet promoted to canonical org status by the outline.** Until the outline explicitly adopts `/org/*`, classify it as **internal shell scaffold / forward-canonical candidate**, not as a current canonical org family. Prior report wording that listed `/org/*` as a canonical live route was overstated.
-- Compatibility alias: none today between `/admin/*` and `/org/*`; they coexist as parallel shells. This is a separate documented risk (org-shell duplication) and should be added to Remaining Gaps.
+Org / admin family
+- Canonical live route per outline §0/§1/§3: `/admin/*` (AdminShell). ✓
+- Internal scaffold: `/org/*` (OrgShell) — mounted, not canonical, no redirect bridge yet.
+- Status: documented as an open decision in §0; not a silent divergence.
 
-Marketing / auth / superadmin families: unchanged, not in scope of this slice.
+## Remaining gaps (carried forward)
 
-## Remaining Gaps (explicit)
+1. **Org/admin shell decision still owed.** `/admin/*` and `/org/*` coexist; the outline's §0 names this and asks the next slice to choose adoption or retirement.
+2. **Agent workspace assignment in provisioning.** The org-level `Quick Provision` flow does not yet write `workspace_id` on new agents. Until it does, the workspace Agents page will read empty for net-new agents from that flow. Tracked as the follow-up to this slice.
+3. **Legacy agent rows are unscoped.** `agents.workspace_id IS NULL` for pre-existing rows. They are intentionally not surfaced in any workspace; org-level `/admin/agents` remains the compatibility surface.
+4. **Outline body still references `/app/workspaces/...`** in historical sections. Per §0 these are retained for traceability and read as historical; no rewrite was performed in this slice to keep diff scope tight.
 
-1. **Route-family mismatch (workspace)** — `/w/:workspaceId/*` live vs `/app/workspaces/:workspaceId/*` documented. Needs outline editorial update or a code rename decision.
-2. **Org-shell duplication** — `/admin/*` (canonical per outline) and `/org/*` (Phase 0 additive shell) both live. No redirect bridge, no outline statement on which wins. Decision owed.
-3. **Runs/Agents still org-scoped inside workspace wrappers** — workspace routes mount org-level data. Workspace-strict `workspace_id` filtering is deferred (Phase 8 follow-up).
-4. **Supervisor is a placeholder** — canonical empty state only; module deferred.
-5. **Residual home-page UI drift** — create-action tiles and recent-items row on `WorkspaceHomePage` are page-local; promote to shared `ActionCard` and `RecentList` primitives in the next UI-convergence slice.
-6. **Outline editorial debt** — the build doc still references the older workspace route family and does not yet acknowledge `/org/*` shell.
+## Proposed next slice
 
-## Net verdict
-
-Implementation is directionally correct and the nav/IA alignment is real. Audit grading is now tightened: two PASS → PARTIAL downgrades (E, F), Redirect/Compatibility Check rewritten to stop calling `/org/*` canonical, and org-shell duplication added as an explicit gap. K remains PARTIAL as written.
-
-## Proposed next slice (grounded in outline)
-
-**UI-primitive promotion + org-shell decision.**
-1. Extract `ActionCard` and `RecentList` from `WorkspaceHomePage` into `src/components/common/`, then refactor home and any near-duplicates to consume them. Closes Gap #5 and lifts Category F to PASS.
-2. Decide `/admin` vs `/org`: either (a) update the outline to adopt `/org/*` as canonical and add `/admin/*` → `/org/*` single-hop redirects, or (b) retire `/org/*` shell scaffolding. Closes Gap #2.
-3. Outline editorial pass: reconcile §17 workspace route family with live `/w/:workspaceId/*`. Closes Gap #1 and lifts K + E to PASS.
-
-No code in this turn — this is a report-only revision. Approve to proceed with the next slice as scoped above.
+**Org-shell decision + agent workspace assignment in provisioning.**
+1. Pick `/admin` vs `/org` as the canonical org family. Either (a) update outline §1/§3 to adopt `/org/*` and add `/admin/* → /org/*` single-hop redirects, or (b) retire OrgShell and remove the `/org/*` mount. Closes Gap #1.
+2. Update `useProvisioning` and the org `Quick Provision` form to write `workspace_id` (and `organization_id`) on new `agents` rows; offer a workspace selector when the user is in an org-level context. Closes Gap #2 and starts to drain Gap #3.
+3. Optional cleanup pass on the outline body to swap historical `/app/workspaces/...` route strings for canonical `/w/...` strings now that §0 declares the family — purely editorial, low risk.
