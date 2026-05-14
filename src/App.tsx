@@ -183,6 +183,78 @@ import TestCasesPage from "@/pages/superadmin/TestCasesPage";
 
 const queryClient = new QueryClient();
 
+/**
+ * WorkspaceResolveRedirect — resolves an "active" workspace and redirects.
+ *
+ * Resolution order:
+ *   1. localStorage `lastWorkspaceId` (set by the canonical workspace shell on mount)
+ *   2. The org's `is_default = true` workspace (RLS-scoped query)
+ *   3. The first workspace the user can see
+ *
+ * Used by all legacy `/admin/*` surfaces that have a workspace-scoped canonical
+ * home (legacy guide builders, agent dashboard, five9 campaign builder, and the
+ * /admin/campaigns create+edit endpoints which are no longer first-class).
+ *
+ * Failure mode: shows a controlled message with a link back to /admin so users
+ * never see a blank screen.
+ */
+function WorkspaceResolveRedirect({ to }: { to: string }) {
+  const { user, organization, isLoading: authLoading } = useAuth();
+  const [resolvedId, setResolvedId] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  const { data: workspaces, isLoading } = useQuery({
+    queryKey: ["resolve-active-workspace", user?.id ?? "anon", organization?.id ?? "none"],
+    enabled: !!user && !authLoading,
+    queryFn: async (): Promise<{ id: string; is_default: boolean; organization_id: string }[]> => {
+      const q = supabase
+        .from("workspaces")
+        .select("id, is_default, organization_id")
+        .order("is_default", { ascending: false });
+      const { data, error } = organization?.id ? await q.eq("organization_id", organization.id) : await q;
+      if (error) throw error;
+      return (data ?? []) as { id: string; is_default: boolean; organization_id: string }[];
+    },
+  });
+
+  useEffect(() => {
+    if (authLoading || isLoading) return;
+    const last = typeof window !== "undefined" ? localStorage.getItem("lastWorkspaceId") : null;
+    const candidate =
+      (last && workspaces?.find((w) => w.id === last)?.id) ||
+      workspaces?.find((w) => w.is_default)?.id ||
+      workspaces?.[0]?.id ||
+      null;
+    if (candidate) setResolvedId(candidate);
+    else setFailed(true);
+  }, [authLoading, isLoading, workspaces]);
+
+  if (resolvedId) {
+    return <Navigate to={to.replace(":workspaceId", resolvedId)} replace />;
+  }
+  if (failed) {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center p-8">
+        <div className="max-w-md text-center space-y-3">
+          <h1 className="text-lg font-semibold">No workspace available</h1>
+          <p className="text-sm text-muted-foreground">
+            This page lives inside a workspace, but you don't have access to one yet.
+            Visit the organization overview to create or be invited into a workspace.
+          </p>
+          <a href="/admin" className="text-sm font-medium text-primary underline">
+            Go to organization overview
+          </a>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="min-h-[40vh] flex items-center justify-center text-sm text-muted-foreground">
+      Resolving workspace…
+    </div>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
