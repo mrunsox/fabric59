@@ -93,7 +93,7 @@ export default function CampaignsPage() {
         </div>
         <div className="flex gap-2">
           <Button asChild className="gap-2">
-            <Link to="/admin/campaigns/new"><Plus className="h-4 w-4" /> New Campaign</Link>
+            <Link to={newCampaignHref}><Plus className="h-4 w-4" /> New Campaign</Link>
           </Button>
         </div>
       </div>
