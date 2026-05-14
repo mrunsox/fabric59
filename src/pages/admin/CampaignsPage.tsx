@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCampaignSetups } from "@/hooks/useCampaignSetup";
+import { useActiveWorkspaceId } from "@/hooks/useActiveWorkspaceId";
 import { Plus, Megaphone, Play, Square, Loader2 } from "lucide-react";
 import { DEFAULT_CHECKLIST } from "@/types/campaign";
 import { format } from "date-fns";
@@ -33,6 +34,12 @@ export default function CampaignsPage() {
   const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get("status") ?? "all";
+  const { workspaceId: activeWorkspaceId } = useActiveWorkspaceId();
+  // Canonical campaign create lives at /w/:workspaceId/campaigns/new. Fall back to
+  // the workspaces index when no workspace is resolvable yet.
+  const newCampaignHref = activeWorkspaceId
+    ? `/w/${activeWorkspaceId}/campaigns/new`
+    : "/admin/workspaces";
 
   const filtered = useMemo(() => {
     if (status === "all") return campaigns;
@@ -86,7 +93,7 @@ export default function CampaignsPage() {
         </div>
         <div className="flex gap-2">
           <Button asChild className="gap-2">
-            <Link to="/admin/campaigns/new"><Plus className="h-4 w-4" /> New Campaign</Link>
+            <Link to={newCampaignHref}><Plus className="h-4 w-4" /> New Campaign</Link>
           </Button>
         </div>
       </div>
@@ -109,7 +116,7 @@ export default function CampaignsPage() {
           <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-30" />
           <p className="text-lg font-medium">No campaigns {status !== "all" ? `with status "${status}"` : "yet"}</p>
           <p className="text-sm mb-4">{status === "all" ? "Create your first campaign setup to get started." : "Try a different filter or create a new campaign."}</p>
-          <Button asChild><Link to="/admin/campaigns/new">Create Campaign</Link></Button>
+          <Button asChild><Link to={newCampaignHref}>Create Campaign</Link></Button>
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">

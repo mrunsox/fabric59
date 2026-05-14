@@ -49,6 +49,7 @@ const REDIRECT_ONLY = [
   "/admin/call-flow",
   "/admin/tenants",
   "/admin/campaigns/overview",
+  "/admin/campaigns/new",
   "/admin/campaigns/drafts",
   "/admin/campaigns/archived",
   "/admin/campaign-blueprints",
@@ -186,8 +187,11 @@ describe("Canonical surfaces · CTA guard", () => {
     expect(qa).toMatch(/\/admin\/connectors/);
     expect(qa).toMatch(/\/admin\/reports/);
     expect(qa).toMatch(/\/admin\/docs/);
-    // Client-scoped variant retains operational setup actions.
-    expect(qa).toMatch(/\/admin\/campaigns\/new/);
+    // Client-scoped "Create campaign" must target the canonical workspace-scoped
+    // intake (/w/:workspaceId/campaigns/new) — never the redirect-only
+    // /admin/campaigns/new write surface.
+    expect(qa).toMatch(/\/w\/\$\{workspaceId\}\/campaigns\/new/);
+    expect(qa).not.toMatch(/["'`]\/admin\/campaigns\/new/);
     // Vendor-specific or compat targets must not surface as quick actions.
     expect(qa).not.toMatch(/\/admin\/five9\/campaign-builder/);
     expect(qa).not.toMatch(/href:\s*["'`]\/admin\/legal-connect["'`]/);
@@ -338,6 +342,9 @@ describe("Phase G · canonical experience rebuild", () => {
     expect(src).toMatch(/Connect provider/);
     expect(src).toMatch(/Run readiness test/);
     expect(src).toMatch(/\/admin\/clients\/\$\{clientId\}\/legal-connect/);
+    // Create campaign goes to canonical workspace intake, never the redirect.
+    expect(src).toMatch(/\/w\/\$\{workspaceId\}\/campaigns\/new/);
+    expect(src).not.toMatch(/["'`]\/admin\/campaigns\/new/);
   });
 
   // ---- No status / readiness badges on marketing capability tiles -----------

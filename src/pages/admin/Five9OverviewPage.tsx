@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Phone, Plus, Plug, BookOpen, Activity, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Five9DocsPanel } from "@/components/docs/Five9DocsPanel";
+import { useActiveWorkspaceId } from "@/hooks/useActiveWorkspaceId";
 
 interface Stats {
   domains: number;
@@ -21,6 +22,10 @@ interface Stats {
 
 export default function Five9OverviewPage() {
   const { organization } = useAuth();
+  const { workspaceId: activeWorkspaceId } = useActiveWorkspaceId();
+  const newCampaignHref = activeWorkspaceId
+    ? `/w/${activeWorkspaceId}/campaigns/new`
+    : "/admin/workspaces";
   const [stats, setStats] = useState<Stats>({
     domains: 0,
     activeRoutes: 0,
@@ -96,7 +101,7 @@ export default function Five9OverviewPage() {
         icon={<Phone className="h-6 w-6 text-primary" />}
       >
         <Button asChild>
-          <Link to="/admin/campaigns/new"><Plus className="h-4 w-4 mr-1.5" />Create campaign</Link>
+          <Link to={newCampaignHref}><Plus className="h-4 w-4 mr-1.5" />Create campaign</Link>
         </Button>
         <Button variant="outline" asChild>
           <Link to="/admin/domains"><Plug className="h-4 w-4 mr-1.5" />Connect domain</Link>
