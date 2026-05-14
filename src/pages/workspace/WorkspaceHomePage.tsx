@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Megaphone, BookOpen, FormInput, FileStack, Plus, ArrowRight,
+  Megaphone, BookOpen, FormInput, FileStack,
   BarChart3, ClipboardCheck, Plug, Settings, Sparkles, ShieldAlert,
   Users,
 } from "lucide-react";
@@ -17,14 +16,8 @@ import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader"
 import { KpiCard } from "@/components/common/KpiCard";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
-
-type RecentItem = {
-  key: string;
-  kind: "Campaign" | "Guide" | "Form" | "Template";
-  name: string;
-  href: string;
-  updated_at: string;
-};
+import { ActionCard } from "@/components/common/ActionCard";
+import { RecentList, type RecentListItem } from "@/components/common/RecentList";
 
 const SECONDARY_LINKS = [
   { label: "Analytics", icon: BarChart3, href: "analytics" },
@@ -52,12 +45,15 @@ export default function WorkspaceHomePage() {
   const realClients = clients.filter((c) => !isDemoName(c.name));
   const demoClientCount = clients.length - realClients.length;
 
-  const allReal: RecentItem[] = [
-    ...realCampaigns.map((c) => ({ key: `c-${c.id}`, kind: "Campaign" as const, name: c.name, href: `${base}/campaigns/${c.id}`, updated_at: c.updated_at })),
-    ...realGuides.map((g) => ({ key: `g-${g.id}`, kind: "Guide" as const, name: g.name, href: `${base}/guides/${g.id}`, updated_at: g.updated_at })),
-    ...realForms.map((f) => ({ key: `f-${f.id}`, kind: "Form" as const, name: f.name, href: `${base}/forms/${f.id}`, updated_at: f.updated_at })),
-    ...realTemplates.map((t) => ({ key: `t-${t.id}`, kind: "Template" as const, name: t.name, href: `${base}/templates/${t.id}`, updated_at: t.updated_at })),
-  ].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 5);
+  const recent: RecentListItem[] = [
+    ...realCampaigns.map((c) => ({ key: `c-${c.id}`, title: c.name, href: `${base}/campaigns/${c.id}`, meta: `Campaign · updated ${new Date(c.updated_at).toLocaleDateString()}`, _u: c.updated_at })),
+    ...realGuides.map((g) => ({ key: `g-${g.id}`, title: g.name, href: `${base}/guides/${g.id}`, meta: `Guide · updated ${new Date(g.updated_at).toLocaleDateString()}`, _u: g.updated_at })),
+    ...realForms.map((f) => ({ key: `f-${f.id}`, title: f.name, href: `${base}/forms/${f.id}`, meta: `Form · updated ${new Date(f.updated_at).toLocaleDateString()}`, _u: f.updated_at })),
+    ...realTemplates.map((t) => ({ key: `t-${t.id}`, title: t.name, href: `${base}/templates/${t.id}`, meta: `Template · updated ${new Date(t.updated_at).toLocaleDateString()}`, _u: t.updated_at })),
+  ]
+    .sort((a, b) => b._u.localeCompare(a._u))
+    .slice(0, 5)
+    .map(({ _u, ...rest }) => rest);
 
   const totalReal = realCampaigns.length + realGuides.length + realForms.length + realTemplates.length;
 
@@ -83,92 +79,32 @@ export default function WorkspaceHomePage() {
 
       {/* Canonical KPI row — 5 items, outline order. */}
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-        <KpiCard
-          label="Clients"
-          value={realClients.length}
-          icon={Users}
-          loading={clientsLoading}
-          hint={demoClientCount > 0 ? `${demoClientCount} demo hidden` : undefined}
-        />
-        <KpiCard
-          label="Campaigns"
-          value={realCampaigns.length}
-          icon={Megaphone}
-          loading={campaignsLoading}
-        />
-        <KpiCard
-          label="Guides"
-          value={realGuides.length}
-          icon={BookOpen}
-          loading={guidesLoading}
-        />
-        <KpiCard
-          label="Forms"
-          value={realForms.length}
-          icon={FormInput}
-          loading={formsLoading}
-        />
-        <KpiCard
-          label="Templates"
-          value={realTemplates.length}
-          icon={FileStack}
-          loading={templatesLoading}
-        />
+        <KpiCard label="Clients" value={realClients.length} icon={Users} loading={clientsLoading}
+          hint={demoClientCount > 0 ? `${demoClientCount} demo hidden` : undefined} />
+        <KpiCard label="Campaigns" value={realCampaigns.length} icon={Megaphone} loading={campaignsLoading} />
+        <KpiCard label="Guides" value={realGuides.length} icon={BookOpen} loading={guidesLoading} />
+        <KpiCard label="Forms" value={realForms.length} icon={FormInput} loading={formsLoading} />
+        <KpiCard label="Templates" value={realTemplates.length} icon={FileStack} loading={templatesLoading} />
       </div>
 
-      {/* Primary create actions */}
+      {/* Primary create actions — uses canonical ActionCard primitive */}
       <section className="space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Create</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {createActions.map((a) => {
-            const Icon = a.icon;
-            return (
-              <Link key={a.label} to={a.href}>
-                <Card className="h-full hover:border-primary/60 transition-colors group">
-                  <CardContent className="pt-5 pb-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Icon className="h-4 w-4 text-primary" />
-                      </div>
-                      <Plus className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">{a.label}</div>
-                      <div className="text-xs text-muted-foreground">{a.hint}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+          {createActions.map((a) => (
+            <ActionCard key={a.label} to={a.href} icon={a.icon} label={a.label} hint={a.hint} />
+          ))}
         </div>
       </section>
 
-      {/* Recent canonical items */}
+      {/* Recent canonical items — uses canonical RecentList primitive */}
       <section className="space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent</h2>
-        {allReal.length === 0 ? (
-          <EmptyState
-            title="Nothing here yet"
-            description="Recent campaigns, guides, forms, and templates will appear here as you create them."
-          />
-        ) : (
-          <Card>
-            <CardContent className="p-0 divide-y">
-              {allReal.map((r) => (
-                <Link key={r.key} to={r.href} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent/5">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium truncate">{r.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {r.kind} · updated {new Date(r.updated_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                </Link>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+        <RecentList
+          items={recent}
+          emptyTitle="Nothing here yet"
+          emptyDescription="Recent campaigns, guides, forms, and templates will appear here as you create them."
+        />
       </section>
 
       {/* Demo data notice — uses canonical EmptyState primitive */}
