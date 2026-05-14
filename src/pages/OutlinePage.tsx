@@ -470,11 +470,12 @@ export default function OutlinePage() {
                       is a single-hop redirect to the canonical family. No nav link or CTA targets it directly.
                     </li>
                     <li>
-                      <strong>Org / admin shell relationship:</strong> <code className="px-1 rounded bg-muted">/admin/*</code>{" "}
-                      (AdminShell) remains the canonical organization-level surface. <code className="px-1 rounded bg-muted">/org/*</code>{" "}
-                      (OrgShell) is an internal forward-canonical scaffold — it is mounted but is <em>not</em> promoted to canonical
-                      org status by this doc. A future slice must either (a) adopt <code>/org/*</code> as canonical and add
-                      <code> /admin/* → /org/*</code> redirects, or (b) retire the OrgShell scaffolding.
+                      <strong>Org / admin shell relationship (RESOLVED — Phase E shell convergence):</strong>{" "}
+                      <code className="px-1 rounded bg-muted">/admin/*</code> (AdminShell) is the single canonical
+                      organization-level surface. The previously scaffolded <code className="px-1 rounded bg-muted">/org/*</code>{" "}
+                      OrgShell has been retired; every <code>/org/*</code> path single-hop redirects to its{" "}
+                      <code>/admin/*</code> equivalent (params preserved via <code>OrgParamRedirect</code>) so external
+                      bookmarks and cross-links keep resolving.
                     </li>
                     <li>
                       <strong>Workspace data scoping:</strong> <code>deployment_runs</code> and <code>agents</code> now carry a
