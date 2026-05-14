@@ -407,9 +407,9 @@ const App = () => (
                   ============================================================ */}
               <Route path="/org" element={<Navigate to="/admin" replace />} />
               <Route path="/org/workspaces" element={<Navigate to="/admin/workspaces" replace />} />
-              <Route path="/org/workspaces/:id" element={<Navigate to="/admin/workspaces/:id" replace />} />
+              <Route path="/org/workspaces/:id" element={<OrgParamRedirect to="/admin/workspaces/:id" />} />
               <Route path="/org/connectors" element={<Navigate to="/admin/connectors" replace />} />
-              <Route path="/org/connectors/:slug" element={<Navigate to="/admin/connectors/:slug" replace />} />
+              <Route path="/org/connectors/:slug" element={<OrgParamRedirect to="/admin/connectors/:slug" />} />
               <Route path="/org/reports" element={<Navigate to="/admin/reports" replace />} />
               <Route path="/org/notifications" element={<Navigate to="/admin/notifications" replace />} />
               <Route path="/org/settings" element={<Navigate to="/admin/settings" replace />} />
