@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Settings as SettingsIcon, Save } from "lucide-react";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { WorkspaceMembersSection } from "@/components/workspace/WorkspaceMembersSection";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -51,7 +52,7 @@ export default function WorkspaceSettingsPage() {
       <WorkspacePageHeader
         eyebrow="Workspace settings"
         title="Settings"
-        lede="Settings local to this workspace. Members, billing, and branding live under organization settings."
+        lede="Settings local to this workspace, including workspace members and roles. Billing and branding live under organization settings."
         action={
           <Button
             size="sm"
@@ -86,13 +87,15 @@ export default function WorkspaceSettingsPage() {
         </CardContent>
       </Card>
 
+      <WorkspaceMembersSection />
+
       <Card className="border-dashed">
         <CardHeader className="pb-2 flex-row items-center gap-2 space-y-0">
           <SettingsIcon className="h-4 w-4 text-muted-foreground" />
           <CardTitle className="text-sm font-medium">Looking for something else?</CardTitle>
         </CardHeader>
         <CardContent className="text-xs text-muted-foreground">
-          Members, branding, and billing are managed at the organization level under{" "}
+          Branding and billing are managed at the organization level under{" "}
           <a href="/org/settings" className="text-primary hover:underline">organization settings</a>.
           Integration credentials live under this workspace's{" "}
           <a href="integrations" className="text-primary hover:underline">Integrations</a> tab.

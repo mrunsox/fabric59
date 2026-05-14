@@ -83,5 +83,27 @@ export function useWorkspace() {
  * Page-level RBAC enforcement using these constants will arrive incrementally;
  * org-level role checks (useAuth().workspaceRole) remain authoritative for now.
  */
-export const WORKSPACE_ROLES = ["owner", "admin", "manager", "member", "viewer"] as const;
+// Phase 13 — Canonical roles per spec, ordered most → least privileged.
+// `manager` and `member` retained for back-compat with existing rows.
+export const WORKSPACE_ROLES = [
+  "owner",
+  "admin",
+  "supervisor",
+  "manager",
+  "analyst",
+  "agent",
+  "member",
+  "viewer",
+] as const;
 export type WorkspaceRoleLiteral = (typeof WORKSPACE_ROLES)[number];
+
+export const WORKSPACE_ROLE_LABELS: Record<WorkspaceRoleLiteral, string> = {
+  owner: "Owner",
+  admin: "Admin",
+  supervisor: "Supervisor",
+  manager: "Manager",
+  analyst: "Analyst / QA",
+  agent: "Agent",
+  member: "Member",
+  viewer: "Viewer",
+};
