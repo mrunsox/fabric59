@@ -15,7 +15,7 @@ import { isDemoName } from "@/lib/demoHeuristic";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { KpiCard } from "@/components/common/KpiCard";
 import { EmptyState } from "@/components/common/EmptyState";
-import { StatusBadge } from "@/components/common/StatusBadge";
+// StatusBadge no longer used here — eyebrow/badge handled by shell breadcrumb.
 import { ActionCard } from "@/components/common/ActionCard";
 import { RecentList, type RecentListItem } from "@/components/common/RecentList";
 
