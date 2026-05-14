@@ -49,6 +49,7 @@ const REDIRECT_ONLY = [
   "/admin/call-flow",
   "/admin/tenants",
   "/admin/campaigns/overview",
+  "/admin/campaigns/new",
   "/admin/campaigns/drafts",
   "/admin/campaigns/archived",
   "/admin/campaign-blueprints",
