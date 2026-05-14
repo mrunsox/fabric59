@@ -344,6 +344,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     switchOrganization,
+    refreshOrganizations: async () => {
+      if (user) await loadOrganizations(user.id);
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
