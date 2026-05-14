@@ -1,5 +1,8 @@
 project_id = "lxwalsgqrnstjclafaka"
 
+[functions.submit-form]
+verify_jwt = false
+
 [functions.five9-provisioning]
 verify_jwt = false
 
