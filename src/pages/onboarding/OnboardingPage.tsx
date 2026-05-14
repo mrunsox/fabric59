@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils";
 import {
   Loader2, ArrowRight, Check, Building2, Building,
   Eye, EyeOff, CheckCircle, Users, Rocket, ShieldCheck,
-  HeadphonesIcon, LineChart, Workflow, PhoneIncoming,
+  HeadphonesIcon, LineChart, Workflow, PhoneIncoming, ShieldAlert,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { OnboardingShell } from "@/shells/OnboardingShell";
 import { OnboardingContextHelper } from "@/components/onboarding/OnboardingContextHelper";
 import { toast } from "sonner";
@@ -108,9 +109,12 @@ export default function OnboardingPage() {
   // Step 4
   const [workspaceName, setWorkspaceName] = useState("");
 
-  useEffect(() => {
-    if (isMasterAdmin && !organization) navigate("/superadmin", { replace: true });
-  }, [isMasterAdmin, organization, navigate]);
+  // Master admins are NOT auto-bounced to /superadmin from here. A fresh
+  // master admin (no org, no workspaces) must be able to seed their founding
+  // org + workspace through this concierge flow exactly like any other user.
+  // The /launch matrix decides who lands here vs. /superadmin based on real
+  // bootstrap state — see LaunchRedirectPage. A quiet "Open Superadmin" link
+  // is rendered below for master admins who want the operator surface.
 
   useEffect(() => {
     if (organization && step === "org") setStep("profile");
@@ -523,6 +527,19 @@ export default function OnboardingPage() {
       subheading={subheading}
     >
       <div className="animate-fade-up">{stepContent[step]}</div>
+      {isMasterAdmin && (
+        <div className="mt-4 flex justify-center">
+          <Link
+            to="/superadmin"
+            className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors"
+            data-testid="onboarding-superadmin-link"
+          >
+            <ShieldAlert className="h-3 w-3" />
+            Open Superadmin
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
     </OnboardingShell>
   );
 }
