@@ -101,7 +101,7 @@ function WorkspaceChrome() {
               The workspace <code className="text-xs">{workspaceId}</code> is not available
               for your account.
             </p>
-            <Button variant="outline" size="sm" onClick={() => navigate("/org/workspaces")}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/workspaces")}>
               <ArrowLeft className="h-4 w-4 mr-1.5" /> Back to workspaces
             </Button>
           </CardContent>
