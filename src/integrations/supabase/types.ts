@@ -27,6 +27,7 @@ export type Database = {
           google_user_id: string | null
           id: string
           last_name: string
+          organization_id: string | null
           provisioned_at: string
           provisioned_by: string | null
           role: string
@@ -34,6 +35,7 @@ export type Database = {
           slack_user_id: string | null
           status: string
           updated_at: string
+          workspace_id: string | null
         }
         Insert: {
           created_at?: string
@@ -47,6 +49,7 @@ export type Database = {
           google_user_id?: string | null
           id?: string
           last_name: string
+          organization_id?: string | null
           provisioned_at?: string
           provisioned_by?: string | null
           role: string
@@ -54,6 +57,7 @@ export type Database = {
           slack_user_id?: string | null
           status?: string
           updated_at?: string
+          workspace_id?: string | null
         }
         Update: {
           created_at?: string
@@ -67,6 +71,7 @@ export type Database = {
           google_user_id?: string | null
           id?: string
           last_name?: string
+          organization_id?: string | null
           provisioned_at?: string
           provisioned_by?: string | null
           role?: string
@@ -74,8 +79,24 @@ export type Database = {
           slack_user_id?: string | null
           status?: string
           updated_at?: string
+          workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "agents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agents_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       api_keys: {
         Row: {
@@ -1234,6 +1255,7 @@ export type Database = {
           started_at: string
           status: string
           trigger_event_id: string | null
+          workspace_id: string | null
         }
         Insert: {
           connector_instance_id?: string | null
@@ -1253,6 +1275,7 @@ export type Database = {
           started_at?: string
           status?: string
           trigger_event_id?: string | null
+          workspace_id?: string | null
         }
         Update: {
           connector_instance_id?: string | null
@@ -1272,6 +1295,7 @@ export type Database = {
           started_at?: string
           status?: string
           trigger_event_id?: string | null
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -1293,6 +1317,13 @@ export type Database = {
             columns: ["retry_of"]
             isOneToOne: false
             referencedRelation: "deployment_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deployment_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
