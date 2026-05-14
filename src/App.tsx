@@ -94,7 +94,7 @@ import AgentsPage from "@/pages/admin/AgentsPage";
 import DispositionsPage from "@/pages/admin/DispositionsPage";
 // Phase D: legacy IntegrationsPage import removed; /admin/integrations redirects to /admin/connectors.
 import CampaignsPage from "@/pages/admin/CampaignsPage";
-import CampaignIntakePage from "@/pages/admin/CampaignIntakePage";
+// CampaignIntakePage no longer routed at /admin/* — create/edit redirected into canonical workspace path.
 import CampaignDetailPage from "@/pages/admin/CampaignDetailPage";
 // ArchivedCampaignsPage + CampaignBlueprintsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns?status=archived and /admin/templates).
 import ReportsPage from "@/pages/admin/ReportsPage";
