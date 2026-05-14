@@ -104,6 +104,46 @@ export function useSaveFormSchema() {
   });
 }
 
+export function useRollbackFormVersion() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async (input: { formId: string; sourceVersion: number; schema: FormSchema }) => {
+      const { formId, sourceVersion, schema } = input;
+      const { data: latest } = await supabase
+        .from("form_versions")
+        .select("version")
+        .eq("form_id", formId)
+        .order("version", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const targetVersion = (latest?.version ?? 0) + 1;
+      await supabase.from("form_versions").update({ is_current: false }).eq("form_id", formId);
+      const { error: vErr } = await supabase.from("form_versions").insert([{
+        form_id: formId,
+        version: targetVersion,
+        schema: schema as unknown as never,
+        is_current: true,
+        notes: `Rollback to v${sourceVersion}`,
+        created_by: user?.id ?? null,
+      }] as never);
+      if (vErr) throw vErr;
+      const { error: fErr } = await supabase
+        .from("forms")
+        .update({ schema: schema as unknown as never, current_version: targetVersion, status: "published" } as never)
+        .eq("id", formId);
+      if (fErr) throw fErr;
+      return { newVersion: targetVersion };
+    },
+    onSuccess: (res, vars) => {
+      qc.invalidateQueries({ queryKey: ["form-versions", vars.formId] });
+      qc.invalidateQueries({ queryKey: ["workspace-form"] });
+      toast.success(`Restored v${vars.sourceVersion} as v${res.newVersion}`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
 export function useFormSubmissions(formId: string | undefined) {
   return useQuery({
     queryKey: ["form-submissions", formId ?? null],
