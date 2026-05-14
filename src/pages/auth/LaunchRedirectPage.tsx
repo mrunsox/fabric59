@@ -12,13 +12,22 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
  * the authenticated user based on real org + workspace state, so the
  * decision logic lives in one place.
  *
- * Routing matrix:
- *   - not authenticated         → /login
- *   - master admin (no org)     → /superadmin
- *   - no org at all             → /onboarding
- *   - org but no workspaces yet → /onboarding (workspace bootstrap step)
- *   - org + at least 1 workspace
+ * Routing matrix (master-admin aware — based on real bootstrap state, not
+ * a blanket shortcut):
+ *   - not authenticated                         → /login
+ *   - master admin, no orgs, no system workspaces visible
+ *                                               → /onboarding (founding bootstrap)
+ *   - master admin, no orgs, system workspaces exist
+ *                                               → /superadmin (operator fallback)
+ *   - has orgs, no resolvable target workspace  → /onboarding (workspace bootstrap)
+ *   - has orgs + resolvable workspace
  *       → /w/:defaultWorkspaceId/home (default-flagged first, else first)
+ *
+ * Note: master admins have RLS read access to all workspaces, so
+ * `workspaces.length > 0` for a master admin with zero orgs reliably
+ * indicates "system has data, this user is operator-only" — making
+ * /superadmin the right landing. A truly empty system funnels them
+ * through /onboarding so they can seed their own founding org.
  *
  * Invite continuity: if /launch?invite=<token> is provided, the token is
  * forwarded to the destination so downstream surfaces can consume it.
@@ -41,16 +50,28 @@ export default function LaunchRedirectPage() {
       navigate(invite ? `/login?invite=${encodeURIComponent(invite)}` : "/login", { replace: true });
       return;
     }
+
+    const onboardingTarget = invite
+      ? `/onboarding?invite=${encodeURIComponent(invite)}`
+      : "/onboarding";
+
+    // Master admin with no org membership of their own: choose between
+    // operator fallback (/superadmin) and founding bootstrap (/onboarding)
+    // based on whether the system already has any workspaces to operate on.
     if (isMasterAdmin && organizations.length === 0) {
-      navigate("/superadmin", { replace: true });
+      if (workspaces.length > 0) {
+        navigate("/superadmin", { replace: true });
+      } else {
+        navigate(onboardingTarget, { replace: true });
+      }
       return;
     }
+
     if (organizations.length === 0) {
-      navigate(invite ? `/onboarding?invite=${encodeURIComponent(invite)}` : "/onboarding", {
-        replace: true,
-      });
+      navigate(onboardingTarget, { replace: true });
       return;
     }
+
     const orgId = organization?.id ?? organizations[0]?.id ?? null;
     const orgWorkspaces = orgId ? workspaces.filter((w) => w.organization_id === orgId) : workspaces;
     const target =
@@ -59,9 +80,10 @@ export default function LaunchRedirectPage() {
       null;
 
     if (!target) {
-      navigate(invite ? `/onboarding?invite=${encodeURIComponent(invite)}` : "/onboarding", {
-        replace: true,
-      });
+      // Org exists but no workspace yet — finish bootstrap. This applies to
+      // master admins too: they must seed the founding workspace before they
+      // can land in /w/:id/home.
+      navigate(onboardingTarget, { replace: true });
       return;
     }
     navigate(`/w/${target.id}/home`, { replace: true });
