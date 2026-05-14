@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCampaignSetups } from "@/hooks/useCampaignSetup";
+import { useActiveWorkspaceId } from "@/hooks/useActiveWorkspaceId";
 import { Plus, Megaphone, Play, Square, Loader2 } from "lucide-react";
 import { DEFAULT_CHECKLIST } from "@/types/campaign";
 import { format } from "date-fns";
