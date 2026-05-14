@@ -9460,6 +9460,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_workspace_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["workspace_role"]
+          _user_id: string
+          _workspace_id: string
+        }
+        Returns: boolean
+      }
+      has_workspace_role_min: {
+        Args: {
+          _min: Database["public"]["Enums"]["workspace_role"]
+          _user_id: string
+          _workspace_id: string
+        }
+        Returns: boolean
+      }
       is_master_admin: { Args: { _user_id: string }; Returns: boolean }
       is_ops_member: { Args: { _user_id: string }; Returns: boolean }
       is_org_member: {
@@ -9493,6 +9509,10 @@ export type Database = {
       user_has_permission: {
         Args: { _org_id: string; _permission: string; _user_id: string }
         Returns: boolean
+      }
+      workspace_role_rank: {
+        Args: { _role: Database["public"]["Enums"]["workspace_role"] }
+        Returns: number
       }
     }
     Enums: {
