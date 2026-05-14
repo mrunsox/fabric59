@@ -37,21 +37,45 @@ export type WorkspaceTemplate = {
   updated_at: string;
 };
 
-export function useWorkspaceTemplates(opts?: { kind?: TemplateKind | "all" }) {
+/**
+ * Read templates visible to the current workspace.
+ *
+ * `scope` controls visibility:
+ *   - "inherited" (default): inheritance read model — platform + this org.
+ *     Used by the Templates library page where forks and lineage matter.
+ *   - "workspace": strictly workspace-assigned templates only
+ *     (`scope_type='workspace' AND scope_id=workspace.id`). Used by the
+ *     Workspace Home KPI + Recent so the empty state is truly empty until
+ *     someone forks/creates a template into THIS workspace.
+ */
+export function useWorkspaceTemplates(opts?: {
+  kind?: TemplateKind | "all";
+  scope?: "inherited" | "workspace";
+}) {
   const { workspace } = useWorkspace();
   const kind = opts?.kind ?? "all";
+  const scope = opts?.scope ?? "inherited";
   return useQuery({
-    queryKey: ["workspace-templates", workspace?.organization_id ?? null, kind],
+    queryKey: [
+      "workspace-templates",
+      workspace?.organization_id ?? null,
+      workspace?.id ?? null,
+      kind,
+      scope,
+    ],
     enabled: !!workspace,
     queryFn: async (): Promise<WorkspaceTemplate[]> => {
-      // Inheritance read model: platform-scoped + this organization's templates.
       let q = supabase
         .from("templates")
         .select(
           "id, organization_id, scope_type, scope_id, kind, name, description, status, content, parent_template_id, current_version, source_type, source_id, metadata, created_at, updated_at",
         )
-        .or(`scope_type.eq.platform,organization_id.eq.${workspace!.organization_id}`)
         .order("updated_at", { ascending: false });
+      if (scope === "workspace") {
+        q = q.eq("scope_type", "workspace").eq("scope_id", workspace!.id);
+      } else {
+        q = q.or(`scope_type.eq.platform,organization_id.eq.${workspace!.organization_id}`);
+      }
       if (kind !== "all") q = q.eq("kind", kind);
       const { data, error } = await q;
       if (error) throw error;

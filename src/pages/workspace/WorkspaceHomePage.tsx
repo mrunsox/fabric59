@@ -31,7 +31,13 @@ export default function WorkspaceHomePage() {
   const { workspace } = useWorkspace();
   const { data: campaigns = [], isLoading: campaignsLoading } = useWorkspaceCampaigns();
   const { data: guides = [], isLoading: guidesLoading } = useWorkspaceGuides();
-  const { data: templates = [], isLoading: templatesLoading } = useWorkspaceTemplates();
+  // Workspace home is strictly workspace-scoped — platform/org-inherited
+  // templates do NOT count toward the Templates KPI or Recent. They remain
+  // visible inside the Templates library page (which uses the default
+  // "inherited" scope).
+  const { data: templates = [], isLoading: templatesLoading } = useWorkspaceTemplates({
+    scope: "workspace",
+  });
   const { data: forms = [], isLoading: formsLoading } = useWorkspaceForms();
   const { data: clients = [], isLoading: clientsLoading } = useWorkspaceClients();
   if (!workspace) return null;
