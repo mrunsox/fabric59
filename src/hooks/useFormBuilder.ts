@@ -60,33 +60,39 @@ export function useSaveFormSchema() {
     mutationFn: async (input: { formId: string; schema: FormSchema; publish?: boolean; notes?: string }) => {
       const { formId, schema, publish, notes } = input;
       // Update the working schema on forms.
+      const updatePayload: Record<string, unknown> = { schema: schema as unknown as never };
+      if (publish) updatePayload.status = "published";
       const { data: formRow, error: e1 } = await supabase
         .from("forms")
-        .update({
-          schema: schema as unknown as Record<string, unknown>,
-          status: publish ? "published" : undefined,
-        })
+        .update(updatePayload as never)
         .eq("id", formId)
         .select("id, current_version, status")
         .single();
       if (e1) throw e1;
 
       if (publish) {
-        const nextVersion = (formRow.current_version ?? 1) + (formRow.current_version ? 1 : 0);
-        const targetVersion = formRow.current_version === 1 ? 1 : nextVersion;
-        // Mark old versions not current
+        // Determine the next version number based on existing versions.
+        const { data: latest } = await supabase
+          .from("form_versions")
+          .select("version")
+          .eq("form_id", formId)
+          .order("version", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const targetVersion = (latest?.version ?? 0) + 1;
         await supabase.from("form_versions").update({ is_current: false }).eq("form_id", formId);
-        const { error: vErr } = await supabase.from("form_versions").insert({
+        const { error: vErr } = await supabase.from("form_versions").insert([{
           form_id: formId,
           version: targetVersion,
-          schema: schema as unknown as Record<string, unknown>,
+          schema: schema as unknown as never,
           is_current: true,
           notes: notes ?? null,
           created_by: user?.id ?? null,
-        });
+        }] as never);
         if (vErr) throw vErr;
-        await supabase.from("forms").update({ current_version: targetVersion }).eq("id", formId);
+        await supabase.from("forms").update({ current_version: targetVersion } as never).eq("id", formId);
       }
+      void formRow;
       return { ok: true };
     },
     onSuccess: (_d, vars) => {
