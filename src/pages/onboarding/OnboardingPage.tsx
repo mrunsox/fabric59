@@ -527,6 +527,19 @@ export default function OnboardingPage() {
       subheading={subheading}
     >
       <div className="animate-fade-up">{stepContent[step]}</div>
+      {isMasterAdmin && (
+        <div className="mt-4 flex justify-center">
+          <Link
+            to="/superadmin"
+            className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors"
+            data-testid="onboarding-superadmin-link"
+          >
+            <ShieldAlert className="h-3 w-3" />
+            Open Superadmin
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
     </OnboardingShell>
   );
 }
