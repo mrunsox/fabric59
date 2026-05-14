@@ -109,9 +109,12 @@ export default function OnboardingPage() {
   // Step 4
   const [workspaceName, setWorkspaceName] = useState("");
 
-  useEffect(() => {
-    if (isMasterAdmin && !organization) navigate("/superadmin", { replace: true });
-  }, [isMasterAdmin, organization, navigate]);
+  // Master admins are NOT auto-bounced to /superadmin from here. A fresh
+  // master admin (no org, no workspaces) must be able to seed their founding
+  // org + workspace through this concierge flow exactly like any other user.
+  // The /launch matrix decides who lands here vs. /superadmin based on real
+  // bootstrap state — see LaunchRedirectPage. A quiet "Open Superadmin" link
+  // is rendered below for master admins who want the operator surface.
 
   useEffect(() => {
     if (organization && step === "org") setStep("profile");
