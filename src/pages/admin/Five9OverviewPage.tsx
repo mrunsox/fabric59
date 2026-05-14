@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Phone, Plus, Plug, BookOpen, Activity, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Five9DocsPanel } from "@/components/docs/Five9DocsPanel";
+import { useActiveWorkspaceId } from "@/hooks/useActiveWorkspaceId";
 
 interface Stats {
   domains: number;
