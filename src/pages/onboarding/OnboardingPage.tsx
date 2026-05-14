@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils";
 import {
   Loader2, ArrowRight, Check, Building2, Building,
   Eye, EyeOff, CheckCircle, Users, Rocket, ShieldCheck,
-  HeadphonesIcon, LineChart, Workflow, PhoneIncoming,
+  HeadphonesIcon, LineChart, Workflow, PhoneIncoming, ShieldAlert,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { OnboardingShell } from "@/shells/OnboardingShell";
 import { OnboardingContextHelper } from "@/components/onboarding/OnboardingContextHelper";
 import { toast } from "sonner";
