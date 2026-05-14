@@ -137,7 +137,7 @@ import MonitoringHubPage from "@/pages/admin/MonitoringHubPage";
 import DocsHubPage from "@/pages/admin/DocsHubPage";
 import QrRoutingPage from "@/pages/admin/QrRoutingPage";
 
-import CallFlowBuilderPage from "@/pages/admin/CallFlowBuilderPage";
+// CallFlowBuilderPage import removed — /admin/call-flow-builder now redirects via WorkspaceResolveRedirect.
 import CallFlowPage from "@/pages/admin/CallFlowPage";
 // VAULTED (slug: legacy-tree-editor) — TreeEditorPage import removed; /admin/tree-editor/:scriptId redirects.
 // UserDashboardPage no longer mounted directly — Phase 11 collapsed /admin/dashboard into /admin (OverviewPage re-exports it).
@@ -379,9 +379,9 @@ const App = () => (
                 {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
                 <Route path="five9" element={<Five9OverviewPage />} />
                 <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
-                {/* VAULTED: legacy-five9-campaign-builder → canonical /admin/campaigns/new */}
-                <Route path="five9/campaign-builder" element={<Navigate to="/admin/campaigns/new" replace />} />
-                <Route path="five9/campaign-builder/:draftId" element={<Navigate to="/admin/campaigns/new" replace />} />
+                {/* CANONICAL: Five9 campaign builder writes redirect into the workspace path. */}
+                <Route path="five9/campaign-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
+                <Route path="five9/campaign-builder/:draftId" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
                 <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
                 {/* CANONICAL (Phase B): campaign cluster collapsed.
                     overview/drafts → /admin/campaigns (with optional ?status= filter). */}
@@ -455,8 +455,8 @@ const App = () => (
                 <Route path="kb" element={<KnowledgeBasePage />} />
                 <Route path="training" element={<TrainingPage />} />
                 <Route path="feedback" element={<FeedbackPage />} />
-                {/* VAULTED: legacy-script-routing → canonical /admin/scripts */}
-                <Route path="script-routing" element={<Navigate to="/admin/scripts" replace />} />
+                {/* CANONICAL: legacy script-routing redirects into workspace guides. */}
+                <Route path="script-routing" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
                 <Route path="goals" element={<GoalsPage />} />
                 <Route path="summary-templates" element={<CallSummaryTemplatesPage />} />
                 {/* Phase C: scriptflow base redirects above; param surface kept for legacy deep links handled by hub. */}
@@ -464,8 +464,8 @@ const App = () => (
                 {/* Phase C: call-flow base redirects above; this param route is compatibility-only. */}
                 <Route path="legal-connect" element={<LegalConnectPage />} />
                 <Route path="qr-routing" element={<QrRoutingPage />} />
-                {/* VAULTED: legacy-tree-editor → canonical /admin/scripts */}
-                <Route path="tree-editor/:scriptId" element={<Navigate to="/admin/scripts" replace />} />
+                {/* CANONICAL: legacy tree-editor redirects into workspace guides (param dropped). */}
+                <Route path="tree-editor/:scriptId" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
                 <Route path="test" element={<TestConsolePage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="design-system" element={<DesignSystemPage />} />
