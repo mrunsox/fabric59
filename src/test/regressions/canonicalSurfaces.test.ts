@@ -342,6 +342,9 @@ describe("Phase G · canonical experience rebuild", () => {
     expect(src).toMatch(/Connect provider/);
     expect(src).toMatch(/Run readiness test/);
     expect(src).toMatch(/\/admin\/clients\/\$\{clientId\}\/legal-connect/);
+    // Create campaign goes to canonical workspace intake, never the redirect.
+    expect(src).toMatch(/\/w\/\$\{workspaceId\}\/campaigns\/new/);
+    expect(src).not.toMatch(/["'`]\/admin\/campaigns\/new/);
   });
 
   // ---- No status / readiness badges on marketing capability tiles -----------
