@@ -18,9 +18,6 @@ verify_jwt = false
 [functions.ai-call-flow]
 verify_jwt = false
 
-[functions.crm-push]
-verify_jwt = false
-
 [functions.five9-webhook]
 verify_jwt = false
 
