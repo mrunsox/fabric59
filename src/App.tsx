@@ -1,9 +1,11 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
 // Phase 2 — smart post-auth redirect (decides /onboarding vs /w/:id/home).
