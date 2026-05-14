@@ -322,7 +322,7 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p7-routes", label: "Phase 7 — /app/workspaces/:id/integrations list+detail live; legacy connectors catalog moved to /integrations-legacy", status: "done" },
   { id: "p7-credentials", label: "Phase 7 follow-up — provider OAuth/API key wiring via credentials_ref to vault secrets", status: "todo" },
   { id: "p7-sync-jobs", label: "Phase 7 follow-up — surface sync_jobs/logs/retry under canonical connection detail", status: "todo" },
-  { id: "p7-stub-deletion", label: "Phase 7 follow-up — delete ~50 stub integration edge functions (Salesforce/HubSpot/Zendesk/etc.)", status: "todo" },
+  { id: "p7-stub-deletion", label: "Phase 7 follow-up — deleted stub integration edge functions (crm-push, teams-notify, twilio-sms, stripe-payments, openai) and dead admin IntegrationsPage + integrations-catalog + IntegrationCard/Detail/Wizard/ClientSelectDialog/ConnectionTestButton", status: "done" },
   { id: "p8-analytics", label: "Phase 8 — canonical /app/workspaces/:id/analytics with KPI overview + dispositions + drill-downs", status: "done" },
   { id: "p8-qa", label: "Phase 8 — canonical /app/workspaces/:id/qa review queue (pending/in_review/completed transitions)", status: "done" },
   { id: "p8-billing", label: "Phase 8 — honest /app/workspaces/:id/billing shell (real invoices + usage snapshot)", status: "done" },

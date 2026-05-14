@@ -88,7 +88,7 @@ const SCENARIOS: Scenario[] = [
         id: "post", title: "Post Disposition",
         steps: [
           { id: "c8", lane: "system", kind: "automated", required: true, label: "Schedule callback reminder", impl: [{ kind: "edge", name: "process-jobs" }, { kind: "hook", name: "useCallbackReminders" }] },
-          { id: "c9", lane: "external", kind: "external", required: false, label: "Send SMS / email confirmation to caller", impl: [{ kind: "edge", name: "twilio-sms" }, { kind: "edge", name: "send-notification" }] },
+          { id: "c9", lane: "external", kind: "external", required: false, label: "Send email confirmation to caller", impl: [{ kind: "edge", name: "send-notification" }] },
           { id: "c10", lane: "external", kind: "external", required: false, label: "Create CRM task assigned to owner", impl: [{ kind: "edge", name: "crm-push" }] },
         ],
       },
