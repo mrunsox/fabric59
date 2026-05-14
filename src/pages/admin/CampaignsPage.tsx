@@ -116,7 +116,7 @@ export default function CampaignsPage() {
           <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-30" />
           <p className="text-lg font-medium">No campaigns {status !== "all" ? `with status "${status}"` : "yet"}</p>
           <p className="text-sm mb-4">{status === "all" ? "Create your first campaign setup to get started." : "Try a different filter or create a new campaign."}</p>
-          <Button asChild><Link to="/admin/campaigns/new">Create Campaign</Link></Button>
+          <Button asChild><Link to={newCampaignHref}>Create Campaign</Link></Button>
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">
