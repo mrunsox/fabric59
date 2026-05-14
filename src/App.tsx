@@ -200,6 +200,8 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            {/* Public, unauthenticated form render — embeddable in Five9 Agent Desktop. */}
+            <Route path="/forms/:formId" element={<PublicFormPage />} />
             <Route path="/trust" element={<TrustPage />} />
             <Route path="/responsible-disclosure" element={<ResponsibleDisclosurePage />} />
             <Route path="/contact" element={<ContactPage />} />
