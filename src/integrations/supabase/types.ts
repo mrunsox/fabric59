@@ -9571,7 +9571,15 @@ export type Database = {
         | "deprecated"
         | "extracted"
       walkthrough_request_status: "new" | "contacted" | "qualified" | "archived"
-      workspace_role: "owner" | "admin" | "manager" | "member" | "viewer"
+      workspace_role:
+        | "owner"
+        | "admin"
+        | "manager"
+        | "member"
+        | "viewer"
+        | "supervisor"
+        | "agent"
+        | "analyst"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -9781,7 +9789,16 @@ export const Constants = {
         "extracted",
       ],
       walkthrough_request_status: ["new", "contacted", "qualified", "archived"],
-      workspace_role: ["owner", "admin", "manager", "member", "viewer"],
+      workspace_role: [
+        "owner",
+        "admin",
+        "manager",
+        "member",
+        "viewer",
+        "supervisor",
+        "agent",
+        "analyst",
+      ],
     },
   },
 } as const
