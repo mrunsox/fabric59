@@ -11,15 +11,28 @@ import { supabase } from "@/integrations/supabase/client";
  * Returns either the created submission id + mapped payload, or a structured
  * validation error.
  */
+export type SubmitFormPublicResult =
+  | {
+      ok: true;
+      submissionId: string;
+      submittedAt: string;
+      campaignId: string | null;
+      mapped: Record<string, unknown>;
+      confirmation: string;
+    }
+  | {
+      ok: false;
+      status: number;
+      error: string;
+      fieldErrors?: Record<string, string>;
+    };
+
 export async function submitFormPublic(input: {
   formId: string;
   values: Record<string, unknown>;
   source?: string;
   campaignId?: string;
-}): Promise<
-  | { ok: true; submissionId: string; submittedAt: string; campaignId: string | null; mapped: Record<string, unknown>; confirmation: string }
-  | { ok: false; status: number; error: string; fieldErrors?: Record<string, string> }
-> {
+}): Promise<SubmitFormPublicResult> {
   const { data, error } = await supabase.functions.invoke("submit-form", {
     body: input,
   });
@@ -33,7 +46,7 @@ export async function submitFormPublic(input: {
       fieldErrors: (data as { fieldErrors?: Record<string, string> } | null)?.fieldErrors,
     };
   }
-  return data as Awaited<ReturnType<typeof submitFormPublic>>;
+  return data as SubmitFormPublicResult;
 }
 
 /** Build the public POST URL for the submit-form endpoint (for embedding/sharing). */

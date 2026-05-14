@@ -173,6 +173,7 @@ import FeatureVaultPage from "@/pages/superadmin/FeatureVaultPage";
 import FeatureVaultDetailPage from "@/pages/superadmin/FeatureVaultDetailPage";
 import SourceExportsPage from "@/pages/superadmin/SourceExportsPage";
 import AdvancedRoutesPage from "@/pages/superadmin/AdvancedRoutesPage";
+import PublicFormPage from "@/pages/public/PublicFormPage";
 import SystemDocsPage from "@/pages/superadmin/SystemDocsPage";
 import DesignPartnersPage from "@/pages/superadmin/DesignPartnersPage";
 import LegalConnectReportsPage from "@/pages/superadmin/LegalConnectReportsPage";
@@ -199,6 +200,8 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            {/* Public, unauthenticated form render — embeddable in Five9 Agent Desktop. */}
+            <Route path="/forms/:formId" element={<PublicFormPage />} />
             <Route path="/trust" element={<TrustPage />} />
             <Route path="/responsible-disclosure" element={<ResponsibleDisclosurePage />} />
             <Route path="/contact" element={<ContactPage />} />
