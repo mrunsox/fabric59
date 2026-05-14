@@ -7,6 +7,7 @@ import {
 import { Megaphone, Plus, ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { ActionCard } from "@/components/common/ActionCard";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
@@ -54,7 +55,16 @@ export default function WorkspaceCampaignsPage() {
           }
         />
       ) : (
-        <Card>
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <ActionCard
+              to={`${base}/new`}
+              icon={Megaphone}
+              label="New campaign"
+              hint="Outbound or inbound program"
+            />
+          </div>
+          <Card>
           <Table>
             <TableHeader>
               <TableRow>
@@ -91,7 +101,8 @@ export default function WorkspaceCampaignsPage() {
               ))}
             </TableBody>
           </Table>
-        </Card>
+          </Card>
+        </>
       )}
     </div>
   );
