@@ -135,16 +135,16 @@ export function useCreateSubmission() {
       campaignId?: string | null;
     }) => {
       if (!workspace) throw new Error("No workspace");
-      const { error } = await supabase.from("form_submissions").insert({
+      const { error } = await supabase.from("form_submissions").insert([{
         workspace_id: workspace.id,
         form_id: input.formId,
         form_version: input.version,
         campaign_id: input.campaignId ?? null,
         source: input.source ?? "preview",
-        payload: input.payload,
-        mapped: input.mapped,
+        payload: input.payload as never,
+        mapped: input.mapped as never,
         submitted_by: user?.id ?? null,
-      });
+      }] as never);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
