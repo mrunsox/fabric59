@@ -101,7 +101,7 @@ export default function Five9OverviewPage() {
         icon={<Phone className="h-6 w-6 text-primary" />}
       >
         <Button asChild>
-          <Link to="/admin/campaigns/new"><Plus className="h-4 w-4 mr-1.5" />Create campaign</Link>
+          <Link to={newCampaignHref}><Plus className="h-4 w-4 mr-1.5" />Create campaign</Link>
         </Button>
         <Button variant="outline" asChild>
           <Link to="/admin/domains"><Plug className="h-4 w-4 mr-1.5" />Connect domain</Link>
