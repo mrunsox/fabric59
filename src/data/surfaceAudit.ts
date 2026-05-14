@@ -394,36 +394,57 @@ export const CTA_ALIGNMENT: CtaRow[] = [
 /* 5. Redirect / compatibility truth table                                    */
 /* ────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * `mode` distinguishes routes that issue a hard redirect (`Navigate replace` or
+ * `WorkspaceResolveRedirect`) from routes that still mount a page body but are
+ * de-surfaced from primary nav and act as deep-link compatibility surfaces.
+ *
+ * `sunsetPhase` = the phase after which this entry becomes eligible for hard
+ * deletion. Phase 9 is the "final legacy strip"; "permanent" routes are
+ * bookmark-preserving aliases we never plan to delete.
+ */
 export type RedirectRow = {
   id: string;
   from: string;
   to: string;
   kind: "permanent" | "grace-window" | "reconsider";
+  mode: "redirect" | "compat";
+  sunsetPhase: "permanent" | "Phase 9" | "Phase 11";
 };
 
 export const REDIRECT_TABLE: RedirectRow[] = [
-  { id: "R-01", from: "/dashboard", to: "/admin", kind: "permanent" },
-  { id: "R-02", from: "/admin/dashboard", to: "/admin", kind: "permanent" },
-  { id: "R-03", from: "/admin/integrations", to: "/admin/connectors", kind: "grace-window" },
-  { id: "R-04", from: "/admin/scripter", to: "/admin/scripts", kind: "grace-window" },
-  { id: "R-05", from: "/admin/scriptflow", to: "/admin/scripts", kind: "grace-window" },
-  { id: "R-06", from: "/admin/tree-editor", to: "/admin/scripts", kind: "grace-window" },
-  { id: "R-07", from: "/admin/call-flow", to: "/admin/flows", kind: "grace-window" },
-  { id: "R-08", from: "/admin/campaign-blueprints", to: "/admin/templates", kind: "grace-window" },
-  { id: "R-09", from: "/admin/campaigns/overview", to: "/admin/campaigns", kind: "grace-window" },
-  { id: "R-10", from: "/admin/campaigns/drafts", to: "/admin/campaigns?status=draft", kind: "grace-window" },
-  { id: "R-11", from: "/admin/campaigns/archived", to: "/admin/campaigns?status=archived", kind: "grace-window" },
-  { id: "R-12", from: "/admin/tenants", to: "/admin/clients", kind: "permanent" },
-  { id: "R-13", from: "/admin/five9/legacy", to: "/admin/five9", kind: "grace-window" },
-  { id: "R-14", from: "/master/*", to: "/superadmin/*", kind: "permanent" },
-  { id: "R-15", from: "/admin/dev-guide", to: "/superadmin/dev-guide", kind: "permanent" },
-  { id: "R-16", from: "/vault, /feature-vault", to: "/superadmin/vault", kind: "permanent" },
-  { id: "R-17", from: "/five9, /domains, /five9-domains, /legal-connect, /settings, /call-flow, /onboarding/legal-connect", to: "/admin/* equivalents", kind: "permanent" },
+  { id: "R-01", from: "/dashboard",                            to: "/admin",                                    kind: "permanent",    mode: "redirect", sunsetPhase: "permanent" },
+  { id: "R-02", from: "/admin/dashboard",                      to: "/admin",                                    kind: "permanent",    mode: "redirect", sunsetPhase: "permanent" },
+  { id: "R-03", from: "/admin/integrations",                   to: "/admin/connectors",                         kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-04", from: "/admin/scripter",                       to: "/w/:workspaceId/guides",                    kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-05", from: "/admin/scriptflow",                     to: "/w/:workspaceId/guides",                    kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-06", from: "/admin/tree-editor",                    to: "/w/:workspaceId/guides",                    kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-06b", from: "/admin/tree-editor/:scriptId",         to: "/w/:workspaceId/guides",                    kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-07", from: "/admin/call-flow",                      to: "/w/:workspaceId/guides",                    kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-07b", from: "/admin/call-flow-builder",             to: "/w/:workspaceId/guides",                    kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-07c", from: "/admin/script-routing",                to: "/w/:workspaceId/guides",                    kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-08", from: "/admin/campaign-blueprints",            to: "/admin/templates",                          kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-09", from: "/admin/campaigns/overview",             to: "/admin/campaigns",                          kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-10", from: "/admin/campaigns/drafts",               to: "/admin/campaigns?status=draft",             kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-11", from: "/admin/campaigns/archived",             to: "/admin/campaigns?status=archived",          kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-11b", from: "/admin/campaigns/new",                 to: "/w/:workspaceId/campaigns/new",             kind: "permanent",    mode: "redirect", sunsetPhase: "Phase 11" },
+  { id: "R-11c", from: "/admin/campaigns/edit/:id",            to: "/w/:workspaceId/campaigns",                 kind: "permanent",    mode: "redirect", sunsetPhase: "Phase 11" },
+  { id: "R-11d", from: "/admin/campaigns",                     to: "(read-only summary)",                       kind: "permanent",    mode: "compat",   sunsetPhase: "Phase 11" },
+  { id: "R-12", from: "/admin/tenants",                        to: "/admin/clients",                            kind: "permanent",    mode: "redirect", sunsetPhase: "permanent" },
+  { id: "R-13", from: "/admin/five9/legacy",                   to: "/admin/five9",                              kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-13b", from: "/admin/five9/campaign-builder",        to: "/w/:workspaceId/campaigns/new",             kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-13c", from: "/admin/five9/campaign-builder/:draft", to: "/w/:workspaceId/campaigns/new",             kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-13d", from: "/admin/agent-dashboard",               to: "/w/:workspaceId/agents",                    kind: "grace-window", mode: "redirect", sunsetPhase: "Phase 9" },
+  { id: "R-14", from: "/master/*",                             to: "/superadmin/*",                             kind: "permanent",    mode: "redirect", sunsetPhase: "permanent" },
+  { id: "R-15", from: "/admin/dev-guide",                      to: "/superadmin/dev-guide",                     kind: "permanent",    mode: "redirect", sunsetPhase: "permanent" },
+  { id: "R-16", from: "/vault, /feature-vault",                to: "/superadmin/vault",                         kind: "permanent",    mode: "redirect", sunsetPhase: "permanent" },
+  { id: "R-17", from: "/five9, /domains, /legal-connect, /settings, /call-flow, /onboarding/legal-connect", to: "/admin/* equivalents", kind: "permanent", mode: "redirect", sunsetPhase: "permanent" },
   // Slice A — implemented:
-  { id: "R-18", from: "/demo", to: "/contact?intent=demo", kind: "permanent" },
-  { id: "R-19", from: "/faq", to: "/trust", kind: "permanent" },
+  { id: "R-18", from: "/demo",                                 to: "/contact?intent=demo",                      kind: "permanent",    mode: "redirect", sunsetPhase: "permanent" },
+  { id: "R-19", from: "/faq",                                  to: "/trust",                                    kind: "permanent",    mode: "redirect", sunsetPhase: "permanent" },
   // May 14 editorial correction — canonical workspace family is /w/:workspaceId/*.
-  { id: "R-20", from: "/app/workspaces/:workspaceId/*", to: "/w/:workspaceId/*", kind: "permanent" },
+  { id: "R-20", from: "/app/workspaces/:workspaceId/*",        to: "/w/:workspaceId/*",                         kind: "permanent",    mode: "redirect", sunsetPhase: "Phase 11" },
+  { id: "R-21", from: "/org/*",                                to: "/admin/*",                                  kind: "permanent",    mode: "redirect", sunsetPhase: "Phase 11" },
 ];
 
 /* ────────────────────────────────────────────────────────────────────────── */
