@@ -26,7 +26,7 @@ export function useWorkspaceForms() {
     queryFn: async (): Promise<WorkspaceForm[]> => {
       const { data, error } = await supabase
         .from("forms")
-        .select("id, workspace_id, name, description, status, schema, metadata, created_by, created_at, updated_at")
+        .select("id, workspace_id, name, description, status, schema, metadata, current_version, created_by, created_at, updated_at")
         .eq("workspace_id", workspace!.id)
         .order("updated_at", { ascending: false });
       if (error) throw error;
@@ -43,7 +43,7 @@ export function useWorkspaceForm(formId: string | undefined) {
     queryFn: async (): Promise<WorkspaceForm | null> => {
       const { data, error } = await supabase
         .from("forms")
-        .select("id, workspace_id, name, description, status, schema, metadata, created_by, created_at, updated_at")
+        .select("id, workspace_id, name, description, status, schema, metadata, current_version, created_by, created_at, updated_at")
         .eq("id", formId!)
         .eq("workspace_id", workspace!.id)
         .maybeSingle();
