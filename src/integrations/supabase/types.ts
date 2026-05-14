@@ -2267,10 +2267,162 @@ export type Database = {
           },
         ]
       }
+      form_campaign_assignments: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          created_by: string | null
+          form_id: string
+          id: string
+          workspace_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          created_by?: string | null
+          form_id: string
+          id?: string
+          workspace_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          created_by?: string | null
+          form_id?: string
+          id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_campaign_assignments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_campaign_assignments_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_campaign_assignments_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_submissions: {
+        Row: {
+          campaign_id: string | null
+          form_id: string
+          form_version: number
+          id: string
+          mapped: Json
+          payload: Json
+          source: string
+          submitted_at: string
+          submitted_by: string | null
+          workspace_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          form_id: string
+          form_version?: number
+          id?: string
+          mapped?: Json
+          payload?: Json
+          source?: string
+          submitted_at?: string
+          submitted_by?: string | null
+          workspace_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          form_id?: string
+          form_version?: number
+          id?: string
+          mapped?: Json
+          payload?: Json
+          source?: string
+          submitted_at?: string
+          submitted_by?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          form_id: string
+          id: string
+          is_current: boolean
+          notes: string | null
+          schema: Json
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          form_id: string
+          id?: string
+          is_current?: boolean
+          notes?: string | null
+          schema?: Json
+          version: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          form_id?: string
+          id?: string
+          is_current?: boolean
+          notes?: string | null
+          schema?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_versions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forms: {
         Row: {
           created_at: string
           created_by: string | null
+          current_version: number
           description: string | null
           id: string
           metadata: Json
@@ -2283,6 +2435,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          current_version?: number
           description?: string | null
           id?: string
           metadata?: Json
@@ -2295,6 +2448,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          current_version?: number
           description?: string | null
           id?: string
           metadata?: Json
