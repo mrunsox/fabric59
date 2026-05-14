@@ -12,6 +12,7 @@ export type WorkspaceForm = {
   status: "draft" | "published" | "archived";
   schema: Record<string, unknown>;
   metadata: Record<string, unknown>;
+  current_version: number;
   created_by: string | null;
   created_at: string;
   updated_at: string;
