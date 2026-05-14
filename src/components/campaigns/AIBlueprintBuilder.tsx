@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { CampaignIntakeData } from "@/types/campaign";
+import { useActiveWorkspaceId } from "@/hooks/useActiveWorkspaceId";
 
 type Step = "upload" | "extracting" | "analyzing" | "review";
 
@@ -33,6 +34,7 @@ interface AIBlueprintBuilderProps {
 export function AIBlueprintBuilder({ onClose }: AIBlueprintBuilderProps) {
   const { organization } = useAuth();
   const navigate = useNavigate();
+  const { workspaceId: activeWorkspaceId, isLoading: workspaceLoading } = useActiveWorkspaceId();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>("upload");
@@ -162,7 +164,21 @@ export function AIBlueprintBuilder({ onClose }: AIBlueprintBuilderProps) {
 
   const createCampaign = () => {
     if (!campaignData) return;
-    navigate("/admin/campaigns/new", { state: { prefill: campaignData } });
+    // Canonical AI handoff: navigate into the workspace-scoped intake with the
+    // AI prefill carried via router state. Never link first-class UI at the
+    // redirect-only /admin/campaigns/new write surface — state would be lost
+    // through <Navigate>.
+    if (!activeWorkspaceId) {
+      toast.error(
+        workspaceLoading
+          ? "Resolving your workspace, please try again in a moment."
+          : "No workspace available — create or join a workspace first.",
+      );
+      return;
+    }
+    navigate(`/w/${activeWorkspaceId}/campaigns/new?source=ai`, {
+      state: { prefill: campaignData, source: "ai-blueprint" },
+    });
   };
 
   const updateField = (field: string, value: any) => {

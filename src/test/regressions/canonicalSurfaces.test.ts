@@ -451,3 +451,51 @@ describe("Phase H · premium marketing + auth + onboarding rebuild", () => {
     expect(src).toMatch(/\/contact\?topic=pilot-guide/);
   });
 });
+
+/**
+ * AI blueprint → canonical workspace intake handoff.
+ *
+ * Locks in that AIBlueprintBuilder navigates the prefill into the
+ * workspace-scoped intake (/w/:workspaceId/campaigns/new) and never sends
+ * users (or their state.prefill) through the redirect-only
+ * /admin/campaigns/new route, where <Navigate> would silently drop the state.
+ */
+describe("AI blueprint → workspace intake handoff", () => {
+  const read = (rel: string) =>
+    fs.readFileSync(path.join(ROOT, rel), "utf8");
+
+  it("AIBlueprintBuilder no longer navigates to /admin/campaigns/new", () => {
+    const src = read("components/campaigns/AIBlueprintBuilder.tsx");
+    expect(src).not.toMatch(/navigate\(\s*["'`]\/admin\/campaigns\/new/);
+  });
+
+  it("AIBlueprintBuilder navigates into the canonical workspace intake with prefill state", () => {
+    const src = read("components/campaigns/AIBlueprintBuilder.tsx");
+    // Workspace-scoped target with a workspaceId interpolation.
+    expect(src).toMatch(/navigate\(\s*`\/w\/\$\{[^}]+\}\/campaigns\/new/);
+    // Resolution uses the shared active-workspace hook.
+    expect(src).toMatch(/useActiveWorkspaceId/);
+    // Prefill is carried via router state.
+    expect(src).toMatch(/state:\s*\{[^}]*prefill:\s*campaignData/);
+    // Source tag identifies the AI handoff to the receiving page.
+    expect(src).toMatch(/source:\s*["'`]ai-blueprint["'`]/);
+  });
+
+  it("WorkspaceCampaignNewPage reads the AI prefill from router state", () => {
+    const src = read("pages/workspace/WorkspaceCampaignNewPage.tsx");
+    expect(src).toMatch(/useLocation/);
+    expect(src).toMatch(/state\.source\s*===\s*["'`]ai-blueprint["'`]/);
+    // Renders a banner so the user sees the form is AI-seeded.
+    expect(src).toMatch(/data-testid="ai-prefill-banner"/);
+    // Still mounts the canonical CampaignIntakePage which already reads
+    // location.state.prefill — guard the import so we don't accidentally
+    // detach the receiving form.
+    expect(src).toMatch(/CampaignIntakePage/);
+  });
+
+  it("CampaignIntakePage still seeds its form from location.state.prefill", () => {
+    const src = read("pages/admin/CampaignIntakePage.tsx");
+    expect(src).toMatch(/location\.state[^;]*prefill/);
+  });
+});
+
