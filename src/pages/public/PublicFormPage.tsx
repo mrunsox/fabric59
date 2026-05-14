@@ -81,13 +81,13 @@ export default function PublicFormPage() {
       campaignId,
     });
     setSubmitting(false);
-    if (!result.ok) {
-      if (result.fieldErrors) setFieldErrors(result.fieldErrors);
-      else setLoadError(result.error);
+    if (result.ok) {
+      setConfirmation(result.confirmation);
+      setValues({});
       return;
     }
-    setConfirmation(result.confirmation);
-    setValues({});
+    if (result.fieldErrors) setFieldErrors(result.fieldErrors);
+    else setLoadError(result.error);
   }
 
   if (loading) {
