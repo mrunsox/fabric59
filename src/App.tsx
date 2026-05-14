@@ -173,6 +173,7 @@ import FeatureVaultPage from "@/pages/superadmin/FeatureVaultPage";
 import FeatureVaultDetailPage from "@/pages/superadmin/FeatureVaultDetailPage";
 import SourceExportsPage from "@/pages/superadmin/SourceExportsPage";
 import AdvancedRoutesPage from "@/pages/superadmin/AdvancedRoutesPage";
+import PublicFormPage from "@/pages/public/PublicFormPage";
 import SystemDocsPage from "@/pages/superadmin/SystemDocsPage";
 import DesignPartnersPage from "@/pages/superadmin/DesignPartnersPage";
 import LegalConnectReportsPage from "@/pages/superadmin/LegalConnectReportsPage";
