@@ -214,38 +214,16 @@ export default function WorkspaceFormDetailPage() {
             </TabsContent>
 
             <TabsContent value="versions" className="mt-4">
-              <Card>
-                <CardHeader><CardTitle className="text-base">Version history</CardTitle></CardHeader>
-                <CardContent>
-                  {versions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No published versions yet. Publish a version to snapshot the schema.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {versions.map((v) => (
-                        <li key={v.id} className="flex items-center justify-between gap-2 border rounded px-3 py-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">v{v.version}</Badge>
-                            {v.is_current && <Badge className="text-xs">Current</Badge>}
-                            <span className="text-muted-foreground text-xs">
-                              {new Date(v.created_at).toLocaleString()}
-                            </span>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setSchema(v.schema);
-                              setDirty(true);
-                            }}
-                          >
-                            Load into builder
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </CardContent>
-              </Card>
+              {formId && (
+                <FormVersionHistory
+                  formId={formId}
+                  versions={versions}
+                  onLoadIntoBuilder={(s) => {
+                    setSchema(s);
+                    setDirty(true);
+                  }}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </>
