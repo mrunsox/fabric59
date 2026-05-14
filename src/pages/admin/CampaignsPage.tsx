@@ -34,6 +34,12 @@ export default function CampaignsPage() {
   const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get("status") ?? "all";
+  const { workspaceId: activeWorkspaceId } = useActiveWorkspaceId();
+  // Canonical campaign create lives at /w/:workspaceId/campaigns/new. Fall back to
+  // the workspaces index when no workspace is resolvable yet.
+  const newCampaignHref = activeWorkspaceId
+    ? `/w/${activeWorkspaceId}/campaigns/new`
+    : "/admin/workspaces";
 
   const filtered = useMemo(() => {
     if (status === "all") return campaigns;
