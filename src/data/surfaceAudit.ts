@@ -422,6 +422,8 @@ export const REDIRECT_TABLE: RedirectRow[] = [
   // Slice A — implemented:
   { id: "R-18", from: "/demo", to: "/contact?intent=demo", kind: "permanent" },
   { id: "R-19", from: "/faq", to: "/trust", kind: "permanent" },
+  // May 14 editorial correction — canonical workspace family is /w/:workspaceId/*.
+  { id: "R-20", from: "/app/workspaces/:workspaceId/*", to: "/w/:workspaceId/*", kind: "permanent" },
 ];
 
 /* ────────────────────────────────────────────────────────────────────────── */

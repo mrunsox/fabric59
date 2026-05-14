@@ -447,6 +447,41 @@ export default function OutlinePage() {
 
         <ScrollArea className="pr-4">
           <div className="space-y-12 pb-24">
+            <Section id="route-family-correction" title="0. Route-family editorial correction (May 14)">
+              <Card className="border-primary/40">
+                <CardContent className="pt-5 space-y-3 text-sm">
+                  <p>
+                    Earlier sections of this doc reference <code className="px-1 rounded bg-muted">/app/workspaces/:workspaceId/*</code>
+                    {" "}as the canonical workspace route family. Live code converged on <code className="px-1 rounded bg-muted">/w/:workspaceId/*</code>{" "}
+                    in the workspace-shell rebuild. This correction is the controlling statement; older route strings below are
+                    retained for traceability and should be read as historical.
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>
+                      <strong>Canonical workspace route family:</strong> <code className="px-1 rounded bg-muted">/w/:workspaceId/*</code>
+                      {" "}rendered by <code>CanonicalWorkspaceShell</code>. All canonical workspace nav targets live here.
+                    </li>
+                    <li>
+                      <strong>Compatibility alias:</strong> <code className="px-1 rounded bg-muted">/app/workspaces/:workspaceId/*</code>{" "}
+                      is a single-hop redirect to the canonical family. No nav link or CTA targets it directly.
+                    </li>
+                    <li>
+                      <strong>Org / admin shell relationship:</strong> <code className="px-1 rounded bg-muted">/admin/*</code>{" "}
+                      (AdminShell) remains the canonical organization-level surface. <code className="px-1 rounded bg-muted">/org/*</code>{" "}
+                      (OrgShell) is an internal forward-canonical scaffold — it is mounted but is <em>not</em> promoted to canonical
+                      org status by this doc. A future slice must either (a) adopt <code>/org/*</code> as canonical and add
+                      <code> /admin/* → /org/*</code> redirects, or (b) retire the OrgShell scaffolding.
+                    </li>
+                    <li>
+                      <strong>Workspace data scoping:</strong> <code>deployment_runs</code> and <code>agents</code> now carry a
+                      <code> workspace_id</code> column. Workspace pages for Runs and Agents filter strictly by it; org-level
+                      pages remain compatibility surfaces.
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </Section>
+
             <Section id="product" title="1. Canonical product statement">
               <p>
                 Fabric59 is a multi-tenant operational intelligence platform for service organizations, beginning with
