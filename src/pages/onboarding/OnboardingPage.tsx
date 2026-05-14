@@ -248,6 +248,55 @@ export default function OnboardingPage() {
 
   // Per-step bodies render inside OnboardingShell — no per-card heading.
 
+  // Master-admin escape hatch: skip the concierge flow and land directly on a
+  // workspace dashboard. If the master admin has no org/workspace yet, bootstrap
+  // a minimal "Fabric59 Ops" org + default workspace so /w/:id/home resolves.
+  const handleSkipToWorkspace = async () => {
+    setSubmitting(true);
+    try {
+      let targetOrgId = orgId;
+      if (!targetOrgId) {
+        const { data: org, error: orgErr } = await supabase
+          .from("organizations")
+          .insert({ name: "Fabric59 Ops", billing_email: user.email })
+          .select()
+          .single();
+        if (orgErr) throw orgErr;
+        const { error: memberError } = await supabase
+          .from("organization_members")
+          .insert({ organization_id: org.id, user_id: user.id, role: "owner" });
+        if (memberError) throw memberError;
+        targetOrgId = org.id;
+        setCreatedOrgId(org.id);
+      }
+      const existing =
+        workspaces.find((w) => w.organization_id === targetOrgId && w.is_default) ??
+        workspaces.find((w) => w.organization_id === targetOrgId);
+      let targetId = existing?.id ?? null;
+      if (!targetId) {
+        const { data, error } = await supabase
+          .from("workspaces")
+          .insert({
+            organization_id: targetOrgId,
+            name: "Main workspace",
+            is_default: true,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        targetId = data.id;
+        await refetchWorkspaces();
+      }
+      if (typeof window !== "undefined") localStorage.removeItem(RESUME_KEY);
+      toast.success("Workspace ready");
+      navigate(`/w/${targetId}/home`, { replace: true });
+    } catch (err) {
+      toast.error((err as Error).message || "Could not skip to workspace");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
 
   const stepContent: Record<Step, React.ReactNode> = {
     org: (
@@ -528,7 +577,18 @@ export default function OnboardingPage() {
     >
       <div className="animate-fade-up">{stepContent[step]}</div>
       {isMasterAdmin && (
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={handleSkipToWorkspace}
+            disabled={submitting}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline disabled:opacity-50"
+            data-testid="onboarding-skip-link"
+          >
+            {submitting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Rocket className="h-3 w-3" />}
+            Skip onboarding — go to workspace dashboard
+            <ArrowRight className="h-3 w-3" />
+          </button>
           <Link
             to="/superadmin"
             className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-primary transition-colors"
