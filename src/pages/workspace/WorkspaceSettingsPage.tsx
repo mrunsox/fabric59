@@ -15,7 +15,7 @@ import { toast } from "@/hooks/use-toast";
  * Phase 4 — Canonical workspace settings.
  *
  * Workspace-scoped surface. Org-level settings (members, billing, branding)
- * live under /org/settings. This page exposes only safe, workspace-local
+ * live under /admin/settings. This page exposes only safe, workspace-local
  * controls; deeper feature settings stay close to their feature surfaces.
  */
 export default function WorkspaceSettingsPage() {
@@ -96,7 +96,7 @@ export default function WorkspaceSettingsPage() {
         </CardHeader>
         <CardContent className="text-xs text-muted-foreground">
           Branding and billing are managed at the organization level under{" "}
-          <a href="/org/settings" className="text-primary hover:underline">organization settings</a>.
+          <a href="/admin/settings" className="text-primary hover:underline">organization settings</a>.
           Integration credentials live under this workspace's{" "}
           <a href="integrations" className="text-primary hover:underline">Integrations</a> tab.
         </CardContent>
