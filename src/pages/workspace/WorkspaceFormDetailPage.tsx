@@ -20,6 +20,7 @@ import {
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 import { FormBuilderEditor } from "@/components/forms/FormBuilderEditor";
 import { FormPreview } from "@/components/forms/FormPreview";
+import { FormVersionHistory } from "@/components/forms/FormVersionHistory";
 import { emptySchema, type FormSchema } from "@/types/form-builder";
 
 export default function WorkspaceFormDetailPage() {
