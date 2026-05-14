@@ -22,6 +22,10 @@ interface Stats {
 
 export default function Five9OverviewPage() {
   const { organization } = useAuth();
+  const { workspaceId: activeWorkspaceId } = useActiveWorkspaceId();
+  const newCampaignHref = activeWorkspaceId
+    ? `/w/${activeWorkspaceId}/campaigns/new`
+    : "/admin/workspaces";
   const [stats, setStats] = useState<Stats>({
     domains: 0,
     activeRoutes: 0,
