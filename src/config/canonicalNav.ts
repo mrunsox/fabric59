@@ -3,6 +3,7 @@ import {
   Home, Users, Megaphone, BookOpen, FormInput, FileStack,
   ClipboardCheck, BarChart3, Brain, Sparkles, Settings,
   PlayCircle, Headphones, Eye,
+  Sparkle, UserSquare2, Tag, Boxes, Heart, Shield,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
