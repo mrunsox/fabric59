@@ -49,6 +49,10 @@ import WorkspaceSettingsPage from "@/pages/workspace/WorkspaceSettingsPage";
 import WorkspaceRunsPage from "@/pages/workspace/WorkspaceRunsPage";
 import WorkspaceAgentsPage from "@/pages/workspace/WorkspaceAgentsPage";
 import WorkspaceSupervisorPage from "@/pages/workspace/WorkspaceSupervisorPage";
+// Phase B canonical surfaces.
+import WorkspaceDispositionsPage from "@/pages/workspace/WorkspaceDispositionsPage";
+import WorkspaceNotificationsPage from "@/pages/workspace/WorkspaceNotificationsPage";
+import WorkspaceAgentCockpitPage from "@/pages/workspace/WorkspaceAgentCockpitPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -530,6 +534,10 @@ const App = () => (
                 <Route path="knowledge" element={<WorkspaceKnowledgePage />} />
                 <Route path="assistant" element={<WorkspaceAssistantPage />} />
                 <Route path="settings" element={<WorkspaceSettingsPage />} />
+                {/* Phase B canonical surfaces */}
+                <Route path="dispositions" element={<WorkspaceDispositionsPage />} />
+                <Route path="notifications" element={<WorkspaceNotificationsPage />} />
+                <Route path="agent" element={<WorkspaceAgentCockpitPage />} />
               </Route>
             </Route>
 
