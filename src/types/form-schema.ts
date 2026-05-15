@@ -11,7 +11,15 @@
 
 export const FORM_SCHEMA_VERSION = 1 as const;
 
-/** The 24 canonical field types — keep in sync with formFieldTypes registry. */
+/**
+ * Canonical field types. Additions are backward-compatible: legacy data that
+ * never used a new type is still valid V1, so FORM_SCHEMA_VERSION stays at 1.
+ *
+ * Agent-presentation types added in Checkpoint 1:
+ *   - `info`           rich note shown to the agent (read-only). Uses `content`.
+ *   - `script_block`   "say this" script line with accent treatment. Uses `content`.
+ *   - `connector_link` labeled URL chip (FAQ, calendar, pricing). Uses `href` + `label`.
+ */
 export type FormFieldType =
   | "text"
   | "textarea"
@@ -36,7 +44,10 @@ export type FormFieldType =
   | "slider"
   | "hidden"
   | "divider"
-  | "heading";
+  | "heading"
+  | "info"
+  | "script_block"
+  | "connector_link";
 
 export type FormFieldOption = { label: string; value: string };
 
@@ -73,6 +84,10 @@ export interface FormField {
   ai?: FormFieldAiDisplay;
   /** Where this value lands when the submission is mapped (dot-path). */
   mapping?: string;
+  /** Body text for `info` / `script_block` (markdown-lite). */
+  content?: string;
+  /** External URL target for `connector_link`. */
+  href?: string;
 }
 
 export interface FormSection {
