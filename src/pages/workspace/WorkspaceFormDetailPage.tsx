@@ -1,67 +1,25 @@
-import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, Pencil, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Send, Plus, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/common/StatusBadge";
-import { useWorkspaceForm } from "@/hooks/useWorkspaceForms";
-import {
-  useFormVersions,
-  useSaveFormSchema,
-  useFormSubmissions,
-  useCreateSubmission,
-  useFormCampaignAssignments,
-  useAssignFormToCampaign,
-  useUnassignFormFromCampaign,
-} from "@/hooks/useFormBuilder";
-import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
-import { FormBuilderEditor } from "@/components/forms/FormBuilderEditor";
-import { FormPreview } from "@/components/forms/FormPreview";
-import { FormVersionHistory } from "@/components/forms/FormVersionHistory";
-import { emptySchema, type FormSchema } from "@/types/form-builder";
+import { useWorkspaceForm, useFormSchema } from "@/hooks/useWorkspaceForms";
 
+/**
+ * Read-only form summary. The canonical authoring surface lives at
+ * /w/:workspaceId/forms/:formId/edit (WorkspaceFormBuilderPage). This page
+ * shows metadata + a quick schema overview and routes to the builder.
+ */
 export default function WorkspaceFormDetailPage() {
   const { workspaceId, formId } = useParams<{ workspaceId: string; formId: string }>();
   const { data: form, isLoading } = useWorkspaceForm(formId);
-  const { data: versions = [] } = useFormVersions(formId);
-  const { data: submissions = [] } = useFormSubmissions(formId);
-  const { data: campaigns = [] } = useWorkspaceCampaigns();
-  const { data: assignments = [] } = useFormCampaignAssignments(formId);
-  const save = useSaveFormSchema();
-  const submit = useCreateSubmission();
-  const assign = useAssignFormToCampaign();
-  const unassign = useUnassignFormFromCampaign();
+  const { data: schema } = useFormSchema(formId);
 
-  const [schema, setSchema] = useState<FormSchema>(emptySchema);
-  const [dirty, setDirty] = useState(false);
-  const [campaignToAssign, setCampaignToAssign] = useState<string>("");
-
-  useEffect(() => {
-    if (form?.schema) {
-      const incoming = (form.schema as unknown as FormSchema) ?? emptySchema;
-      setSchema(incoming.fields ? incoming : emptySchema);
-      setDirty(false);
-    }
-  }, [form?.id]);
-
-  const updateSchema = (next: FormSchema) => {
-    setSchema(next);
-    setDirty(true);
-  };
-
-  const handleSaveDraft = () => formId && save.mutate({ formId, schema }, { onSuccess: () => setDirty(false) });
-  const handlePublish = () =>
-    formId && save.mutate({ formId, schema, publish: true }, { onSuccess: () => setDirty(false) });
-
-  const assignedCampaignIds = useMemo(() => new Set(assignments.map((a) => a.campaign_id)), [assignments]);
-  const availableCampaigns = useMemo(
-    () => campaigns.filter((c) => !assignedCampaignIds.has(c.id)),
-    [campaigns, assignedCampaignIds]
-  );
-  const campaignsById = useMemo(() => Object.fromEntries(campaigns.map((c) => [c.id, c])), [campaigns]);
+  const editHref = `/w/${workspaceId}/forms/${formId}/edit`;
+  const sectionCount = schema?.sections.length ?? 0;
+  const fieldCount = schema?.sections.reduce((n, s) => n + s.fields.length, 0) ?? 0;
+  const ruleCount = schema?.logic.length ?? 0;
 
   return (
     <div className="space-y-4">
@@ -74,160 +32,89 @@ export default function WorkspaceFormDetailPage() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : !form ? (
-        <Card><CardContent className="pt-6 text-sm text-muted-foreground">Form not found.</CardContent></Card>
+        <Card>
+          <CardContent className="pt-6 text-sm text-muted-foreground">Form not found.</CardContent>
+        </Card>
       ) : (
         <>
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold">{form.name}</h1>
-              {form.description && <p className="text-sm text-muted-foreground mt-1">{form.description}</p>}
-              <div className="flex items-center gap-2 mt-2">
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold tracking-tight">{form.name}</h1>
+              {form.description && (
+                <p className="text-sm text-muted-foreground max-w-2xl">{form.description}</p>
+              )}
+              <div className="flex items-center gap-2">
                 <StatusBadge status={form.status} />
                 <Badge variant="outline" className="text-xs">v{form.current_version ?? 1}</Badge>
-                {dirty && <Badge variant="outline" className="text-xs border-accent/40 text-accent">Unsaved</Badge>}
+                <span className="text-xs text-muted-foreground">
+                  Updated {new Date(form.updated_at).toLocaleString()}
+                </span>
               </div>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={handleSaveDraft} disabled={save.isPending || !dirty}>
-                <Save className="h-3.5 w-3.5 mr-1" /> Save draft
-              </Button>
-              <Button size="sm" onClick={handlePublish} disabled={save.isPending}>
-                <Send className="h-3.5 w-3.5 mr-1" /> Publish version
+              <Button asChild size="sm">
+                <Link to={editHref} data-testid="form-edit-cta">
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> Edit form
+                </Link>
               </Button>
             </div>
           </div>
 
-          <Tabs defaultValue="builder">
-            <TabsList>
-              <TabsTrigger value="builder">Builder</TabsTrigger>
-              <TabsTrigger value="preview">Preview</TabsTrigger>
-              <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-              <TabsTrigger value="submissions">Submissions ({submissions.length})</TabsTrigger>
-              <TabsTrigger value="versions">Versions ({versions.length})</TabsTrigger>
-            </TabsList>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <SummaryStat label="Sections" value={sectionCount} />
+            <SummaryStat label="Fields" value={fieldCount} />
+            <SummaryStat label="Logic rules" value={ruleCount} />
+          </div>
 
-            <TabsContent value="builder" className="mt-4">
-              <FormBuilderEditor schema={schema} onChange={updateSchema} />
-            </TabsContent>
-
-            <TabsContent value="preview" className="mt-4">
-              <FormPreview
-                schema={schema}
-                submitting={submit.isPending}
-                onSubmit={({ values, mapped }) =>
-                  formId &&
-                  submit.mutate({
-                    formId,
-                    version: form.current_version ?? 1,
-                    payload: values,
-                    mapped,
-                    source: "preview",
-                  })
-                }
-              />
-            </TabsContent>
-
-            <TabsContent value="campaigns" className="mt-4 space-y-3">
-              <Card>
-                <CardHeader><CardTitle className="text-base">Assign to a campaign</CardTitle></CardHeader>
-                <CardContent className="flex items-center gap-2">
-                  <Select value={campaignToAssign} onValueChange={setCampaignToAssign}>
-                    <SelectTrigger className="max-w-sm">
-                      <SelectValue placeholder={availableCampaigns.length ? "Pick a campaign…" : "No unassigned campaigns"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableCampaigns.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (!formId || !campaignToAssign) return;
-                      assign.mutate(
-                        { formId, campaignId: campaignToAssign },
-                        { onSuccess: () => setCampaignToAssign("") }
-                      );
-                    }}
-                    disabled={!campaignToAssign || assign.isPending}
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1" /> Assign
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader><CardTitle className="text-base">Assigned campaigns</CardTitle></CardHeader>
-                <CardContent>
-                  {assignments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No campaigns assigned yet.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {assignments.map((a) => {
-                        const c = campaignsById[a.campaign_id];
-                        return (
-                          <li key={a.id} className="flex items-center justify-between gap-2 border rounded px-3 py-2">
-                            <div className="flex items-center gap-2 text-sm">
-                              <span className="font-medium">{c?.name ?? a.campaign_id}</span>
-                              {c && <StatusBadge status={c.status} />}
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => formId && unassign.mutate({ assignmentId: a.id, formId })}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                            </Button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="submissions" className="mt-4">
-              <Card>
-                <CardHeader><CardTitle className="text-base">Recent submissions</CardTitle></CardHeader>
-                <CardContent>
-                  {submissions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No submissions yet. Use Preview to capture a test entry.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {submissions.map((s) => (
-                        <li key={s.id} className="border rounded px-3 py-2">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>v{s.form_version} · {s.source}</span>
-                            <span>{new Date(s.submitted_at).toLocaleString()}</span>
-                          </div>
-                          <pre className="bg-muted/40 rounded p-2 text-xs overflow-x-auto mt-2">
-{JSON.stringify(s.payload, null, 2)}
-                          </pre>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="versions" className="mt-4">
-              {formId && (
-                <FormVersionHistory
-                  formId={formId}
-                  versions={versions}
-                  onLoadIntoBuilder={(s) => {
-                    setSchema(s);
-                    setDirty(true);
-                  }}
-                />
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Eye className="h-3.5 w-3.5" /> Sections
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {sectionCount === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No sections yet.{" "}
+                  <Link to={editHref} className="text-primary underline">
+                    Open the builder
+                  </Link>{" "}
+                  to add one.
+                </p>
+              ) : (
+                <ul className="divide-y divide-border/60">
+                  {schema!.sections.map((s, idx) => (
+                    <li key={s.id} className="py-2 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {idx + 1}. {s.title || "Untitled section"}
+                        </p>
+                        {s.description && (
+                          <p className="text-xs text-muted-foreground truncate">{s.description}</p>
+                        )}
+                      </div>
+                      <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                        {s.fields.length} field{s.fields.length === 1 ? "" : "s"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               )}
-            </TabsContent>
-          </Tabs>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
+  );
+}
+
+function SummaryStat({ label, value }: { label: string; value: number }) {
+  return (
+    <Card>
+      <CardContent className="pt-4">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+        <p className="text-2xl font-semibold tabular-nums">{value}</p>
+      </CardContent>
+    </Card>
   );
 }
