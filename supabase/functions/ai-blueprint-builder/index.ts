@@ -81,8 +81,6 @@ const CAMPAIGN_INTAKE_SCHEMA = {
       },
       aniNumbers: { type: "array", items: { type: "string" } },
       dnisNumbers: { type: "array", items: { type: "string" } },
-      aniNumbers: { type: "array", items: { type: "string" } },
-      dnisNumbers: { type: "array", items: { type: "string" } },
       coverageType: { type: "string", enum: ["24/7", "scheduled"] },
       weekdayStart: { type: "string" },
       weekdayEnd: { type: "string" },
