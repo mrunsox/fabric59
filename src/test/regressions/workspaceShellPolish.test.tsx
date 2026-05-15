@@ -81,11 +81,20 @@ describe("WorkspaceShell polish", () => {
     expect(orgLink.getAttribute("href")).toBe("/admin");
   });
 
-  it("renders grouped sidebar labels: Build, Operate, Intelligence", () => {
+  it("renders grouped sidebar labels: Build, Operate, Insight", () => {
     renderShell();
     expect(screen.getByText("Build")).toBeInTheDocument();
     expect(screen.getByText("Operate")).toBeInTheDocument();
-    expect(screen.getByText("Intelligence")).toBeInTheDocument();
+    expect(screen.getByText("Insight")).toBeInTheDocument();
+  });
+
+  it("hides demoted Runs / Agents / Supervisor from the primary sidebar", () => {
+    renderShell();
+    const sidebar = document.querySelector('[data-sidebar="sidebar"]') ?? document.body;
+    const text = sidebar.textContent ?? "";
+    expect(text).not.toMatch(/\bRuns\b/);
+    expect(text).not.toMatch(/\bAgents\b/);
+    expect(text).not.toMatch(/\bSupervisor\b/);
   });
 
   it("exposes a ⌘K quick-jump trigger in the top bar", () => {
