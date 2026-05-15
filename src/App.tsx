@@ -23,6 +23,7 @@ import WorkspaceHomePage from "@/pages/workspace/WorkspaceHomePage";
 import WorkspaceFormsPage from "@/pages/workspace/WorkspaceFormsPage";
 import WorkspaceFormNewPage from "@/pages/workspace/WorkspaceFormNewPage";
 import WorkspaceFormDetailPage from "@/pages/workspace/WorkspaceFormDetailPage";
+import WorkspaceFormBuilderPage from "@/pages/workspace/WorkspaceFormBuilderPage";
 import WorkspaceResetPreviewPage from "@/pages/workspace/WorkspaceResetPreviewPage";
 import WorkspaceClientsPage from "@/pages/workspace/WorkspaceClientsPage";
 import WorkspaceClientDetailPage from "@/pages/workspace/WorkspaceClientDetailPage";
