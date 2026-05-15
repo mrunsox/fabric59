@@ -42,7 +42,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useAuth } from "@/contexts/AuthContext";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
-import { WORKSPACE_NAV } from "@/config/canonicalNav";
+import { WORKSPACE_NAV, WORKSPACE_NAV_GROUPS, WORKSPACE_NAV_PINNED } from "@/config/canonicalNav";
 import { useKeyboardNav, KEYBOARD_HINTS } from "@/hooks/useKeyboardNav";
 import { WorkspaceCommandPalette } from "@/components/workspace/WorkspaceCommandPalette";
 
@@ -55,13 +55,6 @@ import { WorkspaceCommandPalette } from "@/components/workspace/WorkspaceCommand
  * "g + key" shortcuts jump between sections.
  */
 
-type SectionGroup = { label: string; keys: string[] };
-const NAV_GROUPS: SectionGroup[] = [
-  { label: "Build", keys: ["home", "campaigns", "guides", "forms", "templates", "clients"] },
-  { label: "Operate", keys: ["runs", "agents", "supervisor", "qa"] },
-  { label: "Intelligence", keys: ["analytics", "integrations", "knowledge", "assistant"] },
-];
-
 function WorkspaceSidebar({ workspaceId }: { workspaceId: string }) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -71,12 +64,6 @@ function WorkspaceSidebar({ workspaceId }: { workspaceId: string }) {
     const full = `/w/${workspaceId}/${to}`;
     return pathname === full || pathname.startsWith(`${full}/`);
   };
-
-  const navByKey = useMemo(
-    () => Object.fromEntries(WORKSPACE_NAV.map((n) => [n.key, n])),
-    [],
-  );
-  const settingsItem = navByKey["settings"];
 
   return (
     <Sidebar collapsible="icon">
@@ -89,7 +76,7 @@ function WorkspaceSidebar({ workspaceId }: { workspaceId: string }) {
         )}
       </SidebarHeader>
       <SidebarContent className="py-1">
-        {NAV_GROUPS.map((group) => (
+        {WORKSPACE_NAV_GROUPS.map((group) => (
           <SidebarGroup key={group.label}>
             {!collapsed && (
               <SidebarGroupLabel className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">
@@ -98,9 +85,7 @@ function WorkspaceSidebar({ workspaceId }: { workspaceId: string }) {
             )}
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.keys.map((key) => {
-                  const item = navByKey[key];
-                  if (!item) return null;
+                {group.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.to);
                   const hint = KEYBOARD_HINTS[item.to];
@@ -141,25 +126,30 @@ function WorkspaceSidebar({ workspaceId }: { workspaceId: string }) {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      {settingsItem && (
+      {WORKSPACE_NAV_PINNED.length > 0 && (
         <SidebarFooter className="border-t border-border/40">
           <SidebarSeparator className="hidden" />
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive(settingsItem.to)}
-                tooltip={settingsItem.label}
-              >
-                <NavLink
-                  to={`/w/${workspaceId}/${settingsItem.to}`}
-                  className="flex items-center gap-2"
-                >
-                  <settingsItem.icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>{settingsItem.label}</span>}
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {WORKSPACE_NAV_PINNED.map((item) => {
+              const Icon = item.icon;
+              return (
+                <SidebarMenuItem key={item.key}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.to)}
+                    tooltip={item.label}
+                  >
+                    <NavLink
+                      to={`/w/${workspaceId}/${item.to}`}
+                      className="flex items-center gap-2"
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.label}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
           </SidebarMenu>
         </SidebarFooter>
       )}
