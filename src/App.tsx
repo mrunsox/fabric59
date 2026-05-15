@@ -387,7 +387,9 @@ const App = () => (
                 <Route path="templates/:id" element={<TemplateDetailPage />} />
 
                 {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
-                <Route path="five9" element={<Five9OverviewPage />} />
+                {/* Phase D: /admin/five9 de-surfaced — silent redirect to canonical connector instance. */}
+                <Route path="five9" element={<Navigate to="/admin/connectors/five9" replace />} />
+                <Route path="five9/overview" element={<Five9OverviewPage />} />{/* retained on disk; reachable via direct URL */}
                 <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
                 {/* CANONICAL: Five9 campaign builder writes redirect into the workspace path. */}
                 <Route path="five9/campaign-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
