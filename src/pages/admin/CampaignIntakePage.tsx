@@ -421,9 +421,9 @@ export default function CampaignIntakePage() {
       </Card>
 
       <Card>
-        <Collapsible open={openSections[5]}>
+        <Collapsible open={openSections[4]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={5} title="Dispositions" desc="Select or create dispositions for this campaign" />
+            <SectionHeader num={4} title="Dispositions" desc="Select or create dispositions for this campaign" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">
@@ -484,11 +484,11 @@ export default function CampaignIntakePage() {
         </Collapsible>
       </Card>
 
-      {/* Section 6: Connectors */}
+      {/* Section 5: Connectors */}
       <Card>
-        <Collapsible open={openSections[6]}>
+        <Collapsible open={openSections[5]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={6} title="Connectors & Scripts" desc="Link external resources to the campaign" />
+            <SectionHeader num={5} title="Connectors & Scripts" desc="Link external resources to the campaign" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent>
@@ -501,12 +501,12 @@ export default function CampaignIntakePage() {
         </Collapsible>
       </Card>
 
-      {/* Section 7: Decision Tree (only when NOT multi-department) */}
+      {/* Section 6: Decision Tree (only when NOT multi-department) */}
       {!intake.isMultiDepartment && (
         <Card>
-          <Collapsible open={openSections[7]}>
+          <Collapsible open={openSections[6]}>
             <CardHeader className="pb-2">
-              <SectionHeader num={7} title="Agent Decision Tree" desc="Build the step-by-step script for agents" />
+              <SectionHeader num={6} title="Agent Decision Tree" desc="Build the step-by-step script for agents" />
             </CardHeader>
             <CollapsibleContent>
               <CardContent>
@@ -517,12 +517,12 @@ export default function CampaignIntakePage() {
         </Card>
       )}
 
-      {/* Section 7b: Departments (only when multi-department) */}
+      {/* Section 6b: Departments (only when multi-department) */}
       {intake.isMultiDepartment && (
         <Card>
-          <Collapsible open={openSections[7]}>
+          <Collapsible open={openSections[6]}>
             <CardHeader className="pb-2">
-              <SectionHeader num={7} title="Departments" desc="Configure worksheets and dispatch per department" />
+              <SectionHeader num={6} title="Departments" desc="Configure worksheets and dispatch per department" />
             </CardHeader>
             <CollapsibleContent>
               <CardContent>
@@ -537,11 +537,11 @@ export default function CampaignIntakePage() {
         </Card>
       )}
 
-      {/* Section 8: Skill & Users */}
+      {/* Section 7: Skill & Users */}
       <Card>
-        <Collapsible open={openSections[8]}>
+        <Collapsible open={openSections[7]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={8} title="Skill & User Assignment" desc="Create skill and assign agents" />
+            <SectionHeader num={7} title="Skill & User Assignment" desc="Create skill and assign agents" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">
@@ -563,11 +563,11 @@ export default function CampaignIntakePage() {
         </Collapsible>
       </Card>
 
-      {/* Section 9: Final Notes */}
+      {/* Section 8: Final Notes */}
       <Card>
-        <Collapsible open={openSections[9]}>
+        <Collapsible open={openSections[8]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={9} title="Final Notes" desc="Priority, go-live date, and additional notes" />
+            <SectionHeader num={8} title="Final Notes" desc="Priority, go-live date, and additional notes" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">
