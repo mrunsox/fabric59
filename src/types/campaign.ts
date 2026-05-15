@@ -67,7 +67,6 @@ export interface CampaignIntakeData {
   // Section 2: Phone Numbers
   aniNumbers: string[];
   dnisNumbers: string[];
-  transferDisplayNumber?: string;
 
   // Section 3: Schedule
   coverageType: "24/7" | "scheduled";
@@ -79,16 +78,8 @@ export interface CampaignIntakeData {
   afterHoursHandling?: "vm" | "overflow" | "disconnect" | "transfer";
   afterHoursTransferNumber?: string;
 
-  // Section 4: Prompts
-  ivrGreetingPrompt?: string;
-  whisperPrompt?: string;
-  holdMusicPrompt?: string;
-  ivrAnnouncementPrompt?: string;
-  vmGreetingType?: "existing" | "upload";
-  vmGreetingPrompt?: string;
-  vmGreetingFileUrl?: string;
-
-  // Section 5: Dispositions
+  // Section 4: Dispositions (canonical Fabric59 — no IVR/voice prompt plumbing here;
+  // those live in the Five9 admin surface, not in the Fabric59 campaign authoring boundary)
   existingDispositions: string[];
   newDispositions: string[];
   enableDispositionEmail: boolean;
@@ -166,8 +157,6 @@ export const DEFAULT_CHECKLIST: ChecklistItem[] = [
   { id: "cmp_connectors", category: "Campaign", task: "Add Connectors", automated: false, done: false },
   { id: "cmp_script", category: "Campaign", task: "Add Script (embedded)", automated: false, done: false },
   { id: "cmp_worksheets", category: "Campaign", task: "Configure Worksheets", automated: false, done: false },
-  { id: "cmp_hold", category: "Campaign", task: "Add Hold Music", automated: false, done: false },
-  { id: "cmp_whisper", category: "Campaign", task: "Add Whisper Prompt", automated: false, done: false },
   // Connector
   { id: "con_backend", category: "Connector", task: "Backend Document", automated: false, done: false },
   { id: "con_website", category: "Connector", task: "Website", automated: false, done: false },
