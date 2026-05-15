@@ -15,12 +15,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { MultiInput } from "@/components/campaigns/MultiInput";
-import { PromptSelector } from "@/components/campaigns/PromptSelector";
 import { DecisionTreeBuilder } from "@/components/campaigns/DecisionTreeBuilder";
 import { DispositionEmailTable } from "@/components/campaigns/DispositionEmailTable";
 import { ConnectorList } from "@/components/campaigns/ConnectorList";
 import { DepartmentTabs } from "@/components/campaigns/DepartmentTabs";
-import { useSaveCampaignSetup, useCampaignSetup, useFive9Prompts, useFive9Dispositions, useUploadVmGreeting, useAutoProvision } from "@/hooks/useCampaignSetup";
+import { useSaveCampaignSetup, useCampaignSetup, useFive9Dispositions, useAutoProvision } from "@/hooks/useCampaignSetup";
 import type { ProvisioningStep } from "@/hooks/useCampaignSetup";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDomains } from "@/hooks/useDomains";
@@ -28,7 +27,7 @@ import { DEFAULT_CHECKLIST } from "@/types/campaign";
 import type { CampaignIntakeData } from "@/types/campaign";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ChevronDown, ChevronRight, CheckCircle2, CalendarIcon, Save, Rocket, Loader2, Upload, X, FileAudio, CloudOff, Building2 } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, Save, Rocket, Loader2, CloudOff, Building2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WhiteLabelPartnerSelector } from "@/components/campaigns/WhiteLabelPartnerSelector";
 
@@ -41,7 +40,6 @@ const emptyIntake: CampaignIntakeData = {
   departments: [],
   aniNumbers: [""],
   dnisNumbers: [""],
-  transferDisplayNumber: "",
   coverageType: "24/7",
   weekdayStart: "08:00",
   weekdayEnd: "20:00",
@@ -50,13 +48,6 @@ const emptyIntake: CampaignIntakeData = {
   noWeekendCoverage: false,
   afterHoursHandling: "vm",
   afterHoursTransferNumber: "",
-  ivrGreetingPrompt: "",
-  whisperPrompt: "",
-  holdMusicPrompt: "",
-  ivrAnnouncementPrompt: "",
-  vmGreetingType: "existing",
-  vmGreetingPrompt: "",
-  vmGreetingFileUrl: "",
   existingDispositions: [],
   newDispositions: [],
   enableDispositionEmail: false,
