@@ -111,10 +111,17 @@ import Report59UploadPage from "@/pages/admin/Report59UploadPage";
 // agent-dashboard + supervisor pages deleted (canonical workspace QA covers it).
 import QAAnalyticsPage from "@/pages/admin/QAAnalyticsPage";
 import BillingPage from "@/pages/admin/BillingPage";
-import PostCallAutomationsPage from "@/pages/admin/PostCallAutomationsPage";
-import ANIBlockListPage from "@/pages/admin/ANIBlockListPage";
-import CallbackQueuePage from "@/pages/admin/CallbackQueuePage";
-import AbandonRatePage from "@/pages/admin/AbandonRatePage";
+// Phase D: PostCallAutomationsPage no longer routed at /admin/automations.
+// PostCallAutomationsContent is mounted inside WorkspaceNotificationsPage as the
+// canonical "Post-call rules" tab; the file is retained for that re-export only
+// and the legacy route silent-redirects into the workspace notifications surface.
+// Phase D: legacy ANI / Callback Queue / Abandon Rate / QR Routing pages
+// were redirected to /admin/settings and the source files deleted (Gate 3).
+// CampaignOverlayPage / CampaignOverlayListPage same — redirect to /admin/campaigns.
+// Five9OverviewPage retained on disk but de-surfaced — /admin/five9 → /admin/connectors/five9.
+import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
+// IdentityResolutionPage / DataPlanePage / PlatformUtilitiesPage retained on disk
+// but de-surfaced — /admin/identity, /admin/data-plane, /admin/utilities → /superadmin.
 import DataPlanePage from "@/pages/admin/DataPlanePage";
 import IdentityResolutionPage from "@/pages/admin/IdentityResolutionPage";
 import PlatformUtilitiesPage from "@/pages/admin/PlatformUtilitiesPage";
@@ -130,17 +137,14 @@ import CallSummaryTemplatesPage from "@/pages/admin/CallSummaryTemplatesPage";
 import EmailTemplatesPage from "@/pages/admin/EmailTemplatesPage";
 import LegalConnectPage from "@/pages/admin/LegalConnectPage";
 import ClientLegalConnectPage from "@/pages/admin/ClientLegalConnectPage";
-import CampaignOverlayListPage from "@/pages/admin/CampaignOverlayListPage";
-import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
+// Phase D: CampaignOverlayPage / CampaignOverlayListPage retired — files deleted, routes redirect.
 // VAULTED (slug: legacy-five9-campaign-builder) — CampaignBuilderPage import removed; routes redirect to /admin/campaigns/new.
-import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
-import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
 // CampaignsOverviewPage + CampaignDraftsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns and /admin/campaigns?status=draft).
 // CampaignReadinessBoardPage + CampaignEventLogPage deleted in hard-cleanup slice.
 import TestingHubPage from "@/pages/admin/TestingHubPage";
 import MonitoringHubPage from "@/pages/admin/MonitoringHubPage";
 import DocsHubPage from "@/pages/admin/DocsHubPage";
-import QrRoutingPage from "@/pages/admin/QrRoutingPage";
+// Phase D: QrRoutingPage retired — file deleted, /admin/qr-routing → /admin/settings.
 
 // CallFlowBuilderPage import removed — /admin/call-flow-builder now redirects via WorkspaceResolveRedirect.
 import CallFlowPage from "@/pages/admin/CallFlowPage";
