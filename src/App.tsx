@@ -456,10 +456,11 @@ const App = () => (
                 <Route path="agent-dashboard" element={<WorkspaceResolveRedirect to="/w/:workspaceId/agents" />} />
                 <Route path="qa" element={<QAAnalyticsPage />} />
                 <Route path="billing" element={<BillingPage />} />
-                <Route path="automations" element={<PostCallAutomationsPage />} />
-                <Route path="ani-blocklist" element={<ANIBlockListPage />} />
-                <Route path="callback-queue" element={<CallbackQueuePage />} />
-                <Route path="abandon-rate" element={<AbandonRatePage />} />
+                {/* Phase D: legacy ops surfaces silent-redirect to canonical homes. */}
+                <Route path="automations" element={<WorkspaceResolveRedirect to="/w/:workspaceId/notifications" />} />
+                <Route path="ani-blocklist" element={<Navigate to="/admin/settings" replace />} />
+                <Route path="callback-queue" element={<Navigate to="/admin/settings" replace />} />
+                <Route path="abandon-rate" element={<Navigate to="/admin/settings" replace />} />
                 <Route path="data-plane" element={<DataPlanePage />} />
                 <Route path="identity" element={<IdentityResolutionPage />} />
                 <Route path="utilities" element={<PlatformUtilitiesPage />} />
