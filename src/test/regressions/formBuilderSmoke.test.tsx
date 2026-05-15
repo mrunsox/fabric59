@@ -62,18 +62,19 @@ function renderBuilder() {
 
 describe("WorkspaceFormBuilderPage — smoke", () => {
   it("adds a section, 3 field types, and previews them via FormRunner", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
     renderBuilder();
 
     // Add a second section.
     const addSection = await screen.findByTestId("add-section");
-    fireEvent.click(addSection);
+    await user.click(addSection);
 
     // Open Add field dropdown and pick three different types in succession.
     for (const type of ["text", "email", "select"]) {
       const trigger = await screen.findByTestId("add-field-trigger");
-      fireEvent.click(trigger);
+      await user.click(trigger);
       const item = await screen.findByTestId(`add-field-${type}`);
-      fireEvent.click(item);
+      await user.click(item);
     }
 
     // Center field list should now show 3 rows.
@@ -83,7 +84,7 @@ describe("WorkspaceFormBuilderPage — smoke", () => {
     });
 
     // Switch to Preview tab.
-    fireEvent.click(screen.getByTestId("tab-preview"));
+    await user.click(screen.getByTestId("tab-preview"));
 
     // FormRunner mounts and renders the three fields by data-field-type.
     const runner = await screen.findByTestId("form-runner");
