@@ -554,7 +554,7 @@ export default function CampaignIntakePage() {
               </div>
               <div className="flex items-center gap-3">
                 <Switch checked={intake.addSkillToIvr} onCheckedChange={(v) => update({ addSkillToIvr: v })} />
-                <Label>Add Skill to IVR Routing</Label>
+                <Label>Add Skill to Inbound Routing</Label>
               </div>
             </CardContent>
           </CollapsibleContent>
