@@ -42,7 +42,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useAuth } from "@/contexts/AuthContext";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
-import { WORKSPACE_NAV } from "@/config/canonicalNav";
+import { WORKSPACE_NAV, WORKSPACE_NAV_GROUPS, WORKSPACE_NAV_PINNED } from "@/config/canonicalNav";
 import { useKeyboardNav, KEYBOARD_HINTS } from "@/hooks/useKeyboardNav";
 import { WorkspaceCommandPalette } from "@/components/workspace/WorkspaceCommandPalette";
 
@@ -55,13 +55,6 @@ import { WorkspaceCommandPalette } from "@/components/workspace/WorkspaceCommand
  * "g + key" shortcuts jump between sections.
  */
 
-type SectionGroup = { label: string; keys: string[] };
-const NAV_GROUPS: SectionGroup[] = [
-  { label: "Build", keys: ["home", "campaigns", "guides", "forms", "templates", "clients"] },
-  { label: "Operate", keys: ["runs", "agents", "supervisor", "qa"] },
-  { label: "Intelligence", keys: ["analytics", "integrations", "knowledge", "assistant"] },
-];
-
 function WorkspaceSidebar({ workspaceId }: { workspaceId: string }) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -71,12 +64,6 @@ function WorkspaceSidebar({ workspaceId }: { workspaceId: string }) {
     const full = `/w/${workspaceId}/${to}`;
     return pathname === full || pathname.startsWith(`${full}/`);
   };
-
-  const navByKey = useMemo(
-    () => Object.fromEntries(WORKSPACE_NAV.map((n) => [n.key, n])),
-    [],
-  );
-  const settingsItem = navByKey["settings"];
 
   return (
     <Sidebar collapsible="icon">
