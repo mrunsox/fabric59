@@ -111,10 +111,18 @@ import Report59UploadPage from "@/pages/admin/Report59UploadPage";
 // agent-dashboard + supervisor pages deleted (canonical workspace QA covers it).
 import QAAnalyticsPage from "@/pages/admin/QAAnalyticsPage";
 import BillingPage from "@/pages/admin/BillingPage";
-import PostCallAutomationsPage from "@/pages/admin/PostCallAutomationsPage";
-import ANIBlockListPage from "@/pages/admin/ANIBlockListPage";
-import CallbackQueuePage from "@/pages/admin/CallbackQueuePage";
-import AbandonRatePage from "@/pages/admin/AbandonRatePage";
+// Phase D: PostCallAutomationsPage no longer routed at /admin/automations.
+// PostCallAutomationsContent is mounted inside WorkspaceNotificationsPage as the
+// canonical "Post-call rules" tab; the file is retained for that re-export only
+// and the legacy route silent-redirects into the workspace notifications surface.
+import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
+// Phase D: legacy ANI / Callback Queue / Abandon Rate / QR Routing pages
+// were redirected to /admin/settings and the source files deleted (Gate 3).
+// CampaignOverlayPage / CampaignOverlayListPage same — redirect to /admin/campaigns.
+// Five9OverviewPage retained on disk but de-surfaced — /admin/five9 → /admin/connectors/five9.
+import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
+// IdentityResolutionPage / DataPlanePage / PlatformUtilitiesPage retained on disk
+// but de-surfaced — /admin/identity, /admin/data-plane, /admin/utilities → /superadmin.
 import DataPlanePage from "@/pages/admin/DataPlanePage";
 import IdentityResolutionPage from "@/pages/admin/IdentityResolutionPage";
 import PlatformUtilitiesPage from "@/pages/admin/PlatformUtilitiesPage";
@@ -130,17 +138,14 @@ import CallSummaryTemplatesPage from "@/pages/admin/CallSummaryTemplatesPage";
 import EmailTemplatesPage from "@/pages/admin/EmailTemplatesPage";
 import LegalConnectPage from "@/pages/admin/LegalConnectPage";
 import ClientLegalConnectPage from "@/pages/admin/ClientLegalConnectPage";
-import CampaignOverlayListPage from "@/pages/admin/CampaignOverlayListPage";
-import CampaignOverlayPage from "@/pages/admin/CampaignOverlayPage";
+// Phase D: CampaignOverlayPage / CampaignOverlayListPage retired — files deleted, routes redirect.
 // VAULTED (slug: legacy-five9-campaign-builder) — CampaignBuilderPage import removed; routes redirect to /admin/campaigns/new.
-import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
-import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
 // CampaignsOverviewPage + CampaignDraftsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns and /admin/campaigns?status=draft).
 // CampaignReadinessBoardPage + CampaignEventLogPage deleted in hard-cleanup slice.
 import TestingHubPage from "@/pages/admin/TestingHubPage";
 import MonitoringHubPage from "@/pages/admin/MonitoringHubPage";
 import DocsHubPage from "@/pages/admin/DocsHubPage";
-import QrRoutingPage from "@/pages/admin/QrRoutingPage";
+// Phase D: QrRoutingPage retired — file deleted, /admin/qr-routing → /admin/settings.
 
 // CallFlowBuilderPage import removed — /admin/call-flow-builder now redirects via WorkspaceResolveRedirect.
 import CallFlowPage from "@/pages/admin/CallFlowPage";
@@ -320,7 +325,8 @@ const App = () => (
                 <Route path="exports" element={<SourceExportsPage />} />
                 <Route path="routes" element={<AdvancedRoutesPage />} />
                 <Route path="docs" element={<SystemDocsPage />} />
-                <Route path="call-flow" element={<CallFlowPage />} />
+                <Route path="call-flow" element={<Navigate to="/admin/connectors" replace />} />
+                <Route path="call-flow/raw" element={<CallFlowPage />} />
                 <Route path="dev-guide" element={<DevGuidePage />} />
                 <Route path="test-cases" element={<TestCasesPage />} />
                 {/* CANONICAL: internal build doc, no longer public. */}
@@ -382,7 +388,9 @@ const App = () => (
                 <Route path="templates/:id" element={<TemplateDetailPage />} />
 
                 {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
-                <Route path="five9" element={<Five9OverviewPage />} />
+                {/* Phase D: /admin/five9 de-surfaced — silent redirect to canonical connector instance. */}
+                <Route path="five9" element={<Navigate to="/admin/connectors/five9" replace />} />
+                <Route path="five9/overview" element={<Five9OverviewPage />} />{/* retained on disk; reachable via direct URL */}
                 <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
                 {/* CANONICAL: Five9 campaign builder writes redirect into the workspace path. */}
                 <Route path="five9/campaign-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
@@ -398,8 +406,9 @@ const App = () => (
                 <Route path="clients/:id" element={<ClientOverviewPage />} />
                 <Route path="clients/:clientId/legal-connect" element={<ClientLegalConnectPage />} />
                 <Route path="clients/:clientId/legal-connect/setup/:provider" element={<ClientLegalConnectPage />} />
-                <Route path="clients/:clientId/five9-overlay" element={<CampaignOverlayListPage />} />
-                <Route path="clients/:clientId/five9-overlay/campaigns/:campaignRouteId" element={<CampaignOverlayPage />} />
+                {/* Phase D: Campaign Overlay surfaces retired — silent redirects to canonical campaigns list. */}
+                <Route path="clients/:clientId/five9-overlay" element={<Navigate to="/admin/campaigns" replace />} />
+                <Route path="clients/:clientId/five9-overlay/campaigns/:campaignRouteId" element={<Navigate to="/admin/campaigns" replace />} />
                 <Route path="partners" element={<PartnersPage />} />
                 <Route path="partners/:id" element={<PartnerOverviewPage />} />
                 {/* CANONICAL (Phase 11): single org overview at /admin index. /admin/dashboard collapses into it. */}
@@ -448,13 +457,19 @@ const App = () => (
                 <Route path="agent-dashboard" element={<WorkspaceResolveRedirect to="/w/:workspaceId/agents" />} />
                 <Route path="qa" element={<QAAnalyticsPage />} />
                 <Route path="billing" element={<BillingPage />} />
-                <Route path="automations" element={<PostCallAutomationsPage />} />
-                <Route path="ani-blocklist" element={<ANIBlockListPage />} />
-                <Route path="callback-queue" element={<CallbackQueuePage />} />
-                <Route path="abandon-rate" element={<AbandonRatePage />} />
-                <Route path="data-plane" element={<DataPlanePage />} />
-                <Route path="identity" element={<IdentityResolutionPage />} />
-                <Route path="utilities" element={<PlatformUtilitiesPage />} />
+                {/* Phase D: legacy ops surfaces silent-redirect to canonical homes. */}
+                <Route path="automations" element={<WorkspaceResolveRedirect to="/w/:workspaceId/notifications" />} />
+                <Route path="ani-blocklist" element={<Navigate to="/admin/settings" replace />} />
+                <Route path="callback-queue" element={<Navigate to="/admin/settings" replace />} />
+                <Route path="abandon-rate" element={<Navigate to="/admin/settings" replace />} />
+                {/* Phase D: superadmin-class surfaces de-surfaced from /admin — silent redirect to /superadmin.
+                    Files retained on disk; reachable via "/raw" suffix if a deep link is needed. */}
+                <Route path="data-plane" element={<Navigate to="/superadmin" replace />} />
+                <Route path="data-plane/raw" element={<DataPlanePage />} />
+                <Route path="identity" element={<Navigate to="/superadmin" replace />} />
+                <Route path="identity/raw" element={<IdentityResolutionPage />} />
+                <Route path="utilities" element={<Navigate to="/superadmin" replace />} />
+                <Route path="utilities/raw" element={<PlatformUtilitiesPage />} />
                 <Route path="scripts" element={<ScriptEditorPage />} />
                 <Route path="scripts/:scriptId/builder" element={<ScriptBuilderPage />} />
                 <Route path="kb" element={<KnowledgeBasePage />} />
@@ -468,7 +483,8 @@ const App = () => (
                 <Route path="email-templates" element={<EmailTemplatesPage />} />
                 {/* Phase C: call-flow base redirects above; this param route is compatibility-only. */}
                 <Route path="legal-connect" element={<LegalConnectPage />} />
-                <Route path="qr-routing" element={<QrRoutingPage />} />
+                {/* Phase D: QrRoutingPage retired — silent redirect to settings. */}
+                <Route path="qr-routing" element={<Navigate to="/admin/settings" replace />} />
                 {/* CANONICAL: legacy tree-editor redirects into workspace guides (param dropped). */}
                 <Route path="tree-editor/:scriptId" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
                 <Route path="test" element={<TestConsolePage />} />
