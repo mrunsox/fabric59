@@ -91,3 +91,64 @@ describe("canonical nav config", () => {
     }
   });
 });
+
+/**
+ * Phase D — legacy de-surface, redirect, and deletion locks.
+ *
+ * Each redirected legacy path must keep a Navigate/WorkspaceResolveRedirect
+ * mount in App.tsx so external bookmarks and command-palette deep links
+ * never 404. Each deleted page file must stay deleted.
+ */
+
+const REDIRECTS: Array<{ from: string; toContains: string }> = [
+  { from: "ani-blocklist", toContains: "/admin/settings" },
+  { from: "callback-queue", toContains: "/admin/settings" },
+  { from: "abandon-rate", toContains: "/admin/settings" },
+  { from: "qr-routing", toContains: "/admin/settings" },
+  { from: "automations", toContains: "/w/:workspaceId/notifications" },
+  { from: "data-plane", toContains: "/superadmin" },
+  { from: "identity", toContains: "/superadmin" },
+  { from: "utilities", toContains: "/superadmin" },
+  { from: "five9", toContains: "/admin/connectors/five9" },
+  { from: "clients/:clientId/five9-overlay", toContains: "/admin/campaigns" },
+];
+
+describe("canonical scope — Phase D legacy redirects", () => {
+  for (const { from, toContains } of REDIRECTS) {
+    it(`/admin/${from} silent-redirects to ${toContains}`, () => {
+      const re = new RegExp(
+        `<Route\\s+path=["']${from.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}["'][^>]*element=\\{<(Navigate|WorkspaceResolveRedirect)\\s+to=["']${toContains.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}["']`,
+      );
+      expect(APP_TSX, `Missing redirect for /admin/${from}`).toMatch(re);
+    });
+  }
+
+  it("/superadmin/call-flow silent-redirects to /admin/connectors", () => {
+    expect(APP_TSX).toMatch(
+      /<Route\s+path=["']call-flow["']\s+element=\{<Navigate\s+to=["']\/admin\/connectors["']/,
+    );
+  });
+});
+
+describe("canonical scope — Phase D deletions", () => {
+  const DELETED = [
+    "src/pages/admin/ANIBlockListPage.tsx",
+    "src/pages/admin/AbandonRatePage.tsx",
+    "src/pages/admin/CallbackQueuePage.tsx",
+    "src/pages/admin/QrRoutingPage.tsx",
+    "src/pages/admin/CampaignOverlayPage.tsx",
+    "src/pages/admin/CampaignOverlayListPage.tsx",
+  ];
+  for (const rel of DELETED) {
+    it(`${rel} stays deleted`, () => {
+      const abs = resolve(__dirname, "../../../", rel);
+      let exists = true;
+      try {
+        readFileSync(abs);
+      } catch {
+        exists = false;
+      }
+      expect(exists, `${rel} must remain deleted`).toBe(false);
+    });
+  }
+});

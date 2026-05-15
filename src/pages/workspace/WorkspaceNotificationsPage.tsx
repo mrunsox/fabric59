@@ -3,7 +3,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { useNotifications, useNotificationStats } from "@/hooks/useNotifications";
-import { usePostCallAutomations } from "@/hooks/usePostCallAutomations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,26 +13,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Phase D: PostCallAutomationsContent is mounted here as the canonical
+// "Post-call rules" tab. The legacy /admin/automations route silent-redirects
+// to /w/:workspaceId/notifications and the standalone admin page file is
+// retained only as a re-export of this same component.
+import { PostCallAutomationsContent } from "@/pages/admin/PostCallAutomationsPage";
 
 /**
  * Canonical workspace Notifications surface.
  *
- * Bridges the org-scoped notification log (`notifications`) with the
- * post-call automation rules (`post_call_automations`) so operators can see
- * both the live delivery feed and the rules that fired them in one place.
+ * Combines the org-scoped notification log (`notifications`) with the
+ * post-call automation rule editor (`post_call_automations`) so operators
+ * can manage triggers and inspect deliveries in one place.
  */
 export default function WorkspaceNotificationsPage() {
   const { organization } = useAuth();
   const { data: log = [], isLoading } = useNotifications(organization?.id);
   const { data: stats } = useNotificationStats();
-  const { data: rules = [] } = usePostCallAutomations();
 
   return (
     <div className="space-y-6">
       <WorkspacePageHeader
         eyebrow="Operate"
         title="Notifications"
-        lede="Outbound notifications and the post-call automation rules that produced them."
+        lede="Outbound notification deliveries and the post-call rules that produced them."
       />
 
       {stats && (
@@ -45,111 +49,83 @@ export default function WorkspaceNotificationsPage() {
         </div>
       )}
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">
-            Automation rules{" "}
-            <span className="text-muted-foreground font-normal">
-              ({rules.length})
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {rules.length === 0 ? (
-            <EmptyState
-              icon={Bell}
-              title="No automation rules yet"
-              description="Create post-call automation rules to send notifications when a disposition fires."
-            />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Disposition</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead className="w-24">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rules.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {r.disposition_match}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-normal">
-                        {r.action_type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={r.enabled ? "default" : "secondary"}>
-                        {r.enabled ? "Enabled" : "Paused"}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="deliveries" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
+          <TabsTrigger value="rules">Post-call rules</TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">
-            Recent deliveries{" "}
-            <span className="text-muted-foreground font-normal">({log.length})</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-sm text-muted-foreground py-6">Loading…</div>
-          ) : log.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2">
-              No notifications delivered yet.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-24">Channel</TableHead>
-                  <TableHead>Recipient</TableHead>
-                  <TableHead>Trigger</TableHead>
-                  <TableHead className="w-24">Status</TableHead>
-                  <TableHead className="w-40">Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {log.slice(0, 50).map((n) => (
-                  <TableRow key={n.id}>
-                    <TableCell>
-                      <Badge variant="outline" className="font-normal">
-                        {n.channel}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">{n.recipient}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
-                      {n.trigger_event}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={n.status === "sent" ? "default" : n.status === "failed" ? "destructive" : "secondary"}
-                      >
-                        {n.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
-                      {new Date(n.created_at).toLocaleString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+        <TabsContent value="deliveries">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">
+                Recent deliveries{" "}
+                <span className="text-muted-foreground font-normal">
+                  ({log.length})
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-sm text-muted-foreground py-6">Loading…</div>
+              ) : log.length === 0 ? (
+                <EmptyState
+                  icon={Bell}
+                  title="No notifications delivered yet"
+                  description="Notifications produced by post-call rules will appear here."
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-24">Channel</TableHead>
+                      <TableHead>Recipient</TableHead>
+                      <TableHead>Trigger</TableHead>
+                      <TableHead className="w-24">Status</TableHead>
+                      <TableHead className="w-40">Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {log.slice(0, 50).map((n) => (
+                      <TableRow key={n.id}>
+                        <TableCell>
+                          <Badge variant="outline" className="font-normal">
+                            {n.channel}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{n.recipient}</TableCell>
+                        <TableCell className="text-muted-foreground text-xs">
+                          {n.trigger_event}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              n.status === "sent"
+                                ? "default"
+                                : n.status === "failed"
+                                ? "destructive"
+                                : "secondary"
+                            }
+                          >
+                            {n.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-xs">
+                          {new Date(n.created_at).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="rules">
+          <PostCallAutomationsContent />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

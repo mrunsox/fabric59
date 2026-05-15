@@ -176,9 +176,8 @@ export default function ClientOverviewPage() {
         <Button variant="outline" size="sm" asChild>
           <Link to={`/admin/clients/${tenant.id}/legal-connect`}>Legal Connect</Link>
         </Button>
-        <Button variant="outline" size="sm" asChild>
-          <Link to={`/admin/clients/${tenant.id}/five9-overlay`}>Five9 Overlay</Link>
-        </Button>
+        {/* Phase D: Five9 Overlay surface retired — link removed. The route
+            still silent-redirects to /admin/campaigns for any external bookmark. */}
       </PageHeader>
 
       {/* Setup Progress + AI Guidance */}
