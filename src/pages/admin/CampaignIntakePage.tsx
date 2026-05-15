@@ -79,11 +79,11 @@ export default function CampaignIntakePage() {
   const location = useLocation();
   const { organization } = useAuth();
   const { data: existing } = useCampaignSetup(id);
-  const { data: prompts = [], isLoading: promptsLoading } = useFive9Prompts();
+  
   const { data: dispositions = [], isLoading: dispoLoading } = useFive9Dispositions();
   const { data: domains = [] } = useDomains();
   const saveMutation = useSaveCampaignSetup();
-  const uploadMutation = useUploadVmGreeting();
+  
   const provisionMutation = useAutoProvision();
 
   const prefill = (location.state as any)?.prefill as Partial<CampaignIntakeData> | undefined;
@@ -92,7 +92,7 @@ export default function CampaignIntakePage() {
   );
   const [selectedDomainId, setSelectedDomainId] = useState<string>("");
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({
-    1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 10: true,
+    1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true,
   });
 
   // Auto-save state
@@ -100,7 +100,7 @@ export default function CampaignIntakePage() {
   const [autoSaveTime, setAutoSaveTime] = useState<string | null>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>("");
-  const [vmFileName, setVmFileName] = useState<string>("");
+  
 
   // Provisioning modal
   const [showProvisionModal, setShowProvisionModal] = useState(false);
@@ -116,10 +116,6 @@ export default function CampaignIntakePage() {
       setSelectedDomainId(existing.five9_domain_id || "");
       setSavedId(existing.id);
       lastSavedRef.current = JSON.stringify(existing.intake_data);
-      if (existing.intake_data.vmGreetingFileUrl) {
-        const parts = existing.intake_data.vmGreetingFileUrl.split("/");
-        setVmFileName(parts[parts.length - 1]?.replace(/^\d+-/, "") || "");
-      }
     }
   }, [existing]);
 
