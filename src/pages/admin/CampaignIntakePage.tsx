@@ -15,12 +15,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { MultiInput } from "@/components/campaigns/MultiInput";
-import { PromptSelector } from "@/components/campaigns/PromptSelector";
 import { DecisionTreeBuilder } from "@/components/campaigns/DecisionTreeBuilder";
 import { DispositionEmailTable } from "@/components/campaigns/DispositionEmailTable";
 import { ConnectorList } from "@/components/campaigns/ConnectorList";
 import { DepartmentTabs } from "@/components/campaigns/DepartmentTabs";
-import { useSaveCampaignSetup, useCampaignSetup, useFive9Prompts, useFive9Dispositions, useUploadVmGreeting, useAutoProvision } from "@/hooks/useCampaignSetup";
+import { useSaveCampaignSetup, useCampaignSetup, useFive9Dispositions, useAutoProvision } from "@/hooks/useCampaignSetup";
 import type { ProvisioningStep } from "@/hooks/useCampaignSetup";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDomains } from "@/hooks/useDomains";
@@ -28,7 +27,7 @@ import { DEFAULT_CHECKLIST } from "@/types/campaign";
 import type { CampaignIntakeData } from "@/types/campaign";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ChevronDown, ChevronRight, CheckCircle2, CalendarIcon, Save, Rocket, Loader2, Upload, X, FileAudio, CloudOff, Building2 } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, Save, Rocket, Loader2, CloudOff, Building2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WhiteLabelPartnerSelector } from "@/components/campaigns/WhiteLabelPartnerSelector";
 
@@ -41,7 +40,6 @@ const emptyIntake: CampaignIntakeData = {
   departments: [],
   aniNumbers: [""],
   dnisNumbers: [""],
-  transferDisplayNumber: "",
   coverageType: "24/7",
   weekdayStart: "08:00",
   weekdayEnd: "20:00",
@@ -50,13 +48,6 @@ const emptyIntake: CampaignIntakeData = {
   noWeekendCoverage: false,
   afterHoursHandling: "vm",
   afterHoursTransferNumber: "",
-  ivrGreetingPrompt: "",
-  whisperPrompt: "",
-  holdMusicPrompt: "",
-  ivrAnnouncementPrompt: "",
-  vmGreetingType: "existing",
-  vmGreetingPrompt: "",
-  vmGreetingFileUrl: "",
   existingDispositions: [],
   newDispositions: [],
   enableDispositionEmail: false,
@@ -88,11 +79,11 @@ export default function CampaignIntakePage() {
   const location = useLocation();
   const { organization } = useAuth();
   const { data: existing } = useCampaignSetup(id);
-  const { data: prompts = [], isLoading: promptsLoading } = useFive9Prompts();
+  
   const { data: dispositions = [], isLoading: dispoLoading } = useFive9Dispositions();
   const { data: domains = [] } = useDomains();
   const saveMutation = useSaveCampaignSetup();
-  const uploadMutation = useUploadVmGreeting();
+  
   const provisionMutation = useAutoProvision();
 
   const prefill = (location.state as any)?.prefill as Partial<CampaignIntakeData> | undefined;
@@ -101,7 +92,7 @@ export default function CampaignIntakePage() {
   );
   const [selectedDomainId, setSelectedDomainId] = useState<string>("");
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({
-    1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true, 10: true,
+    1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: true, 8: true, 9: true,
   });
 
   // Auto-save state
@@ -109,7 +100,7 @@ export default function CampaignIntakePage() {
   const [autoSaveTime, setAutoSaveTime] = useState<string | null>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>("");
-  const [vmFileName, setVmFileName] = useState<string>("");
+  
 
   // Provisioning modal
   const [showProvisionModal, setShowProvisionModal] = useState(false);
@@ -125,10 +116,6 @@ export default function CampaignIntakePage() {
       setSelectedDomainId(existing.five9_domain_id || "");
       setSavedId(existing.id);
       lastSavedRef.current = JSON.stringify(existing.intake_data);
-      if (existing.intake_data.vmGreetingFileUrl) {
-        const parts = existing.intake_data.vmGreetingFileUrl.split("/");
-        setVmFileName(parts[parts.length - 1]?.replace(/^\d+-/, "") || "");
-      }
     }
   }, [existing]);
 
@@ -190,10 +177,8 @@ export default function CampaignIntakePage() {
       case 4: return true;
       case 5: return true;
       case 6: return true;
-      case 7: return true;
-      case 8: return !!intake.skillName;
-      case 9: return true;
-      case 10: return true;
+      case 7: return !!intake.skillName;
+      case 8: return true;
       default: return false;
     }
   };
@@ -204,21 +189,9 @@ export default function CampaignIntakePage() {
       state[item.id] = { done: item.done, blocked: item.blocked };
     });
     if (intake.whiteLabel) state["imp_wl"] = { done: true };
-    if (intake.vmGreetingPrompt || intake.vmGreetingFileUrl) state["imp_vm"] = { done: true };
     return state;
   };
 
-  const handleVmFileUpload = async (file: File) => {
-    if (!organization?.id) return;
-    try {
-      const result = await uploadMutation.mutateAsync({ file, orgId: organization.id });
-      update({ vmGreetingFileUrl: result.publicUrl });
-      setVmFileName(file.name);
-      toast.success("VM greeting uploaded!");
-    } catch {
-      // Error handled by hook
-    }
-  };
 
   const handleSave = async (status: "draft" | "submitted") => {
     if (!intake.campaignName || !intake.clientName) {
@@ -368,7 +341,7 @@ export default function CampaignIntakePage() {
       <Card>
         <Collapsible open={openSections[2]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={2} title="Phone Numbers & Routing" desc="ANIs, DNIS, and transfer display" />
+            <SectionHeader num={2} title="Phone Numbers" desc="ANI caller IDs and inbound DNIS numbers" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">
@@ -379,10 +352,6 @@ export default function CampaignIntakePage() {
               <div className="space-y-1.5">
                 <Label>DNIS Numbers</Label>
                 <MultiInput values={intake.dnisNumbers} onChange={(v) => update({ dnisNumbers: v })} placeholder="e.g. +18005551234" helperText="US customers get US numbers, CA customers get CA numbers" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Transfer Display Number</Label>
-                <Input value={intake.transferDisplayNumber} onChange={(e) => update({ transferDisplayNumber: e.target.value })} placeholder="Number shown to recipient during transfer" />
               </div>
             </CardContent>
           </CollapsibleContent>
@@ -449,77 +418,10 @@ export default function CampaignIntakePage() {
         </Collapsible>
       </Card>
 
-      {/* Section 4: Prompts */}
       <Card>
         <Collapsible open={openSections[4]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={4} title="Prompts" desc="Select existing prompts from your Five9 domain" />
-          </CardHeader>
-          <CollapsibleContent>
-            <CardContent className="space-y-4">
-              <p className="text-xs text-muted-foreground">These are the prompts already configured on your Five9 domain. Select the appropriate prompt for each section.</p>
-              <PromptSelector label="IVR Greeting" value={intake.ivrGreetingPrompt || ""} onChange={(v) => update({ ivrGreetingPrompt: v })} prompts={prompts} loading={promptsLoading} />
-              <PromptSelector label="Whisper Prompt" value={intake.whisperPrompt || ""} onChange={(v) => update({ whisperPrompt: v })} prompts={prompts} loading={promptsLoading} />
-              <PromptSelector label="Hold Music" value={intake.holdMusicPrompt || ""} onChange={(v) => update({ holdMusicPrompt: v })} prompts={prompts} loading={promptsLoading} />
-              <PromptSelector label="IVR Hold/Announcement Message" value={intake.ivrAnnouncementPrompt || ""} onChange={(v) => update({ ivrAnnouncementPrompt: v })} prompts={prompts} loading={promptsLoading} />
-              <div className="space-y-2">
-                <Label>VM Greeting</Label>
-                <RadioGroup value={intake.vmGreetingType} onValueChange={(v: "existing" | "upload") => update({ vmGreetingType: v })} className="flex gap-4">
-                  <div className="flex items-center gap-2"><RadioGroupItem value="existing" id="vm_ex" /><Label htmlFor="vm_ex">Select existing</Label></div>
-                  <div className="flex items-center gap-2"><RadioGroupItem value="upload" id="vm_up" /><Label htmlFor="vm_up">Upload custom</Label></div>
-                </RadioGroup>
-                {intake.vmGreetingType === "existing" ? (
-                  <PromptSelector value={intake.vmGreetingPrompt || ""} onChange={(v) => update({ vmGreetingPrompt: v })} prompts={prompts} loading={promptsLoading} />
-                ) : (
-                  <div className="space-y-2">
-                    {vmFileName ? (
-                      <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/50">
-                        <FileAudio className="h-4 w-4 text-primary shrink-0" />
-                        <span className="text-sm truncate flex-1">{vmFileName}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => {
-                            update({ vmGreetingFileUrl: "" });
-                            setVmFileName("");
-                          }}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <Input
-                          type="file"
-                          accept="audio/*"
-                          disabled={uploadMutation.isPending}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleVmFileUpload(file);
-                          }}
-                        />
-                        {uploadMutation.isPending && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-md">
-                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                            <span className="ml-2 text-xs">Uploading...</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
-      {/* Section 5: Dispositions */}
-      <Card>
-        <Collapsible open={openSections[5]}>
-          <CardHeader className="pb-2">
-            <SectionHeader num={5} title="Dispositions" desc="Select or create dispositions for this campaign" />
+            <SectionHeader num={4} title="Dispositions" desc="Select or create dispositions for this campaign" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">
@@ -580,11 +482,11 @@ export default function CampaignIntakePage() {
         </Collapsible>
       </Card>
 
-      {/* Section 6: Connectors */}
+      {/* Section 5: Connectors */}
       <Card>
-        <Collapsible open={openSections[6]}>
+        <Collapsible open={openSections[5]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={6} title="Connectors & Scripts" desc="Link external resources to the campaign" />
+            <SectionHeader num={5} title="Connectors & Scripts" desc="Link external resources to the campaign" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent>
@@ -597,12 +499,12 @@ export default function CampaignIntakePage() {
         </Collapsible>
       </Card>
 
-      {/* Section 7: Decision Tree (only when NOT multi-department) */}
+      {/* Section 6: Decision Tree (only when NOT multi-department) */}
       {!intake.isMultiDepartment && (
         <Card>
-          <Collapsible open={openSections[7]}>
+          <Collapsible open={openSections[6]}>
             <CardHeader className="pb-2">
-              <SectionHeader num={7} title="Agent Decision Tree" desc="Build the step-by-step script for agents" />
+              <SectionHeader num={6} title="Agent Decision Tree" desc="Build the step-by-step script for agents" />
             </CardHeader>
             <CollapsibleContent>
               <CardContent>
@@ -613,12 +515,12 @@ export default function CampaignIntakePage() {
         </Card>
       )}
 
-      {/* Section 7b: Departments (only when multi-department) */}
+      {/* Section 6b: Departments (only when multi-department) */}
       {intake.isMultiDepartment && (
         <Card>
-          <Collapsible open={openSections[7]}>
+          <Collapsible open={openSections[6]}>
             <CardHeader className="pb-2">
-              <SectionHeader num={7} title="Departments" desc="Configure worksheets and dispatch per department" />
+              <SectionHeader num={6} title="Departments" desc="Configure worksheets and dispatch per department" />
             </CardHeader>
             <CollapsibleContent>
               <CardContent>
@@ -633,11 +535,11 @@ export default function CampaignIntakePage() {
         </Card>
       )}
 
-      {/* Section 8: Skill & Users */}
+      {/* Section 7: Skill & Users */}
       <Card>
-        <Collapsible open={openSections[8]}>
+        <Collapsible open={openSections[7]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={8} title="Skill & User Assignment" desc="Create skill and assign agents" />
+            <SectionHeader num={7} title="Skill & User Assignment" desc="Create skill and assign agents" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">
@@ -652,18 +554,18 @@ export default function CampaignIntakePage() {
               </div>
               <div className="flex items-center gap-3">
                 <Switch checked={intake.addSkillToIvr} onCheckedChange={(v) => update({ addSkillToIvr: v })} />
-                <Label>Add Skill to IVR Routing</Label>
+                <Label>Add Skill to Inbound Routing</Label>
               </div>
             </CardContent>
           </CollapsibleContent>
         </Collapsible>
       </Card>
 
-      {/* Section 9: Final Notes */}
+      {/* Section 8: Final Notes */}
       <Card>
-        <Collapsible open={openSections[9]}>
+        <Collapsible open={openSections[8]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={9} title="Final Notes" desc="Priority, go-live date, and additional notes" />
+            <SectionHeader num={8} title="Final Notes" desc="Priority, go-live date, and additional notes" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">

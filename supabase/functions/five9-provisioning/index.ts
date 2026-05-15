@@ -401,12 +401,6 @@ serve(async (req) => {
 
       responseData = { success: true, results };
 
-    } else if (action === 'getPrompts') {
-      const soapBody = `<ser:getPrompts/>`;
-      const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getPrompts', soapBody);
-      const prompts = [...new Set(extractValues(xml, 'name').filter(Boolean))];
-      responseData = { success: true, prompts };
-
     } else if (action === 'getDispositions') {
       const soapBody = `<ser:getDispositions/>`;
       const xml = await soapCall(FIVE9_USERNAME, FIVE9_PASSWORD, 'getDispositions', soapBody);

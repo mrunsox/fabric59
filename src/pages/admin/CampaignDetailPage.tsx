@@ -128,7 +128,7 @@ export default function CampaignDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Phone Numbers & Routing</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Phone Numbers</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <Section title="ANIs">
                 <p>{intake.aniNumbers?.filter(Boolean).join(", ") || "None"}</p>
@@ -136,7 +136,6 @@ export default function CampaignDetailPage() {
               <Section title="DNIS">
                 <p>{intake.dnisNumbers?.filter(Boolean).join(", ") || "None"}</p>
               </Section>
-              <Field label="Transfer Display" value={intake.transferDisplayNumber} />
             </CardContent>
           </Card>
 
@@ -153,17 +152,6 @@ export default function CampaignDetailPage() {
                   {intake.afterHoursHandling === "transfer" && <Field label="Transfer To" value={intake.afterHoursTransferNumber} />}
                 </>
               )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Prompts</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <Field label="IVR Greeting" value={intake.ivrGreetingPrompt} />
-              <Field label="Whisper" value={intake.whisperPrompt} />
-              <Field label="Hold Music" value={intake.holdMusicPrompt} />
-              <Field label="IVR Announcement" value={intake.ivrAnnouncementPrompt} />
-              <Field label="VM Greeting" value={intake.vmGreetingType === "upload" ? `Upload: ${intake.vmGreetingFileUrl}` : intake.vmGreetingPrompt} />
             </CardContent>
           </Card>
 

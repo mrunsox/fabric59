@@ -117,22 +117,6 @@ export function useUpdateChecklist() {
   });
 }
 
-export function useFive9Prompts() {
-  return useQuery({
-    queryKey: ["five9_prompts"],
-    queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("five9-provisioning", {
-        body: { action: "getPrompts" },
-      });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Failed to fetch prompts");
-      return (data.prompts as string[]) || [];
-    },
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
-  });
-}
-
 export function useFive9Dispositions() {
   return useQuery({
     queryKey: ["five9_dispositions_list"],
@@ -146,26 +130,6 @@ export function useFive9Dispositions() {
     },
     staleTime: 5 * 60 * 1000,
     retry: 1,
-  });
-}
-
-// --- VM Greeting Upload ---
-export function useUploadVmGreeting() {
-  return useMutation({
-    mutationFn: async ({ file, orgId }: { file: File; orgId: string }) => {
-      const path = `vm-greetings/${orgId}/${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage
-        .from("campaign-assets")
-        .upload(path, file, { upsert: false });
-      if (error) throw error;
-      const { data: urlData } = supabase.storage
-        .from("campaign-assets")
-        .getPublicUrl(path);
-      return { path, publicUrl: urlData.publicUrl };
-    },
-    onError: (error) => {
-      toast.error("Failed to upload VM greeting: " + error.message);
-    },
   });
 }
 
