@@ -487,9 +487,6 @@ export function AIBlueprintBuilder({ onClose }: AIBlueprintBuilderProps) {
                   </div>
                 </div>
               )}
-              {campaignData.transferDisplayNumber && (
-                <p className="text-sm text-muted-foreground">Transfer display: {campaignData.transferDisplayNumber}</p>
-              )}
             </CardContent>
           </CollapsibleContent>
         </Card>
