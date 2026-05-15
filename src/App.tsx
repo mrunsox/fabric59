@@ -325,7 +325,8 @@ const App = () => (
                 <Route path="exports" element={<SourceExportsPage />} />
                 <Route path="routes" element={<AdvancedRoutesPage />} />
                 <Route path="docs" element={<SystemDocsPage />} />
-                <Route path="call-flow" element={<CallFlowPage />} />
+                <Route path="call-flow" element={<Navigate to="/admin/connectors" replace />} />
+                <Route path="call-flow/raw" element={<CallFlowPage />} />
                 <Route path="dev-guide" element={<DevGuidePage />} />
                 <Route path="test-cases" element={<TestCasesPage />} />
                 {/* CANONICAL: internal build doc, no longer public. */}
