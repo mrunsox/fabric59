@@ -12,7 +12,7 @@ function makeSchema(): FormSchemaV1 {
         id: "s1", title: "Triage", description: "",
         fields: [
           { id: "g1", key: "greeting", type: "script_block", label: "Greeting", content: "Thank you for calling." },
-          { id: "f1", key: "reason", type: "select", label: "Reason", required: true,
+          { id: "f1", key: "reason", type: "radio", label: "Reason", required: true,
             options: [
               { label: "Billing", value: "billing" },
               { label: "Sales", value: "sales" },
@@ -59,13 +59,10 @@ describe("FormRunner — branching + validation", () => {
     });
 
     // Pick Billing → logic jump_to_section advances to "Billing".
-    const trigger = within(runner).getByRole("combobox");
-    await user.click(trigger);
-    const option = await screen.findByRole("option", { name: "Billing" });
-    await user.click(option);
+    await user.click(within(runner).getByLabelText("Billing"));
 
     await waitFor(() => {
-      expect(within(screen.getByTestId("form-runner")).getByText(/Section 2 of 3|Billing/i)).toBeTruthy();
+      expect(within(screen.getByTestId("form-runner")).getByText(/Section 2 of 3/i)).toBeTruthy();
     });
   });
 
@@ -75,10 +72,7 @@ describe("FormRunner — branching + validation", () => {
     render(<FormRunner schema={makeSchema()} onSubmit={onSubmit} />);
     const runner = await screen.findByTestId("form-runner");
 
-    const trigger = within(runner).getByRole("combobox");
-    await user.click(trigger);
-    const option = await screen.findByRole("option", { name: "Sales" });
-    await user.click(option);
+    await user.click(within(runner).getByLabelText("Sales"));
 
     const ended = await screen.findByTestId("form-runner");
     await waitFor(() => {
