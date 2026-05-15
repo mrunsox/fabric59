@@ -86,8 +86,12 @@ describe("WorkspaceFormBuilderPage — smoke", () => {
     // Switch to Preview tab.
     await user.click(screen.getByTestId("tab-preview"));
 
-    // FormRunner mounts and renders the three fields by data-field-type.
+    // FormRunner mounts. Fields were added to the second (newly added) section,
+    // so click "Next" to reach it before asserting field renders.
     const runner = await screen.findByTestId("form-runner");
+    const nextBtn = await within(runner).findByRole("button", { name: /next/i });
+    await user.click(nextBtn);
+
     await waitFor(() => {
       expect(runner.querySelector('[data-field-type="text"]')).toBeTruthy();
       expect(runner.querySelector('[data-field-type="email"]')).toBeTruthy();
