@@ -523,6 +523,7 @@ const App = () => (
                 <Route path="forms" element={<WorkspaceFormsPage />} />
                 <Route path="forms/new" element={<WorkspaceFormNewPage />} />
                 <Route path="forms/:formId" element={<WorkspaceFormDetailPage />} />
+                <Route path="forms/:formId/edit" element={<WorkspaceFormBuilderPage />} />
                 <Route path="templates" element={<WorkspaceTemplatesPage />} />
                 <Route path="templates/:templateId" element={<WorkspaceTemplateDetailPage />} />
                 <Route path="qa" element={<WorkspaceQaPage />} />
