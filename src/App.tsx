@@ -462,7 +462,7 @@ const App = () => (
                 <Route path="callback-queue" element={<Navigate to="/admin/settings" replace />} />
                 <Route path="abandon-rate" element={<Navigate to="/admin/settings" replace />} />
                 {/* Phase D: superadmin-class surfaces de-surfaced from /admin — silent redirect to /superadmin.
-                    Files retained on disk and reachable directly via /admin/*/raw if ever needed. */}
+                    Files retained on disk; reachable via "/raw" suffix if a deep link is needed. */}
                 <Route path="data-plane" element={<Navigate to="/superadmin" replace />} />
                 <Route path="data-plane/raw" element={<DataPlanePage />} />
                 <Route path="identity" element={<Navigate to="/superadmin" replace />} />
