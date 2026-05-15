@@ -9,7 +9,7 @@ import {
   Type, AlignLeft, AtSign, Phone, Link as LinkIcon, Hash, DollarSign,
   Calendar, Clock, CalendarClock, ChevronDown, ListChecks, Circle, Check,
   CheckSquare, ToggleLeft, Upload, PenLine, MapPin, Star, SlidersHorizontal,
-  EyeOff, Minus, Heading,
+  EyeOff, Minus, Heading, Info, MessageSquareQuote, ExternalLink,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { cryptoRandomId, type FormField, type FormFieldType } from "@/types/form-schema";
@@ -18,9 +18,11 @@ export type FieldTypeMeta = {
   type: FormFieldType;
   label: string;
   icon: ComponentType<{ className?: string }>;
-  group: "input" | "choice" | "datetime" | "advanced" | "layout";
+  group: "input" | "choice" | "datetime" | "advanced" | "layout" | "agent";
   /** Whether the inspector should expose an `options` editor. */
   hasOptions?: boolean;
+  /** Field is presentational (info/script/connector/divider/heading) — no value collected. */
+  presentational?: boolean;
   /** Default config sprayed into a fresh field of this type. */
   makeDefault: () => FormField;
 };
@@ -73,8 +75,12 @@ export const FIELD_TYPE_REGISTRY: FieldTypeMeta[] = [
   { type: "slider",    label: "Slider",      icon: SlidersHorizontal,  group: "advanced", makeDefault: () => base("slider", "Slider", { validation: { min: 0, max: 100 } }) },
   { type: "hidden",    label: "Hidden",      icon: EyeOff,             group: "advanced", makeDefault: () => base("hidden", "Hidden") },
   // Layout
-  { type: "divider", label: "Divider", icon: Minus,    group: "layout", makeDefault: () => base("divider", "—") },
-  { type: "heading", label: "Heading", icon: Heading,  group: "layout", makeDefault: () => base("heading", "Heading") },
+  { type: "divider", label: "Divider", icon: Minus,    group: "layout", presentational: true, makeDefault: () => base("divider", "—") },
+  { type: "heading", label: "Heading", icon: Heading,  group: "layout", presentational: true, makeDefault: () => base("heading", "Heading") },
+  // Agent guidance (presentational, no value collected)
+  { type: "info",           label: "Info note",      icon: Info,               group: "agent", presentational: true, makeDefault: () => base("info", "Info", { content: "Helpful note for the agent." }) },
+  { type: "script_block",   label: "Say this",       icon: MessageSquareQuote, group: "agent", presentational: true, makeDefault: () => base("script_block", "Say this", { content: "Thank you for calling. How may I help you?" }) },
+  { type: "connector_link", label: "Connector link", icon: ExternalLink,       group: "agent", presentational: true, makeDefault: () => base("connector_link", "Open resource", { href: "https://example.com" }) },
 ];
 
 export const FIELD_TYPE_BY_KEY: Record<FormFieldType, FieldTypeMeta> = Object.fromEntries(
@@ -82,9 +88,10 @@ export const FIELD_TYPE_BY_KEY: Record<FormFieldType, FieldTypeMeta> = Object.fr
 ) as Record<FormFieldType, FieldTypeMeta>;
 
 export const FIELD_TYPE_GROUPS: { label: string; key: FieldTypeMeta["group"] }[] = [
-  { label: "Input",    key: "input" },
-  { label: "Choice",   key: "choice" },
+  { label: "Input",       key: "input" },
+  { label: "Choice",      key: "choice" },
   { label: "Date & time", key: "datetime" },
-  { label: "Advanced", key: "advanced" },
-  { label: "Layout",   key: "layout" },
+  { label: "Advanced",    key: "advanced" },
+  { label: "Agent guide", key: "agent" },
+  { label: "Layout",      key: "layout" },
 ];
