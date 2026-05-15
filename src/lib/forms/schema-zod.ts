@@ -19,6 +19,7 @@ const FIELD_TYPES = [
   "date", "time", "datetime", "select", "multiselect", "radio",
   "checkbox", "checkbox_group", "toggle", "file", "signature",
   "address", "rating", "slider", "hidden", "divider", "heading",
+  "info", "script_block", "connector_link",
 ] as const;
 
 const fieldOptionSchema = z.object({
@@ -53,6 +54,8 @@ const fieldSchema = z.object({
   defaultValue: z.union([z.string(), z.number(), z.boolean(), z.null()]).optional(),
   ai: fieldAiSchema.optional(),
   mapping: z.string().optional(),
+  content: z.string().optional(),
+  href: z.string().optional(),
 });
 
 const sectionSchema = z.object({
