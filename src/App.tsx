@@ -461,9 +461,14 @@ const App = () => (
                 <Route path="ani-blocklist" element={<Navigate to="/admin/settings" replace />} />
                 <Route path="callback-queue" element={<Navigate to="/admin/settings" replace />} />
                 <Route path="abandon-rate" element={<Navigate to="/admin/settings" replace />} />
-                <Route path="data-plane" element={<DataPlanePage />} />
-                <Route path="identity" element={<IdentityResolutionPage />} />
-                <Route path="utilities" element={<PlatformUtilitiesPage />} />
+                {/* Phase D: superadmin-class surfaces de-surfaced from /admin — silent redirect to /superadmin.
+                    Files retained on disk and reachable directly via /admin/*/raw if ever needed. */}
+                <Route path="data-plane" element={<Navigate to="/superadmin" replace />} />
+                <Route path="data-plane/raw" element={<DataPlanePage />} />
+                <Route path="identity" element={<Navigate to="/superadmin" replace />} />
+                <Route path="identity/raw" element={<IdentityResolutionPage />} />
+                <Route path="utilities" element={<Navigate to="/superadmin" replace />} />
+                <Route path="utilities/raw" element={<PlatformUtilitiesPage />} />
                 <Route path="scripts" element={<ScriptEditorPage />} />
                 <Route path="scripts/:scriptId/builder" element={<ScriptBuilderPage />} />
                 <Route path="kb" element={<KnowledgeBasePage />} />
