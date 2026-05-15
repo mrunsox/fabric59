@@ -4,6 +4,7 @@ import {
   ClipboardCheck, BarChart3, Brain, Sparkles, Settings,
   PlayCircle, Headphones, Eye,
   Sparkle, UserSquare2, Tag, Boxes, Heart, Shield,
+  ListChecks, Bell, Radio,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -11,9 +12,9 @@ import type { ComponentType } from "react";
  * Canonical nav registry.
  *
  * Single source of truth for the canonical Workspace shell at
- * /w/:workspaceId/*. The previously scaffolded Org nav (/org/*) was retired
- * during shell convergence — AdminShell at /admin/* is now the single
- * canonical organization-level surface and owns its own nav config.
+ * /w/:workspaceId/*. Phase B (nav convergence) introduces grouped + pinned
+ * + demoted views over the same flat WORKSPACE_NAV union — existing
+ * consumers/tests that iterate WORKSPACE_NAV keep working unchanged.
  */
 
 export type NavItem = {
@@ -25,8 +26,9 @@ export type NavItem = {
 };
 
 /**
- * Canonical Workspace nav — 15 items. Prefix: /w/:workspaceId
- * Order is locked to the May 13 Canonical Build Doc §4.
+ * Flat union of every canonical workspace surface, including demoted ones.
+ * Order is preserved for compatibility with existing iteration sites
+ * (command palette, regression tests, breadcrumbs).
  */
 export const WORKSPACE_NAV: NavItem[] = [
   { key: "home",         label: "Home",         icon: Home,            to: "home" },
@@ -35,15 +37,53 @@ export const WORKSPACE_NAV: NavItem[] = [
   { key: "forms",        label: "Forms",        icon: FormInput,       to: "forms" },
   { key: "templates",    label: "Templates",    icon: FileStack,       to: "templates" },
   { key: "clients",      label: "Clients",      icon: Users,           to: "clients" },
-  { key: "runs",         label: "Runs",         icon: PlayCircle,      to: "runs" },
-  { key: "agents",       label: "Agents",       icon: Headphones,      to: "agents" },
-  { key: "supervisor",   label: "Supervisor",   icon: Eye,             to: "supervisor" },
+  { key: "dispositions", label: "Dispositions", icon: ListChecks,      to: "dispositions" },
+  { key: "notifications",label: "Notifications",icon: Bell,            to: "notifications" },
+  { key: "knowledge",    label: "Knowledge",    icon: Brain,           to: "knowledge" },
+  { key: "assistant",    label: "Assistant",    icon: Sparkles,        to: "assistant" },
   { key: "qa",           label: "QA",           icon: ClipboardCheck,  to: "qa" },
   { key: "analytics",    label: "Analytics",    icon: BarChart3,       to: "analytics" },
   { key: "integrations", label: "Integrations", icon: Plug,            to: "integrations" },
-  { key: "knowledge",    label: "Knowledge",    icon: Brain,           to: "knowledge" },
-  { key: "assistant",    label: "Assistant",    icon: Sparkles,        to: "assistant" },
   { key: "settings",     label: "Settings",     icon: Settings,        to: "settings" },
+  // Demoted: still mounted + reachable, hidden from primary sidebar.
+  { key: "runs",         label: "Runs",         icon: PlayCircle,      to: "runs" },
+  { key: "agents",       label: "Agents",       icon: Headphones,      to: "agents" },
+  { key: "supervisor",   label: "Supervisor",   icon: Eye,             to: "supervisor" },
+  { key: "agent",        label: "Agent cockpit",icon: Radio,           to: "agent" },
+];
+
+const byKey = (k: string) => WORKSPACE_NAV.find((n) => n.key === k)!;
+
+/** Phase B grouped sidebar surface. */
+export type NavGroup = { label: string; items: NavItem[] };
+
+export const WORKSPACE_NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Build",
+    items: ["home", "campaigns", "guides", "forms", "templates", "clients"].map(byKey),
+  },
+  {
+    label: "Operate",
+    items: ["dispositions", "notifications", "knowledge", "assistant"].map(byKey),
+  },
+  {
+    label: "Insight",
+    items: ["qa", "analytics", "integrations"].map(byKey),
+  },
+];
+
+/** Pinned at the bottom of the sidebar. */
+export const WORKSPACE_NAV_PINNED: NavItem[] = [byKey("settings")];
+
+/**
+ * Items intentionally hidden from the primary sidebar in this phase but kept
+ * mounted in routes and discoverable via ⌘K.
+ */
+export const WORKSPACE_NAV_DEMOTED: NavItem[] = [
+  byKey("runs"),
+  byKey("agents"),
+  byKey("supervisor"),
+  byKey("agent"),
 ];
 
 /** Canonical Marketing nav — 6 items. Public, no auth. */
