@@ -405,8 +405,9 @@ const App = () => (
                 <Route path="clients/:id" element={<ClientOverviewPage />} />
                 <Route path="clients/:clientId/legal-connect" element={<ClientLegalConnectPage />} />
                 <Route path="clients/:clientId/legal-connect/setup/:provider" element={<ClientLegalConnectPage />} />
-                <Route path="clients/:clientId/five9-overlay" element={<CampaignOverlayListPage />} />
-                <Route path="clients/:clientId/five9-overlay/campaigns/:campaignRouteId" element={<CampaignOverlayPage />} />
+                {/* Phase D: Campaign Overlay surfaces retired — silent redirects to canonical campaigns list. */}
+                <Route path="clients/:clientId/five9-overlay" element={<Navigate to="/admin/campaigns" replace />} />
+                <Route path="clients/:clientId/five9-overlay/campaigns/:campaignRouteId" element={<Navigate to="/admin/campaigns" replace />} />
                 <Route path="partners" element={<PartnersPage />} />
                 <Route path="partners/:id" element={<PartnerOverviewPage />} />
                 {/* CANONICAL (Phase 11): single org overview at /admin index. /admin/dashboard collapses into it. */}
