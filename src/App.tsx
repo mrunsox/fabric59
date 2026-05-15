@@ -482,7 +482,8 @@ const App = () => (
                 <Route path="email-templates" element={<EmailTemplatesPage />} />
                 {/* Phase C: call-flow base redirects above; this param route is compatibility-only. */}
                 <Route path="legal-connect" element={<LegalConnectPage />} />
-                <Route path="qr-routing" element={<QrRoutingPage />} />
+                {/* Phase D: QrRoutingPage retired — silent redirect to settings. */}
+                <Route path="qr-routing" element={<Navigate to="/admin/settings" replace />} />
                 {/* CANONICAL: legacy tree-editor redirects into workspace guides (param dropped). */}
                 <Route path="tree-editor/:scriptId" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
                 <Route path="test" element={<TestConsolePage />} />
