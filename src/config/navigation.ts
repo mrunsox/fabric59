@@ -52,7 +52,8 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     permission: "integrations",
     matches: [
       "/admin/connectors", "/admin/integrations", "/admin/legal-connect",
-      "/admin/mappings", "/admin/five9", "/admin/domains",
+      // Phase D: /admin/five9 de-surfaced — silent redirect to /admin/connectors/five9.
+      "/admin/mappings", "/admin/domains",
     ],
     subNav: [
       { label: "Catalog", href: "/admin/connectors" },

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Archive, Download, Route, BookOpen, Building2, Users, FileText, Phone, Sparkles, BarChart3, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, Archive, Download, Route, BookOpen, Building2, Users, FileText, Sparkles, BarChart3, ClipboardCheck } from "lucide-react";
 
 export type SuperadminNavItem = {
   key: string;
@@ -17,7 +17,8 @@ export const SUPERADMIN_SECTIONS: SuperadminNavItem[] = [
   { key: "exports", label: "Source Exports", href: "/superadmin/exports", icon: Download },
   { key: "routes", label: "Advanced Routes", href: "/superadmin/routes", icon: Route },
   { key: "docs", label: "System Docs", href: "/superadmin/docs", icon: BookOpen },
-  { key: "call-flow", label: "Call Flow", href: "/superadmin/call-flow", icon: Phone },
+  // Phase D: Call Flow de-surfaced — /superadmin/call-flow silent-redirects to
+  // /admin/connectors. Raw page retained at /superadmin/call-flow/raw.
   { key: "dev-guide", label: "Dev Guide", href: "/superadmin/dev-guide", icon: FileText },
   { key: "test-cases", label: "Test cases", href: "/superadmin/test-cases", icon: ClipboardCheck },
 ];
