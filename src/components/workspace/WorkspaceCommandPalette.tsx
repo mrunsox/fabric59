@@ -9,7 +9,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { WORKSPACE_NAV } from "@/config/canonicalNav";
+import { WORKSPACE_NAV_GROUPS, WORKSPACE_NAV_PINNED, WORKSPACE_NAV_DEMOTED } from "@/config/canonicalNav";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceGuides } from "@/hooks/useWorkspaceGuides";
@@ -57,8 +57,26 @@ export function WorkspaceCommandPalette() {
       <CommandList>
         <CommandEmpty>No matches.</CommandEmpty>
 
-        <CommandGroup heading="Navigate">
-          {WORKSPACE_NAV.map((item) => {
+        {[...WORKSPACE_NAV_GROUPS, { label: "Pinned", items: WORKSPACE_NAV_PINNED }].map((group) => (
+          <CommandGroup key={group.label} heading={group.label}>
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <CommandItem
+                  key={item.key}
+                  value={`nav ${item.label}`}
+                  onSelect={() => go(`${base}/${item.to}`)}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        ))}
+
+        <CommandGroup heading="More">
+          {WORKSPACE_NAV_DEMOTED.map((item) => {
             const Icon = item.icon;
             return (
               <CommandItem
@@ -68,6 +86,9 @@ export function WorkspaceCommandPalette() {
               >
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
+                <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                  hidden
+                </span>
               </CommandItem>
             );
           })}
