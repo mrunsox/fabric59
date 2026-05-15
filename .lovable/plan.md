@@ -1,41 +1,90 @@
-## Problem
 
-Clicking "Skip onboarding" successfully creates the org + workspace in the database (verified — 2 orgs and 2 default workspaces now exist for `pauljoseph@24hvirtual.com`) and calls `navigate("/w/:id/home")`. But the page lands back on `/onboarding`.
+# Premium polish + dead-end repair
 
-**Root cause:** `AuthContext` only loads `organization` once at sign-in. After `Skip onboarding` inserts the new org, `AuthContext.organization` is still `null`. When React Router navigates to `/w/:id/home`, `ProtectedRoute` sees `!organization` and bounces back to `/onboarding`. Same thing for `WorkspaceContext` — its workspace list is stale, so even if it loaded, the new workspace might not be visible to `CanonicalWorkspaceShell`.
+Three coordinated workstreams against the canonical workspace shell at `/w/:workspaceId/*`. Surgical, no scope creep into marketing/auth shells, no schema changes.
 
-`AuthContext` exposes no `refresh()`, so the skip handler has no way to re-trigger the org load before navigating.
+## 1. URL display + breadcrumb truth
 
-## Fix (surgical, two files)
+Current breadcrumb (`Fabric59 Ops / Main workspace / Home`) shows the right pieces but the section label is hard-coded from the URL slug and several pages render their own duplicate H1 ("Main Workspace") which doubles with the eyebrow ("WORKSPACE"). Also the browser tab title doesn't reflect the current section.
 
-### 1. `src/contexts/AuthContext.tsx`
-Expose a `refreshOrganizations()` function on the context:
-- Extract the existing `loadOrganizations(userId)` so it can be called on demand.
-- Add `refreshOrganizations: () => Promise<void>` to `AuthContextType` and the provider value, which calls `loadOrganizations(user.id)` if `user` exists.
+Changes:
+- `WorkspaceShell.WorkspaceChrome`: derive the section label from `WORKSPACE_NAV` (already done) and append a third crumb for detail pages (`Campaigns / Acme Q3`) by reading a small `useBreadcrumbTrail()` context that detail pages publish into.
+- Add `<SEOHead>` per workspace surface so the document title becomes `{Section} · {Workspace} · Fabric59`.
+- Make the workspace switcher pill copy the canonical workspace URL on shift-click, and show the bare `id` only as a `title` tooltip — no UUID in the visible chrome.
+- Collapse the duplicated `WORKSPACE / Main Workspace` eyebrow+H1 on `WorkspaceHomePage` into a single premium header (eyebrow handled by breadcrumb, H1 = workspace name only).
 
-No behavior change for any existing consumer.
+## 2. Ultra-premium nav bar + sidebar
 
-### 2. `src/pages/onboarding/OnboardingPage.tsx` — `handleSkipToWorkspace`
-After the org + workspace inserts succeed, before `navigate(...)`:
-- `await refreshOrganizations()` (from `useAuth()`)
-- `await refetchWorkspaces()` (already called)
-- Persist `localStorage.setItem("currentOrgId", targetOrgId)` so AuthContext picks the right org on the next load.
-- Then `navigate(`/w/${targetId}/home`, { replace: true })`.
+Goals: Linear/Vercel-grade density, motion, and hierarchy. Light-mode pure white per project memory; cyan #0EA5E9 primary kept.
 
-Fallback safety net: if for any reason `organization` is still null right after refresh (race), use `window.location.assign(`/w/${targetId}/home`)` instead of `navigate(...)` so the app re-bootstraps cleanly. This guarantees the user lands on the workspace dashboard.
+Sidebar (`WorkspaceShell.WorkspaceSidebar`):
+- Group the 15 items into 3 silent sections with 10px section labels: **Build** (Home, Campaigns, Guides, Forms, Templates, Clients), **Operate** (Runs, Agents, Supervisor, QA), **Intelligence** (Analytics, Integrations, Knowledge, Assistant), with Settings pinned at the bottom.
+- Active item: 1px inset ring + soft cyan glow (`shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_8px_24px_-12px_hsl(var(--primary)/0.35)]`), animated 120ms.
+- Add per-item kbd hint on hover (`G then C` style) using a small `useCommandHint` map; wire `g h / g c / g g / g f / g t / g r / g a / g s` global shortcuts via a single `useKeyboardNav(workspaceId)` hook.
+- Workspace switcher promoted from breadcrumb into a dedicated sidebar header card (avatar monogram + workspace name + role chip + chevron). Breadcrumb keeps Org / Section only.
+- Collapsed (icon) mode: tooltips already exist; add subtle 200ms width transition and keep section dividers as 1px hairlines.
 
-### 3. Optional cleanup (does not block fix)
-Two stub orgs named "Fabric59 Ops" exist from the failed attempts. Not deleting in this pass — the user can rename one and the other becomes a harmless duplicate. We can prompt to clean up after this fix lands if desired.
+Top bar:
+- Add a global `⌘K` Command Palette (CommandDialog from shadcn) wired to: every `WORKSPACE_NAV` destination, every workspace in scope, recent campaigns/guides/forms (last 10 from existing hooks), and the create actions on Home. This single addition kills most "where do I go?" dead ends.
+- Notification bell stays; add a profile/account menu (avatar → Profile, Switch workspace, Sign out) — currently absent in the canonical shell.
+
+## 3. Dead-end audit & repair
+
+Run a route-by-route audit script and fix everything it surfaces. Initial scan from the codebase already shows:
+
+| Dead end | Fix |
+|---|---|
+| Home → "New template" links to `/w/:id/templates` (not a real create flow) | Point to `templates?new=1`, open the template create drawer on mount |
+| `WorkspaceShell` "Workspace not found" CTA goes to `/admin/workspaces` | Add primary "Switch workspace" picker inline + secondary "Create workspace" |
+| `WorkspaceCampaignNewPage` documents that save still navigates to legacy `/admin/campaigns/:id` | Patch `CampaignIntakePage` save handler to detect `/w/:id/campaigns/new` origin and navigate to `/w/:id/campaigns/:campaignId` |
+| `LegacyWorkspaceRedirect` silently lands on `/w/:id/home` with no breadcrumb of where the user came from | Add a one-time toast "Moved to canonical workspace home" with a "Why?" link to docs |
+| Empty `RecentList` on Home is a flat blank card | Replace with 3 contextual starter actions (Import CSV, Use template, Try sample data) — no dead end if zero data |
+| Breadcrumb `Organization` link goes to `/org` which is retired | Re-point to `/admin` |
+| Workspace switcher dropdown shows only names; no "Create new workspace" terminator | Append "+ Create workspace" item → `/admin/workspaces?new=1` |
+| Sidebar Settings → no sub-IA, lands on a single page | Add in-page tabs (General / Members / Billing / Danger zone) so Settings isn't a "wall" |
+
+Plus a programmatic sweep:
+- Add `scripts/audit-routes.ts` (node, no runtime cost) that walks `App.tsx` Route children, asserts every route either renders a component or is a `<Navigate>` whose target is itself routed. Fail CI on orphan targets.
+- Extend `src/test/regressions/canonicalSurfaces.test.ts` with a "no dead links" matrix: render each `WORKSPACE_NAV` destination + every `<Link to="…">` discovered via `ts-morph` and assert `useRoutes` resolves.
+
+## 4. Tests + docs
+
+- New: `src/test/regressions/workspaceShellPolish.test.tsx` — breadcrumb section text, command palette opens on `⌘K`, switcher renders Create item, keyboard shortcut `g c` navigates to campaigns.
+- Extend: `launchRedirectMatrix.test.tsx` (already added) — keep green.
+- New: `scripts/audit-routes.ts` + `npm test:routes` script wired to Vitest run.
+- Doc: append a "Workspace shell — premium polish" section to `docs/dashboard-surface-extraction.md` covering nav grouping, command palette, shortcut map, and the no-dead-end policy.
+
+## Technical details
+
+```text
+src/
+  shells/WorkspaceShell.tsx          # grouped sidebar, profile menu, ⌘K palette mount
+  components/workspace/
+    WorkspaceCommandPalette.tsx      # NEW — CommandDialog + nav/workspace/recent providers
+    WorkspaceBreadcrumb.tsx          # NEW — context-driven 3-segment crumb
+    WorkspaceSwitcherCard.tsx        # NEW — sidebar header card
+  hooks/
+    useKeyboardNav.ts                # NEW — g+key shortcut router
+    useBreadcrumbTrail.ts            # NEW — per-page crumb publisher
+  pages/workspace/WorkspaceHomePage.tsx   # collapse duplicate H1, smarter empty state, fix New template link
+  pages/admin/CampaignIntakePage.tsx      # workspace-aware post-save navigation
+  pages/workspace/WorkspaceSettingsPage.tsx # tabbed sub-IA
+  test/regressions/workspaceShellPolish.test.tsx  # NEW
+  scripts/audit-routes.ts                # NEW
+```
+
+Design tokens: reuse `--primary` (#0EA5E9), `--background` (white), add `--ring-soft: 14 165 233 / 0.25` and `--shadow-glow: 0 8px 24px -12px hsl(var(--primary) / 0.35)` in `index.css`. No new color families.
+
+## Out of scope (explicit)
+
+- Marketing pages, login/signup, onboarding shell visuals (already iterated last loop).
+- RLS, schema, edge functions.
+- Org/admin-shell sidebar (separate surface; can be a follow-up with the same primitives once approved here).
 
 ## Acceptance
 
-1. On `/onboarding`, master admin clicks "Skip onboarding — go to workspace dashboard".
-2. Toast shows "Workspace ready".
-3. URL changes to `/w/<workspace-id>/home` and the workspace cockpit renders (no bounce back to `/onboarding`).
-4. Refreshing the page stays on `/w/<id>/home`.
-
-## Out of scope
-
-- No changes to `LaunchRedirectPage`, route table, or `WorkspaceResolveRedirect`.
-- No RLS or schema changes.
-- No deletion of duplicate "Fabric59 Ops" orgs (separate cleanup).
+1. `/w/:id/home` shows: `Fabric59 Ops / Main workspace / Home` in breadcrumb, single "Main workspace" H1, no duplicate eyebrow.
+2. `⌘K` opens palette, typing "camp" jumps to Campaigns; `g h` returns home.
+3. Sidebar shows three labeled groups with active-state glow; collapsed mode keeps groupings.
+4. `npm run test` green, including new `workspaceShellPolish` and `audit-routes` checks.
+5. Audit script reports zero unreachable routes and zero `<Link>` targets that 404.

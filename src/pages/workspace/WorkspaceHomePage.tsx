@@ -15,7 +15,7 @@ import { isDemoName } from "@/lib/demoHeuristic";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { KpiCard } from "@/components/common/KpiCard";
 import { EmptyState } from "@/components/common/EmptyState";
-import { StatusBadge } from "@/components/common/StatusBadge";
+// StatusBadge no longer used here — eyebrow/badge handled by shell breadcrumb.
 import { ActionCard } from "@/components/common/ActionCard";
 import { RecentList, type RecentListItem } from "@/components/common/RecentList";
 
@@ -67,20 +67,18 @@ export default function WorkspaceHomePage() {
     { label: "New campaign", icon: Megaphone, href: `${base}/campaigns/new`, hint: "Outbound or inbound program" },
     { label: "New guide", icon: BookOpen, href: `${base}/guides/new`, hint: "Agent script & decision tree" },
     { label: "New form", icon: FormInput, href: `${base}/forms/new`, hint: "Capture inbound leads" },
-    { label: "New template", icon: FileStack, href: `${base}/templates`, hint: "Reusable content (fork in library)" },
+    { label: "New template", icon: FileStack, href: `${base}/templates?new=1`, hint: "Reusable content (fork in library)" },
   ];
 
   return (
     <div className="space-y-6">
       <WorkspacePageHeader
-        eyebrow="Workspace"
         title={workspace.name}
         lede={
           totalReal === 0
             ? "Fresh workspace. Start by creating something below."
             : "Workspace cockpit. Live counts and recent activity for this workspace."
         }
-        secondary={<StatusBadge status="Workspace home" tone="info" />}
       />
 
       {/* Canonical KPI row — 5 items, outline order. */}
