@@ -191,21 +191,9 @@ export default function CampaignIntakePage() {
       state[item.id] = { done: item.done, blocked: item.blocked };
     });
     if (intake.whiteLabel) state["imp_wl"] = { done: true };
-    if (intake.vmGreetingPrompt || intake.vmGreetingFileUrl) state["imp_vm"] = { done: true };
     return state;
   };
 
-  const handleVmFileUpload = async (file: File) => {
-    if (!organization?.id) return;
-    try {
-      const result = await uploadMutation.mutateAsync({ file, orgId: organization.id });
-      update({ vmGreetingFileUrl: result.publicUrl });
-      setVmFileName(file.name);
-      toast.success("VM greeting uploaded!");
-    } catch {
-      // Error handled by hook
-    }
-  };
 
   const handleSave = async (status: "draft" | "submitted") => {
     if (!intake.campaignName || !intake.clientName) {
@@ -355,7 +343,7 @@ export default function CampaignIntakePage() {
       <Card>
         <Collapsible open={openSections[2]}>
           <CardHeader className="pb-2">
-            <SectionHeader num={2} title="Phone Numbers & Routing" desc="ANIs, DNIS, and transfer display" />
+            <SectionHeader num={2} title="Phone Numbers" desc="ANI caller IDs and inbound DNIS numbers" />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">
@@ -366,10 +354,6 @@ export default function CampaignIntakePage() {
               <div className="space-y-1.5">
                 <Label>DNIS Numbers</Label>
                 <MultiInput values={intake.dnisNumbers} onChange={(v) => update({ dnisNumbers: v })} placeholder="e.g. +18005551234" helperText="US customers get US numbers, CA customers get CA numbers" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Transfer Display Number</Label>
-                <Input value={intake.transferDisplayNumber} onChange={(e) => update({ transferDisplayNumber: e.target.value })} placeholder="Number shown to recipient during transfer" />
               </div>
             </CardContent>
           </CollapsibleContent>
@@ -436,73 +420,6 @@ export default function CampaignIntakePage() {
         </Collapsible>
       </Card>
 
-      {/* Section 4: Prompts */}
-      <Card>
-        <Collapsible open={openSections[4]}>
-          <CardHeader className="pb-2">
-            <SectionHeader num={4} title="Prompts" desc="Select existing prompts from your Five9 domain" />
-          </CardHeader>
-          <CollapsibleContent>
-            <CardContent className="space-y-4">
-              <p className="text-xs text-muted-foreground">These are the prompts already configured on your Five9 domain. Select the appropriate prompt for each section.</p>
-              <PromptSelector label="IVR Greeting" value={intake.ivrGreetingPrompt || ""} onChange={(v) => update({ ivrGreetingPrompt: v })} prompts={prompts} loading={promptsLoading} />
-              <PromptSelector label="Whisper Prompt" value={intake.whisperPrompt || ""} onChange={(v) => update({ whisperPrompt: v })} prompts={prompts} loading={promptsLoading} />
-              <PromptSelector label="Hold Music" value={intake.holdMusicPrompt || ""} onChange={(v) => update({ holdMusicPrompt: v })} prompts={prompts} loading={promptsLoading} />
-              <PromptSelector label="IVR Hold/Announcement Message" value={intake.ivrAnnouncementPrompt || ""} onChange={(v) => update({ ivrAnnouncementPrompt: v })} prompts={prompts} loading={promptsLoading} />
-              <div className="space-y-2">
-                <Label>VM Greeting</Label>
-                <RadioGroup value={intake.vmGreetingType} onValueChange={(v: "existing" | "upload") => update({ vmGreetingType: v })} className="flex gap-4">
-                  <div className="flex items-center gap-2"><RadioGroupItem value="existing" id="vm_ex" /><Label htmlFor="vm_ex">Select existing</Label></div>
-                  <div className="flex items-center gap-2"><RadioGroupItem value="upload" id="vm_up" /><Label htmlFor="vm_up">Upload custom</Label></div>
-                </RadioGroup>
-                {intake.vmGreetingType === "existing" ? (
-                  <PromptSelector value={intake.vmGreetingPrompt || ""} onChange={(v) => update({ vmGreetingPrompt: v })} prompts={prompts} loading={promptsLoading} />
-                ) : (
-                  <div className="space-y-2">
-                    {vmFileName ? (
-                      <div className="flex items-center gap-2 p-2 rounded-md border bg-muted/50">
-                        <FileAudio className="h-4 w-4 text-primary shrink-0" />
-                        <span className="text-sm truncate flex-1">{vmFileName}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => {
-                            update({ vmGreetingFileUrl: "" });
-                            setVmFileName("");
-                          }}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <Input
-                          type="file"
-                          accept="audio/*"
-                          disabled={uploadMutation.isPending}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleVmFileUpload(file);
-                          }}
-                        />
-                        {uploadMutation.isPending && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-md">
-                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                            <span className="ml-2 text-xs">Uploading...</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-
-      {/* Section 5: Dispositions */}
       <Card>
         <Collapsible open={openSections[5]}>
           <CardHeader className="pb-2">
