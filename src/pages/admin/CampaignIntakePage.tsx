@@ -177,10 +177,8 @@ export default function CampaignIntakePage() {
       case 4: return true;
       case 5: return true;
       case 6: return true;
-      case 7: return true;
-      case 8: return !!intake.skillName;
-      case 9: return true;
-      case 10: return true;
+      case 7: return !!intake.skillName;
+      case 8: return true;
       default: return false;
     }
   };
