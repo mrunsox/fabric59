@@ -214,3 +214,70 @@ function AssignmentsPanel({ workspaceId, formId }: { workspaceId: string; formId
     </Card>
   );
 }
+
+function RecentSubmissionsPanel({ workspaceId, formId }: { workspaceId: string; formId: string }) {
+  const { data: campaigns = [] } = useWorkspaceCampaigns();
+  const { data: submissions = [], isLoading } = useFormSubmissions(formId, { limit: 25 });
+  const campaignById = new Map(campaigns.map((c) => [c.id, c.name]));
+
+  return (
+    <Card data-testid="recent-submissions-panel">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Inbox className="h-3.5 w-3.5" /> Recent submissions
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : submissions.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic">No submissions yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="text-muted-foreground">
+                <tr className="border-b border-border/60">
+                  <th className="py-2 pr-3 text-left font-medium">Submitted</th>
+                  <th className="py-2 pr-3 text-left font-medium">Source</th>
+                  <th className="py-2 pr-3 text-left font-medium">Campaign</th>
+                  <th className="py-2 pr-3 text-left font-medium">Outcome</th>
+                  <th className="py-2 pr-3 text-left font-medium">Disposition</th>
+                </tr>
+              </thead>
+              <tbody>
+                {submissions.map((s) => (
+                  <tr
+                    key={s.id}
+                    className="border-b border-border/30 last:border-0"
+                    data-testid={`submission-row-${s.id}`}
+                  >
+                    <td className="py-2 pr-3 tabular-nums">
+                      {new Date(s.submitted_at).toLocaleString()}
+                    </td>
+                    <td className="py-2 pr-3">
+                      <Badge variant="outline" className="text-[10px]">{s.source}</Badge>
+                    </td>
+                    <td className="py-2 pr-3">
+                      {s.campaign_id ? (
+                        <Link
+                          to={`/w/${workspaceId}/campaigns/${s.campaign_id}`}
+                          className="hover:text-primary"
+                        >
+                          {campaignById.get(s.campaign_id) ?? s.campaign_id.slice(0, 8)}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="py-2 pr-3 font-mono">{s.outcome_key ?? "—"}</td>
+                    <td className="py-2 pr-3 font-mono">{s.disposition_key ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
