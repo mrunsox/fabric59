@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ReadinessChecklist } from "@/components/dashboard/ReadinessChecklist";
@@ -7,30 +8,44 @@ import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
 import { SystemHealthStrip } from "@/components/dashboard/SystemHealthStrip";
 import { WorkspaceSnapshotPanel } from "@/components/dashboard/WorkspaceSnapshotPanel";
 import { ConnectorsReportsPanel } from "@/components/dashboard/ConnectorsReportsPanel";
+import { WorkspaceLaunchpad } from "@/components/dashboard/WorkspaceLaunchpad";
 import { OnboardingResumeCard } from "@/components/onboarding/OnboardingResumeCard";
+import { EmptyState } from "@/components/common/EmptyState";
+import { Button } from "@/components/ui/button";
 import { fetchClientReadiness, type ClientReadiness } from "@/lib/readiness/computeCampaignReadiness";
-import { Building2 } from "lucide-react";
+import { Building2, Users } from "lucide-react";
 
 /**
  * Canonical Organization Overview at /admin.
- * Reads as an org-level cockpit: top summary → primary org actions →
- * secondary readiness/AI guidance → conditional onboarding resume.
+ * Reads as an org-level cockpit: workspace launchpad → system health → primary
+ * org actions → workspaces/connectors snapshots → readiness/AI guidance.
  */
 export default function OverviewPage() {
   const { organization } = useAuth();
   const [readiness, setReadiness] = useState<ClientReadiness | null>(null);
+  const [hasClient, setHasClient] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!organization) return;
     setLoading(true);
-    supabase.from("tenants").select("id").eq("organization_id", organization.id).limit(1).maybeSingle().then(async ({ data }) => {
-      if (data?.id) {
-        const r = await fetchClientReadiness(data.id);
-        setReadiness(r);
-      }
-      setLoading(false);
-    });
+    supabase
+      .from("tenants")
+      .select("id")
+      .eq("organization_id", organization.id)
+      .limit(1)
+      .maybeSingle()
+      .then(async ({ data }) => {
+        if (data?.id) {
+          setHasClient(true);
+          const r = await fetchClientReadiness(data.id);
+          setReadiness(r);
+        } else {
+          setHasClient(false);
+          setReadiness(null);
+        }
+        setLoading(false);
+      });
   }, [organization]);
 
   return (
@@ -45,6 +60,8 @@ export default function OverviewPage() {
         </div>
       </div>
 
+      <WorkspaceLaunchpad organizationId={organization?.id} />
+
       <SystemHealthStrip organizationId={organization?.id} />
 
       <QuickActionsGrid />
@@ -54,10 +71,23 @@ export default function OverviewPage() {
         <ConnectorsReportsPanel organizationId={organization?.id} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <ReadinessChecklist readiness={readiness} loading={loading} title="Setup Progress" />
-        <AIGuidanceCard readiness={readiness} />
-      </div>
+      {hasClient === false && !loading ? (
+        <EmptyState
+          icon={Users}
+          title="No clients yet"
+          description="Readiness and AI guidance unlock once this organization has its first client. Add a client to get a tailored go-live checklist."
+          action={
+            <Button asChild size="sm">
+              <Link to="/admin/clients">Add your first client</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ReadinessChecklist readiness={readiness} loading={loading} title="Setup Progress" />
+          <AIGuidanceCard readiness={readiness} />
+        </div>
+      )}
 
       <OnboardingResumeCard />
     </div>
