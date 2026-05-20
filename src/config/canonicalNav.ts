@@ -64,7 +64,7 @@ export const WORKSPACE_NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Operate",
-    items: ["dispositions", "notifications", "knowledge", "assistant"].map(byKey),
+    items: ["agent", "dispositions", "notifications", "knowledge", "assistant"].map(byKey),
   },
   {
     label: "Insight",
@@ -83,7 +83,6 @@ export const WORKSPACE_NAV_DEMOTED: NavItem[] = [
   byKey("runs"),
   byKey("agents"),
   byKey("supervisor"),
-  byKey("agent"),
 ];
 
 /** Canonical Marketing nav — 6 items. Public, no auth. */

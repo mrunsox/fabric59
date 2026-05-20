@@ -2319,10 +2319,14 @@ export type Database = {
       form_submissions: {
         Row: {
           campaign_id: string | null
+          disposition_key: string | null
           form_id: string
           form_version: number
           id: string
           mapped: Json
+          metadata: Json
+          notes: string | null
+          outcome_key: string | null
           payload: Json
           source: string
           submitted_at: string
@@ -2331,10 +2335,14 @@ export type Database = {
         }
         Insert: {
           campaign_id?: string | null
+          disposition_key?: string | null
           form_id: string
           form_version?: number
           id?: string
           mapped?: Json
+          metadata?: Json
+          notes?: string | null
+          outcome_key?: string | null
           payload?: Json
           source?: string
           submitted_at?: string
@@ -2343,10 +2351,14 @@ export type Database = {
         }
         Update: {
           campaign_id?: string | null
+          disposition_key?: string | null
           form_id?: string
           form_version?: number
           id?: string
           mapped?: Json
+          metadata?: Json
+          notes?: string | null
+          outcome_key?: string | null
           payload?: Json
           source?: string
           submitted_at?: string

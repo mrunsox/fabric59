@@ -77,18 +77,21 @@ describe("canonical nav config", () => {
     expect(WORKSPACE_NAV_PINNED.map((n) => n.key)).toEqual(["settings"]);
   });
 
-  it("demotes Runs / Agents / Supervisor / Agent cockpit", () => {
+  it("demotes Runs / Agents / Supervisor (Agent cockpit is promoted in Operate)", () => {
     const demotedKeys = WORKSPACE_NAV_DEMOTED.map((n) => n.key);
     expect(demotedKeys).toEqual(
-      expect.arrayContaining(["runs", "agents", "supervisor", "agent"]),
+      expect.arrayContaining(["runs", "agents", "supervisor"]),
     );
+    expect(demotedKeys).not.toContain("agent");
   });
 
-  it("no demoted item leaks into the visible groups", () => {
+  it("no demoted item leaks into the visible groups; Agent cockpit lives in Operate", () => {
     const visible = WORKSPACE_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.key));
-    for (const k of ["runs", "agents", "supervisor", "agent"]) {
+    for (const k of ["runs", "agents", "supervisor"]) {
       expect(visible, `"${k}" must not appear in the primary sidebar`).not.toContain(k);
     }
+    const operate = WORKSPACE_NAV_GROUPS.find((g) => g.label === "Operate");
+    expect(operate?.items.map((i) => i.key)).toContain("agent");
   });
 });
 
