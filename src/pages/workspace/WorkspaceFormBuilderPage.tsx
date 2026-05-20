@@ -163,6 +163,7 @@ export default function WorkspaceFormBuilderPage() {
           <TabsTrigger value="build" data-testid="tab-build">Build</TabsTrigger>
           <TabsTrigger value="logic" data-testid="tab-logic">Logic</TabsTrigger>
           <TabsTrigger value="preview" data-testid="tab-preview">Preview</TabsTrigger>
+          <TabsTrigger value="outcomes" data-testid="tab-outcomes">Outcomes</TabsTrigger>
           <TabsTrigger value="versions" data-testid="tab-versions">Versions</TabsTrigger>
         </TabsList>
 
