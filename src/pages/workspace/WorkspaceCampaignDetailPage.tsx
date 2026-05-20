@@ -104,6 +104,10 @@ export default function WorkspaceCampaignDetailPage() {
         </Card>
       </div>
 
+      <IntakeFormCard workspaceId={workspace.id} campaignId={campaign.id} />
+
+
+
       <Card>
         <CardHeader><CardTitle className="text-sm">Phase 3 note</CardTitle></CardHeader>
         <CardContent className="text-xs text-muted-foreground space-y-1">
