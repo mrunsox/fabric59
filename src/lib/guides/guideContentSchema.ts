@@ -32,7 +32,7 @@ export const guideContentV1Schema = z.object({
  */
 export function migrateGuideContentToV1(raw: unknown): GuideContentV1 {
   const parsed = guideContentV1Schema.safeParse(raw);
-  if (parsed.success) return parsed.data;
+  if (parsed.success) return parsed.data as GuideContentV1;
   return { ...EMPTY_GUIDE_CONTENT, blocks: [] };
 }
 
@@ -41,7 +41,7 @@ export function migrateGuideContentToV1(raw: unknown): GuideContentV1 {
  * Use before writing to persistence.
  */
 export function assertGuideContentV1(value: unknown): GuideContentV1 {
-  return guideContentV1Schema.parse(value);
+  return guideContentV1Schema.parse(value) as GuideContentV1;
 }
 
 /** Loose http(s) URL guard for connector paste-promotion. */
