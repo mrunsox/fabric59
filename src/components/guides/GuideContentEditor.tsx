@@ -179,21 +179,23 @@ export function GuideContentEditor({ value, onChange }: GuideContentEditorProps)
         </div>
       ))}
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button type="button" variant="outline" size="sm" className="gap-2">
-            <Plus className="h-4 w-4" /> Add block
+      <div className="flex flex-wrap items-center gap-2 pt-1">
+        <span className="text-xs font-medium text-muted-foreground inline-flex items-center gap-1">
+          <Plus className="h-3.5 w-3.5" /> Add block:
+        </span>
+        {(Object.keys(BLOCK_LABELS) as GuideBlockType[]).map((t) => (
+          <Button
+            key={t}
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-label={`Add ${BLOCK_LABELS[t]}`}
+            onClick={() => add(t)}
+          >
+            {BLOCK_LABELS[t]}
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          {(Object.keys(BLOCK_LABELS) as GuideBlockType[]).map((t) => (
-            <DropdownMenuItem key={t} onSelect={() => add(t)}>
-              {BLOCK_LABELS[t]}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+        ))}
+      </div>
   );
 }
 
