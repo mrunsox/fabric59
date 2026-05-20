@@ -1,10 +1,19 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Pencil, Eye } from "lucide-react";
+import { ArrowLeft, Pencil, Eye, Link2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { useWorkspaceForm, useFormSchema } from "@/hooks/useWorkspaceForms";
+import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
+import { useFormCampaignAssignments } from "@/hooks/useFormCampaignAssignments";
 
 /**
  * Read-only form summary. The canonical authoring surface lives at
@@ -102,6 +111,8 @@ export default function WorkspaceFormDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          <AssignmentsPanel workspaceId={workspaceId!} formId={formId!} />
         </>
       )}
     </div>
@@ -114,6 +125,89 @@ function SummaryStat({ label, value }: { label: string; value: number }) {
       <CardContent className="pt-4">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
         <p className="text-2xl font-semibold tabular-nums">{value}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AssignmentsPanel({ workspaceId, formId }: { workspaceId: string; formId: string }) {
+  const { data: campaigns = [] } = useWorkspaceCampaigns();
+  const { data: assignments = [], attachCampaign, detachCampaign, isMutating } =
+    useFormCampaignAssignments(formId);
+  const attachedIds = new Set(assignments.map((a) => a.campaign_id));
+  const unattached = campaigns.filter((c) => !attachedIds.has(c.id));
+  const attached = campaigns.filter((c) => attachedIds.has(c.id));
+
+  return (
+    <Card data-testid="assignments-panel">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Link2 className="h-3.5 w-3.5" /> Campaign assignments
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          Attach this form to campaigns. A campaign can have at most one active intake form;
+          attaching this form replaces any prior assignment on that campaign.
+        </p>
+        <div className="flex items-center gap-2">
+          <Select
+            value=""
+            onValueChange={(v) => v && attachCampaign(v)}
+            disabled={isMutating || unattached.length === 0}
+          >
+            <SelectTrigger className="max-w-sm" data-testid="attach-campaign-trigger">
+              <SelectValue
+                placeholder={
+                  unattached.length === 0 ? "All campaigns attached" : "Attach a campaign…"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {unattached.map((c) => (
+                <SelectItem key={c.id} value={c.id} data-testid={`attach-option-${c.id}`}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {attached.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic">No campaigns attached yet.</p>
+        ) : (
+          <ul className="divide-y divide-border/60">
+            {attached.map((c) => (
+              <li
+                key={c.id}
+                className="py-2 flex items-center justify-between gap-3"
+                data-testid={`attached-${c.id}`}
+              >
+                <div className="min-w-0">
+                  <Link
+                    to={`/w/${workspaceId}/campaigns/${c.id}`}
+                    className="text-sm font-medium hover:text-primary truncate"
+                  >
+                    {c.name}
+                  </Link>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                    {c.status}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => detachCampaign(c.id)}
+                  disabled={isMutating}
+                  className="text-destructive/70 hover:text-destructive"
+                  data-testid={`detach-${c.id}`}
+                >
+                  <X className="h-3.5 w-3.5 mr-1" /> Detach
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
       </CardContent>
     </Card>
   );

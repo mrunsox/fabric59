@@ -142,6 +142,8 @@ export interface OutcomeRef {
   /** Optional canonical disposition mapping. */
   dispositionKey?: string;
   description?: string;
+  /** Optional list of email addresses notified when this outcome fires. */
+  notificationEmails?: string[];
 }
 
 export interface FormSchemaV1 {

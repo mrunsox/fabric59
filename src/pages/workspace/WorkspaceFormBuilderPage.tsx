@@ -12,6 +12,7 @@ import { FieldInspector } from "@/components/forms/builder/FieldInspector";
 import { LogicEditor } from "@/components/forms/builder/LogicEditor";
 import { FormPreview } from "@/components/forms/builder/FormPreview";
 import { VersionHistory } from "@/components/forms/builder/VersionHistory";
+import { OutcomesEditor } from "@/components/forms/builder/OutcomesEditor";
 import { FIELD_TYPE_BY_KEY } from "@/config/formFieldTypes";
 import { cryptoRandomId, type FormField, type FormFieldType, type FormSchemaV1, type FormSection } from "@/types/form-schema";
 
@@ -162,6 +163,7 @@ export default function WorkspaceFormBuilderPage() {
           <TabsTrigger value="build" data-testid="tab-build">Build</TabsTrigger>
           <TabsTrigger value="logic" data-testid="tab-logic">Logic</TabsTrigger>
           <TabsTrigger value="preview" data-testid="tab-preview">Preview</TabsTrigger>
+          <TabsTrigger value="outcomes" data-testid="tab-outcomes">Outcomes</TabsTrigger>
           <TabsTrigger value="versions" data-testid="tab-versions">Versions</TabsTrigger>
         </TabsList>
 
@@ -229,6 +231,10 @@ export default function WorkspaceFormBuilderPage() {
 
         <TabsContent value="preview" className="mt-4">
           <FormPreview schema={schema} />
+        </TabsContent>
+
+        <TabsContent value="outcomes" className="mt-4">
+          <OutcomesEditor schema={schema} onChange={setSchemaDirty} />
         </TabsContent>
 
         <TabsContent value="versions" className="mt-4">
