@@ -307,10 +307,28 @@ function ActionRow({
         </Select>
       )}
       {action.type === "end_with_outcome" && (
-        <Input className="w-56" placeholder="outcome_key" value={action.outcomeKey} onChange={(e) => onChange({ ...action, outcomeKey: e.target.value })} />
+        <Select value={action.outcomeKey} onValueChange={(v) => onChange({ ...action, outcomeKey: v })}>
+          <SelectTrigger className="w-56" data-testid="action-outcome-trigger">
+            <SelectValue placeholder={schema.outcomes.length === 0 ? "No outcomes defined" : "Outcome"} />
+          </SelectTrigger>
+          <SelectContent>
+            {schema.outcomes.map((o) => (
+              <SelectItem key={o.key} value={o.key}>{o.label || o.key}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       )}
       {action.type === "trigger_notification" && (
-        <Input className="w-56" placeholder="notification_key" value={action.notificationKey} onChange={(e) => onChange({ ...action, notificationKey: e.target.value })} />
+        <Select value={action.notificationKey} onValueChange={(v) => onChange({ ...action, notificationKey: v })}>
+          <SelectTrigger className="w-56" data-testid="action-notification-trigger">
+            <SelectValue placeholder={schema.outcomes.length === 0 ? "Define an outcome first" : "Outcome notification"} />
+          </SelectTrigger>
+          <SelectContent>
+            {schema.outcomes.map((o) => (
+              <SelectItem key={o.key} value={o.key}>{o.label || o.key}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       )}
       {(action.type === "prefill" ||
         action.type === "show_field" ||
