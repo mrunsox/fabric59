@@ -97,7 +97,7 @@ export default function LaunchRedirectPage() {
       return;
     }
     navigate(`/w/${target.id}/home`, { replace: true });
-  }, [ready, isAuthenticated, isMasterAdmin, organization, organizations, workspaces, invite, navigate]);
+  }, [ready, isAuthenticated, isMasterAdmin, organization, organizations, workspaces, invite, navigate, user?.email]);
 
   if (!isAuthenticated && ready) {
     return <Navigate to="/login" replace />;
