@@ -130,17 +130,19 @@ export function WorkspaceSnapshotPanel({ organizationId }: Props) {
 }
 
 function Stat({ label, value, mono = true }: { label: string; value: string | number; mono?: boolean }) {
+  const display = String(value);
   return (
-    <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
+    <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5 min-w-0">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       <p
-        className={`mt-1 text-lg font-semibold text-foreground truncate ${
+        title={display}
+        className={`mt-1 text-base font-semibold text-foreground truncate min-w-0 ${
           mono ? "tabular-nums" : ""
         }`}
       >
-        {value}
+        {display}
       </p>
     </div>
   );

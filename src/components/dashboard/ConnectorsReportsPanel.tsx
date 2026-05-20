@@ -83,21 +83,23 @@ export function ConnectorsReportsPanel({ organizationId }: Props) {
     };
   }, [organizationId]);
 
+  const hasConnectors = (conn?.total ?? 0) > 0;
+
   return (
     <Card data-testid="connectors-reports-panel">
-      <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
-        <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between pb-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             <Plug className="h-4 w-4 text-primary" />
           </div>
-          <div>
+          <div className="min-w-0">
             <CardTitle className="text-base font-semibold">Connectors and reports</CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">
               Operational state across integrations and reporting
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm" className="gap-1.5">
             <Link to="/admin/connectors">
               Connectors <ArrowRight className="h-3.5 w-3.5" />
@@ -122,22 +124,40 @@ export function ConnectorsReportsPanel({ organizationId }: Props) {
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                 <Plug className="inline h-3 w-3 mr-1 -mt-0.5" /> Connectors
               </p>
-              <div className="grid grid-cols-3 gap-2">
-                <ConnStat icon={CheckCircle2} tone="success" label="Live" value={conn?.live ?? 0} />
-                <ConnStat
-                  icon={AlertTriangle}
-                  tone="destructive"
-                  label="Needs attention"
-                  value={conn?.errored ?? 0}
-                />
-                <ConnStat
-                  icon={Circle}
-                  tone="muted"
-                  label="Not connected"
-                  value={conn?.not_connected ?? 0}
-                />
-              </div>
+              {hasConnectors ? (
+                <div className="grid grid-cols-3 gap-2">
+                  <ConnStat icon={CheckCircle2} tone="success" label="Live" value={conn?.live ?? 0} />
+                  <ConnStat
+                    icon={AlertTriangle}
+                    tone="destructive"
+                    label="Needs attention"
+                    value={conn?.errored ?? 0}
+                  />
+                  <ConnStat
+                    icon={Circle}
+                    tone="muted"
+                    label="Not connected"
+                    value={conn?.not_connected ?? 0}
+                  />
+                </div>
+              ) : (
+                <div
+                  data-testid="connectors-empty-state"
+                  className="rounded-lg border border-dashed border-border/60 px-4 py-5 text-center"
+                >
+                  <p className="text-sm font-medium text-foreground">No connectors yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Connect Five9, your CRM, or another integration to start syncing.
+                  </p>
+                  <Button asChild size="sm" className="mt-3 gap-1.5">
+                    <Link to="/admin/connectors">
+                      Connect first integration <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </section>
+
 
             <section>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
