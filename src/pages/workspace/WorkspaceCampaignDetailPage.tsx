@@ -120,3 +120,62 @@ export default function WorkspaceCampaignDetailPage() {
     </div>
   );
 }
+
+/**
+ * Intake form card. Surfaces the single active intake form attached to this
+ * campaign and lets ops swap it. `useCampaignIntakeForm` enforces the
+ * single-active rule (any previous assignment is removed before insert).
+ */
+function IntakeFormCard({ workspaceId, campaignId }: { workspaceId: string; campaignId: string }) {
+  const { data: forms = [] } = useWorkspaceForms();
+  const { data: active, setActive, isMutating } = useCampaignIntakeForm(campaignId);
+  const activeForm = forms.find((f) => f.id === active?.form_id) ?? null;
+  const NONE = "__none__";
+  return (
+    <Card data-testid="intake-form-card">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <ClipboardList className="h-3.5 w-3.5" /> Intake form
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-xs text-muted-foreground">
+          Exactly one form can be active for a campaign at a time. Agents in the cockpit run
+          this form during calls.
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={active?.form_id ?? NONE}
+            onValueChange={(v) => setActive(v === NONE ? null : v)}
+            disabled={isMutating}
+          >
+            <SelectTrigger className="max-w-sm" data-testid="intake-form-select">
+              <SelectValue placeholder="Select intake form" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>— None selected —</SelectItem>
+              {forms.map((f) => (
+                <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {activeForm && (
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/w/${workspaceId}/forms/${activeForm.id}/edit`}>
+                Open builder <ExternalLink className="h-3.5 w-3.5 ml-1" />
+              </Link>
+            </Button>
+          )}
+        </div>
+        {activeForm ? (
+          <p className="text-xs text-muted-foreground">
+            Active: <span className="font-medium text-foreground">{activeForm.name}</span> · v
+            {activeForm.current_version ?? 1}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground italic">No intake form selected.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
