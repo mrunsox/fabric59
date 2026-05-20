@@ -13,16 +13,16 @@ import {
   useSaveGuideDraft,
   useUpdateGuideMeta,
 } from "@/hooks/useGuideVersions";
+import { GuideContentEditor } from "@/components/guides/GuideContentEditor";
+import { migrateGuideContentToV1 } from "@/lib/guides/guideContentSchema";
+import { EMPTY_GUIDE_CONTENT, type GuideContentV1 } from "@/types/guide-content";
 
 /**
  * Phase 6 — Native canonical guide editor.
  *
- * For guides whose source_type='script' (mirrored from legacy scripts), this
- * still deep-links to the ScriptBuilderPage compatibility surface so legacy
- * authoring is not broken. For native canonical guides (source_type IS NULL,
- * which includes anything created via WorkspaceGuideNewPage or seeded from a
- * canonical template), this page is the real authoring surface and writes
- * directly to `guides` + `guide_versions`.
+ * Legacy script-mirrored guides (source_type='script') deep-link to
+ * ScriptBuilder. Native canonical guides use the structured
+ * GuideContentV1 block editor against guide_versions.content.
  */
 export default function WorkspaceGuideEditPage() {
   const { workspaceId, guideId } = useParams<{ workspaceId: string; guideId: string }>();
@@ -35,8 +35,7 @@ export default function WorkspaceGuideEditPage() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [contentText, setContentText] = useState("");
-  const [contentError, setContentError] = useState<string | null>(null);
+  const [content, setContent] = useState<GuideContentV1>(EMPTY_GUIDE_CONTENT);
 
   useEffect(() => {
     if (guide) {
@@ -46,7 +45,7 @@ export default function WorkspaceGuideEditPage() {
   }, [guide]);
 
   useEffect(() => {
-    if (latest) setContentText(JSON.stringify(latest.content, null, 2));
+    setContent(migrateGuideContentToV1(latest?.content));
   }, [latest]);
 
   if (isLoading) {
@@ -56,20 +55,14 @@ export default function WorkspaceGuideEditPage() {
     return <p className="text-sm text-muted-foreground">Guide not found.</p>;
   }
 
-  // Compatibility deep link for legacy script-sourced guides.
+  // Compatibility deep link for legacy script-sourced guides — checked
+  // before any V1 migration so legacy content never silently collapses
+  // to an empty renderer state.
   if (guide.source_type === "script" && guide.source_id) {
     return <Navigate to={`/admin/scripts/${guide.source_id}/builder`} replace />;
   }
 
   const onSaveDraft = async () => {
-    let parsed: Record<string, unknown>;
-    try {
-      parsed = JSON.parse(contentText || "{}");
-      setContentError(null);
-    } catch (e) {
-      setContentError((e as Error).message);
-      return;
-    }
     if (
       name.trim() !== guide.name ||
       (description ?? "") !== (guide.description ?? "")
@@ -80,7 +73,10 @@ export default function WorkspaceGuideEditPage() {
         description: description || null,
       });
     }
-    await saveDraft.mutateAsync({ guideId: guide.id, content: parsed });
+    await saveDraft.mutateAsync({
+      guideId: guide.id,
+      content: content as unknown as Record<string, unknown>,
+    });
   };
 
   const onPublishLatest = async () => {
@@ -126,25 +122,15 @@ export default function WorkspaceGuideEditPage() {
 
       <Card>
         <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Content (JSON)</CardTitle>
+          <CardTitle className="text-base">Content</CardTitle>
           <Button variant="link" size="sm" asChild className="h-auto p-0">
             <Link to={`/w/${workspaceId}/guides/${guide.id}/preview`}>
               <ExternalLink className="h-3 w-3 mr-1" /> Preview
             </Link>
           </Button>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-xs text-muted-foreground">
-            Native canonical guide content is stored in <code>guide_versions.content</code>. The visual node
-            editor will land in a Phase 6 follow-up; this raw JSON surface is the canonical write path today.
-          </p>
-          <Textarea
-            value={contentText}
-            onChange={(e) => setContentText(e.target.value)}
-            rows={18}
-            className="font-mono text-xs"
-          />
-          {contentError && <p className="text-xs text-destructive">Invalid JSON: {contentError}</p>}
+        <CardContent>
+          <GuideContentEditor value={content} onChange={setContent} />
         </CardContent>
       </Card>
 
