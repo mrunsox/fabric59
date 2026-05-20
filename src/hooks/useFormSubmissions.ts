@@ -81,20 +81,22 @@ export function useCreateFormSubmission() {
       };
       const { data, error } = await supabase
         .from("form_submissions")
-        .insert({
-          workspace_id: workspace.id,
-          form_id: input.formId,
-          form_version: input.formVersion,
-          campaign_id: input.campaignId ?? null,
-          source: input.source ?? "agent_cockpit",
-          payload: input.payload,
-          mapped: input.mapped ?? {},
-          submitted_by: user?.id ?? null,
-          outcome_key: input.outcomeKey ?? null,
-          disposition_key: input.dispositionKey ?? null,
-          notes: input.notes ?? null,
-          metadata,
-        })
+        .insert([
+          {
+            workspace_id: workspace.id,
+            form_id: input.formId,
+            form_version: input.formVersion,
+            campaign_id: input.campaignId ?? undefined,
+            source: input.source ?? "agent_cockpit",
+            payload: input.payload as never,
+            mapped: (input.mapped ?? {}) as never,
+            submitted_by: user?.id ?? undefined,
+            outcome_key: input.outcomeKey ?? undefined,
+            disposition_key: input.dispositionKey ?? undefined,
+            notes: input.notes ?? undefined,
+            metadata: metadata as never,
+          },
+        ])
         .select()
         .single();
       if (error) throw error;
