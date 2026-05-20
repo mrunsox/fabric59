@@ -67,7 +67,7 @@ describe("GuideContentEditor", () => {
 
   it("promotes a pasted http(s) URL into connector href when label/href are empty", () => {
     render(<Harness />);
-    addBlock(/connector link/i);
+    addBlock(/add connector link/i);
 
     const label = screen.getByLabelText(/connector label/i) as HTMLInputElement;
     fireEvent.change(label, { target: { value: "https://portal.test/x" } });
@@ -82,7 +82,7 @@ describe("GuideContentEditor", () => {
 
   it("does not promote non-URL text into href", () => {
     render(<Harness />);
-    addBlock(/connector link/i);
+    addBlock(/add connector link/i);
     const label = screen.getByLabelText(/connector label/i);
     fireEvent.change(label, { target: { value: "Open portal" } });
     const s = snapshot();
