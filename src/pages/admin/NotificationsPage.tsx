@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications, useNotificationStats } from "@/hooks/useNotifications";
 import { useTenants } from "@/hooks/useTenants";
 import { format } from "date-fns";
@@ -47,9 +48,10 @@ interface ErrorAlert {
   created_at: string;
 }
 
-function useErrorAlerts() {
+function useErrorAlerts(enabled: boolean) {
   return useQuery({
     queryKey: ["error-alerts"],
+    enabled,
     queryFn: async () => {
       const { data, error } = await db
         .from("error_alerts")
@@ -63,6 +65,7 @@ function useErrorAlerts() {
 }
 
 export default function NotificationsPage() {
+  const { isMasterAdmin } = useAuth();
   const [tenantFilter, setTenantFilter] = useState<string>("all");
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   
@@ -71,7 +74,9 @@ export default function NotificationsPage() {
     tenantFilter === "all" ? undefined : tenantFilter
   );
   const { data: stats } = useNotificationStats();
-  const { data: errorAlerts, isLoading: alertsLoading } = useErrorAlerts();
+  // error_alerts has no organization_id column — restrict to master admins
+  // to avoid leaking cross-org diagnostics.
+  const { data: errorAlerts, isLoading: alertsLoading } = useErrorAlerts(isMasterAdmin);
 
   const getTenantName = (tenantId: string) => {
     return tenants?.find((t) => t.id === tenantId)?.name || "Unknown";
@@ -184,42 +189,55 @@ export default function NotificationsPage() {
         </TabsContent>
 
         <TabsContent value="alerts" className="space-y-4 mt-4">
-          <div className="rounded-lg border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Message</TableHead>
-                  <TableHead>Alerted Via</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {alertsLoading ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8">Loading...</TableCell></TableRow>
-                ) : (errorAlerts?.length || 0) === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No error alerts. Everything is running smoothly.</TableCell></TableRow>
-                ) : (
-                  errorAlerts?.map((alert) => (
-                    <TableRow key={alert.id}>
-                      <TableCell className="font-mono text-sm">{format(new Date(alert.created_at), "MMM d, HH:mm:ss")}</TableCell>
-                      <TableCell><Badge variant="destructive" className="text-xs">{alert.error_type}</Badge></TableCell>
-                      <TableCell className="max-w-[300px] truncate">{alert.message}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {alert.alerted_via.map(v => (
-                            <Badge key={v} variant="outline" className="text-xs capitalize">{v}</Badge>
-                          ))}
-                          {alert.alerted_via.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          {!isMasterAdmin ? (
+            <div
+              data-testid="error-alerts-restricted"
+              className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-10 text-center"
+            >
+              <p className="text-sm font-medium text-foreground">System error alerts are restricted</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                Platform-wide diagnostics are only visible to platform admins to prevent cross-org data exposure.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Timestamp</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Message</TableHead>
+                    <TableHead>Alerted Via</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {alertsLoading ? (
+                    <TableRow><TableCell colSpan={4} className="text-center py-8">Loading...</TableCell></TableRow>
+                  ) : (errorAlerts?.length || 0) === 0 ? (
+                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No error alerts. Everything is running smoothly.</TableCell></TableRow>
+                  ) : (
+                    errorAlerts?.map((alert) => (
+                      <TableRow key={alert.id}>
+                        <TableCell className="font-mono text-sm">{format(new Date(alert.created_at), "MMM d, HH:mm:ss")}</TableCell>
+                        <TableCell><Badge variant="destructive" className="text-xs">{alert.error_type}</Badge></TableCell>
+                        <TableCell className="max-w-[300px] truncate">{alert.message}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {alert.alerted_via.map(v => (
+                              <Badge key={v} variant="outline" className="text-xs capitalize">{v}</Badge>
+                            ))}
+                            {alert.alerted_via.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
+
       </Tabs>
 
       {/* Details Dialog */}
