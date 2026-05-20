@@ -233,6 +233,10 @@ export default function WorkspaceFormBuilderPage() {
           <FormPreview schema={schema} />
         </TabsContent>
 
+        <TabsContent value="outcomes" className="mt-4">
+          <OutcomesEditor schema={schema} onChange={setSchemaDirty} />
+        </TabsContent>
+
         <TabsContent value="versions" className="mt-4">
           <VersionHistory versions={versions} isLoading={versionsLoading} />
         </TabsContent>
