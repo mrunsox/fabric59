@@ -346,6 +346,7 @@ function CockpitBody({ campaignId, formId }: { campaignId: string; formId: strin
           </Card>
         ) : (
           <FormRunner
+            key={`${campaignId}:${formId}`}
             schema={schema}
             onSubmit={(result) => {
               setPendingValues(result.values);
