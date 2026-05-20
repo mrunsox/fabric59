@@ -17,6 +17,7 @@ import { Link } from "react-router-dom";
 import { OnboardingShell } from "@/shells/OnboardingShell";
 import { OnboardingContextHelper } from "@/components/onboarding/OnboardingContextHelper";
 import { toast } from "sonner";
+import { isSuperadminSkipEmail } from "@/lib/superadmin-emails";
 
 /**
  * Phase G — Premium concierge onboarding (4 steps).
@@ -86,6 +87,14 @@ export default function OnboardingPage() {
   const { organization, user, isMasterAdmin, refreshOrganizations } = useAuth();
   const { workspaces, refetch: refetchWorkspaces } = useWorkspace();
   const navigate = useNavigate();
+
+  // Superadmin skip emails never see /onboarding — bounce immediately to
+  // /superadmin so they can operate without seeding an org of their own.
+  useEffect(() => {
+    if (isSuperadminSkipEmail(user?.email)) {
+      navigate("/superadmin", { replace: true });
+    }
+  }, [user?.email, navigate]);
 
   const [step, setStep] = useState<Step>(() => {
     const resume = typeof window !== "undefined" ? (localStorage.getItem(RESUME_KEY) as Step | null) : null;
@@ -589,11 +598,7 @@ export default function OnboardingPage() {
       subheading={subheading}
     >
       <div className="animate-fade-up">{stepContent[step]}</div>
-      {(isMasterAdmin ||
-        (user?.email &&
-          ["pauljoseph@24hvirtual.com", "dev@unsox.com"].includes(
-            user.email.toLowerCase()
-          ))) && (
+      {(isMasterAdmin || isSuperadminSkipEmail(user?.email)) && (
         <div className="mt-4 flex flex-col items-center gap-2">
           <button
             type="button"

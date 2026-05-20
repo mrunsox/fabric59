@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { AuthShell } from "@/shells/AuthShell";
+import { isSuperadminSkipEmail } from "@/lib/superadmin-emails";
 
 export default function LoginPage() {
-  const { signIn, isAuthenticated, isLoading } = useAuth();
+  const { signIn, isAuthenticated, isLoading, user } = useAuth();
   const [params] = useSearchParams();
   const invite = params.get("invite");
   const [email, setEmail] = useState("");
@@ -27,7 +28,12 @@ export default function LoginPage() {
   // Phase 2 — post-auth redirect goes through /launch so the smart
   // org+workspace routing matrix lives in one canonical place. Invite
   // tokens are forwarded through so /accept-invite continuity holds.
+  // Superadmin skip emails go straight to /superadmin so they never get
+  // stuck behind onboarding.
   if (isAuthenticated) {
+    if (isSuperadminSkipEmail(user?.email)) {
+      return <Navigate to="/superadmin" replace />;
+    }
     const target = invite ? `/launch?invite=${encodeURIComponent(invite)}` : "/launch";
     return <Navigate to={target} replace />;
   }

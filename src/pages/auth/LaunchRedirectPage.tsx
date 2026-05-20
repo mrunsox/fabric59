@@ -35,11 +35,13 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
  * Must be mounted inside a <WorkspaceProvider> so this component can read
  * the user's workspaces. /launch is wrapped accordingly in App.tsx.
  */
+import { isSuperadminSkipEmail } from "@/lib/superadmin-emails";
+
 export default function LaunchRedirectPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const invite = params.get("invite");
-  const { isAuthenticated, isLoading, organization, organizations, isMasterAdmin } = useAuth();
+  const { isAuthenticated, isLoading, organization, organizations, isMasterAdmin, user } = useAuth();
   const { workspaces, isLoading: wsLoading } = useWorkspace();
 
   const ready = !isLoading && !wsLoading;
@@ -48,6 +50,14 @@ export default function LaunchRedirectPage() {
     if (!ready) return;
     if (!isAuthenticated) {
       navigate(invite ? `/login?invite=${encodeURIComponent(invite)}` : "/login", { replace: true });
+      return;
+    }
+
+    // Superadmin skip emails always go to /superadmin, regardless of
+    // org/workspace state. Prevents these operators from getting stuck
+    // in /onboarding when their account has no orgs of its own.
+    if (isSuperadminSkipEmail(user?.email)) {
+      navigate("/superadmin", { replace: true });
       return;
     }
 
@@ -87,7 +97,7 @@ export default function LaunchRedirectPage() {
       return;
     }
     navigate(`/w/${target.id}/home`, { replace: true });
-  }, [ready, isAuthenticated, isMasterAdmin, organization, organizations, workspaces, invite, navigate]);
+  }, [ready, isAuthenticated, isMasterAdmin, organization, organizations, workspaces, invite, navigate, user?.email]);
 
   if (!isAuthenticated && ready) {
     return <Navigate to="/login" replace />;
