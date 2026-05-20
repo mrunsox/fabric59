@@ -196,6 +196,7 @@ export function GuideContentEditor({ value, onChange }: GuideContentEditorProps)
           </Button>
         ))}
       </div>
+    </div>
   );
 }
 
