@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Pencil, Eye, Link2, X } from "lucide-react";
+import { ArrowLeft, Pencil, Eye, Link2, X, Inbox } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 import { useWorkspaceForm, useFormSchema } from "@/hooks/useWorkspaceForms";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 import { useFormCampaignAssignments } from "@/hooks/useFormCampaignAssignments";
+import { useFormSubmissions } from "@/hooks/useFormSubmissions";
 
 /**
  * Read-only form summary. The canonical authoring surface lives at
