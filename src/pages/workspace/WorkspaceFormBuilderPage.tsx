@@ -12,6 +12,7 @@ import { FieldInspector } from "@/components/forms/builder/FieldInspector";
 import { LogicEditor } from "@/components/forms/builder/LogicEditor";
 import { FormPreview } from "@/components/forms/builder/FormPreview";
 import { VersionHistory } from "@/components/forms/builder/VersionHistory";
+import { OutcomesEditor } from "@/components/forms/builder/OutcomesEditor";
 import { FIELD_TYPE_BY_KEY } from "@/config/formFieldTypes";
 import { cryptoRandomId, type FormField, type FormFieldType, type FormSchemaV1, type FormSection } from "@/types/form-schema";
 
