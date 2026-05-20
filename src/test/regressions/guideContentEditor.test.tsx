@@ -38,8 +38,8 @@ function addBlock(label: RegExp) {
 describe("GuideContentEditor", () => {
   it("adds, edits, deletes, and reorders blocks; output is valid V1", () => {
     render(<Harness />);
-    addBlock(/^heading$/i);
-    addBlock(/^paragraph$/i);
+    addBlock(/add heading/i);
+    addBlock(/add paragraph/i);
 
     const inputs = screen.getAllByRole("textbox");
     fireEvent.change(inputs[0], { target: { value: "Hello" } });
