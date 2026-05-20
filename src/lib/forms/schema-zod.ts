@@ -105,6 +105,7 @@ const outcomeSchema = z.object({
   label: z.string(),
   dispositionKey: z.string().optional(),
   description: z.string().optional(),
+  notificationEmails: z.array(z.string()).optional(),
 });
 
 export const formSchemaV1Zod = z.object({
