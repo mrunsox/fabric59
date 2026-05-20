@@ -111,6 +111,8 @@ export default function WorkspaceFormDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          <AssignmentsPanel workspaceId={workspaceId!} formId={formId!} />
         </>
       )}
     </div>
