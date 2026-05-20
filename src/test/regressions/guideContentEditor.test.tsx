@@ -32,8 +32,7 @@ function snapshot(): GuideContentV1 {
 }
 
 function addBlock(label: RegExp) {
-  fireEvent.click(screen.getByRole("button", { name: /add block/i }));
-  fireEvent.click(screen.getByRole("menuitem", { name: label }));
+  fireEvent.click(screen.getByRole("button", { name: label }));
 }
 
 describe("GuideContentEditor", () => {
