@@ -589,7 +589,11 @@ export default function OnboardingPage() {
       subheading={subheading}
     >
       <div className="animate-fade-up">{stepContent[step]}</div>
-      {isMasterAdmin && (
+      {(isMasterAdmin ||
+        (user?.email &&
+          ["pauljoseph@24hvirtual.com", "dev@unsox.com"].includes(
+            user.email.toLowerCase()
+          ))) && (
         <div className="mt-4 flex flex-col items-center gap-2">
           <button
             type="button"
