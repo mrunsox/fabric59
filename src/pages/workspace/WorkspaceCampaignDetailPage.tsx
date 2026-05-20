@@ -2,9 +2,18 @@ import { Link, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ArrowLeft, ExternalLink, ClipboardList } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaign } from "@/hooks/useWorkspaceCampaigns";
+import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
+import { useCampaignIntakeForm } from "@/hooks/useFormCampaignAssignments";
 
 /**
  * Canonical Campaign Detail shell — /app/workspaces/:id/campaigns/:campaignId.
