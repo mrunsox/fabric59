@@ -28,7 +28,7 @@ const SURFACED_FILES = [
   "components/dashboard/AIGuidanceCard.tsx",
   "components/dashboard/WorkspaceSnapshotPanel.tsx",
   "components/dashboard/ConnectorsReportsPanel.tsx",
-  "pages/workspace/WorkspaceHomePage.tsx",
+  // pages/workspace/WorkspaceHomePage.tsx — retired (KPI strip → WorkspaceContextBar).
   "pages/workspace/WorkspacesIndexPage.tsx",
   "pages/admin/OverviewPage.tsx",
   // UserDashboardPage vaulted (slug: legacy-user-dashboard) — body inlined into OverviewPage.
