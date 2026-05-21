@@ -45,6 +45,9 @@ import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
 import { WORKSPACE_NAV, WORKSPACE_NAV_GROUPS, WORKSPACE_NAV_PINNED } from "@/config/canonicalNav";
 import { useKeyboardNav, KEYBOARD_HINTS } from "@/hooks/useKeyboardNav";
 import { WorkspaceCommandPalette } from "@/components/workspace/WorkspaceCommandPalette";
+import { OrgRail } from "@/shells/OrgRail";
+import { WorkspaceContextBar } from "@/components/workspace/WorkspaceContextBar";
+
 
 /**
  * Canonical WorkspaceShell — premium polish pass.
