@@ -1,59 +1,48 @@
-## Two-tier nav convergence — one AppShell, two vertical rails
+## Fix two-tier nav — overlap, clipping, and transition jank
 
-### Target model
+### What's broken
 
-```text
-┌────┬─────────────────┬───────────────────────────────────┐
-│ RAIL│ Workspace nav   │                                   │
-│ 56px│ (only on /w/:id)│   Page content                    │
-│ org │ ~240px          │                                   │
-│ scop│                 │                                   │
-└────┴─────────────────┴───────────────────────────────────┘
-```
+1. **OrgRail overlays the WorkspaceSidebar.** OrgRail renders as a normal flex sibling that grows `w-14 → w-56` on hover. But shadcn's `Sidebar` (the WorkspaceSidebar) is positioned `fixed left-0`, so it doesn't shift when OrgRail expands — the expanding rail just paints on top of it. Result: first 3-4 characters of every workspace nav label are hidden ("ome", "mpaigns", "ides" in the screenshot).
+2. **Two `bg-sidebar` rails sit on top of each other** with no visual separation, so even at rest the user sees a strange double-dark column.
+3. **Transition feels janky** because `transition-[width]` on a flex sibling reflows everything to its right on every mouseenter/leave, while the fixed shadcn sidebar stays put — visual contents jitter.
+4. The org rail and the workspace sidebar both render their own "Fabric59" logo + brand mark, doubling chrome.
 
-- **Org rail** — collapsed 56px icon strip, expands to ~220px on hover. Always visible inside the app. Items: Overview, Workspaces, Connectors, Reports, Notifications, Billing, Settings. Org switcher pinned at top, profile/sign-out at bottom.
-- **Workspace sidebar** — ~240px persistent. **Renders only when path matches `/w/:workspaceId/*`**. Mirrors today's `WORKSPACE_NAV_GROUPS` (Build / Operate / Intelligence / Settings).
-- **No workspace home dashboard.** `WorkspaceHomePage` is retired. The KPI counters (Clients / Campaigns / Guides / Forms / Templates) it rendered move into a slim `WorkspaceContextBar` shown above content on every `/w/:id/*` page.
+### Fix — overlay rail, reserved gutter
 
-When on `/admin/*` (no workspace context), the secondary sidebar **stays hidden** — content gets full width. (Locked: option #1, Supabase-like.)
+Make OrgRail an **always-56px reserved gutter** that expands to 224px as a floating overlay (z-index above the workspace sidebar). Nothing else in the layout reflows on hover. This is exactly the Supabase pattern.
 
-### Files added
+**`src/shells/OrgRail.tsx`**
+- Wrap the rail in an outer `<div className="relative w-14 shrink-0 hidden lg:block" />` so the layout always reserves 56px and nothing reflows.
+- Inner panel becomes `absolute inset-y-0 left-0 w-14 hover:w-56 z-50 bg-sidebar border-r shadow-[2px_0_8px_rgba(0,0,0,0.04)] transition-[width] duration-150 ease-out`.
+- Drop the inner Fabric59 wordmark — keep only the icon. The workspace sidebar already owns the brand lockup.
+- Tighten hover area: add `aria-expanded` driven by `:hover` is fine, but extend the hover hit-zone by a small invisible right-side guard so the rail doesn't collapse the instant the pointer crosses into the secondary sidebar (`after:absolute after:inset-y-0 after:-right-1 after:w-1`).
+- Replace per-label `opacity` fade with a single `[&_[data-label]]:opacity-0 hover:[&_[data-label]]:opacity-100 transition-opacity duration-100` for snappier text reveal.
+- Add `data-state="collapsed"` / `"expanded"` via a `group` modifier so the active-indicator pill stays in sync.
 
-- `src/shells/AppShell.tsx` — single shell. Mounts under both `/admin` and `/w/:workspaceId` route trees. Wraps everything in one `SidebarProvider` and renders `<OrgRail />` + (conditionally, via `useMatch("/w/:workspaceId/*")`) `<WorkspaceSidebar />` + top bar + `<Outlet />`. Workspace routes are wrapped in `<WorkspaceProvider>` like today.
-- `src/shells/OrgRail.tsx` — shadcn `Sidebar collapsible="icon"`. Icon-only when collapsed; hover on the rail container expands to label strip (CSS `:hover` width transition, no JS state). Org switcher dropdown in header, NotificationBell + account menu in footer.
-- `src/shells/WorkspaceSidebar.tsx` — extracted from current `WorkspaceShell`'s inner `WorkspaceSidebar`. Reads `workspaceId` from `useParams`, renders `WORKSPACE_NAV_GROUPS` + `WORKSPACE_NAV_PINNED` exactly as today.
-- `src/components/workspace/WorkspaceContextBar.tsx` — slim header strip: workspace name + 5 KPI counters (uses the same `useWorkspaceCampaigns/Guides/Templates/Forms/Clients` hooks as `WorkspaceHomePage`, with `isDemoName` filtering). Rendered by `AppShell` above `<Outlet />` whenever a workspace is active.
+**`src/shells/WorkspaceShell.tsx`**
+- No structural change — `<OrgRail />` already sits left of `<WorkspaceSidebar />` inside the flex row. Once OrgRail reserves a real 56px slot, shadcn's fixed sidebar (`left-0`) gets visually pushed right by the SidebarProvider wrapper.
+- Issue: shadcn `Sidebar` is `fixed left-0`, which means it still starts at viewport-left, not at left:56. Fix by wrapping the shadcn sidebar + content in a `<div className="flex-1 min-w-0 relative pl-0">` and setting `--sidebar-offset: 56px` on `SidebarProvider`, then overriding the Sidebar fixed wrapper via the `className` prop on `<Sidebar>` to `left-14` (and `group-data-[collapsible=offcanvas]:left-[calc(...)]` preserved). The sidebar's gap-spacer div stays as-is so main content lines up correctly.
+- Remove the duplicate Fabric59 icon from `WorkspaceSidebar`'s `SidebarHeader` — OrgRail owns the brand lockup. Replace it with a slim workspace switcher chip (just the workspace initial in a square) so the header still has presence when collapsed.
 
-### Files deleted
+**`src/components/layout/AdminShell.tsx`**
+- No structural change needed — there's no secondary sidebar at `/admin/*`, so the overlay rail behaves cleanly. Just make sure the main column has `pl-0` (the 56px gutter is already reserved by OrgRail's outer wrapper).
+- Consider giving the rail a permanent expanded state on `/admin/*` since there's no secondary nav competing for space. Two options:
+  - **A — Keep hover-collapse everywhere.** Consistent feel across `/admin` and `/w/:id`. Rail is always 56px at rest.
+  - **B — Auto-expand on `/admin/*`, hover-collapse only inside workspaces.** More discoverable for org-level work but creates a layout shift when entering/leaving a workspace.
+  - I'd default to **A** for consistency; flag if you prefer B.
 
-- `src/pages/workspace/WorkspaceHomePage.tsx`
-- `src/components/layout/AdminShell.tsx`
-- `src/shells/WorkspaceShell.tsx` (kept only as a thin re-export of `AppShell` if other code outside `App.tsx` still imports it — based on the search, only `App.tsx` does, so it gets removed)
+### Transition polish
+- Shorten width transition from 200ms → 150ms with `ease-out`.
+- Add `will-change: width` only while hovering (via `hover:will-change-[width]`) to avoid layer-promotion cost at rest.
+- Remove the per-NavLink `transition-opacity` and let the parent's single fade drive all labels in lockstep — eliminates the "labels appear at different times" effect.
 
-### Routing changes (`src/App.tsx`)
-
-- Replace `<Route path="/admin" element={<AdminShell />}>` with `<Route path="/admin" element={<AppShell />}>`. All `/admin/*` children unchanged.
-- Replace `<Route path="/w/:workspaceId" element={<CanonicalWorkspaceShell />}>` with `<Route path="/w/:workspaceId" element={<AppShell />}>`. All `/w/:workspaceId/*` children unchanged **except**:
-  - Remove `<Route path="home" element={<WorkspaceHomePage />} />`
-  - Add `<Route path="home" element={<Navigate to="../campaigns" replace />} />` (back-compat for bookmarks).
-  - Update `WorkspaceIndexRedirect` to point at `campaigns` instead of `home` (or just have it redirect to the workspace's primary surface — keep current implementation but change its target).
-- Cleanups from previous slice (carry over so this lands clean):
-  - Remove `/admin/clients/:id/workspace` route + delete `ClientWorkspacePage.tsx` (pure pass-through).
-  - Collapse `/admin/legal-connect/overview` → `<Navigate to="/admin/legal-connect" replace />`, drop import + delete `LegalConnectOverviewPage.tsx`.
-  - Fix `/admin/agent-dashboard` redirect target: `/w/:workspaceId/agents` → `/w/:workspaceId/agent` (cockpit, not roster).
-
-### Tests / locks
-
-- Update `src/test/regressions/workspaceShellPolish.test.tsx` to assert against `AppShell` + `WorkspaceSidebar` rendering on `/w/:id/*`.
-- Add a regression in `src/test/regressions/adminDashboardSlice.test.tsx`:
-  - `/admin` renders org rail only (no workspace sidebar).
-  - `/w/:id/campaigns` renders org rail + workspace sidebar + `WorkspaceContextBar`.
-  - `/w/:id/home` → 308 to `/w/:id/campaigns`.
-- Update `src/data/surfaceAudit.ts` to drop the retired surfaces (`home`, `clients/:id/workspace`, `legal-connect/overview`).
+### Files touched
+- `src/shells/OrgRail.tsx` — overlay model, drop wordmark, faster transition
+- `src/shells/WorkspaceShell.tsx` — push shadcn Sidebar right by 56px via override className, drop duplicate Fabric59 in WorkspaceSidebar header
+- `src/components/layout/AdminShell.tsx` — minor: ensure main column doesn't double-pad the 56px gutter
 
 ### Out of scope
+- No changes to nav contents, route map, page bodies, design tokens, or mobile drawer behavior. Mobile (<lg) still hides OrgRail and uses the sheet-style WorkspaceSidebar.
 
-- No edits to any workspace page body (Forms / Guides / Campaigns / Agent Cockpit content unchanged).
-- No DB, auth, or design-token changes. Keep cyan `#0EA5E9` primary, Linear-style premium aesthetic.
-- No marketing or `SuperadminShell` changes.
-- No nav-item additions or removals — only the shell structure changes.
+### Open question
+Pick rail behavior at `/admin/*`: **A** hover-collapsed (consistent) or **B** auto-expanded (more discoverable, but layout shifts when entering a workspace)? Default A unless you say otherwise.

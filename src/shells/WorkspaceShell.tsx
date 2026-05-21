@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,19 +62,27 @@ function WorkspaceSidebar({ workspaceId }: { workspaceId: string }) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { pathname } = useLocation();
+  const { workspace } = useWorkspace();
 
   const isActive = (to: string) => {
     const full = `/w/${workspaceId}/${to}`;
     return pathname === full || pathname.startsWith(`${full}/`);
   };
 
+  const wsInitial = (workspace?.name ?? "W").trim().charAt(0).toUpperCase();
+
   return (
-    <Sidebar collapsible="icon">
+    // Offset the shadcn fixed sidebar by the 56px OrgRail gutter.
+    // className is applied to the fixed inner panel; the spacer div
+    // remains a normal flex sibling so main content lines up.
+    <Sidebar collapsible="icon" className="left-14 group-data-[collapsible=offcanvas]:left-14">
       <SidebarHeader className="h-14 px-3 flex flex-row items-center gap-2.5 border-b border-border/40">
-        <Fabric59Icon size="sm" />
+        <div className="h-7 w-7 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
+          {wsInitial}
+        </div>
         {!collapsed && (
-          <span className="text-sm font-semibold tracking-tight text-foreground">
-            Fabric59
+          <span className="text-sm font-semibold tracking-tight text-foreground truncate">
+            {workspace?.name ?? "Workspace"}
           </span>
         )}
       </SidebarHeader>
