@@ -18,6 +18,8 @@ vi.mock("@/contexts/AuthContext", () => ({
     organization: { id: "o1", name: "Fabric59 Ops" },
     isLoading: false,
     signOut: vi.fn().mockResolvedValue(undefined),
+    hasPermission: () => true,
+    isMasterAdmin: false,
   }),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
