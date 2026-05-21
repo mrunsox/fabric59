@@ -19,7 +19,7 @@ import { OrgParamRedirect } from "@/components/auth/OrgParamRedirect";
 import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } from "@/shells/WorkspaceShell";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
-import WorkspaceHomePage from "@/pages/workspace/WorkspaceHomePage";
+// WorkspaceHomePage retired — /w/:id/home now redirects to /w/:id/campaigns and the KPI strip lives in WorkspaceContextBar.
 import WorkspaceFormsPage from "@/pages/workspace/WorkspaceFormsPage";
 import WorkspaceFormNewPage from "@/pages/workspace/WorkspaceFormNewPage";
 import WorkspaceFormDetailPage from "@/pages/workspace/WorkspaceFormDetailPage";
