@@ -622,6 +622,19 @@ export default function OnboardingPage() {
           </Link>
         </div>
       )}
+      {!isMasterAdmin && !isSuperadminSkipEmail(user?.email) && step !== "land" && (
+        <div className="mt-8 flex justify-center">
+          <button
+            type="button"
+            onClick={handleSkipToWorkspace}
+            disabled={submitting}
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-colors disabled:opacity-50"
+            data-testid="onboarding-skip-for-now"
+          >
+            {submitting ? "Skipping…" : "Skip onboarding for now"}
+          </button>
+        </div>
+      )}
     </OnboardingShell>
   );
 }
