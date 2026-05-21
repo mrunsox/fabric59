@@ -173,9 +173,8 @@ describe("Canonical surfaces · CTA guard", () => {
     expect(shell).toMatch(/WORKSPACE_NAV_GROUPS/);
     expect(shell).toMatch(/WORKSPACE_NAV_PINNED/);
     expect(shell).toMatch(/WORKSPACE_NAV_GROUPS\.map/);
-    // Legacy primitives must not drive nav rendering anymore.
-    expect(shell).not.toMatch(/SURFACED_WORKSPACE_SECTIONS/);
-    expect(shell).not.toMatch(/(?<!SURFACED_)WORKSPACE_SECTIONS\b/);
+    // Legacy primitive must not drive nav rendering anymore.
+    expect(shell).not.toMatch(/WORKSPACE_SECTIONS\b/);
   });
 
   it.skip("workspace home renders only surfaced section cards (retired — see WorkspaceContextBar)", () => {
