@@ -115,7 +115,7 @@ import BillingPage from "@/pages/admin/BillingPage";
 // PostCallAutomationsContent is mounted inside WorkspaceNotificationsPage as the
 // canonical "Post-call rules" tab; the file is retained for that re-export only
 // and the legacy route silent-redirects into the workspace notifications surface.
-import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
+// LegalConnectOverviewPage retired — /admin/legal-connect/overview redirects to /admin/legal-connect.
 // Phase D: legacy ANI / Callback Queue / Abandon Rate / QR Routing pages
 // were redirected to /admin/settings and the source files deleted (Gate 3).
 // CampaignOverlayPage / CampaignOverlayListPage same — redirect to /admin/campaigns.
