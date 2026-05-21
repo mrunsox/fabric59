@@ -167,11 +167,15 @@ describe("Canonical surfaces · CTA guard", () => {
     ).toEqual([]);
   });
 
-  it("workspace shell secondary nav uses SURFACED_WORKSPACE_SECTIONS only", () => {
-    const shell = fs.readFileSync(path.join(ROOT, "components/layout/WorkspaceShell.tsx"), "utf8");
-    expect(shell).toMatch(/SURFACED_WORKSPACE_SECTIONS\.map/);
-    // Make sure the unfiltered registry isn't iterated for nav rendering.
-    expect(shell).not.toMatch(/(?<!SURFACED_)WORKSPACE_SECTIONS\.map\b/);
+  it("workspace shell secondary nav renders from canonical nav primitives", () => {
+    const shell = fs.readFileSync(path.join(ROOT, "shells/WorkspaceShell.tsx"), "utf8");
+    // Canonical primitives (post nav-convergence).
+    expect(shell).toMatch(/WORKSPACE_NAV_GROUPS/);
+    expect(shell).toMatch(/WORKSPACE_NAV_PINNED/);
+    expect(shell).toMatch(/WORKSPACE_NAV_GROUPS\.map/);
+    // Legacy primitives must not drive nav rendering anymore.
+    expect(shell).not.toMatch(/SURFACED_WORKSPACE_SECTIONS/);
+    expect(shell).not.toMatch(/(?<!SURFACED_)WORKSPACE_SECTIONS\b/);
   });
 
   it.skip("workspace home renders only surfaced section cards (retired — see WorkspaceContextBar)", () => {
