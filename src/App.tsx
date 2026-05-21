@@ -395,7 +395,7 @@ const App = () => (
                 {/* CANONICAL: Five9 campaign builder writes redirect into the workspace path. */}
                 <Route path="five9/campaign-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
                 <Route path="five9/campaign-builder/:draftId" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
-                <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
+                <Route path="legal-connect/overview" element={<Navigate to="/admin/legal-connect" replace />} />
                 {/* CANONICAL (Phase B): campaign cluster collapsed.
                     overview/drafts → /admin/campaigns (with optional ?status= filter). */}
                 <Route path="campaigns/overview" element={<Navigate to="/admin/campaigns" replace />} />
