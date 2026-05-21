@@ -28,7 +28,7 @@ const SURFACED_FILES = [
   "components/dashboard/AIGuidanceCard.tsx",
   "components/dashboard/WorkspaceSnapshotPanel.tsx",
   "components/dashboard/ConnectorsReportsPanel.tsx",
-  "pages/workspace/WorkspaceHomePage.tsx",
+  // pages/workspace/WorkspaceHomePage.tsx — retired (KPI strip → WorkspaceContextBar).
   "pages/workspace/WorkspacesIndexPage.tsx",
   "pages/admin/OverviewPage.tsx",
   // UserDashboardPage vaulted (slug: legacy-user-dashboard) — body inlined into OverviewPage.
@@ -174,11 +174,12 @@ describe("Canonical surfaces · CTA guard", () => {
     expect(shell).not.toMatch(/(?<!SURFACED_)WORKSPACE_SECTIONS\.map\b/);
   });
 
-  it("workspace home renders only surfaced section cards", () => {
-    const home = fs.readFileSync(path.join(ROOT, "pages/workspace/WorkspaceHomePage.tsx"), "utf8");
-    expect(home).toMatch(/SURFACED_WORKSPACE_SECTIONS/);
-    expect(home).not.toMatch(/(?<!SURFACED_)WORKSPACE_SECTIONS\.filter/);
+  it.skip("workspace home renders only surfaced section cards (retired — see WorkspaceContextBar)", () => {
+    // WorkspaceHomePage was retired; KPI counters now live in
+    // src/components/workspace/WorkspaceContextBar.tsx rendered above every
+    // /w/:id/* surface. Assertion preserved as a skip for history.
   });
+
 
   it("admin org-level quick actions surface canonical org destinations only", () => {
     const qa = fs.readFileSync(path.join(ROOT, "components/dashboard/QuickActionsGrid.tsx"), "utf8");

@@ -19,7 +19,7 @@ import { OrgParamRedirect } from "@/components/auth/OrgParamRedirect";
 import { WorkspaceShell as CanonicalWorkspaceShell, WorkspaceIndexRedirect } from "@/shells/WorkspaceShell";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspacesIndexPage from "@/pages/workspace/WorkspacesIndexPage";
-import WorkspaceHomePage from "@/pages/workspace/WorkspaceHomePage";
+// WorkspaceHomePage retired — /w/:id/home now redirects to /w/:id/campaigns and the KPI strip lives in WorkspaceContextBar.
 import WorkspaceFormsPage from "@/pages/workspace/WorkspaceFormsPage";
 import WorkspaceFormNewPage from "@/pages/workspace/WorkspaceFormNewPage";
 import WorkspaceFormDetailPage from "@/pages/workspace/WorkspaceFormDetailPage";
@@ -115,7 +115,7 @@ import BillingPage from "@/pages/admin/BillingPage";
 // PostCallAutomationsContent is mounted inside WorkspaceNotificationsPage as the
 // canonical "Post-call rules" tab; the file is retained for that re-export only
 // and the legacy route silent-redirects into the workspace notifications surface.
-import LegalConnectOverviewPage from "@/pages/admin/LegalConnectOverviewPage";
+// LegalConnectOverviewPage retired — /admin/legal-connect/overview redirects to /admin/legal-connect.
 // Phase D: legacy ANI / Callback Queue / Abandon Rate / QR Routing pages
 // were redirected to /admin/settings and the source files deleted (Gate 3).
 // CampaignOverlayPage / CampaignOverlayListPage same — redirect to /admin/campaigns.
@@ -160,7 +160,7 @@ import OverviewPage from "@/pages/admin/OverviewPage";
 import WorkspacesPage from "@/pages/admin/WorkspacesPage";
 import WorkspaceDetailPage from "@/pages/admin/WorkspaceDetailPage";
 import ClientsPage from "@/pages/admin/ClientsPage";
-import ClientWorkspacePage from "@/pages/admin/ClientWorkspacePage";
+// ClientWorkspacePage retired (was a one-line re-export of ClientOverviewPage).
 // Five9Page (re-export) deleted; /admin/five9 now uses Five9OverviewPage directly.
 import ConnectorsCatalogPage from "@/pages/admin/ConnectorsCatalogPage";
 import ConnectorInstancePage from "@/pages/admin/ConnectorInstancePage";
@@ -374,7 +374,7 @@ const App = () => (
                 <Route path="workspaces" element={<WorkspacesPage />} />
                 <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
                 <Route path="clients" element={<ClientsPage />} />
-                <Route path="clients/:id/workspace" element={<ClientWorkspacePage />} />
+                <Route path="clients/:id/workspace" element={<Navigate to="../" replace />} />
                 <Route path="connectors" element={<ConnectorsCatalogPage />} />
                 <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
                 <Route path="flows" element={<FlowsPage />} />
@@ -395,7 +395,7 @@ const App = () => (
                 {/* CANONICAL: Five9 campaign builder writes redirect into the workspace path. */}
                 <Route path="five9/campaign-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
                 <Route path="five9/campaign-builder/:draftId" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
-                <Route path="legal-connect/overview" element={<LegalConnectOverviewPage />} />
+                <Route path="legal-connect/overview" element={<Navigate to="/admin/legal-connect" replace />} />
                 {/* CANONICAL (Phase B): campaign cluster collapsed.
                     overview/drafts → /admin/campaigns (with optional ?status= filter). */}
                 <Route path="campaigns/overview" element={<Navigate to="/admin/campaigns" replace />} />
@@ -454,7 +454,7 @@ const App = () => (
                 <Route path="call-flow" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
                 <Route path="call-flow-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
                 {/* CANONICAL: agent-dashboard is compatibility-only (not in nav). Redirects to workspace. */}
-                <Route path="agent-dashboard" element={<WorkspaceResolveRedirect to="/w/:workspaceId/agents" />} />
+                <Route path="agent-dashboard" element={<WorkspaceResolveRedirect to="/w/:workspaceId/agent" />} />
                 <Route path="qa" element={<QAAnalyticsPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 {/* Phase D: legacy ops surfaces silent-redirect to canonical homes. */}
@@ -525,7 +525,7 @@ const App = () => (
 
               <Route path="/w/:workspaceId" element={<CanonicalWorkspaceShell />}>
                 <Route index element={<WorkspaceIndexRedirect />} />
-                <Route path="home" element={<WorkspaceHomePage />} />
+                <Route path="home" element={<Navigate to="../campaigns" replace />} />
                 <Route path="clients" element={<WorkspaceClientsPage />} />
                 <Route path="clients/:clientId" element={<WorkspaceClientDetailPage />} />
                 <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
