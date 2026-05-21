@@ -60,7 +60,11 @@ export type NavGroup = { label: string; items: NavItem[] };
 export const WORKSPACE_NAV_GROUPS: NavGroup[] = [
   {
     label: "Build",
-    items: ["home", "campaigns", "guides", "forms", "templates", "clients"].map(byKey),
+    // "home" intentionally omitted — /w/:id/home is a redirect-only compat
+    // route (collapses to /w/:id/campaigns). Keeping it in the flat
+    // WORKSPACE_NAV union above preserves command-palette + breadcrumb
+    // lookups for legacy bookmarks without surfacing a ghost sidebar item.
+    items: ["campaigns", "guides", "forms", "templates", "clients"].map(byKey),
   },
   {
     label: "Operate",

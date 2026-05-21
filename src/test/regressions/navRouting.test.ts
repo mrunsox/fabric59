@@ -1,0 +1,179 @@
+import { describe, it, expect } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+import {
+  GLOBAL_SECTIONS,
+  findActiveSection,
+} from "@/config/navigation";
+import {
+  WORKSPACE_NAV,
+  WORKSPACE_NAV_GROUPS,
+  WORKSPACE_NAV_PINNED,
+} from "@/config/canonicalNav";
+
+/**
+ * Narrow nav + routing correctness guard.
+ *
+ * Locks two contracts that broke during nav convergence:
+ *   1) Every visible nav target (admin rail/subnav, workspace sidebar groups +
+ *      pinned) resolves to a mounted route in App.tsx that is NOT a
+ *      <Navigate>-only redirect. Guards against "ghost" items like the
+ *      previous `home` entry that pointed at a redirect-only path.
+ *   2) Active-section matching keeps highlighting the correct parent for
+ *      both /admin/* and nested /w/:id/* detail routes.
+ */
+
+const ROOT = path.resolve(process.cwd(), "src");
+const APP_SRC = fs.readFileSync(path.join(ROOT, "App.tsx"), "utf8");
+
+/**
+ * Scan App.tsx for every <Route path="…"> mounted under the given parent
+ * path prefix (e.g. /admin or /w/:workspaceId). Returns a map of
+ * relative-path → "page" | "redirect", where "redirect" means the route
+ * element is a <Navigate ...> (so it must not be a primary nav target).
+ *
+ * Implementation: locate the parent <Route path="…" element={<Shell />}>
+ * block, then walk forward extracting nested <Route path="…" element={…} />
+ * entries until the matching closing </Route>.
+ */
+function collectChildRoutes(parentPath: string): Map<string, "page" | "redirect"> {
+  const escaped = parentPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const openRe = new RegExp(
+    `<Route\\s+path=["']${escaped}["'][^>]*element=\\{[^}]*Shell[^}]*\\}\\s*>`,
+  );
+  const openMatch = APP_SRC.match(openRe);
+  if (!openMatch || openMatch.index === undefined) {
+    throw new Error(`Could not find <Route path="${parentPath}"> shell block in App.tsx`);
+  }
+  // Slice from end of opening tag forward; stop at first balanced </Route>
+  // that corresponds to this shell. Since children are all self-closing
+  // <Route ... />, the next bare </Route> closes the shell block.
+  const start = openMatch.index + openMatch[0].length;
+  const rest = APP_SRC.slice(start);
+  const closeIdx = rest.indexOf("</Route>");
+  if (closeIdx < 0) throw new Error("Unterminated shell <Route> block");
+  const body = rest.slice(0, closeIdx);
+
+  const result = new Map<string, "page" | "redirect">();
+  const childRe = /<Route\s+path=["']([^"']+)["'][^>]*element=\{([\s\S]*?)\}\s*\/>/g;
+  let m: RegExpExecArray | null;
+  while ((m = childRe.exec(body)) !== null) {
+    const p = m[1];
+    const element = m[2];
+    const kind: "page" | "redirect" = /<\s*Navigate\b/.test(element) ? "redirect" : "page";
+    // Last write wins is fine; App.tsx never duplicates paths intentionally.
+    result.set(p, kind);
+  }
+  return result;
+}
+
+const ADMIN_ROUTES = collectChildRoutes("/admin");
+const WORKSPACE_ROUTES = collectChildRoutes("/w/:workspaceId");
+
+describe("nav + routing correctness", () => {
+  it("every admin rail target is mounted (and is /admin itself or a child route)", () => {
+    for (const s of GLOBAL_SECTIONS) {
+      if (s.href === "/admin") continue; // index route, always mounted
+      expect(s.href.startsWith("/admin/"), `${s.key} href must live under /admin`).toBe(true);
+      const child = s.href.slice("/admin/".length);
+      expect(
+        ADMIN_ROUTES.has(child),
+        `Admin rail target "${s.href}" (key=${s.key}) is not mounted in App.tsx`,
+      ).toBe(true);
+    }
+  });
+
+  it("admin subnav items resolve to mounted routes", () => {
+    for (const s of GLOBAL_SECTIONS) {
+      for (const sub of s.subNav ?? []) {
+        if (sub.href === "/admin") continue;
+        expect(sub.href.startsWith("/admin/"), `subnav ${sub.label} must live under /admin`).toBe(true);
+        const child = sub.href.slice("/admin/".length);
+        expect(
+          ADMIN_ROUTES.has(child),
+          `Subnav "${sub.label}" → ${sub.href} is not mounted`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("every visible workspace sidebar item maps to a mounted, non-redirect route (no ghosts)", () => {
+    const visible = [
+      ...WORKSPACE_NAV_GROUPS.flatMap((g) => g.items),
+      ...WORKSPACE_NAV_PINNED,
+    ];
+    for (const item of visible) {
+      const kind = WORKSPACE_ROUTES.get(item.to);
+      expect(
+        kind,
+        `Workspace nav item "${item.key}" → /w/:id/${item.to} is not mounted in App.tsx`,
+      ).toBeDefined();
+      expect(
+        kind,
+        `Workspace nav item "${item.key}" → /w/:id/${item.to} is a redirect-only ghost; remove it from the visible groups/pinned set`,
+      ).toBe("page");
+    }
+  });
+
+  it("ghost-guard: the retired `home` item must not reappear in any visible workspace group", () => {
+    const visibleKeys = new Set(
+      [
+        ...WORKSPACE_NAV_GROUPS.flatMap((g) => g.items),
+        ...WORKSPACE_NAV_PINNED,
+      ].map((i) => i.key),
+    );
+    expect(visibleKeys.has("home"), "/w/:id/home is redirect-only — keep `home` out of visible groups").toBe(false);
+    // But it must remain in the flat union so command palette + breadcrumb
+    // resolution for legacy /home bookmarks still works.
+    expect(WORKSPACE_NAV.some((i) => i.key === "home")).toBe(true);
+  });
+
+  it("findActiveSection returns the matching section for each canonical /admin/* href", () => {
+    for (const s of GLOBAL_SECTIONS) {
+      const got = findActiveSection(s.href);
+      expect(got?.key, `${s.href} should resolve to section "${s.key}"`).toBe(s.key);
+    }
+  });
+
+  it("findActiveSection highlights the correct parent for nested admin probes", () => {
+    const probes: Array<[string, string]> = [
+      ["/admin/workspaces", "workspaces"],
+      ["/admin/clients", "workspaces"],          // clients live under Workspaces section
+      ["/admin/connectors/five9", "connectors"],
+      ["/admin/mappings/builder", "connectors"], // mappings subnav under Connectors
+      ["/admin/reports", "reports"],
+      ["/admin/qa", "reports"],
+      ["/admin/notifications", "notifications"],
+      ["/admin/settings", "settings"],
+      ["/admin/billing", "billing"],
+    ];
+    for (const [p, key] of probes) {
+      expect(findActiveSection(p)?.key, `${p} → ${key}`).toBe(key);
+    }
+  });
+
+  it("workspace sidebar active-state matches nested detail/edit routes", () => {
+    // Mirror src/shells/WorkspaceShell.tsx → WorkspaceSidebar.isActive
+    const workspaceId = "abc";
+    const isActive = (to: string, pathname: string) => {
+      const full = `/w/${workspaceId}/${to}`;
+      return pathname === full || pathname.startsWith(`${full}/`);
+    };
+    const cases: Array<[string, string]> = [
+      ["campaigns", `/w/${workspaceId}/campaigns/123`],
+      ["campaigns", `/w/${workspaceId}/campaigns/new`],
+      ["guides", `/w/${workspaceId}/guides/g-1/edit`],
+      ["guides", `/w/${workspaceId}/guides/g-1/preview`],
+      ["forms", `/w/${workspaceId}/forms/f-1`],
+      ["forms", `/w/${workspaceId}/forms/f-1/edit`],
+      ["clients", `/w/${workspaceId}/clients/c-1`],
+      ["templates", `/w/${workspaceId}/templates/t-1`],
+      ["integrations", `/w/${workspaceId}/integrations/conn-1`],
+    ];
+    for (const [key, path] of cases) {
+      expect(isActive(key, path), `${path} should highlight "${key}"`).toBe(true);
+    }
+    // Sibling negative — campaigns must not light up when on guides.
+    expect(isActive("campaigns", `/w/${workspaceId}/guides`)).toBe(false);
+  });
+});
