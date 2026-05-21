@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 /**
  * System Docs — canonical pointer page for internal/staff references.
  *
- * Legacy /admin/docs and /admin/kb links removed (those surfaces are
+ * Legacy admin docs/KB links were removed (those surfaces are
  * workspace-owned or deprecated). All destinations listed here are
  * intentionally de-surfaced from the superadmin nav and reachable only
  * via direct URL or this page.
