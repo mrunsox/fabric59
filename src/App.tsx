@@ -160,7 +160,7 @@ import OverviewPage from "@/pages/admin/OverviewPage";
 import WorkspacesPage from "@/pages/admin/WorkspacesPage";
 import WorkspaceDetailPage from "@/pages/admin/WorkspaceDetailPage";
 import ClientsPage from "@/pages/admin/ClientsPage";
-import ClientWorkspacePage from "@/pages/admin/ClientWorkspacePage";
+// ClientWorkspacePage retired (was a one-line re-export of ClientOverviewPage).
 // Five9Page (re-export) deleted; /admin/five9 now uses Five9OverviewPage directly.
 import ConnectorsCatalogPage from "@/pages/admin/ConnectorsCatalogPage";
 import ConnectorInstancePage from "@/pages/admin/ConnectorInstancePage";
