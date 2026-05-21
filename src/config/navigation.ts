@@ -133,9 +133,6 @@ export const WORKSPACE_SECTIONS: WorkspaceNavItem[] = [
   { key: "settings", label: "Settings", icon: Settings, href: "settings", surfaced: true },
 ];
 
-/** Subset shown in primary workspace surfaces (nav, home cards, secondary tabs). */
-export const SURFACED_WORKSPACE_SECTIONS: WorkspaceNavItem[] =
-  WORKSPACE_SECTIONS.filter((s) => s.surfaced !== false);
 
 export function findActiveSection(pathname: string): SectionDef | null {
   for (const s of GLOBAL_SECTIONS) {
