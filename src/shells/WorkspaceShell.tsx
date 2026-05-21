@@ -223,7 +223,7 @@ function NotFoundCard() {
                   key={w.id}
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/w/${w.id}/home`)}
+                  onClick={() => navigate(`/w/${w.id}/campaigns`)}
                 >
                   {w.name}
                 </Button>
