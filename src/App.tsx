@@ -525,7 +525,7 @@ const App = () => (
 
               <Route path="/w/:workspaceId" element={<CanonicalWorkspaceShell />}>
                 <Route index element={<WorkspaceIndexRedirect />} />
-                <Route path="home" element={<WorkspaceHomePage />} />
+                <Route path="home" element={<Navigate to="../campaigns" replace />} />
                 <Route path="clients" element={<WorkspaceClientsPage />} />
                 <Route path="clients/:clientId" element={<WorkspaceClientDetailPage />} />
                 <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
