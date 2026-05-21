@@ -374,7 +374,7 @@ const App = () => (
                 <Route path="workspaces" element={<WorkspacesPage />} />
                 <Route path="workspaces/:id" element={<WorkspaceDetailPage />} />
                 <Route path="clients" element={<ClientsPage />} />
-                <Route path="clients/:id/workspace" element={<ClientWorkspacePage />} />
+                <Route path="clients/:id/workspace" element={<Navigate to="../" replace />} />
                 <Route path="connectors" element={<ConnectorsCatalogPage />} />
                 <Route path="connectors/:slug" element={<ConnectorInstancePage />} />
                 <Route path="flows" element={<FlowsPage />} />
