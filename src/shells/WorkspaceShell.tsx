@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
+
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useAuth } from "@/contexts/AuthContext";
