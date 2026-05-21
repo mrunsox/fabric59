@@ -18,7 +18,7 @@ const SURFACED_FILES = [
   "config/navigation.ts",
   "config/superadmin-navigation.ts",
   "components/layout/AdminShell.tsx",
-  "components/layout/WorkspaceShell.tsx",
+  "shells/WorkspaceShell.tsx",
   "components/layout/SuperadminShell.tsx",
   "components/layout/SectionTabs.tsx",
   "components/marketing/MegaMenuHeader.tsx",
