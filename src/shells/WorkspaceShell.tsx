@@ -275,6 +275,8 @@ function WorkspaceChrome() {
       />
       <WorkspaceCommandPalette />
       <div className="min-h-screen flex w-full bg-background">
+        {/* Always-visible org rail — Supabase-style two-tier nav */}
+        <OrgRail />
         <WorkspaceSidebar workspaceId={workspace.id} />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="sticky top-0 z-30 h-14 bg-background/85 backdrop-blur-md border-b border-border/40 flex items-center px-4 gap-3">
@@ -352,6 +354,8 @@ function WorkspaceChrome() {
               <AccountMenu />
             </div>
           </header>
+          {/* Slim KPI strip — replaces the retired /w/:id/home dashboard */}
+          <WorkspaceContextBar />
           <main className="flex-1 p-6">
             <Outlet />
           </main>
@@ -361,11 +365,14 @@ function WorkspaceChrome() {
   );
 }
 
-/** Index redirect /w/:workspaceId → /w/:workspaceId/home */
+/** Index redirect /w/:workspaceId → /w/:workspaceId/campaigns
+ *  (Workspace Home dashboard retired; KPI counters now live in
+ *  WorkspaceContextBar above every workspace surface.) */
 export function WorkspaceIndexRedirect() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  return <Navigate to={`/w/${workspaceId}/home`} replace />;
+  return <Navigate to={`/w/${workspaceId}/campaigns`} replace />;
 }
+
 
 export function WorkspaceShell() {
   return (
