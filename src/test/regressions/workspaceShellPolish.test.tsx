@@ -52,7 +52,7 @@ vi.mock("@/components/notifications/NotificationBell", () => ({
 
 import { WorkspaceShell } from "@/shells/WorkspaceShell";
 
-function renderShell(initialPath = "/w/w1/home") {
+function renderShell(initialPath = "/w/w1/campaigns") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
