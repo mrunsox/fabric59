@@ -454,7 +454,7 @@ const App = () => (
                 <Route path="call-flow" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
                 <Route path="call-flow-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/guides" />} />
                 {/* CANONICAL: agent-dashboard is compatibility-only (not in nav). Redirects to workspace. */}
-                <Route path="agent-dashboard" element={<WorkspaceResolveRedirect to="/w/:workspaceId/agents" />} />
+                <Route path="agent-dashboard" element={<WorkspaceResolveRedirect to="/w/:workspaceId/agent" />} />
                 <Route path="qa" element={<QAAnalyticsPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 {/* Phase D: legacy ops surfaces silent-redirect to canonical homes. */}
