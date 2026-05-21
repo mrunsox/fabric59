@@ -2,10 +2,45 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const DOC_LINKS = [
-  { label: "Build Outline", href: "/outline", description: "Living spec and roadmap" },
-  { label: "Docs Hub (legacy)", href: "/admin/docs", description: "Five9 docs and KB articles" },
-  { label: "Knowledge Base", href: "/admin/kb", description: "Internal knowledge articles" },
+/**
+ * System Docs — canonical pointer page for internal/staff references.
+ *
+ * Legacy /admin/docs and /admin/kb links removed (those surfaces are
+ * workspace-owned or deprecated). All destinations listed here are
+ * intentionally de-surfaced from the superadmin nav and reachable only
+ * via direct URL or this page.
+ */
+const DOC_LINKS: { label: string; href: string; description: string }[] = [
+  {
+    label: "Build Outline",
+    href: "/outline",
+    description: "Living spec and platform roadmap (gated, staff only)",
+  },
+  {
+    label: "Dev Guide",
+    href: "/superadmin/dev-guide",
+    description: "Internal architecture and developer reference",
+  },
+  {
+    label: "Test Cases",
+    href: "/superadmin/test-cases",
+    description: "Internal QA matrix and handoff notes",
+  },
+  {
+    label: "Advanced Routes",
+    href: "/superadmin/routes",
+    description: "Internal route inventory for debugging",
+  },
+  {
+    label: "Feature Vault",
+    href: "/superadmin/vault",
+    description: "Internal preservation of non-core modules",
+  },
+  {
+    label: "Source Exports",
+    href: "/superadmin/exports",
+    description: "Internal source bundle downloads for archived features",
+  },
 ];
 
 export default function SystemDocsPage() {
@@ -14,17 +49,18 @@ export default function SystemDocsPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">System Docs</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Internal documentation and reference materials for the platform.
+          Internal and staff-only references. These surfaces are intentionally not
+          promoted in the superadmin nav and are reached from here or by direct URL.
         </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <BookOpen className="h-4 w-4" /> Documentation surfaces
+            <BookOpen className="h-4 w-4" /> Internal references
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-1">
           {DOC_LINKS.map((d) => (
             <Link
               key={d.href}
