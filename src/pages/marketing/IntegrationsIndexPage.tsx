@@ -1,4 +1,4 @@
-import { Phone, Scale, Briefcase, MessageSquare, Webhook, GitBranch } from "lucide-react";
+import { Phone, Scale, Briefcase, MessageSquare, Webhook, GitBranch, Layers, Sparkles } from "lucide-react";
 import { MarketingShell as MarketingLayout } from "@/shells/MarketingShell";
 import { MarketingHero } from "@/components/marketing/MarketingHero";
 import { SectionShell } from "@/components/marketing/SectionShell";
@@ -9,14 +9,22 @@ import { ProofStrip } from "@/components/marketing/ProofStrip";
 import { integrationsIndexDescription } from "@/seo/marketingMetadata";
 
 /**
- * Phase H — Integrations index.
- * Honest categories. No status badges. No stub tile.
+ * Phase 3 — Integrations index.
+ *
+ * Reframed around the in-app "vertical pack" concept. Five9 is the call layer;
+ * vertical packs plug into the canonical outcome pipeline:
+ *   InteractionRecord → contact/matter match → adapter writeback → notifications.
+ *
+ * Legal practice management is the first vertical pack live today. More
+ * vertical packs (medical EHR, property management, financial/CRM, etc.) are
+ * on the roadmap and listed as a "More integration packs coming" tile.
  */
+
 const TELEPHONY = [
   {
     icon: Phone,
     title: "Five9 telephony",
-    body: "Multi-domain control via the SOAP Admin API, Web Connector automation, pre-call ANI lookup, and post-call event ingestion.",
+    body: "The call layer. Multi-domain control via the SOAP Admin API, Web Connector automation, pre-call ANI lookup, and post-call event ingestion. Call handling stays in Five9 — Fabric59 orchestrates everything around the call.",
     bullets: [
       "Provisioning, campaigns, skills, profiles, DNIS",
       "Sub-500ms ANI screen pop",
@@ -25,7 +33,7 @@ const TELEPHONY = [
   },
 ];
 
-const LEGAL_CRM = [
+const LEGAL_PACK = [
   {
     icon: Scale,
     title: "MyCase",
@@ -56,13 +64,36 @@ const LEGAL_CRM = [
       "Mappable to existing matter schemas",
     ],
   },
+  {
+    icon: Scale,
+    title: "Smokeball",
+    body: "On the roadmap. Joins the legal practice management pack alongside Clio and MyCase via the same adapter pattern.",
+    bullets: [
+      "Roadmap — design partner scoping",
+      "Same canonical outcome pipeline",
+      "Per-firm credential isolation",
+    ],
+  },
+];
+
+const FUTURE_PACKS = [
+  {
+    icon: Sparkles,
+    title: "More integration packs coming",
+    body: "Vertical packs for medical EHR, property management, financial/CRM, and other professional services are scoped with design partners. Each pack plugs into the same outcome pipeline as legal — interaction record, contact match, adapter writeback, notifications.",
+    bullets: [
+      "Medical EHR pack — roadmap",
+      "Property management pack — roadmap",
+      "Financial / CRM pack — roadmap",
+    ],
+  },
 ];
 
 const NOTIFICATIONS = [
   {
     icon: MessageSquare,
     title: "Slack",
-    body: "Real-time agent workspace plus post-call notifications routed by disposition urgency.",
+    body: "Real-time agent workspace plus post-call notifications routed by disposition urgency, per client workspace.",
     bullets: [
       "Agent workspace channel management",
       "Post-call event notifications",
@@ -75,7 +106,7 @@ const WORKFLOW = [
   {
     icon: Webhook,
     title: "Zapier + Make",
-    body: "Outbound webhooks dispatch into the workflow tools your business already runs.",
+    body: "Outbound webhooks dispatch into the workflow tools each of your clients already runs.",
     bullets: [
       "Per-workspace webhook targets",
       "Disposition-scoped triggers",
@@ -84,28 +115,39 @@ const WORKFLOW = [
   },
 ];
 
-const FOUNDATION = {
+const OUTCOME_PIPELINE = {
   icon: GitBranch,
+  title: "Every pack plugs into the same outcome pipeline",
+  body: "InteractionRecord → contact / matter match → adapter writeback → notifications. Whether the system of record is a legal case management tool today or a medical EHR tomorrow, the route from call to outcome to write-back is identical.",
+};
+
+const FOUNDATION = {
+  icon: Layers,
   title: "One canonical integrations layer",
-  body: "Every provider routes through the same integration_providers, integration_connections, and integration_mappings model. New adapters slot in without forking the data model.",
+  body: "Every provider routes through the same integration_providers, integration_connections, and integration_mappings model. New vertical packs slot in without forking the data model.",
 };
 
 function CategoryBlock({
   eyebrow,
   title,
+  lede,
   items,
+  id,
 }: {
   eyebrow: string;
   title: string;
+  lede?: string;
   items: typeof TELEPHONY;
+  id?: string;
 }) {
   return (
-    <div>
+    <div id={id}>
       <div className="mb-6">
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary">
           {eyebrow}
         </p>
         <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground">{title}</h2>
+        {lede && <p className="mt-3 text-sm text-muted-foreground max-w-2xl">{lede}</p>}
       </div>
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {items.map((p) => (
@@ -124,11 +166,11 @@ export default function IntegrationsIndexPage() {
       ctaBanner={
         <SectionShell>
           <SectionIntro
-            title="Need an adapter you don't see here?"
-            lede="We scope new adapters with design partners. Tell us the system and the workflow it has to support."
+            title="Need a vertical pack you don't see here?"
+            lede="We scope new packs and adapters with design partners. Tell us the vertical, the system of record, and the workflow it has to support."
             cta={
               <CtaRow
-                primary={{ label: "Ask about a provider", to: "/contact?topic=integrations" }}
+                primary={{ label: "Ask about a pack", to: "/contact?topic=integrations" }}
                 secondary={{ label: "See solutions", to: "/solutions" }}
               />
             }
@@ -138,21 +180,58 @@ export default function IntegrationsIndexPage() {
     >
       <MarketingHero
         eyebrow="Integrations"
-        title="Five9-native, with the systems you already run"
-        lede="Telephony lives in Five9. Downstream system-of-record is provider-agnostic by design — Clio first, MyCase next, with an adapter pattern that absorbs the next provider without reshaping the data model."
+        title="Five9 telephony plus vertical integration packs"
+        lede="Five9 handles the call. Vertical packs handle the writeback into each client's system of record. Legal practice management is live today — more packs are on the way."
       />
 
       <SectionShell bordered>
         <div className="space-y-16">
-          <CategoryBlock eyebrow="Telephony" title="The session and event layer" items={TELEPHONY} />
-          <CategoryBlock eyebrow="Legal CRM" title="Adapter-based downstream system" items={LEGAL_CRM} />
-          <CategoryBlock eyebrow="Notifications" title="Real-time team coordination" items={NOTIFICATIONS} />
-          <CategoryBlock eyebrow="Workflow" title="Outbound dispatch" items={WORKFLOW} />
+          <CategoryBlock
+            eyebrow="Telephony"
+            title="The call layer"
+            items={TELEPHONY}
+          />
+
+          {/* Vertical integration packs — primary frame */}
+          <div id="vertical-packs" className="space-y-12">
+            <SectionIntro
+              align="left"
+              eyebrow="Vertical integration packs"
+              title="Grouped by the system your clients actually live in"
+              lede="Each pack is a tested set of adapters for one vertical. Legal practice management ships first because most outsourced answering services start there. New packs land alongside it as we scope them with design partners."
+            />
+            <CategoryBlock
+              eyebrow="Pack · Live"
+              title="Legal practice management"
+              lede="The first vertical pack live today. Covers Clio, MyCase, and Smokeball (roadmap)."
+              items={LEGAL_PACK}
+              id="legal-practice-management"
+            />
+            <CategoryBlock
+              eyebrow="Roadmap"
+              title="More integration packs coming"
+              lede="Additional vertical packs are scoped with design partners. Each new pack plugs into the same canonical outcome pipeline."
+              items={FUTURE_PACKS}
+              id="more-packs"
+            />
+          </div>
+
+          <CategoryBlock
+            eyebrow="Notifications"
+            title="Real-time team coordination"
+            items={NOTIFICATIONS}
+          />
+          <CategoryBlock
+            eyebrow="Workflow"
+            title="Outbound dispatch"
+            items={WORKFLOW}
+          />
         </div>
       </SectionShell>
 
       <SectionShell muted bordered>
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <CapabilityCard icon={OUTCOME_PIPELINE.icon} title={OUTCOME_PIPELINE.title} body={OUTCOME_PIPELINE.body} />
           <CapabilityCard icon={FOUNDATION.icon} title={FOUNDATION.title} body={FOUNDATION.body} />
           <ProofStrip
             className="mt-12"
