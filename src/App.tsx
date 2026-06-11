@@ -178,12 +178,12 @@ import TemplateDetailPage from "@/pages/admin/TemplateDetailPage";
 import OrganizationsOverviewPage from "@/pages/master/OrganizationsOverviewPage";
 import UsersManagementPage from "@/pages/master/UsersManagementPage";
 
-// Superadmin (Feature Vault)
+// Superadmin (platform governance)
+// Feature Vault retired (Phase 1 legacy strip): FeatureVaultPage, FeatureVaultDetailPage,
+// SourceExportsPage source files deleted. /superadmin/vault, /superadmin/vault/:id,
+// /superadmin/exports, /master/vault, /vault all tombstone to /superadmin/docs below.
 import { SuperadminShell } from "@/components/layout/SuperadminShell";
 import SuperadminOverviewPage from "@/pages/superadmin/SuperadminOverviewPage";
-import FeatureVaultPage from "@/pages/superadmin/FeatureVaultPage";
-import FeatureVaultDetailPage from "@/pages/superadmin/FeatureVaultDetailPage";
-import SourceExportsPage from "@/pages/superadmin/SourceExportsPage";
 import AdvancedRoutesPage from "@/pages/superadmin/AdvancedRoutesPage";
 import PublicFormPage from "@/pages/public/PublicFormPage";
 import SystemDocsPage from "@/pages/superadmin/SystemDocsPage";
@@ -228,7 +228,9 @@ function WorkspaceResolveRedirect({ to }: { to: string }) {
   });
 
   useEffect(() => {
-    if (authLoading || isLoading) return;
+    if (authLoading) return;
+    if (!user) return; // unauthenticated fallback handled below
+    if (isLoading) return;
     const last = typeof window !== "undefined" ? localStorage.getItem("lastWorkspaceId") : null;
     const candidate =
       (last && workspaces?.find((w) => w.id === last)?.id) ||
@@ -237,8 +239,13 @@ function WorkspaceResolveRedirect({ to }: { to: string }) {
       null;
     if (candidate) setResolvedId(candidate);
     else setFailed(true);
-  }, [authLoading, isLoading, workspaces]);
+  }, [authLoading, user, isLoading, workspaces]);
 
+  // Unauthenticated fallback: send to the canonical workspaces picker rather
+  // than a login loop with a dead post-login destination.
+  if (!authLoading && !user) {
+    return <Navigate to="/app/workspaces" replace />;
+  }
   if (resolvedId) {
     return <Navigate to={to.replace(":workspaceId", resolvedId)} replace />;
   }
@@ -302,15 +309,24 @@ const App = () => (
             {/* Legacy /master/* → consolidated under /superadmin (high-bookmark only) */}
             <Route path="/master" element={<Navigate to="/superadmin" replace />} />
             <Route path="/master/users" element={<Navigate to="/superadmin/users" replace />} />
-            <Route path="/master/vault" element={<Navigate to="/superadmin/vault" replace />} />
+            {/* Phase 1 legacy strip: Feature Vault retired. /master/vault tombstones to System Docs. */}
+            <Route path="/master/vault" element={<Navigate to="/superadmin/docs" replace />} />
 
             {/* Friendly top-level shortcuts → real routes */}
-            <Route path="/vault" element={<Navigate to="/superadmin/vault" replace />} />
+            {/* Phase 1 legacy strip: /vault tombstones to System Docs (Feature Vault retired). */}
+            <Route path="/vault" element={<Navigate to="/superadmin/docs" replace />} />
             <Route path="/five9" element={<Navigate to="/admin/five9" replace />} />
             <Route path="/domains" element={<Navigate to="/admin/domains" replace />} />
             <Route path="/legal-connect" element={<Navigate to="/admin/legal-connect" replace />} />
             <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
             <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
+
+            {/* Phase 1 legacy strip: workspace-scoped legacy tombstones. Authenticated users
+                resolve to their active workspace; unauthenticated users land on
+                /app/workspaces (see WorkspaceResolveRedirect). */}
+            <Route path="/analytics-legacy" element={<WorkspaceResolveRedirect to="/w/:workspaceId/analytics" />} />
+            <Route path="/qa-legacy" element={<WorkspaceResolveRedirect to="/w/:workspaceId/qa" />} />
+            <Route path="/integrations-legacy" element={<WorkspaceResolveRedirect to="/w/:workspaceId/integrations" />} />
 
             {/* Unified platform admin (Superadmin) — gated by master_admin */}
             <Route element={<MasterProtectedRoute />}>
@@ -320,9 +336,10 @@ const App = () => (
                 <Route path="users" element={<UsersManagementPage />} />
                 <Route path="design-partners" element={<DesignPartnersPage />} />
                 <Route path="legal-connect-reports" element={<LegalConnectReportsPage />} />
-                <Route path="vault" element={<FeatureVaultPage />} />
-                <Route path="vault/:id" element={<FeatureVaultDetailPage />} />
-                <Route path="exports" element={<SourceExportsPage />} />
+                {/* Phase 1 legacy strip: Feature Vault retired — tombstones to System Docs. */}
+                <Route path="vault" element={<Navigate to="/superadmin/docs" replace />} />
+                <Route path="vault/:id" element={<Navigate to="/superadmin/docs" replace />} />
+                <Route path="exports" element={<Navigate to="/superadmin/docs" replace />} />
                 <Route path="routes" element={<AdvancedRoutesPage />} />
                 <Route path="docs" element={<SystemDocsPage />} />
                 <Route path="call-flow" element={<Navigate to="/admin/connectors" replace />} />
