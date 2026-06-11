@@ -158,7 +158,7 @@ export const SURFACE_INVENTORY: SurfaceRow[] = [
   { route: "/admin/runs", scope: "org-admin", file: "src/pages/admin/RunsPage.tsx", currentTitle: "Runs", canonicalName: "Runs", classification: "stale-harmless", action: "keep", slice: "none", risk: "low" },
   { route: "/admin/runs/:id", scope: "org-admin", file: "src/pages/admin/RunDetailPage.tsx", currentTitle: "Run Detail", canonicalName: "Run Detail", classification: "stale-harmless", action: "keep", slice: "none", risk: "low" },
 
-  /* ── Workspace product (canonical 15 in WORKSPACE_SECTIONS) ────────────── */
+  /* ── Workspace product (canonical 15 in WORKSPACE_NAV) ────────────── */
   { route: "/app/workspaces", scope: "workspace", file: "src/pages/workspace/WorkspacesIndexPage.tsx", currentTitle: "Workspaces", canonicalName: "Workspaces Index", classification: "canonical", action: "keep", slice: "none", risk: "low" },
   { route: "/app/workspaces/:id", scope: "workspace", file: "src/pages/workspace/WorkspaceHomePage.tsx", currentTitle: "Workspace Home", canonicalName: "Workspace Home", classification: "canonical", action: "refactor", slice: "C", risk: "med", notes: "Slice C: real KPIs, canonical CTA destinations." },
   { route: "/app/workspaces/:id/clients", scope: "workspace", file: "src/pages/workspace/WorkspaceClientsPage.tsx", currentTitle: "Clients", canonicalName: "Clients", classification: "canonical", action: "keep", slice: "C", risk: "low" },
@@ -262,12 +262,12 @@ export const LINGERING_ITEMS: LingeringItem[] = [
   { id: "L-08", area: "org-admin", item: "AdminShell header buttons use vendor-specific labels",
     evidence: "src/components/layout/AdminShell.tsx — 'Five9 Docs' button + 'AI Guide' button.",
     impact: "med", slice: "B",
-    resolution: "Rename to 'Docs' and 'Assistant' for terminology parity with WORKSPACE_SECTIONS." },
+    resolution: "Rename to 'Docs' and 'Assistant' for terminology parity with WORKSPACE_NAV." },
   { id: "L-09", area: "org-admin", item: "AdvancedRoutesPage labels 11 canonical surfaces as 'Archived'",
     evidence: "src/pages/superadmin/AdvancedRoutesPage.tsx — 'Archived — Scripts & call flow', 'Archived — Operations'.",
     impact: "med", slice: "D",
     resolution: "Re-classify groups against SURFACE_INVENTORY; rename 'Archived' to 'Compatibility' or 'Deep-link only'." },
-  { id: "L-10", area: "workspace", item: "WORKSPACE_SECTIONS.forms entry has no real implementation",
+  { id: "L-10", area: "workspace", item: "WORKSPACE_NAV.forms entry has no real implementation",
     evidence: "App.tsx forms route renders WorkspaceSectionPlaceholder.",
     impact: "med", slice: "C",
     resolution: "Hide Forms tab from secondary nav until Phase 5 ships; keep route as compat." },
@@ -322,14 +322,14 @@ export const COPY_INCONSISTENCIES: CopyInconsistency[] = [
   { id: "C-03", entity: "AI helper",
     variants: [
       { label: "AI Guide", where: "AdminShell header button" },
-      { label: "Assistant", where: "WORKSPACE_SECTIONS / WorkspaceAssistantPage" },
+      { label: "Assistant", where: "WORKSPACE_NAV / WorkspaceAssistantPage" },
     ],
     canonical: "Assistant", slice: "B" },
   { id: "C-04", entity: "Docs entry",
     variants: [
       { label: "Five9 Docs", where: "AdminShell header button" },
       { label: "Docs", where: "/admin/docs DocsHubPage" },
-      { label: "Knowledge", where: "WORKSPACE_SECTIONS.knowledge" },
+      { label: "Knowledge", where: "WORKSPACE_NAV.knowledge" },
     ],
     canonical: "Docs (org); Knowledge (workspace)", slice: "B" },
   { id: "C-05", entity: "Tenant ↔ Client",
@@ -341,7 +341,7 @@ export const COPY_INCONSISTENCIES: CopyInconsistency[] = [
   { id: "C-06", entity: "Scripts ↔ Guides",
     variants: [
       { label: "Scripts", where: "/admin/scripts ScriptEditorPage, ScriptBuilderPage filenames" },
-      { label: "Guides", where: "WORKSPACE_SECTIONS.guides, /app/workspaces/:id/guides" },
+      { label: "Guides", where: "WORKSPACE_NAV.guides, /app/workspaces/:id/guides" },
     ],
     canonical: "Guides (per CANONICAL_TERMS — Phase 4 rename)", slice: "C" },
   { id: "C-07", entity: "Footer link casing",
@@ -387,7 +387,7 @@ export const CTA_ALIGNMENT: CtaRow[] = [
   { id: "T-12", cta: "AdminShell 'AI Guide'", surface: "AdminShell header", destination: "GuidancePanel", classification: "off-message", slice: "B" },
   { id: "T-13", cta: "QuickActionsGrid", surface: "/admin overview", destination: "(audit per Slice B)", classification: "off-message", slice: "B" },
   { id: "T-14", cta: "Workspace back-link 'Org admin'", surface: "WorkspaceShell", destination: "/admin", classification: "off-message", slice: "C" },
-  { id: "T-15", cta: "WorkspaceHomePage section cards (×14)", surface: "/app/workspaces/:id", destination: "WORKSPACE_SECTIONS hrefs", classification: "canonical", slice: "C" },
+  { id: "T-15", cta: "WorkspaceHomePage section cards (×14)", surface: "/app/workspaces/:id", destination: "WORKSPACE_NAV hrefs", classification: "canonical", slice: "C" },
 ];
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -480,7 +480,7 @@ export const SLICE_SEQUENCE: { slice: Slice; name: string; touches: string[]; do
     slice: "C", name: "Workspace shell + page-heading + breadcrumb + CTA cleanup",
     touches: [
       "src/components/layout/WorkspaceShell.tsx — relabel 'Org admin' back-link to 'Organization'",
-      "src/config/navigation.ts WORKSPACE_SECTIONS — hide 'Forms' tab until Phase 5",
+      "src/config/navigation.ts WORKSPACE_NAV — hide 'Forms' tab until Phase 5",
       "src/pages/workspace/WorkspaceHomePage.tsx — add KPIs, readiness card, canonical CTAs",
       "All workspace pages — TitleCase h1, sentence-case body, EmptyState + StatusBadge adoption",
       "Workspace Runs / Agents / Supervisor / Settings — workspace-scope binding or compat banner",
