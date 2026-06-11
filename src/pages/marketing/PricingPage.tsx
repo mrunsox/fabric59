@@ -8,53 +8,60 @@ import { CtaRow } from "@/components/marketing/CtaRow";
 import { Card, CardContent } from "@/components/ui/card";
 
 /**
- * Phase H — Pricing page.
+ * Phase 3 — Pricing page.
+ *
+ * Tiers framed around provider scale: number of client workspaces, campaigns
+ * per workspace, concurrent agents, and the vertical integration packs
+ * included. Fabric59 is purchased by the provider (outsourced answering or
+ * virtual receptionist business), not by the individual end-client firm.
  *
  * Concierge-led only. Every CTA routes to /contact?topic=pricing or pilot.
- * No "buy now", no "subscribe", no "checkout" surface.
  */
 const TIERS = [
   {
-    name: "Pilot",
-    blurb: "For design partners and first-engagement teams.",
+    name: "Starter operation",
+    blurb: "For new outsourced answering or virtual receptionist providers running a single vertical.",
     price: "Custom",
     cadence: "Concierge onboarding",
     features: [
-      "1 workspace, 1 Five9 domain",
-      "MyCase or Clio Grow adapter",
-      "Workspace analytics + QA queue",
+      "Up to 5 client workspaces",
+      "1 Five9 domain, shared across clients",
+      "Legal practice management pack included",
+      "Standard guides, forms, QA queue, and analytics",
       "Direct channel with the build team",
     ],
     cta: { label: "Start a pilot", to: "/contact?topic=pricing" },
     highlight: false,
   },
   {
-    name: "Operator",
-    blurb: "For BPOs and law firms running real intake volume.",
+    name: "Growing provider",
+    blurb: "For established answering services and VR operations running real call volume across many clients.",
     price: "Usage-based",
-    cadence: "Per call session + per workspace",
+    cadence: "Per client workspace + per call session",
     features: [
-      "Unlimited workspaces in one organization",
-      "Full canonical workspace surfaces",
-      "Workspace-scoped RBAC",
+      "Up to 50 client workspaces in one organization",
+      "Unlimited campaigns and guides per workspace",
+      "Concurrent agent seats sized to your shift coverage",
+      "Legal practice management pack included; additional vertical packs add-on",
       "Per-tenant rate limits and tenant health",
-      "Implementation-led rollout",
+      "Implementation-led rollout per client",
     ],
     cta: { label: "Talk to us", to: "/contact?topic=pricing" },
     highlight: true,
   },
   {
-    name: "Platform",
-    blurb: "For partners running their own clients on Fabric59.",
+    name: "Network operator",
+    blurb: "For multi-brand answering networks and enterprise VR operations running many clients across multiple verticals.",
     price: "Contact us",
-    cadence: "Annual + revenue share",
+    cadence: "Annual + per-workspace usage",
     features: [
-      "Multi-org governance",
-      "White-label branding overrides",
-      "Design-partner ops view",
-      "Custom integration scoping",
+      "Unlimited client workspaces across multiple organizations",
+      "Multi-domain Five9 across brands or regions",
+      "All current vertical integration packs included",
+      "White-label branding overrides per brand and per client",
+      "Design-partner ops view and custom adapter scoping",
     ],
-    cta: { label: "Become a partner", to: "/contact?topic=pricing" },
+    cta: { label: "Become a network partner", to: "/contact?topic=pricing" },
     highlight: false,
   },
 ];
@@ -63,12 +70,12 @@ export default function PricingPage() {
   return (
     <MarketingLayout
       title="Pricing | Fabric59"
-      description="Concierge-led pricing. Every Fabric59 engagement is scoped together — no self-serve checkout."
+      description="Pricing for outsourced answering services and virtual receptionist providers. Tiered by client workspaces, concurrent agents, and vertical integration packs."
       ctaBanner={
         <SectionShell>
           <SectionIntro
             title="Every engagement is scoped"
-            lede="Self-serve checkout, plan management, and payment methods are deferred. Until then we quote and invoice directly so the rollout matches your actual operation."
+            lede="Self-serve checkout, plan management, and payment methods are deferred. Until then we quote and invoice directly so the rollout matches the way you actually run your clients."
             cta={
               <CtaRow
                 primary={{ label: "Scope your program", to: "/contact?topic=pricing" }}
@@ -81,8 +88,8 @@ export default function PricingPage() {
     >
       <MarketingHero
         eyebrow="Pricing"
-        title="Priced for real operations, not seat padding"
-        lede="Fabric59 is sold as a working operations layer. Pricing is anchored to the canonical workspace and call-session signals already in product."
+        title="Priced for providers, not for end clients"
+        lede="Fabric59 is purchased by outsourced answering services and virtual receptionist providers. Your clients are workspaces. Tiers scale with workspaces, concurrent agents, and the vertical integration packs you need."
       />
 
       <SectionShell bordered>
@@ -102,7 +109,7 @@ export default function PricingPage() {
                     <h2 className="text-lg font-semibold tracking-tight">{t.name}</h2>
                     {t.highlight && (
                       <span className="text-[10px] uppercase tracking-[0.18em] text-primary">
-                        Most teams
+                        Most providers
                       </span>
                     )}
                   </div>
@@ -137,7 +144,7 @@ export default function PricingPage() {
           ))}
         </div>
         <p className="mt-10 text-center text-xs text-muted-foreground">
-          No self-serve checkout. No credit-card capture. No auto-renew traps.
+          Workspaces map to your clients. Vertical packs are billed per pack. No self-serve checkout, no auto-renew traps.
         </p>
       </SectionShell>
     </MarketingLayout>
