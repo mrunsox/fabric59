@@ -490,8 +490,8 @@ export default function OutlinePage() {
 
             <Section id="product" title="1. Canonical product statement">
               <p>
-                Fabric59 is a multi-tenant operational intelligence platform for service organizations, beginning with
-                legal intake and call-center assisted workflows.
+                Fabric59 is a multi-tenant guided call workspace platform for answering-service and call-center
+                workflows across verticals (legal, medical, financial, property management, and more).
               </p>
               <ul className="list-disc pl-5 space-y-1">
                 <li><strong>Five9</strong> = telephony / session / event layer.</li>

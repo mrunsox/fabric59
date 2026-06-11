@@ -128,14 +128,74 @@ export default function WorkspaceIntegrationsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-muted-foreground">Available providers</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {providers.map((p) => (
-              <Badge key={p.id} variant="outline" className="text-xs">
-                {p.display_name} · {p.category}
-              </Badge>
-            ))}
-          </div>
+        <CardContent className="space-y-5">
+          {(() => {
+            const LEGAL_PM_CATEGORIES = new Set([
+              "legal_pm",
+              "legal-pm",
+              "legal",
+              "legal_practice_management",
+            ]);
+            const isLegalPm = (cat?: string) => !!cat && LEGAL_PM_CATEGORIES.has(cat);
+            const legalProviders = providers.filter((p) => isLegalPm(p.category));
+            const otherByCat = new Map<string, typeof providers>();
+            for (const p of providers) {
+              if (isLegalPm(p.category)) continue;
+              const key = p.category || "other";
+              const arr = otherByCat.get(key) ?? [];
+              arr.push(p);
+              otherByCat.set(key, arr);
+            }
+            const legalNames = legalProviders.length
+              ? legalProviders
+              : providers.filter((p) =>
+                  ["clio", "mycase", "smokeball"].some((n) =>
+                    (p.display_name ?? "").toLowerCase().includes(n),
+                  ),
+                );
+            return (
+              <>
+                <div>
+                  <div className="text-xs font-semibold text-foreground mb-2">
+                    Legal practice management
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {legalNames.length === 0 ? (
+                      <span className="text-xs text-muted-foreground">
+                        No legal providers registered yet.
+                      </span>
+                    ) : (
+                      legalNames.map((p) => (
+                        <Badge key={p.id} variant="outline" className="text-xs">
+                          {p.display_name}
+                        </Badge>
+                      ))
+                    )}
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-dashed text-muted-foreground"
+                    >
+                      More integration packs coming
+                    </Badge>
+                  </div>
+                </div>
+                {[...otherByCat.entries()].map(([cat, list]) => (
+                  <div key={cat}>
+                    <div className="text-xs font-semibold text-foreground mb-2 capitalize">
+                      {cat.replace(/[_-]/g, " ")}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {list.map((p) => (
+                        <Badge key={p.id} variant="outline" className="text-xs">
+                          {p.display_name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </>
+            );
+          })()}
         </CardContent>
       </Card>
 

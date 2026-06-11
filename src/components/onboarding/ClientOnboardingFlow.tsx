@@ -16,7 +16,7 @@ type ClientStep = "welcome" | "profile" | "crm" | "campaign" | "policy" | "revie
 
 const CRM_OPTIONS = [
   { id: "clio", name: "Clio", description: "Legal practice management" },
-  { id: "mycase", name: "MyCase", description: "Law firm case management" },
+  { id: "mycase", name: "MyCase", description: "Case management" },
   { id: "salesforce", name: "Salesforce", description: "Enterprise CRM platform" },
   { id: "generic_rest", name: "Generic REST", description: "Custom API integration" },
   { id: "other", name: "Other / None", description: "Configure later" },
@@ -64,7 +64,7 @@ export function ClientOnboardingFlow({ partnerName = "Your Partner", onComplete,
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
             <p className="text-sm text-muted-foreground text-center">
-              This wizard will guide you through configuring a new law firm client with CRM integration, campaign routing, and data policies.
+              This wizard will guide you through configuring a new client with CRM integration, campaign routing, and data policies.
             </p>
             <Button onClick={next} className="w-full h-11">
               Get Started <ArrowRight className="ml-2 h-4 w-4" />
@@ -77,7 +77,7 @@ export function ClientOnboardingFlow({ partnerName = "Your Partner", onComplete,
         <Card className="card-elevated border-0 shadow-lg">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-xl tracking-tight">Client Profile</CardTitle>
-            <CardDescription>Basic information about the law firm</CardDescription>
+            <CardDescription>Basic information about the client</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
             <div className="space-y-2">
@@ -85,14 +85,14 @@ export function ClientOnboardingFlow({ partnerName = "Your Partner", onComplete,
               <Input placeholder="Smith & Associates" value={name} onChange={(e) => setName(e.target.value)} className="h-11" />
             </div>
             <div className="space-y-2">
-              <Label>Practice Area / Vertical</Label>
-              <Input placeholder="Personal Injury, Family Law, etc." value={vertical} onChange={(e) => setVertical(e.target.value)} className="h-11" />
+              <Label>Industry / Vertical</Label>
+              <Input placeholder="e.g. Legal, Medical, Property Management" value={vertical} onChange={(e) => setVertical(e.target.value)} className="h-11" />
             </div>
             <div className="space-y-2">
               <Label>Team Size</Label>
               <Input placeholder="e.g., 5-10 agents" value={teamSize} onChange={(e) => setTeamSize(e.target.value)} className="h-11" />
             </div>
-            <OnboardingContextHelper title="Why this matters" description="Practice area helps us recommend default dispositions, call scripts, and field mappings that match your client's workflow." />
+            <OnboardingContextHelper title="Why this matters" description="Industry helps us recommend default dispositions, call workflows, and field mappings that match your client's operation." />
           </CardContent>
           <div className="px-6 pb-6 flex gap-2">
             <Button variant="outline" onClick={prev} className="flex-1 h-11"><ArrowLeft className="h-4 w-4 mr-1" /> Back</Button>

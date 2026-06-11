@@ -14,7 +14,7 @@ interface AIScriptGeneratorProps {
 }
 
 const INDUSTRIES = [
-  { value: "legal", label: "Legal / Law Firm" },
+  { value: "legal", label: "Legal" },
   { value: "home-services", label: "Home Services" },
   { value: "healthcare", label: "Healthcare" },
   { value: "insurance", label: "Insurance" },
@@ -79,7 +79,7 @@ export function AIScriptGenerator({ onGenerated }: AIScriptGeneratorProps) {
           <div>
             <label className="text-sm font-medium mb-1.5 block">Describe your call script</label>
             <Textarea
-              placeholder="e.g., Inbound legal intake for personal injury cases. Qualify the caller, capture injury details, check statute of limitations, and schedule a consultation."
+              placeholder="e.g., Inbound intake for new callers. Qualify the caller, capture the reason for the call, and schedule a follow-up."
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               rows={4}
