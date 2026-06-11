@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle2, Circle, Clock, ShieldAlert } from "lucide-react";
-import { GLOBAL_SECTIONS, WORKSPACE_SECTIONS } from "@/config/navigation";
+import { GLOBAL_SECTIONS } from "@/config/navigation";
+import { WORKSPACE_NAV } from "@/config/canonicalNav";
 import {
   SURFACE_INVENTORY, LINGERING_ITEMS, COPY_INCONSISTENCIES,
   CTA_ALIGNMENT, REDIRECT_TABLE, SLICE_SEQUENCE, summarizeAudit,
@@ -361,7 +362,7 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "p11-data-table-rollout", label: "Phase 11 — DataTable adopted on workspace campaigns table; remaining card-based grids kept by design (low-risk surfaces)", status: "done" },
   { id: "p11-empty-state-rollout", label: "Phase 11 — adopt shared EmptyState across workspace campaigns, guides, integrations, billing, QA, analytics, clients (Phase F)", status: "done" },
   { id: "p11-campaign-collapse", label: "Phase 11 follow-up — fold /admin/campaigns/{overview,drafts,readiness,event-log,archived} + /admin/campaign-blueprints into canonical campaigns list+detail (tabs/filters), then redirect", status: "done" },
-  { id: "p11-builder-vault", label: "Phase 11 follow-up — vault legacy ScripterPage / ScriptFlowHubPage / TreeEditorPage / CallFlowBuilderPage source files in a future sweep (now redirected, no longer primary)", status: "todo" },
+  { id: "p11-builder-vault", label: "Phase 11 follow-up — legacy ScripterPage / ScriptFlowHubPage / TreeEditorPage / CallFlowBuilderPage source files retired (Phase 1 Fabric59 reposition); routes still redirect", status: "done" },
   { id: "pc-canonical-four", label: "QA Phase C — canonical builder set locked to four families: Guide (/admin/scripts/:scriptId/builder + /app/workspaces/:workspaceId/guides/:guideId/edit), Campaign (/admin/campaigns/new), Mapping (/admin/mappings/builder), Flow (/admin/flows/:id)", status: "done" },
   { id: "pc-redirects", label: "QA Phase C — legacy builder bases redirect: /admin/scripter→/admin/scripts, /admin/scriptflow→/admin/scripts, /admin/tree-editor→/admin/scripts, /admin/call-flow→/admin/flows", status: "done" },
   { id: "pc-compat", label: "QA Phase C — compatibility-only (reachable, de-surfaced from primary nav/CTAs): /admin/script-routing, /admin/tree-editor/:scriptId; primary CTAs scrubbed (ScriptBuilderPage Back→/admin/scripts, ScriptEditorPage Preview→/admin/scripts/:id/builder)", status: "done" },
@@ -377,7 +378,7 @@ const FREEZE_CHECKLIST: { id: string; label: string; status: Status }[] = [
   { id: "pb-builder", label: "QA Phase B — /admin/campaigns/new (CampaignIntakePage) is the single canonical campaign builder; /admin/campaigns/edit/:id reuses it", status: "done" },
   { id: "pb-redirects", label: "QA Phase B — campaigns/overview→/admin/campaigns, campaigns/drafts→?status=draft, campaigns/archived→?status=archived, campaign-blueprints→/admin/templates", status: "done" },
   { id: "pb-compat", label: "QA Phase B — /admin/campaigns/readiness + /admin/campaigns/event-log kept as compatibility-only (de-surfaced from primary nav, still linked from Five9/Monitoring/Legal Connect operational hubs)", status: "done" },
-  { id: "pb-imports-vault", label: "QA Phase B — vault legacy CampaignsOverviewPage / CampaignDraftsPage / ArchivedCampaignsPage / CampaignBlueprintsPage in next sweep (files retained, no longer routed)", status: "todo" },
+  { id: "pb-imports-vault", label: "QA Phase B — legacy CampaignsOverviewPage / CampaignDraftsPage / ArchivedCampaignsPage / CampaignBlueprintsPage source files retired (Phase 1 Fabric59 reposition); routes still redirect", status: "done" },
   { id: "pd-org-catalog", label: "QA Phase D — /admin/connectors is the canonical org-level integrations catalog (label 'Connectors' in primary nav)", status: "done" },
   { id: "pd-org-detail", label: "QA Phase D — /admin/connectors/:slug (ConnectorInstancePage; LegalConnectPage for clio/mycase/smokeball) is the single canonical org-level connector detail/instance route", status: "done" },
   { id: "pd-workspace-canonical", label: "QA Phase D — /app/workspaces/:workspaceId/integrations + /:connectionId remain the canonical workspace-level integrations surface (provider-agnostic, Phase 7)", status: "done" },
@@ -526,7 +527,7 @@ export default function OutlinePage() {
               </ul>
               <h3 className="text-sm font-semibold text-foreground mt-4">Workspace-level secondary nav (Phase 2 target)</h3>
               <ul className="list-disc pl-5 space-y-1">
-                {WORKSPACE_SECTIONS.map((s) => <li key={s.key}>{s.label}</li>)}
+                {WORKSPACE_NAV.map((s) => <li key={s.key}>{s.label}</li>)}
               </ul>
             </Section>
 
@@ -1340,7 +1341,7 @@ Status:    open | in-progress | fixed | wontfix | duplicate`}
               <ul className="list-disc pl-5 space-y-1 text-xs">
                 <li>Delete redirect entries R-03 through R-08 (legacy <span className="font-mono">/admin/campaigns/*</span> tabs) and R-09 through R-12 (builder aliases) once analytics show &lt;1% traffic for 7 days.</li>
                 <li>Delete <span className="font-mono">/admin/integrations</span> alias (R-13).</li>
-                <li>Vault and remove source files: <span className="font-mono">ScripterPage</span>, <span className="font-mono">ScriptFlowHubPage</span>, <span className="font-mono">CallFlowBuilderPage</span>, legacy <span className="font-mono">IntegrationsPage</span>, legacy campaign tab pages (covered by <span className="font-mono">p11-builder-vault</span>).</li>
+                <li>Legacy source files removed in Phase 1 Fabric59 reposition: <span className="font-mono">ScripterPage</span>, <span className="font-mono">ScriptFlowHubPage</span>, <span className="font-mono">CallFlowBuilderPage</span>, legacy <span className="font-mono">IntegrationsPage</span>, legacy campaign tab pages (<span className="font-mono">p11-builder-vault</span> + <span className="font-mono">pb-imports-vault</span> done).</li>
                 <li>Decide on <span className="font-mono">/admin/tree-editor/:scriptId</span> + <span className="font-mono">/admin/script-routing</span>: keep as ops compat, or fully remove based on usage data.</li>
                 <li>Decide on <span className="font-mono">/app/workspaces/:id/integrations-legacy</span> removal once pilots confirm Phase 7 catalog parity.</li>
                 <li>Decide on <span className="font-mono">/product</span>, <span className="font-mono">/demo</span>, <span className="font-mono">/faq</span> public-route fate based on marketing/SEO data.</li>

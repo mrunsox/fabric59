@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Building } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { WORKSPACE_SECTIONS } from "@/config/navigation";
+import { WORKSPACE_NAV } from "@/config/canonicalNav";
 
 /**
  * Canonical workspaces index. Links into /w/:workspaceId/home.
@@ -49,7 +49,7 @@ export default function WorkspacesIndexPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-xs text-muted-foreground">
-                    {WORKSPACE_SECTIONS.length} canonical sections
+                    {WORKSPACE_NAV.length} canonical sections
                   </p>
                 </CardContent>
               </Card>

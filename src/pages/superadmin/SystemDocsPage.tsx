@@ -31,17 +31,9 @@ const DOC_LINKS: { label: string; href: string; description: string }[] = [
     href: "/superadmin/routes",
     description: "Internal route inventory for debugging",
   },
-  {
-    label: "Feature Vault",
-    href: "/superadmin/vault",
-    description: "Internal preservation of non-core modules",
-  },
-  {
-    label: "Source Exports",
-    href: "/superadmin/exports",
-    description: "Internal source bundle downloads for archived features",
-  },
-];
+  // Feature Vault + Source Exports retired in Phase 1 Fabric59 reposition.
+  // Routes still resolve as tombstones to /superadmin/docs.
+
 
 export default function SystemDocsPage() {
   return (
