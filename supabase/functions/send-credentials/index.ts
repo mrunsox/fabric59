@@ -1,5 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireUser, requireOrgMember } from "../_shared/auth.ts";
+
+function esc(v: unknown): string {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -45,6 +55,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+
+
   try {
     const RESEND_API_KEY = await getConfig('resend_api_key', Deno.env.get('RESEND_API_KEY'));
     const RESEND_FROM_EMAIL = await getConfig('resend_from_email', Deno.env.get('RESEND_FROM_EMAIL'));
@@ -68,11 +82,11 @@ serve(async (req) => {
     const replyTo = branding?.brand_reply_to || null;
 
     const logoHtml = brandLogoUrl
-      ? `<img src="${brandLogoUrl}" alt="${brandName || 'Logo'}" style="max-height: 48px; max-width: 200px; object-fit: contain; margin-bottom: 16px;" />`
+      ? `<img src="${esc(brandLogoUrl)}" alt="${esc(brandName || 'Logo')}" style="max-height: 48px; max-width: 200px; object-fit: contain; margin-bottom: 16px;" />`
       : '';
 
     const headerTitle = brandName
-      ? `Welcome to ${brandName}`
+      ? `Welcome to ${esc(brandName)}`
       : 'Welcome to the Team';
 
     const html = `
@@ -88,35 +102,35 @@ serve(async (req) => {
     </div>
 
     <div style="background: #111; border-radius: 8px; padding: 24px; margin-bottom: 24px; border: 1px solid #222;">
-      <h2 style="font-size: 16px; font-weight: 600; color: ${brandColor}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 0.05em;">Account Details</h2>
+      <h2 style="font-size: 16px; font-weight: 600; color: ${esc(brandColor)}; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 0.05em;">Account Details</h2>
 
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
           <td style="padding: 8px 0; color: #888; font-size: 14px; width: 140px;">Agent Name</td>
-          <td style="padding: 8px 0; color: #fff; font-size: 14px; font-weight: 500;">${agentName}</td>
+          <td style="padding: 8px 0; color: #fff; font-size: 14px; font-weight: 500;">${esc(agentName)}</td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #888; font-size: 14px;">Work Email</td>
-          <td style="padding: 8px 0; color: #fff; font-size: 14px; font-weight: 500;">${email}</td>
+          <td style="padding: 8px 0; color: #fff; font-size: 14px; font-weight: 500;">${esc(email)}</td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #888; font-size: 14px;">Five9 Username</td>
-          <td style="padding: 8px 0; color: #fff; font-size: 14px; font-weight: 500;">${five9Username}</td>
+          <td style="padding: 8px 0; color: #fff; font-size: 14px; font-weight: 500;">${esc(five9Username)}</td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #888; font-size: 14px;">Extension</td>
-          <td style="padding: 8px 0; color: #fff; font-size: 14px; font-weight: 500;">${extension}</td>
+          <td style="padding: 8px 0; color: #fff; font-size: 14px; font-weight: 500;">${esc(extension)}</td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #888; font-size: 14px;">Role</td>
-          <td style="padding: 8px 0; color: #fff; font-size: 14px; font-weight: 500;">${role}</td>
+          <td style="padding: 8px 0; color: #fff; font-size: 14px; font-weight: 500;">${esc(role)}</td>
         </tr>
       </table>
     </div>
 
     <div style="background: #2a1f00; border-radius: 8px; padding: 24px; margin-bottom: 24px; border: 1px solid #f59e0b40;">
       <h2 style="font-size: 16px; font-weight: 600; color: #f59e0b; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.05em;">Temporary Password</h2>
-      <p style="font-family: 'Courier New', monospace; font-size: 20px; font-weight: 700; color: #fbbf24; margin: 0; letter-spacing: 0.1em;">${password}</p>
+      <p style="font-family: 'Courier New', monospace; font-size: 20px; font-weight: 700; color: #fbbf24; margin: 0; letter-spacing: 0.1em;">${esc(password)}</p>
     </div>
 
     <div style="background: #1a0f0f; border-radius: 8px; padding: 16px; border: 1px solid #ef444430;">

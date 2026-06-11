@@ -1,5 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireUser, requireOrgMember } from "../_shared/auth.ts";
+
+function esc(v: unknown): string {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +20,10 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -49,7 +63,7 @@ serve(async (req) => {
 
     const dataTransferSection = dataTransfer?.enabled
       ? `<h3 style="margin-top:20px">Data Transfer</h3>
-         <p>Target: ${dataTransfer.targetEmail || 'N/A'}</p>
+         <p>Target: ${esc(dataTransfer.targetEmail || 'N/A')}</p>
          <p>Drive: ${dataTransfer.transferDrive ? 'Yes' : 'No'} · Email: ${dataTransfer.transferEmail ? 'Yes' : 'No'}</p>`
       : '';
 
@@ -57,10 +71,10 @@ serve(async (req) => {
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
         <h2 style="color:#1a1a2e">Agent Offboarding Complete</h2>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0">
-          <p><strong>Name:</strong> ${agentName}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Role:</strong> ${role}</p>
-          ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+          <p><strong>Name:</strong> ${esc(agentName)}</p>
+          <p><strong>Email:</strong> ${esc(email)}</p>
+          <p><strong>Role:</strong> ${esc(role)}</p>
+          ${reason ? `<p><strong>Reason:</strong> ${esc(reason)}</p>` : ''}
           <p><strong>Completed:</strong> ${new Date().toLocaleString()}</p>
         </div>
         <h3>Offboarding Steps</h3>
