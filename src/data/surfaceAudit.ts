@@ -276,7 +276,7 @@ export const LINGERING_ITEMS: LingeringItem[] = [
     impact: "low", slice: "C",
     resolution: "Relabel to 'Organization' or org name." },
   { id: "L-12", area: "files", item: "Orphaned legacy page files still on disk after Phase 11 redirects",
-    evidence: "Files reachable only via redirect or unreachable: ScripterPage, ScriptFlowHubPage, CallFlowBuilderPage, CallFlowPage, CampaignBlueprintsPage, CampaignsOverviewPage, CampaignDraftsPage, ArchivedCampaignsPage, IntegrationsPage, CampaignBuilderPage.",
+    evidence: "Legacy guide-builder + campaign-tab + legacy integrations source files retired in Phase 1 Fabric59 reposition; routes remain reachable only via redirect tombstones.",
     impact: "low", slice: "D",
     resolution: "Vault then delete after grace window; verify no remaining imports first." },
   { id: "L-13", area: "workspace", item: "Workspace Runs / Agents / Supervisor / Settings reuse org-level pages without workspace scoping",
@@ -491,7 +491,7 @@ export const SLICE_SEQUENCE: { slice: Slice; name: string; touches: string[]; do
   {
     slice: "D", name: "Lingering legacy de-surfacing + redirect follow-ups + file deletion",
     touches: [
-      "Vault + delete: ScripterPage, ScriptFlowHubPage, CallFlowBuilderPage, CallFlowPage, CampaignBlueprintsPage, CampaignsOverviewPage, CampaignDraftsPage, ArchivedCampaignsPage, IntegrationsPage, CampaignBuilderPage (after import audit)",
+      "Retire legacy guide-builder + campaign-tab + legacy integrations source files after import audit (done in Phase 1 Fabric59 reposition)",
       "Re-classify AdvancedRoutesPage groups: 'Archived' → 'Compatibility' or 'Deep-link only'",
       "Demote /admin/tree-editor/:scriptId, /admin/script-routing, /app/workspaces/:id/{integrations,qa,analytics}-legacy with banner",
       "Final pass: every Card/Button/Link in /admin/* and /app/workspaces/* — assert no destination is in REDIRECT_TABLE.from or LingeringItem L-12",

@@ -93,12 +93,13 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
 ];
 
 /**
- * Workspace-level nav has been fully migrated to `src/config/canonicalNav.ts`
- * (`WORKSPACE_NAV`, `WORKSPACE_NAV_GROUPS`, `WORKSPACE_NAV_PINNED`,
- * `WORKSPACE_NAV_DEMOTED`). The legacy `WORKSPACE_SECTIONS` export and its
- * `surfaced` field were removed in the Phase 1 Pass-2B cleanup. Consumers
- * should import from `@/config/canonicalNav` instead.
+ * Workspace-level nav lives in `src/config/canonicalNav.ts` (`WORKSPACE_NAV`,
+ * `WORKSPACE_NAV_GROUPS`, `WORKSPACE_NAV_PINNED`, `WORKSPACE_NAV_DEMOTED`).
+ * The legacy workspace-sections export and its `surfaced` field were
+ * removed in the Phase 1 Pass-2B cleanup. Import canonical nav from
+ * `@/config/canonicalNav` instead.
  */
+
 
 
 

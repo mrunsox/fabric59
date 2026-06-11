@@ -87,7 +87,7 @@ const COMPATIBILITY_ONLY = [
   "/admin/campaigns/event-log",
   "/admin/five9/campaign-builder",
   "/admin/kb",
-  // Workspace compatibility-only sections (de-surfaced in WORKSPACE_SECTIONS).
+  // Workspace compatibility-only sections (de-surfaced in canonical workspace nav).
   // Match as suffix segments because workspace URLs are templated.
   "integrations-legacy",
   "qa-legacy",
