@@ -15,7 +15,7 @@ const CONNECTOR_GROUPS: { key: string; label: string; description: string; conne
   {
     key: "legal-pm",
     label: "Legal practice management",
-    description: "Vertical pack for law firms — Clio, MyCase, and Smokeball.",
+    description: "Vertical pack for legal operations — Clio, MyCase, and Smokeball.",
     connectors: [
       { slug: "clio", name: "Clio", icon: Scale, status: "available", description: "Sync matters and contacts to Clio Manage." },
       { slug: "mycase", name: "MyCase", icon: Briefcase, status: "available", description: "Create cases and tasks in MyCase." },
