@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import {
   ArrowRight, GitBranch, Bot, Megaphone, Scale, CheckCircle2, Phone,
   Globe, GitFork, Building2, Lock, FileSearch, MessageSquare, UserCog, Mail,
+  UserSearch, ListChecks, Target, BellRing,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { StructuredData } from "@/components/seo/StructuredData";
