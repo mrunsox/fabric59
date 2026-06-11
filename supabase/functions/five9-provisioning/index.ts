@@ -83,6 +83,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+
+
   try {
     // Read credentials ONLY from env secrets — bypass DB config to avoid stale/wrong values
     const FIVE9_USERNAME = Deno.env.get('FIVE9_USERNAME');
