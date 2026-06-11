@@ -1,5 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireUser, requireOrgMember } from "../_shared/auth.ts";
+
+function esc(v: unknown): string {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
