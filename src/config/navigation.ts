@@ -1,7 +1,5 @@
 import {
   LayoutDashboard, Building, Plug, FileText, Bell, Settings, CreditCard,
-  Home, Users, Megaphone, BookOpen, FormInput, FileStack, PlayCircle,
-  UserCog, Headphones, ClipboardCheck, BarChart3, Brain, Sparkles,
 } from "lucide-react";
 
 export type SubNavItem = {
@@ -95,43 +93,14 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
 ];
 
 /**
- * Workspace-level secondary nav — canonical 13 (Phase 2 target).
- * Exported for /outline rendering only; NOT yet wired into AdminShell.
- * Hrefs point at the eventual /app/workspaces/:workspaceId/* routes.
+ * Workspace-level nav lives in `src/config/canonicalNav.ts` (`WORKSPACE_NAV`,
+ * `WORKSPACE_NAV_GROUPS`, `WORKSPACE_NAV_PINNED`, `WORKSPACE_NAV_DEMOTED`).
+ * The legacy workspace-sections export and its `surfaced` field were
+ * removed in the Phase 1 Pass-2B cleanup. Import canonical nav from
+ * `@/config/canonicalNav` instead.
  */
-export type WorkspaceNavItem = {
-  key: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href: string;
-  /** When false the section route is mounted/reachable but de-surfaced from
-   *  workspace nav, home cards and shell secondary tabs (compatibility-only). */
-  surfaced?: boolean;
-};
 
-/**
- * Canonical workspace registry. Surfaced=false entries remain reachable via
- * direct URL but are hidden from primary nav, home cards and tabs per the
- * canonical route map. Do NOT remove entries — route mounting still depends
- * on these keys; toggle `surfaced` instead.
- */
-export const WORKSPACE_SECTIONS: WorkspaceNavItem[] = [
-  { key: "home", label: "Home", icon: Home, href: "home", surfaced: true },
-  { key: "campaigns", label: "Campaigns", icon: Megaphone, href: "campaigns", surfaced: true },
-  { key: "guides", label: "Guides", icon: BookOpen, href: "guides", surfaced: true },
-  { key: "forms", label: "Forms", icon: FormInput, href: "forms", surfaced: true },
-  { key: "templates", label: "Templates", icon: FileStack, href: "templates", surfaced: true },
-  { key: "clients", label: "Clients", icon: Users, href: "clients", surfaced: true },
-  { key: "runs", label: "Runs", icon: PlayCircle, href: "runs", surfaced: false },
-  { key: "agents", label: "Agents", icon: UserCog, href: "agents", surfaced: false },
-  { key: "supervisor", label: "Supervisor", icon: Headphones, href: "supervisor", surfaced: false },
-  { key: "qa", label: "QA", icon: ClipboardCheck, href: "qa", surfaced: true },
-  { key: "analytics", label: "Analytics", icon: BarChart3, href: "analytics", surfaced: true },
-  { key: "integrations", label: "Integrations", icon: Plug, href: "integrations", surfaced: true },
-  { key: "knowledge", label: "Knowledge", icon: Brain, href: "knowledge", surfaced: false },
-  { key: "assistant", label: "Assistant", icon: Sparkles, href: "assistant", surfaced: false },
-  { key: "settings", label: "Settings", icon: Settings, href: "settings", surfaced: true },
-];
+
 
 
 export function findActiveSection(pathname: string): SectionDef | null {

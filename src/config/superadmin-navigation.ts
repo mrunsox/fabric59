@@ -10,12 +10,14 @@ export type SuperadminNavItem = {
 /**
  * Canonical surfaced superadmin nav — platform-governance only.
  *
- * De-surfaced (still mounted, reachable via direct URL or System Docs):
- *   - /superadmin/vault, /superadmin/exports  (internal feature preservation)
+ * De-surfaced (still mounted, reachable via direct URL):
  *   - /superadmin/routes                      (debug route dump)
  *   - /superadmin/dev-guide                   (internal dev reference)
  *   - /superadmin/test-cases                  (internal QA matrix)
  *   - /superadmin/call-flow/raw               (legacy)
+ *
+ * Retired in Phase 1 Fabric59 reposition (now tombstone to /superadmin/docs):
+ *   - /superadmin/vault, /superadmin/vault/:id, /superadmin/exports
  */
 export const SUPERADMIN_SECTIONS: SuperadminNavItem[] = [
   { key: "overview", label: "Overview", href: "/superadmin", icon: LayoutDashboard },
