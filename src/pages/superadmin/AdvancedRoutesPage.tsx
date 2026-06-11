@@ -82,8 +82,8 @@ const ROUTE_GROUPS: { group: string; routes: { path: string; label: string }[] }
     group: "Superadmin",
     routes: [
       { path: "/superadmin", label: "Overview" },
-      { path: "/superadmin/vault", label: "Feature Vault" },
-      { path: "/superadmin/exports", label: "Source Exports" },
+      // Feature Vault + Source Exports retired (Phase 1 Fabric59 reposition);
+      // /superadmin/vault, /superadmin/vault/:id, /superadmin/exports tombstone to /superadmin/docs.
       { path: "/superadmin/docs", label: "System Docs" },
     ],
   },

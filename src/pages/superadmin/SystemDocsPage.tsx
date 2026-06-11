@@ -33,6 +33,7 @@ const DOC_LINKS: { label: string; href: string; description: string }[] = [
   },
   // Feature Vault + Source Exports retired in Phase 1 Fabric59 reposition.
   // Routes still resolve as tombstones to /superadmin/docs.
+];
 
 
 export default function SystemDocsPage() {
