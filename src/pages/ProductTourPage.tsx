@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import {
   ArrowRight, GitBranch, Bot, Megaphone, Scale, CheckCircle2, Phone,
   Globe, GitFork, Building2, Lock, FileSearch, MessageSquare, UserCog, Mail,
+  UserSearch, ListChecks, Target, BellRing,
 } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { StructuredData } from "@/components/seo/StructuredData";
@@ -280,6 +281,33 @@ const statusStyle: Record<Status, string> = {
   "Coming soon": "bg-accent/10 text-accent border-accent/30",
 };
 
+const QUESTION_FRAMING = [
+  {
+    icon: UserSearch,
+    title: "Who called?",
+    body: "Workspace + campaign context, multi-tenant client separation, pre-call ANI lookup, screen pop with caller identity and prior history.",
+    surfaces: "Five9 SOAP integration · Multi-domain Five9 · Org / Partner / Client tenancy",
+  },
+  {
+    icon: ListChecks,
+    title: "What happened on the call?",
+    body: "Decision-tree agent guides with conditional branching, structured form capture, AI summaries, and an interactive runtime simulator for QA.",
+    surfaces: "Decision-tree script builder · Visual field mapping · Agent provisioning",
+  },
+  {
+    icon: Target,
+    title: "What was the outcome?",
+    body: "Dispositions, urgency selectors, gated reporting, and a per-disposition policy engine with field-level allow / block / redact rules.",
+    surfaces: "Disposition engine · Campaign blueprints · API logs & reconciliation",
+  },
+  {
+    icon: BellRing,
+    title: "Who needs to be notified?",
+    body: "System-of-record write-back through vertical packs (legal practice management today), Slack routing by urgency, Zapier/Make webhooks, exception queues.",
+    surfaces: "Legal Connect (Clio + MyCase) · Slack · Encrypted credentials & audit",
+  },
+];
+
 export default function ProductTourPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -287,7 +315,7 @@ export default function ProductTourPage() {
         title="Product Overview — Fabric59"
         description={productOverviewDescription()}
         canonical="https://fabric59.com/product"
-        ogTitle="Fabric59 Product Overview — every capability, honestly tagged"
+        ogTitle="Fabric59 Product Overview — the brain between Five9 and your client's system of record"
       />
       <StructuredData data={[organizationLD, softwareApplicationLD()]} />
 
@@ -299,10 +327,13 @@ export default function ProductTourPage() {
             Product overview
           </Badge>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-            Every capability, with an honest status tag
+            Five9 handles the call. Fabric59 is the brain.
           </h1>
-          <p className="text-muted-foreground text-lg mb-6">
-            The canonical Fabric59 product overview. Every section below is tagged Live, Partial, or Coming soon — based on what is actually in production today.
+          <p className="text-muted-foreground text-lg mb-3">
+            Your client's system of record holds the outcome. Fabric59 structures every call your agents take around four questions — and routes the answers into the right place.
+          </p>
+          <p className="text-muted-foreground text-sm mb-6">
+            Built for outsourced answering services and virtual receptionist providers. Multi-vertical by design, with a deep legal practice management pack live today. Every capability below is tagged Live, Partial, or Coming soon based on what is actually in production.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             {sections.map((s) => (
@@ -316,6 +347,37 @@ export default function ProductTourPage() {
                   {s.status}
                 </span>
               </a>
+            ))}
+          </div>
+        </section>
+
+        {/* Four-question framing — the spine of the product */}
+        <section className="max-w-5xl mx-auto px-6 pb-16">
+          <div className="mb-10 text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
+              The four questions
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Fabric59 structures every call around four questions
+            </h2>
+            <p className="mt-3 text-muted-foreground max-w-2xl mx-auto">
+              Fabric59 is not a phone system. It is not a practice management suite. It is the workflow layer between Five9 and your client's system of record — legal practice management today (Clio, MyCase, Smokeball roadmap), more vertical packs to come.
+            </p>
+          </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            {QUESTION_FRAMING.map((q) => (
+              <Card key={q.title} className="border-border/60">
+                <CardContent className="p-6">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4 ring-1 ring-primary/15">
+                    <q.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold tracking-tight">{q.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{q.body}</p>
+                  <p className="mt-4 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Surfaces · <span className="text-foreground/80 normal-case tracking-normal">{q.surfaces}</span>
+                  </p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </section>
