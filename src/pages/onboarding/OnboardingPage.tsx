@@ -247,7 +247,7 @@ export default function OnboardingPage() {
         await refetchWorkspaces();
       }
       toast.success("Workspace ready");
-      navigate(`/w/${targetId}/home`, { replace: true });
+      navigate(`/w/${targetId}/campaigns`, { replace: true });
     } catch (err) {
       toast.error((err as Error).message || "Could not bootstrap workspace");
     } finally {
@@ -308,9 +308,9 @@ export default function OnboardingPage() {
       // re-bootstrap with the new org/workspace, avoiding any race where
       // ProtectedRoute still sees organization=null.
       if (typeof window !== "undefined") {
-        window.location.assign(`/w/${targetId}/home`);
+        window.location.assign(`/w/${targetId}/campaigns`);
       } else {
-        navigate(`/w/${targetId}/home`, { replace: true });
+        navigate(`/w/${targetId}/campaigns`, { replace: true });
       }
     } catch (err) {
       toast.error((err as Error).message || "Could not skip to workspace");
