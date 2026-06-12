@@ -22,14 +22,27 @@ export function AdminCampaignRedirect() {
     }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      // First try direct match on the canonical `campaigns` table.
+      const direct = await supabase
         .from("campaigns")
         .select("id, workspace_id")
         .eq("id", id)
         .maybeSingle();
+      let row = (direct.data as { id: string; workspace_id?: string | null } | null) ?? null;
+      // Fallback: legacy callers pass a campaign_setup id; canonical rows
+      // mirror those via source_type='campaign_setup' + source_id=<setup id>.
+      if (!row) {
+        const mirrored = await supabase
+          .from("campaigns")
+          .select("id, workspace_id")
+          .eq("source_type", "campaign_setup")
+          .eq("source_id", id)
+          .maybeSingle();
+        row = (mirrored.data as { id: string; workspace_id?: string | null } | null) ?? null;
+      }
       if (cancelled) return;
-      const ws = (data as { workspace_id?: string | null } | null)?.workspace_id;
-      setTarget(ws ? `/w/${ws}/campaigns/${id}` : "/admin/campaigns");
+      const ws = row?.workspace_id;
+      setTarget(ws && row ? `/w/${ws}/campaigns/${row.id}` : "/admin/campaigns");
     })().catch(() => {
       if (!cancelled) setTarget("/admin/campaigns");
     });

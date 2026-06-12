@@ -112,6 +112,10 @@ describe("Dashboard consolidation · admin campaign legacy demoted", () => {
       !f.includes("OutlinePage.tsx") &&
       !f.includes("surfaceAudit.ts") &&
       !f.includes("AdminCampaignRedirect.tsx") &&
+      // CampaignsPage rows intentionally navigate through the demoted
+      // /admin/campaigns/:id helper, which resolves both canonical
+      // campaign ids and legacy campaign_setup ids to the workspace hub.
+      !f.endsWith("pages/admin/CampaignsPage.tsx") &&
       !f.endsWith("dashboardConsolidation.test.ts"),
   );
 
