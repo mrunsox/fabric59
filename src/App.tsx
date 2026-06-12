@@ -429,7 +429,8 @@ const App = () => (
                 {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
                 {/* Phase D: /admin/five9 de-surfaced — silent redirect to canonical connector instance. */}
                 <Route path="five9" element={<Navigate to="/admin/connectors/five9" replace />} />
-                <Route path="five9/overview" element={<Five9OverviewPage />} />{/* retained on disk; reachable via direct URL */}
+                {/* Dashboard consolidation: Five9 Overview retired — tombstone to canonical connector instance. */}
+                <Route path="five9/overview" element={<Navigate to="/admin/connectors/five9" replace />} />
                 <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
                 {/* CANONICAL: Five9 campaign builder writes redirect into the workspace path. */}
                 <Route path="five9/campaign-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
@@ -439,8 +440,9 @@ const App = () => (
                     overview/drafts → /admin/campaigns (with optional ?status= filter). */}
                 <Route path="campaigns/overview" element={<Navigate to="/admin/campaigns" replace />} />
                 <Route path="campaigns/drafts" element={<Navigate to="/admin/campaigns?status=draft" replace />} />
-                <Route path="testing" element={<TestingHubPage />} />
-                <Route path="monitoring" element={<MonitoringHubPage />} />
+                {/* Dashboard consolidation: Testing + Monitoring hubs retired — tombstone to canonical destinations. */}
+                <Route path="testing" element={<Navigate to="/admin/test" replace />} />
+                <Route path="monitoring" element={<Navigate to="/admin/logs" replace />} />
                 <Route path="docs" element={<DocsHubPage />} />
                 <Route path="clients/:id" element={<ClientOverviewPage />} />
                 <Route path="clients/:clientId/legal-connect" element={<ClientLegalConnectPage />} />
@@ -470,7 +472,8 @@ const App = () => (
                     /admin/campaigns is a read-only cross-workspace summary; writes redirect. */}
                 <Route path="campaigns/new" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
                 <Route path="campaigns/edit/:id" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns" />} />
-                <Route path="campaigns/:id" element={<CampaignDetailPage />} />
+                {/* Dashboard consolidation: legacy campaign detail demoted — redirects to canonical /w/:workspaceId/campaigns/:id hub. */}
+                <Route path="campaigns/:id" element={<AdminCampaignRedirect />} />
                 {/* CANONICAL (Phase B): archived collapses into list filter; blueprints fold into templates. */}
                 <Route path="campaigns/archived" element={<Navigate to="/admin/campaigns?status=archived" replace />} />
                 <Route path="campaign-blueprints" element={<Navigate to="/admin/templates" replace />} />
