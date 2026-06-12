@@ -130,8 +130,8 @@ export function buildLegalIntakeTemplate(): CampaignFlowContent {
     }, 3),
     step("field_capture", {
       title: "Opposing party",
-      helper: "Required for conflict-check before booking a consultation.",
-      config: { fieldKey: "opposing_party", fieldType: "short_text", destinationKey: "matter.opposing_party", destinationProvider: "clio" },
+      description: "Required for conflict-check before booking a consultation.",
+      config: { fieldKey: "opposing_party", fieldType: "short_text", destinationKey: "matter.opposing_party", destinationProvider: "clio", helper: "Required for conflict-check before booking a consultation." },
     }, 4),
     step("information_display", {
       title: "Conflict check reminder",
