@@ -23,6 +23,9 @@ import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 export default function WorkspaceCampaignsPage() {
   const { workspace } = useWorkspace();
   const { data: campaigns = [], isLoading } = useWorkspaceCampaigns();
+  const { data: clients = [] } = useWorkspaceClients();
+  const [searchParams] = useSearchParams();
+  const showSeed = clients.length === 0 || searchParams.get("seed") === "assureway";
   if (!workspace) return null;
   const base = `/w/${workspace.id}/campaigns`;
 
@@ -33,13 +36,17 @@ export default function WorkspaceCampaignsPage() {
         title="Campaigns"
         lede={`Canonical campaigns for ${workspace.name}. Legacy campaign setups mirror in automatically.`}
         action={
-          <Button asChild size="sm">
-            <Link to={`${base}/new`}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> New campaign
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {showSeed && <SeedAssurewayButton />}
+            <Button asChild size="sm">
+              <Link to={`${base}/new`}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> New campaign
+              </Link>
+            </Button>
+          </div>
         }
       />
+
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading campaigns…</p>
