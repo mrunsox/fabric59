@@ -391,7 +391,7 @@ describe("Phase H · premium marketing + auth + onboarding rebuild", () => {
     const src = read("pages/onboarding/OnboardingPage.tsx");
     // Dashboard consolidation — workspace "home" retired; canonical handoff is /w/:id/campaigns.
     expect(src).toMatch(/\/w\/[^"`]*campaigns/);
-    expect(src).not.toMatch(/\/w\/[^"`]*\/home\b/);
+    expect(src, "no navigation should target the retired /w/:id/home").not.toMatch(/["'`]\/w\/[^"'`]*\/home["'`]/);
     // Must not redirect first-run users straight into /admin.
     expect(src).not.toMatch(/navigate\(\s*["'`]\/admin["'`]/);
   });
