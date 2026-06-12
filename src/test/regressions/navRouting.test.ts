@@ -115,7 +115,7 @@ describe("nav + routing correctness", () => {
     }
   });
 
-  it("ghost-guard: the retired `home` item must not reappear in any visible workspace group", () => {
+  it("ghost-guard: the retired `home` item must be fully absent from canonical workspace nav", () => {
     const visibleKeys = new Set(
       [
         ...WORKSPACE_NAV_GROUPS.flatMap((g) => g.items),
@@ -123,10 +123,12 @@ describe("nav + routing correctness", () => {
       ].map((i) => i.key),
     );
     expect(visibleKeys.has("home"), "/w/:id/home is redirect-only — keep `home` out of visible groups").toBe(false);
-    // But it must remain in the flat union so command palette + breadcrumb
-    // resolution for legacy /home bookmarks still works.
-    expect(WORKSPACE_NAV.some((i) => i.key === "home")).toBe(true);
+    // Dashboard consolidation: `home` is fully retired from the flat union
+    // too. /w/:id/home still resolves (Navigate-only compat route in App.tsx)
+    // but no product chrome references it.
+    expect(WORKSPACE_NAV.some((i) => i.key === "home"), "`home` must not appear in flat WORKSPACE_NAV").toBe(false);
   });
+
 
   it("findActiveSection returns the matching section for each canonical /admin/* href", () => {
     for (const s of GLOBAL_SECTIONS) {
