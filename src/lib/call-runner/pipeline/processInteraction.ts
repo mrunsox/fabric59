@@ -40,12 +40,12 @@ import {
   routeNotifications,
   type WorkspaceNotificationRule,
 } from "./notificationRouting";
-import type { CampaignFlowOutputMapping } from "@/types/campaign-flow";
+import type { FlowOutputMapping } from "@/types/campaign-flow";
 
 export interface ProcessInteractionInput {
   payload: InteractionDraftPayload;
   contactCandidates: ContactCandidate[];
-  mappings: CampaignFlowOutputMapping[];
+  mappings: FlowOutputMapping[];
   connections: IntegrationConnection[];
   notificationRules: WorkspaceNotificationRule[];
   fallbackInternalRecipient?: string;

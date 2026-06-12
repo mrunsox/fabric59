@@ -9,7 +9,7 @@
  * Industry-neutral — vertical-specific behavior lives inside each adapter
  * (Clio/MyCase/Smokeball), not here.
  */
-import type { CampaignFlowOutputMapping } from "@/types/campaign-flow";
+import type { FlowOutputMapping } from "@/types/campaign-flow";
 import type {
   AdapterWritebackJobInput,
   ContactMatchOutcome,
@@ -27,7 +27,7 @@ const SUPPORTED_LEGAL_PROVIDERS = new Set(["clio", "clio_manage", "mycase", "smo
 
 export function buildAdapterJobs(
   rec: InteractionRecord,
-  mappings: CampaignFlowOutputMapping[],
+  mappings: FlowOutputMapping[],
   connections: IntegrationConnection[],
 ): AdapterWritebackJobInput[] {
   const jobs: AdapterWritebackJobInput[] = [];
@@ -124,7 +124,7 @@ export function annotateWithContactLink(
 
 function applyMappings(
   values: Record<string, unknown>,
-  mappings: CampaignFlowOutputMapping[],
+  mappings: FlowOutputMapping[],
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const m of mappings ?? []) {
