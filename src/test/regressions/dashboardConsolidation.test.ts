@@ -140,7 +140,9 @@ describe("Dashboard consolidation · admin campaign legacy demoted", () => {
       offenders,
       `Surfaces still linking to /admin/campaigns/:id:\n${offenders.join("\n")}`,
     ).toEqual([]);
+  });
 });
+
 
 describe("Dashboard consolidation · scope-preserving unification", () => {
   const app = read("App.tsx");
@@ -187,4 +189,4 @@ describe("Dashboard consolidation · workspace `home` fully retired from nav", (
   });
 });
 
-});
+
