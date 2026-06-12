@@ -61,8 +61,9 @@ export function buildInteractionRecord(
 ): InteractionRecord {
   const id =
     interactionId ??
-    payload.meta.callId ??
-    `int_${payload.meta.workspaceId}_${payload.meta.campaignId}_${payload.finalizedAt}`;
+    (payload.meta.callId
+      ? `int_${payload.meta.callId}`
+      : `int_${payload.meta.workspaceId}_${payload.meta.campaignId}_${payload.finalizedAt}`);
   return {
     schemaVersion: INTERACTION_RECORD_SCHEMA_VERSION,
     id,
