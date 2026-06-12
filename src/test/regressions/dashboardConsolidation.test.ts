@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
+import { WORKSPACE_NAV } from "@/config/canonicalNav";
 
 /**
  * Dashboard consolidation guard.
@@ -10,10 +11,17 @@ import { resolve, join } from "node:path";
  *   - Legacy /admin/campaigns/:id demoted behind AdminCampaignRedirect.
  *   - /admin/five9/overview, /admin/monitoring, /admin/testing tombstoned
  *     to canonical destinations.
- *   - No first-class workspace "home" links remain in product chrome.
+ *   - /superadmin, /admin, /admin/workspaces remain distinct mounted
+ *     routes (no merges, no hash anchors) but share the DashboardHeader
+ *     primitive for visual unification.
+ *   - /admin/agent-dashboard preserves its compatibility redirect into
+ *     /w/:workspaceId/agent (NOT into /admin Overview).
+ *   - Workspace `home` fully retired from product chrome: no link, no
+ *     keyboard shortcut, no flat-nav entry, no breadcrumb fallback.
  *   - No first-class CTA links into /admin/campaigns/:id (only the
  *     redirect helper itself may reference the path).
  */
+
 
 const ROOT = resolve(process.cwd(), "src");
 const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
