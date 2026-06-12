@@ -20,7 +20,8 @@ import {
 const APP_TSX = readFileSync(resolve(__dirname, "../../App.tsx"), "utf8");
 
 const REQUIRED_ROUTES = [
-  "home",
+  // `home` is now a redirect-only compat route (Navigate to ../campaigns) and
+  // not asserted as a first-class canonical surface.
   "campaigns",
   "guides",
   "forms",
@@ -36,6 +37,7 @@ const REQUIRED_ROUTES = [
   "settings",
   "agent",
 ];
+
 
 describe("canonical scope — workspace route matrix", () => {
   for (const path of REQUIRED_ROUTES) {
@@ -56,14 +58,17 @@ describe("canonical nav config", () => {
   it("WORKSPACE_NAV exposes a flat union including demoted items", () => {
     const keys = WORKSPACE_NAV.map((n) => n.key);
     for (const k of [
-      "home", "campaigns", "guides", "forms", "templates", "clients",
+      "campaigns", "guides", "forms", "templates", "clients",
       "dispositions", "notifications", "knowledge", "assistant",
       "qa", "analytics", "integrations", "settings",
       "runs", "agents", "supervisor", "agent",
     ]) {
       expect(keys, `WORKSPACE_NAV missing "${k}"`).toContain(k);
     }
+    // Dashboard consolidation — `home` fully retired from flat nav.
+    expect(keys, "`home` must not appear in WORKSPACE_NAV").not.toContain("home");
   });
+
 
   it("renders Build / Operate / Insight groups in order", () => {
     expect(WORKSPACE_NAV_GROUPS.map((g) => g.label)).toEqual([

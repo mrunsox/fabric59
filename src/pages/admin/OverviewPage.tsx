@@ -14,6 +14,8 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
 import { fetchClientReadiness, type ClientReadiness } from "@/lib/readiness/computeCampaignReadiness";
 import { Building2, Users } from "lucide-react";
+import { DashboardHeader } from "@/components/dashboard/sections/DashboardHeader";
+
 
 /**
  * Canonical Organization Overview at /admin.
@@ -50,15 +52,13 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-start gap-4">
-        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <Building2 className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">{organization?.name || "Organization Overview"}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Workspaces, connectors, reports, and live operations at a glance</p>
-        </div>
-      </div>
+      <DashboardHeader
+        icon={Building2}
+        title={organization?.name || "Organization Overview"}
+        subtitle="Workspaces, connectors, reports, and live operations at a glance"
+        scope="organization"
+      />
+
 
       <WorkspaceLaunchpad organizationId={organization?.id} />
 

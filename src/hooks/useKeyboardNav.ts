@@ -7,7 +7,8 @@ import { useNavigate } from "react-router-dom";
  * when modifier keys are held.
  */
 const SHORTCUTS: Record<string, string> = {
-  h: "home",
+  // `h` (home) retired with workspace home dashboard consolidation; campaigns
+  // is now the canonical workspace landing, reachable via `g c`.
   c: "campaigns",
   g: "guides",
   f: "forms",
@@ -22,6 +23,7 @@ const SHORTCUTS: Record<string, string> = {
   k: "knowledge",
   s: "settings",
 };
+
 
 export function useKeyboardNav(workspaceId: string | undefined) {
   const navigate = useNavigate();

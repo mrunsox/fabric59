@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
+import { WORKSPACE_NAV } from "@/config/canonicalNav";
 
 /**
  * Dashboard consolidation guard.
@@ -10,10 +11,17 @@ import { resolve, join } from "node:path";
  *   - Legacy /admin/campaigns/:id demoted behind AdminCampaignRedirect.
  *   - /admin/five9/overview, /admin/monitoring, /admin/testing tombstoned
  *     to canonical destinations.
- *   - No first-class workspace "home" links remain in product chrome.
+ *   - /superadmin, /admin, /admin/workspaces remain distinct mounted
+ *     routes (no merges, no hash anchors) but share the DashboardHeader
+ *     primitive for visual unification.
+ *   - /admin/agent-dashboard preserves its compatibility redirect into
+ *     /w/:workspaceId/agent (NOT into /admin Overview).
+ *   - Workspace `home` fully retired from product chrome: no link, no
+ *     keyboard shortcut, no flat-nav entry, no breadcrumb fallback.
  *   - No first-class CTA links into /admin/campaigns/:id (only the
  *     redirect helper itself may reference the path).
  */
+
 
 const ROOT = resolve(process.cwd(), "src");
 const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
@@ -134,3 +142,51 @@ describe("Dashboard consolidation · admin campaign legacy demoted", () => {
     ).toEqual([]);
   });
 });
+
+
+describe("Dashboard consolidation · scope-preserving unification", () => {
+  const app = read("App.tsx");
+
+  it("/superadmin, /admin, /admin/workspaces remain distinct, non-redirect mounts", () => {
+    // /superadmin index renders SuperadminOverviewPage (not a Navigate).
+    expect(app).toMatch(
+      /<Route\s+path="\/superadmin"\s+element=\{<SuperadminShell\s*\/>\}>[\s\S]*?<Route\s+index\s+element=\{<SuperadminOverviewPage\s*\/>\}/,
+    );
+    // /admin index renders OverviewPage.
+    expect(app).toMatch(
+      /<Route\s+path="\/admin"\s+element=\{<AdminShell\s*\/>\}>[\s\S]*?<Route\s+index\s+element=\{<OverviewPage\s*\/>\}/,
+    );
+    // /admin/workspaces renders WorkspacesPage.
+    expect(app).toMatch(
+      /<Route\s+path="workspaces"\s+element=\{<WorkspacesPage\s*\/>\}/,
+    );
+  });
+
+  it("/admin/agent-dashboard preserves its workspace-agent redirect (NOT into /admin)", () => {
+    expect(app).toMatch(
+      /<Route\s+path="agent-dashboard"\s+element=\{<WorkspaceResolveRedirect\s+to="\/w\/:workspaceId\/agent"\s*\/>\}/,
+    );
+  });
+
+  it("all three dashboards render through the shared DashboardHeader primitive", () => {
+    for (const rel of [
+      "pages/admin/OverviewPage.tsx",
+      "pages/admin/WorkspacesPage.tsx",
+      "pages/superadmin/SuperadminOverviewPage.tsx",
+    ]) {
+      const src = read(rel);
+      expect(src, `${rel} must import DashboardHeader`).toMatch(
+        /from\s+"@\/components\/dashboard\/sections\/DashboardHeader"/,
+      );
+      expect(src, `${rel} must render <DashboardHeader />`).toMatch(/<DashboardHeader\b/);
+    }
+  });
+});
+
+describe("Dashboard consolidation · workspace `home` fully retired from nav", () => {
+  it("WORKSPACE_NAV no longer contains a `home` entry", () => {
+    expect(WORKSPACE_NAV.find((n) => n.key === "home")).toBeUndefined();
+  });
+});
+
+
