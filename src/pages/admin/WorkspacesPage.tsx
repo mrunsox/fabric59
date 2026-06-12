@@ -11,7 +11,10 @@ import {
   BookOpen,
   Megaphone,
   Headphones,
+  Layers,
 } from "lucide-react";
+import { DashboardHeader } from "@/components/dashboard/sections/DashboardHeader";
+
 
 interface OrgRow {
   id: string;
@@ -64,12 +67,13 @@ export default function WorkspacesPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Workspaces</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Tenant boundary for the platform. Workspaces are backed by the <code className="text-xs bg-secondary/60 px-1 py-0.5 rounded">organizations</code> table; all flows, deployments, runs, and clients are scoped here.
-        </p>
-      </div>
+      <DashboardHeader
+        icon={Layers}
+        title="Workspaces"
+        subtitle="Tenant boundary for the platform. Workspaces are backed by the organizations table; all flows, deployments, runs, and clients are scoped here."
+        scope="organization"
+      />
+
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>

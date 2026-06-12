@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Sparkles, ShieldAlert } from "lucide-react";
+import { Building2, Users, Sparkles, ShieldAlert, Globe2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { DashboardHeader } from "@/components/dashboard/sections/DashboardHeader";
+
 
 type Stat = {
   label: string;
@@ -50,12 +52,13 @@ export default function SuperadminOverviewPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Platform Overview</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Cross-tenant governance, platform health, and superadmin operations.
-        </p>
-      </div>
+      <DashboardHeader
+        icon={Globe2}
+        title="Platform Overview"
+        subtitle="Cross-tenant governance, platform health, and superadmin operations."
+        scope="platform"
+      />
+
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => {
