@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +9,10 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { ActionCard } from "@/components/common/ActionCard";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { SeedAssurewayButton } from "@/components/dashboard/SeedAssurewayButton";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
+import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 
 /**
  * Canonical Workspace Campaigns — /app/workspaces/:id/campaigns (Phase 3).
