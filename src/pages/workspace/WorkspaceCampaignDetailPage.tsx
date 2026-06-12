@@ -59,6 +59,11 @@ export default function WorkspaceCampaignDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm" data-testid="open-agent-cockpit">
+            <Link to={`/app/agent/workspace/${workspace.id}/${campaign.id}`}>
+              <Headphones className="h-3.5 w-3.5 mr-1.5" /> Open agent cockpit
+            </Link>
+          </Button>
           <Button asChild variant="default" size="sm" data-testid="open-flow-builder">
             <Link to={`${base}/${campaign.id}/builder`}>
               <Workflow className="h-3.5 w-3.5 mr-1.5" /> Open flow builder
@@ -66,6 +71,9 @@ export default function WorkspaceCampaignDetailPage() {
           </Button>
         </div>
       </div>
+
+      <CampaignReadinessChecklist workspaceId={workspace.id} campaignId={campaign.id} />
+
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
