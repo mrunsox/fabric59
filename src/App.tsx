@@ -37,6 +37,8 @@ import WorkspaceGuideNewPage from "@/pages/workspace/WorkspaceGuideNewPage";
 import WorkspaceGuidePreviewPage from "@/pages/workspace/WorkspaceGuidePreviewPage";
 // Phase 4 — canonical singleton workspace guide builder.
 import WorkspaceGuideBuilderPage from "@/pages/workspace/WorkspaceGuideBuilderPage";
+// Phase 5 — canonical campaign flow (decision-tree) builder.
+import WorkspaceCampaignFlowBuilderPage from "@/pages/workspace/WorkspaceCampaignFlowBuilderPage";
 import WorkspaceTemplatesPage from "@/pages/workspace/WorkspaceTemplatesPage";
 import WorkspaceTemplateDetailPage from "@/pages/workspace/WorkspaceTemplateDetailPage";
 import WorkspaceIntegrationsPage from "@/pages/workspace/WorkspaceIntegrationsPage";
