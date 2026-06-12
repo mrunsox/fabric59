@@ -26,12 +26,17 @@ export const DEFAULT_SECTION_LABELS: Record<WorkspaceGuideSectionKind, string> =
   custom: "Custom section",
 };
 
-function section(
-  kind: WorkspaceGuideSectionKind,
-  overrides: Partial<Omit<WorkspaceGuideSection, "id" | "kind">> & {
-    fields?: { label: string; value?: string }[];
-  } = {},
-): WorkspaceGuideSection {
+type SectionOverrides = {
+  label?: string;
+  description?: string;
+  helper?: string;
+  visibility?: WorkspaceGuideSection["visibility"];
+  required?: boolean;
+  enabled?: boolean;
+  fields?: { label: string; value?: string }[];
+};
+
+function section(kind: WorkspaceGuideSectionKind, overrides: SectionOverrides = {}): WorkspaceGuideSection {
   return {
     id: newId("sec"),
     kind,
