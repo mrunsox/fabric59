@@ -387,9 +387,11 @@ describe("Phase H · premium marketing + auth + onboarding rebuild", () => {
     // WorkspaceBootstrapPage was retired (folded into OnboardingPage step 4).
   });
 
-  it("onboarding final handoff lands in /w/:id/home or /app/workspaces/:id/home, not /admin", () => {
+  it("onboarding final handoff lands inside the workspace operational home (campaigns), not /admin", () => {
     const src = read("pages/onboarding/OnboardingPage.tsx");
-    expect(src).toMatch(/\/(?:app\/workspaces|w)\/[^"`]*home/);
+    // Dashboard consolidation — workspace "home" retired; canonical handoff is /w/:id/campaigns.
+    expect(src).toMatch(/\/w\/[^"`]*campaigns/);
+    expect(src, "no navigation should target the retired /w/:id/home").not.toMatch(/["'`]\/w\/[^"'`]*\/home["'`]/);
     // Must not redirect first-run users straight into /admin.
     expect(src).not.toMatch(/navigate\(\s*["'`]\/admin["'`]/);
   });

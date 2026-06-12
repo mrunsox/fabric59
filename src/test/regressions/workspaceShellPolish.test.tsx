@@ -62,7 +62,6 @@ function renderShell(initialPath = "/w/w1/campaigns") {
         <MemoryRouter initialEntries={[initialPath]}>
           <Routes>
             <Route element={<WorkspaceShell />}>
-              <Route path="/w/:workspaceId/home" element={<div>home page</div>} />
               <Route path="/w/:workspaceId/campaigns" element={<div>campaigns page</div>} />
             </Route>
           </Routes>

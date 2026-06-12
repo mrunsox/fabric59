@@ -32,7 +32,7 @@ export const GLOBAL_SECTIONS: SectionDef[] = [
     icon: LayoutDashboard,
     href: "/admin",
     permission: null,
-    matches: ["/admin", "/admin/dashboard", "/admin/agent-dashboard"],
+    matches: ["/admin"],
   },
   {
     key: "workspaces",

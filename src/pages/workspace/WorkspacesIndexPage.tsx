@@ -6,7 +6,8 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WORKSPACE_NAV } from "@/config/canonicalNav";
 
 /**
- * Canonical workspaces index. Links into /w/:workspaceId/home.
+ * Canonical workspaces index. Cards land users in the workspace operational
+ * home — /w/:workspaceId/campaigns (workspace "home" dashboard retired).
  */
 export default function WorkspacesIndexPage() {
   const { workspaces, isLoading } = useWorkspace();
@@ -35,7 +36,7 @@ export default function WorkspacesIndexPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {workspaces.map((w) => (
-            <Link key={w.id} to={`/w/${w.id}/home`}>
+            <Link key={w.id} to={`/w/${w.id}/campaigns`}>
               <Card className="hover:border-primary/40 transition-colors h-full">
                 <CardHeader className="flex-row items-center gap-3 space-y-0">
                   <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">

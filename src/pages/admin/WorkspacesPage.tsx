@@ -101,7 +101,7 @@ export default function WorkspacesPage() {
                   {base ? (
                     <>
                       <Button asChild size="sm" className="w-full gap-1.5">
-                        <Link to={`${base}/home`}>
+                        <Link to={`${base}/campaigns`}>
                           Open workspace <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
                       </Button>

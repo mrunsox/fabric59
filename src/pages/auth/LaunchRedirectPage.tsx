@@ -96,7 +96,7 @@ export default function LaunchRedirectPage() {
       navigate(onboardingTarget, { replace: true });
       return;
     }
-    navigate(`/w/${target.id}/home`, { replace: true });
+    navigate(`/w/${target.id}/campaigns`, { replace: true });
   }, [ready, isAuthenticated, isMasterAdmin, organization, organizations, workspaces, invite, navigate, user?.email]);
 
   if (!isAuthenticated && ready) {

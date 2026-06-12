@@ -60,7 +60,7 @@ function renderLaunch() {
         <Route path="/onboarding" element={<Probe where="/onboarding" />} />
         <Route path="/superadmin" element={<Probe where="/superadmin" />} />
         <Route path="/login" element={<Probe where="/login" />} />
-        <Route path="/w/:workspaceId/home" element={<Probe where="/w/:id/home" />} />
+        <Route path="/w/:workspaceId/campaigns" element={<Probe where="/w/:id/campaigns" />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -91,7 +91,7 @@ describe("/launch · master-admin redirect matrix", () => {
     await waitFor(() => expect(getLanded()).toBe("/onboarding"));
   });
 
-  it("master admin + org + ≥1 workspace → /w/:default/home", async () => {
+  it("master admin + org + ≥1 workspace → /w/:default/campaigns", async () => {
     authState.organizations = [{ id: "org-1" }];
     authState.organization = { id: "org-1" };
     wsState.workspaces = [
@@ -99,7 +99,7 @@ describe("/launch · master-admin redirect matrix", () => {
       { id: "ws-B", organization_id: "org-1", is_default: true },
     ];
     const { getLanded } = renderLaunch();
-    await waitFor(() => expect(getLanded()).toBe("/w/:id/home"));
+    await waitFor(() => expect(getLanded()).toBe("/w/:id/campaigns"));
   });
 
   it("master admin + zero orgs + system workspaces exist → /superadmin", async () => {

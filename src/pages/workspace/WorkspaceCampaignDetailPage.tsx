@@ -16,10 +16,9 @@ import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
 import { useCampaignIntakeForm } from "@/hooks/useFormCampaignAssignments";
 
 /**
- * Canonical Campaign Detail shell — /app/workspaces/:id/campaigns/:campaignId.
- * Phase 3: thin canonical shell. Deeper builder/checklist surfaces remain in the legacy
- * /admin/campaigns/:id page until Phase 4+. When the source is a campaign_setup we link
- * out to the legacy detail surface so operators can keep using existing tooling.
+ * Canonical Campaign Detail shell — /w/:workspaceId/campaigns/:campaignId.
+ * Dashboard consolidation: this is the single canonical campaign hub. The
+ * legacy /admin/campaigns/:id redirects here via AdminCampaignRedirect.
  */
 export default function WorkspaceCampaignDetailPage() {
   const { campaignId } = useParams<{ campaignId: string }>();
@@ -41,11 +40,6 @@ export default function WorkspaceCampaignDetailPage() {
       </Card>
     );
   }
-
-  const legacyHref =
-    campaign.source_type === "campaign_setup" && campaign.source_id
-      ? `/admin/campaigns/${campaign.source_id}`
-      : null;
 
   return (
     <div className="space-y-6">
@@ -69,13 +63,6 @@ export default function WorkspaceCampaignDetailPage() {
               <Workflow className="h-3.5 w-3.5 mr-1.5" /> Open flow builder
             </Link>
           </Button>
-          {legacyHref && (
-            <Button asChild variant="outline" size="sm">
-              <Link to={legacyHref}>
-                Open legacy detail <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
-              </Link>
-            </Button>
-          )}
         </div>
       </div>
 

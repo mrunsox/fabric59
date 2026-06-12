@@ -107,7 +107,9 @@ import DispositionsPage from "@/pages/admin/DispositionsPage";
 // Phase D: legacy IntegrationsPage import removed; /admin/integrations redirects to /admin/connectors.
 import CampaignsPage from "@/pages/admin/CampaignsPage";
 // CampaignIntakePage no longer routed at /admin/* — create/edit redirected into canonical workspace path.
-import CampaignDetailPage from "@/pages/admin/CampaignDetailPage";
+// Dashboard consolidation: legacy /admin/campaigns/:id demoted to a redirect helper
+// that resolves the workspace and forwards to the canonical /w/:workspaceId/campaigns/:id hub.
+import { AdminCampaignRedirect } from "@/components/auth/AdminCampaignRedirect";
 // ArchivedCampaignsPage + CampaignBlueprintsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns?status=archived and /admin/templates).
 import ReportsPage from "@/pages/admin/ReportsPage";
 import ClientOverviewPage from "@/pages/admin/ClientOverviewPage";
@@ -126,8 +128,8 @@ import BillingPage from "@/pages/admin/BillingPage";
 // Phase D: legacy ANI / Callback Queue / Abandon Rate / QR Routing pages
 // were redirected to /admin/settings and the source files deleted (Gate 3).
 // CampaignOverlayPage / CampaignOverlayListPage same — redirect to /admin/campaigns.
-// Five9OverviewPage retained on disk but de-surfaced — /admin/five9 → /admin/connectors/five9.
-import Five9OverviewPage from "@/pages/admin/Five9OverviewPage";
+// Dashboard consolidation: Five9OverviewPage file deleted; /admin/five9 and
+// /admin/five9/overview both redirect to /admin/connectors/five9.
 // IdentityResolutionPage / DataPlanePage / PlatformUtilitiesPage retained on disk
 // but de-surfaced — /admin/identity, /admin/data-plane, /admin/utilities → /superadmin.
 import DataPlanePage from "@/pages/admin/DataPlanePage";
@@ -149,8 +151,8 @@ import ClientLegalConnectPage from "@/pages/admin/ClientLegalConnectPage";
 // VAULTED (slug: legacy-five9-campaign-builder) — CampaignBuilderPage import removed; routes redirect to /admin/campaigns/new.
 // CampaignsOverviewPage + CampaignDraftsPage no longer routed (Phase B convergence — redirected to canonical /admin/campaigns and /admin/campaigns?status=draft).
 // CampaignReadinessBoardPage + CampaignEventLogPage deleted in hard-cleanup slice.
-import TestingHubPage from "@/pages/admin/TestingHubPage";
-import MonitoringHubPage from "@/pages/admin/MonitoringHubPage";
+// Dashboard consolidation: TestingHubPage + MonitoringHubPage retired —
+// /admin/testing → /admin/test, /admin/monitoring → /admin/logs.
 import DocsHubPage from "@/pages/admin/DocsHubPage";
 // Phase D: QrRoutingPage retired — file deleted, /admin/qr-routing → /admin/settings.
 
@@ -427,7 +429,8 @@ const App = () => (
                 {/* Five9 (top-level). CANONICAL: /five9/legacy collapsed into /five9 (Phase 1). */}
                 {/* Phase D: /admin/five9 de-surfaced — silent redirect to canonical connector instance. */}
                 <Route path="five9" element={<Navigate to="/admin/connectors/five9" replace />} />
-                <Route path="five9/overview" element={<Five9OverviewPage />} />{/* retained on disk; reachable via direct URL */}
+                {/* Dashboard consolidation: Five9 Overview retired — tombstone to canonical connector instance. */}
+                <Route path="five9/overview" element={<Navigate to="/admin/connectors/five9" replace />} />
                 <Route path="five9/legacy" element={<Navigate to="/admin/five9" replace />} />
                 {/* CANONICAL: Five9 campaign builder writes redirect into the workspace path. */}
                 <Route path="five9/campaign-builder" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
@@ -437,8 +440,9 @@ const App = () => (
                     overview/drafts → /admin/campaigns (with optional ?status= filter). */}
                 <Route path="campaigns/overview" element={<Navigate to="/admin/campaigns" replace />} />
                 <Route path="campaigns/drafts" element={<Navigate to="/admin/campaigns?status=draft" replace />} />
-                <Route path="testing" element={<TestingHubPage />} />
-                <Route path="monitoring" element={<MonitoringHubPage />} />
+                {/* Dashboard consolidation: Testing + Monitoring hubs retired — tombstone to canonical destinations. */}
+                <Route path="testing" element={<Navigate to="/admin/test" replace />} />
+                <Route path="monitoring" element={<Navigate to="/admin/logs" replace />} />
                 <Route path="docs" element={<DocsHubPage />} />
                 <Route path="clients/:id" element={<ClientOverviewPage />} />
                 <Route path="clients/:clientId/legal-connect" element={<ClientLegalConnectPage />} />
@@ -468,7 +472,8 @@ const App = () => (
                     /admin/campaigns is a read-only cross-workspace summary; writes redirect. */}
                 <Route path="campaigns/new" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns/new" />} />
                 <Route path="campaigns/edit/:id" element={<WorkspaceResolveRedirect to="/w/:workspaceId/campaigns" />} />
-                <Route path="campaigns/:id" element={<CampaignDetailPage />} />
+                {/* Dashboard consolidation: legacy campaign detail demoted — redirects to canonical /w/:workspaceId/campaigns/:id hub. */}
+                <Route path="campaigns/:id" element={<AdminCampaignRedirect />} />
                 {/* CANONICAL (Phase B): archived collapses into list filter; blueprints fold into templates. */}
                 <Route path="campaigns/archived" element={<Navigate to="/admin/campaigns?status=archived" replace />} />
                 <Route path="campaign-blueprints" element={<Navigate to="/admin/templates" replace />} />
