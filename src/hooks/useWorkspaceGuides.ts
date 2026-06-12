@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
+import { WORKSPACE_GUIDE_SINGLETON_NAME } from "@/types/workspace-guide";
 
 /**
  * Phase 4: Canonical Guides hooks.
@@ -36,6 +37,7 @@ export function useWorkspaceGuides(opts?: { campaignId?: string | null }) {
         .from("guides")
         .select("id, workspace_id, campaign_id, name, description, status, current_version, source_type, source_id, metadata, created_at, updated_at")
         .eq("workspace_id", workspace!.id)
+        .neq("name", WORKSPACE_GUIDE_SINGLETON_NAME)
         .order("updated_at", { ascending: false });
       if (opts?.campaignId) q = q.eq("campaign_id", opts.campaignId);
       const { data, error } = await q;
