@@ -22,6 +22,16 @@ export function SessionHeader({ meta, resumed, onReset }: Props) {
   const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const ss = String(elapsed % 60).padStart(2, "0");
 
+  // Elapsed-time stage coloring — a low-effort visual cue that tracks call age
+  // so long calls are obvious in peripheral vision without a separate timer.
+  // Thresholds: < 3 min calm, 3–8 min nudge, > 8 min escalate.
+  const elapsedStage =
+    elapsed < 180
+      ? "text-foreground"
+      : elapsed < 480
+        ? "text-amber-600 dark:text-amber-300 border-amber-500/40"
+        : "text-destructive border-destructive/40";
+
   return (
     <Card data-testid="runner-session-header">
       <CardContent className="py-3 flex flex-wrap items-center gap-3">
@@ -39,7 +49,12 @@ export function SessionHeader({ meta, resumed, onReset }: Props) {
             Call {meta.callId.slice(0, 8)}
           </Badge>
         )}
-        <Badge variant="outline" className="font-mono text-xs gap-1" data-testid="runner-elapsed">
+        <Badge
+          variant="outline"
+          className={`font-mono text-xs gap-1 ${elapsedStage}`}
+          data-testid="runner-elapsed"
+          title="Call duration"
+        >
           <Clock className="h-3 w-3" /> {mm}:{ss}
         </Badge>
         {resumed && (

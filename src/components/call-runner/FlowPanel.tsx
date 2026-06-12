@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
-import { ArrowRight, ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, AlertCircle, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { matchBranchHotkey, matchHotkey, shouldIgnoreEvent, HOTKEYS } from "@/lib/call-runner/hotkeys";
 import {
   enabledSteps,
   computeVisibleStepIds,
@@ -102,19 +103,46 @@ export function FlowPanel({
     if (last) onCurrentStep(last);
   }, [session.completedStepIds, onCurrentStep]);
 
-  // Keyboard-first: Enter advances when current step isn't a free text area.
+  // Keyboard-first ergonomics. Modifier-bound shortcuts always work; bare
+  // number keys only fire when the event did NOT originate from a typing
+  // surface, so number entry into a captured field is never hijacked.
   const rootRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
+    const advanceDef = HOTKEYS.find((h) => h.id === "advance")!;
+    const backDef = HOTKEYS.find((h) => h.id === "back")!;
+    const submitDef = HOTKEYS.find((h) => h.id === "submit")!;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      if (matchHotkey(e, advanceDef)) {
         e.preventDefault();
         advance();
+        return;
       }
+      if (matchHotkey(e, backDef)) {
+        e.preventDefault();
+        goBack();
+        return;
+      }
+      if (matchHotkey(e, submitDef)) {
+        e.preventDefault();
+        onSubmit();
+        return;
+      }
+      // Branch hotkeys: only on a question_branch step, only when not typing.
+      if (shouldIgnoreEvent(e)) return;
+      if (current?.type !== "question_branch") return;
+      const idx = matchBranchHotkey(e);
+      if (idx == null) return;
+      const cfg = current.config as QuestionBranchConfig;
+      const opt = (cfg.options ?? [])[idx - 1];
+      if (!opt) return;
+      e.preventDefault();
+      onValueChange(`branch_${current.id}`, opt.label);
+      advance(opt.goto ?? null);
     }
     const el = rootRef.current;
     el?.addEventListener("keydown", onKey);
     return () => el?.removeEventListener("keydown", onKey);
-  }, [advance]);
+  }, [advance, goBack, onSubmit, current, onValueChange]);
 
   if (isLoading) {
     return (
@@ -141,18 +169,53 @@ export function FlowPanel({
     ? 0
     : Math.min(100, Math.round((session.completedStepIds.length / orderedVisible.length) * 100));
 
+  // Now / Next preview — cuts cognitive load on a live call by always
+  // surfacing the upcoming step title so the agent can mentally pre-load it.
+  const currentIndex = current ? orderedVisible.findIndex((s) => s.id === current.id) : -1;
+  const nextStep = currentIndex >= 0 ? orderedVisible[currentIndex + 1] : null;
+
+  // Sticky "must complete" checklist of remaining required steps. Cheap to
+  // recompute; small list size on real flows.
+  const requiredRemaining = useMemo(
+    () =>
+      orderedVisible.filter(
+        (s) => s.required && !session.completedStepIds.includes(s.id) && s.id !== current?.id,
+      ),
+    [orderedVisible, session.completedStepIds, current],
+  );
+
   return (
     <Card className="h-full flex flex-col" data-testid="runner-flow-panel" ref={rootRef}>
-      <CardHeader className="pb-2 flex-shrink-0">
+      <CardHeader className="pb-2 flex-shrink-0 space-y-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold">Live flow</CardTitle>
-          <Badge variant="outline" className="text-[10px]">
-            Step {Math.min(session.completedStepIds.length + (current ? 1 : 0), orderedVisible.length)} / {orderedVisible.length}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            {requiredRemaining.length > 0 && (
+              <Badge
+                variant="outline"
+                className="text-[10px] gap-1 border-amber-500/40 text-amber-700 dark:text-amber-300"
+                data-testid="runner-required-remaining"
+              >
+                <AlertTriangle className="h-3 w-3" />
+                {requiredRemaining.length} required
+              </Badge>
+            )}
+            <Badge variant="outline" className="text-[10px]">
+              Step {Math.min(session.completedStepIds.length + (current ? 1 : 0), orderedVisible.length)} / {orderedVisible.length}
+            </Badge>
+          </div>
         </div>
-        <div className="h-1 w-full bg-muted rounded-full overflow-hidden mt-1">
+        <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
           <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
         </div>
+        {nextStep && (
+          <p
+            className="text-[10px] uppercase tracking-wider text-muted-foreground truncate"
+            data-testid="runner-next-preview"
+          >
+            <span className="opacity-70">Up next →</span> {nextStep.title}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4 flex-1 overflow-y-auto">
         {/* Outline / quick nav */}
@@ -290,26 +353,35 @@ function StepBody({
     }
     case "question_branch": {
       const cfg = step.config as QuestionBranchConfig;
+      const opts = cfg.options ?? [];
       return (
         <div className="space-y-2">
           <p className="text-sm">{cfg.prompt}</p>
           <div className="grid gap-1.5">
-            {(cfg.options ?? []).map((o) => (
+            {opts.map((o, i) => (
               <Button
                 key={o.id}
                 variant="outline"
                 size="sm"
-                className="justify-start"
+                className="justify-start gap-2"
                 onClick={() => {
                   onValueChange(`branch_${step.id}`, o.label);
                   onBranch(o.goto ?? null);
                 }}
                 data-testid={`runner-branch-${o.id}`}
               >
-                {o.label}
+                {i < 9 && (
+                  <kbd className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded border border-border bg-muted text-[10px] font-mono text-muted-foreground">
+                    {i + 1}
+                  </kbd>
+                )}
+                <span className="truncate">{o.label}</span>
               </Button>
             ))}
           </div>
+          <p className="text-[10px] text-muted-foreground">
+            Press <kbd className="font-mono">1–{Math.min(opts.length, 9)}</kbd> to pick an option, or click.
+          </p>
         </div>
       );
     }
