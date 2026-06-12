@@ -4,7 +4,7 @@ import {
   ClipboardCheck, BarChart3, Brain, Sparkles, Settings,
   PlayCircle, Headphones, Eye,
   Sparkle, UserSquare2, Tag, Boxes, Heart, Shield,
-  ListChecks, Bell, Radio,
+  ListChecks, Bell, Radio, BookMarked,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -33,6 +33,7 @@ export type NavItem = {
 export const WORKSPACE_NAV: NavItem[] = [
   { key: "home",         label: "Home",         icon: Home,            to: "home" },
   { key: "campaigns",    label: "Campaigns",    icon: Megaphone,       to: "campaigns" },
+  { key: "guide",        label: "Workspace guide", icon: BookMarked,   to: "guide" },
   { key: "guides",       label: "Guides",       icon: BookOpen,        to: "guides" },
   { key: "forms",        label: "Forms",        icon: FormInput,       to: "forms" },
   { key: "templates",    label: "Templates",    icon: FileStack,       to: "templates" },
@@ -64,7 +65,7 @@ export const WORKSPACE_NAV_GROUPS: NavGroup[] = [
     // route (collapses to /w/:id/campaigns). Keeping it in the flat
     // WORKSPACE_NAV union above preserves command-palette + breadcrumb
     // lookups for legacy bookmarks without surfacing a ghost sidebar item.
-    items: ["campaigns", "guides", "forms", "templates", "clients"].map(byKey),
+    items: ["campaigns", "guide", "guides", "forms", "templates", "clients"].map(byKey),
   },
   {
     label: "Operate",
