@@ -140,5 +140,51 @@ describe("Dashboard consolidation · admin campaign legacy demoted", () => {
       offenders,
       `Surfaces still linking to /admin/campaigns/:id:\n${offenders.join("\n")}`,
     ).toEqual([]);
+});
+
+describe("Dashboard consolidation · scope-preserving unification", () => {
+  const app = read("App.tsx");
+
+  it("/superadmin, /admin, /admin/workspaces remain distinct, non-redirect mounts", () => {
+    // /superadmin index renders SuperadminOverviewPage (not a Navigate).
+    expect(app).toMatch(
+      /<Route\s+path="\/superadmin"\s+element=\{<SuperadminShell\s*\/>\}>[\s\S]*?<Route\s+index\s+element=\{<SuperadminOverviewPage\s*\/>\}/,
+    );
+    // /admin index renders OverviewPage.
+    expect(app).toMatch(
+      /<Route\s+path="\/admin"\s+element=\{<AdminShell\s*\/>\}>[\s\S]*?<Route\s+index\s+element=\{<OverviewPage\s*\/>\}/,
+    );
+    // /admin/workspaces renders WorkspacesPage.
+    expect(app).toMatch(
+      /<Route\s+path="workspaces"\s+element=\{<WorkspacesPage\s*\/>\}/,
+    );
   });
+
+  it("/admin/agent-dashboard preserves its workspace-agent redirect (NOT into /admin)", () => {
+    expect(app).toMatch(
+      /<Route\s+path="agent-dashboard"\s+element=\{<WorkspaceResolveRedirect\s+to="\/w\/:workspaceId\/agent"\s*\/>\}/,
+    );
+  });
+
+  it("all three dashboards render through the shared DashboardHeader primitive", () => {
+    for (const rel of [
+      "pages/admin/OverviewPage.tsx",
+      "pages/admin/WorkspacesPage.tsx",
+      "pages/superadmin/SuperadminOverviewPage.tsx",
+    ]) {
+      const src = read(rel);
+      expect(src, `${rel} must import DashboardHeader`).toMatch(
+        /from\s+"@\/components\/dashboard\/sections\/DashboardHeader"/,
+      );
+      expect(src, `${rel} must render <DashboardHeader />`).toMatch(/<DashboardHeader\b/);
+    }
+  });
+});
+
+describe("Dashboard consolidation · workspace `home` fully retired from nav", () => {
+  it("WORKSPACE_NAV no longer contains a `home` entry", () => {
+    expect(WORKSPACE_NAV.find((n) => n.key === "home")).toBeUndefined();
+  });
+});
+
 });
