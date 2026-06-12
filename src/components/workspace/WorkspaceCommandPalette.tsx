@@ -116,7 +116,7 @@ export function WorkspaceCommandPalette() {
                 <CommandItem
                   key={w.id}
                   value={`workspace ${w.name}`}
-                  onSelect={() => go(`/w/${w.id}/home`)}
+                  onSelect={() => go(`/w/${w.id}/campaigns`)}
                 >
                   <ArrowRightLeft className="h-4 w-4" />
                   <span>{w.name}</span>
