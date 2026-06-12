@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +9,10 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { ActionCard } from "@/components/common/ActionCard";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { SeedAssurewayButton } from "@/components/dashboard/SeedAssurewayButton";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
+import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 
 /**
  * Canonical Workspace Campaigns — /app/workspaces/:id/campaigns (Phase 3).
@@ -21,6 +23,9 @@ import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 export default function WorkspaceCampaignsPage() {
   const { workspace } = useWorkspace();
   const { data: campaigns = [], isLoading } = useWorkspaceCampaigns();
+  const { data: clients = [] } = useWorkspaceClients();
+  const [searchParams] = useSearchParams();
+  const showSeed = clients.length === 0 || searchParams.get("seed") === "assureway";
   if (!workspace) return null;
   const base = `/w/${workspace.id}/campaigns`;
 
@@ -31,13 +36,17 @@ export default function WorkspaceCampaignsPage() {
         title="Campaigns"
         lede={`Canonical campaigns for ${workspace.name}. Legacy campaign setups mirror in automatically.`}
         action={
-          <Button asChild size="sm">
-            <Link to={`${base}/new`}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> New campaign
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {showSeed && <SeedAssurewayButton />}
+            <Button asChild size="sm">
+              <Link to={`${base}/new`}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> New campaign
+              </Link>
+            </Button>
+          </div>
         }
       />
+
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading campaigns…</p>
