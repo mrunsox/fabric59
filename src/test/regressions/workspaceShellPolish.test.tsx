@@ -63,7 +63,7 @@ function renderShell(initialPath = "/w/w1/campaigns") {
           <Routes>
             <Route element={<WorkspaceShell />}>
               <Route path="/w/:workspaceId/campaigns" element={<div>campaigns page</div>} />
-              <Route path="/w/:workspaceId/campaigns" element={<div>campaigns page</div>} />
+            </Route>
           </Routes>
         </MemoryRouter>
       </TooltipProvider>
