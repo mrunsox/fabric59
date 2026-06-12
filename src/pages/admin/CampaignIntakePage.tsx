@@ -27,9 +27,11 @@ import { DEFAULT_CHECKLIST } from "@/types/campaign";
 import type { CampaignIntakeData } from "@/types/campaign";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ChevronDown, ChevronRight, CheckCircle2, Save, Rocket, Loader2, CloudOff, Building2 } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, Save, Rocket, Loader2, CloudOff, Building2, Info, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WhiteLabelPartnerSelector } from "@/components/campaigns/WhiteLabelPartnerSelector";
+import { useActiveWorkspaceId } from "@/hooks/useActiveWorkspaceId";
 
 const emptyIntake: CampaignIntakeData = {
   campaignName: "",
@@ -76,6 +78,7 @@ const emptyIntake: CampaignIntakeData = {
 export default function CampaignIntakePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { workspaceId: activeWorkspaceId } = useActiveWorkspaceId();
   const location = useLocation();
   const { organization } = useAuth();
   const { data: existing } = useCampaignSetup(id);
@@ -504,10 +507,32 @@ export default function CampaignIntakePage() {
         <Card>
           <Collapsible open={openSections[6]}>
             <CardHeader className="pb-2">
-              <SectionHeader num={6} title="Agent Decision Tree" desc="Build the step-by-step script for agents" />
+              <SectionHeader num={6} title="Agent Decision Tree (legacy)" desc="Lightweight legacy tree — use the canonical Flow Builder for new work" />
             </CardHeader>
             <CollapsibleContent>
-              <CardContent>
+              <CardContent className="space-y-3">
+                <div
+                  data-testid="legacy-tree-canonical-banner"
+                  className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground flex items-start gap-2"
+                >
+                  <Info className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">Canonical flow builder available</p>
+                    <p className="text-muted-foreground mt-0.5">
+                      New campaigns should use the schema-driven flow builder — it supports
+                      conditional branching, field capture, outcomes, and version history.
+                      This legacy tree continues to work for Five9 provisioning compatibility.
+                    </p>
+                  </div>
+                  {id && activeWorkspaceId && (
+                    <Link
+                      to={`/w/${activeWorkspaceId}/campaigns/${id}/builder`}
+                      className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1 shrink-0"
+                    >
+                      Open flow builder <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  )}
+                </div>
                 <DecisionTreeBuilder nodes={intake.decisionTree} onChange={(nodes) => update({ decisionTree: nodes })} />
               </CardContent>
             </CollapsibleContent>

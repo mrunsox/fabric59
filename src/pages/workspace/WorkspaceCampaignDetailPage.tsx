@@ -14,6 +14,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaign } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
 import { useCampaignIntakeForm } from "@/hooks/useFormCampaignAssignments";
+import { CampaignReadinessChecklist } from "@/components/workspace/CampaignReadinessChecklist";
 
 /**
  * Canonical Campaign Detail shell — /w/:workspaceId/campaigns/:campaignId.
@@ -98,19 +99,10 @@ export default function WorkspaceCampaignDetailPage() {
         </Card>
       </div>
 
-      <IntakeFormCard workspaceId={workspace.id} campaignId={campaign.id} />
-
-
-
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Phase 3 note</CardTitle></CardHeader>
-        <CardContent className="text-xs text-muted-foreground space-y-1">
-          <p>This is the canonical campaign detail shell. Builder, checklist, provisioning, and
-            archive workflows remain in the legacy admin page until Phase 4+.</p>
-          <p>Status, client linkage, and workspace ownership are now sourced from the canonical
-            <code className="px-1">campaigns</code> table.</p>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        <CampaignReadinessChecklist workspaceId={workspace.id} campaignId={campaign.id} />
+        <IntakeFormCard workspaceId={workspace.id} campaignId={campaign.id} />
+      </div>
     </div>
   );
 }

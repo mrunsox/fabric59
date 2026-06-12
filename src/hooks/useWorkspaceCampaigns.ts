@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { toast } from "sonner";
 
 /**
  * Canonical workspace campaigns (Phase 3).
@@ -36,6 +37,55 @@ export function useWorkspaceCampaigns() {
         .order("updated_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as WorkspaceCampaign[];
+    },
+  });
+}
+
+/**
+ * Quick-create a canonical campaign with just a name (and optional client).
+ *
+ * This is the minimal Phase 3+ writer for the canonical `campaigns` table.
+ * It exists so the workspace surface can offer a 30-second "new campaign"
+ * happy path that doesn't drag the agent through the legacy 10-section
+ * provisioning form. Downstream readiness (guide / flow / intake form /
+ * notifications) is then driven by the CampaignReadinessChecklist on the
+ * canonical detail page.
+ *
+ * Status defaults to "draft". Source defaults to "canonical".
+ */
+export function useCreateWorkspaceCampaign() {
+  const { workspace } = useWorkspace();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      name,
+      clientId,
+    }: {
+      name: string;
+      clientId?: string | null;
+    }): Promise<WorkspaceCampaign> => {
+      if (!workspace) throw new Error("No workspace context");
+      const { data, error } = await supabase
+        .from("campaigns")
+        .insert({
+          workspace_id: workspace.id,
+          name: name.trim(),
+          client_id: clientId ?? null,
+          status: "draft",
+          source_type: "canonical",
+        })
+        .select(
+          "id, workspace_id, client_id, name, status, source_type, source_id, legacy_status, created_at, updated_at",
+        )
+        .single();
+      if (error) throw error;
+      return data as WorkspaceCampaign;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["workspace-campaigns", workspace?.id ?? null] });
+    },
+    onError: (e: Error) => {
+      toast.error(`Could not create campaign: ${e.message}`);
     },
   });
 }
