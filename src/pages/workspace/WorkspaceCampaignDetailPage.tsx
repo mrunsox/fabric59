@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, ExternalLink, ClipboardList } from "lucide-react";
+import { ArrowLeft, ExternalLink, ClipboardList, Workflow } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaign } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
