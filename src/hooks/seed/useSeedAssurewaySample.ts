@@ -149,7 +149,7 @@ function buildFlow(): CampaignFlowContent {
     enabled: true,
     nextStepId: null,
     rules: [],
-    config,
+    config: config as FlowStep["config"],
   });
   const steps: FlowStep[] = [
     mkStep(1, "information_display", "Greeting", {
