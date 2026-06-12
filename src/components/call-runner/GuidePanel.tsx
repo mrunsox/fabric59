@@ -1,15 +1,19 @@
-import { useMemo, useState } from "react";
-import { BookOpen, Search, ChevronDown, ChevronRight, EyeOff } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, Search, ChevronDown, ChevronRight, EyeOff, ClipboardCopy, Check } from "lucide-react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { matchHotkey, HOTKEYS } from "@/lib/call-runner/hotkeys";
 import type { WorkspaceGuideContentV2, WorkspaceGuideSection } from "@/types/workspace-guide";
 
 interface Props {
   guide: WorkspaceGuideContentV2 | null;
   isLoading: boolean;
+  /** Optional sink for the "copy to notes" action (Zingtree-style Instant Notes). */
+  onAppendToNotes?: (text: string) => void;
 }
 
 /**
@@ -17,8 +21,23 @@ interface Props {
  * Collapsible sections, in-panel filter, internal sections badged but not hidden
  * from the agent (per spec — internal = not surfaced externally).
  */
-export function GuidePanel({ guide, isLoading }: Props) {
+export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
   const [filter, setFilter] = useState("");
+  const filterRef = useRef<HTMLInputElement | null>(null);
+
+  // Global Alt+F focuses the in-panel filter without stealing other inputs.
+  useEffect(() => {
+    const def = HOTKEYS.find((h) => h.id === "focus_guide_search")!;
+    function onKey(e: KeyboardEvent) {
+      if (matchHotkey(e, def)) {
+        e.preventDefault();
+        filterRef.current?.focus();
+        filterRef.current?.select();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const sections = useMemo<WorkspaceGuideSection[]>(() => {
     if (!guide) return [];
@@ -52,12 +71,16 @@ export function GuidePanel({ guide, isLoading }: Props) {
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-2 top-2.5 text-muted-foreground" />
               <Input
-                className="h-8 pl-7 text-xs"
+                ref={filterRef}
+                className="h-8 pl-7 pr-12 text-xs"
                 placeholder="Filter sections…"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 data-testid="runner-guide-filter"
               />
+              <kbd className="absolute right-2 top-2 inline-flex items-center justify-center h-4 px-1 rounded border border-border bg-muted text-[9px] font-mono text-muted-foreground">
+                Alt+F
+              </kbd>
             </div>
             <nav className="flex flex-wrap gap-1.5" aria-label="Guide sections">
               {sections.map((s) => (
@@ -72,7 +95,7 @@ export function GuidePanel({ guide, isLoading }: Props) {
             </nav>
             <div className="space-y-2">
               {sections.map((s) => (
-                <GuideSectionRow key={s.id} section={s} />
+                <GuideSectionRow key={s.id} section={s} onAppendToNotes={onAppendToNotes} />
               ))}
             </div>
           </>
@@ -82,7 +105,13 @@ export function GuidePanel({ guide, isLoading }: Props) {
   );
 }
 
-function GuideSectionRow({ section }: { section: WorkspaceGuideSection }) {
+function GuideSectionRow({
+  section,
+  onAppendToNotes,
+}: {
+  section: WorkspaceGuideSection;
+  onAppendToNotes?: (text: string) => void;
+}) {
   const [open, setOpen] = useState(true);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -114,15 +143,56 @@ function GuideSectionRow({ section }: { section: WorkspaceGuideSection }) {
               <p className="text-[11px] italic text-muted-foreground">No content</p>
             ) : (
               section.fields.map((f) => (
-                <div key={f.id} className="space-y-0.5">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{f.label}</p>
-                  <p className="text-xs whitespace-pre-wrap">{f.value}</p>
-                </div>
+                <GuideField key={f.id} label={f.label} value={f.value} onAppendToNotes={onAppendToNotes} />
               ))
             )}
           </div>
         </CollapsibleContent>
       </div>
     </Collapsible>
+  );
+}
+
+function GuideField({
+  label,
+  value,
+  onAppendToNotes,
+}: {
+  label: string;
+  value: string;
+  onAppendToNotes?: (text: string) => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    const text = `${label}: ${value}`;
+    if (onAppendToNotes) {
+      onAppendToNotes(text);
+      toast.success("Appended to call notes");
+    } else if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast.success("Copied");
+      } catch {
+        toast.error("Could not copy");
+      }
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
+  };
+  return (
+    <div className="group relative space-y-0.5">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-xs whitespace-pre-wrap pr-6">{value}</p>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label={onAppendToNotes ? "Append to call notes" : "Copy to clipboard"}
+        title={onAppendToNotes ? "Append to call notes" : "Copy to clipboard"}
+        className="absolute right-0 top-0 h-5 w-5 rounded inline-flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-accent/20 transition-opacity"
+        data-testid="runner-guide-copy"
+      >
+        {copied ? <Check className="h-3 w-3 text-primary" /> : <ClipboardCopy className="h-3 w-3" />}
+      </button>
+    </div>
   );
 }

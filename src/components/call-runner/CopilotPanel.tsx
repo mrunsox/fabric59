@@ -1,9 +1,11 @@
+import { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Sparkle, ThumbsUp, ThumbsDown } from "lucide-react";
+import { matchHotkey, HOTKEYS } from "@/lib/call-runner/hotkeys";
 import type { CopilotFeedbackVerdict, CopilotResult, CopilotSuggestion } from "@/types/call-runner";
 
 interface Props {
@@ -30,6 +32,19 @@ const KIND_LABEL: Record<CopilotSuggestion["kind"], string> = {
  * backend behind the same hook without UI changes.
  */
 export function CopilotPanel({ copilot, feedback, onRate, notes, onNotesChange }: Props) {
+  const notesRef = useRef<HTMLTextAreaElement | null>(null);
+  useEffect(() => {
+    const def = HOTKEYS.find((h) => h.id === "focus_notes")!;
+    function onKey(e: KeyboardEvent) {
+      if (matchHotkey(e, def)) {
+        e.preventDefault();
+        notesRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <Card className="h-full flex flex-col" data-testid="runner-copilot-panel">
       <CardHeader className="pb-2 flex-shrink-0">
@@ -54,10 +69,16 @@ export function CopilotPanel({ copilot, feedback, onRate, notes, onNotesChange }
         )}
 
         <div className="space-y-1 pt-2 border-t border-border">
-          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Call notes
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Call notes
+            </Label>
+            <kbd className="inline-flex items-center justify-center h-4 px-1 rounded border border-border bg-muted text-[9px] font-mono text-muted-foreground">
+              Alt+N
+            </kbd>
+          </div>
           <Textarea
+            ref={notesRef}
             rows={4}
             value={notes}
             onChange={(e) => onNotesChange(e.target.value)}

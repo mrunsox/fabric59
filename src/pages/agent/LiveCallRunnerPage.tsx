@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,7 +14,9 @@ import { SessionHeader } from "@/components/call-runner/SessionHeader";
 import { GuidePanel } from "@/components/call-runner/GuidePanel";
 import { FlowPanel } from "@/components/call-runner/FlowPanel";
 import { CopilotPanel } from "@/components/call-runner/CopilotPanel";
+import { ShortcutsHelp } from "@/components/call-runner/ShortcutsHelp";
 import { buildInteractionPayload, submitInteractionDraft } from "@/lib/call-runner/submit";
+import { HOTKEYS, matchHotkey } from "@/lib/call-runner/hotkeys";
 
 import type { CallSessionMeta } from "@/types/call-runner";
 
@@ -86,6 +88,33 @@ function LiveCallRunnerInner() {
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Global "?" toggles the shortcuts help drawer.
+  useEffect(() => {
+    const def = HOTKEYS.find((h) => h.id === "toggle_help")!;
+    function onKey(e: KeyboardEvent) {
+      // Ignore when typing.
+      const tgt = e.target as HTMLElement | null;
+      if (tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || tgt.isContentEditable)) return;
+      if (matchHotkey(e, def)) {
+        e.preventDefault();
+        setShowHelp((s) => !s);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Append-to-notes sink consumed by GuidePanel "Instant Notes" buttons.
+  const appendToNotes = useCallback(
+    (text: string) => {
+      const prev = session.session.notes ?? "";
+      const sep = prev && !prev.endsWith("\n") ? "\n" : "";
+      session.setNotes(`${prev}${sep}${text}`);
+    },
+    [session],
+  );
 
   const onSubmit = async () => {
     if (!flow) {
@@ -130,7 +159,7 @@ function LiveCallRunnerInner() {
     <div className="h-screen flex flex-col gap-3 p-3 bg-background" data-testid="live-call-runner">
       <SessionHeader meta={meta} resumed={session.resumed} onReset={session.reset} />
       <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)_340px] gap-3 flex-1 min-h-0">
-        <GuidePanel guide={guide ?? null} isLoading={guideLoading} />
+        <GuidePanel guide={guide ?? null} isLoading={guideLoading} onAppendToNotes={appendToNotes} />
         <FlowPanel
           flow={flow ?? null}
           isLoading={flowLoading}
@@ -149,6 +178,7 @@ function LiveCallRunnerInner() {
           onNotesChange={session.setNotes}
         />
       </div>
+      <ShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
     </div>
   );
 }
