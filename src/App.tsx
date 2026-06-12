@@ -37,6 +37,8 @@ import WorkspaceGuideNewPage from "@/pages/workspace/WorkspaceGuideNewPage";
 import WorkspaceGuidePreviewPage from "@/pages/workspace/WorkspaceGuidePreviewPage";
 // Phase 4 — canonical singleton workspace guide builder.
 import WorkspaceGuideBuilderPage from "@/pages/workspace/WorkspaceGuideBuilderPage";
+// Phase 5 — canonical campaign flow (decision-tree) builder.
+import WorkspaceCampaignFlowBuilderPage from "@/pages/workspace/WorkspaceCampaignFlowBuilderPage";
 import WorkspaceTemplatesPage from "@/pages/workspace/WorkspaceTemplatesPage";
 import WorkspaceTemplateDetailPage from "@/pages/workspace/WorkspaceTemplateDetailPage";
 import WorkspaceIntegrationsPage from "@/pages/workspace/WorkspaceIntegrationsPage";
@@ -550,6 +552,7 @@ const App = () => (
                 <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
                 <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
                 <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
+                <Route path="campaigns/:campaignId/builder" element={<WorkspaceCampaignFlowBuilderPage />} />
                 <Route path="guide" element={<WorkspaceGuideBuilderPage />} />
                 <Route path="guides" element={<WorkspaceGuidesPage />} />
                 <Route path="guides/new" element={<WorkspaceGuideNewPage />} />

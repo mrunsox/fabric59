@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, ExternalLink, ClipboardList } from "lucide-react";
+import { ArrowLeft, ExternalLink, ClipboardList, Workflow } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaign } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
@@ -63,13 +63,20 @@ export default function WorkspaceCampaignDetailPage() {
             Workspace: {workspace.name} · Updated {new Date(campaign.updated_at).toLocaleString()}
           </p>
         </div>
-        {legacyHref && (
-          <Button asChild variant="outline" size="sm">
-            <Link to={legacyHref}>
-              Open legacy detail <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+        <div className="flex items-center gap-2">
+          <Button asChild variant="default" size="sm" data-testid="open-flow-builder">
+            <Link to={`${base}/${campaign.id}/builder`}>
+              <Workflow className="h-3.5 w-3.5 mr-1.5" /> Open flow builder
             </Link>
           </Button>
-        )}
+          {legacyHref && (
+            <Button asChild variant="outline" size="sm">
+              <Link to={legacyHref}>
+                Open legacy detail <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

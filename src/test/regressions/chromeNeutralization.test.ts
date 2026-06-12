@@ -32,6 +32,9 @@ const EXCLUDE_PREFIXES = [
   // Phase 4 — workspace guide template registry; legal vocabulary is allowed
   // here because it only seeds the "Legal firm starter" template content.
   "src/lib/workspace-guide/templates.ts",
+  // Phase 5 — campaign-flow template registry; legal vocabulary is allowed
+  // here because it only seeds the "Legal intake starter" template content.
+  "src/lib/campaign-flow/templates.ts",
 ];
 
 // Files where the literal phrase "Legal practice management" is canonical
