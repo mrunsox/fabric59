@@ -29,6 +29,9 @@ const EXCLUDE_PREFIXES = [
   "src/lib/legal-connect/",
   "src/pages/marketing/",
   "src/test/",
+  // Phase 4 — workspace guide template registry; legal vocabulary is allowed
+  // here because it only seeds the "Legal firm starter" template content.
+  "src/lib/workspace-guide/templates.ts",
 ];
 
 // Files where the literal phrase "Legal practice management" is canonical
