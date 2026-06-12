@@ -262,8 +262,11 @@ function WorkspaceChrome() {
 
   const sectionKey = useMemo(() => {
     const m = location.pathname.match(/\/w\/[^/]+\/([^/]+)/);
-    return m?.[1] ?? "home";
+    // Dashboard consolidation: `home` retired — campaigns is the canonical
+    // workspace landing surface, so it's also the breadcrumb fallback.
+    return m?.[1] ?? "campaigns";
   }, [location.pathname]);
+
   const activeSection =
     WORKSPACE_NAV.find((s) => s.to === sectionKey) ?? WORKSPACE_NAV[0];
 

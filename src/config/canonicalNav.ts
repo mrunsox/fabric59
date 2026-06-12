@@ -1,11 +1,12 @@
 import {
   Plug,
-  Home, Users, Megaphone, BookOpen, FormInput, FileStack,
+  Users, Megaphone, BookOpen, FormInput, FileStack,
   ClipboardCheck, BarChart3, Brain, Sparkles, Settings,
   PlayCircle, Headphones, Eye,
   Sparkle, UserSquare2, Tag, Boxes, Heart, Shield,
   ListChecks, Bell, Radio, BookMarked,
 } from "lucide-react";
+
 import type { ComponentType } from "react";
 
 /**
@@ -29,9 +30,13 @@ export type NavItem = {
  * Flat union of every canonical workspace surface, including demoted ones.
  * Order is preserved for compatibility with existing iteration sites
  * (command palette, regression tests, breadcrumbs).
+ *
+ * Dashboard consolidation: the legacy `home` entry has been fully retired.
+ * /w/:workspaceId/home remains mounted as a redirect-only compat route
+ * (collapses to /w/:workspaceId/campaigns) so external bookmarks survive,
+ * but no product chrome, command palette, breadcrumb, or sidebar exposes it.
  */
 export const WORKSPACE_NAV: NavItem[] = [
-  { key: "home",         label: "Home",         icon: Home,            to: "home" },
   { key: "campaigns",    label: "Campaigns",    icon: Megaphone,       to: "campaigns" },
   { key: "guide",        label: "Workspace guide", icon: BookMarked,   to: "guide" },
   { key: "guides",       label: "Guides",       icon: BookOpen,        to: "guides" },
@@ -53,6 +58,7 @@ export const WORKSPACE_NAV: NavItem[] = [
   { key: "agent",        label: "Agent cockpit",icon: Radio,           to: "agent" },
 ];
 
+
 const byKey = (k: string) => WORKSPACE_NAV.find((n) => n.key === k)!;
 
 /** Phase B grouped sidebar surface. */
@@ -61,12 +67,12 @@ export type NavGroup = { label: string; items: NavItem[] };
 export const WORKSPACE_NAV_GROUPS: NavGroup[] = [
   {
     label: "Build",
-    // "home" intentionally omitted — /w/:id/home is a redirect-only compat
-    // route (collapses to /w/:id/campaigns). Keeping it in the flat
-    // WORKSPACE_NAV union above preserves command-palette + breadcrumb
-    // lookups for legacy bookmarks without surfacing a ghost sidebar item.
+    // `home` was fully retired from WORKSPACE_NAV. /w/:id/home now lives as
+    // a Navigate-only compat route in App.tsx and is invisible to product
+    // chrome (sidebar, command palette, breadcrumbs, keyboard nav).
     items: ["campaigns", "guide", "guides", "forms", "templates", "clients"].map(byKey),
   },
+
   {
     label: "Operate",
     items: ["agent", "dispositions", "notifications", "knowledge", "assistant"].map(byKey),
