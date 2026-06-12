@@ -23,11 +23,11 @@ export function OrgRail() {
   return (
     <div
       data-testid="org-rail"
-      className="relative hidden lg:block w-14 shrink-0 z-50"
+      className="hidden lg:block w-14 shrink-0 z-50 sticky top-0 h-screen self-start"
     >
       <aside
         className={cn(
-          "group/orgrail absolute inset-y-0 left-0 flex flex-col py-3",
+          "group/orgrail relative h-full left-0 flex flex-col py-3",
           "w-14 hover:w-56 transition-[width] duration-150 ease-out",
           "bg-sidebar border-r border-sidebar-border/40",
           "shadow-[2px_0_12px_-4px_rgba(0,0,0,0.08)] hover:shadow-[4px_0_20px_-6px_rgba(0,0,0,0.18)]",
