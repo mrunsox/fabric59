@@ -58,6 +58,9 @@ import WorkspaceSupervisorPage from "@/pages/workspace/WorkspaceSupervisorPage";
 import WorkspaceDispositionsPage from "@/pages/workspace/WorkspaceDispositionsPage";
 import WorkspaceNotificationsPage from "@/pages/workspace/WorkspaceNotificationsPage";
 import WorkspaceAgentCockpitPage from "@/pages/workspace/WorkspaceAgentCockpitPage";
+// Phase 6 — canonical live call runner.
+import LiveCallRunnerPage from "@/pages/agent/LiveCallRunnerPage";
+import AgentWorkspaceLandingPage from "@/pages/agent/AgentWorkspaceLandingPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -386,6 +389,19 @@ const App = () => (
                 }
               />
 
+              {/* ============================================================
+                  PHASE 6 — Canonical live call runner.
+                  /app/agent/workspace                                landing (picker)
+                  /app/agent/workspace/:workspaceId/:campaignId       runner
+                  Dedicated runtime surface — not mounted inside any other
+                  shell so live-call latency stays predictable. The legacy
+                  /w/:workspaceId/agent cockpit (Checkpoint 4) is preserved.
+                  ============================================================ */}
+              <Route path="/app/agent/workspace" element={<AgentWorkspaceLandingPage />} />
+              <Route
+                path="/app/agent/workspace/:workspaceId/:campaignId"
+                element={<LiveCallRunnerPage />}
+              />
 
               {/* Admin routes */}
               <Route path="/admin" element={<AdminShell />}>
