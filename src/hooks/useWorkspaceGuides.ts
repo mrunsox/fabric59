@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { toast } from "sonner";
 import { WORKSPACE_GUIDE_SINGLETON_NAME } from "@/types/workspace-guide";
+import { CAMPAIGN_FLOW_SENTINEL_NAME } from "@/types/campaign-flow";
 
 /**
  * Phase 4: Canonical Guides hooks.
