@@ -89,6 +89,19 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
                 Alt+F
               </kbd>
             </div>
+            {internalCount > 0 && (
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>{internalCount} internal section{internalCount === 1 ? "" : "s"}</span>
+                <button
+                  type="button"
+                  onClick={() => setShowInternal((v) => !v)}
+                  className="underline-offset-2 hover:underline"
+                  data-testid="runner-guide-toggle-internal"
+                >
+                  {showInternal ? "Hide internal" : "Show internal"}
+                </button>
+              </div>
+            )}
             <nav className="flex flex-wrap gap-1.5" aria-label="Guide sections">
               {sections.map((s) => (
                 <a
@@ -102,7 +115,12 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
             </nav>
             <div className="space-y-2">
               {sections.map((s) => (
-                <GuideSectionRow key={s.id} section={s} onAppendToNotes={onAppendToNotes} />
+                <GuideSectionRow
+                  key={s.id}
+                  section={s}
+                  onAppendToNotes={onAppendToNotes}
+                  defaultOpen={s.visibility !== "internal"}
+                />
               ))}
             </div>
           </>
