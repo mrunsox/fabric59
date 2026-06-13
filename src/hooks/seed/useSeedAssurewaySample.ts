@@ -513,9 +513,14 @@ export function useSeedAssurewaySample() {
         await supabase.from("guides").update({ status: "published", current_version: nextV }).eq("id", flowId);
       }
 
-      // Step 5 — intake form
+      // Step 5 — intake form (rename legacy form if found)
       toast.message("Loading Assureway sample", { description: "Publishing intake form…" });
       const schema = buildFormSchema();
+      const { data: legacyForm } = await supabase.from("forms")
+        .select("id, name").eq("workspace_id", wsId).eq("name", LEGACY_FORM_NAME).maybeSingle();
+      if (legacyForm?.id) {
+        await supabase.from("forms").update({ name: FORM_NAME } as never).eq("id", legacyForm.id);
+      }
       let { data: existingForm } = await supabase.from("forms")
         .select("id, current_version").eq("workspace_id", wsId).eq("name", FORM_NAME).maybeSingle();
       let formId: string;
