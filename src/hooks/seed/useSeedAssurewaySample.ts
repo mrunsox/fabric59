@@ -155,38 +155,6 @@ function buildGuide(): WorkspaceGuideContentV2 {
   };
 }
 
-function buildFlow(): CampaignFlowContent {
-  const mk = (
-    i: number,
-    type: FlowStep["type"],
-    title: string,
-    config: Record<string, unknown>,
-    required = true,
-  ): FlowStep => ({
-    id: rid("stp"),
-    type,
-    title,
-    order: i,
-    required,
-    enabled: true,
-    nextStepId: null,
-    rules: [],
-    config: config as FlowStep["config"],
-  });
-
-  // ---- Shared ----
-  const greeting = mk(1, "information_display", "Greeting", {
-    body: "Hi there, you've reached AssureWay. How can I help you today?",
-  }, false);
-
-  // Branch step (goto wired after we have target ids)
-  const branch = mk(2, "question_branch", "Department", {
-    prompt: "Are you calling about a dealership matter, or a general inquiry?",
-    options: [
-      { id: rid("opt"), label: "Dealership", goto: null },
-      { id: rid("opt"), label: "General Inquiry", goto: null },
-    ],
-  });
 
 function buildFlow(): CampaignFlowContent {
   const mk = (
