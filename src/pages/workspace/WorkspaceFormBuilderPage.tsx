@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { ArrowLeft, Plus, Send, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +52,7 @@ export default function WorkspaceFormBuilderPage() {
   );
 
   if (!schema || !section) {
-    return <p className="text-sm text-muted-foreground">Loading form…</p>;
+    return <p role="status" className="text-sm text-muted-foreground">Loading form…</p>;
   }
 
   const setSchemaDirty = (next: FormSchemaV1) => {
@@ -119,6 +120,7 @@ export default function WorkspaceFormBuilderPage() {
   const saveDraft = async () => {
     await updateSchema.mutateAsync(schema);
     setDirty(false);
+    toast.success("Draft saved");
   };
   const publishVersion = async () => {
     await publish.mutateAsync({ schema, notes: notes || undefined });
@@ -145,6 +147,7 @@ export default function WorkspaceFormBuilderPage() {
         <div className="flex items-center gap-2">
           <Input
             placeholder="Change notes (optional)"
+            aria-label="Change notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="w-56"
@@ -174,7 +177,7 @@ export default function WorkspaceFormBuilderPage() {
               <CardContent className="pt-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Sections</p>
-                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={addSection} data-testid="add-section">
+                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={addSection} aria-label="Add section" data-testid="add-section">
                     <Plus className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -189,7 +192,7 @@ export default function WorkspaceFormBuilderPage() {
                         {s.title}
                       </button>
                       {schema.sections.length > 1 && (
-                        <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive/60 hover:text-destructive" onClick={() => removeSection(s.id)}>
+                        <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive/60 hover:text-destructive" onClick={() => removeSection(s.id)} aria-label={`Delete section ${s.title}`}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       )}
@@ -204,6 +207,7 @@ export default function WorkspaceFormBuilderPage() {
               <Input
                 value={section.title}
                 onChange={(e) => renameSection(section.id, e.target.value)}
+                aria-label="Section title"
                 className="text-base font-semibold"
               />
               <FieldList

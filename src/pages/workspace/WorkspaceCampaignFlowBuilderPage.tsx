@@ -72,7 +72,7 @@ export default function WorkspaceCampaignFlowBuilderPage() {
   );
 
   if (isLoading || !flow || !workspace) {
-    return <p className="text-sm text-muted-foreground">Loading campaign flow…</p>;
+    return <p role="status" className="text-sm text-muted-foreground">Loading campaign flow…</p>;
   }
 
   const base = `/w/${workspaceId}/campaigns`;

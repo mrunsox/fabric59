@@ -77,7 +77,7 @@ export default function WorkspaceGuideBuilderPage() {
   );
 
   if (isLoading || !guide) {
-    return <p className="text-sm text-muted-foreground">Loading workspace guide…</p>;
+    return <p role="status" className="text-sm text-muted-foreground">Loading workspace guide…</p>;
   }
 
   const updateSections = (next: WorkspaceGuideSection[]) =>
