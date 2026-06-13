@@ -117,7 +117,17 @@ export interface EscalationTriggerConfig {
 export interface NotificationTriggerConfig {
   channel: "email" | "sms" | "slack" | "webhook";
   target: string;
-  payloadSummary?: string;
+  /**
+   * Either a single rendered summary string, OR a structured payload:
+   *  - templates: outcomeCode -> subject/body template
+   *  - skipOutcomes: outcome codes that should NOT fire the notification
+   */
+  payloadSummary?:
+    | string
+    | {
+        templates: Record<string, { subject?: string; body: string }>;
+        skipOutcomes?: string[];
+      };
 }
 
 export interface EndFlowConfig {

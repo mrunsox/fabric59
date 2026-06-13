@@ -137,6 +137,7 @@ export function FlowPanel({
       if (!opt) return;
       e.preventDefault();
       onValueChange(`branch_${current.id}`, opt.label);
+      onValueChange("__branch_label__", opt.label);
       advance(opt.goto ?? null);
     }
     const el = rootRef.current;
@@ -367,6 +368,7 @@ function StepBody({
                 className="justify-start gap-2"
                 onClick={() => {
                   onValueChange(`branch_${step.id}`, o.label);
+                  onValueChange("__branch_label__", o.label);
                   onBranch(o.goto ?? null);
                 }}
                 data-testid={`runner-branch-${o.id}`}
