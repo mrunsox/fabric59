@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
     }
 
     const signature = req.headers.get("x-clio-signature") ?? req.headers.get("clio-signature") ?? "";
-    const firstSecret = String(matches[0]?.metadata?.webhook_secret ?? matches[0]?.metadata?.shared_secret ?? payload.shared_secret ?? "");
+    const firstMetadata = (matches[0]?.metadata ?? {}) as Record<string, unknown>;
+    const firstSecret = String(firstMetadata.webhook_secret ?? firstMetadata.shared_secret ?? payload.shared_secret ?? "");
     const signatureValid = await verifyClioSignature(rawBody, signature, firstSecret);
 
     if (!signatureValid) {
