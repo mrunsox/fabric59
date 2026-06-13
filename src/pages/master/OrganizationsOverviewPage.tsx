@@ -27,6 +27,14 @@ export default function OrganizationsOverviewPage() {
   const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null);
   const [expandedBrandingOrgId, setExpandedBrandingOrgId] = useState<string | null>(null);
   const [brandingDraft, setBrandingDraft] = useState<Record<string, Record<string, string>>>({});
+  const [dialog, setDialog] = useState<
+    | { kind: "create" }
+    | { kind: "rename"; org: Organization }
+    | { kind: "delete"; org: Organization }
+    | null
+  >(null);
+  const [formName, setFormName] = useState("");
+  const [formEmail, setFormEmail] = useState("");
   const queryClient = useQueryClient();
 
   const { data: organizations, isLoading } = useQuery({
