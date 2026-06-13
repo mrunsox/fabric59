@@ -219,31 +219,7 @@ export function FlowPanel({
           </p>
         )}
       </CardHeader>
-      <CardContent className="space-y-4 flex-1 overflow-y-auto">
-        {/* Outline / quick nav */}
-        <ol className="grid grid-cols-1 gap-1" aria-label="Flow outline">
-          {orderedVisible.map((s, i) => {
-            const isCurrent = current?.id === s.id;
-            const isDone = session.completedStepIds.includes(s.id);
-            return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  className={`w-full text-left text-[11px] flex items-center gap-2 rounded px-1.5 py-1 hover:bg-accent/10 ${
-                    isCurrent ? "bg-accent/10 text-foreground font-medium" : "text-muted-foreground"
-                  }`}
-                  onClick={() => onCurrentStep(s.id)}
-                  data-testid={`runner-step-outline-${s.id}`}
-                >
-                  <span className="font-mono w-5 text-right">{i + 1}.</span>
-                  {isDone && <CheckCircle2 className="h-3 w-3 text-primary" />}
-                  <span className="truncate">{s.title}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-
+      <CardContent className="space-y-3 flex-1 overflow-y-auto">
         {completedAll && (
           <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
             <p className="text-sm font-medium">Flow complete</p>
@@ -261,65 +237,103 @@ export function FlowPanel({
           </div>
         )}
 
-        {current && (
-          <div className="rounded-md border border-border bg-card p-3 space-y-3" data-testid={`runner-current-step-${current.id}`}>
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {current.type.replace(/_/g, " ")}
-                </p>
-                <h3 className="text-sm font-semibold leading-snug">{current.title}</h3>
-                {current.description && (
-                  <p className="text-xs text-muted-foreground mt-0.5">{current.description}</p>
+        {/* Worksheet-hybrid: every visible step rendered; active one amplified. */}
+        <ol className="space-y-2" aria-label="Worksheet">
+          {orderedVisible.map((s, i) => {
+            const isCurrent = current?.id === s.id;
+            const isDone = session.completedStepIds.includes(s.id);
+            const scriptLine = getScriptLine(s);
+            const capturedPreview = getCapturedPreview(s, session.values);
+            return (
+              <li key={s.id}>
+                {isCurrent ? (
+                  <div
+                    className="rounded-md border-2 border-primary/50 bg-card p-4 space-y-3 shadow-sm"
+                    data-testid={`runner-current-step-${s.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <span className="font-mono">{i + 1}.</span>
+                        <span>{s.type.replace(/_/g, " ")}</span>
+                      </div>
+                      {s.required && <Badge variant="outline" className="text-[10px]">Required</Badge>}
+                    </div>
+                    {scriptLine && (
+                      <p className="text-[22px] leading-snug font-semibold tracking-tight">
+                        {scriptLine}
+                      </p>
+                    )}
+                    <StepBody
+                      step={s}
+                      steps={steps}
+                      values={session.values}
+                      errors={errors}
+                      onValueChange={onValueChange}
+                      onBranch={(goto) => advance(goto)}
+                    />
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={goBack}
+                        disabled={session.completedStepIds.length === 0}
+                        className="gap-1.5"
+                      >
+                        <ArrowLeft className="h-3.5 w-3.5" /> Back
+                      </Button>
+                      {s.type !== "question_branch" && s.type !== "end_flow" && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => advance()}
+                          className="gap-1.5"
+                          data-testid="runner-next"
+                        >
+                          Next <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={onSubmit}
+                        disabled={submitting}
+                        className="ml-auto"
+                      >
+                        {submitting ? "Submitting…" : "Submit"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onCurrentStep(s.id)}
+                    className={`w-full text-left rounded-md border border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors px-3 py-2 ${
+                      isDone ? "opacity-90" : "opacity-60"
+                    }`}
+                    data-testid={`runner-step-outline-${s.id}`}
+                  >
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <span className="font-mono w-5 text-right text-muted-foreground">{i + 1}.</span>
+                      {isDone ? (
+                        <CheckCircle2 className="h-3 w-3 text-primary flex-shrink-0" />
+                      ) : (
+                        <span className="h-3 w-3 rounded-full border border-border flex-shrink-0" />
+                      )}
+                      <span className="font-medium truncate">{s.title}</span>
+                    </div>
+                    {capturedPreview && (
+                      <p className="text-[11px] text-muted-foreground mt-0.5 ml-7 truncate">
+                        {capturedPreview}
+                      </p>
+                    )}
+                  </button>
                 )}
-              </div>
-              {current.required && <Badge variant="outline" className="text-[10px]">Required</Badge>}
-            </div>
-
-            <StepBody
-              step={current}
-              steps={steps}
-              values={session.values}
-              errors={errors}
-              onValueChange={onValueChange}
-              onBranch={(goto) => advance(goto)}
-            />
-
-            <div className="flex items-center gap-2 pt-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={goBack}
-                disabled={session.completedStepIds.length === 0}
-                className="gap-1.5"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" /> Back
-              </Button>
-              {current.type !== "question_branch" && current.type !== "end_flow" && (
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => advance()}
-                  className="gap-1.5"
-                  data-testid="runner-next"
-                >
-                  Next <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onSubmit}
-                disabled={submitting}
-                className="ml-auto"
-              >
-                {submitting ? "Submitting…" : "Submit"}
-              </Button>
-            </div>
-          </div>
-        )}
+              </li>
+            );
+          })}
+        </ol>
 
         {(actions.escalations.length > 0 || actions.notifications.length > 0) && (
           <div className="text-[11px] text-muted-foreground border-t border-border pt-2 space-y-0.5">
@@ -334,6 +348,42 @@ export function FlowPanel({
       </CardContent>
     </Card>
   );
+}
+
+/** Extract the line the agent should say aloud for a given step. */
+function getScriptLine(step: FlowStep): string {
+  switch (step.type) {
+    case "information_display":
+      return (step.config as InformationDisplayConfig).body ?? step.title;
+    case "question_branch":
+      return (step.config as QuestionBranchConfig).prompt ?? step.title;
+    case "field_capture": {
+      const cfg = step.config as FieldCaptureConfig;
+      return cfg.helper ?? step.title;
+    }
+    case "end_flow":
+      return (step.config as EndFlowConfig).label ?? step.title;
+    default:
+      return step.title;
+  }
+}
+
+/** Short preview of what was captured at this step, for muted rows. */
+function getCapturedPreview(step: FlowStep, values: Record<string, unknown>): string | null {
+  if (step.type === "field_capture") {
+    const cfg = step.config as FieldCaptureConfig;
+    const v = values[cfg.fieldKey];
+    if (v != null && v !== "") return String(v);
+  }
+  if (step.type === "question_branch") {
+    const v = values[`branch_${step.id}`];
+    if (v) return String(v);
+  }
+  if (step.type === "outcome_disposition") {
+    const v = values.__outcome__;
+    if (v) return `Disposition: ${String(v)}`;
+  }
+  return null;
 }
 
 function StepBody({
