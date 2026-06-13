@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PhoneCall, Clock, Radio, RotateCcw } from "lucide-react";
+import { PhoneCall, Clock, Radio, RotateCcw, GitBranch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { CallSessionMeta } from "@/types/call-runner";
 
@@ -9,9 +9,11 @@ interface Props {
   meta: CallSessionMeta;
   resumed: boolean;
   onReset: () => void;
+  /** Active question_branch selection — surfaced as a department badge. */
+  branchLabel?: string | null;
 }
 
-export function SessionHeader({ meta, resumed, onReset }: Props) {
+export function SessionHeader({ meta, resumed, onReset, branchLabel }: Props) {
   const startedAt = new Date(meta.startedAt);
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -44,6 +46,16 @@ export function SessionHeader({ meta, resumed, onReset }: Props) {
         <Badge variant="outline" className="font-mono text-xs gap-1">
           <PhoneCall className="h-3 w-3" /> ANI {meta.ani ?? "—"}
         </Badge>
+        {branchLabel && (
+          <Badge
+            variant="secondary"
+            className="text-xs gap-1"
+            data-testid="runner-branch-badge"
+            title="Active branch"
+          >
+            <GitBranch className="h-3 w-3" /> {branchLabel}
+          </Badge>
+        )}
         {meta.callId && (
           <Badge variant="outline" className="font-mono text-[10px]" title="Five9 call id">
             Call {meta.callId.slice(0, 8)}

@@ -278,6 +278,7 @@ export function FlowPanel({
 
             <StepBody
               step={current}
+              steps={steps}
               values={session.values}
               errors={errors}
               onValueChange={onValueChange}
@@ -337,12 +338,14 @@ export function FlowPanel({
 
 function StepBody({
   step,
+  steps,
   values,
   errors,
   onValueChange,
   onBranch,
 }: {
   step: FlowStep;
+  steps: FlowStep[];
   values: Record<string, unknown>;
   errors: Record<string, string>;
   onValueChange: (key: string, value: unknown) => void;
@@ -459,11 +462,12 @@ function StepBody({
     }
     case "outcome_disposition": {
       const cfg = step.config as OutcomeDispositionConfig;
+      const selected = String(values.__outcome__ ?? "");
       return (
-        <div className="space-y-1">
+        <div className="space-y-2">
           <Label className="text-xs">Disposition</Label>
           <Select
-            value={String(values.__outcome__ ?? "")}
+            value={selected}
             onValueChange={(v) => onValueChange("__outcome__", v)}
           >
             <SelectTrigger data-testid="runner-outcome">
@@ -477,6 +481,7 @@ function StepBody({
               ))}
             </SelectContent>
           </Select>
+          {selected && <DispositionEmailPreview outcome={selected} steps={steps} values={values} />}
         </div>
       );
     }
@@ -514,4 +519,64 @@ function StepBody({
     default:
       return null;
   }
+}
+
+/**
+ * Inline preview card: shows the rendered email (or "no email") for the
+ * selected disposition by reading the downstream notification_trigger step.
+ */
+function DispositionEmailPreview({
+  outcome,
+  steps,
+  values,
+}: {
+  outcome: string;
+  steps: FlowStep[];
+  values: Record<string, unknown>;
+}) {
+  const notif = steps.find((s) => s.type === "notification_trigger");
+  if (!notif) return null;
+  const cfg = notif.config as NotificationTriggerConfig;
+  const summary = cfg.payloadSummary;
+
+  // Structured payload: per-outcome templates + skipOutcomes.
+  if (summary && typeof summary === "object") {
+    if (summary.skipOutcomes?.includes(outcome)) {
+      return (
+        <div className="rounded-md border border-dashed border-border bg-muted/30 p-2 text-[11px] text-muted-foreground" data-testid="runner-email-preview-skip">
+          No email will be sent for this disposition.
+        </div>
+      );
+    }
+    const tpl = summary.templates?.[outcome];
+    if (!tpl) {
+      return (
+        <div className="rounded-md border border-dashed border-border bg-muted/30 p-2 text-[11px] text-muted-foreground">
+          No email template configured for this disposition.
+        </div>
+      );
+    }
+    const render = (s: string) =>
+      s.replace(/\{\{(\w+)\}\}/g, (_, k) => {
+        const v = values[k];
+        return v == null || v === "" ? `[${k}]` : String(v);
+      });
+    return (
+      <div className="rounded-md border border-primary/30 bg-primary/5 p-2 space-y-1" data-testid="runner-email-preview">
+        <p className="text-[10px] uppercase tracking-wider text-primary">Email preview · {cfg.target}</p>
+        {tpl.subject && <p className="text-xs font-medium">{render(tpl.subject)}</p>}
+        <p className="text-xs whitespace-pre-wrap text-muted-foreground">{render(tpl.body)}</p>
+      </div>
+    );
+  }
+
+  // Legacy string summary.
+  if (typeof summary === "string" && summary) {
+    return (
+      <div className="rounded-md border border-border bg-muted/30 p-2 text-[11px] text-muted-foreground">
+        Will queue {cfg.channel} to <span className="font-mono">{cfg.target}</span>: {summary}
+      </div>
+    );
+  }
+  return null;
 }

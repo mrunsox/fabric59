@@ -23,6 +23,7 @@ interface Props {
  */
 export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
   const [filter, setFilter] = useState("");
+  const [showInternal, setShowInternal] = useState(false);
   const filterRef = useRef<HTMLInputElement | null>(null);
 
   // Global Alt+F focuses the in-panel filter without stealing other inputs.
@@ -41,7 +42,8 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
 
   const sections = useMemo<WorkspaceGuideSection[]>(() => {
     if (!guide) return [];
-    const enabled = guide.sections.filter((s) => s.enabled);
+    let enabled = guide.sections.filter((s) => s.enabled);
+    if (!showInternal) enabled = enabled.filter((s) => s.visibility !== "internal");
     if (!filter.trim()) return enabled;
     const q = filter.toLowerCase();
     return enabled.filter(
@@ -49,7 +51,12 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
         s.label.toLowerCase().includes(q) ||
         s.fields.some((f) => f.label.toLowerCase().includes(q) || f.value.toLowerCase().includes(q)),
     );
-  }, [guide, filter]);
+  }, [guide, filter, showInternal]);
+
+  const internalCount = useMemo(
+    () => (guide?.sections ?? []).filter((s) => s.enabled && s.visibility === "internal").length,
+    [guide],
+  );
 
   return (
     <Card className="h-full flex flex-col" data-testid="runner-guide-panel">
@@ -82,6 +89,19 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
                 Alt+F
               </kbd>
             </div>
+            {internalCount > 0 && (
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>{internalCount} internal section{internalCount === 1 ? "" : "s"}</span>
+                <button
+                  type="button"
+                  onClick={() => setShowInternal((v) => !v)}
+                  className="underline-offset-2 hover:underline"
+                  data-testid="runner-guide-toggle-internal"
+                >
+                  {showInternal ? "Hide internal" : "Show internal"}
+                </button>
+              </div>
+            )}
             <nav className="flex flex-wrap gap-1.5" aria-label="Guide sections">
               {sections.map((s) => (
                 <a
@@ -95,7 +115,12 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
             </nav>
             <div className="space-y-2">
               {sections.map((s) => (
-                <GuideSectionRow key={s.id} section={s} onAppendToNotes={onAppendToNotes} />
+                <GuideSectionRow
+                  key={s.id}
+                  section={s}
+                  onAppendToNotes={onAppendToNotes}
+                  defaultOpen={s.visibility !== "internal"}
+                />
               ))}
             </div>
           </>
@@ -108,11 +133,13 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
 function GuideSectionRow({
   section,
   onAppendToNotes,
+  defaultOpen = true,
 }: {
   section: WorkspaceGuideSection;
   onAppendToNotes?: (text: string) => void;
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div id={`guide-section-${section.id}`} className="rounded-md border border-border bg-card">

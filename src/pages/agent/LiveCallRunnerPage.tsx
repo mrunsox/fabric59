@@ -157,7 +157,12 @@ function LiveCallRunnerInner() {
 
   return (
     <div className="h-screen flex flex-col gap-3 p-3 bg-background" data-testid="live-call-runner">
-      <SessionHeader meta={meta} resumed={session.resumed} onReset={session.reset} />
+      <SessionHeader
+        meta={meta}
+        resumed={session.resumed}
+        onReset={session.reset}
+        branchLabel={(session.session.values.__branch_label__ as string | undefined) ?? null}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)_340px] gap-3 flex-1 min-h-0">
         <GuidePanel guide={guide ?? null} isLoading={guideLoading} onAppendToNotes={appendToNotes} />
         <FlowPanel

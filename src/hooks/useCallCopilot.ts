@@ -25,6 +25,18 @@ function id(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/** Snake/branch keys → human-readable phrase. */
+export function prettifyKey(raw: string): string {
+  if (!raw) return raw;
+  return raw
+    .replace(/^__/, "")
+    .replace(/__$/, "")
+    .replace(/^branch_/, "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
+
 function currentStep(flow: CampaignFlowContent | null, currentId: string | null): FlowStep | null {
   if (!flow || !currentId) return null;
   return flow.steps.find((s) => s.id === currentId) ?? null;
@@ -71,11 +83,12 @@ function suggestedAnswer(step: FlowStep | null, guide: WorkspaceGuideContentV2 |
   }
   if (step.type === "field_capture") {
     const cfg = step.config as FieldCaptureConfig;
+    const pretty = prettifyKey(cfg.fieldKey);
     return {
       id: id("sug"),
       kind: "suggested_answer",
-      title: `Capture ${cfg.fieldKey}`,
-      body: cfg.helper ?? `Ask the caller for ${cfg.fieldKey.replace(/_/g, " ")}.`,
+      title: `Capture ${pretty}`,
+      body: cfg.helper ?? `Ask the caller for ${pretty.toLowerCase()}.`,
       source: "Derived from current step",
     };
   }
@@ -103,8 +116,10 @@ function draftSummary(session: CallSessionState, flow: CampaignFlowContent | nul
   const captured = Object.keys(v).filter((k) => !k.startsWith("__") && v[k]).length;
   if (captured === 0 && !session.notes) return null;
   const reasonBranchKey = Object.keys(v).find((k) => k.startsWith("branch_"));
-  const reason = reasonBranchKey ? String(v[reasonBranchKey]) : "general inquiry";
-  const name = (v.caller_name as string) ?? (v.full_name as string) ?? "the caller";
+  const reason =
+    (v.__branch_label__ as string | undefined) ??
+    (reasonBranchKey ? String(v[reasonBranchKey]) : "general inquiry");
+  const name = (v.caller_name as string) ?? (v.full_name as string) ?? (v.dealership_caller_name as string) ?? "the caller";
   const summaryBody = [
     `${ani} reached us about ${reason}.`,
     `Spoke with ${name}. ${captured} field(s) captured across ${session.completedStepIds.length} step(s).`,
