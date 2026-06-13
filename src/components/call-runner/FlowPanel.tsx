@@ -278,6 +278,7 @@ export function FlowPanel({
 
             <StepBody
               step={current}
+              steps={steps}
               values={session.values}
               errors={errors}
               onValueChange={onValueChange}
