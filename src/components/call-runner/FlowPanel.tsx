@@ -368,6 +368,7 @@ function StepBody({
                 className="justify-start gap-2"
                 onClick={() => {
                   onValueChange(`branch_${step.id}`, o.label);
+                  onValueChange("__branch_label__", o.label);
                   onBranch(o.goto ?? null);
                 }}
                 data-testid={`runner-branch-${o.id}`}
