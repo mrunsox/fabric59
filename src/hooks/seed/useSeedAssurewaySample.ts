@@ -26,8 +26,10 @@ import type { FormSchemaV1 } from "@/types/form-schema";
 import { cryptoRandomId } from "@/types/form-schema";
 
 const CLIENT_NAME = "Assureway";
-const CAMPAIGN_NAME = "General Inquiry";
-const FORM_NAME = "Assureway — General Inquiry intake";
+const CAMPAIGN_NAME = "Main Reception";
+const LEGACY_CAMPAIGN_NAME = "General Inquiry";
+const FORM_NAME = "Assureway — Main Reception intake";
+const LEGACY_FORM_NAME = "Assureway — General Inquiry intake";
 
 const rid = (p = "id"): string => {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
