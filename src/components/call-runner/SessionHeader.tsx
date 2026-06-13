@@ -37,25 +37,22 @@ export function SessionHeader({ meta, resumed, onReset, branchLabel }: Props) {
   return (
     <Card data-testid="runner-session-header">
       <CardContent className="py-3 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-testid="runner-header-title">
           <Radio className="h-4 w-4 text-primary" />
           <span className="text-sm font-semibold">{meta.workspaceName ?? "Workspace"}</span>
           <span className="text-xs text-muted-foreground">·</span>
           <span className="text-sm">{meta.campaignName ?? "Campaign"}</span>
+          <span className="text-xs text-muted-foreground">·</span>
+          <span
+            className={`text-sm inline-flex items-center gap-1 ${branchLabel ? "" : "text-muted-foreground italic"}`}
+            data-testid="runner-branch-badge"
+          >
+            <GitBranch className="h-3 w-3" /> {branchLabel ?? "Routing…"}
+          </span>
         </div>
         <Badge variant="outline" className="font-mono text-xs gap-1">
           <PhoneCall className="h-3 w-3" /> ANI {meta.ani ?? "—"}
         </Badge>
-        {branchLabel && (
-          <Badge
-            variant="secondary"
-            className="text-xs gap-1"
-            data-testid="runner-branch-badge"
-            title="Active branch"
-          >
-            <GitBranch className="h-3 w-3" /> {branchLabel}
-          </Badge>
-        )}
         {meta.callId && (
           <Badge variant="outline" className="font-mono text-[10px]" title="Five9 call id">
             Call {meta.callId.slice(0, 8)}

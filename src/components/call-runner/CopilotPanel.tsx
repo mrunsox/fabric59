@@ -54,9 +54,16 @@ export function CopilotPanel({ copilot, feedback, onRate, notes, onNotesChange }
       </CardHeader>
       <CardContent className="space-y-3 flex-1 overflow-y-auto">
         {copilot.empty ? (
-          <p className="text-xs text-muted-foreground">
-            Suggestions will appear here as the call progresses.
-          </p>
+          <div
+            className="rounded-md border border-dashed border-border bg-muted/20 p-4 text-center space-y-1"
+            data-testid="copilot-empty"
+          >
+            <Sparkle className="h-4 w-4 mx-auto text-primary animate-pulse" />
+            <p className="text-xs font-medium">Copilot is listening…</p>
+            <p className="text-[11px] text-muted-foreground">
+              Suggestions appear as the call progresses.
+            </p>
+          </div>
         ) : (
           copilot.suggestions.map((s) => (
             <SuggestionRow
