@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { isServiceRoleRequest } from "../_shared/auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +19,24 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
+    const cronSecret = req.headers.get('x-cron-secret') ?? '';
+    let isCron = false;
+    if (cronSecret) {
+      const { data: row } = await supabase
+        .from('app_config')
+        .select('value')
+        .eq('key', 'process_jobs_cron_secret')
+        .maybeSingle();
+      isCron = !!row?.value && row.value === cronSecret;
+    }
+
+    if (!isServiceRoleRequest(req) && !isCron) {
+      return new Response(JSON.stringify({ success: false, error: 'Forbidden' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Fetch pending jobs that are due
     const { data: jobs, error: fetchError } = await supabase
       .from('scheduled_jobs')

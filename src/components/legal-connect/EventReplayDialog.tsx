@@ -29,7 +29,7 @@ export default function EventReplayDialog({ open, onOpenChange, eventId }: Props
       if (fetchErr) throw fetchErr;
 
       const { data, error } = await supabase.functions.invoke("legal-connect-jobs", {
-        body: { action: "replay_event", event_id: eventId, normalized_payload: row.normalized_payload },
+        body: { action: "replayJob", event_log_id: eventId },
       });
       if (error) throw error;
       setResult(data);

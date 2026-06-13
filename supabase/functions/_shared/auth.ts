@@ -47,16 +47,67 @@ export async function requireUser(req: Request): Promise<RequireUserResult> {
 
 type RequireOrgResult = { ok: true } | { ok: false; response: Response };
 
+function getAdminClient() {
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+  const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!SUPABASE_URL || !SERVICE) {
+    throw new Error("Service not configured");
+  }
+  return createClient(SUPABASE_URL, SERVICE, { auth: { persistSession: false } });
+}
+
+export function isServiceRoleRequest(req: Request): boolean {
+  const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization") ?? "";
+  if (!authHeader.toLowerCase().startsWith("bearer ")) return false;
+  const token = authHeader.slice("bearer ".length).trim();
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  return !!serviceKey && token === serviceKey;
+}
+
+export async function isOpsUser(userId: string): Promise<boolean> {
+  const admin = getAdminClient();
+  const { data: roles } = await admin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+
+  return (roles ?? []).some((r: any) =>
+    ["master_admin", "admin", "ops_team"].includes(String(r.role)),
+  );
+}
+
+export async function getUserAccessScope(userId: string): Promise<{ isPrivileged: boolean; organizationIds: string[] }> {
+  const admin = getAdminClient();
+  const { data: roles } = await admin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+
+  const isPrivileged = (roles ?? []).some((r: any) =>
+    ["master_admin", "admin", "ops_team"].includes(String(r.role)),
+  );
+
+  const { data: memberships } = await admin
+    .from("organization_members")
+    .select("organization_id")
+    .eq("user_id", userId);
+
+  return {
+    isPrivileged,
+    organizationIds: (memberships ?? []).map((row: any) => String(row.organization_id)).filter(Boolean),
+  };
+}
+
 export async function requireOrgMember(userId: string, organizationId: string | null | undefined, opts?: { adminOnly?: boolean }): Promise<RequireOrgResult> {
   if (!organizationId) {
     return { ok: false, response: jsonResponse({ error: "organization_id required" }, 400) };
   }
-  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-  const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!SUPABASE_URL || !SERVICE) {
+  let admin;
+  try {
+    admin = getAdminClient();
+  } catch {
     return { ok: false, response: jsonResponse({ error: "Service not configured" }, 500) };
   }
-  const admin = createClient(SUPABASE_URL, SERVICE, { auth: { persistSession: false } });
 
   // Master admin bypass
   const { data: roles } = await admin

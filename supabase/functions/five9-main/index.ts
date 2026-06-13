@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getUserAccessScope, requireUser } from "../_shared/auth.ts";
 import { normalizeFive9Event } from "../_shared/five9-event-normalizer.ts";
 import { resolveFive9Route } from "../_shared/five9-router.ts";
 import { buildActionChain } from "../_shared/disposition-mapping-engine.ts";
@@ -773,6 +774,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+  const accessScope = await getUserAccessScope(auth.user.id);
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -784,6 +789,12 @@ serve(async (req) => {
 
     // ── Pre-call Lookup endpoint (no auth context needed, uses ANI) ──
     if (payload.action === 'lookup' || payload.event_type === 'lookup') {
+      if (!accessScope.isPrivileged) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const ani = payload.ani || payload.fromNumber || payload.phone || '';
       const dnis = payload.dnis || payload.toNumber || '';
       const normalizedAni = normalizePhone(ani);
@@ -792,6 +803,7 @@ serve(async (req) => {
       const { data: lcContacts } = await supabase
         .from('legal_connect_contacts')
         .select('id, first_name, last_name, phone, email, provider, provider_id, client_id')
+        .in('organization_id', accessScope.organizationIds)
         .or(`phone.eq.${normalizedAni},primary_phone.eq.${normalizedAni}`)
         .limit(5);
 
@@ -799,6 +811,7 @@ serve(async (req) => {
       const { data: clioMaps } = await supabase
         .from('clio_mappings')
         .select('tenant_id, contact_id, matter_id, phone')
+        .in('organization_id', accessScope.organizationIds)
         .eq('phone', normalizedAni)
         .limit(3);
 
@@ -806,6 +819,7 @@ serve(async (req) => {
       const { data: mycaseMaps } = await supabase
         .from('mycase_mappings')
         .select('tenant_id, contact_id, case_id, phone')
+        .in('organization_id', accessScope.organizationIds)
         .eq('phone', normalizedAni)
         .limit(3);
 
@@ -816,6 +830,7 @@ serve(async (req) => {
         const { data: matterData } = await supabase
           .from('legal_connect_matters')
           .select('id, title, status, provider, provider_id')
+          .in('organization_id', accessScope.organizationIds)
           .eq('contact_id', contact.id)
           .eq('status', 'open')
           .order('created_at', { ascending: false })
@@ -827,7 +842,8 @@ serve(async (req) => {
       const { data: recentCalls } = await supabase
         .from('call_sessions')
         .select('id, started_at, duration_seconds, status, ani, dnis')
-        .eq('ani', ani)
+        .in('organization_id', accessScope.organizationIds)
+        .eq('ani', normalizedAni)
         .order('started_at', { ascending: false })
         .limit(5);
 
