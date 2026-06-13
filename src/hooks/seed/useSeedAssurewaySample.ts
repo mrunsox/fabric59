@@ -338,19 +338,31 @@ function buildFormSchema(): FormSchemaV1 {
     sections: [
       {
         id: cryptoRandomId(),
-        title: "Caller information",
-        description: "Same four fields the agent collects on the call.",
+        title: "General Inquiry",
+        description: "Used when the caller selects General Inquiry on the branch.",
         fields: [
-          { id: cryptoRandomId(), key: "caller_name", type: "text", label: "Caller name", required: true, placeholder: "Full name" },
-          { id: cryptoRandomId(), key: "caller_phone", type: "phone", label: "Phone number", required: true, placeholder: "Best number to reach the caller" },
-          { id: cryptoRandomId(), key: "caller_email", type: "email", label: "Email address", required: true, placeholder: "name@example.com" },
-          { id: cryptoRandomId(), key: "call_notes", type: "textarea", label: "Notes about the call", required: true, helpText: "What is the call regarding? Capture verbatim where possible." },
+          { id: cryptoRandomId(), key: "caller_name", type: "text", label: "Caller name", required: false, placeholder: "Full name" },
+          { id: cryptoRandomId(), key: "caller_phone", type: "phone", label: "Phone number", required: false, placeholder: "Best number to reach the caller" },
+          { id: cryptoRandomId(), key: "caller_email", type: "email", label: "Email address", required: false, placeholder: "name@example.com" },
+          { id: cryptoRandomId(), key: "call_notes", type: "textarea", label: "Notes about the call", required: false, helpText: "What is the call regarding? Capture verbatim where possible." },
+        ],
+      },
+      {
+        id: cryptoRandomId(),
+        title: "Dealership",
+        description: "Used when the caller selects Dealership on the branch.",
+        fields: [
+          { id: cryptoRandomId(), key: "dealership_caller_name", type: "text", label: "Caller name", required: false, placeholder: "Full name" },
+          { id: cryptoRandomId(), key: "dealership_caller_phone", type: "phone", label: "Phone number", required: false, placeholder: "Best number to reach the caller" },
+          { id: cryptoRandomId(), key: "dealership_caller_email", type: "email", label: "Email address", required: false, placeholder: "name@example.com" },
+          { id: cryptoRandomId(), key: "dealership_call_notes", type: "textarea", label: "Notes about the call", required: false, helpText: "Capture verbatim where possible." },
         ],
       },
     ],
     logic: [],
     outcomes: [
       { key: "aw_general_inquiry", label: "AW - General Inquiry", dispositionKey: "aw_general_inquiry", notificationEmails: ["admin@assureway.ca"] },
+      { key: "aw_dealership", label: "AW - Dealership", dispositionKey: "aw_dealership", notificationEmails: ["admin@assureway.ca"] },
       { key: "wrong", label: "Wrong" },
       { key: "marketing", label: "Marketing" },
       { key: "testing", label: "Testing" },
