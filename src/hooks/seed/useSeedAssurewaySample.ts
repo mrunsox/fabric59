@@ -555,6 +555,12 @@ export function useSeedAssurewaySample() {
       } as never);
       if (aErr) throw aErr;
 
+      const typeCounts = flowContent.steps.reduce((acc, s) => {
+        acc[s.type] = (acc[s.type] ?? 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      console.log("[seed-assureway] published flow step counts:", typeCounts);
+
       return { campaignId, created: true };
     },
     onSuccess: ({ campaignId, created }) => {
