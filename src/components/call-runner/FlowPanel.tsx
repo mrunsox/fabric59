@@ -137,6 +137,7 @@ export function FlowPanel({
       if (!opt) return;
       e.preventDefault();
       onValueChange(`branch_${current.id}`, opt.label);
+      onValueChange("__branch_label__", opt.label);
       advance(opt.goto ?? null);
     }
     const el = rootRef.current;
