@@ -25,6 +25,18 @@ function id(prefix: string): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+/** Snake/branch keys → human-readable phrase. */
+export function prettifyKey(raw: string): string {
+  if (!raw) return raw;
+  return raw
+    .replace(/^__/, "")
+    .replace(/__$/, "")
+    .replace(/^branch_/, "")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
+
 function currentStep(flow: CampaignFlowContent | null, currentId: string | null): FlowStep | null {
   if (!flow || !currentId) return null;
   return flow.steps.find((s) => s.id === currentId) ?? null;
