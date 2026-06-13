@@ -462,11 +462,12 @@ function StepBody({
     }
     case "outcome_disposition": {
       const cfg = step.config as OutcomeDispositionConfig;
+      const selected = String(values.__outcome__ ?? "");
       return (
-        <div className="space-y-1">
+        <div className="space-y-2">
           <Label className="text-xs">Disposition</Label>
           <Select
-            value={String(values.__outcome__ ?? "")}
+            value={selected}
             onValueChange={(v) => onValueChange("__outcome__", v)}
           >
             <SelectTrigger data-testid="runner-outcome">
@@ -480,6 +481,7 @@ function StepBody({
               ))}
             </SelectContent>
           </Select>
+          {selected && <DispositionEmailPreview outcome={selected} steps={steps} values={values} />}
         </div>
       );
     }
