@@ -504,7 +504,7 @@ export default function OrganizationsOverviewPage() {
               ))}
               {(!organizations || organizations.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
                     No organizations found
                   </TableCell>
                 </TableRow>
@@ -513,6 +513,109 @@ export default function OrganizationsOverviewPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Create / Rename dialog */}
+      <Dialog
+        open={dialog?.kind === "create" || dialog?.kind === "rename"}
+        onOpenChange={(open) => !open && setDialog(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {dialog?.kind === "rename" ? "Edit organization" : "New organization"}
+            </DialogTitle>
+            <DialogDescription>
+              {dialog?.kind === "rename"
+                ? "Update the organization name and billing email."
+                : "Create a new partner organization."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="org-name">Name</Label>
+              <Input
+                id="org-name"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Acme Services"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="org-email">Billing email</Label>
+              <Input
+                id="org-email"
+                type="email"
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder="billing@acme.com"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDialog(null)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!formName.trim() || createOrgMutation.isPending || updateOrgMutation.isPending}
+              onClick={() => {
+                if (dialog?.kind === "rename") {
+                  updateOrgMutation.mutate(
+                    {
+                      id: dialog.org.id,
+                      updates: { name: formName.trim(), billing_email: formEmail.trim() },
+                    },
+                    { onSuccess: () => setDialog(null) },
+                  );
+                } else {
+                  createOrgMutation.mutate({
+                    name: formName.trim(),
+                    billing_email: formEmail.trim(),
+                  });
+                }
+              }}
+            >
+              {(createOrgMutation.isPending || updateOrgMutation.isPending) && (
+                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+              )}
+              {dialog?.kind === "rename" ? "Save changes" : "Create organization"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete dialog */}
+      <Dialog
+        open={dialog?.kind === "delete"}
+        onOpenChange={(open) => !open && setDialog(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete organization</DialogTitle>
+            <DialogDescription>
+              This permanently deletes{" "}
+              <span className="font-medium text-foreground">
+                {dialog?.kind === "delete" ? dialog.org.name : ""}
+              </span>{" "}
+              and may cascade to its workspaces, clients, and members. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDialog(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteOrgMutation.isPending}
+              onClick={() => {
+                if (dialog?.kind === "delete") deleteOrgMutation.mutate(dialog.org.id);
+              }}
+            >
+              {deleteOrgMutation.isPending && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
+              Delete organization
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
