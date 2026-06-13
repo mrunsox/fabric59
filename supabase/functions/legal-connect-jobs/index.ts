@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.93.3";
+import { isServiceRoleRequest, requireUser } from "../_shared/auth.ts";
 import { resolveLegacyConnection } from "../_shared/legacy-config-bridge.ts";
 import {
   classifyAdapterError,
@@ -615,6 +616,14 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const serviceRoleRequest = isServiceRoleRequest(req);
+  let authUserId: string | null = null;
+  if (!serviceRoleRequest) {
+    const auth = await requireUser(req);
+    if (!auth.ok) return auth.response;
+    authUserId = auth.user.id;
+  }
+
   const supabaseAdmin = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -623,8 +632,34 @@ Deno.serve(async (req) => {
   try {
     const { action, ...payload } = await req.json();
 
+    const requireInternalAction = async () => {
+      if (serviceRoleRequest) return null;
+      if (!authUserId) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: roles } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", authUserId);
+      const isPrivileged = (roles ?? []).some((r: any) =>
+        ["master_admin", "admin", "ops_team"].includes(String(r.role)),
+      );
+      if (!isPrivileged) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return null;
+    };
+
     switch (action) {
       case "processQueue": {
+        const denied = await requireInternalAction();
+        if (denied) return denied;
         const batchSize = payload.batch_size ?? 10;
         const { data: jobs, error: fetchErr } = await supabaseAdmin
           .from("legal_connect_sync_jobs")
@@ -902,6 +937,8 @@ Deno.serve(async (req) => {
       }
 
       case "renewExpiring": {
+        const denied = await requireInternalAction();
+        if (denied) return denied;
         const renewWindow = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString();
 
         const { data: expiring } = await supabaseAdmin
@@ -1030,6 +1067,8 @@ Deno.serve(async (req) => {
       }
 
       case "computeAllHealth": {
+        const denied = await requireInternalAction();
+        if (denied) return denied;
         const { data: allSubs } = await supabaseAdmin
           .from("legal_connect_webhook_subscriptions")
           .select("*");

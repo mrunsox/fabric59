@@ -21,6 +21,7 @@
 // because every job carries an idempotency_key derived from that id.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.93.3";
+import { requireOrgMember, requireUser } from "../_shared/auth.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -52,6 +53,9 @@ interface InteractionDraftPayload {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return json(500, { ok: false, error: "service_role_unavailable" });
   }
@@ -71,6 +75,8 @@ Deno.serve(async (req) => {
 
   try {
     const ctx = await resolveContext(supabase, payload);
+    const orgCheck = await requireOrgMember(auth.user.id, ctx.organizationId);
+    if (!orgCheck.ok) return orgCheck.response;
     const interactionId = buildInteractionId(payload);
 
     // 1. Persist InteractionRecord. We use platform_events as the canonical
