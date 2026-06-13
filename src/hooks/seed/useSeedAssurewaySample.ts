@@ -96,6 +96,19 @@ function buildGuide(): WorkspaceGuideContentV2 {
       },
       {
         id: rid("s"),
+        kind: "service_descriptions",
+        label: "Department routing (PROMPT 2 vs PROMPT 4)",
+        description: "Help the agent figure out which branch to take.",
+        visibility: "agent",
+        required: true,
+        enabled: true,
+        fields: [
+          { id: rid("f"), label: "PROMPT 2 — Dealership", value: "Caller comes from an auto dealership. Collect dealership name + caller name + phone/email + notes. Closing depends on time: before 3pm EST = 'within the business day', after 3pm = 'within 1 business day'. Disposition: AW - DEALERSHIP." },
+          { id: rid("f"), label: "PROMPT 4 — General Inquiry", value: "Everyone else. Collect name + phone + email + notes. Closing: 'expect to hear back within 3–5 business days.' Disposition: AW - General Inquiry." },
+        ],
+      },
+      {
+        id: rid("s"),
         kind: "special_handling",
         label: "If the caller persists (always-visible fallbacks)",
         description: "Read verbatim if the caller pushes for information the receptionist cannot give.",
@@ -105,9 +118,10 @@ function buildGuide(): WorkspaceGuideContentV2 {
         fields: [
           { id: rid("f"), label: "Fallback A — information limit", value: "Unfortunately, I do not have access to that information myself, but I will make sure your message is directed appropriately and someone will get back to you about this matter." },
           { id: rid("f"), label: "Fallback B — receptionist limit", value: "Unfortunately my access is limited as a receptionist, but if you are okay with it I can proceed to collect some information from you so our team can best assist you." },
-          { id: rid("f"), label: "Fallback C — email path", value: "If you would like to detail your request by email to info@assureway.ca, they may be able to respond to you sooner." },
+          { id: rid("f"), label: "Fallback C — email path", value: "If a customer has an existing claim with Assureway, they can reply directly to the last email notification they received from claims@assureway.ca. For non-claim requests, they may email info@assureway.ca." },
         ],
       },
+
       {
         id: rid("s"),
         kind: "special_handling",
@@ -141,193 +155,173 @@ function buildGuide(): WorkspaceGuideContentV2 {
   };
 }
 
+
 function buildFlow(): CampaignFlowContent {
   const mk = (
     i: number,
     type: FlowStep["type"],
     title: string,
     config: Record<string, unknown>,
-    required = true,
+    extra: Partial<FlowStep> = {},
   ): FlowStep => ({
     id: rid("stp"),
     type,
     title,
     order: i,
-    required,
+    required: true,
     enabled: true,
     nextStepId: null,
     rules: [],
     config: config as FlowStep["config"],
+    ...extra,
   });
 
-  // ---- Shared ----
+  // Build all step objects up front so we can wire references.
   const greeting = mk(1, "information_display", "Greeting", {
-    body: "Hi there, you've reached AssureWay. How can I help you today?",
-  }, false);
+    body: "Hi there, you've reached AssureWay. It seems like you're calling from a dealership; is that correct?",
+  }, { required: false });
 
-  // Branch step (goto wired after we have target ids)
-  const branch = mk(2, "question_branch", "Department", {
-    prompt: "Are you calling about a dealership matter, or a general inquiry?",
+  const branch = mk(2, "question_branch", "Calling from a dealership?", {
+    prompt: "Confirm: is the caller from an auto dealership?",
     options: [
-      { id: rid("opt"), label: "Dealership", goto: null },
-      { id: rid("opt"), label: "General Inquiry", goto: null },
+      { id: rid("opt"), label: "Yes — dealership", goto: null },
+      { id: rid("opt"), label: "No — general inquiry", goto: null },
     ],
   });
 
-  // ---- Dealership branch (orders 10–18) ----
-  const dName = mk(10, "field_capture", "Dealership · Caller name", {
-    fieldKey: "dealership_caller_name", fieldType: "short_text",
-    placeholder: "May I have your name, please?",
-    helper: "May I have your name, please?",
-  });
-  const dPhone = mk(11, "field_capture", "Dealership · Phone", {
-    fieldKey: "dealership_caller_phone", fieldType: "phone",
-    placeholder: "Best number to reach you?",
-    helper: "What is the best number to reach you?",
-  });
-  const dEmail = mk(12, "field_capture", "Dealership · Email", {
-    fieldKey: "dealership_caller_email", fieldType: "email",
-    placeholder: "May I have your email address?",
-    helper: "May I have your email address, please?",
-  });
-  const dNotes = mk(13, "field_capture", "Dealership · Notes", {
-    fieldKey: "dealership_call_notes", fieldType: "long_text",
-    placeholder: "What is your call regarding?",
-    helper: "Capture verbatim where possible.",
-  });
-  const dWrap = mk(14, "information_display", "Dealership · Wrap-up", {
-    body: "Thank you. I will pass along your information to our dealership team — you can expect to hear back within 3–5 business days.",
-  }, false);
-  const dDispo = mk(15, "outcome_disposition", "Dealership · Disposition", {
+  // Dealership path
+  const dealershipName = mk(3, "field_capture", "Dealership name", {
+    fieldKey: "dealership_name", fieldType: "short_text", placeholder: "Dealership name",
+    helper: "If not actually calling from a dealership, jump back to the branch step and pick 'No — general inquiry'.",
+  }, { description: "What is the name of the dealership you are calling from?" });
+  const dCaller = mk(4, "field_capture", "Caller name", {
+    fieldKey: "caller_name", fieldType: "short_text", placeholder: "Full name",
+  }, { description: "May I have your name, please?" });
+  const dPhone = mk(5, "field_capture", "Best contact — phone", {
+    fieldKey: "caller_phone", fieldType: "phone", placeholder: "Best phone number",
+  }, { description: "What is the best way to reach you, phone or email? Take down both if given." });
+  const dEmail = mk(6, "field_capture", "Email (if provided)", {
+    fieldKey: "caller_email", fieldType: "email", placeholder: "name@example.com",
+  }, { required: false, description: "Email — if also provided" });
+  const dNotes = mk(7, "field_capture", "Call notes", {
+    fieldKey: "call_notes", fieldType: "long_text", helper: "Take notes verbatim where possible.",
+  }, { description: "What is your call regarding?" });
+  const dClosing = mk(8, "information_display", "Closing — time-aware (dealership)", {
+    body: "Mon–Fri before 3:00 pm EST:\n\"Thank you. I will have someone from our team return your call within the business day.\"\n\nMon–Fri after 3:00 pm EST:\n\"Thank you. Someone from our team will return your call within 1 business day.\"\n\nThank you for calling and have a nice day!",
+    acknowledgement: "Read closing",
+  }, { required: false });
+
+  // General inquiry path
+  const giPivot = mk(9, "information_display", "General inquiry pivot", {
+    body: "You may have selected the incorrect prompt. Let me collect some information so that someone from our team can follow up with you.",
+  }, { required: false });
+  const giCaller = mk(10, "field_capture", "Caller name", {
+    fieldKey: "caller_name", fieldType: "short_text", placeholder: "Full name",
+  }, { description: "May I have your name, please?" });
+  const giPhone = mk(11, "field_capture", "Phone number", {
+    fieldKey: "caller_phone", fieldType: "phone", placeholder: "Best phone number",
+  }, { description: "What is the best number to reach you?" });
+  const giEmail = mk(12, "field_capture", "Email address", {
+    fieldKey: "caller_email", fieldType: "email", placeholder: "name@example.com",
+  }, { description: "May I have your email address, please?" });
+  const giNotes = mk(13, "field_capture", "Call notes", {
+    fieldKey: "call_notes", fieldType: "long_text", helper: "Take notes verbatim where possible.",
+  }, { description: "What is your call regarding, please?" });
+  const giClosing = mk(14, "information_display", "Closing — 3–5 business days (general inquiry)", {
+    body: "Thank you. I will pass along your information to our team and you can expect to hear back from someone within 3–5 business days.\n\nThank you for calling and have a nice day!",
+    acknowledgement: "Read closing",
+  }, { required: false });
+
+  // Shared tail
+  const disposition = mk(15, "outcome_disposition", "Disposition", {
     destinationKey: "disposition",
     allowedOutcomes: [
-      { code: "aw_dealership", label: "AW - Dealership", urgency: "normal" },
+      { code: "aw_dealership", label: "AW - DEALERSHIP", urgency: "normal" },
+      { code: "aw_general_inquiry", label: "AW - General Inquiry", urgency: "normal" },
       { code: "wrong", label: "Wrong" },
+      { code: "wrong_number", label: "Wrong Number" },
       { code: "marketing", label: "Marketing" },
       { code: "testing", label: "Testing" },
       { code: "caller_hung_up", label: "Caller hung up - disconnected" },
     ],
   });
-  const dNotify = mk(16, "notification_trigger", "Dealership · Notify team", {
+  const notify = mk(16, "notification_trigger", "Email Office Admin", {
     channel: "email",
     target: "admin@assureway.ca",
     payloadSummary: {
       templates: {
         aw_dealership: {
-          subject: "CALL from DEALERSHIP: {{dealership_caller_name}}",
-          body: "Name: {{dealership_caller_name}}\nPhone: {{dealership_caller_phone}}\nEmail: {{dealership_caller_email}}\nNotes: {{dealership_call_notes}}",
+          subject: "CALL from DEALERSHIP: {{dealership_name}}",
+          body: "CALL TYPE: DEALERSHIP\nDEALERSHIP NAME: {{dealership_name}}\nCALLER NAME: {{caller_name}}\nPHONE #: {{caller_phone}}\nEMAIL: {{caller_email}}\nMESSAGE: {{call_notes}}",
         },
-      },
-      skipOutcomes: ["wrong", "marketing", "testing", "caller_hung_up"],
-    },
-  }, false);
-
-  // ---- General Inquiry branch (orders 20–28) ----
-  const gName = mk(20, "field_capture", "General · Caller name", {
-    fieldKey: "caller_name", fieldType: "short_text",
-    placeholder: "May I have your name, please?",
-    helper: "May I have your name, please?",
-  });
-  const gPhone = mk(21, "field_capture", "General · Phone", {
-    fieldKey: "caller_phone", fieldType: "phone",
-    placeholder: "Best number to reach you?",
-    helper: "What is the best number to reach you?",
-  });
-  const gEmail = mk(22, "field_capture", "General · Email", {
-    fieldKey: "caller_email", fieldType: "email",
-    placeholder: "May I have your email address?",
-    helper: "May I have your email address, please?",
-  });
-  const gNotes = mk(23, "field_capture", "General · Notes", {
-    fieldKey: "call_notes", fieldType: "long_text",
-    placeholder: "What is your call regarding?",
-    helper: "Capture verbatim where possible.",
-  });
-  const gWrap = mk(24, "information_display", "General · Wrap-up", {
-    body: "Thank you. I will pass along your information to our team — you can expect to hear back within 3–5 business days.",
-  }, false);
-  const gDispo = mk(25, "outcome_disposition", "General · Disposition", {
-    destinationKey: "disposition",
-    allowedOutcomes: [
-      { code: "aw_general_inquiry", label: "AW - General Inquiry", urgency: "normal" },
-      { code: "wrong", label: "Wrong" },
-      { code: "marketing", label: "Marketing" },
-      { code: "testing", label: "Testing" },
-      { code: "caller_hung_up", label: "Caller hung up - disconnected" },
-    ],
-  });
-  const gNotify = mk(26, "notification_trigger", "General · Notify team", {
-    channel: "email",
-    target: "admin@assureway.ca",
-    payloadSummary: {
-      templates: {
         aw_general_inquiry: {
-          subject: "CALL from CUSTOMER: GENERAL INQUIRY — {{caller_name}}",
-          body: "Name: {{caller_name}}\nPhone: {{caller_phone}}\nEmail: {{caller_email}}\nNotes: {{call_notes}}",
+          subject: "CALL for GENERAL INQUIRY: {{caller_name}}",
+          body: "CALL TYPE: GENERAL INQUIRY\nCALLER NAME: {{caller_name}}\nPHONE #: {{caller_phone}}\nEMAIL: {{caller_email}}\nMESSAGE: {{call_notes}}",
         },
       },
-      skipOutcomes: ["wrong", "marketing", "testing", "caller_hung_up"],
+      skipOutcomes: ["wrong", "wrong_number", "marketing", "testing", "caller_hung_up"],
     },
-  }, false);
+  }, { required: false });
+  const end = mk(17, "end_flow", "End", { label: "End of session" }, { required: false });
 
-  const end = mk(99, "end_flow", "End", { label: "End of call" }, false);
-
-  // Wire branch gotos
+  // Wire branch goto targets
   const branchCfg = branch.config as { options: { id: string; label: string; goto: string | null }[] };
-  branchCfg.options[0].goto = dName.id;
-  branchCfg.options[1].goto = gName.id;
+  branchCfg.options[0].goto = dealershipName.id;
+  branchCfg.options[1].goto = giPivot.id;
 
-  // Hide-step rules so each branch's outline only shows its own steps.
-  const dealershipIds = [dName.id, dPhone.id, dEmail.id, dNotes.id, dWrap.id, dDispo.id, dNotify.id];
-  const generalIds = [gName.id, gPhone.id, gEmail.id, gNotes.id, gWrap.id, gDispo.id, gNotify.id];
+  // Sequential wiring
+  greeting.nextStepId = branch.id;
+  dealershipName.nextStepId = dCaller.id;
+  dCaller.nextStepId = dPhone.id;
+  dPhone.nextStepId = dEmail.id;
+  dEmail.nextStepId = dNotes.id;
+  dNotes.nextStepId = dClosing.id;
+  dClosing.nextStepId = disposition.id;
+  giPivot.nextStepId = giCaller.id;
+  giCaller.nextStepId = giPhone.id;
+  giPhone.nextStepId = giEmail.id;
+  giEmail.nextStepId = giNotes.id;
+  giNotes.nextStepId = giClosing.id;
+  giClosing.nextStepId = disposition.id;
+  disposition.nextStepId = notify.id;
+  notify.nextStepId = end.id;
 
+  // Hide per branch — only show the chosen path
+  const dealershipIds = [dealershipName.id, dCaller.id, dPhone.id, dEmail.id, dNotes.id, dClosing.id];
+  const giIds = [giPivot.id, giCaller.id, giPhone.id, giEmail.id, giNotes.id, giClosing.id];
   const hideWhenBranch = (label: string, targetId: string) => ({
     id: rid("rule"),
-    groups: [
-      {
-        id: rid("grp"),
-        combinator: "AND" as const,
-        conditions: [
-          { id: rid("cond"), source: "__branch_label__", op: "eq" as const, value: label },
-        ],
-      },
-    ],
+    groups: [{
+      id: rid("grp"),
+      combinator: "AND" as const,
+      conditions: [{ id: rid("cond"), source: "__branch_label__", op: "eq" as const, value: label }],
+    }],
     action: { type: "hide_step" as const, stepId: targetId },
   });
-
-  // When General Inquiry is chosen, hide all Dealership steps (attach on branch step).
   branch.rules = [
-    ...generalIds.map((id) => hideWhenBranch("Dealership", id)),
-    ...dealershipIds.map((id) => hideWhenBranch("General Inquiry", id)),
+    ...giIds.map((id) => hideWhenBranch("Yes — dealership", id)),
+    ...dealershipIds.map((id) => hideWhenBranch("No — general inquiry", id)),
   ];
 
-  // Jump-to-end on non-actionable dispositions.
-  const skipOutcomes = ["wrong", "marketing", "testing", "caller_hung_up"];
-  const jumpToEnd = () => ({
+  // Skip notify on non-actionable dispositions — jump straight to end
+  disposition.rules = [{
     id: rid("rule"),
-    groups: [
-      {
-        id: rid("grp"),
-        combinator: "AND" as const,
-        conditions: [
-          { id: rid("cond"), source: "__outcome__", op: "in" as const, value: skipOutcomes },
-        ],
-      },
-    ],
+    groups: [{
+      id: rid("grp"),
+      combinator: "AND" as const,
+      conditions: [{
+        id: rid("cond"), source: "__outcome__", op: "in" as const,
+        value: ["wrong", "wrong_number", "marketing", "testing", "caller_hung_up"],
+      }],
+    }],
     action: { type: "jump_to" as const, stepId: end.id },
-  });
-  dDispo.rules = [jumpToEnd()];
-  gDispo.rules = [jumpToEnd()];
-
-  // Sequential wiring inside each branch (last node points to end).
-  dNotify.nextStepId = end.id;
-  gNotify.nextStepId = end.id;
+  }];
 
   const steps: FlowStep[] = [
     greeting, branch,
-    dName, dPhone, dEmail, dNotes, dWrap, dDispo, dNotify,
-    gName, gPhone, gEmail, gNotes, gWrap, gDispo, gNotify,
-    end,
+    dealershipName, dCaller, dPhone, dEmail, dNotes, dClosing,
+    giPivot, giCaller, giPhone, giEmail, giNotes, giClosing,
+    disposition, notify, end,
   ];
   return { schemaVersion: 1, steps, mappings: [] };
 }
@@ -338,38 +332,44 @@ function buildFormSchema(): FormSchemaV1 {
     sections: [
       {
         id: cryptoRandomId(),
-        title: "General Inquiry",
-        description: "Used when the caller selects General Inquiry on the branch.",
+        title: "Department",
+        description: "If this is a dealership call, complete this section.",
         fields: [
-          { id: cryptoRandomId(), key: "caller_name", type: "text", label: "Caller name", required: false, placeholder: "Full name" },
-          { id: cryptoRandomId(), key: "caller_phone", type: "phone", label: "Phone number", required: false, placeholder: "Best number to reach the caller" },
-          { id: cryptoRandomId(), key: "caller_email", type: "email", label: "Email address", required: false, placeholder: "name@example.com" },
-          { id: cryptoRandomId(), key: "call_notes", type: "textarea", label: "Notes about the call", required: false, helpText: "What is the call regarding? Capture verbatim where possible." },
+          { id: cryptoRandomId(), key: "dealership_name", type: "text", label: "Dealership name", required: false, helpText: "Required only when disposition = AW - DEALERSHIP" },
         ],
       },
       {
         id: cryptoRandomId(),
-        title: "Dealership",
-        description: "Used when the caller selects Dealership on the branch.",
+        title: "Caller information",
         fields: [
-          { id: cryptoRandomId(), key: "dealership_caller_name", type: "text", label: "Caller name", required: false, placeholder: "Full name" },
-          { id: cryptoRandomId(), key: "dealership_caller_phone", type: "phone", label: "Phone number", required: false, placeholder: "Best number to reach the caller" },
-          { id: cryptoRandomId(), key: "dealership_caller_email", type: "email", label: "Email address", required: false, placeholder: "name@example.com" },
-          { id: cryptoRandomId(), key: "dealership_call_notes", type: "textarea", label: "Notes about the call", required: false, helpText: "Capture verbatim where possible." },
+          { id: cryptoRandomId(), key: "caller_name", type: "text", label: "Caller name", required: true },
+          { id: cryptoRandomId(), key: "caller_phone", type: "phone", label: "Phone number", required: true },
+          { id: cryptoRandomId(), key: "caller_email", type: "email", label: "Email address", required: false },
+          { id: cryptoRandomId(), key: "call_notes", type: "textarea", label: "Notes about the call", required: true },
         ],
       },
     ],
-    logic: [],
+    logic: [
+      {
+        id: cryptoRandomId(),
+        name: "Require dealership_name when disposition = AW - DEALERSHIP",
+        groups: [{ all: [{ fieldKey: "__outcome__", op: "equals", value: "aw_dealership" }] }],
+        actions: [{ type: "require_field", fieldKey: "dealership_name" }],
+        enabled: true,
+      },
+    ],
     outcomes: [
+      { key: "aw_dealership", label: "AW - DEALERSHIP", dispositionKey: "aw_dealership", notificationEmails: ["admin@assureway.ca"] },
       { key: "aw_general_inquiry", label: "AW - General Inquiry", dispositionKey: "aw_general_inquiry", notificationEmails: ["admin@assureway.ca"] },
-      { key: "aw_dealership", label: "AW - Dealership", dispositionKey: "aw_dealership", notificationEmails: ["admin@assureway.ca"] },
       { key: "wrong", label: "Wrong" },
+      { key: "wrong_number", label: "Wrong Number" },
       { key: "marketing", label: "Marketing" },
       { key: "testing", label: "Testing" },
       { key: "caller_hung_up", label: "Caller hung up - disconnected" },
     ],
   };
 }
+
 
 export function useSeedAssurewaySample() {
   const { workspace } = useWorkspace();
@@ -554,6 +554,12 @@ export function useSeedAssurewaySample() {
         workspace_id: wsId, form_id: formId, campaign_id: campaignId, created_by: uid,
       } as never);
       if (aErr) throw aErr;
+
+      const typeCounts = flowContent.steps.reduce((acc, s) => {
+        acc[s.type] = (acc[s.type] ?? 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      console.log("[seed-assureway] published flow step counts:", typeCounts);
 
       return { campaignId, created: true };
     },
