@@ -46,6 +46,16 @@ export function SessionHeader({ meta, resumed, onReset, branchLabel }: Props) {
         <Badge variant="outline" className="font-mono text-xs gap-1">
           <PhoneCall className="h-3 w-3" /> ANI {meta.ani ?? "—"}
         </Badge>
+        {branchLabel && (
+          <Badge
+            variant="secondary"
+            className="text-xs gap-1"
+            data-testid="runner-branch-badge"
+            title="Active branch"
+          >
+            <GitBranch className="h-3 w-3" /> {branchLabel}
+          </Badge>
+        )}
         {meta.callId && (
           <Badge variant="outline" className="font-mono text-[10px]" title="Five9 call id">
             Call {meta.callId.slice(0, 8)}
