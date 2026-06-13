@@ -197,9 +197,21 @@ export default function OrganizationsOverviewPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">White-Label Partners</h1>
-        <p className="text-muted-foreground">Manage partner organizations and their branding</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">White-Label Partners</h1>
+          <p className="text-muted-foreground">Manage partner organizations and their branding</p>
+        </div>
+        <Button
+          onClick={() => {
+            setFormName("");
+            setFormEmail("");
+            setDialog({ kind: "create" });
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          New organization
+        </Button>
       </div>
 
       <Card>
@@ -216,6 +228,7 @@ export default function OrganizationsOverviewPage() {
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="w-8"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
