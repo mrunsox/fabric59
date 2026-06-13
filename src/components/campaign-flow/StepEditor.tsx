@@ -315,7 +315,11 @@ function NotificationEditor({ cfg, onChange }: { cfg: NotificationTriggerConfig;
       </div>
       <div className="space-y-1">
         <Label className="text-xs">Payload summary</Label>
-        <Textarea rows={2} value={cfg.payloadSummary ?? ""} onChange={(e) => onChange({ payloadSummary: e.target.value || undefined })} />
+        <Textarea
+          rows={2}
+          value={typeof cfg.payloadSummary === "string" ? cfg.payloadSummary : JSON.stringify(cfg.payloadSummary ?? "", null, 2)}
+          onChange={(e) => onChange({ payloadSummary: e.target.value || undefined })}
+        />
       </div>
     </div>
   );
