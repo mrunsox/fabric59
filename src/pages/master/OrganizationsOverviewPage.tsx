@@ -280,11 +280,39 @@ export default function OrganizationsOverviewPage() {
                     <TableCell>
                       {new Date(org.created_at).toLocaleDateString()}
                     </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setFormName(org.name);
+                              setFormEmail(org.billing_email || "");
+                              setDialog({ kind: "rename", org });
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5 mr-2" />
+                            Edit details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setDialog({ kind: "delete", org })}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
 
                   {expandedOrgId === org.id && (
                     <TableRow key={`${org.id}-members`}>
-                      <TableCell colSpan={6} className="bg-muted/30 p-0">
+                      <TableCell colSpan={7} className="bg-muted/30 p-0">
                         <div className="px-6 py-4 space-y-6">
                           {/* Members section */}
                           <div className="space-y-3">
