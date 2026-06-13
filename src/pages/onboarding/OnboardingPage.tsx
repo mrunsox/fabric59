@@ -364,6 +364,7 @@ export default function OnboardingPage() {
                   <button
                     key={r.key}
                     type="button"
+                    aria-pressed={active}
                     onClick={() => setRole(r.key)}
                     className={cn(
                       "text-left rounded-xl border-2 p-3 transition-premium",
@@ -401,6 +402,7 @@ export default function OnboardingPage() {
                   <button
                     key={opt.key}
                     type="button"
+                    aria-pressed={active}
                     onClick={() => setOwnershipMode(opt.key)}
                     className={cn(
                       "text-left rounded-xl border-2 p-3 transition-premium",
@@ -434,6 +436,7 @@ export default function OnboardingPage() {
                   <button
                     key={m.key}
                     type="button"
+                    aria-pressed={active}
                     onClick={() => setMotion(m.key)}
                     className={cn(
                       "w-full text-left rounded-lg border px-3 py-2.5 transition-premium flex items-center justify-between gap-3",
@@ -507,7 +510,8 @@ export default function OnboardingPage() {
                   size="sm"
                   className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
-                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                 </Button>
