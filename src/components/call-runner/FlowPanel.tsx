@@ -144,6 +144,17 @@ export function FlowPanel({
     return () => el?.removeEventListener("keydown", onKey);
   }, [advance, goBack, onSubmit, current, onValueChange]);
 
+  // Sticky "must complete" checklist of remaining required steps. Cheap to
+  // recompute; small list size on real flows. Must be declared before any
+  // early returns to keep hook order stable.
+  const requiredRemaining = useMemo(
+    () =>
+      orderedVisible.filter(
+        (s) => s.required && !session.completedStepIds.includes(s.id) && s.id !== current?.id,
+      ),
+    [orderedVisible, session.completedStepIds, current],
+  );
+
   if (isLoading) {
     return (
       <Card className="h-full flex flex-col">
@@ -173,16 +184,6 @@ export function FlowPanel({
   // surfacing the upcoming step title so the agent can mentally pre-load it.
   const currentIndex = current ? orderedVisible.findIndex((s) => s.id === current.id) : -1;
   const nextStep = currentIndex >= 0 ? orderedVisible[currentIndex + 1] : null;
-
-  // Sticky "must complete" checklist of remaining required steps. Cheap to
-  // recompute; small list size on real flows.
-  const requiredRemaining = useMemo(
-    () =>
-      orderedVisible.filter(
-        (s) => s.required && !session.completedStepIds.includes(s.id) && s.id !== current?.id,
-      ),
-    [orderedVisible, session.completedStepIds, current],
-  );
 
   return (
     <Card className="h-full flex flex-col" data-testid="runner-flow-panel" ref={rootRef}>
