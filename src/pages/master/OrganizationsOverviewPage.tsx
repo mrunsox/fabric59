@@ -93,6 +93,39 @@ export default function OrganizationsOverviewPage() {
     onError: () => toast.error("Failed to update organization"),
   });
 
+  const createOrgMutation = useMutation({
+    mutationFn: async ({ name, billing_email }: { name: string; billing_email: string }) => {
+      const { error } = await db.from("organizations").insert({
+        name,
+        billing_email: billing_email || null,
+        plan: "free",
+        status: "active",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["master-organizations"] });
+      toast.success("Organization created");
+      setDialog(null);
+      setFormName("");
+      setFormEmail("");
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to create organization"),
+  });
+
+  const deleteOrgMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db.from("organizations").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["master-organizations"] });
+      toast.success("Organization deleted");
+      setDialog(null);
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to delete organization"),
+  });
+
   const updateMemberRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
       const { error } = await supabase
