@@ -338,12 +338,14 @@ export function FlowPanel({
 
 function StepBody({
   step,
+  steps,
   values,
   errors,
   onValueChange,
   onBranch,
 }: {
   step: FlowStep;
+  steps: FlowStep[];
   values: Record<string, unknown>;
   errors: Record<string, string>;
   onValueChange: (key: string, value: unknown) => void;
