@@ -25,7 +25,7 @@ begin
         url := 'https://lxwalsgqrnstjclafaka.supabase.co/functions/v1/process-jobs',
         headers := jsonb_build_object(
           'Content-Type', 'application/json',
-          'x-cron-secret', %L
+          'x-cron-secret', '[REDACTED-AT-RUNTIME]'
         ),
         body := jsonb_build_object('trigger', 'cron')
       ) as request_id;
