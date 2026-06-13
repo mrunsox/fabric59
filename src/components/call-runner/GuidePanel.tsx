@@ -133,11 +133,13 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
 function GuideSectionRow({
   section,
   onAppendToNotes,
+  defaultOpen = true,
 }: {
   section: WorkspaceGuideSection;
   onAppendToNotes?: (text: string) => void;
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div id={`guide-section-${section.id}`} className="rounded-md border border-border bg-card">
