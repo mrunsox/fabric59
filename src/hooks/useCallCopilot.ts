@@ -83,11 +83,12 @@ function suggestedAnswer(step: FlowStep | null, guide: WorkspaceGuideContentV2 |
   }
   if (step.type === "field_capture") {
     const cfg = step.config as FieldCaptureConfig;
+    const pretty = prettifyKey(cfg.fieldKey);
     return {
       id: id("sug"),
       kind: "suggested_answer",
-      title: `Capture ${cfg.fieldKey}`,
-      body: cfg.helper ?? `Ask the caller for ${cfg.fieldKey.replace(/_/g, " ")}.`,
+      title: `Capture ${pretty}`,
+      body: cfg.helper ?? `Ask the caller for ${pretty.toLowerCase()}.`,
       source: "Derived from current step",
     };
   }
