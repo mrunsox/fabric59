@@ -116,8 +116,10 @@ function draftSummary(session: CallSessionState, flow: CampaignFlowContent | nul
   const captured = Object.keys(v).filter((k) => !k.startsWith("__") && v[k]).length;
   if (captured === 0 && !session.notes) return null;
   const reasonBranchKey = Object.keys(v).find((k) => k.startsWith("branch_"));
-  const reason = reasonBranchKey ? String(v[reasonBranchKey]) : "general inquiry";
-  const name = (v.caller_name as string) ?? (v.full_name as string) ?? "the caller";
+  const reason =
+    (v.__branch_label__ as string | undefined) ??
+    (reasonBranchKey ? String(v[reasonBranchKey]) : "general inquiry");
+  const name = (v.caller_name as string) ?? (v.full_name as string) ?? (v.dealership_caller_name as string) ?? "the caller";
   const summaryBody = [
     `${ani} reached us about ${reason}.`,
     `Spoke with ${name}. ${captured} field(s) captured across ${session.completedStepIds.length} step(s).`,
