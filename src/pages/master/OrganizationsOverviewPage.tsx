@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ChevronDown, ChevronRight, Users, Trash2, Palette } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Loader2, ChevronDown, ChevronRight, Users, Trash2, Palette, Plus, MoreVertical, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import type { Organization } from "@/types/database";
 
@@ -25,6 +27,14 @@ export default function OrganizationsOverviewPage() {
   const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null);
   const [expandedBrandingOrgId, setExpandedBrandingOrgId] = useState<string | null>(null);
   const [brandingDraft, setBrandingDraft] = useState<Record<string, Record<string, string>>>({});
+  const [dialog, setDialog] = useState<
+    | { kind: "create" }
+    | { kind: "rename"; org: Organization }
+    | { kind: "delete"; org: Organization }
+    | null
+  >(null);
+  const [formName, setFormName] = useState("");
+  const [formEmail, setFormEmail] = useState("");
   const queryClient = useQueryClient();
 
   const { data: organizations, isLoading } = useQuery({
@@ -81,6 +91,39 @@ export default function OrganizationsOverviewPage() {
       toast.success("Organization updated");
     },
     onError: () => toast.error("Failed to update organization"),
+  });
+
+  const createOrgMutation = useMutation({
+    mutationFn: async ({ name, billing_email }: { name: string; billing_email: string }) => {
+      const { error } = await db.from("organizations").insert({
+        name,
+        billing_email: billing_email || null,
+        plan: "free",
+        status: "active",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["master-organizations"] });
+      toast.success("Organization created");
+      setDialog(null);
+      setFormName("");
+      setFormEmail("");
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to create organization"),
+  });
+
+  const deleteOrgMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db.from("organizations").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["master-organizations"] });
+      toast.success("Organization deleted");
+      setDialog(null);
+    },
+    onError: (e: Error) => toast.error(e.message || "Failed to delete organization"),
   });
 
   const updateMemberRoleMutation = useMutation({
@@ -154,9 +197,21 @@ export default function OrganizationsOverviewPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">White-Label Partners</h1>
-        <p className="text-muted-foreground">Manage partner organizations and their branding</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">White-Label Partners</h1>
+          <p className="text-muted-foreground">Manage partner organizations and their branding</p>
+        </div>
+        <Button
+          onClick={() => {
+            setFormName("");
+            setFormEmail("");
+            setDialog({ kind: "create" });
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          New organization
+        </Button>
       </div>
 
       <Card>
@@ -173,6 +228,7 @@ export default function OrganizationsOverviewPage() {
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead className="w-8"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -224,11 +280,39 @@ export default function OrganizationsOverviewPage() {
                     <TableCell>
                       {new Date(org.created_at).toLocaleDateString()}
                     </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setFormName(org.name);
+                              setFormEmail(org.billing_email || "");
+                              setDialog({ kind: "rename", org });
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5 mr-2" />
+                            Edit details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setDialog({ kind: "delete", org })}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
 
                   {expandedOrgId === org.id && (
                     <TableRow key={`${org.id}-members`}>
-                      <TableCell colSpan={6} className="bg-muted/30 p-0">
+                      <TableCell colSpan={7} className="bg-muted/30 p-0">
                         <div className="px-6 py-4 space-y-6">
                           {/* Members section */}
                           <div className="space-y-3">
@@ -420,7 +504,7 @@ export default function OrganizationsOverviewPage() {
               ))}
               {(!organizations || organizations.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
                     No organizations found
                   </TableCell>
                 </TableRow>
@@ -429,6 +513,109 @@ export default function OrganizationsOverviewPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Create / Rename dialog */}
+      <Dialog
+        open={dialog?.kind === "create" || dialog?.kind === "rename"}
+        onOpenChange={(open) => !open && setDialog(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {dialog?.kind === "rename" ? "Edit organization" : "New organization"}
+            </DialogTitle>
+            <DialogDescription>
+              {dialog?.kind === "rename"
+                ? "Update the organization name and billing email."
+                : "Create a new partner organization."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="org-name">Name</Label>
+              <Input
+                id="org-name"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Acme Services"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="org-email">Billing email</Label>
+              <Input
+                id="org-email"
+                type="email"
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder="billing@acme.com"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDialog(null)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!formName.trim() || createOrgMutation.isPending || updateOrgMutation.isPending}
+              onClick={() => {
+                if (dialog?.kind === "rename") {
+                  updateOrgMutation.mutate(
+                    {
+                      id: dialog.org.id,
+                      updates: { name: formName.trim(), billing_email: formEmail.trim() },
+                    },
+                    { onSuccess: () => setDialog(null) },
+                  );
+                } else {
+                  createOrgMutation.mutate({
+                    name: formName.trim(),
+                    billing_email: formEmail.trim(),
+                  });
+                }
+              }}
+            >
+              {(createOrgMutation.isPending || updateOrgMutation.isPending) && (
+                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+              )}
+              {dialog?.kind === "rename" ? "Save changes" : "Create organization"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete dialog */}
+      <Dialog
+        open={dialog?.kind === "delete"}
+        onOpenChange={(open) => !open && setDialog(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete organization</DialogTitle>
+            <DialogDescription>
+              This permanently deletes{" "}
+              <span className="font-medium text-foreground">
+                {dialog?.kind === "delete" ? dialog.org.name : ""}
+              </span>{" "}
+              and may cascade to its workspaces, clients, and members. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDialog(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteOrgMutation.isPending}
+              onClick={() => {
+                if (dialog?.kind === "delete") deleteOrgMutation.mutate(dialog.org.id);
+              }}
+            >
+              {deleteOrgMutation.isPending && <Loader2 className="h-3 w-3 mr-2 animate-spin" />}
+              Delete organization
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
