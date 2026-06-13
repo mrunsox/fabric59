@@ -23,6 +23,7 @@ interface Props {
  */
 export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
   const [filter, setFilter] = useState("");
+  const [showInternal, setShowInternal] = useState(false);
   const filterRef = useRef<HTMLInputElement | null>(null);
 
   // Global Alt+F focuses the in-panel filter without stealing other inputs.
@@ -41,7 +42,8 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
 
   const sections = useMemo<WorkspaceGuideSection[]>(() => {
     if (!guide) return [];
-    const enabled = guide.sections.filter((s) => s.enabled);
+    let enabled = guide.sections.filter((s) => s.enabled);
+    if (!showInternal) enabled = enabled.filter((s) => s.visibility !== "internal");
     if (!filter.trim()) return enabled;
     const q = filter.toLowerCase();
     return enabled.filter(
@@ -49,7 +51,12 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
         s.label.toLowerCase().includes(q) ||
         s.fields.some((f) => f.label.toLowerCase().includes(q) || f.value.toLowerCase().includes(q)),
     );
-  }, [guide, filter]);
+  }, [guide, filter, showInternal]);
+
+  const internalCount = useMemo(
+    () => (guide?.sections ?? []).filter((s) => s.enabled && s.visibility === "internal").length,
+    [guide],
+  );
 
   return (
     <Card className="h-full flex flex-col" data-testid="runner-guide-panel">
