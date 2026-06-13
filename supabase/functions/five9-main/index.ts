@@ -843,7 +843,7 @@ serve(async (req) => {
         .from('call_sessions')
         .select('id, started_at, duration_seconds, status, ani, dnis')
         .in('organization_id', accessScope.organizationIds)
-        .eq('ani', ani)
+        .eq('ani', normalizedAni)
         .order('started_at', { ascending: false })
         .limit(5);
 
