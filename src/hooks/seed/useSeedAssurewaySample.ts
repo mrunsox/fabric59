@@ -428,17 +428,10 @@ export function useSeedAssurewaySample() {
         campaignId = c.id;
       }
 
-      // Short-circuit if everything already exists.
-      if (isExisting) {
-        const { data: fa } = await supabase.from("form_campaign_assignments")
-          .select("id").eq("campaign_id", campaignId).limit(1).maybeSingle();
-        const { data: cf } = await supabase.from("guides")
-          .select("id, status").eq("workspace_id", wsId).eq("campaign_id", campaignId)
-          .eq("name", CAMPAIGN_FLOW_SENTINEL_NAME).maybeSingle();
-        if (fa && cf && cf.status === "published") {
-          return { campaignId, created: false };
-        }
-      }
+      // No early short-circuit: downstream steps compare content hashes and
+      // only re-publish on actual change, so re-runs are cheap AND pick up
+      // new flow/form revisions when this seeder is updated.
+      void isExisting;
 
       // Step 3 — singleton workspace guide
       toast.message("Loading Assureway sample", { description: "Publishing firm guide…" });
