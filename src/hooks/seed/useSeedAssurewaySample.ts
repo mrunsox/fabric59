@@ -96,6 +96,19 @@ function buildGuide(): WorkspaceGuideContentV2 {
       },
       {
         id: rid("s"),
+        kind: "service_descriptions",
+        label: "Department routing (PROMPT 2 vs PROMPT 4)",
+        description: "Help the agent figure out which branch to take.",
+        visibility: "agent",
+        required: true,
+        enabled: true,
+        fields: [
+          { id: rid("f"), label: "PROMPT 2 — Dealership", value: "Caller comes from an auto dealership. Collect dealership name + caller name + phone/email + notes. Closing depends on time: before 3pm EST = 'within the business day', after 3pm = 'within 1 business day'. Disposition: AW - DEALERSHIP." },
+          { id: rid("f"), label: "PROMPT 4 — General Inquiry", value: "Everyone else. Collect name + phone + email + notes. Closing: 'expect to hear back within 3–5 business days.' Disposition: AW - General Inquiry." },
+        ],
+      },
+      {
+        id: rid("s"),
         kind: "special_handling",
         label: "If the caller persists (always-visible fallbacks)",
         description: "Read verbatim if the caller pushes for information the receptionist cannot give.",
@@ -105,9 +118,10 @@ function buildGuide(): WorkspaceGuideContentV2 {
         fields: [
           { id: rid("f"), label: "Fallback A — information limit", value: "Unfortunately, I do not have access to that information myself, but I will make sure your message is directed appropriately and someone will get back to you about this matter." },
           { id: rid("f"), label: "Fallback B — receptionist limit", value: "Unfortunately my access is limited as a receptionist, but if you are okay with it I can proceed to collect some information from you so our team can best assist you." },
-          { id: rid("f"), label: "Fallback C — email path", value: "If you would like to detail your request by email to info@assureway.ca, they may be able to respond to you sooner." },
+          { id: rid("f"), label: "Fallback C — email path", value: "If a customer has an existing claim with Assureway, they can reply directly to the last email notification they received from claims@assureway.ca. For non-claim requests, they may email info@assureway.ca." },
         ],
       },
+
       {
         id: rid("s"),
         kind: "special_handling",
