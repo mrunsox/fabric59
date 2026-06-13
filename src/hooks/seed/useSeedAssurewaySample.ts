@@ -400,8 +400,14 @@ export function useSeedAssurewaySample() {
         clientId = t.id;
       }
 
-      // Step 2 — campaign
+      // Step 2 — campaign (rename legacy "General Inquiry" → "Main Reception" if present)
       toast.message("Loading Assureway sample", { description: "Creating campaign…" });
+      const { data: legacyCampaign } = await supabase
+        .from("campaigns").select("id, name")
+        .eq("workspace_id", wsId).eq("client_id", clientId).eq("name", LEGACY_CAMPAIGN_NAME).maybeSingle();
+      if (legacyCampaign?.id) {
+        await supabase.from("campaigns").update({ name: CAMPAIGN_NAME } as never).eq("id", legacyCampaign.id);
+      }
       let { data: existingCampaign } = await supabase
         .from("campaigns").select("id")
         .eq("workspace_id", wsId).eq("client_id", clientId).eq("name", CAMPAIGN_NAME).maybeSingle();
