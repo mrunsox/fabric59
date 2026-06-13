@@ -27,7 +27,14 @@ Deno.serve(async (req) => {
 
   try {
     const rawBody = await req.text();
-    const payload = rawBody ? await JSON.parse(rawBody) as Record<string, unknown> : {} as Record<string, unknown>;
+    let payload: Record<string, unknown> = {};
+    if (rawBody) {
+      try {
+        payload = JSON.parse(rawBody) as Record<string, unknown>;
+      } catch {
+        return jsonResponse({ error: "Invalid JSON" }, 400);
+      }
+    }
     // Clio sends client_id (their OAuth app id) and the user_id whose token was revoked.
     const clioUserId = String(payload.user_id ?? payload.client_id ?? "");
     if (!clioUserId) return jsonResponse({ error: "Missing user_id / client_id in deauth payload" }, 400);
@@ -78,15 +85,6 @@ Deno.serve(async (req) => {
         .update({ status: "disabled" })
         .eq("connection_id", conn.id);
 
-      // Audit log entry
-      await supabase.from("legal_connect_audit_log").insert({
-        organization_id: conn.organization_id,
-        client_id: conn.client_id,
-        provider: "clio",
-        action: "deauthorization_received",
-        actor: "clio_callback",
-        details: { connection_id: conn.id, payload },
-      }).select();
     }
 
     return jsonResponse({ ok: true, connections_revoked: matches?.length ?? 0 });
