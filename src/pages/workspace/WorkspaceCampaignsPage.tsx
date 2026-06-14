@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,6 @@ import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader"
 import { SeedAssurewayButton } from "@/components/dashboard/SeedAssurewayButton";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
-import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 
 /**
  * Canonical Workspace Campaigns — /app/workspaces/:id/campaigns (Phase 3).
@@ -23,11 +22,11 @@ import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 export default function WorkspaceCampaignsPage() {
   const { workspace } = useWorkspace();
   const { data: campaigns = [], isLoading } = useWorkspaceCampaigns();
-  const { data: clients = [] } = useWorkspaceClients();
-  const [searchParams] = useSearchParams();
-  const showSeed = clients.length === 0 || searchParams.get("seed") === "assureway";
   if (!workspace) return null;
   const base = `/w/${workspace.id}/campaigns`;
+  const hasExistingAssureway = campaigns.some(
+    (c) => c.name === "Main Reception" || c.name === "Assureway" || c.name === "General Inquiry",
+  );
 
   return (
     <div className="space-y-6">
@@ -37,7 +36,7 @@ export default function WorkspaceCampaignsPage() {
         lede={`Canonical campaigns for ${workspace.name}. Legacy campaign setups mirror in automatically.`}
         action={
           <div className="flex items-center gap-2">
-            {showSeed && <SeedAssurewayButton />}
+            <SeedAssurewayButton variant="secondary" hasExistingAssureway={hasExistingAssureway} />
             <Button asChild size="sm">
               <Link to={`${base}/new`}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> New campaign

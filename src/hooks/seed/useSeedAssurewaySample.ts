@@ -555,11 +555,17 @@ export function useSeedAssurewaySample() {
       } as never);
       if (aErr) throw aErr;
 
-      const typeCounts = flowContent.steps.reduce((acc, s) => {
+      const stepCounts = flowContent.steps.reduce((acc, s) => {
         acc[s.type] = (acc[s.type] ?? 0) + 1;
         return acc;
       }, {} as Record<string, number>);
-      console.log("[seed-assureway] published flow step counts:", typeCounts);
+      console.log("[seed-assureway] complete", {
+        workspaceId: wsId,
+        campaignId,
+        campaignName: CAMPAIGN_NAME,
+        stepCounts,
+      });
+      // Expected stepCounts: { information_display: 4, question_branch: 1, field_capture: 9, outcome_disposition: 1, notification_trigger: 1, end_flow: 1 }
 
       return { campaignId, created: true };
     },
