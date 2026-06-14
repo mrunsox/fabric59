@@ -1,29 +1,55 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Search, ChevronDown, ChevronRight, EyeOff, ClipboardCopy, Check } from "lucide-react";
+import {
+  BookOpen,
+  Search,
+  ChevronDown,
+  ChevronRight,
+  EyeOff,
+  ClipboardCopy,
+  Check,
+  Sparkle,
+} from "lucide-react";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { StatusPill, RunnerSurface } from "./primitives";
 import { matchHotkey, HOTKEYS } from "@/lib/call-runner/hotkeys";
-import type { WorkspaceGuideContentV2, WorkspaceGuideSection } from "@/types/workspace-guide";
+import type {
+  WorkspaceGuideContentV2,
+  WorkspaceGuideSection,
+  WorkspaceGuideSectionKind,
+} from "@/types/workspace-guide";
 
 interface Props {
   guide: WorkspaceGuideContentV2 | null;
   isLoading: boolean;
-  /** Optional sink for the "copy to notes" action (Zingtree-style Instant Notes). */
+  /** Optional sink for the "copy to notes" action. */
   onAppendToNotes?: (text: string) => void;
+  /**
+   * Optional hint about the active step. Used to pin a "Relevant to this step"
+   * section so the guide rail behaves like an at-call reference, not a wall of
+   * text. Best-effort heuristic — no schema dependency.
+   */
+  currentStepHint?: {
+    type?: string;
+    title?: string;
+  } | null;
 }
 
 /**
- * Phase 6 · Left panel — read-only published workspace guide.
- * Collapsible sections, in-panel filter, internal sections badged but not hidden
- * from the agent (per spec — internal = not surfaced externally).
+ * Left panel — read-only published workspace guide as scan-first reference.
+ *
+ * Improvements over the original rail:
+ *   - Sections collapsed by default. Less ink, more signal.
+ *   - "Relevant to this step" pin when the active step has a section match.
+ *   - Quick-jump chips for high-value sections.
+ *   - Search input always present so Alt+F has a visible target.
  */
-export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
+export function GuidePanel({ guide, isLoading, onAppendToNotes, currentStepHint }: Props) {
   const [filter, setFilter] = useState("");
   const [showInternal, setShowInternal] = useState(false);
+  const [openIds, setOpenIds] = useState<Record<string, boolean>>({});
   const filterRef = useRef<HTMLInputElement | null>(null);
 
   // Global Alt+F focuses the in-panel filter without stealing other inputs.
@@ -49,7 +75,9 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
     return enabled.filter(
       (s) =>
         s.label.toLowerCase().includes(q) ||
-        s.fields.some((f) => f.label.toLowerCase().includes(q) || f.value.toLowerCase().includes(q)),
+        s.fields.some(
+          (f) => f.label.toLowerCase().includes(q) || f.value.toLowerCase().includes(q),
+        ),
     );
   }, [guide, filter, showInternal]);
 
@@ -58,26 +86,86 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
     [guide],
   );
 
+  // Heuristic: pick the most relevant section for the current step (if any).
+  // Order of preference is small and intentional so this stays predictable.
+  const relevantSection = useMemo<WorkspaceGuideSection | null>(() => {
+    if (!guide || !currentStepHint) return null;
+    const type = currentStepHint.type ?? "";
+    const title = (currentStepHint.title ?? "").toLowerCase();
+    const lookup = (kinds: WorkspaceGuideSectionKind[]) =>
+      guide.sections.find((s) => s.enabled && kinds.includes(s.kind));
+    if (type === "information_display") return lookup(["greeting", "business_overview"]) ?? null;
+    if (type === "question_branch") return lookup(["faqs", "service_descriptions"]) ?? null;
+    if (type === "field_capture") return lookup(["special_handling", "callback_policy"]) ?? null;
+    if (type === "outcome_disposition") return lookup(["escalation_contacts", "callback_policy"]) ?? null;
+    if (type === "escalation_trigger") return lookup(["escalation_contacts"]) ?? null;
+    if (title) {
+      const byTitle = guide.sections.find(
+        (s) => s.enabled && s.label.toLowerCase().includes(title.split(" ")[0]),
+      );
+      if (byTitle) return byTitle;
+    }
+    return null;
+  }, [guide, currentStepHint]);
+
+  // Quick-jump chips: stable, high-value section kinds first; truncate to 5.
+  const quickJumpKinds: WorkspaceGuideSectionKind[] = [
+    "greeting",
+    "hours",
+    "escalation_contacts",
+    "callback_policy",
+    "faqs",
+    "special_handling",
+  ];
+  const quickJumpSections = useMemo(() => {
+    if (!guide) return [];
+    const map = new Map(guide.sections.filter((s) => s.enabled).map((s) => [s.kind, s] as const));
+    return quickJumpKinds
+      .map((k) => map.get(k))
+      .filter((s): s is WorkspaceGuideSection => Boolean(s))
+      .slice(0, 5);
+  }, [guide]);
+
+  const scrollTo = (id: string) => {
+    setOpenIds((m) => ({ ...m, [id]: true }));
+    requestAnimationFrame(() => {
+      document.getElementById(`guide-section-${id}`)?.scrollIntoView({
+        block: "start",
+        behavior: "smooth",
+      });
+    });
+  };
+
   return (
-    <Card className="h-full flex flex-col" data-testid="runner-guide-panel">
-      <CardHeader className="pb-2 flex-shrink-0">
-        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-          <BookOpen className="h-3.5 w-3.5" /> Workspace guide
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 flex-1 overflow-y-auto">
+    <RunnerSurface className="overflow-hidden" data-testid="runner-guide-panel">
+      <div className="px-3 pt-3 pb-2 border-b flex items-center justify-between gap-2 shrink-0">
+        <h2 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
+          <BookOpen className="h-3.5 w-3.5 text-primary" /> Workspace guide
+        </h2>
+        {guide && (
+          <span className="text-[10px] text-muted-foreground">
+            {sections.length} of {guide.sections.filter((s) => s.enabled).length}
+          </span>
+        )}
+      </div>
+
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-3">
         {isLoading ? (
-          <p className="text-xs text-muted-foreground">Loading guide…</p>
+          <GuideSkeleton />
         ) : !guide || guide.sections.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground space-y-1">
-            <p className="font-medium text-foreground">No published workspace guide yet</p>
-            <p>Contact an admin to publish a workspace guide for this campaign.</p>
-          </div>
+          <GuideEmpty />
         ) : (
           <>
             <div className="relative">
-              <Search className="h-3.5 w-3.5 absolute left-2 top-2.5 text-muted-foreground" />
+              <Search
+                className="h-3.5 w-3.5 absolute left-2 top-2.5 text-muted-foreground"
+                aria-hidden
+              />
+              <label htmlFor="runner-guide-filter-input" className="sr-only">
+                Filter guide sections
+              </label>
               <Input
+                id="runner-guide-filter-input"
                 ref={filterRef}
                 className="h-8 pl-7 pr-12 text-xs"
                 placeholder="Filter sections…"
@@ -85,84 +173,141 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
                 onChange={(e) => setFilter(e.target.value)}
                 data-testid="runner-guide-filter"
               />
-              <kbd className="absolute right-2 top-2 inline-flex items-center justify-center h-4 px-1 rounded border border-border bg-muted text-[9px] font-mono text-muted-foreground">
+              <kbd
+                className="absolute right-2 top-2 inline-flex items-center justify-center h-4 px-1 rounded border border-border bg-muted text-[9px] font-mono text-muted-foreground"
+                aria-hidden
+              >
                 Alt+F
               </kbd>
             </div>
+
+            {quickJumpSections.length > 0 && (
+              <nav aria-label="Quick jump to guide sections" className="flex flex-wrap gap-1.5">
+                {quickJumpSections.map((s) => (
+                  <button
+                    key={`qj-${s.id}`}
+                    type="button"
+                    onClick={() => scrollTo(s.id)}
+                    className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground border border-border rounded-md px-1.5 py-0.5 hover:bg-accent/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </nav>
+            )}
+
             {internalCount > 0 && (
               <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                <span>{internalCount} internal section{internalCount === 1 ? "" : "s"}</span>
+                <span>
+                  {internalCount} internal section{internalCount === 1 ? "" : "s"}
+                </span>
                 <button
                   type="button"
                   onClick={() => setShowInternal((v) => !v)}
-                  className="underline-offset-2 hover:underline"
+                  className="underline-offset-2 hover:underline focus-visible:outline-none focus-visible:underline"
                   data-testid="runner-guide-toggle-internal"
                 >
                   {showInternal ? "Hide internal" : "Show internal"}
                 </button>
               </div>
             )}
-            <nav className="flex flex-wrap gap-1.5" aria-label="Guide sections">
-              {sections.map((s) => (
-                <a
-                  key={`nav-${s.id}`}
-                  href={`#guide-section-${s.id}`}
-                  className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground border border-border rounded px-1.5 py-0.5"
-                >
-                  {s.label}
-                </a>
-              ))}
-            </nav>
-            <div className="space-y-2">
-              {sections.map((s) => (
-                <GuideSectionRow
-                  key={s.id}
-                  section={s}
-                  onAppendToNotes={onAppendToNotes}
-                  defaultOpen={s.visibility !== "internal"}
-                />
-              ))}
+
+            {relevantSection && (
+              <div
+                className="rounded-md border border-primary/30 bg-primary/5 p-2.5 space-y-1.5"
+                data-testid="runner-guide-relevant"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-primary">
+                    <Sparkle className="h-3 w-3" aria-hidden /> Relevant to this step
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => scrollTo(relevantSection.id)}
+                    className="text-[10px] underline-offset-2 hover:underline text-primary"
+                  >
+                    Open
+                  </button>
+                </div>
+                <p className="text-xs font-medium leading-snug">{relevantSection.label}</p>
+                {relevantSection.fields[0] && (
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">
+                    {relevantSection.fields[0].value}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              {sections.length === 0 ? (
+                <p className="text-xs italic text-muted-foreground px-1">
+                  No sections match the current filter.
+                </p>
+              ) : (
+                sections.map((s) => (
+                  <GuideSectionRow
+                    key={s.id}
+                    section={s}
+                    open={openIds[s.id] ?? false}
+                    onOpenChange={(o) => setOpenIds((m) => ({ ...m, [s.id]: o }))}
+                    onAppendToNotes={onAppendToNotes}
+                  />
+                ))
+              )}
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </RunnerSurface>
   );
 }
 
 function GuideSectionRow({
   section,
+  open,
+  onOpenChange,
   onAppendToNotes,
-  defaultOpen = true,
 }: {
   section: WorkspaceGuideSection;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onAppendToNotes?: (text: string) => void;
-  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <div id={`guide-section-${section.id}`} className="rounded-md border border-border bg-card">
+    <Collapsible open={open} onOpenChange={onOpenChange}>
+      <div
+        id={`guide-section-${section.id}`}
+        className="rounded-md border bg-card transition-colors hover:border-border/80"
+      >
         <CollapsibleTrigger asChild>
           <Button
             type="button"
             variant="ghost"
-            className="w-full justify-between h-auto py-2 px-2.5 text-left"
+            className="w-full justify-between h-auto py-2 px-2.5 text-left rounded-md"
             data-testid={`runner-guide-section-${section.id}`}
           >
-            <span className="flex items-center gap-1.5 text-xs font-medium">
-              {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-              {section.label}
+            <span className="flex items-center gap-1.5 text-xs font-medium min-w-0">
+              {open ? (
+                <ChevronDown className="h-3 w-3 shrink-0" aria-hidden />
+              ) : (
+                <ChevronRight className="h-3 w-3 shrink-0" aria-hidden />
+              )}
+              <span className="truncate">{section.label}</span>
               {section.visibility === "internal" && (
-                <Badge variant="outline" className="text-[9px] gap-1 px-1 h-4">
-                  <EyeOff className="h-2.5 w-2.5" /> Internal
-                </Badge>
+                <StatusPill tone="muted" icon={EyeOff} dense className="ml-1">
+                  Internal
+                </StatusPill>
               )}
             </span>
+            {section.fields.length > 0 && (
+              <span className="text-[10px] text-muted-foreground tabular-nums">
+                {section.fields.length}
+              </span>
+            )}
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="px-2.5 pb-2 space-y-2">
+          <div className="px-2.5 pb-2.5 space-y-2 border-t pt-2">
             {section.description && (
               <p className="text-[11px] text-muted-foreground">{section.description}</p>
             )}
@@ -170,7 +315,12 @@ function GuideSectionRow({
               <p className="text-[11px] italic text-muted-foreground">No content</p>
             ) : (
               section.fields.map((f) => (
-                <GuideField key={f.id} label={f.label} value={f.value} onAppendToNotes={onAppendToNotes} />
+                <GuideField
+                  key={f.id}
+                  label={f.label}
+                  value={f.value}
+                  onAppendToNotes={onAppendToNotes}
+                />
               ))
             )}
           </div>
@@ -209,17 +359,43 @@ function GuideField({
   return (
     <div className="group relative space-y-0.5">
       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="text-xs whitespace-pre-wrap pr-6">{value}</p>
+      <p className="text-xs whitespace-pre-wrap pr-6 leading-relaxed">{value}</p>
       <button
         type="button"
         onClick={copy}
         aria-label={onAppendToNotes ? "Append to call notes" : "Copy to clipboard"}
         title={onAppendToNotes ? "Append to call notes" : "Copy to clipboard"}
-        className="absolute right-0 top-0 h-5 w-5 rounded inline-flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-accent/20 transition-opacity"
+        className="absolute right-0 top-0 h-5 w-5 rounded inline-flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent/20 transition-opacity"
         data-testid="runner-guide-copy"
       >
         {copied ? <Check className="h-3 w-3 text-primary" /> : <ClipboardCopy className="h-3 w-3" />}
       </button>
+    </div>
+  );
+}
+
+function GuideSkeleton() {
+  return (
+    <div className="space-y-2" data-testid="runner-guide-loading" aria-busy="true">
+      <div className="h-8 rounded-md bg-muted/40 animate-pulse" />
+      <div className="h-12 rounded-md bg-muted/40 animate-pulse" />
+      <div className="h-12 rounded-md bg-muted/30 animate-pulse" />
+      <div className="h-12 rounded-md bg-muted/20 animate-pulse" />
+    </div>
+  );
+}
+
+function GuideEmpty() {
+  return (
+    <div
+      className="rounded-md border border-dashed bg-muted/20 p-4 text-center space-y-1.5"
+      data-testid="runner-guide-empty"
+    >
+      <BookOpen className="h-5 w-5 mx-auto text-muted-foreground" aria-hidden />
+      <p className="text-xs font-medium">No published workspace guide</p>
+      <p className="text-[11px] text-muted-foreground">
+        Ask an admin to publish a workspace guide so this rail shows reference content.
+      </p>
     </div>
   );
 }
