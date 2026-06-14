@@ -1,24 +1,32 @@
-import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSeedAssurewaySample } from "@/hooks/seed/useSeedAssurewaySample";
+import { Loader2, Download, RotateCw } from "lucide-react";
 
-/**
- * One-shot dev/onboarding affordance: provisions the full Assureway
- * "General Inquiry" sample (client + campaign + guide + flow + form +
- * attachment) using only canonical hooks. Idempotent.
- */
-export function SeedAssurewayButton({ variant = "outline" as const }: { variant?: "default" | "outline" | "secondary" }) {
+export function SeedAssurewayButton({
+  variant = "outline" as const,
+  hasExistingAssureway = false,
+}: {
+  variant?: "default" | "outline" | "secondary";
+  hasExistingAssureway?: boolean;
+}) {
   const seed = useSeedAssurewaySample();
+  const label = hasExistingAssureway ? "Re-run Assureway sample" : "Load Assureway sample";
+  const Icon = hasExistingAssureway ? RotateCw : Download;
   return (
     <Button
-      onClick={() => seed.mutate()}
-      disabled={seed.isPending}
       variant={variant}
       size="sm"
+      onClick={() => seed.mutate()}
+      disabled={seed.isPending}
+      aria-label={label}
       data-testid="seed-assureway-button"
     >
-      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-      {seed.isPending ? "Loading sample…" : "Load Assureway sample"}
+      {seed.isPending ? (
+        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" aria-hidden="true" />
+      ) : (
+        <Icon className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
+      )}
+      {seed.isPending ? "Loading sample…" : label}
     </Button>
   );
 }
