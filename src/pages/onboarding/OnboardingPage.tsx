@@ -650,7 +650,7 @@ export default function OnboardingPage() {
         <div className="mt-8 flex justify-center">
           <button
             type="button"
-            onClick={handleSkipToWorkspace}
+            onClick={handleSkipForNow}
             disabled={submitting}
             className="text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-colors disabled:opacity-50"
             data-testid="onboarding-skip-for-now"
