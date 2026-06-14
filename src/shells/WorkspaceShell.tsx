@@ -271,7 +271,7 @@ function WorkspaceChrome() {
     WORKSPACE_NAV.find((s) => s.to === sectionKey) ?? WORKSPACE_NAV[0];
 
   if (isLoading) {
-    return <div className="p-8 text-sm text-muted-foreground">Loading workspace…</div>;
+    return <div role="status" className="p-8 text-sm text-muted-foreground">Loading workspace…</div>;
   }
   if (notFound || !workspace) {
     return <NotFoundCard />;

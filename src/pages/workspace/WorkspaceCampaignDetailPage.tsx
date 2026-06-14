@@ -15,6 +15,7 @@ import { useWorkspaceCampaign } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
 import { useCampaignIntakeForm } from "@/hooks/useFormCampaignAssignments";
 import { CampaignReadinessChecklist } from "@/components/dashboard/CampaignReadinessChecklist";
+import { prettifyKey, formatDateTime } from "@/lib/utils";
 
 /**
  * Canonical Campaign Detail shell — /w/:workspaceId/campaigns/:campaignId.
@@ -28,7 +29,7 @@ export default function WorkspaceCampaignDetailPage() {
   if (!workspace) return null;
   const base = `/w/${workspace.id}/campaigns`;
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Loading campaign…</p>;
+  if (isLoading) return <p role="status" className="text-sm text-muted-foreground">Loading campaign…</p>;
   if (!campaign) {
     return (
       <Card>
@@ -55,7 +56,7 @@ export default function WorkspaceCampaignDetailPage() {
           <Badge variant="secondary" className="mb-2">{campaign.status}</Badge>
           <h1 className="text-2xl font-semibold tracking-tight">{campaign.name}</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Workspace: {workspace.name} · Updated {new Date(campaign.updated_at).toLocaleString()}
+            Workspace: {workspace.name} · Updated {formatDateTime(campaign.updated_at)}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -102,24 +103,12 @@ export default function WorkspaceCampaignDetailPage() {
         <Card>
           <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Source</CardTitle></CardHeader>
           <CardContent className="text-sm">
-            <span className="text-muted-foreground">{campaign.source_type ?? "canonical"}</span>
+            <span className="text-muted-foreground">{prettifyKey(campaign.source_type ?? "canonical")}</span>
           </CardContent>
         </Card>
       </div>
 
       <IntakeFormCard workspaceId={workspace.id} campaignId={campaign.id} />
-
-
-
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Phase 3 note</CardTitle></CardHeader>
-        <CardContent className="text-xs text-muted-foreground space-y-1">
-          <p>This is the canonical campaign detail shell. Builder, checklist, provisioning, and
-            archive workflows remain in the legacy admin page until Phase 4+.</p>
-          <p>Status, client linkage, and workspace ownership are now sourced from the canonical
-            <code className="px-1">campaigns</code> table.</p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
@@ -152,7 +141,7 @@ function IntakeFormCard({ workspaceId, campaignId }: { workspaceId: string; camp
             onValueChange={(v) => setActive(v === NONE ? null : v)}
             disabled={isMutating}
           >
-            <SelectTrigger className="max-w-sm" data-testid="intake-form-select">
+            <SelectTrigger className="max-w-sm" aria-label="Intake form" data-testid="intake-form-select">
               <SelectValue placeholder="Select intake form" />
             </SelectTrigger>
             <SelectContent>

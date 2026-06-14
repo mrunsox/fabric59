@@ -13,8 +13,8 @@ import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
  * NOTE: Until tenants gain a workspace_id column, this list is resolved via the
  * workspace's parent organization (see useWorkspaceClients). Surface copy is
  * deliberately honest: clients shown here belong to the parent organization,
- * not strictly to this workspace. Per-row deep links are intentionally omitted
- * until canonical client detail surfaces ship.
+ * not strictly to this workspace. Each row deep-links to the canonical client
+ * detail surface at /w/:workspaceId/clients/:clientId.
  */
 export default function WorkspaceClientsPage() {
   const { workspace } = useWorkspace();
@@ -33,7 +33,7 @@ export default function WorkspaceClientsPage() {
       />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading clients…</p>
+        <p role="status" className="text-sm text-muted-foreground">Loading clients…</p>
       ) : clients.length === 0 ? (
         <EmptyState
           icon={Users}

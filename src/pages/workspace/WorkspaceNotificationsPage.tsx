@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { prettifyKey, formatDateTime } from "@/lib/utils";
 // Phase D: PostCallAutomationsContent is mounted here as the canonical
 // "Post-call rules" tab. The legacy /admin/automations route silent-redirects
 // to /w/:workspaceId/notifications and the standalone admin page file is
@@ -67,7 +68,7 @@ export default function WorkspaceNotificationsPage() {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <div className="text-sm text-muted-foreground py-6">Loading…</div>
+                <div role="status" className="text-sm text-muted-foreground py-6">Loading…</div>
               ) : log.length === 0 ? (
                 <EmptyState
                   icon={Bell}
@@ -78,11 +79,11 @@ export default function WorkspaceNotificationsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-24">Channel</TableHead>
-                      <TableHead>Recipient</TableHead>
-                      <TableHead>Trigger</TableHead>
-                      <TableHead className="w-24">Status</TableHead>
-                      <TableHead className="w-40">Created</TableHead>
+                      <TableHead scope="col" className="w-24">Channel</TableHead>
+                      <TableHead scope="col">Recipient</TableHead>
+                      <TableHead scope="col">Trigger</TableHead>
+                      <TableHead scope="col" className="w-24">Status</TableHead>
+                      <TableHead scope="col" className="w-40">Created</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -95,7 +96,7 @@ export default function WorkspaceNotificationsPage() {
                         </TableCell>
                         <TableCell className="font-mono text-xs">{n.recipient}</TableCell>
                         <TableCell className="text-muted-foreground text-xs">
-                          {n.trigger_event}
+                          {prettifyKey(n.trigger_event)}
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -110,8 +111,8 @@ export default function WorkspaceNotificationsPage() {
                             {n.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground text-xs">
-                          {new Date(n.created_at).toLocaleString()}
+                        <TableCell className="text-muted-foreground text-xs tabular-nums">
+                          {formatDateTime(n.created_at)}
                         </TableCell>
                       </TableRow>
                     ))}

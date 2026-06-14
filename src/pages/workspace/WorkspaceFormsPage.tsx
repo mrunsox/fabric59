@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
+import { formatDateTime } from "@/lib/utils";
 
 export default function WorkspaceFormsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -28,7 +29,7 @@ export default function WorkspaceFormsPage() {
       />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading forms…</p>
+        <p role="status" className="text-sm text-muted-foreground">Loading forms…</p>
       ) : forms.length === 0 ? (
         <EmptyState
           icon={FormInput}
@@ -49,8 +50,9 @@ export default function WorkspaceFormsPage() {
               <Card className="hover:border-primary/40 transition-colors">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between gap-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <FormInput className="h-4 w-4 text-muted-foreground" /> {f.name}
+                    <CardTitle className="text-base flex items-center gap-2 min-w-0">
+                      <FormInput className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate" title={f.name}>{f.name}</span>
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={f.status} />
@@ -61,7 +63,7 @@ export default function WorkspaceFormsPage() {
                 <CardContent className="text-xs text-muted-foreground pt-0">
                   {f.description || "No description"}
                   <span className="mx-2">·</span>
-                  Updated {new Date(f.updated_at).toLocaleDateString()}
+                  Updated {formatDateTime(f.updated_at)}
                 </CardContent>
               </Card>
             </Link>

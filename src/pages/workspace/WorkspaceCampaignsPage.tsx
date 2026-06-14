@@ -5,6 +5,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Megaphone, Plus, ArrowRight } from "lucide-react";
+import { prettifyKey, formatDateTime } from "@/lib/utils";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { ActionCard } from "@/components/common/ActionCard";
@@ -49,7 +50,7 @@ export default function WorkspaceCampaignsPage() {
 
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading campaigns…</p>
+        <p role="status" className="text-sm text-muted-foreground">Loading campaigns…</p>
       ) : campaigns.length === 0 ? (
         <EmptyState
           icon={Megaphone}
@@ -77,18 +78,22 @@ export default function WorkspaceCampaignsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead className="w-10" />
+                <TableHead scope="col">Name</TableHead>
+                <TableHead scope="col">Status</TableHead>
+                <TableHead scope="col">Source</TableHead>
+                <TableHead scope="col">Updated</TableHead>
+                <TableHead scope="col" className="w-10"><span className="sr-only">Open</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {campaigns.map((c) => (
                 <TableRow key={c.id}>
-                  <TableCell>
-                    <Link to={`${base}/${c.id}`} className="font-medium hover:text-primary">
+                  <TableCell className="max-w-[280px]">
+                    <Link
+                      to={`${base}/${c.id}`}
+                      className="font-medium hover:text-primary block truncate"
+                      title={c.name}
+                    >
                       {c.name}
                     </Link>
                   </TableCell>
@@ -96,13 +101,13 @@ export default function WorkspaceCampaignsPage() {
                     <StatusBadge status={c.status} />
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {c.source_type ?? "canonical"}
+                    {prettifyKey(c.source_type ?? "canonical")}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {new Date(c.updated_at).toLocaleDateString()}
+                  <TableCell className="text-xs text-muted-foreground tabular-nums">
+                    {formatDateTime(c.updated_at)}
                   </TableCell>
                   <TableCell>
-                    <Link to={`${base}/${c.id}`}>
+                    <Link to={`${base}/${c.id}`} aria-label={`Open ${c.name}`}>
                       <ArrowRight className="h-4 w-4 text-muted-foreground" />
                     </Link>
                   </TableCell>

@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { ActionCard } from "@/components/common/ActionCard";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { formatDateTime } from "@/lib/utils";
 
 export default function WorkspaceGuidesPage() {
   const { workspaceId } = useParams();
@@ -29,7 +30,7 @@ export default function WorkspaceGuidesPage() {
       />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading guides…</p>
+        <p role="status" className="text-sm text-muted-foreground">Loading guides…</p>
       ) : guides.length === 0 ? (
         <EmptyState
           icon={FileText}
@@ -59,9 +60,9 @@ export default function WorkspaceGuidesPage() {
               <Card className="hover:border-primary/40 transition-colors">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between gap-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      {g.name}
+                    <CardTitle className="text-base flex items-center gap-2 min-w-0">
+                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="truncate" title={g.name}>{g.name}</span>
                     </CardTitle>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={g.status} />
@@ -72,7 +73,7 @@ export default function WorkspaceGuidesPage() {
                 <CardContent className="text-xs text-muted-foreground">
                   {g.description || "No description"}
                   <span className="mx-2">·</span>
-                  Updated {new Date(g.updated_at).toLocaleDateString()}
+                  Updated {formatDateTime(g.updated_at)}
                   {g.source_type === "script" && (
                     <>
                       <span className="mx-2">·</span>

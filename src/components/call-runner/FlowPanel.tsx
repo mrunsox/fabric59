@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { prettifyKey } from "@/lib/utils";
 import { matchBranchHotkey, matchHotkey, shouldIgnoreEvent, HOTKEYS } from "@/lib/call-runner/hotkeys";
 import {
   enabledSteps,
@@ -259,7 +260,11 @@ export function FlowPanel({
                       {s.required && <Badge variant="outline" className="text-[10px]">Required</Badge>}
                     </div>
                     {scriptLine && (
-                      <p className="text-[22px] leading-snug font-semibold tracking-tight">
+                      <p
+                        className="text-[22px] leading-snug font-semibold tracking-tight"
+                        aria-live="polite"
+                        data-testid="runner-active-script-line"
+                      >
                         {scriptLine}
                       </p>
                     )}
@@ -446,18 +451,23 @@ function StepBody({
       const v = values[cfg.fieldKey];
       const setV = (x: unknown) => onValueChange(cfg.fieldKey, x);
       const err = errors[cfg.fieldKey];
+      const fieldId = `runner-field-${cfg.fieldKey}`;
+      const errId = `${fieldId}-error`;
       return (
         <div className="space-y-1">
-          <Label className="text-xs">
-            {cfg.helper ?? cfg.fieldKey}
+          <Label htmlFor={fieldId} className="text-xs">
+            {cfg.helper ?? prettifyKey(cfg.fieldKey)}
             {step.required && <span className="text-destructive"> *</span>}
           </Label>
           {cfg.fieldType === "long_text" || cfg.fieldType === "ai_summary" || cfg.fieldType === "address" ? (
             <Textarea
+              id={fieldId}
               rows={3}
               value={String(v ?? "")}
               onChange={(e) => setV(e.target.value)}
               placeholder={cfg.placeholder}
+              aria-invalid={err ? true : undefined}
+              aria-describedby={err ? errId : undefined}
             />
           ) : cfg.fieldType === "checkbox" ? (
             <Checkbox checked={Boolean(v)} onCheckedChange={(c) => setV(Boolean(c))} />
@@ -503,10 +513,13 @@ function StepBody({
               value={String(v ?? "")}
               onChange={(e) => setV(e.target.value)}
               placeholder={cfg.placeholder}
+              id={fieldId}
+              aria-invalid={err ? true : undefined}
+              aria-describedby={err ? errId : undefined}
               data-testid={`runner-field-${cfg.fieldKey}`}
             />
           )}
-          {err && <p className="text-[11px] text-destructive">{err}</p>}
+          {err && <p id={errId} role="alert" className="text-[11px] text-destructive">{err}</p>}
         </div>
       );
     }

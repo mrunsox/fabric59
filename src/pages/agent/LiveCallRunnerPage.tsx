@@ -144,7 +144,7 @@ function LiveCallRunnerInner() {
   }
 
   if (wsLoading) {
-    return <div className="p-6 text-sm text-muted-foreground">Loading workspace…</div>;
+    return <div role="status" className="p-6 text-sm text-muted-foreground">Loading workspace…</div>;
   }
 
   if (notFound) {
@@ -156,7 +156,7 @@ function LiveCallRunnerInner() {
   }
 
   return (
-    <div className="h-screen flex flex-col gap-3 p-3 bg-background" data-testid="live-call-runner">
+    <div className="h-screen flex flex-col gap-3 p-3 bg-background" role="main" aria-label="Live call runner" data-testid="live-call-runner">
       <SessionHeader
         meta={meta}
         resumed={session.resumed}

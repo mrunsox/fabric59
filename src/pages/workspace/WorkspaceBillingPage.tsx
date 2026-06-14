@@ -30,7 +30,7 @@ export default function WorkspaceBillingPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Billing & Usage</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Workspace-scoped billing snapshot. Subscription plumbing lands in a follow-up phase.
+          Your workspace invoices and usage at a glance.
         </p>
       </div>
 
@@ -38,9 +38,9 @@ export default function WorkspaceBillingPage() {
         <CardContent className="py-3 flex items-start gap-2 text-xs text-muted-foreground">
           <AlertCircle className="h-4 w-4 text-warning mt-0.5 shrink-0" />
           <div>
-            Plan management, payment methods, and self-serve checkout are deferred to a later
-            slice. This surface reflects only the invoice + usage data already captured by the
-            platform.
+            Plan changes, payment methods, and self-serve checkout are handled by your account
+            manager. Reach out to update billing details — this page shows your current invoices
+            and usage.
           </div>
         </CardContent>
       </Card>
@@ -103,7 +103,7 @@ export default function WorkspaceBillingPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p role="status" className="text-sm text-muted-foreground">Loading…</p>
           ) : invoices.length === 0 ? (
             <EmptyState
               icon={Receipt}

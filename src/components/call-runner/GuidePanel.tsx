@@ -81,6 +81,7 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes }: Props) {
                 ref={filterRef}
                 className="h-8 pl-7 pr-12 text-xs"
                 placeholder="Filter sections…"
+                aria-label="Filter guide sections"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 data-testid="runner-guide-filter"
