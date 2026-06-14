@@ -319,6 +319,30 @@ export default function OnboardingPage() {
     }
   };
 
+  // Non-master "Skip onboarding for now": never writes to the DB. Regular org
+  // members don't satisfy the workspaces insert RLS, so we just bail out of the
+  // concierge flow and let /launch (or an existing workspace) take over.
+  const handleSkipForNow = async () => {
+    setSubmitting(true);
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(RESUME_KEY);
+      }
+      const existing =
+        workspaces.find((w) => w.is_default) ?? workspaces[0] ?? null;
+      const target = existing ? `/w/${existing.id}/campaigns` : "/launch";
+      if (typeof window !== "undefined") {
+        window.location.assign(target);
+      } else {
+        navigate(target, { replace: true });
+      }
+    } catch (err) {
+      toast.error((err as Error).message || "Could not skip onboarding");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
 
   const stepContent: Record<Step, React.ReactNode> = {
     org: (
@@ -626,7 +650,7 @@ export default function OnboardingPage() {
         <div className="mt-8 flex justify-center">
           <button
             type="button"
-            onClick={handleSkipToWorkspace}
+            onClick={handleSkipForNow}
             disabled={submitting}
             className="text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-colors disabled:opacity-50"
             data-testid="onboarding-skip-for-now"
