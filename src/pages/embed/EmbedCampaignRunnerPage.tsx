@@ -263,11 +263,22 @@ function ResolvedEmbed({
         />
       }
       directory={
-        <TransferDirectoryPanel
-          result={evaluation}
-          emptyHint="No transfer targets are configured for this campaign yet."
-          onAppendToNotes={appendToNotes}
-        />
+        <div className="flex flex-col gap-2 min-h-0">
+          <TransferDirectoryPanel
+            result={evaluation}
+            emptyHint="No transfer targets are configured for this campaign yet."
+            onAppendToNotes={appendToNotes}
+          />
+          <ExternalResourcesPanel
+            result={externalResult}
+            context={externalContext}
+            onEvent={handleResourceEvent}
+            onSurfaced={handleResourcesSurfaced}
+            onAppendToNotes={appendToNotes}
+            emptyHint="No external resources configured for this campaign yet."
+            compact
+          />
+        </div>
       }
     />
   );
