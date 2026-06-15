@@ -308,6 +308,60 @@ export function FlowPanel({
         )}
       </div>
 
+      {/* Action row — pinned directly under the header so Back/Next/Submit
+          remain visible without scrolling on long flows. */}
+      {current && (
+        <div className="border-b bg-card/50 px-4 py-2.5 flex items-center gap-2 shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={goBack}
+            disabled={session.completedStepIds.length === 0}
+            className="gap-1.5"
+            aria-label="Go back to previous step"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
+          </Button>
+          {current.type !== "question_branch" && current.type !== "end_flow" && (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => advance()}
+              className="gap-1.5"
+              data-testid="runner-next"
+            >
+              Next <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          {blockingReason && (
+            <StatusPill tone="warn" icon={AlertTriangle} dense className="hidden sm:inline-flex">
+              {blockingReason}
+            </StatusPill>
+          )}
+          <Button
+            type="button"
+            variant={completedAll ? "default" : "outline"}
+            size="sm"
+            onClick={onSubmit}
+            disabled={submitting}
+            className="ml-auto gap-1.5"
+            data-testid="runner-submit"
+            aria-label="Submit interaction"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Submitting…
+              </>
+            ) : (
+              <>
+                <Send className="h-3.5 w-3.5" /> Submit
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
       {/* Body */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
         {completedAll && (
@@ -358,59 +412,6 @@ export function FlowPanel({
           </div>
         )}
       </div>
-
-      {/* Sticky action row */}
-      {current && (
-        <div className="border-t bg-card/50 px-4 py-2.5 flex items-center gap-2 shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={goBack}
-            disabled={session.completedStepIds.length === 0}
-            className="gap-1.5"
-            aria-label="Go back to previous step"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back
-          </Button>
-          {current.type !== "question_branch" && current.type !== "end_flow" && (
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => advance()}
-              className="gap-1.5"
-              data-testid="runner-next"
-            >
-              Next <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          {blockingReason && (
-            <StatusPill tone="warn" icon={AlertTriangle} dense className="hidden sm:inline-flex">
-              {blockingReason}
-            </StatusPill>
-          )}
-          <Button
-            type="button"
-            variant={completedAll ? "default" : "outline"}
-            size="sm"
-            onClick={onSubmit}
-            disabled={submitting}
-            className="ml-auto gap-1.5"
-            data-testid="runner-submit"
-            aria-label="Submit interaction"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Submitting…
-              </>
-            ) : (
-              <>
-                <Send className="h-3.5 w-3.5" /> Submit
-              </>
-            )}
-          </Button>
-        </div>
-      )}
     </RunnerSurface>
   );
 }
