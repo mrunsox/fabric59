@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, fireEvent } from "@testing-library/react";
 import { useRunnerCardOrder } from "@/hooks/useRunnerCardOrder";
 import { DraggableStack } from "@/components/call-runner/DraggableStack";
 
