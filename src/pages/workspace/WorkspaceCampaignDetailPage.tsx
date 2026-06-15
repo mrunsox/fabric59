@@ -116,6 +116,8 @@ export default function WorkspaceCampaignDetailPage() {
 
       <TransferDirectoryEditor campaignId={campaign.id} />
 
+      <ExternalResourcesEditor campaignId={campaign.id} />
+
 
 
 
