@@ -101,6 +101,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const entries = Array.isArray(transferDir?.entries) ? transferDir!.entries : [];
   const rules = Array.isArray(transferDir?.rules) ? transferDir!.rules : [];
 
+  // External resources — additive sibling namespace. Only enabled resources
+  // are surfaced to the embed payload.
+  const externalRaw = isRecord(campaign.metadata)
+    ? campaign.metadata.externalResources
+    : null;
+  const external = isRecord(externalRaw) ? externalRaw : null;
+  const allResources = Array.isArray(external?.resources) ? external!.resources : [];
+  const externalResources = {
+    version: 1,
+    resources: allResources.filter(
+      (r: unknown) => isRecord(r) && r.enabled !== false,
+    ),
+    rules: Array.isArray(external?.rules) ? external!.rules : [],
+  };
+
   // Workspace display name.
   const wRes = await sbFetch(
     `workspaces?id=eq.${encodeURIComponent(campaign.workspace_id)}&select=id,name&limit=1`,
