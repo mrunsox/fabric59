@@ -23,6 +23,16 @@ import { TransferDirectoryPanel } from "@/components/transfer-directory/Transfer
 import { useTransferDirectoryConfig } from "@/hooks/useTransferDirectoryConfig";
 import { useTransferRecommendations } from "@/hooks/useTransferRecommendations";
 import type { TransferEvaluationContext, Urgency, HoursBehavior } from "@/lib/transfer-directory/types";
+import { ExternalResourcesPanel } from "@/components/external-resources/ExternalResourcesPanel";
+import { useExternalResourcesConfig } from "@/hooks/useExternalResourcesConfig";
+import { useExternalResources } from "@/hooks/useExternalResources";
+import { recordEvent, surfaceEvaluated } from "@/lib/external-resources/events";
+import type {
+  ResourceEvaluationContext,
+  ResourceEvent,
+  ResourceRuntimeValues,
+  ResourceUrgency,
+} from "@/lib/external-resources/types";
 
 import type { CallSessionMeta } from "@/types/call-runner";
 
