@@ -56,15 +56,12 @@ describe("Runner card reorder", () => {
     expect(screen.getByTestId("order").textContent).toBe("resources,copilot,transfer");
   });
 
-  it("keyboard reorder moves an item and announces", async () => {
+  it("keyboard reorder moves an item and announces", () => {
     render(<Harness knownIds={["a", "b", "c"]} />);
     const handle = screen.getByLabelText(/Reorder a/i);
-    handle.focus();
-    await act(async () => {
-      handle.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
-      handle.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
-      handle.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
-    });
+    fireEvent.keyDown(handle, { key: " " });
+    fireEvent.keyDown(handle, { key: "ArrowDown" });
+    fireEvent.keyDown(handle, { key: " " });
     expect(screen.getByTestId("order").textContent).toBe("b,a,c");
   });
 
