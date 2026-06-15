@@ -270,16 +270,24 @@ function LiveCallRunnerInner() {
           submitting={submitting}
           submissionState={submissionState}
         />
-        <CopilotPanel
-          copilot={copilot}
-          feedback={copilot.feedback}
-          onRate={copilot.rate}
-          notes={session.session.notes}
-          onNotesChange={session.setNotes}
-          onInsertIntoNotes={appendToNotes}
-          notesAutosave={autosave}
-          notesSavedAt={autosaveAt}
-        />
+        <div className="flex flex-col gap-3 min-h-0">
+          <CopilotPanel
+            copilot={copilot}
+            feedback={copilot.feedback}
+            onRate={copilot.rate}
+            notes={session.session.notes}
+            onNotesChange={session.setNotes}
+            onInsertIntoNotes={appendToNotes}
+            notesAutosave={autosave}
+            notesSavedAt={autosaveAt}
+          />
+          <TransferDirectoryPanel
+            result={transferResult}
+            onAppendToNotes={appendToNotes}
+            compact
+          />
+        </div>
+
       </div>
       <ShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
     </main>
