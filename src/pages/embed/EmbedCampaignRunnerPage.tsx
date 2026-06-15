@@ -300,3 +300,34 @@ function ResolvedEmbed({
     />
   );
 }
+
+function EmbedRightStack({
+  campaignId,
+  items,
+}: {
+  campaignId: string;
+  items: import("@/components/call-runner/DraggableStack").DraggableStackItem[];
+}) {
+  const knownIds = items.map((i) => i.id);
+  const { order, setOrder, reset, isCustom } = useRunnerCardOrder({
+    knownIds,
+    workspaceId: null,
+    campaignId,
+    userId: null,
+    surface: "embed",
+  });
+  return (
+    <div className="flex flex-col gap-2 min-h-0">
+      <DraggableStack items={items} order={order} onOrderChange={setOrder} surfaceId="embed" />
+      {isCustom && (
+        <button
+          type="button"
+          onClick={reset}
+          className="self-end text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+        >
+          Reset layout
+        </button>
+      )}
+    </div>
+  );
+}
