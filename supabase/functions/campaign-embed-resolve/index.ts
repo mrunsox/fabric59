@@ -173,6 +173,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     guide: guideContent,
     flow: flowContent,
     transferDirectory: { entries, rules },
+    externalResources,
   };
 
   return json(payload, 200);
