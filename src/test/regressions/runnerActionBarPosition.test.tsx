@@ -64,11 +64,11 @@ describe("Runner action bar position", () => {
         />
       </TooltipProvider>,
     );
-    const panel = screen.getByTestId("runner-flow-panel");
-    const submit = within(panel).getByTestId("runner-submit");
-    const next = within(panel).getByTestId("runner-next");
-    // The action row sits in a `border-b` container — it precedes the
-    // scrolling body (`overflow-y-auto`) in DOM order.
+    const submit = screen.getByTestId("runner-submit");
+    const next = screen.getByTestId("runner-next");
+    // The flow panel root contains the action row before the scrolling body.
+    const panel = submit.closest('[class*="rounded-lg"]') as HTMLElement;
+    expect(panel).toBeTruthy();
     const scrollBody = panel.querySelector(".overflow-y-auto") as HTMLElement;
     expect(scrollBody).toBeTruthy();
     expect(
