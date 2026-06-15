@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EmbedShell } from "@/components/embed/EmbedShell";
 import { EmbedHeader } from "@/components/embed/EmbedHeader";
 import { TransferDirectoryPanel } from "@/components/transfer-directory/TransferDirectoryPanel";
+import { ExternalResourcesPanel } from "@/components/external-resources/ExternalResourcesPanel";
 
 import {
   buildEmbedRuntimeContext,
@@ -25,6 +26,9 @@ import {
 } from "@/lib/campaign-publish/runtimeContext";
 import { normalizeTransferDirectory } from "@/lib/transfer-directory/normalize";
 import { evaluateTransferRules } from "@/lib/transfer-directory/evaluateRules";
+import { normalizeExternalResources } from "@/lib/external-resources/normalize";
+import { evaluateResources } from "@/lib/external-resources/evaluateResources";
+import { recordEvent, surfaceEvaluated } from "@/lib/external-resources/events";
 import { useCallRunnerSession } from "@/hooks/useCallRunnerSession";
 import { useCallCopilot } from "@/hooks/useCallCopilot";
 
@@ -35,6 +39,12 @@ import type { CallSessionMeta } from "@/types/call-runner";
 import type { CampaignFlowContent } from "@/types/campaign-flow";
 import type { WorkspaceGuideContentV2 } from "@/types/workspace-guide";
 import type { EmbedResolvePayload } from "@/lib/campaign-publish/types";
+import type {
+  ResourceEvaluationContext,
+  ResourceEvent,
+  ResourceRuntimeValues,
+  ResourceUrgency,
+} from "@/lib/external-resources/types";
 
 interface ResolveError {
   error: string;
@@ -149,6 +159,49 @@ function ResolvedEmbed({
     });
   }, [directoryConfig, session.session]);
 
+  // External resources from embed payload (additive — older payloads omit it).
+  const externalConfig = useMemo(
+    () => normalizeExternalResources(payload.externalResources),
+    [payload.externalResources],
+  );
+  const externalContext = useMemo<ResourceEvaluationContext>(() => {
+    const v = session.session.values;
+    const runtime: ResourceRuntimeValues = {
+      ani: ctx.ani,
+      callId: ctx.callId,
+      sessionId: ctx.sessionId ?? ctx.callId,
+      agentId: ctx.agentId,
+      agentName: ctx.agentName,
+      issueType: (v.__issue_type__ as string) ?? (v.issue_type as string) ?? null,
+      specialty: (v.__specialty__ as string) ?? null,
+      urgency: (v.__urgency__ as string) ?? null,
+      campaignId: payload.campaign.id,
+      campaignName: payload.campaign.name,
+      workspaceId: payload.workspace.id,
+      workspaceName: payload.workspace.name,
+      disposition: (v.__outcome__ as string) ?? null,
+      callerName: (v.caller_name as string) ?? null,
+      callerEmail: (v.caller_email as string) ?? null,
+      capturedFields: v,
+    };
+    return {
+      issueType: runtime.issueType,
+      specialty: runtime.specialty,
+      urgency: (runtime.urgency as ResourceUrgency) ?? null,
+      stepId: session.session.currentStepId,
+      branch: (v.__branch_label__ as string) ?? null,
+      disposition: runtime.disposition,
+      embedMode: ctx.mode === "preview" ? "preview" : ctx.mode === "kiosk" ? "kiosk" : "embed",
+      capturedFields: v,
+      runtime,
+      viewportWidth: typeof window !== "undefined" ? window.innerWidth : null,
+    };
+  }, [session.session.values, session.session.currentStepId, ctx, payload]);
+  const externalResult = useMemo(
+    () => evaluateResources(externalConfig, externalContext),
+    [externalConfig, externalContext],
+  );
+
   const [submissionState] = useState<
     "idle" | "submitting" | "accepted" | "deferred" | "error"
   >("idle");
@@ -157,6 +210,13 @@ function ResolvedEmbed({
     const prev = session.session.notes ?? "";
     const sep = prev && !prev.endsWith("\n") ? "\n" : "";
     session.setNotes(`${prev}${sep}${text}`);
+  };
+
+  const handleResourceEvent = (event: ResourceEvent) => {
+    recordEvent(session.session, { setValue: session.setValue }, event);
+  };
+  const handleResourcesSurfaced = (resources: Parameters<typeof surfaceEvaluated>[2]) => {
+    surfaceEvaluated(session.session, { setValue: session.setValue }, resources, externalContext);
   };
 
   // Embed mode: submission deferred to admin/internal runner. We render a
@@ -203,11 +263,22 @@ function ResolvedEmbed({
         />
       }
       directory={
-        <TransferDirectoryPanel
-          result={evaluation}
-          emptyHint="No transfer targets are configured for this campaign yet."
-          onAppendToNotes={appendToNotes}
-        />
+        <div className="flex flex-col gap-2 min-h-0">
+          <TransferDirectoryPanel
+            result={evaluation}
+            emptyHint="No transfer targets are configured for this campaign yet."
+            onAppendToNotes={appendToNotes}
+          />
+          <ExternalResourcesPanel
+            result={externalResult}
+            context={externalContext}
+            onEvent={handleResourceEvent}
+            onSurfaced={handleResourcesSurfaced}
+            onAppendToNotes={appendToNotes}
+            emptyHint="No external resources configured for this campaign yet."
+            compact
+          />
+        </div>
       }
     />
   );

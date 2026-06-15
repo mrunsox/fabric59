@@ -17,6 +17,7 @@ import { useCampaignIntakeForm } from "@/hooks/useFormCampaignAssignments";
 import { CampaignReadinessChecklist } from "@/components/dashboard/CampaignReadinessChecklist";
 import { PublishSettingsCard } from "@/components/campaign-admin/PublishSettingsCard";
 import { TransferDirectoryEditor } from "@/components/campaign-admin/TransferDirectoryEditor";
+import { ExternalResourcesEditor } from "@/components/campaign-admin/ExternalResourcesEditor";
 
 /**
  * Canonical Campaign Detail shell — /w/:workspaceId/campaigns/:campaignId.
@@ -114,6 +115,8 @@ export default function WorkspaceCampaignDetailPage() {
       <PublishSettingsCard campaignId={campaign.id} workspaceId={workspace.id} />
 
       <TransferDirectoryEditor campaignId={campaign.id} />
+
+      <ExternalResourcesEditor campaignId={campaign.id} />
 
 
 

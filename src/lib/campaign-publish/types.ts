@@ -101,6 +101,12 @@ export interface EmbedResolvePayload {
     entries: unknown[];
     rules: unknown[];
   };
+  /** External resource workspace — optional; older payloads may omit it. */
+  externalResources?: {
+    version: number;
+    resources: unknown[];
+    rules: unknown[];
+  };
 }
 
 export type EmbedResolveError =
