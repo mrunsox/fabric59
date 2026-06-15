@@ -346,6 +346,14 @@ function LiveCallRunnerInner() {
             onAppendToNotes={appendToNotes}
             compact
           />
+          <ExternalResourcesPanel
+            result={externalResult}
+            context={externalContext}
+            onEvent={handleResourceEvent}
+            onSurfaced={handleResourcesSurfaced}
+            onAppendToNotes={appendToNotes}
+            compact
+          />
         </div>
 
       </div>
