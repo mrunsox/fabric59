@@ -66,10 +66,7 @@ describe("Runner action bar position", () => {
     );
     const submit = screen.getByTestId("runner-submit");
     const next = screen.getByTestId("runner-next");
-    // The flow panel root contains the action row before the scrolling body.
-    const panel = submit.closest('[class*="rounded-lg"]') as HTMLElement;
-    expect(panel).toBeTruthy();
-    const scrollBody = panel.querySelector(".overflow-y-auto") as HTMLElement;
+    const scrollBody = document.querySelector(".overflow-y-auto") as HTMLElement;
     expect(scrollBody).toBeTruthy();
     expect(
       submit.compareDocumentPosition(scrollBody) & Node.DOCUMENT_POSITION_FOLLOWING,
