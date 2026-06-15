@@ -266,7 +266,7 @@ function ResolvedEmbed({
       }
       directory={
         <EmbedRightStack
-          campaignId={campaignId ?? null}
+          campaignId={payload.campaign.id}
           items={[
             {
               id: "transfer",
