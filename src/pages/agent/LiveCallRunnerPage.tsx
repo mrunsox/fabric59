@@ -172,6 +172,27 @@ function LiveCallRunnerInner() {
     [currentStep],
   );
 
+  // Phase: rule-based transfer directory. Additive panel — runner behavior
+  // is unchanged when no entries/rules are configured.
+  const { data: transferConfig } = useTransferDirectoryConfig(campaignId);
+  const transferContext = useMemo<TransferEvaluationContext>(() => {
+    const v = session.session.values;
+    return {
+      stepId: session.session.currentStepId,
+      urgency: ((v.__urgency__ as Urgency) ?? null) as Urgency | null,
+      disposition: (v.__outcome__ as string) ?? null,
+      issueType: (v.__issue_type__ as string) ?? (v.issue_type as string) ?? null,
+      specialty: (v.__specialty__ as string) ?? (v.specialty as string) ?? null,
+      branch: (v.__branch_label__ as string) ?? null,
+      timeMode: (v.__time_mode__ as HoursBehavior) ?? null,
+      transferGroup: (v.__transfer_group__ as string) ?? null,
+      capturedFields: v,
+    };
+  }, [session.session.values, session.session.currentStepId]);
+  const transferResult = useTransferRecommendations(transferConfig, transferContext);
+
+
+
   const onSubmit = async () => {
     if (!flow) {
       toast.error("No published flow to submit against.");
