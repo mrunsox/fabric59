@@ -61,6 +61,8 @@ import WorkspaceAgentCockpitPage from "@/pages/workspace/WorkspaceAgentCockpitPa
 // Phase 6 — canonical live call runner.
 import LiveCallRunnerPage from "@/pages/agent/LiveCallRunnerPage";
 import AgentWorkspaceLandingPage from "@/pages/agent/AgentWorkspaceLandingPage";
+// Published campaign embed runner — mounted outside the auth shell.
+import EmbedCampaignRunnerPage from "@/pages/embed/EmbedCampaignRunnerPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
