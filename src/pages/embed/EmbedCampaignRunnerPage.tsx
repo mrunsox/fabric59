@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EmbedShell } from "@/components/embed/EmbedShell";
 import { EmbedHeader } from "@/components/embed/EmbedHeader";
 import { TransferDirectoryPanel } from "@/components/transfer-directory/TransferDirectoryPanel";
+import { ExternalResourcesPanel } from "@/components/external-resources/ExternalResourcesPanel";
 
 import {
   buildEmbedRuntimeContext,
@@ -25,6 +26,9 @@ import {
 } from "@/lib/campaign-publish/runtimeContext";
 import { normalizeTransferDirectory } from "@/lib/transfer-directory/normalize";
 import { evaluateTransferRules } from "@/lib/transfer-directory/evaluateRules";
+import { normalizeExternalResources } from "@/lib/external-resources/normalize";
+import { evaluateResources } from "@/lib/external-resources/evaluateResources";
+import { recordEvent, surfaceEvaluated } from "@/lib/external-resources/events";
 import { useCallRunnerSession } from "@/hooks/useCallRunnerSession";
 import { useCallCopilot } from "@/hooks/useCallCopilot";
 
@@ -35,6 +39,12 @@ import type { CallSessionMeta } from "@/types/call-runner";
 import type { CampaignFlowContent } from "@/types/campaign-flow";
 import type { WorkspaceGuideContentV2 } from "@/types/workspace-guide";
 import type { EmbedResolvePayload } from "@/lib/campaign-publish/types";
+import type {
+  ResourceEvaluationContext,
+  ResourceEvent,
+  ResourceRuntimeValues,
+  ResourceUrgency,
+} from "@/lib/external-resources/types";
 
 interface ResolveError {
   error: string;
