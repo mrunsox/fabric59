@@ -34,6 +34,8 @@ import { useCallCopilot } from "@/hooks/useCallCopilot";
 
 import { FlowPanel } from "@/components/call-runner/FlowPanel";
 import { GuidePanel } from "@/components/call-runner/GuidePanel";
+import { DraggableStack } from "@/components/call-runner/DraggableStack";
+import { useRunnerCardOrder } from "@/hooks/useRunnerCardOrder";
 
 import type { CallSessionMeta } from "@/types/call-runner";
 import type { CampaignFlowContent } from "@/types/campaign-flow";
@@ -263,23 +265,69 @@ function ResolvedEmbed({
         />
       }
       directory={
-        <div className="flex flex-col gap-2 min-h-0">
-          <TransferDirectoryPanel
-            result={evaluation}
-            emptyHint="No transfer targets are configured for this campaign yet."
-            onAppendToNotes={appendToNotes}
-          />
-          <ExternalResourcesPanel
-            result={externalResult}
-            context={externalContext}
-            onEvent={handleResourceEvent}
-            onSurfaced={handleResourcesSurfaced}
-            onAppendToNotes={appendToNotes}
-            emptyHint="No external resources configured for this campaign yet."
-            compact
-          />
-        </div>
+        <EmbedRightStack
+          campaignId={payload.campaign.id}
+          items={[
+            {
+              id: "transfer",
+              label: "Transfer directory",
+              node: (
+                <TransferDirectoryPanel
+                  result={evaluation}
+                  emptyHint="No transfer targets are configured for this campaign yet."
+                  onAppendToNotes={appendToNotes}
+                />
+              ),
+            },
+            {
+              id: "resources",
+              label: "Resources",
+              node: (
+                <ExternalResourcesPanel
+                  result={externalResult}
+                  context={externalContext}
+                  onEvent={handleResourceEvent}
+                  onSurfaced={handleResourcesSurfaced}
+                  onAppendToNotes={appendToNotes}
+                  emptyHint="No external resources configured for this campaign yet."
+                  compact
+                />
+              ),
+            },
+          ]}
+        />
       }
     />
+  );
+}
+
+function EmbedRightStack({
+  campaignId,
+  items,
+}: {
+  campaignId: string;
+  items: import("@/components/call-runner/DraggableStack").DraggableStackItem[];
+}) {
+  const knownIds = items.map((i) => i.id);
+  const { order, setOrder, reset, isCustom } = useRunnerCardOrder({
+    knownIds,
+    workspaceId: null,
+    campaignId,
+    userId: null,
+    surface: "embed",
+  });
+  return (
+    <div className="flex flex-col gap-2 min-h-0">
+      <DraggableStack items={items} order={order} onOrderChange={setOrder} surfaceId="embed" />
+      {isCustom && (
+        <button
+          type="button"
+          onClick={reset}
+          className="self-end text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+        >
+          Reset layout
+        </button>
+      )}
+    </div>
   );
 }
