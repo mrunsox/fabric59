@@ -15,6 +15,8 @@ import { useWorkspaceCampaign } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
 import { useCampaignIntakeForm } from "@/hooks/useFormCampaignAssignments";
 import { CampaignReadinessChecklist } from "@/components/dashboard/CampaignReadinessChecklist";
+import { PublishSettingsCard } from "@/components/campaign-admin/PublishSettingsCard";
+import { TransferDirectoryEditor } from "@/components/campaign-admin/TransferDirectoryEditor";
 
 /**
  * Canonical Campaign Detail shell — /w/:workspaceId/campaigns/:campaignId.
