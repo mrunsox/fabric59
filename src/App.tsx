@@ -317,6 +317,10 @@ const App = () => (
             {/* Phase 9 — invite-accept landing target */}
             <Route path="/accept-invite" element={<AcceptInvitePage />} />
 
+            {/* Published campaign embed runner — no auth, no app shell. */}
+            <Route path="/embed/c/:campaignId" element={<EmbedCampaignRunnerPage />} />
+
+
             {/* Legacy /master/* → consolidated under /superadmin (high-bookmark only) */}
             <Route path="/master" element={<Navigate to="/superadmin" replace />} />
             <Route path="/master/users" element={<Navigate to="/superadmin/users" replace />} />
