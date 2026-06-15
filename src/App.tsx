@@ -580,6 +580,7 @@ const App = () => (
                 <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
                 <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
                 <Route path="campaigns/:campaignId/builder" element={<WorkspaceCampaignFlowBuilderPage />} />
+                <Route path="campaigns/:campaignId/embed-preview" element={<EmbedCampaignRunnerPage />} />
                 <Route path="guide" element={<WorkspaceGuideBuilderPage />} />
                 <Route path="guides" element={<WorkspaceGuidesPage />} />
                 <Route path="guides/new" element={<WorkspaceGuideNewPage />} />
