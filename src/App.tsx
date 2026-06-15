@@ -61,6 +61,8 @@ import WorkspaceAgentCockpitPage from "@/pages/workspace/WorkspaceAgentCockpitPa
 // Phase 6 — canonical live call runner.
 import LiveCallRunnerPage from "@/pages/agent/LiveCallRunnerPage";
 import AgentWorkspaceLandingPage from "@/pages/agent/AgentWorkspaceLandingPage";
+// Published campaign embed runner — mounted outside the auth shell.
+import EmbedCampaignRunnerPage from "@/pages/embed/EmbedCampaignRunnerPage";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 
 // Auth pages
@@ -314,6 +316,10 @@ const App = () => (
             <Route path="/customers" element={<CustomersPage />} />
             {/* Phase 9 — invite-accept landing target */}
             <Route path="/accept-invite" element={<AcceptInvitePage />} />
+
+            {/* Published campaign embed runner — no auth, no app shell. */}
+            <Route path="/embed/c/:campaignId" element={<EmbedCampaignRunnerPage />} />
+
 
             {/* Legacy /master/* → consolidated under /superadmin (high-bookmark only) */}
             <Route path="/master" element={<Navigate to="/superadmin" replace />} />
@@ -574,6 +580,7 @@ const App = () => (
                 <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
                 <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
                 <Route path="campaigns/:campaignId/builder" element={<WorkspaceCampaignFlowBuilderPage />} />
+                <Route path="campaigns/:campaignId/embed-preview" element={<EmbedCampaignRunnerPage />} />
                 <Route path="guide" element={<WorkspaceGuideBuilderPage />} />
                 <Route path="guides" element={<WorkspaceGuidesPage />} />
                 <Route path="guides/new" element={<WorkspaceGuideNewPage />} />

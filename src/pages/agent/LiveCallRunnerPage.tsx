@@ -19,6 +19,10 @@ import { ShortcutsHelp } from "@/components/call-runner/ShortcutsHelp";
 import type { AutosaveState } from "@/components/call-runner/primitives";
 import { buildInteractionPayload, submitInteractionDraft } from "@/lib/call-runner/submit";
 import { HOTKEYS, matchHotkey } from "@/lib/call-runner/hotkeys";
+import { TransferDirectoryPanel } from "@/components/transfer-directory/TransferDirectoryPanel";
+import { useTransferDirectoryConfig } from "@/hooks/useTransferDirectoryConfig";
+import { useTransferRecommendations } from "@/hooks/useTransferRecommendations";
+import type { TransferEvaluationContext, Urgency, HoursBehavior } from "@/lib/transfer-directory/types";
 
 import type { CallSessionMeta } from "@/types/call-runner";
 
@@ -168,6 +172,27 @@ function LiveCallRunnerInner() {
     [currentStep],
   );
 
+  // Phase: rule-based transfer directory. Additive panel — runner behavior
+  // is unchanged when no entries/rules are configured.
+  const { data: transferConfig } = useTransferDirectoryConfig(campaignId);
+  const transferContext = useMemo<TransferEvaluationContext>(() => {
+    const v = session.session.values;
+    return {
+      stepId: session.session.currentStepId,
+      urgency: ((v.__urgency__ as Urgency) ?? null) as Urgency | null,
+      disposition: (v.__outcome__ as string) ?? null,
+      issueType: (v.__issue_type__ as string) ?? (v.issue_type as string) ?? null,
+      specialty: (v.__specialty__ as string) ?? (v.specialty as string) ?? null,
+      branch: (v.__branch_label__ as string) ?? null,
+      timeMode: (v.__time_mode__ as HoursBehavior) ?? null,
+      transferGroup: (v.__transfer_group__ as string) ?? null,
+      capturedFields: v,
+    };
+  }, [session.session.values, session.session.currentStepId]);
+  const transferResult = useTransferRecommendations(transferConfig, transferContext);
+
+
+
   const onSubmit = async () => {
     if (!flow) {
       toast.error("No published flow to submit against.");
@@ -245,16 +270,24 @@ function LiveCallRunnerInner() {
           submitting={submitting}
           submissionState={submissionState}
         />
-        <CopilotPanel
-          copilot={copilot}
-          feedback={copilot.feedback}
-          onRate={copilot.rate}
-          notes={session.session.notes}
-          onNotesChange={session.setNotes}
-          onInsertIntoNotes={appendToNotes}
-          notesAutosave={autosave}
-          notesSavedAt={autosaveAt}
-        />
+        <div className="flex flex-col gap-3 min-h-0">
+          <CopilotPanel
+            copilot={copilot}
+            feedback={copilot.feedback}
+            onRate={copilot.rate}
+            notes={session.session.notes}
+            onNotesChange={session.setNotes}
+            onInsertIntoNotes={appendToNotes}
+            notesAutosave={autosave}
+            notesSavedAt={autosaveAt}
+          />
+          <TransferDirectoryPanel
+            result={transferResult}
+            onAppendToNotes={appendToNotes}
+            compact
+          />
+        </div>
+
       </div>
       <ShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
     </main>
