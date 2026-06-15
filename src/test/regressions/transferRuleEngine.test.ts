@@ -142,7 +142,9 @@ describe("transfer rule engine", () => {
       ),
       { timeMode: "after_hours" },
     );
-    expect(r.allowed.map((t) => t.entry.id)).toEqual(["b"]);
+    // A lone surviving target is auto-promoted to recommended.
+    const visibleIds = [...r.recommended, ...r.allowed].map((t) => t.entry.id);
+    expect(visibleIds).toEqual(["b"]);
     expect(r.unavailable.map((t) => t.entry.id)).toEqual(["a"]);
   });
 
