@@ -159,6 +159,49 @@ function ResolvedEmbed({
     });
   }, [directoryConfig, session.session]);
 
+  // External resources from embed payload (additive — older payloads omit it).
+  const externalConfig = useMemo(
+    () => normalizeExternalResources(payload.externalResources),
+    [payload.externalResources],
+  );
+  const externalContext = useMemo<ResourceEvaluationContext>(() => {
+    const v = session.session.values;
+    const runtime: ResourceRuntimeValues = {
+      ani: ctx.ani,
+      callId: ctx.callId,
+      sessionId: ctx.sessionId ?? ctx.callId,
+      agentId: ctx.agentId,
+      agentName: ctx.agentName,
+      issueType: (v.__issue_type__ as string) ?? (v.issue_type as string) ?? null,
+      specialty: (v.__specialty__ as string) ?? null,
+      urgency: (v.__urgency__ as string) ?? null,
+      campaignId: payload.campaign.id,
+      campaignName: payload.campaign.name,
+      workspaceId: payload.workspace.id,
+      workspaceName: payload.workspace.name,
+      disposition: (v.__outcome__ as string) ?? null,
+      callerName: (v.caller_name as string) ?? null,
+      callerEmail: (v.caller_email as string) ?? null,
+      capturedFields: v,
+    };
+    return {
+      issueType: runtime.issueType,
+      specialty: runtime.specialty,
+      urgency: (runtime.urgency as ResourceUrgency) ?? null,
+      stepId: session.session.currentStepId,
+      branch: (v.__branch_label__ as string) ?? null,
+      disposition: runtime.disposition,
+      embedMode: ctx.mode === "preview" ? "preview" : ctx.mode === "kiosk" ? "kiosk" : "embed",
+      capturedFields: v,
+      runtime,
+      viewportWidth: typeof window !== "undefined" ? window.innerWidth : null,
+    };
+  }, [session.session.values, session.session.currentStepId, ctx, payload]);
+  const externalResult = useMemo(
+    () => evaluateResources(externalConfig, externalContext),
+    [externalConfig, externalContext],
+  );
+
   const [submissionState] = useState<
     "idle" | "submitting" | "accepted" | "deferred" | "error"
   >("idle");
@@ -167,6 +210,13 @@ function ResolvedEmbed({
     const prev = session.session.notes ?? "";
     const sep = prev && !prev.endsWith("\n") ? "\n" : "";
     session.setNotes(`${prev}${sep}${text}`);
+  };
+
+  const handleResourceEvent = (event: ResourceEvent) => {
+    recordEvent(session.session, { setValue: session.setValue }, event);
+  };
+  const handleResourcesSurfaced = (resources: Parameters<typeof surfaceEvaluated>[2]) => {
+    surfaceEvaluated(session.session, { setValue: session.setValue }, resources, externalContext);
   };
 
   // Embed mode: submission deferred to admin/internal runner. We render a
