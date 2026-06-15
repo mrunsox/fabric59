@@ -35,6 +35,9 @@ import type {
 } from "@/lib/external-resources/types";
 
 import type { CallSessionMeta } from "@/types/call-runner";
+import { DraggableStack, type DraggableStackItem } from "@/components/call-runner/DraggableStack";
+import { useRunnerCardOrder } from "@/hooks/useRunnerCardOrder";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Canonical live call runner.
