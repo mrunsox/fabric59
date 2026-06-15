@@ -333,37 +333,101 @@ function LiveCallRunnerInner() {
           submitting={submitting}
           submissionState={submissionState}
         />
-        <div className="flex flex-col gap-3 min-h-0">
-          <CopilotPanel
-            copilot={copilot}
-            feedback={copilot.feedback}
-            onRate={copilot.rate}
-            notes={session.session.notes}
-            onNotesChange={session.setNotes}
-            onInsertIntoNotes={appendToNotes}
-            notesAutosave={autosave}
-            notesSavedAt={autosaveAt}
-          />
-          <TransferDirectoryPanel
-            result={transferResult}
-            onAppendToNotes={appendToNotes}
-            compact
-          />
-          <ExternalResourcesPanel
-            result={externalResult}
-            context={externalContext}
-            onEvent={handleResourceEvent}
-            onSurfaced={handleResourcesSurfaced}
-            onAppendToNotes={appendToNotes}
-            compact
-          />
-        </div>
+        <RightStack
+          workspaceId={workspaceId}
+          campaignId={campaignId}
+          items={[
+            {
+              id: "copilot",
+              label: "Call copilot",
+              node: (
+                <CopilotPanel
+                  copilot={copilot}
+                  feedback={copilot.feedback}
+                  onRate={copilot.rate}
+                  notes={session.session.notes}
+                  onNotesChange={session.setNotes}
+                  onInsertIntoNotes={appendToNotes}
+                  notesAutosave={autosave}
+                  notesSavedAt={autosaveAt}
+                />
+              ),
+            },
+            {
+              id: "transfer",
+              label: "Transfer directory",
+              node: (
+                <TransferDirectoryPanel
+                  result={transferResult}
+                  onAppendToNotes={appendToNotes}
+                  compact
+                />
+              ),
+            },
+            {
+              id: "resources",
+              label: "Resources",
+              node: (
+                <ExternalResourcesPanel
+                  result={externalResult}
+                  context={externalContext}
+                  onEvent={handleResourceEvent}
+                  onSurfaced={handleResourcesSurfaced}
+                  onAppendToNotes={appendToNotes}
+                  compact
+                />
+              ),
+            },
+          ]}
+        />
 
       </div>
       <ShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
     </main>
   );
 }
+
+function RightStack({
+  workspaceId,
+  campaignId,
+  items,
+  surface = "main",
+}: {
+  workspaceId: string;
+  campaignId: string;
+  items: DraggableStackItem[];
+  surface?: string;
+}) {
+  const { user } = useAuth();
+  const knownIds = items.map((i) => i.id);
+  const { order, setOrder, reset, isCustom } = useRunnerCardOrder({
+    knownIds,
+    workspaceId,
+    campaignId,
+    userId: user?.id ?? null,
+    surface,
+  });
+  return (
+    <div className="flex flex-col gap-2 min-h-0">
+      <DraggableStack
+        items={items}
+        order={order}
+        onOrderChange={setOrder}
+        surfaceId={surface}
+      />
+      {isCustom && (
+        <button
+          type="button"
+          onClick={reset}
+          className="self-end text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+        >
+          Reset layout
+        </button>
+      )}
+    </div>
+  );
+}
+
 
 // Re-export sentinel so chrome-neutralization tests can verify the route file
 // exists without leaking legal vocabulary.
