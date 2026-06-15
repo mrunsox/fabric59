@@ -111,6 +111,12 @@ export default function WorkspaceCampaignDetailPage() {
 
       <IntakeFormCard workspaceId={workspace.id} campaignId={campaign.id} />
 
+      <PublishSettingsCard campaignId={campaign.id} workspaceId={workspace.id} />
+
+      <TransferDirectoryEditor campaignId={campaign.id} />
+
+
+
 
 
       <Card>
