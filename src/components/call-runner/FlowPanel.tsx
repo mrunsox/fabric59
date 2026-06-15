@@ -412,7 +412,6 @@ export function FlowPanel({
           </div>
         )}
       </div>
-    </RunnerSurface>
   );
 }
 
