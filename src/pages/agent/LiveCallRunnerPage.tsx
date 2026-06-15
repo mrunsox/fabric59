@@ -19,6 +19,10 @@ import { ShortcutsHelp } from "@/components/call-runner/ShortcutsHelp";
 import type { AutosaveState } from "@/components/call-runner/primitives";
 import { buildInteractionPayload, submitInteractionDraft } from "@/lib/call-runner/submit";
 import { HOTKEYS, matchHotkey } from "@/lib/call-runner/hotkeys";
+import { TransferDirectoryPanel } from "@/components/transfer-directory/TransferDirectoryPanel";
+import { useTransferDirectoryConfig } from "@/hooks/useTransferDirectoryConfig";
+import { useTransferRecommendations } from "@/hooks/useTransferRecommendations";
+import type { TransferEvaluationContext, Urgency, HoursBehavior } from "@/lib/transfer-directory/types";
 
 import type { CallSessionMeta } from "@/types/call-runner";
 
