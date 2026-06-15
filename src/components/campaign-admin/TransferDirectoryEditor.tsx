@@ -537,11 +537,11 @@ function RuleEditor({
           const cond = c as {
             field: ContextFieldKey;
             op: ConditionOperator;
-            value?: unknown;
+            value?: string | number | boolean | string[];
           };
           const updateCond = (patch: Partial<typeof cond>) => {
             const next = [...rule.when.conditions];
-            next[idx] = { ...cond, ...patch };
+            next[idx] = { ...cond, ...patch } as never;
             onChange({ when: { ...rule.when, conditions: next } });
           };
           const remove = () => {
