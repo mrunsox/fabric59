@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AGENT_ROLES } from "@/types/provisioning";
 import { useOrganizations } from "@/hooks/useOrganizations";
 import { useEmailTemplates, useAllEmailTemplates, useSaveEmailTemplate, useDeleteEmailTemplate } from "@/hooks/useEmailTemplates";
+import AppearanceSection from "@/components/settings/AppearanceSection";
 
 const timezones = [
   "America/New_York",
@@ -449,6 +450,7 @@ export default function SettingsPage() {
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           {isOrgAdmin && <TabsTrigger value="email-templates">Email Templates</TabsTrigger>}
+          {isOrgAdmin && <TabsTrigger value="appearance">Appearance</TabsTrigger>}
           <TabsTrigger value="data">Data</TabsTrigger>
           <TabsTrigger value="legal">Legal & Compliance</TabsTrigger>
           
@@ -1032,6 +1034,13 @@ export default function SettingsPage() {
         {isOrgAdmin && (
           <TabsContent value="email-templates" className="space-y-6">
             <EmailTemplatesSection />
+          </TabsContent>
+        )}
+
+        {/* ── Appearance Tab ── */}
+        {isOrgAdmin && (
+          <TabsContent value="appearance" className="space-y-6">
+            <AppearanceSection />
           </TabsContent>
         )}
 
