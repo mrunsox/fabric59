@@ -1,51 +1,56 @@
 /**
- * Vertical Skin System — Phase 1
- * Skin registry foundation.
+ * Vertical Skin System — Phase 2
+ * Canonical skin registry. Backed by per-vertical pack modules.
  *
- * Phase 1 only ships the `general` fallback skin, which is a bit-for-bit
- * mirror of BASE_THEME. The 10 canonical vertical skins are populated in
- * Phase 2 — until then, every SkinId resolves to `general`.
+ * SkinId is canonical in `@/lib/theme/types` (Phase 1) and re-exported
+ * via `@/lib/skins/types` — there is no second source of truth.
+ *
+ * Phase 2 contract: 10 real packs, `general` as the deterministic
+ * fallback. The resolver in `@/lib/theme/themeResolver` consumes the
+ * `tokens` field on each pack unchanged.
  */
 
-import { BASE_THEME } from "@/lib/theme/baseTheme";
-import type { Skin, SkinId } from "@/lib/theme/types";
+import type { SkinId } from "@/lib/theme/types";
+import type { Skin } from "@/lib/skins/types";
+
+import { generalSkin } from "./packs/general";
+import { legalSkin } from "./packs/legal";
+import { medicalSkin } from "./packs/medical";
+import { financialSkin } from "./packs/financial";
+import { propertyManagementSkin } from "./packs/propertyManagement";
+import { professionalServicesSkin } from "./packs/professionalServices";
+import { homeServicesSkin } from "./packs/homeServices";
+import { ecommerceSkin } from "./packs/ecommerce";
+import { insuranceSkin } from "./packs/insurance";
+import { educationSkin } from "./packs/education";
 
 export const FALLBACK_SKIN_ID: SkinId = "general";
 
+/** Stable display order — drives `listSkins()` and admin pickers. */
 export const ALL_SKIN_IDS: readonly SkinId[] = [
+  "general",
   "legal",
   "medical",
   "financial",
-  "property_management",
+  "insurance",
   "professional_services",
+  "property_management",
   "home_services",
   "ecommerce",
-  "general",
-  "insurance",
   "education",
 ] as const;
 
-const generalSkin: Skin = {
-  id: "general",
-  label: "General",
-  tokens: BASE_THEME,
-};
-
-/**
- * Registry map. Phase 2 will replace the `general`-cloned entries with
- * vertical-specific token packs. Phase 1 keeps the contract stable.
- */
 const REGISTRY: Record<SkinId, Skin> = {
-  legal: generalSkin,
-  medical: generalSkin,
-  financial: generalSkin,
-  property_management: generalSkin,
-  professional_services: generalSkin,
-  home_services: generalSkin,
-  ecommerce: generalSkin,
   general: generalSkin,
-  insurance: generalSkin,
-  education: generalSkin,
+  legal: legalSkin,
+  medical: medicalSkin,
+  financial: financialSkin,
+  property_management: propertyManagementSkin,
+  professional_services: professionalServicesSkin,
+  home_services: homeServicesSkin,
+  ecommerce: ecommerceSkin,
+  insurance: insuranceSkin,
+  education: educationSkin,
 };
 
 export function getSkin(id?: SkinId | null): Skin {
