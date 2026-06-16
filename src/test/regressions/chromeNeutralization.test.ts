@@ -39,6 +39,9 @@ const EXCLUDE_PREFIXES = [
   // vertical metadata; legal vocabulary in the legal pack description is
   // intentional and not generic chrome.
   "src/lib/skins/packs/",
+  // Vertical Skin System (Phase 5) — copy preset registry holds vertical-aware
+  // greetings/transfer lines; legal-specific phrasing here is intentional.
+  "src/lib/skins/copyPresets.ts",
 ];
 
 // Files where the literal phrase "Legal practice management" is canonical
