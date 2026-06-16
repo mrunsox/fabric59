@@ -403,14 +403,14 @@ export function FlowPanel({
         )}
 
         {(actions.escalations.length > 0 || actions.notifications.length > 0) && (
-          <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px] space-y-0.5">
+          <div className="rounded-md border border-warning/30 bg-warning/5 p-2.5 text-[11px] space-y-0.5">
             {actions.escalations.length > 0 && (
-              <p className="text-amber-700 dark:text-amber-300">
+              <p className="text-warning-foreground/90">
                 Active escalations: {actions.escalations.join(", ")}
               </p>
             )}
             {actions.notifications.length > 0 && (
-              <p className="text-amber-700 dark:text-amber-300">
+              <p className="text-warning-foreground/90">
                 Pending notifications: {actions.notifications.join(", ")}
               </p>
             )}
@@ -473,11 +473,11 @@ function SubmissionPanel({
   if (state === "accepted") {
     return (
       <div
-        className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-1.5"
+        className="rounded-md border border-success/30 bg-success/5 p-3 space-y-1.5"
         data-testid="runner-submission-accepted"
       >
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+          <CheckCircle2 className="h-4 w-4 text-success" />
           <p className="text-sm font-medium">Interaction submitted</p>
         </div>
         <p className="text-xs text-muted-foreground">
@@ -489,11 +489,11 @@ function SubmissionPanel({
   if (state === "deferred") {
     return (
       <div
-        className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 space-y-1.5"
+        className="rounded-md border border-warning/30 bg-warning/5 p-3 space-y-1.5"
         data-testid="runner-submission-deferred"
       >
         <div className="flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTriangle className="h-4 w-4 text-warning" />
           <p className="text-sm font-medium">Submission queued</p>
         </div>
         <p className="text-xs text-muted-foreground">
