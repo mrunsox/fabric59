@@ -48,7 +48,7 @@ const SESSION: CallSessionState = {
 describe("Runner action bar position", () => {
   beforeEach(() => window.localStorage.clear());
 
-  it("renders Back/Next/Submit above the scrolling steps body", () => {
+  it("renders Back/Next/Submit below the active question card", () => {
     render(
       <TooltipProvider>
         <FlowPanel
@@ -64,15 +64,16 @@ describe("Runner action bar position", () => {
         />
       </TooltipProvider>,
     );
-    const submit = screen.getByTestId("runner-submit");
-    const next = screen.getByTestId("runner-next");
+    const actionRow = screen.getByTestId("runner-action-row");
     const scrollBody = document.querySelector(".overflow-y-auto") as HTMLElement;
     expect(scrollBody).toBeTruthy();
+    // Action row is INSIDE the scrollable body now (sticky-bottom).
+    expect(scrollBody.contains(actionRow)).toBe(true);
+    // And it appears AFTER the active step card in DOM order.
+    const activeCard = scrollBody.firstElementChild as HTMLElement;
+    expect(activeCard).toBeTruthy();
     expect(
-      submit.compareDocumentPosition(scrollBody) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      next.compareDocumentPosition(scrollBody) & Node.DOCUMENT_POSITION_FOLLOWING,
+      activeCard.compareDocumentPosition(actionRow) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 });

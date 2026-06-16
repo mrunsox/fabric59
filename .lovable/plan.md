@@ -1,49 +1,56 @@
-## What's actually happening
+## 1. Move Back / Next / Submit bar below the question card
 
-You're not being routed wrong by the marketing site — the "Sign in" link in `MarketingShell` / `HomePage` does point at `/login`. The problem is downstream:
+File: `src/components/call-runner/FlowPanel.tsx`
 
-1. You already have a persisted auth session (Supabase remembers you).
-2. `LoginPage` (`src/pages/auth/LoginPage.tsx`, lines 33–39) sees `isAuthenticated === true` and does `<Navigate to="/launch" replace />` *before ever rendering the login form*.
-3. `LaunchRedirectPage` sees you have **no organization and no workspace**, so it sends you to `/onboarding`.
-4. `OnboardingPage` has **no sign-out button**, so there's no way to escape back to a real login screen.
+- Remove the action row currently rendered between the header and the body (lines ~311–363).
+- Render the same action row *inside* the scrollable body, immediately **after** the `ActiveStepCard` block (between the active card and `CompactStepList`), so it sits directly under the current question.
+- Keep the row sticky to the top of its scroll container with `sticky bottom-0` removed — instead use plain inline placement so it visually follows the question card, as the user requested.
+- Preserve all existing behavior: `goBack`, `advance`, `onSubmit`, `blockingReason` chip, keyboard shortcuts, `data-testid` values (`runner-next`, `runner-submit`), and the hide-Next rule for `question_branch` / `end_flow`.
+- Update the regression test `src/test/regressions/runnerActionBarPosition.test.tsx` to assert the new DOM order: action row appears *after* the active step card, not before it.
 
-Net effect: every attempt to "go to login" silently lands on `/onboarding` with no way out. That's the dead end.
+No other files in the runner need to change; `LiveCallRunnerPage` and `EmbedCampaignRunnerPage` already mount `FlowPanel`.
 
-## Fix
+## 2. Caller history from ANI (Five9)
 
-Frontend-only, no schema/RLS/config changes.
+Goal: when an agent opens a live call (ANI passed in URL/Five9 screen-pop), show prior interactions for that phone number.
 
-### 1. `src/pages/auth/LoginPage.tsx` — stop auto-bouncing
-Replace the unconditional `<Navigate to="/launch">` for authenticated users with a small interstitial:
+### Data sources (already exist)
+- `public.call_sessions` — internal runner history; has `ani`, `organization_id`, `started_at`, `ended_at`, `duration_seconds`, `status`, `script_id`, `agent_id`, `metadata`.
+- `public.call_outcomes` joined on `call_session_id` — disposition / outcome label.
+- `public.call_notes` joined on `call_session_id` — agent notes summary.
+- `public.call_log_cache` — raw Five9 call log JSON cached per org; queried as a fallback when no internal session exists for the ANI.
 
-- If `isAuthenticated` and the URL has `?continue=1`, then (and only then) redirect through `/launch` as today. This preserves the post-signin redirect path (the form itself will set `?continue=1` on success).
-- Otherwise render an "Already signed in as `user.email`" panel inside `AuthShell` with two buttons:
-  - **Continue** → navigate to `/launch` (preserving `?invite=` if present).
-  - **Sign out and use a different account** → call `signOut()`, then stay on `/login` so the form renders.
-- On successful `signIn(...)` submit, navigate to `/launch?continue=1` (or forward `invite`) so the redirect to the workspace still happens for a fresh sign-in.
-- Superadmin-skip behavior is preserved (still routes to `/superadmin` on Continue).
+No schema changes required. RLS on these tables already scopes by `organization_id` via `get_user_org_ids(auth.uid())`.
 
-### 2. `src/pages/onboarding/OnboardingPage.tsx` — visible escape hatch
-Add a small top-right header action: "Signed in as `user.email` · Sign out". Clicking calls `signOut()` and navigates to `/login`. This breaks the trap for any user (including master admins with no org) who ends up parked on `/onboarding`.
+### Backend (edge function)
+New edge function `caller-history`:
+- Input: `{ ani: string, limit?: number (default 10) }`.
+- Verifies user session, resolves their org ids.
+- Normalizes ANI (strip non-digits, optional `+1` handling) and queries:
+  1. `call_sessions` where `ani` matches (last-10-digits suffix match) ordered by `started_at desc`.
+  2. Left-joins latest `call_outcomes` + a short `call_notes` excerpt per session.
+  3. If fewer than `limit` rows, supplements with `call_log_cache` rows whose `call_data->>'ani'` matches.
+- Returns a unified array: `{ id, source: 'internal'|'five9_cache', started_at, ended_at, duration_seconds, disposition, agent_name, script_name, summary }`.
 
-### 3. `src/pages/auth/LaunchRedirectPage.tsx` — no behavior change required
-Already correct. Once #1 and #2 are in place, users can reach `/login` deliberately and can leave `/onboarding` without dev-tools.
+Edge function registered in `supabase/config.toml` (verify_jwt = true).
 
-### 4. Regression tests
-Extend `src/test/regressions/authRoutingFallOffs.test.tsx`:
+### Frontend
+- New component `src/components/call-runner/CallerHistoryPanel.tsx`:
+  - Collapsible card titled "Caller history" with the ANI as subtitle.
+  - Calls the `caller-history` edge function via `supabase.functions.invoke` once the runner mounts with a non-empty `ani`.
+  - Renders a compact list: timestamp, duration, disposition pill, script name, agent, and an expandable notes excerpt. Empty state: "No prior interactions found for this number."
+  - Loading skeleton + error toast on failure.
+- Mount it in `FlowPanel`'s left/header area (under `SessionHeader`) on `LiveCallRunnerPage` and `EmbedCampaignRunnerPage`. Hidden when `meta.ani` is null.
+- Add a small "Caller history (N)" button in `SessionHeader` next to the ANI chip that scrolls/expands the panel.
 
-- Authenticated user visiting `/login` *without* `?continue=1` sees the "Already signed in" interstitial (no redirect).
-- Authenticated user visiting `/login?continue=1` still redirects to `/launch`.
-- Clicking "Sign out" on the interstitial calls `signOut` and renders the login form.
-- `OnboardingPage` renders a sign-out control that calls `signOut` and navigates to `/login`.
+### Tests
+- `src/test/regressions/runnerActionBarPosition.test.tsx` — updated order assertion.
+- New `src/test/regressions/callerHistoryPanel.test.tsx` — mocks `supabase.functions.invoke`, asserts the panel:
+  - hides when no ANI,
+  - shows skeleton then list when data returns,
+  - shows empty-state copy when array is empty.
 
 ## Out of scope
-
-- No changes to `ProtectedRoute`, `AuthContext`, RLS, generated types, `client.ts`, `.env`, or `supabase/config.toml`.
-- No change to the marketing "Sign in" link target (already `/login`).
-- No change to the `/launch` decision matrix.
-
-## Verification gates
-
-- All existing 386 tests stay green; 4 new regressions added above pass.
-- Manual: when signed in with no org, visiting `/login` shows the interstitial; "Sign out" returns you to the login form; submitting credentials lands you back through `/launch`.
+- No changes to drag-to-reorder behavior.
+- No schema migrations.
+- No Five9 SOAP live lookups (we reuse cached call logs already pulled by existing sync).
