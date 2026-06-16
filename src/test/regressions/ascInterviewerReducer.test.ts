@@ -15,11 +15,11 @@ import { createEmptyAscDraft } from "@/lib/asc/fixtures";
 import { serializeFieldValue } from "@/lib/asc/interviewerSchema";
 import type { AscDraft, AscInterviewerTurn } from "@/lib/asc/types";
 
+import { readTargetFieldValue } from "@/lib/asc/interviewerSchema";
+
 function turnWithProposal(
   draft: AscDraft,
-  targetField: Parameters<typeof serializeFieldValue>[0] extends infer _
-    ? string
-    : never,
+  targetField: string,
   value: string,
   questionTargetField?: string,
 ): AscInterviewerTurn {
@@ -36,7 +36,12 @@ function turnWithProposal(
         confidence: "medium",
         rationale: "because",
         status: "pending",
-        fieldSnapshot: serializeFieldValue(""),
+        // Snapshot the field's actual current value, matching what the hook
+        // does in production. Using a wrong snapshot would falsely trip the
+        // manual-wins-over-stale guard.
+        fieldSnapshot: serializeFieldValue(
+          readTargetFieldValue(draft.input, targetField as never),
+        ),
         issuedAt: "2026-06-16T00:00:00.000Z",
       },
     ],
