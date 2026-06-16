@@ -16,9 +16,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useParams } from "react-router-dom";
 import type { AscDraft } from "@/lib/asc/types";
 import type { AscAction } from "@/lib/asc/actions";
 import { ProvenanceBadge } from "@/components/asc/ProvenanceBadge";
+import { AscAssistantPanel } from "@/components/asc/AscAssistantPanel";
 
 export interface AscStepProps {
   draft: AscDraft;
@@ -56,14 +58,20 @@ function ComingInLaterSlice({ what }: { what: string }) {
   );
 }
 
+function useWorkspaceIdFromRoute(): string {
+  const { workspaceId = "" } = useParams<{ workspaceId: string }>();
+  return workspaceId;
+}
+
 // ── Step 1 ─────────────────────────────────────────────────────────────────
 export function AscStepBusiness({ draft, dispatch }: AscStepProps) {
+  const workspaceId = useWorkspaceIdFromRoute();
   return (
-    <div data-testid="asc-step-1">
+    <div data-testid="asc-step-1" className="space-y-5">
       <StepHeader
         number={1}
         title="Business context"
-        blurb="Describe the business so the assistant can ground its suggestions in real facts. Free-text answers below; conversational follow-ups arrive with the assistant in a later slice."
+        blurb="Describe the business so the assistant can ground its suggestions in real facts. Type below or click Ask the assistant for a focused follow-up."
       />
       <div className="space-y-4">
         <div>
@@ -87,6 +95,7 @@ export function AscStepBusiness({ draft, dispatch }: AscStepProps) {
           <Label htmlFor="asc-industry">Industry preset</Label>
           <Input
             id="asc-industry"
+            data-testid="asc-business-industry"
             className="mt-1"
             placeholder="legal, medical, general…"
             value={draft.input.business.industryPresetId}
@@ -98,20 +107,27 @@ export function AscStepBusiness({ draft, dispatch }: AscStepProps) {
             }
           />
         </div>
-        <ComingInLaterSlice what="Adaptive interviewer follow-ups" />
       </div>
+      <AscAssistantPanel
+        draft={draft}
+        step={1}
+        dispatch={dispatch}
+        workspaceId={workspaceId}
+        hint="The assistant asks one focused follow-up at a time and can suggest values you confirm or dismiss. It never writes to your draft directly."
+      />
     </div>
   );
 }
 
 // ── Step 2 ─────────────────────────────────────────────────────────────────
 export function AscStepPurpose({ draft, dispatch }: AscStepProps) {
+  const workspaceId = useWorkspaceIdFromRoute();
   return (
-    <div data-testid="asc-step-2">
+    <div data-testid="asc-step-2" className="space-y-5">
       <StepHeader
         number={2}
         title="Campaign purpose"
-        blurb="What does success look like for one call? Capture the primary outcome you're optimizing for."
+        blurb="What does success look like for one call? Capture the primary outcome you're optimizing for. Other outcomes are optional in this step."
       />
       <div className="space-y-4">
         <div>
@@ -130,11 +146,36 @@ export function AscStepPurpose({ draft, dispatch }: AscStepProps) {
             placeholder="e.g. Book an intake consultation"
           />
         </div>
-        <ComingInLaterSlice what="Suggested outcomes from skin starter pack" />
+        <div>
+          <Label htmlFor="asc-secondary-outcome">
+            Secondary outcome <span className="text-xs text-muted-foreground">(optional)</span>
+          </Label>
+          <Input
+            id="asc-secondary-outcome"
+            data-testid="asc-secondary-outcome"
+            className="mt-1"
+            value={draft.input.purpose.secondaryOutcome ?? ""}
+            onChange={(e) =>
+              dispatch({
+                type: "UPDATE_PURPOSE",
+                patch: { secondaryOutcome: e.target.value },
+              })
+            }
+            placeholder="e.g. Capture qualified lead details"
+          />
+        </div>
       </div>
+      <AscAssistantPanel
+        draft={draft}
+        step={2}
+        dispatch={dispatch}
+        workspaceId={workspaceId}
+        hint="The assistant will probe for secondary, blocking, and shared-across-clients outcomes. Only the primary outcome is required to continue."
+      />
     </div>
   );
 }
+
 
 // ── Step 3 ─────────────────────────────────────────────────────────────────
 export function AscStepCallerTypes({ draft, dispatch }: AscStepProps) {
