@@ -138,7 +138,13 @@ export function AscAssistantPanel({
                 Try again
               </Button>
               {showPersistentFailureHint && (
-                <AscSwitchToManualLink workspaceId={workspaceId} />
+                <AscSwitchToManualLink
+                  workspaceId={workspaceId}
+                  onConfirm={() =>
+                    `/w/${workspaceId}/campaigns/new/manual?seedFromAsc=${encodeURIComponent(draft.id)}`
+                  }
+                />
+
               )}
             </div>
           </AlertDescription>
