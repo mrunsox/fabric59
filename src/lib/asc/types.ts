@@ -169,6 +169,56 @@ export type AscStepStatus =
   | "blocker"
   | "warning";
 
+// ── Slice 3: Interviewer turn metadata ─────────────────────────────────────
+// Strictly ASC UI/session metadata. Lives under `meta.interviewer` (optional)
+// so the Phase 2 input contract is untouched. Canonical builder/runtime
+// code MUST NOT read this; only the wizard reducer + AscAssistantPanel may.
+import type {
+  AscInterviewerInputKind,
+  AscInterviewerProposalValue,
+  AscInterviewerTargetField,
+} from "./interviewerSchema";
+
+export type AscInterviewerProposalStatus =
+  | "pending"
+  | "confirmed"
+  | "rejected"
+  | "stale";
+
+export interface AscInterviewerProposal {
+  id: string;
+  targetField: AscInterviewerTargetField;
+  value: AscInterviewerProposalValue;
+  confidence: AscConfidence;
+  rationale: string;
+  status: AscInterviewerProposalStatus;
+  /**
+   * Serialized snapshot of the target field's value at proposal-issue time.
+   * Used to detect "user manually edited the field after the proposal was
+   * issued" so a stale Confirm is a no-op instead of clobbering newer input.
+   */
+  fieldSnapshot: string;
+  issuedAt: string;
+}
+
+export interface AscInterviewerTurn {
+  questionId: string | null;
+  questionPrompt: string | null;
+  questionTargetField: AscInterviewerTargetField | null;
+  questionInputKind: AscInterviewerInputKind | null;
+  questionOptions?: string[];
+  proposals: AscInterviewerProposal[];
+  askedAt: string;
+}
+
+export interface AscInterviewerMeta {
+  /** Last completed turn per assisted step (Slice 3: only 1 and 2). */
+  lastTurnByStep: Partial<Record<1 | 2, AscInterviewerTurn>>;
+  /** Target fields the user has confirmed at least once. Used to prevent
+   *  the model from re-asking already-answered fields. */
+  confirmedFields: AscInterviewerTargetField[];
+}
+
 export interface AscDraft {
   schemaVersion: 1;
   id: string;
@@ -187,6 +237,9 @@ export interface AscDraft {
     createdAt: string;
     updatedAt: string;
     skinId?: string;
+    /** Optional. Strictly ASC UI/session metadata — do not consume from
+     *  canonical builder or runtime code in Slice 3. */
+    interviewer?: AscInterviewerMeta;
   };
 }
 
