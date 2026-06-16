@@ -12,16 +12,18 @@ import { useAscDraft } from "@/hooks/useAscDraft";
 import { useAuth } from "@/contexts/AuthContext";
 import { ASC_TOTAL_STEPS } from "@/lib/asc/types";
 
-import { AscStepBusiness } from "./steps/AscStepBusiness";
-import { AscStepPurpose } from "./steps/AscStepPurpose";
-import { AscStepCallerTypes } from "./steps/AscStepCallerTypes";
-import { AscStepHandling } from "./steps/AscStepHandling";
-import { AscStepOutcomes } from "./steps/AscStepOutcomes";
-import { AscStepNotifications } from "./steps/AscStepNotifications";
-import { AscStepDestination } from "./steps/AscStepDestination";
-import { AscStepGenerate } from "./steps/AscStepGenerate";
-import { AscStepReview } from "./steps/AscStepReview";
-import { AscStepReadiness } from "./steps/AscStepReadiness";
+import {
+  AscStepBusiness,
+  AscStepPurpose,
+  AscStepCallerTypes,
+  AscStepHandling,
+  AscStepOutcomes,
+  AscStepNotifications,
+  AscStepDestination,
+  AscStepGenerate,
+  AscStepReview,
+  AscStepReadiness,
+} from "./steps";
 
 const DRAFT_ID_STORAGE_PREFIX = "fabric59.asc.activeDraftId.";
 
