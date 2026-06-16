@@ -250,8 +250,23 @@ export default function OnboardingPage() {
         targetId = data.id;
         await refetchWorkspaces();
       }
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(resumeKeyFor(user?.id));
+        localStorage.setItem("currentOrgId", orgId);
+      }
+      // Refresh AuthContext so ProtectedRoute sees the freshly-created org
+      // and doesn't bounce us back to /onboarding (org was created earlier
+      // in this same session via createdOrgId; AuthContext hasn't reloaded).
+      await refreshOrganizations();
       toast.success("Workspace ready");
-      navigate(`/w/${targetId}/campaigns`, { replace: true });
+      // Hard navigation guarantees AuthContext + WorkspaceContext fully
+      // re-bootstrap with the new org/workspace, avoiding any race where
+      // ProtectedRoute still sees organization=null.
+      if (typeof window !== "undefined") {
+        window.location.assign(`/w/${targetId}/campaigns`);
+      } else {
+        navigate(`/w/${targetId}/campaigns`, { replace: true });
+      }
     } catch (err) {
       toast.error((err as Error).message || "Could not bootstrap workspace");
     } finally {
