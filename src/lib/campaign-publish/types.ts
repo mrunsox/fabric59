@@ -107,6 +107,25 @@ export interface EmbedResolvePayload {
     resources: unknown[];
     rules: unknown[];
   };
+  /** Vertical Skin System (Phase 4). Optional org/partner branding sources
+   *  used by EmbedSkinProvider to resolve the org's skin client-side. The
+   *  edge function returns the same `integration_configs.theme` slice + the
+   *  legacy `brand_*` scalars the authenticated app reads — no privileged
+   *  data is exposed. Older payloads may omit this field. */
+  branding?: {
+    organization?: {
+      integration_configs?: unknown;
+      brand_name?: string | null;
+      brand_logo_url?: string | null;
+      brand_primary_color?: string | null;
+    } | null;
+    partner?: {
+      integration_configs?: unknown;
+      brand_name?: string | null;
+      brand_logo_url?: string | null;
+      brand_primary_color?: string | null;
+    } | null;
+  };
 }
 
 export type EmbedResolveError =

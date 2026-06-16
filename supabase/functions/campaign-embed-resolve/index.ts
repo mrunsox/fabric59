@@ -116,12 +116,52 @@ Deno.serve(async (req: Request): Promise<Response> => {
     rules: Array.isArray(external?.rules) ? external!.rules : [],
   };
 
-  // Workspace display name.
+  // Workspace display name + organization id for skin resolution.
   const wRes = await sbFetch(
-    `workspaces?id=eq.${encodeURIComponent(campaign.workspace_id)}&select=id,name&limit=1`,
+    `workspaces?id=eq.${encodeURIComponent(campaign.workspace_id)}&select=id,name,organization_id&limit=1`,
   );
   const wRows = wRes.ok ? ((await wRes.json()) as any[]) : [];
-  const workspace = wRows[0] ?? { id: campaign.workspace_id, name: "Workspace" };
+  const workspace = wRows[0] ?? { id: campaign.workspace_id, name: "Workspace", organization_id: null };
+
+  // Vertical Skin System (Phase 4) — fetch org + partner branding sources so
+  // the embed runner can resolve the org's skin client-side using the same
+  // Phase 3 resolver as the authenticated app. Only the public branding
+  // slice is returned (integration_configs + brand_* scalars). Failures are
+  // swallowed — branding is best-effort.
+  let orgBranding: any = null;
+  let partnerBranding: any = null;
+  if (workspace.organization_id) {
+    const oRes = await sbFetch(
+      `organizations?id=eq.${encodeURIComponent(workspace.organization_id)}&select=id,partner_id,integration_configs,brand_name,brand_logo_url,brand_primary_color&limit=1`,
+    );
+    if (oRes.ok) {
+      const oRows = (await oRes.json()) as any[];
+      if (oRows[0]) {
+        orgBranding = {
+          integration_configs: oRows[0].integration_configs ?? null,
+          brand_name: oRows[0].brand_name ?? null,
+          brand_logo_url: oRows[0].brand_logo_url ?? null,
+          brand_primary_color: oRows[0].brand_primary_color ?? null,
+        };
+        if (oRows[0].partner_id) {
+          const pRes = await sbFetch(
+            `partners?id=eq.${encodeURIComponent(oRows[0].partner_id)}&select=id,integration_configs,brand_name,brand_logo_url,brand_primary_color&limit=1`,
+          );
+          if (pRes.ok) {
+            const pRows = (await pRes.json()) as any[];
+            if (pRows[0]) {
+              partnerBranding = {
+                integration_configs: pRows[0].integration_configs ?? null,
+                brand_name: pRows[0].brand_name ?? null,
+                brand_logo_url: pRows[0].brand_logo_url ?? null,
+                brand_primary_color: pRows[0].brand_primary_color ?? null,
+              };
+            }
+          }
+        }
+      }
+    }
+  }
 
   // Published guide (workspace-scoped singleton).
   const gRes = await sbFetch(
@@ -174,6 +214,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     flow: flowContent,
     transferDirectory: { entries, rules },
     externalResources,
+    branding: { organization: orgBranding, partner: partnerBranding },
   };
 
   return json(payload, 200);
