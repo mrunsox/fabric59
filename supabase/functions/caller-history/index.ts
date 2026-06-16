@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     const { data: sessions, error: sErr } = await supabase
       .from("call_sessions")
       .select(
-        "id, started_at, ended_at, duration_seconds, ani, script_id, agent_id, metadata, scripts(name), agents(first_name,last_name), call_outcomes(disposition_label,created_at), call_notes(notes,created_at)",
+        "id, started_at, ended_at, duration_seconds, ani, script_id, agent_id, metadata, scripts(name), agents(first_name,last_name), call_outcomes(disposition,summary,created_at), call_notes(note_text,created_at)",
       )
       .ilike("ani", `%${last10}`)
       .order("started_at", { ascending: false })
