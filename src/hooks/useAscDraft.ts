@@ -169,18 +169,20 @@ export function useAscDraft(params: {
             setStatus("error");
             return;
           }
+          const insertRow = {
+            organization_id: organization.id,
+            campaign_name: campaignName,
+            client_name: "",
+            status: "draft",
+            priority: "normal",
+            intake_data: intakeData as unknown as Record<string, unknown>,
+            checklist_state: {} as Record<string, unknown>,
+            created_by: user?.id ?? createdBy ?? null,
+          };
           const { data, error } = await supabase
             .from("campaign_setups")
-            .insert({
-              organization_id: organization.id,
-              campaign_name: campaignName,
-              client_name: "",
-              status: "draft",
-              priority: "normal",
-              intake_data: intakeData,
-              checklist_state: {},
-              created_by: user?.id ?? createdBy ?? null,
-            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .insert(insertRow as any)
             .select("id, intake_data")
             .single();
           if (error) throw error;
