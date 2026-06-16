@@ -21,7 +21,7 @@ const overrides: ThemeModeOverrides = {
   dark: {
     colors: {
       primary: "184 68% 52%",
-      primaryForeground: "0 0% 100%",
+      primaryForeground: "184 80% 8%",
       accent: "152 56% 55%",
       accentForeground: "222 47% 11%",
       ring: "184 68% 52%",
