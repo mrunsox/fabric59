@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AGENT_ROLES } from "@/types/provisioning";
 import { useOrganizations } from "@/hooks/useOrganizations";
 import { useEmailTemplates, useAllEmailTemplates, useSaveEmailTemplate, useDeleteEmailTemplate } from "@/hooks/useEmailTemplates";
+import AppearanceSection from "@/components/settings/AppearanceSection";
 
 const timezones = [
   "America/New_York",
