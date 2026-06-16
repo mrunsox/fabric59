@@ -450,6 +450,7 @@ export default function SettingsPage() {
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           {isOrgAdmin && <TabsTrigger value="email-templates">Email Templates</TabsTrigger>}
+          {isOrgAdmin && <TabsTrigger value="appearance">Appearance</TabsTrigger>}
           <TabsTrigger value="data">Data</TabsTrigger>
           <TabsTrigger value="legal">Legal & Compliance</TabsTrigger>
           
