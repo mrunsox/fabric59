@@ -101,7 +101,7 @@ export function useUpdateOrganizationThemeConfig() {
       );
       const { error } = await supabase
         .from("organizations")
-        .update({ integration_configs: newConfigs })
+        .update({ integration_configs: newConfigs as never })
         .eq("id", organization.id);
       if (error) throw error;
       return next;
