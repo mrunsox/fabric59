@@ -339,6 +339,11 @@ function LiveCallRunnerInner() {
           campaignId={campaignId}
           items={[
             {
+              id: "caller-history",
+              label: "Caller history",
+              node: <CallerHistoryPanel ani={meta.ani ?? null} />,
+            },
+            {
               id: "copilot",
               label: "Call copilot",
               node: (
