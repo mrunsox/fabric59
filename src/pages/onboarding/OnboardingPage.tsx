@@ -316,7 +316,7 @@ export default function OnboardingPage() {
         await refetchWorkspaces();
       }
       if (typeof window !== "undefined") {
-        localStorage.removeItem(RESUME_KEY);
+        localStorage.removeItem(resumeKeyFor(user?.id));
         localStorage.setItem("currentOrgId", targetOrgId);
       }
       // Refresh AuthContext so ProtectedRoute sees the freshly-created org and
