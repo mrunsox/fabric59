@@ -105,11 +105,13 @@ Deno.serve(async (req) => {
         started_at: row.started_at,
         ended_at: row.ended_at,
         duration_seconds: row.duration_seconds ?? null,
-        disposition: lastOutcome?.disposition_label ?? null,
+        disposition: lastOutcome?.disposition ?? null,
         agent_name: agent && agent.length > 0 ? agent : null,
         script_name: row.scripts?.name ?? null,
-        summary: lastNote?.notes
-          ? String(lastNote.notes).slice(0, 240)
+        summary: lastNote?.note_text
+          ? String(lastNote.note_text).slice(0, 240)
+          : lastOutcome?.summary
+          ? String(lastOutcome.summary).slice(0, 240)
           : null,
       };
     });
