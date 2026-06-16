@@ -63,7 +63,7 @@ describe("AppearanceSection", () => {
     currentConfig = { skinId: "general", branding: {} };
     render(<AppearanceSection />);
     expect(screen.getAllByText(/general/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/fallback/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/fallback/i).length).toBeGreaterThan(0);
   });
 
   it("shows starter pack + copy preset preview deterministically per skin", () => {
