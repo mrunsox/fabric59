@@ -35,6 +35,10 @@ const EXCLUDE_PREFIXES = [
   // Phase 5 — campaign-flow template registry; legal vocabulary is allowed
   // here because it only seeds the "Legal intake starter" template content.
   "src/lib/campaign-flow/templates.ts",
+  // Vertical Skin System (Phase 2) — per-vertical skin packs are canonical
+  // vertical metadata; legal vocabulary in the legal pack description is
+  // intentional and not generic chrome.
+  "src/lib/skins/packs/",
 ];
 
 // Files where the literal phrase "Legal practice management" is canonical
