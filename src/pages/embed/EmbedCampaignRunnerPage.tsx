@@ -36,6 +36,7 @@ import { FlowPanel } from "@/components/call-runner/FlowPanel";
 import { GuidePanel } from "@/components/call-runner/GuidePanel";
 import { DraggableStack } from "@/components/call-runner/DraggableStack";
 import { useRunnerCardOrder } from "@/hooks/useRunnerCardOrder";
+import { EmbedSkinProvider } from "@/lib/skins/SkinProvider";
 
 import type { CallSessionMeta } from "@/types/call-runner";
 import type { CampaignFlowContent } from "@/types/campaign-flow";
@@ -233,71 +234,76 @@ function ResolvedEmbed({
   }, [payload.campaign.name]);
 
   return (
-    <EmbedShell
-      theme={payload.publish.theme as never}
-      header={
-        <EmbedHeader
-          workspaceName={payload.workspace.name}
-          campaignName={payload.campaign.name}
-          ctx={ctx}
-          startedAt={startedAt}
-        />
-      }
-      guide={
-        <GuidePanel
-          guide={guide}
-          isLoading={false}
-          onAppendToNotes={appendToNotes}
-          currentStepHint={null}
-        />
-      }
-      flow={
-        <FlowPanel
-          flow={flow}
-          isLoading={false}
-          session={session.session}
-          onValueChange={session.setValue}
-          onCurrentStep={session.setCurrentStepId}
-          onCompleted={session.pushCompleted}
-          onSubmit={noopSubmit}
-          submitting={false}
-          submissionState={submissionState}
-        />
-      }
-      directory={
-        <EmbedRightStack
-          campaignId={payload.campaign.id}
-          items={[
-            {
-              id: "transfer",
-              label: "Transfer directory",
-              node: (
-                <TransferDirectoryPanel
-                  result={evaluation}
-                  emptyHint="No transfer targets are configured for this campaign yet."
-                  onAppendToNotes={appendToNotes}
-                />
-              ),
-            },
-            {
-              id: "resources",
-              label: "Resources",
-              node: (
-                <ExternalResourcesPanel
-                  result={externalResult}
-                  context={externalContext}
-                  onEvent={handleResourceEvent}
-                  onSurfaced={handleResourcesSurfaced}
-                  onAppendToNotes={appendToNotes}
-                  emptyHint="No external resources configured for this campaign yet."
-                  compact
-                />
-              ),
-            },
-          ]}
-        />
-      }
-    />
+    <EmbedSkinProvider
+      organization={payload.branding?.organization ?? null}
+      partner={payload.branding?.partner ?? null}
+    >
+      <EmbedShell
+        theme={payload.publish.theme as never}
+        header={
+          <EmbedHeader
+            workspaceName={payload.workspace.name}
+            campaignName={payload.campaign.name}
+            ctx={ctx}
+            startedAt={startedAt}
+          />
+        }
+        guide={
+          <GuidePanel
+            guide={guide}
+            isLoading={false}
+            onAppendToNotes={appendToNotes}
+            currentStepHint={null}
+          />
+        }
+        flow={
+          <FlowPanel
+            flow={flow}
+            isLoading={false}
+            session={session.session}
+            onValueChange={session.setValue}
+            onCurrentStep={session.setCurrentStepId}
+            onCompleted={session.pushCompleted}
+            onSubmit={noopSubmit}
+            submitting={false}
+            submissionState={submissionState}
+          />
+        }
+        directory={
+          <EmbedRightStack
+            campaignId={payload.campaign.id}
+            items={[
+              {
+                id: "transfer",
+                label: "Transfer directory",
+                node: (
+                  <TransferDirectoryPanel
+                    result={evaluation}
+                    emptyHint="No transfer targets are configured for this campaign yet."
+                    onAppendToNotes={appendToNotes}
+                  />
+                ),
+              },
+              {
+                id: "resources",
+                label: "Resources",
+                node: (
+                  <ExternalResourcesPanel
+                    result={externalResult}
+                    context={externalContext}
+                    onEvent={handleResourceEvent}
+                    onSurfaced={handleResourcesSurfaced}
+                    onAppendToNotes={appendToNotes}
+                    emptyHint="No external resources configured for this campaign yet."
+                    compact
+                  />
+                ),
+              },
+            ]}
+          />
+        }
+      />
+    </EmbedSkinProvider>
   );
 }
 
