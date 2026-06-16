@@ -246,6 +246,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user returned from signup");
 
+      // If the project requires email confirmation, signUp returns a user but
+      // no session. We MUST NOT attempt the org/member insert in that state —
+      // RLS would reject it and leave an orphaned auth row with an opaque
+      // "permission denied" error. Surface an actionable message instead.
+      if (!authData.session) {
+        return {
+          error: new Error(
+            "Check your email to confirm your account, then sign in to finish setup.",
+          ),
+        };
+      }
+
       const { data: orgData, error: orgError } = await supabase
         .from("organizations").insert({ name: orgName, billing_email: email }).select().single();
       if (orgError) throw orgError;
@@ -275,6 +287,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setDevMode(false);
     await supabase.auth.signOut();
     localStorage.removeItem("currentOrgId");
+    // Clear per-user onboarding scratch state so the next user on this
+    // browser doesn't resume into a stranger's concierge step.
+    try {
+      const keys = Object.keys(localStorage);
+      for (const k of keys) {
+        if (k.startsWith("fabric59:onboarding:")) localStorage.removeItem(k);
+      }
+    } catch {
+      /* ignore storage errors */
+    }
     setOrganization(null);
     setMembership(null);
     setOrganizations([]);
