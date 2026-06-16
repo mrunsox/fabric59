@@ -1,8 +1,11 @@
 # Vertical Skin System — Rollout Plan
 
-Status: Phase 0 (documentation-only).
+Status: **All phases complete (Phase 7 shipped).** This document is now an
+historical record of the rollout. Operational guidance lives in
+`docs/vertical-skin-runbook.md`.
 Companion to: `docs/vertical-skin-architecture.md`.
-Rule: each phase ends with a written report and an approval gate before the next phase starts.
+Rule: each phase ended with a written report and an approval gate before the
+next phase started.
 
 This document is the operational plan. It freezes file targets, risks, and
 verification gates so reviewers can compare each phase's PR against the

@@ -1,6 +1,8 @@
 # Vertical Skin System — Architecture
 
-Status: Phase 0 (architecture decision package, documentation-only).
+Status: **All phases shipped.** This document is the final architectural
+contract for the 10-skin system. Day-to-day operations live in
+`docs/vertical-skin-runbook.md`.
 Owner: Platform / Design Systems.
 Scope: Fabric59 web app (internal admin, canonical runner, embed runner) and supporting edge functions that render branded surfaces (email digests, etc.).
 
