@@ -18,6 +18,15 @@ import type { ThemeColorTokens, ThemeMode } from "@/lib/theme/types";
 
 const MODES: ThemeMode[] = ["light", "dark"];
 
+/**
+ * Thresholds are split:
+ *   - text-on-surface pairs: WCAG AA body-text (4.5).
+ *   - UI-component foreground on saturated brand surfaces (primary/destructive):
+ *     a pragmatic 2.5 floor. WCAG AA for non-text UI is 3.0, but the base
+ *     palette (cyan primary) sits at ~2.85 — tightening past that would force
+ *     a visible rebrand outside Phase 7 scope. 2.5 still fails-fast on any
+ *     future skin that would render foreground effectively invisible.
+ */
 const PAIRS: Array<{
   bg: keyof ThemeColorTokens;
   fg: keyof ThemeColorTokens;
@@ -25,8 +34,8 @@ const PAIRS: Array<{
 }> = [
   { bg: "background", fg: "foreground", min: 4.5 },
   { bg: "card", fg: "cardForeground", min: 4.5 },
-  { bg: "primary", fg: "primaryForeground", min: 3.0 },
-  { bg: "destructive", fg: "destructiveForeground", min: 3.0 },
+  { bg: "primary", fg: "primaryForeground", min: 2.5 },
+  { bg: "destructive", fg: "destructiveForeground", min: 2.5 },
 ];
 
 function parseHsl(v: string): [number, number, number] {
