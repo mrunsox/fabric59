@@ -32,6 +32,10 @@ import WorkspaceClientDetailPage from "@/pages/workspace/WorkspaceClientDetailPa
 import WorkspaceCampaignsPage from "@/pages/workspace/WorkspaceCampaignsPage";
 import WorkspaceCampaignDetailPage from "@/pages/workspace/WorkspaceCampaignDetailPage";
 import WorkspaceCampaignNewPage from "@/pages/workspace/WorkspaceCampaignNewPage";
+// ASC (AI-Assisted Script Creation) — Slice 1: flag-gated decision shim + wizard.
+import WorkspaceCampaignNewDecisionPage from "@/pages/workspace/campaigns/WorkspaceCampaignNewDecisionPage";
+import AscWizardPage from "@/pages/workspace/campaigns/asc/AscWizardPage";
+import AscPreviewPage from "@/pages/workspace/campaigns/asc/AscPreviewPage";
 import WorkspaceGuidesPage from "@/pages/workspace/WorkspaceGuidesPage";
 import WorkspaceGuideDetailPage from "@/pages/workspace/WorkspaceGuideDetailPage";
 import WorkspaceGuideEditPage from "@/pages/workspace/WorkspaceGuideEditPage";
@@ -580,7 +584,10 @@ const App = () => (
                 <Route path="clients" element={<WorkspaceClientsPage />} />
                 <Route path="clients/:clientId" element={<WorkspaceClientDetailPage />} />
                 <Route path="campaigns" element={<WorkspaceCampaignsPage />} />
-                <Route path="campaigns/new" element={<WorkspaceCampaignNewPage />} />
+                <Route path="campaigns/new" element={<WorkspaceCampaignNewDecisionPage />} />
+                <Route path="campaigns/new/manual" element={<WorkspaceCampaignNewPage />} />
+                <Route path="campaigns/new/assisted" element={<AscWizardPage />} />
+                <Route path="campaigns/new/assisted/preview" element={<AscPreviewPage />} />
                 <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
                 <Route path="campaigns/:campaignId/builder" element={<WorkspaceCampaignFlowBuilderPage />} />
                 <Route path="campaigns/:campaignId/embed-preview" element={<EmbedCampaignRunnerPage />} />
