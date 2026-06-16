@@ -344,16 +344,20 @@ export default function OnboardingPage() {
   const handleSkipForNow = async () => {
     setSubmitting(true);
     try {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(RESUME_KEY);
-      }
       const existing =
         workspaces.find((w) => w.is_default) ?? workspaces[0] ?? null;
-      const target = existing ? `/w/${existing.id}/campaigns` : "/launch";
+      if (!existing) {
+        // No workspace yet — sending to /launch would just bounce back to
+        // /onboarding (org exists, no workspace). Keep the user here and
+        // surface an honest next step.
+        toast.message("Finish the workspace step to continue, or ask your admin to add you to a workspace.");
+        return;
+      }
       if (typeof window !== "undefined") {
-        window.location.assign(target);
+        localStorage.removeItem(resumeKeyFor(user?.id));
+        window.location.assign(`/w/${existing.id}/campaigns`);
       } else {
-        navigate(target, { replace: true });
+        navigate(`/w/${existing.id}/campaigns`, { replace: true });
       }
     } catch (err) {
       toast.error((err as Error).message || "Could not skip onboarding");
