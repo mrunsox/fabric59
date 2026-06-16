@@ -86,7 +86,7 @@ const MOTIONS: Array<{ key: Motion; label: string; helper: string }> = [
 ];
 
 export default function OnboardingPage() {
-  const { organization, user, isMasterAdmin, refreshOrganizations } = useAuth();
+  const { organization, user, isMasterAdmin, refreshOrganizations, signOut } = useAuth();
   const { workspaces, refetch: refetchWorkspaces } = useWorkspace();
   const navigate = useNavigate();
 
