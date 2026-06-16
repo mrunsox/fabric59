@@ -62,7 +62,7 @@ describe("AppearanceSection", () => {
   it("falls back to general when no skin is set", () => {
     currentConfig = { skinId: "general", branding: {} };
     render(<AppearanceSection />);
-    expect(screen.getByText(/general/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/general/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/fallback/i)).toBeInTheDocument();
   });
 
