@@ -40,7 +40,9 @@ type OwnershipMode = "workspace" | "client";
 type Role = "ops_leader" | "supervisor" | "implementation" | "intake_owner";
 type Motion = "intake" | "reactivation" | "qa" | "sync" | "monitoring";
 
-const RESUME_KEY = "fabric59:onboarding:step";
+const RESUME_KEY_BASE = "fabric59:onboarding:step";
+const resumeKeyFor = (userId: string | undefined | null) =>
+  userId ? `${RESUME_KEY_BASE}:${userId}` : RESUME_KEY_BASE;
 
 const STEP_DEFS = [
   { key: "org", label: "Organization", description: "Name your operating tenant" },
@@ -97,7 +99,8 @@ export default function OnboardingPage() {
   }, [user?.email, navigate]);
 
   const [step, setStep] = useState<Step>(() => {
-    const resume = typeof window !== "undefined" ? (localStorage.getItem(RESUME_KEY) as Step | null) : null;
+    const key = resumeKeyFor(user?.id);
+    const resume = typeof window !== "undefined" ? (localStorage.getItem(key) as Step | null) : null;
     if (resume && organization) return resume;
     return organization ? "profile" : "org";
   });
@@ -131,9 +134,10 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (step === "land") localStorage.removeItem(RESUME_KEY);
-    else localStorage.setItem(RESUME_KEY, step);
-  }, [step]);
+    const key = resumeKeyFor(user?.id);
+    if (step === "land") localStorage.removeItem(key);
+    else localStorage.setItem(key, step);
+  }, [step, user?.id]);
 
   useEffect(() => {
     if (!workspaceName && organization?.name) setWorkspaceName(`${organization.name} workspace`);
@@ -246,8 +250,23 @@ export default function OnboardingPage() {
         targetId = data.id;
         await refetchWorkspaces();
       }
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(resumeKeyFor(user?.id));
+        localStorage.setItem("currentOrgId", orgId);
+      }
+      // Refresh AuthContext so ProtectedRoute sees the freshly-created org
+      // and doesn't bounce us back to /onboarding (org was created earlier
+      // in this same session via createdOrgId; AuthContext hasn't reloaded).
+      await refreshOrganizations();
       toast.success("Workspace ready");
-      navigate(`/w/${targetId}/campaigns`, { replace: true });
+      // Hard navigation guarantees AuthContext + WorkspaceContext fully
+      // re-bootstrap with the new org/workspace, avoiding any race where
+      // ProtectedRoute still sees organization=null.
+      if (typeof window !== "undefined") {
+        window.location.assign(`/w/${targetId}/campaigns`);
+      } else {
+        navigate(`/w/${targetId}/campaigns`, { replace: true });
+      }
     } catch (err) {
       toast.error((err as Error).message || "Could not bootstrap workspace");
     } finally {
@@ -297,7 +316,7 @@ export default function OnboardingPage() {
         await refetchWorkspaces();
       }
       if (typeof window !== "undefined") {
-        localStorage.removeItem(RESUME_KEY);
+        localStorage.removeItem(resumeKeyFor(user?.id));
         localStorage.setItem("currentOrgId", targetOrgId);
       }
       // Refresh AuthContext so ProtectedRoute sees the freshly-created org and
@@ -325,16 +344,20 @@ export default function OnboardingPage() {
   const handleSkipForNow = async () => {
     setSubmitting(true);
     try {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem(RESUME_KEY);
-      }
       const existing =
         workspaces.find((w) => w.is_default) ?? workspaces[0] ?? null;
-      const target = existing ? `/w/${existing.id}/campaigns` : "/launch";
+      if (!existing) {
+        // No workspace yet — sending to /launch would just bounce back to
+        // /onboarding (org exists, no workspace). Keep the user here and
+        // surface an honest next step.
+        toast.message("Finish the workspace step to continue, or ask your admin to add you to a workspace.");
+        return;
+      }
       if (typeof window !== "undefined") {
-        window.location.assign(target);
+        localStorage.removeItem(resumeKeyFor(user?.id));
+        window.location.assign(`/w/${existing.id}/campaigns`);
       } else {
-        navigate(target, { replace: true });
+        navigate(`/w/${existing.id}/campaigns`, { replace: true });
       }
     } catch (err) {
       toast.error((err as Error).message || "Could not skip onboarding");

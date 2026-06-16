@@ -1,64 +1,57 @@
-# Runner UX: Sticky Action Bar + Draggable Side Cards
+# Fix: Login / Signup / Onboarding routing fall-offs
 
-Two scoped UX upgrades to the canonical Live Call Runner. Both are additive to the existing layout and preserve Phase 6/7 session, copilot, and submission contracts.
+I traced every entry point (`/login`, `/signup`, `/forgot-password`, `/reset-password`, `/accept-invite`, `/launch`, `/onboarding`) through `AuthContext`, `ProtectedRoute`, `LaunchRedirectPage`, and `OnboardingPage`. Several concrete dead ends and loops exist. All fixes are frontend-only — no schema, RLS, generated types, `client.ts`, `.env`, or `supabase/config.toml` changes.
 
-## 1. Action bar above the steps
+## Issues found
 
-Today the Back / Next / Submit row sits at the bottom of the center `FlowPanel`. On long flows (17+ steps) the agent must scroll to reach it.
+1. **Loop after concierge "Land workspace"** (`OnboardingPage.handleLandWorkspace`, line 223–256). It creates the workspace and navigates to `/w/:id/campaigns`, but never calls `refreshOrganizations()`. If the org was created earlier in the same session (`createdOrgId` path), `AuthContext.organization` is still `null`, so `ProtectedRoute` (line 25) bounces the user straight back to `/onboarding`. The "skip to workspace" path already does this correctly — `land` does not.
 
-Change: move that action row out of the scrolling body and pin it directly under the panel header — above the Active Step card and the "ALL STEPS" list. The body keeps its scroll; the actions never leave the viewport.
+2. **Loop in "Skip onboarding for now"** (`handleSkipForNow`, line 325). When the user has an org but no workspace, it navigates to `/launch`. `/launch` sees "org exists, no workspace" and redirects to `/onboarding`. Infinite ping-pong.
 
-- In `src/components/call-runner/FlowPanel.tsx`:
-  - Lift the existing sticky action row (Back, Next, blocking-reason pill, Submit) from the bottom of the panel up to a new `<div>` rendered immediately after the header block and before the body `overflow-y-auto` container.
-  - Keep the same buttons, handlers, hotkeys, `data-testid` values (`runner-next`, `runner-submit`), aria labels, and disabled states — pure relocation.
-  - Remove the now-duplicated bottom row.
-  - Keep the floating annotation toolbar (lasso / T / pencil / chat icons in the second screenshot) where it currently lives — it is unrelated.
-- The `SubmissionPanel` (shown when all steps complete) stays inside the scroll body; the top action row already exposes Submit so nothing regresses.
-- The header's "Up next →" hint stays directly under the progress rail so the action row reads as: progress → up next → actions → steps.
+3. **`ProtectedRoute` master-admin comment vs. code mismatch** (line 22–26). Comment says "Master admins are exempt — they can access /admin without an org," but the guard only checks `!organization`. A master admin with zero orgs hitting `/admin` directly is redirected to `/onboarding` instead of being allowed through (or routed to `/superadmin`).
 
-## 2. Draggable right-column cards
+4. **Signup org-insert race when email confirmation is required**. `AuthContext.signUp` (line 241–262) calls `supabase.auth.signUp` then immediately inserts into `organizations` + `organization_members`. With auto-confirm off, `signUp` returns no session, RLS denies the insert, the user account is left orphaned with no org, and the surfaced error is opaque ("permission denied"). Today auto-confirm is on so it works, but the flow is fragile and the error is unhelpful. Fix: detect "no session returned" and surface a clear "Check your email to confirm, then sign in" state instead of attempting the org insert.
 
-Agents want to arrange the right rail to match how they work. Make the three stacked cards in the right column reorderable by drag:
+5. **`AcceptInvitePage` is a true dead end for tokenized links**. The page forwards `?invite=…` through `/launch` / `/signup` / `/login`, but no downstream code actually consumes it — the token is just appended to URLs. A real recipient clicking an invite link lands in onboarding with no membership being created. Fix (scoped, no backend change): when an authenticated user lands at `/accept-invite?token=…` and the token is unknown to the client, show an explicit "Invite acceptance is not yet wired — ask your admin to add you from the in-app dialog" state instead of silently routing to `/launch`. This converts a silent dead end into an explainable terminal state.
 
-- Call Copilot (suggestions + Call Notes)
-- Transfer Directory
-- Resources
+6. **Stale `RESUME_KEY` cross-user contamination**. `localStorage["fabric59:onboarding:step"]` is global. If user A reaches step `telephony`, signs out, and user B signs up on the same machine, B resumes mid-flow with A's progress. Fix: namespace the key by `user.id`, and clear it on `signOut`.
 
-Scope intentionally excludes the three top-level columns (Guide / Flow / Copilot) and the left guide accordion — those stay fixed so the runner's spatial model is stable across agents and training material.
+## Changes
 
-Implementation:
+### `src/components/auth/ProtectedRoute.tsx`
+- Exempt master admins from the no-org redirect; route them to `/superadmin` instead of `/onboarding` when they have no org and aren't already on an admin/superadmin path.
 
-- New component `src/components/call-runner/DraggableStack.tsx`:
-  - Accepts an ordered array of `{ id, node }` items and an `onOrderChange(ids)` callback.
-  - Uses native HTML5 drag-and-drop (no new dependencies) with a small drag handle (`GripVertical` from `lucide-react`) in the top-right of each slot.
-  - Handles `dragstart`, `dragover`, `drop`, `dragend`; computes insert-before vs insert-after from pointer Y midpoint; renders a 2px primary-colored insertion line between slots.
-  - Keyboard a11y: handle is a `<button>` with `aria-grabbed`; `Space` picks up, `ArrowUp` / `ArrowDown` move, `Space` again drops, `Escape` cancels. Announces moves via an `aria-live="polite"` region.
-  - Respects `prefers-reduced-motion` (no transform transitions when reduced).
-- New hook `src/hooks/useRunnerCardOrder.ts`:
-  - Persists order in `localStorage` under `fabric59:runner:rightStack:v1:<userId|anon>:<workspaceId>:<campaignId>`.
-  - Validates stored ids against the current known set; drops unknown ids and appends new ones at the end so future cards (e.g. a 4th panel) surface automatically.
-  - Returns `{ order, setOrder, reset }`.
-- Wire into `src/pages/agent/LiveCallRunnerPage.tsx`:
-  - Replace the `<div className="flex flex-col gap-3 …">` on lines 333–357 with `<DraggableStack>` using ids `copilot`, `transfer`, `resources`.
-  - Add a tiny "Reset layout" link in the right column footer when order differs from default.
-- Embed runner (`src/pages/embed/EmbedCampaignRunnerPage.tsx`): apply the same `DraggableStack` so the Five9 iframe experience matches; persistence keys include the embed mode so they do not collide.
+### `src/pages/onboarding/OnboardingPage.tsx`
+- `handleLandWorkspace`: call `await refreshOrganizations()` after the workspace insert and before navigating, mirroring the `handleSkipToWorkspace` pattern. Use `window.location.assign` for the final navigation so `AuthContext` + `WorkspaceContext` rebootstrap cleanly with the new org/workspace (same guarantee already used by skip-to-workspace).
+- `handleSkipForNow`: when no existing workspace is found, stop sending the user through `/launch` (which loops back). Instead, stay on `/onboarding` and surface a toast: "Finish the workspace step to continue, or ask your admin to add you to one."
+- `RESUME_KEY`: derive as `fabric59:onboarding:step:${user.id}` to scope per user. Read/write/remove using the namespaced key.
 
-## Tests
+### `src/contexts/AuthContext.tsx`
+- `signUp`: if `authData.session` is null after `supabase.auth.signUp`, return `{ error: new Error("Check your email to confirm your account, then sign in.") }` *without* attempting the org/member insert. Keeps the auth row clean and gives an actionable message. When a session is present, behavior is unchanged.
+- `signOut`: also clear `fabric59:onboarding:step` and `fabric59:onboarding:profile` from `localStorage`.
 
-- `src/test/regressions/runnerActionBarPosition.test.tsx`: render `FlowPanel` with a long mock flow, assert the Submit button is reachable without scrolling the body container (button rendered before the scroll region in DOM order).
-- `src/test/regressions/runnerCardReorder.test.tsx`: simulate dragstart → dragover → drop to move `resources` above `transfer`; assert order persisted to `localStorage` and that the next mount restores it. Cover keyboard reorder path and unknown-id pruning.
-- All existing runner regression suites must stay green.
+### `src/pages/auth/AcceptInvitePage.tsx`
+- When `?token=…` is present and the user is authenticated, render a clear terminal "Invite acceptance is not yet wired" message + a "Continue to your workspace" button (routes to `/launch`). Unauthenticated path is unchanged.
 
-## Out of scope
+### `src/test/regressions/launchRedirectMatrix.test.tsx`
+- Extend existing suite with three cases:
+  1. `ProtectedRoute` with `isMasterAdmin=true, organization=null` does NOT redirect to `/onboarding`.
+  2. `OnboardingPage.handleSkipForNow` with `workspaces=[]` stays on `/onboarding` (does not navigate to `/launch`).
+  3. `AuthContext.signUp` with no returned session surfaces the "Check your email" error and does not insert into `organizations`.
 
-- No changes to the session hook, copilot hook, submission pipeline, schema, RLS, generated types, `client.ts`, `.env`, or `supabase/config.toml`.
-- No drag for the three main columns or the left guide sections.
-- No new dependencies.
+## Out of scope (intentional)
 
-## Verification gates
+- No changes to Supabase auth settings, providers, or `config.toml`.
+- No edits to `client.ts`, generated types, `.env`, or RLS.
+- No real implementation of tokenized invite acceptance — that needs a server-side `accept-invite` edge function and is a separate phase. This pass only converts the silent fall-off into an honest terminal state.
+- No changes to `LaunchRedirectPage` matrix itself — it's correct; the bugs were upstream/downstream of it.
 
-- Submit visible in viewport at 1024 / 1200 / 1440 / 1920 widths with a 30-step flow without scrolling.
-- Reordering persists across reload, per workspace+campaign, per user.
-- Reduced-motion users see no transform animation; keyboard users can reorder without a mouse.
-- Embed mode honors the same reorder behavior.
-- All existing tests pass; two new suites added.
+## Verification
+
+- All existing 372 regression tests stay green.
+- New cases above pass.
+- Manual matrix:
+  - Fresh signup → `/launch` → `/onboarding` (profile) → telephony → land → `/w/:id/campaigns` (no loop).
+  - Master admin, no org, hits `/admin` → no `/onboarding` bounce.
+  - User with org + no workspace clicks "Skip for now" → stays on `/onboarding` with toast (no `/launch` ↔ `/onboarding` loop).
+  - Two users on same browser don't see each other's onboarding step.
