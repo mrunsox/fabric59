@@ -1,13 +1,14 @@
 /**
- * ASC Slice 1 — typed reducer action union.
+ * ASC reducer action union.
  *
- * Intentionally narrow: no AI-related actions yet (APPLY_GENERATED,
- * ACCEPT_GAP, etc.) and no canonical-write actions. Those land in Slice 2+.
+ * Slice 3 adds Interviewer turn handling. Canonical-write actions (fork,
+ * generate, etc.) still land in later slices.
  */
 import type {
   AscCallerReason,
   AscDestinationInput,
   AscDraft,
+  AscInterviewerTurn,
   AscLaunchInput,
   AscStepStatus,
   AscWizardInput,
@@ -31,4 +32,9 @@ export type AscAction =
   | { type: "SET_DESTINATION"; destination: AscDestinationInput }
   | { type: "SET_LAUNCH"; launch: AscLaunchInput }
   | { type: "MARK_STEP_STATUS"; step: number; status: AscStepStatus }
-  | { type: "TOUCH"; now?: string };
+  | { type: "TOUCH"; now?: string }
+  // --- Slice 3: Interviewer ---
+  | { type: "APPLY_INTERVIEWER_TURN"; step: 1 | 2; turn: AscInterviewerTurn }
+  | { type: "CONFIRM_PROPOSED_FIELD"; step: 1 | 2; proposalId: string }
+  | { type: "REJECT_PROPOSED_FIELD"; step: 1 | 2; proposalId: string }
+  | { type: "CLEAR_INTERVIEWER_STEP"; step: 1 | 2 };
