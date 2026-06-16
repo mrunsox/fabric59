@@ -1,8 +1,10 @@
 /**
- * ASC Slice 1 — wizard host page.
+ * ASC Slice 2 — wizard host page.
  *
  * Owns the AscDraft state via useAscDraft and routes the per-step bodies.
- * No AI calls in Slice 1; step bodies are minimal stubs.
+ * Persistence lives in `campaign_setups.intake_data.ascDraft`; this page
+ * mirrors the assigned `setupId` into the URL so a refresh resumes against
+ * the same row.
  */
 import { useCallback, useMemo } from "react";
 import { Navigate, useParams, useSearchParams } from "react-router-dom";
@@ -25,43 +27,38 @@ import {
   AscStepReadiness,
 } from "./steps";
 
-const DRAFT_ID_STORAGE_PREFIX = "fabric59.asc.activeDraftId.";
-
-function resolveActiveDraftId(workspaceId: string): string {
-  const key = `${DRAFT_ID_STORAGE_PREFIX}${workspaceId}`;
-  if (typeof window === "undefined") return "asc-temp";
-  try {
-    const existing = window.localStorage.getItem(key);
-    if (existing) return existing;
-    const fresh = `asc-${Date.now().toString(36)}-${Math.random()
-      .toString(36)
-      .slice(2, 8)}`;
-    window.localStorage.setItem(key, fresh);
-    return fresh;
-  } catch {
-    return "asc-temp";
-  }
-}
-
 export default function AscWizardPage() {
   const { workspaceId = "" } = useParams<{ workspaceId: string }>();
   const flag = useAscWizardFlag(workspaceId);
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const draftId = useMemo(() => resolveActiveDraftId(workspaceId), [workspaceId]);
+  const existingSetupId = searchParams.get("setupId");
+
+  const onSetupIdAssigned = useCallback(
+    (id: string) => {
+      const next = new URLSearchParams(searchParams);
+      if (next.get("setupId") === id) return;
+      next.set("setupId", id);
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
   const { draft, dispatch, autosaveStatus, lastSavedAt, handoffToManual } =
     useAscDraft({
       workspaceId,
-      draftId,
       createdBy: user?.id ?? "anonymous",
+      existingSetupId: existingSetupId ?? null,
+      onSetupIdAssigned,
     });
 
   const urlStep = Number(searchParams.get("step"));
-  const currentStep =
-    Number.isFinite(urlStep) && urlStep >= 1 && urlStep <= ASC_TOTAL_STEPS
+  const currentStep = useMemo(() => {
+    return Number.isFinite(urlStep) && urlStep >= 1 && urlStep <= ASC_TOTAL_STEPS
       ? urlStep
       : draft.step;
+  }, [urlStep, draft.step]);
 
   const setStep = useCallback(
     (step: number) => {

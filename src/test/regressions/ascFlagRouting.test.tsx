@@ -1,14 +1,21 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import WorkspaceCampaignNewDecisionPage from "@/pages/workspace/campaigns/WorkspaceCampaignNewDecisionPage";
 
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({
+    user: { id: "u-1" },
+    organization: { id: "org-1", integration_configs: {} },
+  }),
+}));
 vi.mock("@/pages/admin/CampaignIntakePage", () => ({
   default: () => <div data-testid="campaign-intake-manual">manual</div>,
 }));
 vi.mock("@/pages/workspace/campaigns/asc/AscWizardPage", () => ({
   default: () => <div data-testid="asc-wizard-mounted">wizard</div>,
 }));
+
+import WorkspaceCampaignNewDecisionPage from "@/pages/workspace/campaigns/WorkspaceCampaignNewDecisionPage";
 
 const STORAGE_KEY = "fabric59.features.ascWizard.enabled";
 

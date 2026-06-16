@@ -17,7 +17,15 @@ export function useCampaignSetups() {
         .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as unknown as CampaignSetup[];
+      // Exclude ASC wizard drafts (Phase 4): they live in the same table but
+      // are managed by the assisted wizard and should not surface in canonical
+      // campaign rollups, counts, or dashboards. Marker: intake_data.source.
+      const rows = (data ?? []) as unknown as CampaignSetup[];
+      return rows.filter((row) => {
+        const intake = (row as unknown as { intake_data?: Record<string, unknown> })
+          .intake_data;
+        return (intake as { source?: string } | undefined)?.source !== "asc-wizard";
+      });
     },
     enabled: !!organization?.id,
   });
