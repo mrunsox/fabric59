@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
 export function ProtectedRoute() {
-  const { isAuthenticated, isLoading, organization, isMasterAdmin, orgRole } = useAuth();
+  const { isAuthenticated, isLoading, organization, isMasterAdmin } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -18,16 +18,19 @@ export function ProtectedRoute() {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If user is authenticated but has no organization, redirect to onboarding.
-  // Master admins are exempt — they can access /admin without an org.
-  // Phase 9: any /onboarding/* route is treated as a valid onboarding surface,
-  // so the workspace bootstrap step at /onboarding/workspace is reachable.
-  if (!organization && !location.pathname.startsWith("/onboarding")) {
-    return <Navigate to="/onboarding" replace />;
+  // If user is authenticated but has no organization, redirect.
+  // Master admins go to /superadmin (operator surface), regular users to
+  // /onboarding. Allow /onboarding, /superadmin, and /launch through so the
+  // resolver and operator surfaces never bounce back to themselves.
+  if (!organization) {
+    const path = location.pathname;
+    const onAllowed =
+      path.startsWith("/onboarding") ||
+      path.startsWith("/superadmin") ||
+      path.startsWith("/launch");
+    if (onAllowed) return <Outlet />;
+    return <Navigate to={isMasterAdmin ? "/superadmin" : "/onboarding"} replace />;
   }
-
-  // Phase A (QA Readiness): /admin is the single canonical org overview for ALL roles.
-  // Previous member→/admin/dashboard redirect removed (would now loop, since /admin/dashboard → /admin).
 
   return <Outlet />;
 }
