@@ -31,9 +31,13 @@ const authState: AuthMock = {
   isMasterAdmin: false,
 };
 
-vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => authState,
-}));
+vi.mock("@/contexts/AuthContext", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/contexts/AuthContext")>();
+  return {
+    ...actual,
+    useAuth: () => authState,
+  };
+});
 
 function renderProtected(initialPath: string) {
   let landed = "";
