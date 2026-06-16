@@ -99,7 +99,8 @@ export default function OnboardingPage() {
   }, [user?.email, navigate]);
 
   const [step, setStep] = useState<Step>(() => {
-    const resume = typeof window !== "undefined" ? (localStorage.getItem(RESUME_KEY) as Step | null) : null;
+    const key = resumeKeyFor(user?.id);
+    const resume = typeof window !== "undefined" ? (localStorage.getItem(key) as Step | null) : null;
     if (resume && organization) return resume;
     return organization ? "profile" : "org";
   });
