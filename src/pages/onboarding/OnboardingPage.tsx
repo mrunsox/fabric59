@@ -40,7 +40,9 @@ type OwnershipMode = "workspace" | "client";
 type Role = "ops_leader" | "supervisor" | "implementation" | "intake_owner";
 type Motion = "intake" | "reactivation" | "qa" | "sync" | "monitoring";
 
-const RESUME_KEY = "fabric59:onboarding:step";
+const RESUME_KEY_BASE = "fabric59:onboarding:step";
+const resumeKeyFor = (userId: string | undefined | null) =>
+  userId ? `${RESUME_KEY_BASE}:${userId}` : RESUME_KEY_BASE;
 
 const STEP_DEFS = [
   { key: "org", label: "Organization", description: "Name your operating tenant" },
