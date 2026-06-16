@@ -15,6 +15,7 @@ import { SessionHeader } from "@/components/call-runner/SessionHeader";
 import { GuidePanel } from "@/components/call-runner/GuidePanel";
 import { FlowPanel } from "@/components/call-runner/FlowPanel";
 import { CopilotPanel } from "@/components/call-runner/CopilotPanel";
+import { CallerHistoryPanel } from "@/components/call-runner/CallerHistoryPanel";
 import { ShortcutsHelp } from "@/components/call-runner/ShortcutsHelp";
 import type { AutosaveState } from "@/components/call-runner/primitives";
 import { buildInteractionPayload, submitInteractionDraft } from "@/lib/call-runner/submit";
