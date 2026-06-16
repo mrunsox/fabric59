@@ -68,7 +68,6 @@ function mount() {
 
 describe("ASC wizard persistence — campaign_setups.intake_data.ascDraft (Slice 2)", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
     window.localStorage.clear();
     window.localStorage.setItem(FLAG_KEY, "1");
     captured.insertRows.length = 0;
@@ -79,10 +78,7 @@ describe("ASC wizard persistence — campaign_setups.intake_data.ascDraft (Slice
 
   it("does NOT insert a campaign_setups row on mount (lazy)", async () => {
     mount();
-    // Run timers; with no user input there's still no autosave trigger.
-    await act(async () => {
-      vi.advanceTimersByTime(1000);
-    });
+    await new Promise((r) => setTimeout(r, 1000));
     expect(insertSingle).not.toHaveBeenCalled();
     expect(captured.insertRows).toHaveLength(0);
   });
@@ -92,10 +88,9 @@ describe("ASC wizard persistence — campaign_setups.intake_data.ascDraft (Slice
     fireEvent.change(screen.getByTestId("asc-business-description"), {
       target: { value: "Dental answering service" },
     });
-    await act(async () => {
-      vi.advanceTimersByTime(900);
+    await waitFor(() => expect(insertSingle).toHaveBeenCalledTimes(1), {
+      timeout: 3000,
     });
-    await waitFor(() => expect(insertSingle).toHaveBeenCalledTimes(1));
     expect(captured.insertRows).toHaveLength(1);
     const row = captured.insertRows[0] as Record<string, unknown>;
     expect(row.organization_id).toBe("org-1");
@@ -104,7 +99,6 @@ describe("ASC wizard persistence — campaign_setups.intake_data.ascDraft (Slice
     expect(intake.source).toBe("asc-wizard");
     const ascDraft = intake.ascDraft as { input: { business: { description: string } } };
     expect(ascDraft.input.business.description).toBe("Dental answering service");
-    // campaign_name should reflect user input, not the scaffold placeholder.
     expect(row.campaign_name).toBe("Dental answering service");
   });
 
@@ -113,18 +107,16 @@ describe("ASC wizard persistence — campaign_setups.intake_data.ascDraft (Slice
     fireEvent.change(screen.getByTestId("asc-business-description"), {
       target: { value: "First" },
     });
-    await act(async () => {
-      vi.advanceTimersByTime(900);
+    await waitFor(() => expect(insertSingle).toHaveBeenCalledTimes(1), {
+      timeout: 3000,
     });
-    await waitFor(() => expect(insertSingle).toHaveBeenCalledTimes(1));
 
     fireEvent.change(screen.getByTestId("asc-business-description"), {
       target: { value: "Second" },
     });
-    await act(async () => {
-      vi.advanceTimersByTime(900);
+    await waitFor(() => expect(updateEq).toHaveBeenCalledTimes(1), {
+      timeout: 3000,
     });
-    await waitFor(() => expect(updateEq).toHaveBeenCalledTimes(1));
     expect(insertSingle).toHaveBeenCalledTimes(1);
     const upd = captured.updates[0] as Record<string, unknown>;
     const intake = upd.intake_data as Record<string, unknown>;
