@@ -134,9 +134,10 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (step === "land") localStorage.removeItem(RESUME_KEY);
-    else localStorage.setItem(RESUME_KEY, step);
-  }, [step]);
+    const key = resumeKeyFor(user?.id);
+    if (step === "land") localStorage.removeItem(key);
+    else localStorage.setItem(key, step);
+  }, [step, user?.id]);
 
   useEffect(() => {
     if (!workspaceName && organization?.name) setWorkspaceName(`${organization.name} workspace`);
