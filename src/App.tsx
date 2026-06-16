@@ -12,6 +12,8 @@ import { MasterProtectedRoute } from "@/components/auth/MasterProtectedRoute";
 import LaunchRedirectPage from "@/pages/auth/LaunchRedirectPage";
 import { AdminShell } from "@/components/layout/AdminShell";
 import LegacyWorkspaceRedirect from "@/pages/workspace/LegacyWorkspaceRedirect";
+// Vertical Skin System (Phase 4) — runtime theme injection.
+import { SkinProvider } from "@/lib/skins/SkinProvider";
 // Shell convergence (Phase E) — /org/* retired in favor of canonical /admin/*.
 import { OrgParamRedirect } from "@/components/auth/OrgParamRedirect";
 // Shell convergence (Phase E) — /org/* retired in favor of canonical /admin/*.
@@ -291,6 +293,7 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <AuthProvider>
+          <SkinProvider>
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
