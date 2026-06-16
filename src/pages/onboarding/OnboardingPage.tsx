@@ -86,7 +86,7 @@ const MOTIONS: Array<{ key: Motion; label: string; helper: string }> = [
 ];
 
 export default function OnboardingPage() {
-  const { organization, user, isMasterAdmin, refreshOrganizations } = useAuth();
+  const { organization, user, isMasterAdmin, refreshOrganizations, signOut } = useAuth();
   const { workspaces, refetch: refetchWorkspaces } = useWorkspace();
   const navigate = useNavigate();
 
@@ -644,6 +644,22 @@ export default function OnboardingPage() {
       heading={heading}
       subheading={subheading}
     >
+      <div className="mb-4 flex items-center justify-end gap-3 text-xs text-muted-foreground">
+        <span data-testid="onboarding-current-user">
+          Signed in as <span className="font-medium text-foreground">{user?.email ?? "your account"}</span>
+        </span>
+        <button
+          type="button"
+          onClick={async () => {
+            await signOut();
+            navigate("/login", { replace: true });
+          }}
+          className="font-medium text-primary hover:underline"
+          data-testid="onboarding-sign-out"
+        >
+          Sign out
+        </button>
+      </div>
       <div className="animate-fade-up">{stepContent[step]}</div>
       {(isMasterAdmin || isSuperadminSkipEmail(user?.email)) && (
         <div className="mt-4 flex flex-col items-center gap-2">

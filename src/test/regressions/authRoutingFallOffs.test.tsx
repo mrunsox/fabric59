@@ -157,3 +157,55 @@ describe("AcceptInvitePage · tokenized invite no longer silently drops", () => 
     expect(src).toMatch(/not yet wired/i);
   });
 });
+
+describe("LoginPage · does not silently bounce signed-in users", () => {
+  it("only auto-redirects authenticated users when ?continue=1 is present", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const src = fs.readFileSync(
+      path.resolve(process.cwd(), "src/pages/auth/LoginPage.tsx"),
+      "utf8",
+    );
+    // Guard must require an explicit continue marker before issuing the
+    // redirect to /launch. Without this, authenticated users get shunted to
+    // /onboarding with no way back.
+    expect(src).toMatch(/shouldContinue\s*=\s*params\.get\("continue"\)\s*===\s*"1"/);
+    expect(src).toMatch(/isAuthenticated && shouldContinue/);
+  });
+
+  it("renders an interstitial with a sign-out action for already-authenticated visitors", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const src = fs.readFileSync(
+      path.resolve(process.cwd(), "src/pages/auth/LoginPage.tsx"),
+      "utf8",
+    );
+    expect(src).toMatch(/Already signed in/);
+    expect(src).toMatch(/Sign out and use a different account/);
+    expect(src).toMatch(/signOut\(\)/);
+  });
+
+  it("post-signin submit forwards through /login?continue=1 so the guard fires", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const src = fs.readFileSync(
+      path.resolve(process.cwd(), "src/pages/auth/LoginPage.tsx"),
+      "utf8",
+    );
+    expect(src).toMatch(/\/login\?continue=1/);
+  });
+});
+
+describe("OnboardingPage · visible sign-out escape hatch", () => {
+  it("renders a sign-out control wired to AuthContext.signOut and /login", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const src = fs.readFileSync(
+      path.resolve(process.cwd(), "src/pages/onboarding/OnboardingPage.tsx"),
+      "utf8",
+    );
+    expect(src).toMatch(/data-testid="onboarding-sign-out"/);
+    expect(src).toMatch(/signOut\(\)/);
+    expect(src).toMatch(/navigate\("\/login"/);
+  });
+});
