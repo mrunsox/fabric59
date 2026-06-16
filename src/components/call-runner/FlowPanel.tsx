@@ -333,6 +333,64 @@ export function FlowPanel({
           />
         )}
 
+        {/* Action row — sits directly below the active question card so it
+            stays in the agent's natural reading flow. Sticky to the bottom of
+            the scroll container so it remains tappable on long flows. */}
+        {current && (
+          <div
+            className="sticky bottom-0 z-10 -mx-4 px-4 py-2 border-t bg-card/95 backdrop-blur flex items-center gap-2"
+            data-testid="runner-action-row"
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={goBack}
+              disabled={session.completedStepIds.length === 0}
+              className="gap-1.5"
+              aria-label="Go back to previous step"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </Button>
+            {current.type !== "question_branch" && current.type !== "end_flow" && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => advance()}
+                className="gap-1.5"
+                data-testid="runner-next"
+              >
+                Next <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {blockingReason && (
+              <StatusPill tone="warn" icon={AlertTriangle} dense className="hidden sm:inline-flex">
+                {blockingReason}
+              </StatusPill>
+            )}
+            <Button
+              type="button"
+              variant={completedAll ? "default" : "outline"}
+              size="sm"
+              onClick={onSubmit}
+              disabled={submitting}
+              className="ml-auto gap-1.5"
+              data-testid="runner-submit"
+              aria-label="Submit interaction"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Submitting…
+                </>
+              ) : (
+                <>
+                  <Send className="h-3.5 w-3.5" /> Submit
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
         {/* Past steps (collapsed) */}
         {orderedVisible.length > 0 && (
           <CompactStepList
