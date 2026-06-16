@@ -1037,6 +1037,13 @@ export default function SettingsPage() {
           </TabsContent>
         )}
 
+        {/* ── Appearance Tab ── */}
+        {isOrgAdmin && (
+          <TabsContent value="appearance" className="space-y-6">
+            <AppearanceSection />
+          </TabsContent>
+        )}
+
         {/* ── Legal & Compliance Tab ── */}
         <TabsContent value="legal" className="space-y-6">
           <Card>
