@@ -9,6 +9,8 @@ import type {
   AscDestinationInput,
   AscDraft,
   AscGapItem,
+  AscGenerated,
+  AscGenerationError,
   AscInterviewerTurn,
   AscLaunchInput,
   AscLogicArchitectProposal,
@@ -22,6 +24,7 @@ import type {
   AscLaProposalValue,
   AscLaStep,
 } from "./logicArchitectSchema";
+import type { AscStep8Advisory } from "./step8CompileSchema";
 
 export type AscInterviewerStep = 1 | 2 | 3 | 4;
 export type AscGapFinderStep = 3 | 4;
