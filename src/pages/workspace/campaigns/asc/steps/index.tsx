@@ -887,18 +887,13 @@ export function AscStepGenerate({ draft, dispatch }: AscStepProps) {
 }
 
 // ── Step 9 ─────────────────────────────────────────────────────────────────
-export function AscStepReview(_: AscStepProps) {
+export function AscStepReview({ draft, onJumpToStep }: AscStepProps) {
   return (
-    <div data-testid="asc-step-9">
-      <StepHeader
-        number={9}
-        title="Review & agent preview"
-        blurb="Tabbed canvas: Flow, Copy, Outcomes, Notifications, Destination, Agent preview. Lands later."
-      />
-      <ComingInLaterSlice what="Review canvas with provenance overlay and the runner-parity preview" />
-    </div>
+    <AscStepReviewSurface draft={draft} onJumpToStep={onJumpToStep} />
   );
 }
+
+
 
 // ── Step 10 ────────────────────────────────────────────────────────────────
 export function AscStepReadiness(_: AscStepProps) {
