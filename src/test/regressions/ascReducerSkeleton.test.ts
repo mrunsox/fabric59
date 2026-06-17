@@ -120,9 +120,11 @@ describe("ASC reducer skeleton (Slice 1)", () => {
     expect(selectIsForked({ ...draft, state: "forked" })).toBe(true);
   });
 
-  it("does NOT export a forkToCanonical or runner payload helper yet", async () => {
+  it("forkToCanonical returns prefill (Slice 8); runner payload helper still pending", async () => {
     const mod = await import("@/lib/asc/reducer");
-    expect(() => mod.forkToCanonical()).toThrow(/not implemented/);
+    const result = mod.forkToCanonical(draft);
+    expect(result).toMatchObject({ source: "asc-wizard", ascDraftId: draft.id });
+    expect(result.prefill).toBeTruthy();
     expect(() => mod.ascGeneratedToRunnerPayload()).toThrow(/not implemented/);
   });
 
