@@ -107,13 +107,18 @@ describe("ASC invariants (Phase 6 · Slice 1)", () => {
       "src/hooks/useCampaignSetup.ts",
     ];
 
-    it("none of the pinned canonical files import @/lib/asc/*", () => {
+    it("none of the pinned canonical files import @/lib/asc/* (except telemetry)", () => {
+      // Phase 6 · Slice 2 — `@/lib/asc/telemetry` is an explicit, additive
+      // boundary: canonical code may emit ASC-origin events but must not
+      // touch any other ASC-local module.
+      const ALLOWED = /from\s+["']@\/lib\/asc\/telemetry["']/;
       for (const file of CANONICAL_RUNTIME_FILES) {
         const src = read(file);
-        const matches = src.match(/from\s+["']@\/lib\/asc\/[^"']+["']/g) ?? [];
+        const allMatches = src.match(/from\s+["']@\/lib\/asc\/[^"']+["']/g) ?? [];
+        const disallowed = allMatches.filter((m) => !ALLOWED.test(m));
         expect(
-          matches,
-          `${file} must not import from @/lib/asc/* — found: ${matches.join(", ")}`,
+          disallowed,
+          `${file} must not import from @/lib/asc/* (except telemetry) — found: ${disallowed.join(", ")}`,
         ).toEqual([]);
         // Also catch relative paths into the asc dir.
         expect(src).not.toMatch(/from\s+["'][./]+lib\/asc\//);
