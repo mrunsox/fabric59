@@ -1,22 +1,22 @@
 /**
- * ASC Slice 3/4 — orchestration boundary.
+ * ASC Slice 3/4/5 — orchestration boundary.
  *
  * Single endpoint. Strict scope:
- *   role === "interviewer"  → step in {1, 2, 3, 4}
- *   role === "gap-finder"   → step in {3, 4} (advisory only)
+ *   role === "interviewer"     → step in {1, 2, 3, 4}
+ *   role === "gap-finder"      → step in {3, 4} (advisory only)
+ *   role === "logic-architect" → step in {5, 6, 7} (proposals only)
  *
- * Everything else (logic architect, script writer, explainer, readiness,
- * fork, publish) is intentionally rejected with 400 so future roles cannot
- * be silently invoked through this boundary before they are designed.
- *
- * No DB writes. Tool-calling forces schema-constrained output; the tool
- * arguments are re-validated client-side before any reducer dispatch.
+ * Everything else (script writer, explainer, readiness, fork, publish) is
+ * rejected with 400. No DB writes. Tool-calling forces schema-constrained
+ * output; the tool arguments are re-validated client-side before any
+ * reducer dispatch.
  */
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { requireUser } from "../_shared/auth.ts";
 
 const INTERVIEWER_STEPS = new Set([1, 2, 3, 4]);
 const GAP_FINDER_STEPS = new Set([3, 4]);
+const LOGIC_ARCHITECT_STEPS = new Set([5, 6, 7]);
 
 const ALL_TARGET_FIELDS = [
   // Step 1
@@ -213,23 +213,130 @@ const GAP_FINDER_TOOL = {
   },
 };
 
+// ── Logic Architect (Slice 5) ─────────────────────────────────────────────
+const LA_TARGET_FIELDS = [
+  "outcomes.add",
+  "notifications.add",
+  "destination.kind",
+  "destination.externalUrl",
+  "destination.deepLinkTemplate",
+  "destination.openMode",
+  "launch.slugCandidates",
+] as const;
+
+const LOGIC_ARCHITECT_SYSTEM_PROMPT = `You are the ASC Logic Architect.
+
+ROLE
+- Translate captured business + caller-reason context into proposed
+  outcomes (Step 5), notification rules (Step 6), and destination + launch
+  candidates (Step 7). All output is proposal-only.
+- Scope: Steps 5, 6, 7 only.
+
+GROUNDING (hard rules)
+- Use only: draftInputSnapshot and the supplied grounding fields
+  (workspaceOutcomeCatalog, workspaceNotificationDestinations,
+  destinationContext, takenSlugs).
+- Never invent third-party brand names, prices, jurisdictions, phone numbers,
+  emails, channel handles, integration names, or URLs that are not in the
+  supplied grounding.
+- Never claim a slug is unique. Slug uniqueness is decided client-side.
+
+STEP 5 — Outcomes
+- At most 6 outcomes. Each: { id, label, kind, note? }.
+- The stable identifier is the label. \`kind\` is a coarse PROPOSAL-LOCAL hint
+  (success, qualified, unqualified, callback, voicemail, escalated, blocked,
+  other). Do NOT treat \`kind\` as a canonical taxonomy.
+- Prefer labels from workspaceOutcomeCatalog. Don't duplicate (normalized
+  compare) outcomes already in draftInputSnapshot.outcomesDraftEdits.
+
+STEP 6 — Notifications
+- At most 6 rules. Each: { id, outcomeRef, channelRef, audienceRef?, urgency, note? }.
+- outcomeRef MUST reference an outcome label already in
+  draftInputSnapshot.outcomesDraftEdits. channelRef MUST reference an entry
+  in workspaceNotificationDestinations.
+- If workspaceNotificationDestinations is empty, return proposals=[] and one
+  advisory explaining the gap.
+
+STEP 7 — Destination + launch
+- Destination proposals are scoped subfields:
+    destination.kind            (always groundable)
+    destination.externalUrl     (only if URL appears in destinationContext)
+    destination.deepLinkTemplate (only if template appears in destinationContext)
+    destination.openMode        (always groundable)
+- Launch proposals are launch.slugCandidates (string[]). Never write a single
+  "slug". Candidates: short, kebab-case, ASCII.
+- If destinationContext is empty, prefer destination.kind="internal_runner"
+  and move any external suggestions to advisories[].
+
+RESPONSE
+- Always call the logic_architect_response tool exactly once. Free-form
+  replies are invalid. step MUST equal the request's step.`;
+
+const LOGIC_ARCHITECT_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "logic_architect_response",
+    description:
+      "Return the next Logic Architect proposal set for the ASC wizard. Always call this; never reply in free text.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        step: { type: "integer", enum: [5, 6, 7] },
+        proposals: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              id: { type: "string" },
+              targetField: { type: "string", enum: LA_TARGET_FIELDS },
+              value: {},
+              confidence: { type: "string", enum: ["high", "medium", "low"] },
+              rationale: { type: "string" },
+            },
+            required: ["id", "targetField", "value", "confidence", "rationale"],
+          },
+        },
+        advisories: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              message: { type: "string", maxLength: 240 },
+            },
+            required: ["message"],
+          },
+        },
+      },
+      required: ["step", "proposals", "advisories"],
+    },
+  },
+};
+
 interface BaseRequest {
-  role: "interviewer" | "gap-finder";
-  step: 1 | 2 | 3 | 4;
+  role: "interviewer" | "gap-finder" | "logic-architect";
+  step: number;
   workspaceId: string;
   skinId?: string;
   draftInputSnapshot: Record<string, unknown>;
   confirmedFields?: string[];
   lastUserMessage?: string;
+  grounding?: Record<string, unknown>;
 }
 
 function validateRequest(raw: unknown): BaseRequest | { error: string } {
   if (!raw || typeof raw !== "object") return { error: "Body must be an object" };
   const r = raw as Record<string, unknown>;
   const role = r.role;
-  if (role !== "interviewer" && role !== "gap-finder") {
+  if (
+    role !== "interviewer" &&
+    role !== "gap-finder" &&
+    role !== "logic-architect"
+  ) {
     return {
-      error: `Only role="interviewer" or "gap-finder" is supported (got ${JSON.stringify(role)})`,
+      error: `Only role="interviewer" | "gap-finder" | "logic-architect" is supported (got ${JSON.stringify(role)})`,
     };
   }
   if (typeof r.step !== "number") {
@@ -241,6 +348,9 @@ function validateRequest(raw: unknown): BaseRequest | { error: string } {
   if (role === "gap-finder" && !GAP_FINDER_STEPS.has(r.step)) {
     return { error: `gap-finder step must be 3 or 4 (got ${r.step})` };
   }
+  if (role === "logic-architect" && !LOGIC_ARCHITECT_STEPS.has(r.step)) {
+    return { error: `logic-architect step must be 5, 6, or 7 (got ${r.step})` };
+  }
   if (typeof r.workspaceId !== "string" || r.workspaceId.length === 0) {
     return { error: "workspaceId is required" };
   }
@@ -249,7 +359,7 @@ function validateRequest(raw: unknown): BaseRequest | { error: string } {
   }
   return {
     role,
-    step: r.step as 1 | 2 | 3 | 4,
+    step: r.step,
     workspaceId: r.workspaceId,
     skinId: typeof r.skinId === "string" ? r.skinId : undefined,
     draftInputSnapshot: r.draftInputSnapshot as Record<string, unknown>,
@@ -258,11 +368,15 @@ function validateRequest(raw: unknown): BaseRequest | { error: string } {
       : [],
     lastUserMessage:
       typeof r.lastUserMessage === "string" ? r.lastUserMessage : undefined,
+    grounding:
+      r.grounding && typeof r.grounding === "object"
+        ? (r.grounding as Record<string, unknown>)
+        : undefined,
   };
 }
 
 function buildInterviewerUserMessage(req: BaseRequest): string {
-  const allowed = STEP_FIELDS[req.step].join(", ");
+  const allowed = STEP_FIELDS[req.step as 1 | 2 | 3 | 4].join(", ");
   const snapshot = JSON.stringify(req.draftInputSnapshot, null, 2);
   const confirmed = req.confirmedFields?.length
     ? req.confirmedFields.join(", ")
@@ -291,6 +405,23 @@ function buildGapFinderUserMessage(req: BaseRequest): string {
     snapshot,
     "",
     "Return advisory recommendations only. Reply by calling the gap_finder_response tool exactly once.",
+  ].join("\n");
+}
+
+function buildLogicArchitectUserMessage(req: BaseRequest): string {
+  const snapshot = JSON.stringify(req.draftInputSnapshot, null, 2);
+  const grounding = JSON.stringify(req.grounding ?? {}, null, 2);
+  return [
+    `Step: ${req.step}`,
+    `Workspace skin id: ${req.skinId ?? "(none)"}`,
+    "",
+    "Current draft input snapshot (JSON):",
+    snapshot,
+    "",
+    "Grounding (the ONLY external context you may reference):",
+    grounding,
+    "",
+    "Reply by calling the logic_architect_response tool exactly once.",
   ].join("\n");
 }
 
@@ -325,15 +456,26 @@ Deno.serve(async (req) => {
     return jsonResponse({ ok: false, code: "bad_request", message: validated.error }, 400);
   }
 
-  const isInterviewer = validated.role === "interviewer";
-  const systemPrompt = isInterviewer
-    ? INTERVIEWER_SYSTEM_PROMPT
-    : GAP_FINDER_SYSTEM_PROMPT;
-  const userMessage = isInterviewer
-    ? buildInterviewerUserMessage(validated)
-    : buildGapFinderUserMessage(validated);
-  const tool = isInterviewer ? INTERVIEWER_TOOL : GAP_FINDER_TOOL;
-  const toolName = isInterviewer ? "interviewer_response" : "gap_finder_response";
+  let systemPrompt: string;
+  let userMessage: string;
+  let tool: typeof INTERVIEWER_TOOL;
+  let toolName: string;
+  if (validated.role === "interviewer") {
+    systemPrompt = INTERVIEWER_SYSTEM_PROMPT;
+    userMessage = buildInterviewerUserMessage(validated);
+    tool = INTERVIEWER_TOOL;
+    toolName = "interviewer_response";
+  } else if (validated.role === "gap-finder") {
+    systemPrompt = GAP_FINDER_SYSTEM_PROMPT;
+    userMessage = buildGapFinderUserMessage(validated);
+    tool = GAP_FINDER_TOOL;
+    toolName = "gap_finder_response";
+  } else {
+    systemPrompt = LOGIC_ARCHITECT_SYSTEM_PROMPT;
+    userMessage = buildLogicArchitectUserMessage(validated);
+    tool = LOGIC_ARCHITECT_TOOL;
+    toolName = "logic_architect_response";
+  }
 
   try {
     const aiResponse = await fetch(

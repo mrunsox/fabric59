@@ -249,6 +249,42 @@ export interface AscGapFinderMeta {
   itemsByStep: Partial<Record<3 | 4, AscGapItem[]>>;
 }
 
+// ── Slice 5: Logic Architect proposal metadata ─────────────────────────────
+import type {
+  AscLaProposalValue,
+  AscLaTargetField,
+  AscLaStep,
+  AscLaAdvisory,
+} from "./logicArchitectSchema";
+
+export type AscLaProposalStatus =
+  | "pending"
+  | "confirmed"
+  | "rejected"
+  | "stale";
+
+export interface AscLogicArchitectProposal {
+  id: string;
+  step: AscLaStep;
+  targetField: AscLaTargetField;
+  value: AscLaProposalValue;
+  confidence: AscConfidence;
+  rationale: string;
+  status: AscLaProposalStatus;
+  /** Snapshot of the relevant input slot at proposal-issue time. Used for
+   *  the manual-wins-over-stale guard. */
+  fieldSnapshot: string;
+  /** Set when a Step 3/4 input changed after the proposal was issued. */
+  staleReason?: "cross_step_input_changed" | "snapshot_diverged" | "ungrounded";
+  issuedAt: string;
+}
+
+export interface AscLogicArchitectMeta {
+  lastRunAt: Partial<Record<AscLaStep, string>>;
+  proposalsByStep: Partial<Record<AscLaStep, AscLogicArchitectProposal[]>>;
+  advisoriesByStep: Partial<Record<AscLaStep, AscLaAdvisory[]>>;
+}
+
 
 export interface AscDraft {
   schemaVersion: 1;
@@ -273,6 +309,8 @@ export interface AscDraft {
     interviewer?: AscInterviewerMeta;
     /** Optional. Strictly ASC UI/session metadata — Slice 4 advisory only. */
     gapFinder?: AscGapFinderMeta;
+    /** Optional. Slice 5 — Logic Architect proposals/advisories, proposal-only. */
+    logicArchitect?: AscLogicArchitectMeta;
   };
 }
 

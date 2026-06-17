@@ -33,6 +33,10 @@ import {
   type AscInterviewerMeta,
   type AscInterviewerProposal,
   type AscInterviewerTurn,
+  type AscLogicArchitectMeta,
+  type AscLogicArchitectProposal,
+  type AscNotificationEdit,
+  type AscOutcomeEdit,
 } from "./types";
 import {
   normalizeReasonLabel,
@@ -46,6 +50,16 @@ import {
   type AscBranchHintValue,
   type AscInterviewerTargetField,
 } from "./interviewerSchema";
+import {
+  laTargetStep,
+  normalizeOutcomeLabel,
+  normalizeSlug,
+  notificationKey,
+  snapshotForLaProposal,
+  type AscLaNotificationValue,
+  type AscLaOutcomeValue,
+  type AscLaStep,
+} from "./logicArchitectSchema";
 
 function bumpUpdated(draft: AscDraft, now?: string): AscDraft {
   return {
@@ -81,6 +95,66 @@ function emptyGapFinderMeta(): AscGapFinderMeta {
 
 function withGapFinder(draft: AscDraft, next: AscGapFinderMeta): AscDraft {
   return { ...draft, meta: { ...draft.meta, gapFinder: next } };
+}
+
+// ── Slice 5: Logic Architect meta helpers ───────────────────────────────
+function emptyLaMeta(): AscLogicArchitectMeta {
+  return { lastRunAt: {}, proposalsByStep: {}, advisoriesByStep: {} };
+}
+
+function getLa(draft: AscDraft): AscLogicArchitectMeta {
+  return draft.meta.logicArchitect ?? emptyLaMeta();
+}
+
+function withLa(draft: AscDraft, next: AscLogicArchitectMeta): AscDraft {
+  return { ...draft, meta: { ...draft.meta, logicArchitect: next } };
+}
+
+function mapLaProposals(
+  meta: AscLogicArchitectMeta,
+  step: AscLaStep,
+  fn: (p: AscLogicArchitectProposal) => AscLogicArchitectProposal,
+): AscLogicArchitectMeta {
+  const cur = meta.proposalsByStep[step];
+  if (!cur) return meta;
+  return {
+    ...meta,
+    proposalsByStep: { ...meta.proposalsByStep, [step]: cur.map(fn) },
+  };
+}
+
+function staleLaForCrossStepChange(
+  meta: AscLogicArchitectMeta,
+): AscLogicArchitectMeta {
+  // Step 3/4 (callerReasons) and Step 2 (purpose) changes invalidate Step 5
+  // and Step 6 proposals (outcomes + notifications depend on them). Step 7
+  // destination/slug doesn't structurally depend on callerReasons, so leave it.
+  const stepsToStale: AscLaStep[] = [5, 6];
+  let next = meta;
+  for (const step of stepsToStale) {
+    next = mapLaProposals(next, step, (p) =>
+      p.status === "pending"
+        ? { ...p, status: "stale", staleReason: "cross_step_input_changed" }
+        : p,
+    );
+  }
+  return next;
+}
+
+function makeLaProposalId(): string {
+  const rand =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).slice(2, 10);
+  return `la-${Date.now().toString(36)}-${rand}`;
+}
+
+function makeEditId(prefix: string): string {
+  const rand =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).slice(2, 10);
+  return `${prefix}-${Date.now().toString(36)}-${rand}`;
 }
 
 /**
@@ -308,22 +382,28 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
     case "UPDATE_PURPOSE": {
       const touched: AscInterviewerTargetField[] = Object.keys(action.patch)
         .map((k) => `purpose.${k}` as AscInterviewerTargetField);
-      const next = bumpUpdated({
+      let next = bumpUpdated({
         ...state,
         input: {
           ...state.input,
           purpose: { ...state.input.purpose, ...action.patch },
         },
       });
-      if (!next.meta.interviewer) return next;
-      return withInterviewer(
-        next,
-        markStaleForFields(next.meta.interviewer, touched),
-      );
+      if (next.meta.interviewer) {
+        next = withInterviewer(
+          next,
+          markStaleForFields(next.meta.interviewer, touched),
+        );
+      }
+      // Cross-step: purpose changes invalidate Step 5/6 LA proposals.
+      if (next.meta.logicArchitect) {
+        next = withLa(next, staleLaForCrossStepChange(next.meta.logicArchitect));
+      }
+      return next;
     }
 
     case "ADD_CALLER_REASON": {
-      const next = bumpUpdated({
+      let next = bumpUpdated({
         ...state,
         input: {
           ...state.input,
@@ -332,20 +412,26 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
       });
       // Stale any pending `callerReasons.add` proposals whose normalized
       // label now matches the just-added reason.
-      if (!next.meta.interviewer) return next;
-      const newNorm = normalizeReasonLabel(action.reason.label);
-      const staled = markStaleWhere(
-        next.meta.interviewer,
-        (p) =>
-          p.targetField === "callerReasons.add" &&
-          typeof p.value === "string" &&
-          normalizeReasonLabel(p.value) === newNorm,
-      );
-      return withInterviewer(next, staled);
+      if (next.meta.interviewer) {
+        const newNorm = normalizeReasonLabel(action.reason.label);
+        const staled = markStaleWhere(
+          next.meta.interviewer,
+          (p) =>
+            p.targetField === "callerReasons.add" &&
+            typeof p.value === "string" &&
+            normalizeReasonLabel(p.value) === newNorm,
+        );
+        next = withInterviewer(next, staled);
+      }
+      // Cross-step: caller-reason changes invalidate Step 5/6 LA proposals.
+      if (next.meta.logicArchitect) {
+        next = withLa(next, staleLaForCrossStepChange(next.meta.logicArchitect));
+      }
+      return next;
     }
 
     case "UPDATE_CALLER_REASON": {
-      const next = bumpUpdated({
+      let next = bumpUpdated({
         ...state,
         input: {
           ...state.input,
@@ -354,15 +440,21 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
           ),
         },
       });
-      if (!next.meta.interviewer) return next;
-      const touched = touchedPerReasonFields(action.patch);
-      if (touched.length === 0) return next;
-      const tset = new Set<string>(touched);
-      const staled = markStaleWhere(
-        next.meta.interviewer,
-        (p) => p.reasonId === action.id && tset.has(p.targetField),
-      );
-      return withInterviewer(next, staled);
+      if (next.meta.interviewer) {
+        const touched = touchedPerReasonFields(action.patch);
+        if (touched.length > 0) {
+          const tset = new Set<string>(touched);
+          const staled = markStaleWhere(
+            next.meta.interviewer,
+            (p) => p.reasonId === action.id && tset.has(p.targetField),
+          );
+          next = withInterviewer(next, staled);
+        }
+      }
+      if (next.meta.logicArchitect) {
+        next = withLa(next, staleLaForCrossStepChange(next.meta.logicArchitect));
+      }
+      return next;
     }
 
     case "REMOVE_CALLER_REASON": {
@@ -404,20 +496,52 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
           itemsByStep: cleanedByStep,
         });
       }
+      if (withMeta.meta.logicArchitect) {
+        withMeta = withLa(
+          withMeta,
+          staleLaForCrossStepChange(withMeta.meta.logicArchitect),
+        );
+      }
       return withMeta;
     }
 
-    case "SET_DESTINATION":
-      return bumpUpdated({
+    case "SET_DESTINATION": {
+      let next = bumpUpdated({
         ...state,
         input: { ...state.input, destination: action.destination },
       });
+      // Stale any pending destination LA proposals whose snapshot diverges.
+      if (next.meta.logicArchitect) {
+        const cur = next.meta.logicArchitect;
+        const updated = mapLaProposals(cur, 7, (p) => {
+          if (p.status !== "pending") return p;
+          if (!p.targetField.startsWith("destination.")) return p;
+          const live = snapshotForLaProposal(next.input, p.targetField);
+          if (live === p.fieldSnapshot) return p;
+          return { ...p, status: "stale", staleReason: "snapshot_diverged" };
+        });
+        next = withLa(next, updated);
+      }
+      return next;
+    }
 
-    case "SET_LAUNCH":
-      return bumpUpdated({
+    case "SET_LAUNCH": {
+      let next = bumpUpdated({
         ...state,
         input: { ...state.input, launch: action.launch },
       });
+      if (next.meta.logicArchitect) {
+        const updated = mapLaProposals(next.meta.logicArchitect, 7, (p) => {
+          if (p.status !== "pending") return p;
+          if (p.targetField !== "launch.slugCandidates") return p;
+          const live = snapshotForLaProposal(next.input, p.targetField);
+          if (live === p.fieldSnapshot) return p;
+          return { ...p, status: "stale", staleReason: "snapshot_diverged" };
+        });
+        next = withLa(next, updated);
+      }
+      return next;
+    }
 
     case "MARK_STEP_STATUS":
       return bumpUpdated({
@@ -633,6 +757,373 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
         itemsByStep: { ...existing.itemsByStep, [action.step]: next },
       };
       return bumpUpdated(withGapFinder(state, nextMeta));
+    }
+
+    // ── Slice 5: outcome/notification manual editors ──────────────────────
+    case "ADD_OUTCOME_EDIT": {
+      const next = bumpUpdated({
+        ...state,
+        input: {
+          ...state.input,
+          outcomesDraftEdits: [
+            ...(state.input.outcomesDraftEdits ?? []),
+            action.outcome,
+          ],
+        },
+      });
+      if (next.meta.logicArchitect) {
+        const newNorm = normalizeOutcomeLabel(action.outcome.label);
+        const updated = mapLaProposals(next.meta.logicArchitect, 5, (p) => {
+          if (p.status !== "pending") return p;
+          if (p.targetField !== "outcomes.add") return p;
+          const v = p.value as AscLaOutcomeValue;
+          if (normalizeOutcomeLabel(v.label) === newNorm) {
+            return { ...p, status: "stale", staleReason: "snapshot_diverged" };
+          }
+          return p;
+        });
+        return withLa(next, updated);
+      }
+      return next;
+    }
+
+    case "UPDATE_OUTCOME_EDIT": {
+      return bumpUpdated({
+        ...state,
+        input: {
+          ...state.input,
+          outcomesDraftEdits: (state.input.outcomesDraftEdits ?? []).map((o) =>
+            o.id === action.id ? { ...o, ...action.patch } : o,
+          ),
+        },
+      });
+    }
+
+    case "REMOVE_OUTCOME_EDIT": {
+      return bumpUpdated({
+        ...state,
+        input: {
+          ...state.input,
+          outcomesDraftEdits: (state.input.outcomesDraftEdits ?? []).filter(
+            (o) => o.id !== action.id,
+          ),
+        },
+      });
+    }
+
+    case "ADD_NOTIFICATION_EDIT": {
+      const next = bumpUpdated({
+        ...state,
+        input: {
+          ...state.input,
+          notificationsDraftEdits: [
+            ...(state.input.notificationsDraftEdits ?? []),
+            action.notification,
+          ],
+        },
+      });
+      if (next.meta.logicArchitect) {
+        const newKey = [
+          normalizeOutcomeLabel(action.notification.trigger ?? ""),
+          (action.notification.channel ?? "").trim().toLowerCase(),
+        ].join("|");
+        const updated = mapLaProposals(next.meta.logicArchitect, 6, (p) => {
+          if (p.status !== "pending") return p;
+          if (p.targetField !== "notifications.add") return p;
+          const v = p.value as AscLaNotificationValue;
+          const k = [
+            normalizeOutcomeLabel(v.outcomeRef),
+            v.channelRef.trim().toLowerCase(),
+          ].join("|");
+          if (k === newKey) {
+            return { ...p, status: "stale", staleReason: "snapshot_diverged" };
+          }
+          return p;
+        });
+        return withLa(next, updated);
+      }
+      return next;
+    }
+
+    case "UPDATE_NOTIFICATION_EDIT": {
+      return bumpUpdated({
+        ...state,
+        input: {
+          ...state.input,
+          notificationsDraftEdits: (state.input.notificationsDraftEdits ?? []).map(
+            (n) => (n.id === action.id ? { ...n, ...action.patch } : n),
+          ),
+        },
+      });
+    }
+
+    case "REMOVE_NOTIFICATION_EDIT": {
+      return bumpUpdated({
+        ...state,
+        input: {
+          ...state.input,
+          notificationsDraftEdits: (state.input.notificationsDraftEdits ?? []).filter(
+            (n) => n.id !== action.id,
+          ),
+        },
+      });
+    }
+
+    // ── Slice 5: Logic Architect (proposals only) ─────────────────────────
+    case "APPLY_LOGIC_ARCHITECT_RESULT": {
+      const meta = getLa(state);
+      const nextMeta: AscLogicArchitectMeta = {
+        ...meta,
+        lastRunAt: { ...meta.lastRunAt, [action.step]: action.now },
+        proposalsByStep: {
+          ...meta.proposalsByStep,
+          [action.step]: action.proposals,
+        },
+        advisoriesByStep: {
+          ...meta.advisoriesByStep,
+          [action.step]: action.advisories,
+        },
+      };
+      return bumpUpdated(withLa(state, nextMeta));
+    }
+
+    case "CONFIRM_LOGIC_ARCHITECT_PROPOSAL": {
+      const meta = getLa(state);
+      const list = meta.proposalsByStep[action.step] ?? [];
+      const proposal = list.find((p) => p.id === action.proposalId);
+      if (!proposal || proposal.status !== "pending") return state;
+
+      // Verify the step inferred from targetField matches.
+      if (laTargetStep(proposal.targetField) !== action.step) return state;
+
+      // Snapshot guard (manual-wins-over-stale). Append-only outcome/notification
+      // proposals also re-check the live snapshot.
+      const liveSnapshot = snapshotForLaProposal(state.input, proposal.targetField);
+      if (liveSnapshot !== proposal.fieldSnapshot) {
+        const nextMeta = mapLaProposals(meta, action.step, (p) =>
+          p.id === proposal.id
+            ? { ...p, status: "stale", staleReason: "snapshot_diverged" }
+            : p,
+        );
+        return bumpUpdated(withLa(state, nextMeta));
+      }
+
+      switch (proposal.targetField) {
+        case "outcomes.add": {
+          const v = proposal.value as AscLaOutcomeValue;
+          const norm = normalizeOutcomeLabel(v.label);
+          const existing = state.input.outcomesDraftEdits ?? [];
+          const isDup = existing.some(
+            (o) => normalizeOutcomeLabel(o.label) === norm,
+          );
+          let nextState = state;
+          if (!isDup) {
+            // `kind` and `note` are proposal-local; we persist only label + note
+            // (note carries the proposal-local `kind` hint as plain text so it
+            // doesn't leak into a canonical taxonomy).
+            const note = [v.kind, v.note].filter(Boolean).join(" — ") || undefined;
+            const outcome: AscOutcomeEdit = {
+              id: makeEditId("oc"),
+              label: v.label.trim(),
+              note,
+            };
+            nextState = {
+              ...state,
+              input: {
+                ...state.input,
+                outcomesDraftEdits: [...existing, outcome],
+              },
+            };
+          }
+          const nextMeta = mapLaProposals(meta, action.step, (p) =>
+            p.id === proposal.id ? { ...p, status: "confirmed" } : p,
+          );
+          return bumpUpdated(withLa(nextState, nextMeta));
+        }
+
+        case "notifications.add": {
+          const v = proposal.value as AscLaNotificationValue;
+          const key = notificationKey(v);
+          const existing = state.input.notificationsDraftEdits ?? [];
+          const isDup = existing.some(
+            (n) =>
+              [
+                normalizeOutcomeLabel(n.trigger ?? ""),
+                (n.channel ?? "").trim().toLowerCase(),
+              ].join("|") === key,
+          );
+          let nextState = state;
+          if (!isDup) {
+            // Flat persistence bridge: trigger=outcomeRef, channel=channelRef,
+            // note=audienceRef + urgency + note (the UI separately renders
+            // audience/urgency from the proposal preview while it's pending).
+            const noteParts: string[] = [];
+            if (v.audienceRef) noteParts.push(`audience: ${v.audienceRef}`);
+            noteParts.push(`urgency: ${v.urgency}`);
+            if (v.note) noteParts.push(v.note);
+            const notification: AscNotificationEdit = {
+              id: makeEditId("nt"),
+              trigger: v.outcomeRef,
+              channel: v.channelRef,
+              note: noteParts.join(" · "),
+            };
+            nextState = {
+              ...state,
+              input: {
+                ...state.input,
+                notificationsDraftEdits: [...existing, notification],
+              },
+            };
+          }
+          const nextMeta = mapLaProposals(meta, action.step, (p) =>
+            p.id === proposal.id ? { ...p, status: "confirmed" } : p,
+          );
+          return bumpUpdated(withLa(nextState, nextMeta));
+        }
+
+        case "destination.kind": {
+          const nextState = {
+            ...state,
+            input: {
+              ...state.input,
+              destination: {
+                ...(state.input.destination ?? { kind: "internal_runner" as const }),
+                kind: proposal.value as AscOutcomeEdit extends never
+                  ? never
+                  : "internal_runner" | "external_url" | "deep_link",
+              },
+            },
+          };
+          const nextMeta = mapLaProposals(meta, action.step, (p) =>
+            p.id === proposal.id ? { ...p, status: "confirmed" } : p,
+          );
+          return bumpUpdated(withLa(nextState, nextMeta));
+        }
+
+        case "destination.externalUrl": {
+          const nextState = {
+            ...state,
+            input: {
+              ...state.input,
+              destination: {
+                ...(state.input.destination ?? { kind: "external_url" as const }),
+                kind: state.input.destination?.kind ?? "external_url",
+                externalUrl: proposal.value as string,
+              },
+            },
+          };
+          const nextMeta = mapLaProposals(meta, action.step, (p) =>
+            p.id === proposal.id ? { ...p, status: "confirmed" } : p,
+          );
+          return bumpUpdated(withLa(nextState, nextMeta));
+        }
+
+        case "destination.deepLinkTemplate": {
+          const nextState = {
+            ...state,
+            input: {
+              ...state.input,
+              destination: {
+                ...(state.input.destination ?? { kind: "deep_link" as const }),
+                kind: state.input.destination?.kind ?? "deep_link",
+                deepLinkTemplate: proposal.value as string,
+              },
+            },
+          };
+          const nextMeta = mapLaProposals(meta, action.step, (p) =>
+            p.id === proposal.id ? { ...p, status: "confirmed" } : p,
+          );
+          return bumpUpdated(withLa(nextState, nextMeta));
+        }
+
+        case "destination.openMode": {
+          const nextState = {
+            ...state,
+            input: {
+              ...state.input,
+              destination: {
+                ...(state.input.destination ?? { kind: "internal_runner" as const }),
+                kind: state.input.destination?.kind ?? "internal_runner",
+                openMode: proposal.value as
+                  | "same_tab"
+                  | "new_tab"
+                  | "side_panel",
+              },
+            },
+          };
+          const nextMeta = mapLaProposals(meta, action.step, (p) =>
+            p.id === proposal.id ? { ...p, status: "confirmed" } : p,
+          );
+          return bumpUpdated(withLa(nextState, nextMeta));
+        }
+
+        case "launch.slugCandidates": {
+          // Slug candidates: user must pick a slug and provide uniqueness.
+          const chosen = action.chosenSlug ? normalizeSlug(action.chosenSlug) : "";
+          if (!chosen || action.slugIsUnique !== true) {
+            // Don't write. Don't stale either — let user re-pick.
+            return state;
+          }
+          const candidates = proposal.value as string[];
+          const allowed = candidates.map(normalizeSlug);
+          if (!allowed.includes(chosen)) return state;
+          const nextState = {
+            ...state,
+            input: {
+              ...state.input,
+              launch: {
+                ...(state.input.launch ?? {}),
+                slug: chosen,
+                editableUntilPublish: true,
+              },
+            },
+          };
+          const nextMeta = mapLaProposals(meta, action.step, (p) =>
+            p.id === proposal.id ? { ...p, status: "confirmed" } : p,
+          );
+          return bumpUpdated(withLa(nextState, nextMeta));
+        }
+
+        default:
+          return state;
+      }
+    }
+
+    case "REJECT_LOGIC_ARCHITECT_PROPOSAL": {
+      const meta = getLa(state);
+      const list = meta.proposalsByStep[action.step] ?? [];
+      if (!list.find((p) => p.id === action.proposalId)) return state;
+      const nextMeta = mapLaProposals(meta, action.step, (p) =>
+        p.id === action.proposalId ? { ...p, status: "rejected" } : p,
+      );
+      return bumpUpdated(withLa(state, nextMeta));
+    }
+
+    case "EDIT_LOGIC_ARCHITECT_PROPOSAL": {
+      const meta = getLa(state);
+      const nextMeta = mapLaProposals(meta, action.step, (p) =>
+        p.id === action.proposalId && p.status === "pending"
+          ? { ...p, value: action.nextValue }
+          : p,
+      );
+      return bumpUpdated(withLa(state, nextMeta));
+    }
+
+    case "CLEAR_LOGIC_ARCHITECT_STEP": {
+      const meta = getLa(state);
+      const nextProposals = { ...meta.proposalsByStep };
+      delete nextProposals[action.step];
+      const nextAdvisories = { ...meta.advisoriesByStep };
+      delete nextAdvisories[action.step];
+      const nextLastRun = { ...meta.lastRunAt };
+      delete nextLastRun[action.step];
+      return bumpUpdated(
+        withLa(state, {
+          lastRunAt: nextLastRun,
+          proposalsByStep: nextProposals,
+          advisoriesByStep: nextAdvisories,
+        }),
+      );
     }
 
     default: {

@@ -4,13 +4,18 @@
  *
  * Slice 4 adds advisory gap-item selectors. Gap items NEVER affect
  * `selectCanContinue` — they are advisory only.
+ *
+ * Slice 5 adds Logic Architect proposal/advisory selectors. LA proposals
+ * also never block Continue — they are proposal-only.
  */
 import {
   ASC_TOTAL_STEPS,
   type AscDraft,
   type AscGapItem,
+  type AscLogicArchitectProposal,
   type AscStepStatus,
 } from "./types";
+import type { AscLaAdvisory, AscLaStep } from "./logicArchitectSchema";
 
 export function selectStepStatus(
   draft: AscDraft,
@@ -29,8 +34,9 @@ export function selectIsForked(draft: AscDraft | null | undefined): boolean {
 }
 
 /**
- * Slice 1/3/4 gating rules. Intentionally permissive. Gap-finder items are
- * advisory only and never affect Continue.
+ * Slice 1/3/4 gating rules. Intentionally permissive. Gap-finder items and
+ * Logic-Architect proposals are advisory/proposal-only — they never affect
+ * Continue.
  */
 export function selectCanContinue(draft: AscDraft, step: number): boolean {
   if (step < 1 || step > ASC_TOTAL_STEPS) return false;
@@ -65,4 +71,19 @@ export function selectGapItemsForStep(
 ): AscGapItem[] {
   const items = draft.meta.gapFinder?.itemsByStep?.[step] ?? [];
   return items.filter((g) => !g.dismissed);
+}
+
+/** Slice 5 — Logic Architect proposals (any status) for a step. */
+export function selectLogicArchitectProposals(
+  draft: AscDraft,
+  step: AscLaStep,
+): AscLogicArchitectProposal[] {
+  return draft.meta.logicArchitect?.proposalsByStep?.[step] ?? [];
+}
+
+export function selectLogicArchitectAdvisories(
+  draft: AscDraft,
+  step: AscLaStep,
+): AscLaAdvisory[] {
+  return draft.meta.logicArchitect?.advisoriesByStep?.[step] ?? [];
 }
