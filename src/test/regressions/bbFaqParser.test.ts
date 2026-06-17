@@ -16,7 +16,8 @@ describe("Business Brain — parseFaqText", () => {
     const pairs = parseFaqText(text);
     expect(pairs).toHaveLength(2);
     expect(pairs[0].question).toContain("hours");
-    expect(pairs[1].answer).toContain("credit cards");
+    expect(pairs[1].question).toContain("credit cards");
+    expect(pairs[1].answer).toContain("major cards");
   });
 
   it("parses numbered FAQ format", () => {
@@ -49,8 +50,11 @@ describe("Business Brain — parseFaqText", () => {
       "A: 9-5.",
       "Q: WHAT ARE YOUR HOURS?",
       "A: 9-5.",
+      "Q: Do you take cards?",
+      "A: Yes.",
     ].join("\n");
-    expect(parseFaqText(text)).toHaveLength(1);
+    const pairs = parseFaqText(text);
+    expect(pairs).toHaveLength(2);
   });
 
   it("returns empty array for unparseable prose so AI fallback runs", () => {

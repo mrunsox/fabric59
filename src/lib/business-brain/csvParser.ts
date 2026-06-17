@@ -145,7 +145,7 @@ export function rowsToExtractions(
       !!row.label && DESTINATION_LABEL_RE.test(row.label);
 
     if (row.department) {
-      const k = row.department.toLowerCase().trim();
+      const k = row.department.toLowerCase().replace(/\s+/g, " ").trim();
       if (!seenDept.has(k)) {
         seenDept.add(k);
         out.push({
@@ -158,7 +158,7 @@ export function rowsToExtractions(
     }
 
     if (isPerson) {
-      const k = (row.name as string).toLowerCase().trim();
+      const k = (row.name as string).toLowerCase().replace(/\s+/g, " ").trim();
       if (!seenStaff.has(k)) {
         seenStaff.add(k);
         const payload: Record<string, unknown> = { name: row.name };
