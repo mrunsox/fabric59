@@ -78,7 +78,7 @@ export function AscReadinessPanel({
         {isForked ? (
           <Button asChild size="sm" variant="outline" data-testid="asc-readiness-open-canonical">
             <a href={`/w/${workspaceId}/campaigns`}>
-              Open canonical builder
+              Go to campaigns
               <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
             </a>
           </Button>
