@@ -60,6 +60,7 @@ import {
   type AscLaOutcomeValue,
   type AscLaStep,
 } from "./logicArchitectSchema";
+import { computeInputFingerprint } from "./step8CompileSchema";
 
 function bumpUpdated(draft: AscDraft, now?: string): AscDraft {
   return {
@@ -347,7 +348,22 @@ function touchedPerReasonFields(
   return out;
 }
 
-export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
+function withGeneration(
+  draft: AscDraft,
+  patch: Partial<NonNullable<AscDraft["meta"]["generation"]>> & { stale?: boolean },
+): AscDraft {
+  const cur = draft.meta.generation ?? {
+    status: "idle" as const,
+    stale: !draft.generated,
+    ...(draft.generated ? {} : { staleReason: "never_generated" as const }),
+  };
+  return {
+    ...draft,
+    meta: { ...draft.meta, generation: { ...cur, ...patch } },
+  };
+}
+
+function ascReducerInner(state: AscDraft, action: AscAction): AscDraft {
   switch (action.type) {
     case "INIT_DRAFT":
     case "RESET_DRAFT":
@@ -1127,12 +1143,93 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
       );
     }
 
+    // ── Slice 6: Step 8 generation pipeline ──────────────────────────────
+    case "BEGIN_STEP8_GENERATION": {
+      const next = withGeneration(state, {
+        status: "compiling",
+        lastError: undefined,
+      });
+      return bumpUpdated(next, action.now);
+    }
+
+    case "APPLY_STEP8_GENERATION": {
+      // Atomic replace. Never partial-merge into a prior `generated`.
+      const livePrint = computeInputFingerprint(state.input);
+      const stale = action.generated.inputFingerprint !== livePrint;
+      const withGen: AscDraft = {
+        ...state,
+        generated: action.generated,
+      };
+      const next = withGeneration(withGen, {
+        status: "success",
+        lastRunAt: action.now,
+        lastError: undefined,
+        stale,
+        staleReason: stale ? "input_changed" : undefined,
+      });
+      return bumpUpdated(next, action.now);
+    }
+
+    case "FAIL_STEP8_GENERATION": {
+      const next = withGeneration(state, {
+        status: "error",
+        lastError: action.error,
+      });
+      return bumpUpdated(next, action.now);
+    }
+
+    case "DISCARD_STEP8_GENERATION": {
+      const next: AscDraft = { ...state };
+      delete next.generated;
+      return bumpUpdated(
+        withGeneration(next, {
+          status: "idle",
+          lastError: undefined,
+          stale: true,
+          staleReason: "never_generated",
+        }),
+        action.now,
+      );
+    }
+
     default: {
       const _exhaustive: never = action;
       void _exhaustive;
       return state;
     }
   }
+}
+
+/**
+ * Slice 6 — post-process staleness wrapper.
+ *
+ * If a Step 1–7 input mutation occurs while a generated draft exists, the
+ * draft must be marked stale (but never deleted). The wrapped reducer runs
+ * normally; we then compare input identity. Identity-based check is sound
+ * because every input-mutating case constructs a new `input` object.
+ *
+ * BEGIN/APPLY/FAIL/DISCARD already manage their own generation meta and are
+ * skipped — `APPLY_STEP8_GENERATION` in particular intentionally records
+ * stale=true if the live fingerprint diverged from the generated one.
+ */
+const GENERATION_OWNED_ACTIONS: ReadonlySet<AscAction["type"]> = new Set([
+  "BEGIN_STEP8_GENERATION",
+  "APPLY_STEP8_GENERATION",
+  "FAIL_STEP8_GENERATION",
+  "DISCARD_STEP8_GENERATION",
+  "INIT_DRAFT",
+  "RESET_DRAFT",
+]);
+
+export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
+  const next = ascReducerInner(state, action);
+  if (GENERATION_OWNED_ACTIONS.has(action.type)) return next;
+  if (next === state) return next;
+  if (!next.generated) return next;
+  if (next.input === state.input) return next;
+  const meta = next.meta.generation;
+  if (meta?.stale) return next;
+  return withGeneration(next, { stale: true, staleReason: "input_changed" });
 }
 
 // ── Later-slice stubs ──────────────────────────────────────────────────────

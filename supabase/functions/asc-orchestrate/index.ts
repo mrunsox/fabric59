@@ -17,6 +17,7 @@ import { requireUser } from "../_shared/auth.ts";
 const INTERVIEWER_STEPS = new Set([1, 2, 3, 4]);
 const GAP_FINDER_STEPS = new Set([3, 4]);
 const LOGIC_ARCHITECT_STEPS = new Set([5, 6, 7]);
+const LOGIC_ARCHITECT_COMPILE_STEPS = new Set([8]);
 
 const ALL_TARGET_FIELDS = [
   // Step 1
@@ -315,8 +316,249 @@ const LOGIC_ARCHITECT_TOOL = {
   },
 };
 
+// ── Logic Architect compile (Slice 6 — Step 8) ────────────────────────────
+const LOGIC_ARCHITECT_COMPILE_SYSTEM_PROMPT = `You are the ASC Logic Architect, COMPILE mode.
+
+ROLE
+- Step 8 ONLY. Translate the confirmed Step 1–7 inputs into a single ASC-local
+  draft object. ASC-local means: this is NOT a canonical campaign or flow
+  schema; do not invent runtime semantics. A separate fork step (later)
+  translates this draft into canonical entities.
+- All output is a draft. Manual user input from Steps 1–7 remains the source
+  of truth.
+
+GROUNDING (hard rules)
+- Use only: draftInputSnapshot and grounding (workspaceOutcomeCatalog,
+  workspaceNotificationDestinations, destinationContext, takenSlugs).
+- Never invent third-party brand names, prices, jurisdictions, phone numbers,
+  emails, channel handles, integration names, or URLs not in grounding.
+- Never claim a slug is unique. Echo whatever slug is in
+  draftInputSnapshot.launch.slug. Do not invent a new slug.
+
+NO LEGAL / MEDICAL / FINANCIAL ADVICE
+- Copy you write into node.copy.opener / node.copy.body must NEVER imply
+  legal, medical, financial, or regulated advice. No "we guarantee",
+  "legally", "diagnose", "prescribe", "investment advice", "we advise you to".
+  When unsure, leave the copy slot empty and add a node.todos[] entry
+  explaining what to write later. Empty copy is a successful outcome.
+
+STRUCTURE
+- generated.flow.nodes: minimum one "entry" node. Use kinds
+  entry | reason_branch | handling | outcome | exit. Node ids are short ASCII.
+- generated.flow.edges: id, from, to, optional trigger (plain language). Edges
+  reference existing node ids.
+- generated.reasonToBranch: map every AscCallerReason.id to a flow node id
+  (typically a reason_branch). Keys MUST match draftInputSnapshot.callerReasons[].id.
+- generated.outcomes: link normalized outcome labels (from
+  draftInputSnapshot.outcomesDraftEdits) to fromReasonIds and notificationRefs.
+- generated.notifications: { id, outcomeRef, channelRef, audienceRef?, urgency,
+  note? }. channelRef MUST match grounding.workspaceNotificationDestinations.
+- generated.destinationLaunch.destination: mirror the user's confirmed
+  destination if present; otherwise propose only fields you can ground.
+- generated.destinationLaunch.launch.slug: echo the user's confirmed slug or
+  omit. Never invent.
+- generated.todos: short markers for under-specified areas.
+- generated.confidenceByArea: high/medium/low per area (flow, copy, outcomes,
+  notifications, destination), with a one-line reason.
+
+SAFETY / FAIL-CLOSED
+- If you cannot produce a usable structure, return one entry node + one
+  todos[] item explaining what's missing rather than fabricating.
+- Caps: at most 60 nodes, 120 edges, 30 outcomes, 30 notifications, 60 TODOs.
+
+RESPONSE
+- Always call the logic_architect_compile_response tool exactly once.
+- step MUST equal 8.`;
+
+const NODE_KINDS = ["entry", "reason_branch", "handling", "outcome", "exit"] as const;
+const AREA_KINDS = ["flow", "copy", "outcomes", "notifications", "destination"] as const;
+const URGENCY_KINDS = ["low", "normal", "high"] as const;
+const DEST_KINDS = ["internal_runner", "external_url", "deep_link"] as const;
+const OPEN_MODES = ["same_tab", "new_tab", "side_panel"] as const;
+const CONFIDENCE_LEVELS = ["high", "medium", "low"] as const;
+
+const LOGIC_ARCHITECT_COMPILE_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "logic_architect_compile_response",
+    description:
+      "Return the ASC Step 8 compile artifact. Always call this; never reply in free text.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        step: { type: "integer", enum: [8] },
+        generated: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            flow: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                nodes: {
+                  type: "array",
+                  maxItems: 60,
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                      id: { type: "string" },
+                      kind: { type: "string", enum: NODE_KINDS },
+                      label: { type: "string", maxLength: 200 },
+                      reasonId: { type: "string" },
+                      outcomeRef: { type: "string" },
+                      copy: {
+                        type: "object",
+                        additionalProperties: false,
+                        properties: {
+                          opener: { type: "string", maxLength: 600 },
+                          body: { type: "string", maxLength: 1200 },
+                        },
+                      },
+                      todos: {
+                        type: "array",
+                        items: { type: "string", maxLength: 240 },
+                      },
+                    },
+                    required: ["id", "kind", "label"],
+                  },
+                },
+                edges: {
+                  type: "array",
+                  maxItems: 120,
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                      id: { type: "string" },
+                      from: { type: "string" },
+                      to: { type: "string" },
+                      trigger: { type: "string", maxLength: 240 },
+                    },
+                    required: ["id", "from", "to"],
+                  },
+                },
+              },
+              required: ["nodes", "edges"],
+            },
+            reasonToBranch: {
+              type: "object",
+              additionalProperties: { type: "string" },
+            },
+            outcomes: {
+              type: "array",
+              maxItems: 30,
+              items: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  outcomeRef: { type: "string" },
+                  fromReasonIds: { type: "array", items: { type: "string" } },
+                  notificationRefs: { type: "array", items: { type: "string" } },
+                },
+                required: ["outcomeRef", "fromReasonIds", "notificationRefs"],
+              },
+            },
+            notifications: {
+              type: "array",
+              maxItems: 30,
+              items: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  id: { type: "string" },
+                  outcomeRef: { type: "string" },
+                  channelRef: { type: "string" },
+                  audienceRef: { type: "string" },
+                  urgency: { type: "string", enum: URGENCY_KINDS },
+                  note: { type: "string", maxLength: 240 },
+                },
+                required: ["id", "outcomeRef", "channelRef", "urgency"],
+              },
+            },
+            destinationLaunch: {
+              type: "object",
+              additionalProperties: false,
+              properties: {
+                destination: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    kind: { type: "string", enum: DEST_KINDS },
+                    externalUrl: { type: "string" },
+                    deepLinkTemplate: { type: "string" },
+                    openMode: { type: "string", enum: OPEN_MODES },
+                    notes: { type: "string", maxLength: 240 },
+                  },
+                  required: ["kind"],
+                },
+                launch: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: { slug: { type: "string" } },
+                },
+              },
+              required: ["destination", "launch"],
+            },
+            todos: {
+              type: "array",
+              maxItems: 60,
+              items: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  id: { type: "string" },
+                  area: { type: "string", enum: AREA_KINDS },
+                  message: { type: "string", maxLength: 240 },
+                },
+                required: ["id", "area", "message"],
+              },
+            },
+            confidenceByArea: {
+              type: "object",
+              additionalProperties: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  level: { type: "string", enum: CONFIDENCE_LEVELS },
+                  reason: { type: "string", maxLength: 240 },
+                },
+                required: ["level"],
+              },
+            },
+          },
+          required: [
+            "flow",
+            "reasonToBranch",
+            "outcomes",
+            "notifications",
+            "destinationLaunch",
+            "todos",
+          ],
+        },
+        advisories: {
+          type: "array",
+          maxItems: 12,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: { message: { type: "string", maxLength: 240 } },
+            required: ["message"],
+          },
+        },
+      },
+      required: ["step", "generated", "advisories"],
+    },
+  },
+};
+
 interface BaseRequest {
-  role: "interviewer" | "gap-finder" | "logic-architect";
+  role:
+    | "interviewer"
+    | "gap-finder"
+    | "logic-architect"
+    | "logic-architect-compile";
   step: number;
   workspaceId: string;
   skinId?: string;
@@ -333,10 +575,11 @@ function validateRequest(raw: unknown): BaseRequest | { error: string } {
   if (
     role !== "interviewer" &&
     role !== "gap-finder" &&
-    role !== "logic-architect"
+    role !== "logic-architect" &&
+    role !== "logic-architect-compile"
   ) {
     return {
-      error: `Only role="interviewer" | "gap-finder" | "logic-architect" is supported (got ${JSON.stringify(role)})`,
+      error: `Only role="interviewer" | "gap-finder" | "logic-architect" | "logic-architect-compile" is supported (got ${JSON.stringify(role)})`,
     };
   }
   if (typeof r.step !== "number") {
@@ -350,6 +593,12 @@ function validateRequest(raw: unknown): BaseRequest | { error: string } {
   }
   if (role === "logic-architect" && !LOGIC_ARCHITECT_STEPS.has(r.step)) {
     return { error: `logic-architect step must be 5, 6, or 7 (got ${r.step})` };
+  }
+  if (
+    role === "logic-architect-compile" &&
+    !LOGIC_ARCHITECT_COMPILE_STEPS.has(r.step)
+  ) {
+    return { error: `logic-architect-compile step must be 8 (got ${r.step})` };
   }
   if (typeof r.workspaceId !== "string" || r.workspaceId.length === 0) {
     return { error: "workspaceId is required" };
@@ -425,6 +674,24 @@ function buildLogicArchitectUserMessage(req: BaseRequest): string {
   ].join("\n");
 }
 
+function buildLogicArchitectCompileUserMessage(req: BaseRequest): string {
+  const snapshot = JSON.stringify(req.draftInputSnapshot, null, 2);
+  const grounding = JSON.stringify(req.grounding ?? {}, null, 2);
+  return [
+    `Step: 8 (compile)`,
+    `Workspace skin id: ${req.skinId ?? "(none)"}`,
+    "",
+    "Current draft input snapshot (JSON):",
+    snapshot,
+    "",
+    "Grounding (the ONLY external context you may reference):",
+    grounding,
+    "",
+    "Compile into a single ASC-local draft. Echo the user's confirmed slug; never invent.",
+    "Reply by calling the logic_architect_compile_response tool exactly once.",
+  ].join("\n");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -470,11 +737,16 @@ Deno.serve(async (req) => {
     userMessage = buildGapFinderUserMessage(validated);
     tool = GAP_FINDER_TOOL;
     toolName = "gap_finder_response";
-  } else {
+  } else if (validated.role === "logic-architect") {
     systemPrompt = LOGIC_ARCHITECT_SYSTEM_PROMPT;
     userMessage = buildLogicArchitectUserMessage(validated);
     tool = LOGIC_ARCHITECT_TOOL;
     toolName = "logic_architect_response";
+  } else {
+    systemPrompt = LOGIC_ARCHITECT_COMPILE_SYSTEM_PROMPT;
+    userMessage = buildLogicArchitectCompileUserMessage(validated);
+    tool = LOGIC_ARCHITECT_COMPILE_TOOL;
+    toolName = "logic_architect_compile_response";
   }
 
   try {

@@ -12,10 +12,13 @@ import {
   ASC_TOTAL_STEPS,
   type AscDraft,
   type AscGapItem,
+  type AscGenerationMeta,
+  type AscGenerationStatus,
   type AscLogicArchitectProposal,
   type AscStepStatus,
 } from "./types";
 import type { AscLaAdvisory, AscLaStep } from "./logicArchitectSchema";
+import { computeInputFingerprint } from "./step8CompileSchema";
 
 export function selectStepStatus(
   draft: AscDraft,
@@ -86,4 +89,76 @@ export function selectLogicArchitectAdvisories(
   step: AscLaStep,
 ): AscLaAdvisory[] {
   return draft.meta.logicArchitect?.advisoriesByStep?.[step] ?? [];
+}
+
+// ── Slice 6 — Step 8 generation selectors ───────────────────────────────
+export function selectGenerationMeta(draft: AscDraft): AscGenerationMeta {
+  return (
+    draft.meta.generation ?? {
+      status: "idle",
+      stale: true,
+      staleReason: "never_generated",
+    }
+  );
+}
+
+export function selectGenerationStatus(draft: AscDraft): AscGenerationStatus {
+  return selectGenerationMeta(draft).status;
+}
+
+/** True when there's no generated draft yet OR upstream inputs have changed. */
+export function selectGenerationIsStale(draft: AscDraft): boolean {
+  if (!draft.generated) return true;
+  const meta = draft.meta.generation;
+  if (!meta) return true;
+  if (meta.stale) return true;
+  // Defensive recompute: a freshly-rehydrated draft may have stale meta.
+  return draft.generated.inputFingerprint !== computeInputFingerprint(draft.input);
+}
+
+export interface AscGenerationSummary {
+  nodeCount: number;
+  edgeCount: number;
+  branchCount: number;
+  outcomeCount: number;
+  notificationCount: number;
+  todoCount: number;
+  lowConfidenceAreas: string[];
+}
+
+export function selectGeneratedSummary(
+  draft: AscDraft,
+): AscGenerationSummary | null {
+  const g = draft.generated;
+  if (!g) return null;
+  const lowConfidenceAreas = Object.entries(g.confidenceByArea)
+    .filter(([, v]) => v?.level === "low")
+    .map(([k]) => k);
+  return {
+    nodeCount: g.flow.nodes.length,
+    edgeCount: g.flow.edges.length,
+    branchCount: Object.keys(g.reasonToBranch).length,
+    outcomeCount: g.outcomes.length,
+    notificationCount: g.notifications.length,
+    todoCount: g.todos.length,
+    lowConfidenceAreas,
+  };
+}
+
+/** Slice 6 — Step 8 generate CTA gating. Mirrors Step 5/6/7 pre-reqs. */
+export function selectCanGenerateStep8(draft: AscDraft): {
+  ok: boolean;
+  reason?: string;
+} {
+  const input = draft.input;
+  if ((input.callerReasons ?? []).length === 0) {
+    return { ok: false, reason: "Add at least one caller reason in Step 3." };
+  }
+  if ((input.outcomesDraftEdits ?? []).length === 0) {
+    return { ok: false, reason: "Add at least one outcome in Step 5." };
+  }
+  if (!input.destination?.kind) {
+    return { ok: false, reason: "Choose a destination kind in Step 7." };
+  }
+  return { ok: true };
 }

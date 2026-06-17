@@ -9,6 +9,8 @@ import type {
   AscDestinationInput,
   AscDraft,
   AscGapItem,
+  AscGenerated,
+  AscGenerationError,
   AscInterviewerTurn,
   AscLaunchInput,
   AscLogicArchitectProposal,
@@ -22,6 +24,7 @@ import type {
   AscLaProposalValue,
   AscLaStep,
 } from "./logicArchitectSchema";
+import type { AscStep8Advisory } from "./step8CompileSchema";
 
 export type AscInterviewerStep = 1 | 2 | 3 | 4;
 export type AscGapFinderStep = 3 | 4;
@@ -109,4 +112,18 @@ export type AscAction =
       proposalId: string;
       nextValue: AscLaProposalValue;
     }
-  | { type: "CLEAR_LOGIC_ARCHITECT_STEP"; step: AscLaStep };
+  | { type: "CLEAR_LOGIC_ARCHITECT_STEP"; step: AscLaStep }
+  // --- Slice 6: Step 8 generation pipeline (ASC-local) ---
+  | { type: "BEGIN_STEP8_GENERATION"; now: string }
+  | {
+      type: "APPLY_STEP8_GENERATION";
+      generated: AscGenerated;
+      advisories: AscStep8Advisory[];
+      now: string;
+    }
+  | {
+      type: "FAIL_STEP8_GENERATION";
+      now: string;
+      error: AscGenerationError;
+    }
+  | { type: "DISCARD_STEP8_GENERATION"; now: string };
