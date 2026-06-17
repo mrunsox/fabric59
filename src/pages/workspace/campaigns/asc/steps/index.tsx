@@ -31,6 +31,7 @@ import {
   AscReviewDestinationSection,
   AscReviewTodosSection,
 } from "@/components/asc/AscReviewSections";
+import { AscReadinessPanel } from "@/components/asc/AscReadinessPanel";
 import { selectGenerationIsStale } from "@/lib/asc/selectors";
 import { useAscGapFinder } from "@/hooks/useAscGapFinder";
 
