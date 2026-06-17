@@ -10,7 +10,7 @@
  * here because Slice 1 ships no code that constructs them; later slices will
  * flesh them out as the orchestration lands.
  */
-import type { CampaignFlowContent } from "@/types/campaign-flow";
+// Slice 6 — AscGenerated is now ASC-local; no canonical flow import needed.
 
 export type AscDraftState =
   | "in_progress"
