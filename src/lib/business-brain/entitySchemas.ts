@@ -39,16 +39,33 @@ export const staffSchema = z.object({
 
 export const phoneSchema = z.object({
   label: trimmed,
-  number: trimmed,
+  number: trimmed.refine(
+    (v) => v.replace(/\D+/g, "").length >= 7,
+    "phone number must contain at least 7 digits",
+  ),
   extension: z.string().trim().optional(),
   department: z.string().trim().optional(),
 });
 
+const weeklySchema = z
+  .object({
+    mon: z.string().trim().optional(),
+    tue: z.string().trim().optional(),
+    wed: z.string().trim().optional(),
+    thu: z.string().trim().optional(),
+    fri: z.string().trim().optional(),
+    sat: z.string().trim().optional(),
+    sun: z.string().trim().optional(),
+  })
+  .optional();
+
 export const hoursSchema = z.object({
   label: trimmed,
-  // Free-form for Slice 1 (e.g. "Mon-Fri 9-5 ET"). Structured weekly schedule
-  // is intentionally deferred until we see a real need.
+  // Free-form text is always preserved as the source of truth.
   schedule: trimmed,
+  // Slice 2: best-effort weekly normalization. Populated only when parsing
+  // is confident. Callers must continue treating `schedule` as primary.
+  weekly: weeklySchema,
   timezone: z.string().trim().optional(),
   appliesTo: z.string().trim().optional(),
 });
@@ -64,6 +81,8 @@ export const faqSchema = z.object({
   question: trimmed,
   answer: trimmed,
   topic: z.string().trim().optional(),
+  /** Optional Slice 2: explicit, reusable service this FAQ is about. */
+  service: z.string().trim().optional(),
 });
 
 export const escalationContactSchema = z.object({
@@ -75,13 +94,30 @@ export const escalationContactSchema = z.object({
 
 export const intakeRequirementSchema = z.object({
   label: trimmed,
-  fields: z.array(trimmed).min(1),
+  // Slice 2: dedupe + lowercase-trim so reviewers don't get noise like
+  // ["Name", "name", "NAME"] from the same source.
+  fields: z
+    .array(trimmed)
+    .min(1)
+    .transform((arr) => {
+      const seen = new Set<string>();
+      const out: string[] = [];
+      for (const v of arr) {
+        const k = v.toLowerCase().trim();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push(k);
+      }
+      return out;
+    }),
   appliesTo: z.string().trim().optional(),
 });
 
 export const policySchema = z.object({
   title: trimmed,
-  body: trimmed,
+  // Slice 2: cap policy body length. Long policies must be split — keeps
+  // approved knowledge tight and reduces drift.
+  body: trimmed.max(500, "policy body must be 500 characters or fewer"),
   category: z.string().trim().optional(),
 });
 

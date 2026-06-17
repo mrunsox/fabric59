@@ -2,6 +2,8 @@ import { useParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -9,16 +11,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Link as LinkIcon } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Loader2, Link as LinkIcon, Search, Eye } from "lucide-react";
 import {
   useBbFacts,
+  useBbSources,
   type BbFactRow,
 } from "@/hooks/useBusinessBrain";
-import {
-  ENTITY_LABEL,
-} from "@/lib/business-brain/entitySchemas";
+import { ENTITY_LABEL } from "@/lib/business-brain/entitySchemas";
 import { BB_ENTITY_TYPES } from "@/lib/business-brain/types";
 import type { BbEntityType } from "@/lib/business-brain/types";
+
+type DateRange = "all" | "7" | "30" | "90";
 
 function VerificationBadge({ state }: { state: BbFactRow["verification_state"] }) {
   const map = {
@@ -30,55 +40,113 @@ function VerificationBadge({ state }: { state: BbFactRow["verification_state"] }
   return <Badge variant="secondary" className={e.cls}>{e.label}</Badge>;
 }
 
+function withinDateRange(iso: string, range: DateRange): boolean {
+  if (range === "all") return true;
+  const days = Number(range);
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  return new Date(iso).getTime() >= cutoff;
+}
+
 export default function ApprovedKnowledgePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { data: facts = [], isLoading } = useBbFacts(workspaceId ?? null);
+  const { data: sources = [] } = useBbSources(workspaceId ?? null);
   const [filter, setFilter] = useState<"all" | BbEntityType>("all");
+  const [search, setSearch] = useState("");
+  const [range, setRange] = useState<DateRange>("all");
+  const [drawerFact, setDrawerFact] = useState<BbFactRow | null>(null);
+
+  const sourceMap = useMemo(() => {
+    const m = new Map<string, { title: string; created_at: string }>();
+    for (const s of sources) m.set(s.id, { title: s.title, created_at: s.created_at });
+    return m;
+  }, [sources]);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return facts.filter((f) => {
+      if (f.verification_state === "stale") return false;
+      if (filter !== "all" && f.entity_type !== filter) return false;
+      if (!withinDateRange(f.last_reviewed_at, range)) return false;
+      if (term) {
+        const hay = `${f.display_name} ${f.canonical_key}`.toLowerCase();
+        if (!hay.includes(term)) return false;
+      }
+      return true;
+    });
+  }, [facts, filter, search, range]);
 
   const grouped = useMemo(() => {
     const out: Record<string, BbFactRow[]> = {};
-    for (const f of facts) {
-      if (f.verification_state === "stale") continue;
-      (out[f.entity_type] ||= []).push(f);
-    }
+    for (const f of filtered) (out[f.entity_type] ||= []).push(f);
     return out;
-  }, [facts]);
+  }, [filtered]);
 
-  const visibleTypes = useMemo<BbEntityType[]>(() => {
-    return BB_ENTITY_TYPES.filter((t) => (filter === "all" ? true : t === filter));
-  }, [filter]);
+  const visibleTypes = useMemo<BbEntityType[]>(
+    () => BB_ENTITY_TYPES.filter((t) => (filter === "all" ? true : t === filter)),
+    [filter],
+  );
+
+  function latestSourceDate(f: BbFactRow): string | null {
+    let latest = 0;
+    for (const ref of f.source_refs) {
+      const s = sourceMap.get(ref.source_id);
+      if (!s) continue;
+      const t = new Date(s.created_at).getTime();
+      if (t > latest) latest = t;
+    }
+    return latest ? new Date(latest).toISOString() : null;
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-lg font-semibold">Approved knowledge</h2>
           <p className="text-sm text-muted-foreground">
             Governed business memory. Every fact is reviewer-approved and source-backed.
           </p>
         </div>
-        <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All types ({facts.length})</SelectItem>
-            {BB_ENTITY_TYPES.map((t) => (
-              <SelectItem key={t} value={t}>
-                {ENTITY_LABEL[t]} ({(grouped[t] ?? []).length})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search name or key…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-56 pl-8"
+            />
+          </div>
+          <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All types ({facts.length})</SelectItem>
+              {BB_ENTITY_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {ENTITY_LABEL[t]} ({facts.filter((f) => f.entity_type === t).length})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={range} onValueChange={(v) => setRange(v as DateRange)}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any time</SelectItem>
+              <SelectItem value="7">Last 7 days</SelectItem>
+              <SelectItem value="30">Last 30 days</SelectItem>
+              <SelectItem value="90">Last 90 days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading approved knowledge…
         </div>
-      ) : facts.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <Card className="px-6 py-12 text-center text-sm text-muted-foreground">
-          No approved facts yet. Review the Suggested Facts queue to start building the Brain.
+          No approved facts match these filters.
         </Card>
       ) : (
         <div className="space-y-6">
@@ -98,33 +166,46 @@ export default function ApprovedKnowledgePage() {
                         <th className="px-4 py-2 font-medium">Name</th>
                         <th className="px-4 py-2 font-medium">Details</th>
                         <th className="px-4 py-2 font-medium">Sources</th>
+                        <th className="px-4 py-2 font-medium">Latest import</th>
                         <th className="px-4 py-2 font-medium">Verification</th>
-                        <th className="px-4 py-2 font-medium">Last reviewed</th>
+                        <th className="px-4 py-2 font-medium">Reviewed</th>
+                        <th className="px-4 py-2 font-medium"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {rows.map((f) => (
-                        <tr key={f.id} className="border-b last:border-0 align-top">
-                          <td className="px-4 py-3 font-medium">{f.display_name}</td>
-                          <td className="px-4 py-3">
-                            <pre className="max-w-[28rem] overflow-x-auto text-xs text-muted-foreground">
-                              {JSON.stringify(f.payload, null, 0)}
-                            </pre>
-                          </td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">
-                            <span className="inline-flex items-center gap-1">
-                              <LinkIcon className="h-3 w-3" />
-                              {f.source_refs.length}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <VerificationBadge state={f.verification_state} />
-                          </td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">
-                            {new Date(f.last_reviewed_at).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
+                      {rows.map((f) => {
+                        const latest = latestSourceDate(f);
+                        return (
+                          <tr key={f.id} className="border-b last:border-0 align-top">
+                            <td className="px-4 py-3 font-medium">{f.display_name}</td>
+                            <td className="px-4 py-3">
+                              <pre className="max-w-[24rem] overflow-x-auto text-xs text-muted-foreground">
+                                {JSON.stringify(f.payload, null, 0)}
+                              </pre>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-muted-foreground">
+                              <span className="inline-flex items-center gap-1">
+                                <LinkIcon className="h-3 w-3" />
+                                {f.source_refs.length}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-xs text-muted-foreground">
+                              {latest ? new Date(latest).toLocaleDateString() : "—"}
+                            </td>
+                            <td className="px-4 py-3">
+                              <VerificationBadge state={f.verification_state} />
+                            </td>
+                            <td className="px-4 py-3 text-xs text-muted-foreground">
+                              {new Date(f.last_reviewed_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Button size="sm" variant="ghost" onClick={() => setDrawerFact(f)}>
+                                <Eye className="mr-1 h-3.5 w-3.5" /> Snippets
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </Card>
@@ -133,6 +214,40 @@ export default function ApprovedKnowledgePage() {
           })}
         </div>
       )}
+
+      <Sheet open={!!drawerFact} onOpenChange={(o) => !o && setDrawerFact(null)}>
+        <SheetContent className="w-full max-w-md overflow-y-auto sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>{drawerFact?.display_name}</SheetTitle>
+            <SheetDescription>
+              Source snippets backing this approved fact.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 space-y-3">
+            {(drawerFact?.source_refs ?? []).map((ref, i) => {
+              const s = sourceMap.get(ref.source_id);
+              return (
+                <Card key={`${ref.source_id}-${ref.extraction_id ?? i}`} className="p-3 text-sm">
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="font-medium">{s?.title ?? "Source"}</span>
+                    {s ? (
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(s.created_at).toLocaleDateString()}
+                      </span>
+                    ) : null}
+                  </div>
+                  <blockquote className="border-l-2 border-muted-foreground/30 pl-3 text-xs italic text-muted-foreground">
+                    “{ref.snippet ?? "(no snippet recorded)"}”
+                  </blockquote>
+                </Card>
+              );
+            })}
+            {(drawerFact?.source_refs ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No source snippets recorded.</p>
+            ) : null}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

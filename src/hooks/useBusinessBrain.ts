@@ -301,6 +301,159 @@ export function useBbIngestUpload() {
   });
 }
 
+export interface IngestCsvInput {
+  workspaceId: string;
+  clientId?: string | null;
+  file: File;
+  title: string;
+  rows: import("@/lib/business-brain/csvParser").CsvDirectoryRow[];
+  mapping: Record<string, string>;
+}
+
+export function useBbIngestCsv() {
+  const qc = useQueryClient();
+  const { organization } = useAuth();
+  return useMutation({
+    mutationFn: async (input: IngestCsvInput) => {
+      // Store the original CSV file for provenance / re-processing.
+      const path = `${input.workspaceId}/${crypto.randomUUID()}-${input.file.name}`;
+      const { error: upErr } = await supabase.storage
+        .from("business-brain-sources")
+        .upload(path, input.file, { upsert: false });
+      if (upErr) throw upErr;
+
+      const serialized = JSON.stringify({ mapping: input.mapping, rows: input.rows });
+      const hash = await sha256Hex(serialized);
+
+      const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("bb_sources" as any)
+        .insert([
+          {
+            workspace_id: input.workspaceId,
+            client_id: input.clientId ?? null,
+            kind: "upload_csv",
+            title: input.title || input.file.name,
+            uri: path,
+            content_hash: hash,
+            metadata: {
+              byteLength: input.file.size,
+              mimeType: input.file.type,
+              rowCount: input.rows.length,
+              mapping: input.mapping,
+            },
+          },
+        ])
+        .select("id")
+        .single();
+      if (error) throw error;
+      const sourceId = (data as unknown as { id: string }).id;
+      emitBbEvent("bb_source_added", {
+        workspaceId: input.workspaceId,
+        organizationId: organization?.id ?? null,
+        sourceId,
+      });
+      const { error: fnErr } = await supabase.functions.invoke("bb-ingest", {
+        body: {
+          sourceId,
+          kind: "upload_csv",
+          mode: "structured_directory",
+          rows: input.rows,
+        },
+      });
+      if (fnErr) {
+        emitBbEvent("bb_source_failed", {
+          workspaceId: input.workspaceId,
+          organizationId: organization?.id ?? null,
+          sourceId,
+          errorCode: "ingest_invoke_failed",
+        });
+        throw fnErr;
+      }
+      return { id: sourceId };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bb_sources"] });
+      qc.invalidateQueries({ queryKey: ["bb_extractions"] });
+      toast.success("Directory ingested. Review suggestions to approve.");
+    },
+    onError: (e: Error) => toast.error(e.message || "CSV ingest failed"),
+  });
+}
+
+export interface IngestFaqInput {
+  workspaceId: string;
+  clientId?: string | null;
+  title: string;
+  text: string;
+  pairs: import("@/lib/business-brain/faqParser").FaqPair[];
+}
+
+/**
+ * Structured FAQ ingest: client pre-parses Q/A pairs and ships them alongside
+ * the raw text. The edge function fast-paths deterministic extraction when
+ * `pairs.length >= 2`, else falls back to AI on the raw text.
+ */
+export function useBbIngestFaq() {
+  const qc = useQueryClient();
+  const { organization } = useAuth();
+  return useMutation({
+    mutationFn: async (input: IngestFaqInput) => {
+      const hash = await sha256Hex(input.text);
+      const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("bb_sources" as any)
+        .insert([
+          {
+            workspace_id: input.workspaceId,
+            client_id: input.clientId ?? null,
+            kind: "paste_faq",
+            title: input.title || "Pasted FAQ",
+            content_hash: hash,
+            metadata: {
+              byteLength: input.text.length,
+              inline: true,
+              parsedPairs: input.pairs.length,
+            },
+          },
+        ])
+        .select("id")
+        .single();
+      if (error) throw error;
+      const sourceId = (data as unknown as { id: string }).id;
+      emitBbEvent("bb_source_added", {
+        workspaceId: input.workspaceId,
+        organizationId: organization?.id ?? null,
+        sourceId,
+      });
+      const { error: fnErr } = await supabase.functions.invoke("bb-ingest", {
+        body: {
+          sourceId,
+          kind: "paste_faq",
+          text: input.text,
+          pairs: input.pairs,
+        },
+      });
+      if (fnErr) {
+        emitBbEvent("bb_source_failed", {
+          workspaceId: input.workspaceId,
+          organizationId: organization?.id ?? null,
+          sourceId,
+          errorCode: "ingest_invoke_failed",
+        });
+        throw fnErr;
+      }
+      return { id: sourceId };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bb_sources"] });
+      qc.invalidateQueries({ queryKey: ["bb_extractions"] });
+      toast.success("FAQ ingested. Review suggestions to approve.");
+    },
+    onError: (e: Error) => toast.error(e.message || "FAQ ingest failed"),
+  });
+}
+
 export interface ApproveInput {
   extractionId: string;
   workspaceId: string;
