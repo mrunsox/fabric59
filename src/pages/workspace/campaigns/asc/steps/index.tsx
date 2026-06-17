@@ -10,7 +10,7 @@
  */
 import { useState } from "react";
 import type { Dispatch } from "react";
-import { Sparkles, Plus, Trash2, Search, Loader2 } from "lucide-react";
+import { Sparkles, Plus, Trash2, Search, Loader2, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +23,15 @@ import { ProvenanceBadge } from "@/components/asc/ProvenanceBadge";
 import { AscAssistantPanel } from "@/components/asc/AscAssistantPanel";
 import { AscLogicArchitectPanel } from "@/components/asc/AscLogicArchitectPanel";
 import { AscGenerationPanel } from "@/components/asc/AscGenerationPanel";
+import {
+  AscReviewOverviewSection,
+  AscReviewFlowOutlineSection,
+  AscReviewOutcomesSection,
+  AscReviewNotificationsSection,
+  AscReviewDestinationSection,
+  AscReviewTodosSection,
+} from "@/components/asc/AscReviewSections";
+import { selectGenerationIsStale } from "@/lib/asc/selectors";
 import { useAscGapFinder } from "@/hooks/useAscGapFinder";
 
 
