@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useMemo, useState } from "react";
+import Papa from "papaparse";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +18,37 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, FileText, Type, MessageSquare, Globe, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Plus,
+  FileText,
+  Type,
+  MessageSquare,
+  Globe,
+  Loader2,
+  Table as TableIcon,
+} from "lucide-react";
 import {
   useBbSources,
   useBbIngestPaste,
   useBbIngestUpload,
+  useBbIngestCsv,
+  useBbIngestFaq,
   type BbSourceRow,
 } from "@/hooks/useBusinessBrain";
+import {
+  autoMapHeaders,
+  normalizeRow,
+  type CsvField,
+  type CsvDirectoryRow,
+} from "@/lib/business-brain/csvParser";
+import { parseFaqText } from "@/lib/business-brain/faqParser";
 
 function StatusPill({ status }: { status: BbSourceRow["status"] }) {
   const map: Record<BbSourceRow["status"], { label: string; cls: string }> = {
@@ -42,7 +67,7 @@ function KindLabel({ kind }: { kind: BbSourceRow["kind"] }) {
     upload_doc: "Document",
     paste_text: "Pasted text",
     paste_faq: "Pasted FAQ",
-    upload_csv: "CSV",
+    upload_csv: "Team directory (CSV)",
     url_crawl: "URL",
   };
   return <span className="text-xs text-muted-foreground">{labels[kind]}</span>;
@@ -87,7 +112,7 @@ export default function KnowledgeBinPage() {
           </div>
         ) : sorted.length === 0 ? (
           <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-            No sources yet. Add a document or paste FAQ content to populate the Business Brain.
+            No sources yet. Add a document, paste FAQ content, or upload a team directory CSV.
           </div>
         ) : (
           <table className="w-full text-sm">
@@ -135,6 +160,8 @@ export default function KnowledgeBinPage() {
   );
 }
 
+type Tab = "upload" | "text" | "faq" | "csv" | "url";
+
 function AddSourceDialog({
   workspaceId,
   onClose,
@@ -142,27 +169,83 @@ function AddSourceDialog({
   workspaceId: string;
   onClose: () => void;
 }) {
-  const [tab, setTab] = useState<"upload" | "text" | "faq" | "url">("upload");
+  const [tab, setTab] = useState<Tab>("upload");
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const ingestPaste = useBbIngestPaste();
   const ingestUpload = useBbIngestUpload();
+  const ingestCsv = useBbIngestCsv();
+  const ingestFaq = useBbIngestFaq();
 
-  const submitting = ingestPaste.isPending || ingestUpload.isPending;
+  // CSV state
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
+  const [csvRaw, setCsvRaw] = useState<Record<string, unknown>[]>([]);
+  const [csvMapping, setCsvMapping] = useState<Record<string, CsvField>>({});
+
+  const submitting =
+    ingestPaste.isPending ||
+    ingestUpload.isPending ||
+    ingestCsv.isPending ||
+    ingestFaq.isPending;
+
+  // FAQ live-parse preview
+  const faqPairs = useMemo(() => parseFaqText(text), [text]);
+
+  const normalizedRows: CsvDirectoryRow[] = useMemo(
+    () => csvRaw.map((r) => normalizeRow(r, csvMapping)),
+    [csvRaw, csvMapping],
+  );
+
+  function onCsvFile(f: File | null) {
+    setCsvFile(f);
+    setCsvHeaders([]);
+    setCsvRaw([]);
+    setCsvMapping({});
+    if (!f) return;
+    Papa.parse<Record<string, unknown>>(f, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (result) => {
+        const headers = result.meta.fields ?? [];
+        setCsvHeaders(headers);
+        setCsvRaw(result.data);
+        setCsvMapping(autoMapHeaders(headers));
+      },
+    });
+  }
 
   async function handleSubmit() {
     if (!workspaceId) return;
     if (tab === "upload") {
       if (!file) return;
       await ingestUpload.mutateAsync({ workspaceId, file });
+    } else if (tab === "csv") {
+      if (!csvFile || normalizedRows.length === 0) return;
+      await ingestCsv.mutateAsync({
+        workspaceId,
+        file: csvFile,
+        title: title.trim() || csvFile.name,
+        rows: normalizedRows,
+        mapping: csvMapping,
+      });
+    } else if (tab === "faq") {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      await ingestFaq.mutateAsync({
+        workspaceId,
+        title: title.trim() || "Pasted FAQ",
+        text: trimmed,
+        pairs: faqPairs,
+      });
     } else {
       const trimmed = text.trim();
       if (!trimmed) return;
       await ingestPaste.mutateAsync({
         workspaceId,
-        kind: tab === "faq" ? "paste_faq" : "paste_text",
-        title: title.trim() || (tab === "faq" ? "Pasted FAQ" : "Pasted text"),
+        kind: "paste_text",
+        title: title.trim() || "Pasted text",
         text: trimmed,
       });
     }
@@ -170,7 +253,23 @@ function AddSourceDialog({
     setTitle("");
     setText("");
     setFile(null);
+    setCsvFile(null);
+    setCsvHeaders([]);
+    setCsvRaw([]);
+    setCsvMapping({});
   }
+
+  const FIELD_OPTIONS: CsvField[] = [
+    "name",
+    "role",
+    "department",
+    "phone",
+    "extension",
+    "email",
+    "label",
+    "notes",
+    "ignore",
+  ];
 
   return (
     <DialogContent className="max-w-2xl">
@@ -180,11 +279,12 @@ function AddSourceDialog({
           Sources are ingested, chunked, and extracted into suggested facts you review.
         </DialogDescription>
       </DialogHeader>
-      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-        <TabsList className="grid grid-cols-4">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+        <TabsList className="grid grid-cols-5">
           <TabsTrigger value="upload"><FileText className="mr-1.5 h-4 w-4" /> Upload</TabsTrigger>
           <TabsTrigger value="text"><Type className="mr-1.5 h-4 w-4" /> Paste text</TabsTrigger>
           <TabsTrigger value="faq"><MessageSquare className="mr-1.5 h-4 w-4" /> Paste FAQ</TabsTrigger>
+          <TabsTrigger value="csv"><TableIcon className="mr-1.5 h-4 w-4" /> Team CSV</TabsTrigger>
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="contents">
@@ -218,7 +318,77 @@ function AddSourceDialog({
           <Label htmlFor="bb-faq-title">Title</Label>
           <Input id="bb-faq-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Website FAQ — billing" />
           <Label htmlFor="bb-faq">FAQ content</Label>
-          <Textarea id="bb-faq" value={text} onChange={(e) => setText(e.target.value)} rows={10} placeholder="Q: …\nA: …" />
+          <Textarea
+            id="bb-faq"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={10}
+            placeholder={"Q: What are your hours?\nA: Mon-Fri 9-5\n\nQ: Do you take cards?\nA: Yes."}
+          />
+          <p className="text-xs text-muted-foreground">
+            Supports <code>Q:/A:</code>, numbered, and blank-line formats.{" "}
+            {faqPairs.length >= 2 ? (
+              <span className="font-medium text-emerald-700">
+                {faqPairs.length} pair(s) detected — will skip AI and ingest directly.
+              </span>
+            ) : (
+              <span>
+                {faqPairs.length} pair(s) detected — AI will extract any FAQs from the prose.
+              </span>
+            )}
+          </p>
+        </TabsContent>
+        <TabsContent value="csv" className="space-y-3 pt-4">
+          <Label htmlFor="bb-csv-title">Title</Label>
+          <Input
+            id="bb-csv-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Q3 firm directory"
+          />
+          <Label htmlFor="bb-csv-file">CSV file</Label>
+          <Input
+            id="bb-csv-file"
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(e) => onCsvFile(e.target.files?.[0] ?? null)}
+          />
+          {csvHeaders.length > 0 ? (
+            <div className="space-y-2 rounded border bg-muted/30 p-3">
+              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Column mapping ({csvRaw.length} rows detected)
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {csvHeaders.map((h) => (
+                  <div key={h} className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{h}</span>
+                    <Select
+                      value={csvMapping[h] ?? "ignore"}
+                      onValueChange={(v) =>
+                        setCsvMapping((prev) => ({ ...prev, [h]: v as CsvField }))
+                      }
+                    >
+                      <SelectTrigger className="w-36">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FIELD_OPTIONS.map((f) => (
+                          <SelectItem key={f} value={f}>{f}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Destination contacts are only extracted from labeled non-person rows (e.g. "Billing Line").
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Expected columns: name, role, department, phone, extension, email, label, notes. Headers are auto-detected.
+            </p>
+          )}
         </TabsContent>
         <TabsContent value="url" className="space-y-3 pt-4">
           <p className="text-sm text-muted-foreground">
