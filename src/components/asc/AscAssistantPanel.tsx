@@ -1,15 +1,14 @@
 /**
- * ASC Slice 3 — Assistant panel for Steps 1 & 2.
+ * ASC Slice 3/4 — Assistant panel for Steps 1–4.
  *
- * Pure presentation + hook orchestration. The reducer is the single source
- * of truth for the draft; this component only dispatches via the hook.
+ * Pure presentation + hook orchestration. Reducer is the single source of
+ * truth; this component only dispatches via the hook.
  *
- * UI states (per scope lock — no blur triggers, explicit action only):
- *   - idle:    "Ask the assistant" button; manual fields above are editable.
- *   - loading: skeleton row; manual fields stay editable.
- *   - ready:   question (if any) + chip row with Confirm / Dismiss.
- *   - error:   inline alert with Try again. After 3 consecutive schema
- *              failures, also surface the canonical Switch to manual link.
+ * Per scope locks:
+ *   - explicit-trigger only (Ask button), no blur/mount triggers
+ *   - per-reason chips are grouped by reasonId so users can map suggestions
+ *     to the right caller reason
+ *   - manual editing wins over stale proposals (enforced by the reducer)
  */
 import { AlertCircle, Loader2, Sparkles, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,7 @@ import { AscSwitchToManualLink } from "@/components/asc/AscSwitchToManualLink";
 import { useAscInterviewer } from "@/hooks/useAscInterviewer";
 import type { AscDraft, AscInterviewerProposal } from "@/lib/asc/types";
 import type { Dispatch } from "react";
-import type { AscAction } from "@/lib/asc/actions";
+import type { AscAction, AscInterviewerStep } from "@/lib/asc/actions";
 
 const ERROR_COPY: Record<string, { title: string; body: string }> = {
   schema_invalid: {
@@ -49,17 +48,74 @@ const ERROR_COPY: Record<string, { title: string; body: string }> = {
 function describeValue(value: AscInterviewerProposal["value"]): string {
   if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (value && typeof value === "object") {
+    const o = value as Record<string, string>;
+    if ("when" in o && "toRole" in o) return `when ${o.when} → ${o.toRole}`;
+    if ("trigger" in o && "outcome" in o) return `${o.trigger} → ${o.outcome}`;
+    return JSON.stringify(o);
+  }
   return String(value);
 }
 
 export interface AscAssistantPanelProps {
   draft: AscDraft;
-  step: 1 | 2;
+  step: AscInterviewerStep;
   dispatch: Dispatch<AscAction>;
-  /** Workspace id for the fallback Switch-to-manual link. */
   workspaceId: string;
-  /** Friendly hint above the Ask button. Step-specific. */
   hint?: string;
+}
+
+function ProposalChip({
+  p,
+  onConfirm,
+  onReject,
+  reasonLabel,
+}: {
+  p: AscInterviewerProposal;
+  onConfirm: (id: string) => void;
+  onReject: (id: string) => void;
+  reasonLabel?: string;
+}) {
+  return (
+    <li
+      data-testid={`asc-assistant-proposal-${p.id}`}
+      className="flex items-center gap-2 rounded-full border bg-background px-2 py-1 text-xs"
+      title={p.rationale}
+    >
+      <ProvenanceBadge provenance="inferred_best_practice" showLabel={false} />
+      <span className="font-mono text-[11px] text-muted-foreground">
+        {p.targetField}
+      </span>
+      {reasonLabel && (
+        <span className="rounded bg-muted px-1 text-[10px] text-muted-foreground">
+          {reasonLabel}
+        </span>
+      )}
+      <span>{describeValue(p.value)}</span>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        className="h-5 w-5"
+        aria-label="Confirm"
+        data-testid={`asc-assistant-confirm-${p.id}`}
+        onClick={() => onConfirm(p.id)}
+      >
+        <Check className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        className="h-5 w-5"
+        aria-label="Dismiss"
+        data-testid={`asc-assistant-reject-${p.id}`}
+        onClick={() => onReject(p.id)}
+      >
+        <X className="h-3.5 w-3.5" />
+      </Button>
+    </li>
+  );
 }
 
 export function AscAssistantPanel({
@@ -80,6 +136,11 @@ export function AscAssistantPanel({
     (p) => p.status === "stale",
   );
   const showPersistentFailureHint = consecutiveSchemaFailures >= 3;
+
+  // Group per-reason pending proposals so users see them by caller reason.
+  const reasonLabelById = new Map(
+    draft.input.callerReasons.map((r) => [r.id, r.label]),
+  );
 
   return (
     <Card
@@ -144,7 +205,6 @@ export function AscAssistantPanel({
                     `/w/${workspaceId}/campaigns/new/manual?seedFromAsc=${encodeURIComponent(draft.id)}`
                   }
                 />
-
               )}
             </div>
           </AlertDescription>
@@ -158,84 +218,64 @@ export function AscAssistantPanel({
         >
           <div className="text-xs uppercase tracking-wide text-muted-foreground">
             Next question
+            {turn.questionReasonId && reasonLabelById.has(turn.questionReasonId) && (
+              <> · {reasonLabelById.get(turn.questionReasonId)}</>
+            )}
           </div>
           <p className="mt-1">{turn.questionPrompt}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Answer this in the field above, or confirm a suggestion below.
+            Answer this in the fields, or confirm a suggestion below.
           </p>
         </div>
       )}
 
-      {(pendingProposals.length > 0 || staleProposals.length > 0) && (
+      {pendingProposals.length > 0 && (
         <div className="space-y-2">
           <div className="text-xs uppercase tracking-wide text-muted-foreground">
             Suggestions
           </div>
           <ul className="flex flex-wrap gap-2">
             {pendingProposals.map((p) => (
-              <li
+              <ProposalChip
                 key={p.id}
-                data-testid={`asc-assistant-proposal-${p.id}`}
-                className="flex items-center gap-2 rounded-full border bg-background px-2 py-1 text-xs"
-                title={p.rationale}
-              >
-                <ProvenanceBadge
-                  provenance="inferred_best_practice"
-                  showLabel={false}
-                />
-                <span className="font-mono text-[11px] text-muted-foreground">
-                  {p.targetField}
-                </span>
-                <span>{describeValue(p.value)}</span>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="h-5 w-5"
-                  aria-label="Confirm"
-                  data-testid={`asc-assistant-confirm-${p.id}`}
-                  onClick={() => confirm(p.id)}
-                >
-                  <Check className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="h-5 w-5"
-                  aria-label="Dismiss"
-                  data-testid={`asc-assistant-reject-${p.id}`}
-                  onClick={() => reject(p.id)}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </li>
-            ))}
-            {staleProposals.map((p) => (
-              <li
-                key={p.id}
-                data-testid={`asc-assistant-stale-${p.id}`}
-                className="flex items-center gap-2 rounded-full border border-dashed bg-muted px-2 py-1 text-xs text-muted-foreground"
-                title="You changed this field after the suggestion was made."
-              >
-                <span className="font-mono text-[11px]">{p.targetField}</span>
-                <span className="line-through">{describeValue(p.value)}</span>
-                <span className="italic">outdated</span>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="h-5 w-5"
-                  aria-label="Dismiss"
-                  data-testid={`asc-assistant-reject-${p.id}`}
-                  onClick={() => reject(p.id)}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </li>
+                p={p}
+                onConfirm={confirm}
+                onReject={reject}
+                reasonLabel={
+                  p.reasonId ? reasonLabelById.get(p.reasonId) : undefined
+                }
+              />
             ))}
           </ul>
         </div>
+      )}
+
+      {staleProposals.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {staleProposals.map((p) => (
+            <li
+              key={p.id}
+              data-testid={`asc-assistant-stale-${p.id}`}
+              className="flex items-center gap-2 rounded-full border border-dashed bg-muted px-2 py-1 text-xs text-muted-foreground"
+              title="You changed this field after the suggestion was made."
+            >
+              <span className="font-mono text-[11px]">{p.targetField}</span>
+              <span className="line-through">{describeValue(p.value)}</span>
+              <span className="italic">outdated</span>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-5 w-5"
+                aria-label="Dismiss"
+                data-testid={`asc-assistant-reject-${p.id}`}
+                onClick={() => reject(p.id)}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </li>
+          ))}
+        </ul>
       )}
 
       {turn && !turn.questionPrompt && pendingProposals.length === 0 && status === "ready" && (

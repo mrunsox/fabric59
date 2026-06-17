@@ -7,12 +7,15 @@ import { AscSidePanel } from "./AscSidePanel";
 import { AscFooterNav } from "./AscFooterNav";
 import { AscSwitchToManualLink } from "./AscSwitchToManualLink";
 import type { AscDraft } from "@/lib/asc/types";
+import type { AscAction } from "@/lib/asc/actions";
 import type { AscAutosaveStatus } from "@/hooks/useAscDraft";
+import type { Dispatch } from "react";
 import { selectCanContinue } from "@/lib/asc/selectors";
 
 export interface AscWizardShellProps {
   workspaceId: string;
   draft: AscDraft;
+  dispatch: Dispatch<AscAction>;
   autosaveStatus: AscAutosaveStatus;
   lastSavedAt: string | null;
   onSelectStep: (step: number) => void;
@@ -21,6 +24,7 @@ export interface AscWizardShellProps {
   onHandoffToManual: () => string;
   children: ReactNode;
 }
+
 
 function formatSaveLabel(
   status: AscAutosaveStatus,
@@ -42,6 +46,7 @@ function formatSaveLabel(
 export function AscWizardShell({
   workspaceId,
   draft,
+  dispatch,
   autosaveStatus,
   lastSavedAt,
   onSelectStep,
@@ -51,6 +56,7 @@ export function AscWizardShell({
   children,
 }: AscWizardShellProps) {
   const canContinue = selectCanContinue(draft, draft.step);
+
   return (
     <div
       data-testid="asc-wizard-shell"
@@ -87,7 +93,7 @@ export function AscWizardShell({
         <main className="overflow-y-auto p-6" data-testid="asc-step-body">
           {children}
         </main>
-        <AscSidePanel />
+        <AscSidePanel draft={draft} dispatch={dispatch} />
       </div>
 
       <AscFooterNav

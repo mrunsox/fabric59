@@ -3,34 +3,47 @@
  *
  * Framework-free, no React imports, no I/O. The only mutator of AscDraft.
  *
- * Slice 3 adds Interviewer-turn handling:
- *   - APPLY_INTERVIEWER_TURN stores the latest assistant turn under
- *     `meta.interviewer.lastTurnByStep[step]`. If the model tries to
- *     re-ask a target field that is already in `confirmedFields`, the
- *     reducer drops the `nextQuestion` (proposals still pass through).
- *   - CONFIRM_PROPOSED_FIELD writes the proposal's value into the matching
- *     `input` slot ONLY IF the field's current value still matches the
- *     snapshot captured at proposal-issue time. Manual edits always win.
- *   - REJECT_PROPOSED_FIELD flips a proposal to "rejected" without writing.
- *   - Manual UPDATE_BUSINESS / UPDATE_PURPOSE marks any pending proposal
- *     for a touched target field as "stale" so the UI hides Confirm.
+ * Slice 4 adds:
+ *   - Per-reason Interviewer proposals (`callerReasons.add`, `callerReason.*`)
+ *     routed by `targetField` and gated by `reasonId` + snapshot compare.
+ *   - Duplicate-reason guard: confirming a `callerReasons.add` proposal
+ *     whose normalized label matches any existing reason is a no-op
+ *     (proposal flips to `stale`), never silently creates a duplicate.
+ *   - Advisory Gap-finder reducer arms (`APPLY_GAP_FINDER_RESULT`,
+ *     `DISMISS_GAP_ITEM`). Gap-finder NEVER writes to `draft.input` or
+ *     `draft.unresolved`; its items live under `meta.gapFinder` only.
  *
- * Canonical-write helpers (ascGeneratedToRunnerPayload, forkToCanonical)
- * remain throw-on-invoke stubs.
+ * Slice 3 behaviour preserved:
+ *   - APPLY_INTERVIEWER_TURN drops nextQuestion for already-confirmed
+ *     fields (Steps 1/2 fields; per-reason targets are repeatable).
+ *   - CONFIRM/REJECT_PROPOSED_FIELD operate via meta.interviewer only.
+ *   - Manual UPDATE_BUSINESS / UPDATE_PURPOSE marks pending proposals stale.
  */
-import type { AscAction } from "./actions";
+import type {
+  AscAction,
+  AscGapFinderStep,
+  AscInterviewerStep,
+} from "./actions";
 import {
   ASC_TOTAL_STEPS,
+  type AscBranchHint,
+  type AscCallerReason,
   type AscDraft,
+  type AscGapFinderMeta,
   type AscInterviewerMeta,
   type AscInterviewerProposal,
   type AscInterviewerTurn,
 } from "./types";
 import {
+  normalizeReasonLabel,
+  readPerReasonFieldValue,
   readTargetFieldValue,
   serializeFieldValue,
+  snapshotCallerReasonsLabels,
   targetFieldKey,
   targetFieldSlot,
+  type AscEscalationValue,
+  type AscBranchHintValue,
   type AscInterviewerTargetField,
 } from "./interviewerSchema";
 
@@ -62,19 +75,28 @@ function withInterviewer(
   };
 }
 
-function markStaleForFields(
+function emptyGapFinderMeta(): AscGapFinderMeta {
+  return { itemsByStep: {} };
+}
+
+function withGapFinder(draft: AscDraft, next: AscGapFinderMeta): AscDraft {
+  return { ...draft, meta: { ...draft.meta, gapFinder: next } };
+}
+
+/**
+ * Mark pending proposals matching `predicate` as stale across all steps.
+ */
+function markStaleWhere(
   meta: AscInterviewerMeta,
-  fields: AscInterviewerTargetField[],
+  predicate: (p: AscInterviewerProposal) => boolean,
 ): AscInterviewerMeta {
-  if (fields.length === 0) return meta;
-  const fset = new Set<string>(fields);
   const nextByStep: AscInterviewerMeta["lastTurnByStep"] = {};
   let changed = false;
   for (const [stepKey, turn] of Object.entries(meta.lastTurnByStep)) {
     if (!turn) continue;
-    const step = Number(stepKey) as 1 | 2;
+    const step = Number(stepKey) as AscInterviewerStep;
     const nextProposals = turn.proposals.map((p) =>
-      p.status === "pending" && fset.has(p.targetField)
+      p.status === "pending" && predicate(p)
         ? { ...p, status: "stale" as const }
         : p,
     );
@@ -85,9 +107,18 @@ function markStaleForFields(
   return { ...meta, lastTurnByStep: nextByStep };
 }
 
+function markStaleForFields(
+  meta: AscInterviewerMeta,
+  fields: AscInterviewerTargetField[],
+): AscInterviewerMeta {
+  if (fields.length === 0) return meta;
+  const fset = new Set<string>(fields);
+  return markStaleWhere(meta, (p) => fset.has(p.targetField));
+}
+
 function findProposal(
   meta: AscInterviewerMeta,
-  step: 1 | 2,
+  step: AscInterviewerStep,
   proposalId: string,
 ): { turn: AscInterviewerTurn; proposal: AscInterviewerProposal } | null {
   const turn = meta.lastTurnByStep[step];
@@ -97,7 +128,27 @@ function findProposal(
   return { turn, proposal };
 }
 
-function applyProposalValue(
+function replaceProposalStatus(
+  meta: AscInterviewerMeta,
+  step: AscInterviewerStep,
+  proposalId: string,
+  status: AscInterviewerProposal["status"],
+): AscInterviewerMeta {
+  const turn = meta.lastTurnByStep[step];
+  if (!turn) return meta;
+  const nextTurn: AscInterviewerTurn = {
+    ...turn,
+    proposals: turn.proposals.map((p) =>
+      p.id === proposalId ? { ...p, status } : p,
+    ),
+  };
+  return {
+    ...meta,
+    lastTurnByStep: { ...meta.lastTurnByStep, [step]: nextTurn },
+  };
+}
+
+function applySimpleFieldProposal(
   draft: AscDraft,
   proposal: AscInterviewerProposal,
 ): AscDraft {
@@ -112,7 +163,10 @@ function applyProposalValue(
           ...draft.input.business,
           [key]:
             key === "hours"
-              ? { ...draft.input.business.hours, coverage: proposal.value as never }
+              ? {
+                  ...draft.input.business.hours,
+                  coverage: proposal.value as never,
+                }
               : (proposal.value as never),
         },
       },
@@ -128,6 +182,95 @@ function applyProposalValue(
       },
     },
   };
+}
+
+function makeReasonId(): string {
+  const rand =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).slice(2, 10);
+  return `cr-${Date.now().toString(36)}-${rand}`;
+}
+
+function makeBranchId(): string {
+  const rand =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).slice(2, 10);
+  return `bh-${Date.now().toString(36)}-${rand}`;
+}
+
+function replaceReason(
+  draft: AscDraft,
+  updated: AscCallerReason,
+): AscDraft {
+  return {
+    ...draft,
+    input: {
+      ...draft.input,
+      callerReasons: draft.input.callerReasons.map((r) =>
+        r.id === updated.id ? updated : r,
+      ),
+    },
+  };
+}
+
+function applyPerReasonField(
+  reason: AscCallerReason,
+  proposal: AscInterviewerProposal,
+): AscCallerReason {
+  switch (proposal.targetField) {
+    case "callerReason.requiredCapture":
+      return { ...reason, requiredCapture: proposal.value as string[] };
+    case "callerReason.opener":
+      return { ...reason, opener: proposal.value as string };
+    case "callerReason.escalation": {
+      const v = proposal.value as AscEscalationValue;
+      return { ...reason, escalation: { when: v.when, toRole: v.toRole } };
+    }
+    case "callerReason.variants.afterHours":
+      return {
+        ...reason,
+        variants: { ...(reason.variants ?? {}), afterHours: proposal.value as string },
+      };
+    case "callerReason.variants.voicemail":
+      return {
+        ...reason,
+        variants: { ...(reason.variants ?? {}), voicemail: proposal.value as string },
+      };
+    case "callerReason.branching.add": {
+      const v = proposal.value as AscBranchHintValue;
+      const hint: AscBranchHint = {
+        id: makeBranchId(),
+        trigger: v.trigger,
+        outcome: v.outcome,
+        origin: "user_stated",
+      };
+      return {
+        ...reason,
+        branching: [...(reason.branching ?? []), hint],
+      };
+    }
+    default:
+      return reason;
+  }
+}
+
+/** Determine which per-reason target fields a `UPDATE_CALLER_REASON` patch
+ *  touched, so we can stale matching proposals. */
+function touchedPerReasonFields(
+  patch: Partial<AscCallerReason>,
+): AscInterviewerTargetField[] {
+  const out: AscInterviewerTargetField[] = [];
+  if ("requiredCapture" in patch) out.push("callerReason.requiredCapture");
+  if ("opener" in patch) out.push("callerReason.opener");
+  if ("escalation" in patch) out.push("callerReason.escalation");
+  if ("variants" in patch) {
+    out.push("callerReason.variants.afterHours");
+    out.push("callerReason.variants.voicemail");
+  }
+  // branching is append-only; manual edits don't invalidate "add" proposals.
+  return out;
 }
 
 export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
@@ -179,17 +322,30 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
       );
     }
 
-    case "ADD_CALLER_REASON":
-      return bumpUpdated({
+    case "ADD_CALLER_REASON": {
+      const next = bumpUpdated({
         ...state,
         input: {
           ...state.input,
           callerReasons: [...state.input.callerReasons, action.reason],
         },
       });
+      // Stale any pending `callerReasons.add` proposals whose normalized
+      // label now matches the just-added reason.
+      if (!next.meta.interviewer) return next;
+      const newNorm = normalizeReasonLabel(action.reason.label);
+      const staled = markStaleWhere(
+        next.meta.interviewer,
+        (p) =>
+          p.targetField === "callerReasons.add" &&
+          typeof p.value === "string" &&
+          normalizeReasonLabel(p.value) === newNorm,
+      );
+      return withInterviewer(next, staled);
+    }
 
-    case "UPDATE_CALLER_REASON":
-      return bumpUpdated({
+    case "UPDATE_CALLER_REASON": {
+      const next = bumpUpdated({
         ...state,
         input: {
           ...state.input,
@@ -198,9 +354,19 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
           ),
         },
       });
+      if (!next.meta.interviewer) return next;
+      const touched = touchedPerReasonFields(action.patch);
+      if (touched.length === 0) return next;
+      const tset = new Set<string>(touched);
+      const staled = markStaleWhere(
+        next.meta.interviewer,
+        (p) => p.reasonId === action.id && tset.has(p.targetField),
+      );
+      return withInterviewer(next, staled);
+    }
 
-    case "REMOVE_CALLER_REASON":
-      return bumpUpdated({
+    case "REMOVE_CALLER_REASON": {
+      const next = bumpUpdated({
         ...state,
         input: {
           ...state.input,
@@ -209,6 +375,37 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
           ),
         },
       });
+      // Stale any per-reason proposals tied to the removed reason and drop
+      // gap items that reference only this reason.
+      let withMeta = next;
+      if (next.meta.interviewer) {
+        const staled = markStaleWhere(
+          next.meta.interviewer,
+          (p) => p.reasonId === action.id,
+        );
+        withMeta = withInterviewer(withMeta, staled);
+      }
+      if (next.meta.gapFinder) {
+        const cleanedByStep: AscGapFinderMeta["itemsByStep"] = {};
+        for (const [k, items] of Object.entries(
+          next.meta.gapFinder.itemsByStep,
+        )) {
+          if (!items) continue;
+          const step = Number(k) as AscGapFinderStep;
+          cleanedByStep[step] = items.filter((g) => {
+            if (!g.reasonIds || g.reasonIds.length === 0) return true;
+            const remaining = g.reasonIds.filter((id) => id !== action.id);
+            // drop items whose only referenced reasons are now removed.
+            return remaining.length > 0;
+          });
+        }
+        withMeta = withGapFinder(withMeta, {
+          ...next.meta.gapFinder,
+          itemsByStep: cleanedByStep,
+        });
+      }
+      return withMeta;
+    }
 
     case "SET_DESTINATION":
       return bumpUpdated({
@@ -231,14 +428,13 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
     case "TOUCH":
       return bumpUpdated(state, action.now);
 
-    // ── Slice 3: Interviewer ──────────────────────────────────────────────
+    // ── Interviewer (Slices 3 + 4) ────────────────────────────────────────
     case "APPLY_INTERVIEWER_TURN": {
       const meta = getInterviewer(state);
       const confirmed = new Set(meta.confirmedFields);
       let turn = action.turn;
-      // Suppress re-asks: drop nextQuestion if its targetField is already
-      // confirmed. Proposals still flow through so the model can surface
-      // inferences for other fields in the same turn.
+      // Suppress re-asks for simple confirmed fields (Steps 1/2). Per-reason
+      // targets are repeatable and never recorded in confirmedFields.
       if (
         turn.questionTargetField &&
         confirmed.has(turn.questionTargetField)
@@ -250,6 +446,7 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
           questionTargetField: null,
           questionInputKind: null,
           questionOptions: undefined,
+          questionReasonId: undefined,
         };
       }
       const nextMeta: AscInterviewerMeta = {
@@ -265,17 +462,99 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
       if (!found) return state;
       const { proposal } = found;
       if (proposal.status !== "pending") return state;
-      // Manual-wins-over-stale: drop if the field's current value has
-      // diverged from the snapshot captured at proposal time.
+
+      const slot = targetFieldSlot(proposal.targetField);
+
+      // ── Slice 4: callerReasons.add ─────────────────────────────────────
+      if (slot === "callerReasons") {
+        const newLabel = String(proposal.value ?? "").trim();
+        if (!newLabel) {
+          const stale = markStaleForFields(meta, [proposal.targetField]);
+          return bumpUpdated(withInterviewer(state, stale));
+        }
+        const normalizedNew = normalizeReasonLabel(newLabel);
+        // Duplicate guard — always run, regardless of snapshot. Even if the
+        // snapshot matches, a duplicate must not be silently created.
+        const isDuplicate = state.input.callerReasons.some(
+          (r) => normalizeReasonLabel(r.label) === normalizedNew,
+        );
+        // Snapshot-divergence check as a defensive secondary signal.
+        const currentSnapshot = snapshotCallerReasonsLabels(state.input);
+        const snapshotDiverged = currentSnapshot !== proposal.fieldSnapshot;
+        if (isDuplicate || snapshotDiverged) {
+          const stale = markStaleForFields(meta, [proposal.targetField]);
+          return bumpUpdated(withInterviewer(state, stale));
+        }
+        const reason: AscCallerReason = {
+          id: makeReasonId(),
+          label: newLabel,
+          requiredCapture: [],
+        };
+        const withReason = {
+          ...state,
+          input: {
+            ...state.input,
+            callerReasons: [...state.input.callerReasons, reason],
+          },
+        };
+        const nextMeta = replaceProposalStatus(
+          meta,
+          action.step,
+          proposal.id,
+          "confirmed",
+        );
+        return bumpUpdated(withInterviewer(withReason, nextMeta));
+      }
+
+      // ── Slice 4: per-reason callerReason.* ─────────────────────────────
+      if (slot === "callerReason") {
+        if (!proposal.reasonId) {
+          const stale = markStaleForFields(meta, [proposal.targetField]);
+          return bumpUpdated(withInterviewer(state, stale));
+        }
+        const reason = state.input.callerReasons.find(
+          (r) => r.id === proposal.reasonId,
+        );
+        if (!reason) {
+          const stale = markStaleWhere(
+            meta,
+            (p) => p.id === proposal.id,
+          );
+          return bumpUpdated(withInterviewer(state, stale));
+        }
+        // Append-only branching skips the snapshot check.
+        if (proposal.targetField !== "callerReason.branching.add") {
+          const currentSerialized = serializeFieldValue(
+            readPerReasonFieldValue(reason, proposal.targetField),
+          );
+          if (currentSerialized !== proposal.fieldSnapshot) {
+            const stale = markStaleWhere(
+              meta,
+              (p) => p.id === proposal.id,
+            );
+            return bumpUpdated(withInterviewer(state, stale));
+          }
+        }
+        const updatedReason = applyPerReasonField(reason, proposal);
+        const withReason = replaceReason(state, updatedReason);
+        const nextMeta = replaceProposalStatus(
+          meta,
+          action.step,
+          proposal.id,
+          "confirmed",
+        );
+        return bumpUpdated(withInterviewer(withReason, nextMeta));
+      }
+
+      // ── Slices 1/2: simple business/purpose targets ────────────────────
       const currentSerialized = serializeFieldValue(
         readTargetFieldValue(state.input, proposal.targetField),
       );
       if (currentSerialized !== proposal.fieldSnapshot) {
-        // Mark stale so the UI hides Confirm; never write.
         const stale = markStaleForFields(meta, [proposal.targetField]);
         return bumpUpdated(withInterviewer(state, stale));
       }
-      const withValue = applyProposalValue(state, proposal);
+      const withValue = applySimpleFieldProposal(state, proposal);
       const turn = meta.lastTurnByStep[action.step]!;
       const nextTurn: AscInterviewerTurn = {
         ...turn,
@@ -298,19 +577,12 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
       const meta = getInterviewer(state);
       const found = findProposal(meta, action.step, action.proposalId);
       if (!found) return state;
-      const turn = found.turn;
-      const nextTurn: AscInterviewerTurn = {
-        ...turn,
-        proposals: turn.proposals.map((p) =>
-          p.id === action.proposalId
-            ? { ...p, status: "rejected" as const }
-            : p,
-        ),
-      };
-      const nextMeta: AscInterviewerMeta = {
-        ...meta,
-        lastTurnByStep: { ...meta.lastTurnByStep, [action.step]: nextTurn },
-      };
+      const nextMeta = replaceProposalStatus(
+        meta,
+        action.step,
+        action.proposalId,
+        "rejected",
+      );
       return bumpUpdated(withInterviewer(state, nextMeta));
     }
 
@@ -323,6 +595,46 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
       return bumpUpdated(withInterviewer(state, nextMeta));
     }
 
+    // ── Slice 4: Gap-finder (advisory only) ────────────────────────────────
+    case "APPLY_GAP_FINDER_RESULT": {
+      const existing = state.meta.gapFinder ?? emptyGapFinderMeta();
+      // Filter to items referencing existing reasons (if reasonIds present).
+      const existingReasonIds = new Set(
+        state.input.callerReasons.map((r) => r.id),
+      );
+      const cleaned = action.items
+        .map((g) => {
+          if (!g.reasonIds || g.reasonIds.length === 0) return g;
+          const known = g.reasonIds.filter((id) => existingReasonIds.has(id));
+          if (known.length === 0) return null;
+          return { ...g, reasonIds: known };
+        })
+        .filter((g): g is typeof action.items[number] => g !== null);
+      const nextMeta: AscGapFinderMeta = {
+        lastRunAt: action.now,
+        itemsByStep: {
+          ...existing.itemsByStep,
+          [action.step]: cleaned,
+        },
+      };
+      return bumpUpdated(withGapFinder(state, nextMeta));
+    }
+
+    case "DISMISS_GAP_ITEM": {
+      const existing = state.meta.gapFinder;
+      if (!existing) return state;
+      const items = existing.itemsByStep[action.step];
+      if (!items) return state;
+      const next = items.map((g) =>
+        g.id === action.itemId ? { ...g, dismissed: true } : g,
+      );
+      const nextMeta: AscGapFinderMeta = {
+        ...existing,
+        itemsByStep: { ...existing.itemsByStep, [action.step]: next },
+      };
+      return bumpUpdated(withGapFinder(state, nextMeta));
+    }
+
     default: {
       const _exhaustive: never = action;
       void _exhaustive;
@@ -331,16 +643,14 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
   }
 }
 
-// ── Slice 6/7 stubs ────────────────────────────────────────────────────────
-// Loud failure if anything tries to write canonical entities or build a
-// runner payload before those slices land.
+// ── Later-slice stubs ──────────────────────────────────────────────────────
 
 export function ascGeneratedToRunnerPayload(): never {
   throw new Error(
-    "[asc] ascGeneratedToRunnerPayload is not implemented in Slice 1.",
+    "[asc] ascGeneratedToRunnerPayload is not implemented yet.",
   );
 }
 
 export function forkToCanonical(): never {
-  throw new Error("[asc] forkToCanonical is not implemented in Slice 1.");
+  throw new Error("[asc] forkToCanonical is not implemented yet.");
 }

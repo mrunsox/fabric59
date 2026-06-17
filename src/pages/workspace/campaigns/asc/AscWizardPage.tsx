@@ -87,6 +87,7 @@ export default function AscWizardPage() {
     <AscWizardShell
       workspaceId={workspaceId}
       draft={{ ...draft, step: currentStep }}
+      dispatch={dispatch}
       autosaveStatus={autosaveStatus}
       lastSavedAt={lastSavedAt}
       onSelectStep={setStep}
@@ -94,6 +95,7 @@ export default function AscWizardPage() {
       onContinue={() => setStep(currentStep + 1)}
       onHandoffToManual={() => handoffToManual(workspaceId)}
     >
+
       {body}
     </AscWizardShell>
   );

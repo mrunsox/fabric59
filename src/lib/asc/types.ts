@@ -194,11 +194,15 @@ export interface AscInterviewerProposal {
   status: AscInterviewerProposalStatus;
   /**
    * Serialized snapshot of the target field's value at proposal-issue time.
-   * Used to detect "user manually edited the field after the proposal was
-   * issued" so a stale Confirm is a no-op instead of clobbering newer input.
+   * For per-reason fields this is the serialized slot for the specific
+   * `reasonId`. For `callerReasons.add` it is the serialized normalized
+   * label set used for duplicate detection. Unused for append-only
+   * targets like `callerReason.branching.add`.
    */
   fieldSnapshot: string;
   issuedAt: string;
+  /** Required when `targetField` starts with `callerReason.`. */
+  reasonId?: string;
 }
 
 export interface AscInterviewerTurn {
@@ -207,17 +211,44 @@ export interface AscInterviewerTurn {
   questionTargetField: AscInterviewerTargetField | null;
   questionInputKind: AscInterviewerInputKind | null;
   questionOptions?: string[];
+  questionReasonId?: string;
   proposals: AscInterviewerProposal[];
   askedAt: string;
 }
 
+
 export interface AscInterviewerMeta {
-  /** Last completed turn per assisted step (Slice 3: only 1 and 2). */
-  lastTurnByStep: Partial<Record<1 | 2, AscInterviewerTurn>>;
+  /** Last completed turn per assisted step. Slices 3–4 cover steps 1–4. */
+  lastTurnByStep: Partial<Record<1 | 2 | 3 | 4, AscInterviewerTurn>>;
   /** Target fields the user has confirmed at least once. Used to prevent
-   *  the model from re-asking already-answered fields. */
+   *  the model from re-asking already-answered fields. Per-reason and
+   *  `callerReasons.add` targets are intentionally NOT recorded here —
+   *  they are repeatable. */
   confirmedFields: AscInterviewerTargetField[];
 }
+
+/** Slice 4 — advisory Gap-finder item. ASC-local UI metadata only. */
+export type AscGapKind =
+  | "missing_handling"
+  | "escalation_no_destination"
+  | "implied_capture_missing"
+  | "after_hours_no_variant"
+  | "duplicate_reasons";
+
+export interface AscGapItem {
+  id: string;
+  step: 3 | 4;
+  kind: AscGapKind;
+  message: string;
+  reasonIds?: string[];
+  dismissed?: boolean;
+}
+
+export interface AscGapFinderMeta {
+  lastRunAt?: string;
+  itemsByStep: Partial<Record<3 | 4, AscGapItem[]>>;
+}
+
 
 export interface AscDraft {
   schemaVersion: 1;
@@ -238,9 +269,12 @@ export interface AscDraft {
     updatedAt: string;
     skinId?: string;
     /** Optional. Strictly ASC UI/session metadata — do not consume from
-     *  canonical builder or runtime code in Slice 3. */
+     *  canonical builder or runtime code. */
     interviewer?: AscInterviewerMeta;
+    /** Optional. Strictly ASC UI/session metadata — Slice 4 advisory only. */
+    gapFinder?: AscGapFinderMeta;
   };
 }
+
 
 export const ASC_TOTAL_STEPS = 10 as const;

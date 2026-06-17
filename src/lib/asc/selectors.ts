@@ -1,8 +1,16 @@
 /**
  * ASC Slice 1 — selectors over AscDraft.
  * Pure functions; no memoization library dependency.
+ *
+ * Slice 4 adds advisory gap-item selectors. Gap items NEVER affect
+ * `selectCanContinue` — they are advisory only.
  */
-import { ASC_TOTAL_STEPS, type AscDraft, type AscStepStatus } from "./types";
+import {
+  ASC_TOTAL_STEPS,
+  type AscDraft,
+  type AscGapItem,
+  type AscStepStatus,
+} from "./types";
 
 export function selectStepStatus(
   draft: AscDraft,
@@ -21,9 +29,8 @@ export function selectIsForked(draft: AscDraft | null | undefined): boolean {
 }
 
 /**
- * Slice 1 gating rules. Intentionally permissive: only the bare minimum so
- * users cannot blow past Step 1 with a completely empty business description.
- * Richer per-step rules land alongside the AI orchestration in Slice 2+.
+ * Slice 1/3/4 gating rules. Intentionally permissive. Gap-finder items are
+ * advisory only and never affect Continue.
  */
 export function selectCanContinue(draft: AscDraft, step: number): boolean {
   if (step < 1 || step > ASC_TOTAL_STEPS) return false;
@@ -33,6 +40,8 @@ export function selectCanContinue(draft: AscDraft, step: number): boolean {
     case 2:
       return draft.input.purpose.primaryOutcome.trim().length > 0;
     case 3:
+      return draft.input.callerReasons.length > 0;
+    case 4:
       return draft.input.callerReasons.length > 0;
     default:
       return true;
@@ -47,4 +56,13 @@ export function selectAllStepStatuses(
     out.push({ step: s, status: selectStepStatus(draft, s) });
   }
   return out;
+}
+
+/** Slice 4 — visible (non-dismissed) advisory gap items for a step. */
+export function selectGapItemsForStep(
+  draft: AscDraft,
+  step: 3 | 4,
+): AscGapItem[] {
+  const items = draft.meta.gapFinder?.itemsByStep?.[step] ?? [];
+  return items.filter((g) => !g.dismissed);
 }
