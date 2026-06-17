@@ -18,6 +18,7 @@ import {
   BB_ENTITY_TYPES,
   ENTITY_LABEL,
 } from "@/lib/business-brain/entitySchemas";
+import { BB_ENTITY_TYPES } from "@/lib/business-brain/types";
 import type { BbEntityType } from "@/lib/business-brain/types";
 
 function VerificationBadge({ state }: { state: BbFactRow["verification_state"] }) {

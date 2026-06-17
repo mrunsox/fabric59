@@ -33,6 +33,7 @@ import {
   ENTITY_LABEL,
   canonicalKey,
 } from "@/lib/business-brain/entitySchemas";
+import { BB_ENTITY_TYPES } from "@/lib/business-brain/types";
 import type { BbEntityType } from "@/lib/business-brain/types";
 
 function ConfidenceBadge({ value }: { value: number }) {
