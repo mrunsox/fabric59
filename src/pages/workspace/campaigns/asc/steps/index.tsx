@@ -22,6 +22,7 @@ import type { AscAction } from "@/lib/asc/actions";
 import { ProvenanceBadge } from "@/components/asc/ProvenanceBadge";
 import { AscAssistantPanel } from "@/components/asc/AscAssistantPanel";
 import { AscLogicArchitectPanel } from "@/components/asc/AscLogicArchitectPanel";
+import { AscGenerationPanel } from "@/components/asc/AscGenerationPanel";
 import { useAscGapFinder } from "@/hooks/useAscGapFinder";
 
 
