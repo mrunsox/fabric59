@@ -38,8 +38,11 @@ import { useAscGapFinder } from "@/hooks/useAscGapFinder";
 export interface AscStepProps {
   draft: AscDraft;
   dispatch: Dispatch<AscAction>;
-  /** Optional navigation hook; currently only Step 9 consumes this. */
+  /** Optional navigation hook; Step 9 and Step 10 consume this. */
   onJumpToStep?: (step: number) => void;
+  /** Slice 8 — Step 10 only. Invoked by the readiness CTA when it's safe
+   *  to hand off into the canonical campaign builder. */
+  onForkToCanonical?: () => void;
 }
 
 function StepHeader({
