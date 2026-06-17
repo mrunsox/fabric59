@@ -7,12 +7,14 @@
  * the same row.
  */
 import { useCallback, useMemo } from "react";
-import { Navigate, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AscWizardShell } from "@/components/asc/AscWizardShell";
 import { useAscWizardFlag } from "@/lib/asc/flagResolver";
 import { useAscDraft } from "@/hooks/useAscDraft";
 import { useAuth } from "@/contexts/AuthContext";
 import { ASC_TOTAL_STEPS } from "@/lib/asc/types";
+import { selectCanFork, selectIsForked } from "@/lib/asc/selectors";
+import { forkToCanonical } from "@/lib/asc/reducer";
 
 import {
   AscStepBusiness,
