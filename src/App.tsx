@@ -613,6 +613,12 @@ const App = () => (
                 <Route path="integrations" element={<WorkspaceIntegrationsPage />} />
                 <Route path="integrations/:connectionId" element={<WorkspaceIntegrationDetailPage />} />
                 <Route path="knowledge" element={<WorkspaceKnowledgePage />} />
+                {/* Business Brain — Phase 1 / Slice 1. Flag-gated inside the layout. */}
+                <Route path="brain" element={<BusinessBrainLayoutPage />}>
+                  <Route index element={<KnowledgeBinPage />} />
+                  <Route path="suggested" element={<SuggestedFactsPage />} />
+                  <Route path="approved" element={<ApprovedKnowledgePage />} />
+                </Route>
                 <Route path="assistant" element={<WorkspaceAssistantPage />} />
                 <Route path="settings" element={<WorkspaceSettingsPage />} />
                 {/* Phase B canonical surfaces */}
