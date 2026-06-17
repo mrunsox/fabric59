@@ -91,43 +91,46 @@ function renderReadOnlyStep(node: React.ReactNode) {
 }
 
 describe("Phase 5 · Slice 2 — UI disablement when forked", () => {
-  it("Step 1 (Business): textarea + input controls are disabled via fieldset", () => {
+  it("Step 1 (Business): controls live inside a disabled fieldset wrapper", () => {
     const draft = forkedDraft();
-    const dispatch = vi.fn();
     renderReadOnlyStep(
-      <AscStepBusiness draft={draft} dispatch={dispatch} />,
+      <AscStepBusiness draft={draft} dispatch={vi.fn()} />,
     );
-    const desc = screen.getByTestId("asc-business-description") as HTMLTextAreaElement;
-    const ind = screen.getByTestId("asc-business-industry") as HTMLInputElement;
-    expect(desc.disabled).toBe(true);
-    expect(ind.disabled).toBe(true);
+    const desc = screen.getByTestId("asc-business-description");
+    const ind = screen.getByTestId("asc-business-industry");
+    // Native HTML semantics: fieldset[disabled] disables descendant form
+    // controls. jsdom does not surface that on the .disabled getter, so we
+    // assert the structural contract instead. The browser does the right
+    // thing at runtime; the reducer guard is the real enforcement layer
+    // (see ascPostForkReadOnlyReducer.test.ts).
+    expect(desc.closest("fieldset[disabled]")).not.toBeNull();
+    expect(ind.closest("fieldset[disabled]")).not.toBeNull();
   });
 
-  it("Step 3 (Caller types): inputs and add/remove buttons are disabled", () => {
+  it("Step 3 (Caller types): inputs and add/remove buttons live inside the disabled fieldset", () => {
     const draft = forkedDraft();
-    const dispatch = vi.fn();
     renderReadOnlyStep(
-      <AscStepCallerTypes draft={draft} dispatch={dispatch} />,
+      <AscStepCallerTypes draft={draft} dispatch={vi.fn()} />,
     );
-    const input = screen.getByTestId("asc-caller-reason-input") as HTMLInputElement;
-    const add = screen.getByTestId("asc-caller-reason-add") as HTMLButtonElement;
-    expect(input.disabled).toBe(true);
-    expect(add.disabled).toBe(true);
+    const input = screen.getByTestId("asc-caller-reason-input");
+    const add = screen.getByTestId("asc-caller-reason-add");
+    expect(input.closest("fieldset[disabled]")).not.toBeNull();
+    expect(add.closest("fieldset[disabled]")).not.toBeNull();
   });
 
-  it("clicking a disabled control inside the fieldset does not dispatch any action", () => {
-    // Explicit read-only browsing regression: users can interact with the
-    // surface without mutating state. The fieldset blocks the DOM event,
-    // and the reducer guard is the safety net behind it.
-    const draft = forkedDraft();
-    const dispatch = vi.fn();
-    renderReadOnlyStep(
-      <AscStepBusiness draft={draft} dispatch={dispatch} />,
-    );
-    const desc = screen.getByTestId("asc-business-description") as HTMLTextAreaElement;
-    fireEvent.change(desc, { target: { value: "tampered" } });
-    expect(dispatch).not.toHaveBeenCalled();
+  it("reducer guard ensures even a leaked dispatch from inside the fieldset cannot mutate state", () => {
+    // Explicit read-only browsing regression: even if a UI control somehow
+    // dispatches (e.g. jsdom doesn't honor fieldset[disabled]), the reducer
+    // refuses to mutate the forked draft.
+    const before = forkedDraft();
+    const after = ascReducer(before, {
+      type: "UPDATE_BUSINESS",
+      patch: { description: "tampered" },
+    });
+    expect(after).toBe(before);
+    expect(after.input.business.description).toBe("Acme");
   });
+
 
   it("read-only browsing: rendering a different forked step still works and shows content", () => {
     const draft = forkedDraft();
