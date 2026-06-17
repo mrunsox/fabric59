@@ -17,6 +17,7 @@ import { requireUser } from "../_shared/auth.ts";
 const INTERVIEWER_STEPS = new Set([1, 2, 3, 4]);
 const GAP_FINDER_STEPS = new Set([3, 4]);
 const LOGIC_ARCHITECT_STEPS = new Set([5, 6, 7]);
+const LOGIC_ARCHITECT_COMPILE_STEPS = new Set([8]);
 
 const ALL_TARGET_FIELDS = [
   // Step 1
