@@ -737,11 +737,16 @@ Deno.serve(async (req) => {
     userMessage = buildGapFinderUserMessage(validated);
     tool = GAP_FINDER_TOOL;
     toolName = "gap_finder_response";
-  } else {
+  } else if (validated.role === "logic-architect") {
     systemPrompt = LOGIC_ARCHITECT_SYSTEM_PROMPT;
     userMessage = buildLogicArchitectUserMessage(validated);
     tool = LOGIC_ARCHITECT_TOOL;
     toolName = "logic_architect_response";
+  } else {
+    systemPrompt = LOGIC_ARCHITECT_COMPILE_SYSTEM_PROMPT;
+    userMessage = buildLogicArchitectCompileUserMessage(validated);
+    tool = LOGIC_ARCHITECT_COMPILE_TOOL;
+    toolName = "logic_architect_compile_response";
   }
 
   try {
