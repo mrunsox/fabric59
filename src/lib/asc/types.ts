@@ -127,7 +127,8 @@ export interface AscBranchProvenance {
   confidence: AscConfidence;
 }
 
-// Opaque Slice 1 placeholders. Concrete shapes land with the orchestration.
+// Legacy Slice 1 placeholders. Slice 6 replaced AscGenerated with an
+// ASC-local shape; these are kept only to avoid breaking unrelated imports.
 export type AscGuideDraft = { __slice1Placeholder: true };
 export type AscOutcomeDraft = { __slice1Placeholder: true };
 export type AscNotificationDraft = { __slice1Placeholder: true };
@@ -152,14 +153,129 @@ export interface AscLaunch {
   editableUntilPublish: boolean;
 }
 
+// ── Slice 6 — ASC-local generated draft ───────────────────────────────────
+// Deliberately NOT a canonical campaign/guide/flow type. Translation into
+// canonical entities is the explicit job of a later fork slice.
+export type AscGeneratedNodeKind =
+  | "entry"
+  | "reason_branch"
+  | "handling"
+  | "outcome"
+  | "exit";
+
+export interface AscGeneratedFlowNode {
+  id: string;
+  kind: AscGeneratedNodeKind;
+  label: string;
+  /** For reason_branch / handling nodes. References AscCallerReason.id. */
+  reasonId?: string;
+  /** For outcome nodes. Normalized outcome label. */
+  outcomeRef?: string;
+  /** Optional, low-stakes copy slots. Empty when copy is missing or unsafe;
+   *  in that case a matching `todos[]` entry explains why. */
+  copy?: { opener?: string; body?: string };
+  todos?: string[];
+}
+
+export interface AscGeneratedFlowEdge {
+  id: string;
+  from: string;
+  to: string;
+  /** Human-readable transition label. NOT a runtime predicate. */
+  trigger?: string;
+}
+
+export interface AscGeneratedOutcomeLink {
+  /** Normalized outcome label. */
+  outcomeRef: string;
+  fromReasonIds: string[];
+  notificationRefs: string[];
+}
+
+export interface AscGeneratedNotification {
+  id: string;
+  outcomeRef: string;
+  channelRef: string;
+  audienceRef?: string;
+  urgency: "low" | "normal" | "high";
+  note?: string;
+}
+
+export interface AscGeneratedDestinationLaunch {
+  destination: {
+    kind: "internal_runner" | "external_url" | "deep_link";
+    externalUrl?: string;
+    deepLinkTemplate?: string;
+    openMode?: "same_tab" | "new_tab" | "side_panel";
+    notes?: string;
+  };
+  launch: { slug?: string };
+}
+
+export type AscGenerationArea =
+  | "flow"
+  | "copy"
+  | "outcomes"
+  | "notifications"
+  | "destination";
+
+export interface AscGenerationConfidence {
+  level: AscConfidence;
+  reason?: string;
+}
+
+export interface AscGeneratedTodo {
+  id: string;
+  area: AscGenerationArea;
+  message: string;
+}
+
 export interface AscGenerated {
-  guideDraft: AscGuideDraft;
-  flowDraft: CampaignFlowContent;
-  outcomesDraft: AscOutcomeDraft[];
-  notificationsDraft: AscNotificationDraft[];
-  destination: AscDestination;
-  launch: AscLaunch;
-  branchProvenance: Record<string, AscBranchProvenance>;
+  schemaVersion: 1;
+  generatedAt: string;
+  /** Stable hash of the Step 1–7 inputs that produced this draft. */
+  inputFingerprint: string;
+  flow: {
+    nodes: AscGeneratedFlowNode[];
+    edges: AscGeneratedFlowEdge[];
+  };
+  /** Map AscCallerReason.id → flow node id for the branch that handles it. */
+  reasonToBranch: Record<string, string>;
+  outcomes: AscGeneratedOutcomeLink[];
+  notifications: AscGeneratedNotification[];
+  destinationLaunch: AscGeneratedDestinationLaunch;
+  todos: AscGeneratedTodo[];
+  confidenceByArea: Partial<Record<AscGenerationArea, AscGenerationConfidence>>;
+}
+
+// ── Slice 6 — Generation lifecycle metadata ───────────────────────────────
+export type AscGenerationStatus =
+  | "idle"
+  | "compiling"
+  | "success"
+  | "error";
+
+export type AscGenerationErrorCode =
+  | "schema_invalid"
+  | "incomplete"
+  | "unsafe"
+  | "upstream_error"
+  | "rate_limited"
+  | "credits_exhausted"
+  | "network_error";
+
+export interface AscGenerationError {
+  code: AscGenerationErrorCode;
+  message: string;
+}
+
+export interface AscGenerationMeta {
+  status: AscGenerationStatus;
+  lastRunAt?: string;
+  lastError?: AscGenerationError;
+  /** True when the most-recent generation no longer matches Step 1–7 inputs. */
+  stale: boolean;
+  staleReason?: "input_changed" | "never_generated";
 }
 
 export type AscStepStatus =
