@@ -1,0 +1,110 @@
+/**
+ * Business Brain telemetry — mirrors the ASC pattern.
+ *
+ * Fire-and-forget inserts into `platform_events` with `bb_*` event types and
+ * source = "business-brain". Failures are swallowed. Never blocks UX.
+ */
+import { supabase } from "@/integrations/supabase/client";
+
+export const BB_EVENT_TYPES = [
+  "bb_source_added",
+  "bb_source_processed",
+  "bb_source_failed",
+  "bb_extraction_completed",
+  "bb_fact_approved",
+  "bb_fact_rejected",
+  "bb_fact_edited",
+  "bb_fact_merged",
+] as const;
+export type BbEventType = (typeof BB_EVENT_TYPES)[number];
+
+export interface BbEventPayload {
+  workspaceId?: string | null;
+  organizationId?: string | null;
+  sourceId?: string;
+  extractionId?: string;
+  factId?: string;
+  entityType?: string;
+  outcome?: "ok" | "fail";
+  errorCode?: string;
+  count?: number;
+}
+
+const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
+  "workspaceId",
+  "organizationId",
+  "sourceId",
+  "extractionId",
+  "factId",
+  "entityType",
+  "outcome",
+  "errorCode",
+  "count",
+]);
+
+function sanitize(p: BbEventPayload): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const k of Object.keys(p) as Array<keyof BbEventPayload>) {
+    if (!ALLOWED.has(k)) continue;
+    const v = p[k];
+    if (v === undefined || v === null) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
+type Emitter = (
+  eventType: BbEventType,
+  payload: Record<string, unknown>,
+  organizationId: string | null,
+) => Promise<void> | void;
+
+const defaultEmitter: Emitter = async (eventType, payload, organizationId) => {
+  if (!organizationId) return;
+  try {
+    await supabase.from("platform_events").insert([
+      {
+        organization_id: organizationId,
+        event_type: eventType,
+        payload: payload as never,
+        source: "business-brain",
+      },
+    ]);
+  } catch {
+    /* swallow */
+  }
+};
+
+let emitter: Emitter = defaultEmitter;
+
+export function __setBbTelemetryEmitter(next: Emitter | null): void {
+  emitter = next ?? defaultEmitter;
+}
+
+export function emitBbEvent(
+  eventType: BbEventType,
+  payload: BbEventPayload = {},
+): void {
+  try {
+    if (!(BB_EVENT_TYPES as readonly string[]).includes(eventType)) {
+      if (import.meta.env?.DEV) {
+        // eslint-disable-next-line no-console
+        console.warn("[bb-telemetry] unknown event type rejected:", eventType);
+      }
+      return;
+    }
+    const clean = sanitize(payload);
+    const orgId = payload.organizationId ?? null;
+    const result = emitter(eventType, clean, orgId);
+    if (result && typeof (result as Promise<void>).catch === "function") {
+      (result as Promise<void>).catch(() => {
+        /* swallow */
+      });
+    }
+  } catch (err) {
+    if (import.meta.env?.DEV) {
+      // eslint-disable-next-line no-console
+      console.warn("[bb-telemetry] emit failed:", err);
+    }
+  }
+}
