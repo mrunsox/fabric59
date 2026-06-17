@@ -75,7 +75,7 @@ const emptyIntake: CampaignIntakeData = {
 };
 
 export default function CampaignIntakePage() {
-  const { id } = useParams();
+  const { id, workspaceId } = useParams<{ id?: string; workspaceId?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { organization } = useAuth();
