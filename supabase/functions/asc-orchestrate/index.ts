@@ -674,6 +674,24 @@ function buildLogicArchitectUserMessage(req: BaseRequest): string {
   ].join("\n");
 }
 
+function buildLogicArchitectCompileUserMessage(req: BaseRequest): string {
+  const snapshot = JSON.stringify(req.draftInputSnapshot, null, 2);
+  const grounding = JSON.stringify(req.grounding ?? {}, null, 2);
+  return [
+    `Step: 8 (compile)`,
+    `Workspace skin id: ${req.skinId ?? "(none)"}`,
+    "",
+    "Current draft input snapshot (JSON):",
+    snapshot,
+    "",
+    "Grounding (the ONLY external context you may reference):",
+    grounding,
+    "",
+    "Compile into a single ASC-local draft. Echo the user's confirmed slug; never invent.",
+    "Reply by calling the logic_architect_compile_response tool exactly once.",
+  ].join("\n");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
