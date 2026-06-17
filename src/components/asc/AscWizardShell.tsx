@@ -93,7 +93,7 @@ export function AscWizardShell({
         <main className="overflow-y-auto p-6" data-testid="asc-step-body">
           {children}
         </main>
-        <AscSidePanel />
+        <AscSidePanel draft={draft} dispatch={dispatch} />
       </div>
 
       <AscFooterNav
