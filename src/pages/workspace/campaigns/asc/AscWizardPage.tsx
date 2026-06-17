@@ -1,6 +1,9 @@
 /**
  * ASC Slice 2 — wizard host page.
  *
+ * Source of truth for handoff + post-fork behavior: docs/asc-architecture.md
+ *
+ *
  * Owns the AscDraft state via useAscDraft and routes the per-step bodies.
  * Persistence lives in `campaign_setups.intake_data.ascDraft`; this page
  * mirrors the assigned `setupId` into the URL so a refresh resumes against
