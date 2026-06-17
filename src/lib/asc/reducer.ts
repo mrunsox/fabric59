@@ -348,7 +348,22 @@ function touchedPerReasonFields(
   return out;
 }
 
-export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
+function withGeneration(
+  draft: AscDraft,
+  patch: Partial<NonNullable<AscDraft["meta"]["generation"]>> & { stale?: boolean },
+): AscDraft {
+  const cur = draft.meta.generation ?? {
+    status: "idle" as const,
+    stale: !draft.generated,
+    ...(draft.generated ? {} : { staleReason: "never_generated" as const }),
+  };
+  return {
+    ...draft,
+    meta: { ...draft.meta, generation: { ...cur, ...patch } },
+  };
+}
+
+function ascReducerInner(state: AscDraft, action: AscAction): AscDraft {
   switch (action.type) {
     case "INIT_DRAFT":
     case "RESET_DRAFT":
