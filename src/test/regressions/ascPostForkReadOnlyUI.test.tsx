@@ -177,7 +177,8 @@ describe("Phase 5 · Slice 2 — unforked draft remains editable (regression gua
         <AscStepBusiness draft={draft} dispatch={vi.fn()} />
       </MemoryRouter>,
     );
-    const desc = screen.getByTestId("asc-business-description") as HTMLTextAreaElement;
-    expect(desc.disabled).toBe(false);
+    const desc = screen.getByTestId("asc-business-description");
+    expect(desc.closest("fieldset[disabled]")).toBeNull();
   });
 });
+
