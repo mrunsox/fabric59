@@ -1006,25 +1006,25 @@ export function AscStepReview({ draft, onJumpToStep }: AscStepProps) {
 
 
 // ── Step 10 ────────────────────────────────────────────────────────────────
-export function AscStepReadiness(_: AscStepProps) {
+export function AscStepReadiness({
+  draft,
+  onJumpToStep,
+  onForkToCanonical,
+}: AscStepProps) {
+  const workspaceId = useWorkspaceIdFromRoute();
   return (
-    <div data-testid="asc-step-10">
+    <div data-testid="asc-step-10" className="space-y-4">
       <StepHeader
         number={10}
         title="Readiness & handoff"
-        blurb="ASC validates readiness and forks into the canonical campaign builder. Publish still runs through the existing canonical publish flow after handoff."
+        blurb="ASC checks your inputs and the generated draft for blockers. When safe, you can hand off into the canonical campaign builder — nothing is published from ASC."
       />
-      <Card className="space-y-2 border-dashed p-4 text-sm">
-        <p className="font-medium">v1 scope reminder</p>
-        <p className="text-muted-foreground">
-          ASC does not publish. Once your draft is ready, the canonical
-          campaign builder is where you review and publish. This step ships
-          its handoff action in a later slice.
-        </p>
-      </Card>
-      <div className="mt-4">
-        <ComingInLaterSlice what="Blocker/warning list and the fork-to-canonical action" />
-      </div>
+      <AscReadinessPanel
+        draft={draft}
+        workspaceId={workspaceId}
+        onJumpToStep={onJumpToStep}
+        onForkToCanonical={onForkToCanonical}
+      />
     </div>
   );
 }
