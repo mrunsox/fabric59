@@ -78,8 +78,8 @@ export default function AscWizardPage() {
   const handleFork = useCallback(() => {
     if (!selectCanFork(draft)) return;
     if (selectIsForked(draft)) return;
-    const result = forkToCanonical(draft);
     const now = new Date().toISOString();
+    const result = forkToCanonical(draft, { forkedAt: now });
     dispatch({
       type: "MARK_FORKED",
       at: now,

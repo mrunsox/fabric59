@@ -1273,6 +1273,9 @@ export function ascGeneratedToRunnerPayload(): never {
  * record, and does NOT change ASC state. Callers must dispatch
  * `MARK_FORKED` separately once they actually navigate.
  */
-export function forkToCanonical(draft: AscDraft): AscForkResult {
-  return translateAscDraftToIntake(draft);
+export function forkToCanonical(
+  draft: AscDraft,
+  options: { forkedAt: string },
+): AscForkResult {
+  return translateAscDraftToIntake(draft, options);
 }

@@ -30,6 +30,7 @@ import { format } from "date-fns";
 import { ChevronDown, ChevronRight, CheckCircle2, Save, Rocket, Loader2, CloudOff, Building2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WhiteLabelPartnerSelector } from "@/components/campaigns/WhiteLabelPartnerSelector";
+import { AscOriginPanel } from "@/components/campaigns/AscOriginPanel";
 
 const emptyIntake: CampaignIntakeData = {
   campaignName: "",
@@ -74,7 +75,7 @@ const emptyIntake: CampaignIntakeData = {
 };
 
 export default function CampaignIntakePage() {
-  const { id } = useParams();
+  const { id, workspaceId } = useParams<{ id?: string; workspaceId?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { organization } = useAuth();
@@ -288,6 +289,24 @@ export default function CampaignIntakePage() {
             </Select>
           </CardContent>
         </Card>
+      )}
+      {/* Phase 5 · Slice 1 — ASC origin provenance panel.
+          Reads from intake.ascOrigin so it survives autosave + the legacy
+          edit-route transition. Canonical fields below remain the source
+          of record; this panel only renders provenance + carry-over and
+          presentation-scoped review state. */}
+      {intake.ascOrigin && (
+        <AscOriginPanel
+          workspaceId={workspaceId ?? ""}
+          ascOrigin={intake.ascOrigin}
+          existingNewDispositions={intake.newDispositions}
+          onUpdateAscOrigin={(next) => update({ ascOrigin: next })}
+          onAddNewDispositions={(labels) =>
+            update({
+              newDispositions: [...intake.newDispositions, ...labels],
+            })
+          }
+        />
       )}
 
       {/* Section 1: Basics */}
