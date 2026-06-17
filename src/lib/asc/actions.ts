@@ -126,4 +126,11 @@ export type AscAction =
       now: string;
       error: AscGenerationError;
     }
-  | { type: "DISCARD_STEP8_GENERATION"; now: string };
+  | { type: "DISCARD_STEP8_GENERATION"; now: string }
+  // --- Slice 8: one-way fork into canonical builder ---
+  | {
+      type: "MARK_FORKED";
+      at: string;
+      by: string;
+      target?: "canonical_builder";
+    };

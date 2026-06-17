@@ -31,20 +31,28 @@ export default function WorkspaceCampaignNewPage() {
   const state = (location.state ?? {}) as {
     prefill?: Partial<CampaignIntakeData>;
     source?: string;
+    ascDraftId?: string;
   };
   const isAiPrefill = state.source === "ai-blueprint" && !!state.prefill;
+  const isAscPrefill = state.source === "asc-wizard" && !!state.prefill;
 
   useEffect(() => {
     if (isAiPrefill) {
-      // Lightweight observability for the new AI→workspace handoff while we
-      // wire up richer analytics. Keeps the prefill discoverable in dev tools.
       // eslint-disable-next-line no-console
       console.info("[ai-handoff] workspace campaign intake received prefill", {
         workspaceId,
         keys: Object.keys(state.prefill ?? {}),
       });
     }
-  }, [isAiPrefill, state.prefill, workspaceId]);
+    if (isAscPrefill) {
+      // eslint-disable-next-line no-console
+      console.info("[asc-handoff] workspace campaign intake received ASC prefill", {
+        workspaceId,
+        ascDraftId: state.ascDraftId,
+        keys: Object.keys(state.prefill ?? {}),
+      });
+    }
+  }, [isAiPrefill, isAscPrefill, state.prefill, state.ascDraftId, workspaceId]);
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -56,7 +64,19 @@ export default function WorkspaceCampaignNewPage() {
         </Button>
       </div>
 
-      {isAiPrefill ? (
+      {isAscPrefill ? (
+        <div
+          data-testid="asc-prefill-banner"
+          className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground flex items-start gap-2"
+        >
+          <Sparkles className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
+          <span>
+            Handed off from the ASC wizard. Review every section — ASC draft
+            follow-ups are listed in the notes field at the bottom of the
+            form.
+          </span>
+        </div>
+      ) : isAiPrefill ? (
         <div
           data-testid="ai-prefill-banner"
           className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground flex items-start gap-2"

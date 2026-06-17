@@ -7,12 +7,14 @@
  * the same row.
  */
 import { useCallback, useMemo } from "react";
-import { Navigate, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AscWizardShell } from "@/components/asc/AscWizardShell";
 import { useAscWizardFlag } from "@/lib/asc/flagResolver";
 import { useAscDraft } from "@/hooks/useAscDraft";
 import { useAuth } from "@/contexts/AuthContext";
 import { ASC_TOTAL_STEPS } from "@/lib/asc/types";
+import { selectCanFork, selectIsForked } from "@/lib/asc/selectors";
+import { forkToCanonical } from "@/lib/asc/reducer";
 
 import {
   AscStepBusiness,
@@ -71,28 +73,55 @@ export default function AscWizardPage() {
     [dispatch, searchParams, setSearchParams],
   );
 
+  const navigate = useNavigate();
+
+  const handleFork = useCallback(() => {
+    if (!selectCanFork(draft)) return;
+    if (selectIsForked(draft)) return;
+    const result = forkToCanonical(draft);
+    const now = new Date().toISOString();
+    dispatch({
+      type: "MARK_FORKED",
+      at: now,
+      by: user?.id ?? "anonymous",
+      target: "canonical_builder",
+    });
+    navigate(`/w/${workspaceId}/campaigns/new`, {
+      state: {
+        prefill: result.prefill,
+        source: result.source,
+        ascDraftId: result.ascDraftId,
+      },
+    });
+  }, [draft, dispatch, navigate, workspaceId, user?.id]);
+
   // Flag off → bounce out to manual without flashing wizard UI.
   if (!flag.enabled) {
     return <Navigate to={`/w/${workspaceId}/campaigns/new/manual`} replace />;
   }
 
-  // Already forked → canonical edit page is the source of truth.
-  if (draft.state === "forked") {
-    return <Navigate to={`/w/${workspaceId}/campaigns`} replace />;
-  }
+  // Slice 8 — once forked, lock the visible step to Step 10 so the
+  // "handed off" banner is reachable instead of silently kicking the user
+  // out. Re-fork is prevented by selectCanFork.
+  const effectiveStep = draft.state === "forked" ? ASC_TOTAL_STEPS : currentStep;
 
-  const body = renderStep(currentStep, { draft, dispatch, onJumpToStep: setStep });
+  const body = renderStep(effectiveStep, {
+    draft,
+    dispatch,
+    onJumpToStep: setStep,
+    onForkToCanonical: handleFork,
+  });
 
   return (
     <AscWizardShell
       workspaceId={workspaceId}
-      draft={{ ...draft, step: currentStep }}
+      draft={{ ...draft, step: effectiveStep }}
       dispatch={dispatch}
       autosaveStatus={autosaveStatus}
       lastSavedAt={lastSavedAt}
       onSelectStep={setStep}
-      onBack={() => setStep(currentStep - 1)}
-      onContinue={() => setStep(currentStep + 1)}
+      onBack={() => setStep(effectiveStep - 1)}
+      onContinue={() => setStep(effectiveStep + 1)}
       onHandoffToManual={() => handoffToManual(workspaceId)}
     >
 

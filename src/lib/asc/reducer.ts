@@ -61,6 +61,7 @@ import {
   type AscLaStep,
 } from "./logicArchitectSchema";
 import { computeInputFingerprint } from "./step8CompileSchema";
+import { translateAscDraftToIntake, type AscForkResult } from "./forkTranslator";
 
 function bumpUpdated(draft: AscDraft, now?: string): AscDraft {
   return {
@@ -1192,6 +1193,26 @@ function ascReducerInner(state: AscDraft, action: AscAction): AscDraft {
       );
     }
 
+    case "MARK_FORKED": {
+      // Idempotent: once forked, repeat dispatches are a no-op rather than
+      // appending duplicate fork records. The CTA is already gated by
+      // selectCanFork; this is a defense-in-depth guard.
+      if (state.state === "forked") return state;
+      const fork = {
+        at: action.at,
+        by: action.by,
+        target: action.target ?? ("canonical_builder" as const),
+      };
+      return bumpUpdated(
+        {
+          ...state,
+          state: "forked",
+          forks: [...(state.forks ?? []), fork],
+        },
+        action.at,
+      );
+    }
+
     default: {
       const _exhaustive: never = action;
       void _exhaustive;
@@ -1211,6 +1232,9 @@ function ascReducerInner(state: AscDraft, action: AscAction): AscDraft {
  * BEGIN/APPLY/FAIL/DISCARD already manage their own generation meta and are
  * skipped — `APPLY_STEP8_GENERATION` in particular intentionally records
  * stale=true if the live fingerprint diverged from the generated one.
+ *
+ * Slice 8 — MARK_FORKED is also skipped: forking does not mutate
+ * input.* so it must not flip generation.stale.
  */
 const GENERATION_OWNED_ACTIONS: ReadonlySet<AscAction["type"]> = new Set([
   "BEGIN_STEP8_GENERATION",
@@ -1219,6 +1243,7 @@ const GENERATION_OWNED_ACTIONS: ReadonlySet<AscAction["type"]> = new Set([
   "DISCARD_STEP8_GENERATION",
   "INIT_DRAFT",
   "RESET_DRAFT",
+  "MARK_FORKED",
 ]);
 
 export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
@@ -1240,6 +1265,14 @@ export function ascGeneratedToRunnerPayload(): never {
   );
 }
 
-export function forkToCanonical(): never {
-  throw new Error("[asc] forkToCanonical is not implemented yet.");
+/**
+ * Slice 8 — explicit ASC → canonical intake translation.
+ *
+ * Returns prefill suitable for navigating to the canonical campaign intake
+ * route. Does NOT touch the database, does NOT mutate any canonical
+ * record, and does NOT change ASC state. Callers must dispatch
+ * `MARK_FORKED` separately once they actually navigate.
+ */
+export function forkToCanonical(draft: AscDraft): AscForkResult {
+  return translateAscDraftToIntake(draft);
 }

@@ -36,6 +36,24 @@ export function selectIsForked(draft: AscDraft | null | undefined): boolean {
   return !!draft && draft.state === "forked";
 }
 
+// Slice 8 — readiness + fork-eligibility selectors.
+export {
+  computeReadiness as selectReadinessReport,
+} from "./readiness";
+export type {
+  AscReadinessIssue,
+  AscReadinessReport,
+  AscReadinessCategory,
+  AscReadinessSeverity,
+} from "./readiness";
+
+import { computeReadiness as _computeReadinessForCanFork } from "./readiness";
+
+export function selectCanFork(draft: AscDraft): boolean {
+  if (selectIsForked(draft)) return false;
+  return _computeReadinessForCanFork(draft).isSafeToFork;
+}
+
 /**
  * Slice 1/3/4 gating rules. Intentionally permissive. Gap-finder items and
  * Logic-Architect proposals are advisory/proposal-only — they never affect
