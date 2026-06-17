@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useParams } from "react-router-dom";
-import { Brain, Inbox, ListChecks, CheckCircle2 } from "lucide-react";
+import { Inbox, ListChecks, CheckCircle2 } from "lucide-react";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { useBusinessBrainFlag } from "@/lib/business-brain/flagResolver";
 import { cn } from "@/lib/utils";
@@ -20,11 +20,7 @@ export default function BusinessBrainLayoutPage() {
   if (!flag.enabled) {
     return (
       <div className="space-y-6">
-        <WorkspacePageHeader
-          icon={Brain}
-          title="Business Brain"
-          description="Governed business knowledge for script creation and live assist."
-        />
+        <WorkspacePageHeader title="Business Brain" lede="Governed business knowledge for script creation and live assist." />
         <div className="rounded-lg border bg-card p-8 text-sm text-muted-foreground">
           Business Brain is not enabled for this workspace. Ask a workspace
           owner to turn on{" "}
@@ -46,11 +42,7 @@ export default function BusinessBrainLayoutPage() {
 
   return (
     <div className="space-y-6">
-      <WorkspacePageHeader
-        icon={Brain}
-        title="Business Brain"
-        description="Ingest, review, and govern the business knowledge that powers scripts and assist."
-      />
+      <WorkspacePageHeader title="Business Brain" lede="Ingest, review, and govern the business knowledge that powers scripts and assist." />
       <nav className="flex items-center gap-1 border-b">
         {tabs.map((t) => (
           <NavLink
