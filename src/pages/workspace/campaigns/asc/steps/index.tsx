@@ -21,6 +21,7 @@ import type { AscDraft, AscCallerReason } from "@/lib/asc/types";
 import type { AscAction } from "@/lib/asc/actions";
 import { ProvenanceBadge } from "@/components/asc/ProvenanceBadge";
 import { AscAssistantPanel } from "@/components/asc/AscAssistantPanel";
+import { AscLogicArchitectPanel } from "@/components/asc/AscLogicArchitectPanel";
 import { useAscGapFinder } from "@/hooks/useAscGapFinder";
 
 
@@ -573,29 +574,149 @@ export function AscStepHandling({ draft, dispatch }: AscStepProps) {
 
 
 // ── Step 5 ─────────────────────────────────────────────────────────────────
-export function AscStepOutcomes(_: AscStepProps) {
+export function AscStepOutcomes({ draft, dispatch }: AscStepProps) {
+  const [label, setLabel] = useState("");
+  const outcomes = draft.input.outcomesDraftEdits ?? [];
   return (
-    <div data-testid="asc-step-5">
+    <div data-testid="asc-step-5" className="space-y-5">
       <StepHeader
         number={5}
         title="Outcomes & dispositions"
-        blurb="Pair AI-proposed dispositions with the workspace catalog. Lands with the orchestration."
+        blurb="What's the result of a call? Add outcomes manually, or let the architect propose options grounded in your purpose and caller types."
       />
-      <ComingInLaterSlice what="Disposition proposals and catalog reuse editor" />
+      <div className="flex gap-2">
+        <Input
+          data-testid="asc-outcome-input"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          placeholder="e.g. Booked consultation"
+        />
+        <Button
+          data-testid="asc-outcome-add"
+          onClick={() => {
+            const trimmed = label.trim();
+            if (!trimmed) return;
+            dispatch({
+              type: "ADD_OUTCOME_EDIT",
+              outcome: { id: `oc-${Date.now().toString(36)}`, label: trimmed },
+            });
+            setLabel("");
+          }}
+        >
+          <Plus className="h-4 w-4 mr-1" /> Add
+        </Button>
+      </div>
+      <ul className="space-y-2">
+        {outcomes.map((o) => (
+          <li
+            key={o.id}
+            data-testid={`asc-outcome-${o.id}`}
+            className="flex items-center justify-between rounded-md border bg-card px-3 py-2 text-sm"
+          >
+            <div>
+              <div className="font-medium">{o.label}</div>
+              {o.note && <div className="text-xs text-muted-foreground">{o.note}</div>}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => dispatch({ type: "REMOVE_OUTCOME_EDIT", id: o.id })}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </li>
+        ))}
+      </ul>
+      <AscLogicArchitectPanel
+        draft={draft}
+        step={5}
+        dispatch={dispatch}
+        hint="The architect proposes outcomes grounded in your purpose and caller types. The stable identifier is the label — `kind` is a proposal-local hint only."
+      />
     </div>
   );
 }
 
 // ── Step 6 ─────────────────────────────────────────────────────────────────
-export function AscStepNotifications(_: AscStepProps) {
+export function AscStepNotifications({ draft, dispatch }: AscStepProps) {
+  const [trigger, setTrigger] = useState("");
+  const [channel, setChannel] = useState("");
+  const notifications = draft.input.notificationsDraftEdits ?? [];
   return (
-    <div data-testid="asc-step-6">
+    <div data-testid="asc-step-6" className="space-y-5">
       <StepHeader
         number={6}
         title="Notifications"
-        blurb="Per-disposition notification rules. Recipients are constrained to existing workspace integrations."
+        blurb="Who should be alerted, and when? Add rules manually, or let the architect propose rules grounded in your configured destinations."
       />
-      <ComingInLaterSlice what="Notification rule editor wired to workspace integrations" />
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto]">
+        <Input
+          data-testid="asc-notification-trigger"
+          value={trigger}
+          onChange={(e) => setTrigger(e.target.value)}
+          placeholder="Outcome trigger (e.g. Booked consultation)"
+        />
+        <Input
+          data-testid="asc-notification-channel"
+          value={channel}
+          onChange={(e) => setChannel(e.target.value)}
+          placeholder="Channel (e.g. #intake-alerts)"
+        />
+        <Button
+          data-testid="asc-notification-add"
+          onClick={() => {
+            const t = trigger.trim();
+            const c = channel.trim();
+            if (!t || !c) return;
+            dispatch({
+              type: "ADD_NOTIFICATION_EDIT",
+              notification: {
+                id: `nt-${Date.now().toString(36)}`,
+                trigger: t,
+                channel: c,
+              },
+            });
+            setTrigger("");
+            setChannel("");
+          }}
+        >
+          Add rule
+        </Button>
+      </div>
+      <ul className="space-y-2">
+        {notifications.map((n) => (
+          <li
+            key={n.id}
+            data-testid={`asc-notification-${n.id}`}
+            className="flex items-center justify-between rounded-md border bg-card px-3 py-2 text-sm"
+          >
+            <div className="space-y-0.5">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="text-muted-foreground">outcome</span>
+                <span className="font-medium">{n.trigger}</span>
+                <span className="text-muted-foreground">·  channel</span>
+                <span className="font-mono">{n.channel}</span>
+              </div>
+              {n.note && <div className="text-xs text-muted-foreground">{n.note}</div>}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                dispatch({ type: "REMOVE_NOTIFICATION_EDIT", id: n.id })
+              }
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </li>
+        ))}
+      </ul>
+      <AscLogicArchitectPanel
+        draft={draft}
+        step={6}
+        dispatch={dispatch}
+        hint="Without configured destinations the architect stays advisory — it will not invent recipients."
+      />
     </div>
   );
 }
@@ -604,20 +725,28 @@ export function AscStepNotifications(_: AscStepProps) {
 export function AscStepDestination({ draft, dispatch }: AscStepProps) {
   const dest = draft.input.destination;
   const launch = draft.input.launch;
+  const slug = launch?.slug ?? "";
+  const takenSlugs: string[] = []; // sourced from a deterministic, non-AI check; pluggable upstream
+  const slugStatus =
+    slug.trim().length === 0
+      ? null
+      : takenSlugs.map((s) => s.toLowerCase()).includes(slug.toLowerCase())
+        ? "taken"
+        : "available";
   return (
-    <div data-testid="asc-step-7">
+    <div data-testid="asc-step-7" className="space-y-5">
       <StepHeader
         number={7}
         title="Destination & launch URL"
         blurb="Two distinct things: where agents work (operational destination) and the public launch URL."
       />
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="p-4">
+        <Card className="space-y-3 p-4">
           <h3 className="text-sm font-semibold">Where do agents work?</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Operational destination — what the agent opens during a call.
           </p>
-          <div className="mt-3 space-y-2">
+          <div className="space-y-2">
             <Label htmlFor="asc-dest-kind" className="text-xs">
               Kind
             </Label>
@@ -631,8 +760,7 @@ export function AscStepDestination({ draft, dispatch }: AscStepProps) {
                   type: "SET_DESTINATION",
                   destination: {
                     ...(dest ?? { kind: "internal_runner" }),
-                    kind: e.target
-                      .value as NonNullable<typeof dest>["kind"],
+                    kind: e.target.value as NonNullable<typeof dest>["kind"],
                   },
                 })
               }
@@ -642,20 +770,58 @@ export function AscStepDestination({ draft, dispatch }: AscStepProps) {
               <option value="deep_link">Deep link template</option>
             </select>
           </div>
+          {dest?.kind === "external_url" && (
+            <div className="space-y-1">
+              <Label htmlFor="asc-dest-url" className="text-xs">
+                External URL
+              </Label>
+              <Input
+                id="asc-dest-url"
+                data-testid="asc-destination-external-url"
+                value={dest.externalUrl ?? ""}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_DESTINATION",
+                    destination: { ...dest, externalUrl: e.target.value },
+                  })
+                }
+                placeholder="https://app.example.com/agent"
+              />
+            </div>
+          )}
+          {dest?.kind === "deep_link" && (
+            <div className="space-y-1">
+              <Label htmlFor="asc-dest-deep" className="text-xs">
+                Deep link template
+              </Label>
+              <Input
+                id="asc-dest-deep"
+                data-testid="asc-destination-deep-link"
+                value={dest.deepLinkTemplate ?? ""}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_DESTINATION",
+                    destination: { ...dest, deepLinkTemplate: e.target.value },
+                  })
+                }
+                placeholder="myapp://case/{{caseId}}"
+              />
+            </div>
+          )}
         </Card>
-        <Card className="p-4">
+        <Card className="space-y-3 p-4">
           <h3 className="text-sm font-semibold">What's the public link?</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Launch slug — separate from destination.
           </p>
-          <div className="mt-3 space-y-2">
+          <div className="space-y-1">
             <Label htmlFor="asc-launch-slug" className="text-xs">
               Slug
             </Label>
             <Input
               id="asc-launch-slug"
               data-testid="asc-launch-slug"
-              value={launch?.slug ?? ""}
+              value={slug}
               onChange={(e) =>
                 dispatch({
                   type: "SET_LAUNCH",
@@ -669,14 +835,31 @@ export function AscStepDestination({ draft, dispatch }: AscStepProps) {
               placeholder="my-campaign"
             />
             <p className="text-xs text-muted-foreground">
-              Preview: fabric59.com/c/<span className="font-mono">{launch?.slug || "<slug>"}</span>
+              Preview: fabric59.com/c/<span className="font-mono">{slug || "<slug>"}</span>
             </p>
+            {slugStatus && (
+              <p
+                data-testid="asc-launch-slug-status"
+                className={
+                  "text-xs " +
+                  (slugStatus === "available"
+                    ? "text-emerald-600"
+                    : "text-destructive")
+                }
+              >
+                {slugStatus === "available" ? "Available" : "Already in use"}
+              </p>
+            )}
           </div>
         </Card>
       </div>
-      <div className="mt-4">
-        <ComingInLaterSlice what="Deterministic slug collision check and AI alternatives" />
-      </div>
+      <AscLogicArchitectPanel
+        draft={draft}
+        step={7}
+        dispatch={dispatch}
+        grounding={{ takenSlugs }}
+        hint="The architect proposes destination subfields and slug candidates. Slug uniqueness is decided here, not by the AI."
+      />
     </div>
   );
 }

@@ -1,9 +1,8 @@
 /**
  * ASC reducer action union.
  *
- * Slice 4 widens the Interviewer step union to {1, 2, 3, 4} and adds the
- * advisory-only Gap-finder actions. Canonical-write actions (fork, generate)
- * still land in later slices.
+ * Slice 5 adds Logic Architect (proposal-only) actions for Steps 5–7 and
+ * the manual outcome/notification edit actions Step 5/6 need.
  */
 import type {
   AscCallerReason,
@@ -12,9 +11,17 @@ import type {
   AscGapItem,
   AscInterviewerTurn,
   AscLaunchInput,
+  AscLogicArchitectProposal,
+  AscNotificationEdit,
+  AscOutcomeEdit,
   AscStepStatus,
   AscWizardInput,
 } from "./types";
+import type {
+  AscLaAdvisory,
+  AscLaProposalValue,
+  AscLaStep,
+} from "./logicArchitectSchema";
 
 export type AscInterviewerStep = 1 | 2 | 3 | 4;
 export type AscGapFinderStep = 3 | 4;
@@ -62,4 +69,44 @@ export type AscAction =
       items: AscGapItem[];
       now: string;
     }
-  | { type: "DISMISS_GAP_ITEM"; step: AscGapFinderStep; itemId: string };
+  | { type: "DISMISS_GAP_ITEM"; step: AscGapFinderStep; itemId: string }
+  // --- Slice 5: outcome/notification manual editors ---
+  | { type: "ADD_OUTCOME_EDIT"; outcome: AscOutcomeEdit }
+  | { type: "UPDATE_OUTCOME_EDIT"; id: string; patch: Partial<AscOutcomeEdit> }
+  | { type: "REMOVE_OUTCOME_EDIT"; id: string }
+  | { type: "ADD_NOTIFICATION_EDIT"; notification: AscNotificationEdit }
+  | {
+      type: "UPDATE_NOTIFICATION_EDIT";
+      id: string;
+      patch: Partial<AscNotificationEdit>;
+    }
+  | { type: "REMOVE_NOTIFICATION_EDIT"; id: string }
+  // --- Slice 5: Logic Architect (proposals only) ---
+  | {
+      type: "APPLY_LOGIC_ARCHITECT_RESULT";
+      step: AscLaStep;
+      proposals: AscLogicArchitectProposal[];
+      advisories: AscLaAdvisory[];
+      now: string;
+    }
+  | {
+      type: "CONFIRM_LOGIC_ARCHITECT_PROPOSAL";
+      step: AscLaStep;
+      proposalId: string;
+      /** For Step 7 launch.slugCandidates: the slug the user picked. */
+      chosenSlug?: string;
+      /** For Step 7 launch.slugCandidates: client-side uniqueness result. */
+      slugIsUnique?: boolean;
+    }
+  | {
+      type: "REJECT_LOGIC_ARCHITECT_PROPOSAL";
+      step: AscLaStep;
+      proposalId: string;
+    }
+  | {
+      type: "EDIT_LOGIC_ARCHITECT_PROPOSAL";
+      step: AscLaStep;
+      proposalId: string;
+      nextValue: AscLaProposalValue;
+    }
+  | { type: "CLEAR_LOGIC_ARCHITECT_STEP"; step: AscLaStep };
