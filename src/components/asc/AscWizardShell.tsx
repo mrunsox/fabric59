@@ -10,7 +10,7 @@ import type { AscDraft } from "@/lib/asc/types";
 import type { AscAction } from "@/lib/asc/actions";
 import type { AscAutosaveStatus } from "@/hooks/useAscDraft";
 import type { Dispatch } from "react";
-import { selectCanContinue } from "@/lib/asc/selectors";
+import { selectCanContinue, selectIsReadOnly } from "@/lib/asc/selectors";
 
 export interface AscWizardShellProps {
   workspaceId: string;
@@ -56,6 +56,8 @@ export function AscWizardShell({
   children,
 }: AscWizardShellProps) {
   const canContinue = selectCanContinue(draft, draft.step);
+  const isReadOnly = selectIsReadOnly(draft);
+  const lastFork = draft.forks?.[draft.forks.length - 1];
 
   return (
     <div
@@ -86,6 +88,32 @@ export function AscWizardShell({
         />
       </header>
 
+      {isReadOnly && (
+        <div
+          data-testid="asc-forked-banner"
+          className="border-b border-emerald-200 bg-emerald-50/70 px-4 py-2 text-xs text-emerald-900"
+        >
+          <p className="font-medium">
+            This draft has been handed off to the canonical builder. Changes
+            here no longer affect the canonical campaign.
+          </p>
+          {lastFork && (
+            <p className="mt-0.5 text-emerald-900/80">
+              Forked on {formatForkedAt(lastFork.at)} by {lastFork.by}.{" "}
+              <Link
+                to={`/w/${workspaceId}/campaigns`}
+                className="underline underline-offset-2"
+                data-testid="asc-forked-banner-open-campaigns"
+              >
+                Go to campaigns
+              </Link>{" "}
+              to find the handed-off draft (deep-link to the exact canonical
+              draft is not available yet).
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="grid flex-1 grid-cols-[220px_minmax(0,1fr)_280px] overflow-hidden">
         <div className="overflow-y-auto border-r">
           <AscStepper draft={draft} onSelectStep={onSelectStep} />
@@ -95,6 +123,25 @@ export function AscWizardShell({
         </main>
         <AscSidePanel draft={draft} dispatch={dispatch} />
       </div>
+
+      <AscFooterNav
+        step={draft.step}
+        canContinue={canContinue && !isReadOnly}
+        onBack={onBack}
+        onContinue={onContinue}
+        saveLabel={formatSaveLabel(autosaveStatus, lastSavedAt)}
+      />
+    </div>
+  );
+}
+
+function formatForkedAt(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return iso;
+  }
+}
 
       <AscFooterNav
         step={draft.step}
