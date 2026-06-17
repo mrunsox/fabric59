@@ -290,6 +290,24 @@ export default function CampaignIntakePage() {
           </CardContent>
         </Card>
       )}
+      {/* Phase 5 · Slice 1 — ASC origin provenance panel.
+          Reads from intake.ascOrigin so it survives autosave + the legacy
+          edit-route transition. Canonical fields below remain the source
+          of record; this panel only renders provenance + carry-over and
+          presentation-scoped review state. */}
+      {intake.ascOrigin && (
+        <AscOriginPanel
+          workspaceId={workspaceId ?? ""}
+          ascOrigin={intake.ascOrigin}
+          existingNewDispositions={intake.newDispositions}
+          onUpdateAscOrigin={(next) => update({ ascOrigin: next })}
+          onAddNewDispositions={(labels) =>
+            update({
+              newDispositions: [...intake.newDispositions, ...labels],
+            })
+          }
+        />
+      )}
 
       {/* Section 1: Basics */}
       <Card>
