@@ -1,20 +1,23 @@
 /**
- * ASC Slice 3 — Interviewer hook.
+ * ASC Slice 3/4 — Interviewer hook.
  *
  * Owns the call to `asc-orchestrate`, schema re-validation, snapshot
  * capture for the manual-wins-over-stale rule, and the recoverable error
  * state. Reducer is the single source of truth for the draft; this hook
  * only dispatches typed actions.
  *
- * Per Slice 3 scope locks:
+ * Per scope locks:
  *   - askNext() runs only on explicit user action (or after confirm/reject).
  *     No blur, focus, or mount triggers.
- *   - role is hard-pinned to "interviewer"; steps 1 and 2 only.
+ *   - role is hard-pinned to "interviewer"; steps 1..4 only (Slice 4).
+ *   - Per-reason proposals carry reasonId; snapshot is the serialized slot
+ *     for that specific reason. `callerReasons.add` snapshot is the
+ *     normalized existing-label set (duplicate guard lives in the reducer).
  */
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { Dispatch } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { AscAction } from "@/lib/asc/actions";
+import type { AscAction, AscInterviewerStep } from "@/lib/asc/actions";
 import type {
   AscDraft,
   AscInterviewerProposal,
@@ -22,8 +25,11 @@ import type {
 } from "@/lib/asc/types";
 import {
   parseInterviewerResponse,
+  readPerReasonFieldValue,
   readTargetFieldValue,
   serializeFieldValue,
+  snapshotCallerReasonsLabels,
+  targetFieldSlot,
   type AscInterviewerResponse,
 } from "@/lib/asc/interviewerSchema";
 
@@ -44,8 +50,6 @@ export interface AscInterviewerError {
 export interface UseAscInterviewerResult {
   status: AscInterviewerStatus;
   error: AscInterviewerError | null;
-  /** Consecutive schema-invalid count for the current step. UI uses this
-   *  to surface the "switch to manual" affordance after persistent failure. */
   consecutiveSchemaFailures: number;
   askNext: () => Promise<void>;
   confirm: (proposalId: string) => void;
@@ -60,6 +64,31 @@ function makeId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function snapshotForProposal(
+  draft: AscDraft,
+  payload: AscInterviewerResponse["proposedFields"][number],
+): string {
+  const slot = targetFieldSlot(payload.targetField);
+  if (slot === "callerReasons") {
+    return snapshotCallerReasonsLabels(draft.input);
+  }
+  if (slot === "callerReason") {
+    if (payload.targetField === "callerReason.branching.add") {
+      // Append-only — snapshot is unused but keep stable.
+      return "";
+    }
+    const reason = draft.input.callerReasons.find(
+      (r) => r.id === payload.reasonId,
+    );
+    return serializeFieldValue(
+      readPerReasonFieldValue(reason, payload.targetField),
+    );
+  }
+  return serializeFieldValue(
+    readTargetFieldValue(draft.input, payload.targetField),
+  );
+}
+
 function buildTurnFromResponse(
   resp: AscInterviewerResponse,
   draft: AscDraft,
@@ -72,10 +101,9 @@ function buildTurnFromResponse(
     confidence: p.confidence,
     rationale: p.rationale,
     status: "pending",
-    fieldSnapshot: serializeFieldValue(
-      readTargetFieldValue(draft.input, p.targetField),
-    ),
+    fieldSnapshot: snapshotForProposal(draft, p),
     issuedAt: now,
+    reasonId: p.reasonId,
   }));
   return {
     questionId: resp.nextQuestion?.id ?? null,
@@ -83,6 +111,7 @@ function buildTurnFromResponse(
     questionTargetField: resp.nextQuestion?.targetField ?? null,
     questionInputKind: resp.nextQuestion?.inputKind ?? null,
     questionOptions: resp.nextQuestion?.options,
+    questionReasonId: resp.nextQuestion?.reasonId,
     proposals,
     askedAt: now,
   };
@@ -90,13 +119,18 @@ function buildTurnFromResponse(
 
 export function useAscInterviewer(params: {
   draft: AscDraft;
-  step: 1 | 2;
+  step: AscInterviewerStep;
   dispatch: Dispatch<AscAction>;
 }): UseAscInterviewerResult {
   const { draft, step, dispatch } = params;
   const [status, setStatus] = useState<AscInterviewerStatus>("idle");
   const [error, setError] = useState<AscInterviewerError | null>(null);
-  const failuresRef = useRef<Record<1 | 2, number>>({ 1: 0, 2: 0 });
+  const failuresRef = useRef<Record<AscInterviewerStep, number>>({
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+  });
   const [, force] = useState(0);
 
   const askNext = useCallback(async () => {
@@ -105,6 +139,7 @@ export function useAscInterviewer(params: {
     const snapshot = {
       business: draft.input.business,
       purpose: draft.input.purpose,
+      callerReasons: draft.input.callerReasons,
     };
     const confirmedFields = draft.meta.interviewer?.confirmedFields ?? [];
     try {
@@ -156,7 +191,6 @@ export function useAscInterviewer(params: {
         });
         return;
       }
-      // Success — reset failure counter, dispatch the turn.
       failuresRef.current[step] = 0;
       const turn = buildTurnFromResponse(
         parsed,
