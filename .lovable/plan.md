@@ -1,78 +1,150 @@
-# Phase 6 · Slice 1 — ASC + Canonical Consolidation, Docs, and Guardrails
+# Phase 6 · Slice 2 — Shadow Rollout & Observation
 
-Documentation + guardrails only. No behavior changes, no new features, no UX surfaces beyond comment breadcrumbs.
+Goal: turn ASC into something we can actually measure during a quiet pilot. No new ASC features, no new canonical features. Just gating, telemetry, and the docs/dashboards needed to read the results.
 
-## 1. Architecture doc
+## 1. Rollout gating (no UI surface beyond what exists)
 
-**Create** `docs/asc-architecture.md` as the single source of truth for the ASC → canonical flow. Sections:
+ASC is already behind `resolveAscWizardFlag` (Client > Partner > Org > dev override). Slice 2 keeps that mechanism — we do **not** add new toggles, route changes, or nav entries.
 
-1. **Overview & responsibility boundaries** — what ASC owns vs. what canonical owns; the one-way handoff diagram.
-2. **Steps 1–10 reference table** — for each step: concern owned, AI role allowed to write (interviewer / gap finder / logic architect / step-8 generator), confirm rules, ASC-local vs. canonical scope.
-3. **Translation boundary** — `src/lib/asc/forkTranslator.ts`:
-   - inputs: `AscDraft`, `AscGenerated`
-   - outputs: `prefill: Partial<CampaignIntakeData>`, `ascOrigin`
-   - intentional drops: interviewer/gapFinder/logicArchitect meta, confidence, rationales
-   - name-fallback rule (≤60 chars from business description)
-4. **`CampaignIntakeData.ascOrigin`** — provenance role, carried fields (outcomes, reasons, destination, launchSlug, followUps[], reviewState), how `AscOriginPanel` renders it, presentation-scoped `reviewState`.
-5. **Post-fork behavior** — reducer `ALLOWED_WHEN_FORKED` allowlist (lifecycle + nav only) as primary enforcement; UI `<fieldset disabled>` as secondary; navigation across Steps 1–9 remains possible read-only; canonical `AscOriginPanel` "no sync back to ASC" messaging.
-6. **Invariants** (explicit, numbered):
-   - I1. ASC cannot mutate state when `state === "forked"`.
-   - I2. Handoff is one-way; no reverse translation back into ASC.
-   - I3. Canonical publish path is identical for ASC-origin and non-ASC campaigns.
-   - I4. ASC-local types are never imported by canonical runtime modules (only the translator bridges them).
-   - I5. ASC never calls the canonical publish/save action directly.
-7. **For Contributors** — where to add new ASC roles, where to update invariants/tests, pointers to key files.
+- Add a short operator doc `docs/asc-shadow-rollout.md` covering:
+  - Who: internal team + 2–5 trusted customers.
+  - How to enable per workspace via `features.ascWizard.enabled = true` in the org/partner/client integration config.
+  - Expectation copy ("assisted wizard, hands off to canonical builder, never publishes directly").
+  - Success criteria: 10–20 full ASC → canonical journeys from shippers.
+- No nav changes; entry stays via the existing decision page when the flag resolves true.
 
-## 2. Golden-path integration test
+## 2. Telemetry layer (`src/lib/asc/telemetry.ts`)
 
-**Create** `src/test/integration/ascToCanonicalHappyPath.test.ts` (new `integration/` folder under `src/test/`).
+One thin helper, used everywhere ASC emits a signal, so events stay consistent and easy to grep.
 
-Flow:
+```text
+emitAscEvent(eventType, {
+  ascDraftId,
+  workspaceId,
+  step?,         // 1..10 where relevant
+  role?,         // interviewer | gap_finder | logic_architect | generator
+  targetField?,  // for proposal confirmations
+  outcome?,      // ok | fail
+  errorCode?,    // '402' | '429' | 'schema' | 'unknown'
+  blockerCount?, warningCount?, blockerId?,
+  source?,       // 'asc' | 'canonical'
+})
+```
 
-1. Build representative `AscDraft` via `createEmptyAscDraft` + reducer dispatches (Steps 1–7 populated, Step 8 generation applied, draft state `complete`).
-2. Call `translateAscDraftToIntake(draft, { forkedAt })`. Assert:
-   - `prefill.campaignName` and `prefill.clientName` present and non-empty.
-   - `prefill.ascOrigin.{ascDraftId, forkedAt, primaryOutcome, callerReasons, destination, launchSlug, followUps}` shaped as expected.
-   - No ASC-only metadata leaks (`interviewer`, `gapFinder`, `logicArchitect`, `confidence`, `rationales`).
-   - `prefill.additionalNotes` contains only the pointer line, not the full structured payload.
-3. Feed `prefill` into a minimal `CampaignIntakeData` using the same default-merge pattern `CampaignIntakePage` uses, and assert `ascOrigin` survives the merge and required Section-1 fields are satisfied.
-4. Simulate "save as submitted" by invoking the same required-field validation predicates the page uses (re-import the validation helper or inline the equivalent rule set the test pins). Assert the ASC-origin intake passes the same rules a non-ASC intake with the same fields would pass — no ASC-specific branch.
+Internally it calls the existing `useEmitEvent` / `platform_events` insert with `source: "asc"` and a stable `event_type` prefix `asc_*` / `canonical_from_asc_*`. `userId`, `organization_id`, and `created_at` already come from the existing emitter — we do not duplicate them in the payload.
 
-Test must fail loudly if translator shape, intake assimilation, or publish-path validation diverges.
+Failure of telemetry is silent (try/catch swallow + console.warn in dev). Telemetry never blocks UX or mutates ASC state.
 
-## 3. Invariants sanity tests
+### Event catalog (the only events we ship in Slice 2)
 
-**Create** `src/test/regressions/ascInvariants.test.ts`. Lightweight string/regex scans (no AST):
+Wizard lifecycle
+- `asc_wizard_opened`
+- `asc_step_completed` — `{ step, usedAi: boolean }`
+- `asc_step_back` — `{ step }`
+- `asc_wizard_abandoned` — `{ lastStep }` (emitted on unmount when state !== forked/published/discarded)
 
-- **I4 guard**: read canonical runtime files (`src/pages/admin/CampaignIntakePage.tsx`, `src/components/campaigns/AscOriginPanel.tsx`, and the canonical publish action module) and assert none contain `from "@/lib/asc/` or `from "../../lib/asc/` except for the explicitly-allowed `ascOrigin` type re-export path (whitelisted constant in the test).
-- **I5 guard**: read ASC entrypoints (`src/lib/asc/*.ts`, `src/pages/workspace/campaigns/asc/**`) and assert none import the canonical publish/save function (pin the exact symbol/path used by canonical `handleSave("submitted")`).
-- **I1 guard**: import `ALLOWED_WHEN_FORKED` from `src/lib/asc/reducer.ts` (export it if not already exported — minimal change) and assert it contains exactly the expected lifecycle/nav actions and excludes a pinned list of known mutating actions (`UPDATE_INPUT`, `APPLY_AI_PATCH`, `SET_GENERATED`, `SET_STEP_STATUS`, etc.).
+AI usage
+- `asc_ai_call` — `{ role, step, outcome, errorCode? }`
+- `asc_ai_proposal_confirmed` — `{ role, step, targetField }`
 
-If `ALLOWED_WHEN_FORKED` is not currently exported, add a named export — the only code change in this slice.
+Readiness + handoff
+- `asc_readiness_viewed` — `{ blockerCount, warningCount }`
+- `asc_readiness_blocker_seen` — `{ blockerId }` (deduped per draft+blocker in session)
+- `asc_handoff_initiated`
+- `asc_handoff_completed` — emitted when canonical page mounts with `ascOrigin`
 
-## 4. Breadcrumb comments
+Canonical side (ASC-origin only)
+- `canonical_from_asc_opened`
+- `canonical_from_asc_saved` — first successful save of an ASC-origin draft
+- `canonical_from_asc_published` — final publish where `ascOrigin` is present
 
-Add a single-line comment pointing to `docs/asc-architecture.md` in:
+## 3. Wiring points (minimal, additive)
 
-- `src/lib/asc/forkTranslator.ts` (top of file)
-- `src/components/campaigns/AscOriginPanel.tsx` (top of file)
-- `src/pages/workspace/campaigns/asc/AscWizardPage.tsx` (top of file)
+All changes are call-site insertions of `emitAscEvent(...)`; no logic refactors.
 
-No behavior changes.
+- `src/pages/workspace/campaigns/asc/AscWizardPage.tsx`
+  - `asc_wizard_opened` on first mount per draft.
+  - `asc_step_completed` / `asc_step_back` on footer nav.
+  - `asc_wizard_abandoned` in unmount effect, guarded by draft state.
+  - `asc_handoff_initiated` when the user triggers handoff (existing handler).
+- `src/hooks/useAscInterviewer.ts`, `useAscGapFinder.ts`, `useAscLogicArchitect.ts`, `useAscStep8Generate.ts`
+  - Wrap the call with `asc_ai_call` on success/fail, mapping HTTP/Zod error to `errorCode`.
+- ASC proposal acceptance handlers (in the relevant step components consuming those hooks)
+  - `asc_ai_proposal_confirmed` on accept.
+- `src/components/asc/AscReadinessPanel.tsx`
+  - `asc_readiness_viewed` once per mount per draft.
+  - `asc_readiness_blocker_seen` per unique blocker rendered.
+- `src/components/campaigns/AscOriginPanel.tsx`
+  - `canonical_from_asc_opened` on mount.
+- `src/pages/admin/CampaignIntakePage.tsx` (and `WorkspaceCampaignNewPage.tsx` for the route-transition path)
+  - `asc_handoff_completed` on mount when `ascOrigin` is present (once per `ascDraftId`).
+  - `canonical_from_asc_saved` on first successful save where `ascOrigin` is present.
+  - `canonical_from_asc_published` on successful publish where `ascOrigin` is present.
 
-## Files
+De-dup strategy: per-mount `useRef` guards for "once per session/draft" events; no DB-side dedup, no schema changes.
 
-**Created**
-- `docs/asc-architecture.md`
-- `src/test/integration/ascToCanonicalHappyPath.test.ts`
-- `src/test/regressions/ascInvariants.test.ts`
+## 4. Read path — a tiny observation dashboard
 
-**Edited (minimal)**
-- `src/lib/asc/reducer.ts` — export `ALLOWED_WHEN_FORKED` if not already exported
-- `src/lib/asc/forkTranslator.ts` — doc-link comment
-- `src/components/campaigns/AscOriginPanel.tsx` — doc-link comment
-- `src/pages/workspace/campaigns/asc/AscWizardPage.tsx` — doc-link comment
+A superadmin-only page so we can read the rollout without writing SQL each time.
 
-## Non-goals
+- New route `src/pages/superadmin/AscShadowObservationPage.tsx`, linked from `SuperadminOverviewPage` behind the existing superadmin guard.
+- Data: queries `platform_events` filtered to `event_type LIKE 'asc_%' OR LIKE 'canonical_from_asc_%'` for the last 30 days.
+- Renders:
+  - Funnel counts: opened → step 5 → step 8 → step 10 → handoff_initiated → handoff_completed → canonical_saved → canonical_published.
+  - AI adoption: % of `asc_step_completed` with `usedAi=true`; proposal confirmation rate per role.
+  - Top blockers: grouped counts of `asc_readiness_blocker_seen`.
+  - Handoff drop-off: simple per-draft state machine derived from events.
+- Implementation is read-only client-side aggregation over the `platform_events` query; no new tables, no edge function.
 
-No new ASC roles/steps, no readiness changes, no fork-mechanic or `ascOrigin` shape changes, no canonical feature work, no publish behavior changes, no new RLS/schema/edge functions.
+## 5. Qualitative debrief asset
+
+Add `docs/asc-shadow-debrief.md`: the five debrief questions verbatim, plus a one-paragraph "how to run a debrief" intro. This is the canonical script the team uses when interviewing internal/external pilots.
+
+## 6. Tests
+
+Lightweight, focused on the contract — no flaky network tests.
+
+- `src/test/regressions/ascTelemetryContract.test.ts`
+  - Calls `emitAscEvent` with each event type using a stubbed emitter.
+  - Asserts: event_type matches the documented catalog; payload only contains the documented keys; unknown event types throw at compile time (TS literal union) and at runtime are rejected.
+- `src/test/regressions/ascTelemetrySafety.test.ts`
+  - Stub emitter that throws; assert calling `emitAscEvent` does not throw and does not mutate any caller-provided objects.
+- `src/test/regressions/ascHandoffEventsFire.test.tsx`
+  - Mount `AscOriginPanel` and `CampaignIntakePage` (with mocked router/state) under an emitter spy; assert `canonical_from_asc_opened` and `asc_handoff_completed` fire exactly once per mount with the expected payload shape.
+
+No tests assert event counts in production data; we only verify the emit contract.
+
+## 7. Out of scope (locked)
+
+- No new ASC steps, roles, or AI prompts.
+- No canonical builder changes beyond inserting telemetry calls and the existing `AscOriginPanel` mount event.
+- No schema migrations, no new tables, no RLS changes, no edge functions.
+- No nav exposure of ASC beyond the existing flag-gated decision page.
+- No automated rollout gating based on event data — pilot expansion stays a human decision informed by the dashboard.
+
+## Files touched
+
+Created
+- `src/lib/asc/telemetry.ts`
+- `src/pages/superadmin/AscShadowObservationPage.tsx`
+- `docs/asc-shadow-rollout.md`
+- `docs/asc-shadow-debrief.md`
+- `src/test/regressions/ascTelemetryContract.test.ts`
+- `src/test/regressions/ascTelemetrySafety.test.ts`
+- `src/test/regressions/ascHandoffEventsFire.test.tsx`
+
+Edited (telemetry call-sites only)
+- `src/pages/workspace/campaigns/asc/AscWizardPage.tsx`
+- `src/hooks/useAscInterviewer.ts`, `useAscGapFinder.ts`, `useAscLogicArchitect.ts`, `useAscStep8Generate.ts`
+- `src/components/asc/AscReadinessPanel.tsx`
+- `src/components/campaigns/AscOriginPanel.tsx`
+- `src/pages/admin/CampaignIntakePage.tsx`
+- `src/pages/workspace/WorkspaceCampaignNewPage.tsx`
+- `src/pages/superadmin/SuperadminOverviewPage.tsx` (one nav entry)
+- `.lovable/plan.md`
+
+## Exit criteria
+
+- Pilot workspaces with the flag on emit the full event set without errors.
+- Superadmin observation page renders the funnel, AI adoption, top blockers, and handoff drop-off from real `platform_events` data.
+- All new tests green; no behavior changes to ASC or canonical flows beyond emitting events.

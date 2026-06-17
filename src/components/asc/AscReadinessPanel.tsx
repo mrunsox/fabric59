@@ -9,6 +9,7 @@
  * Idempotency: once `draft.state === "forked"`, the CTA is replaced with
  * a "handed off" banner and an "Open canonical builder" link.
  */
+import { useEffect, useRef } from "react";
 import { AlertTriangle, ArrowRight, CheckCircle2, ExternalLink, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,6 +25,7 @@ import {
   selectReadinessReport,
   type AscReadinessIssue,
 } from "@/lib/asc/selectors";
+import { emitAscEvent } from "@/lib/asc/telemetry";
 
 export interface AscReadinessPanelProps {
   draft: AscDraft;
@@ -47,6 +49,33 @@ export function AscReadinessPanel({
   const warningCount = report.warnings.length;
   const ctaDisabled = isForked || !report.isSafeToFork || !onForkToCanonical;
   const lastFork = draft.forks?.[draft.forks.length - 1];
+
+  // Telemetry — once per mount per draft id
+  const viewedRef = useRef<string | null>(null);
+  const seenBlockerRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (viewedRef.current === draft.id) return;
+    viewedRef.current = draft.id;
+    emitAscEvent("asc_readiness_viewed", {
+      ascDraftId: draft.id,
+      workspaceId,
+      blockerCount,
+      warningCount,
+    });
+  }, [draft.id, workspaceId, blockerCount, warningCount]);
+
+  useEffect(() => {
+    for (const b of report.blockers) {
+      const key = `${draft.id}::${b.id}`;
+      if (seenBlockerRef.current.has(key)) continue;
+      seenBlockerRef.current.add(key);
+      emitAscEvent("asc_readiness_blocker_seen", {
+        ascDraftId: draft.id,
+        workspaceId,
+        blockerId: b.id,
+      });
+    }
+  }, [draft.id, workspaceId, report.blockers]);
 
   return (
     <div className="space-y-4" data-testid="asc-readiness-panel">

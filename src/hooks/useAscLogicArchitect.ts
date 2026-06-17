@@ -18,6 +18,15 @@ import {
   type AscLaNotificationValue,
   type AscLaStep,
 } from "@/lib/asc/logicArchitectSchema";
+import { emitAscEvent, type AscEventErrorCode } from "@/lib/asc/telemetry";
+
+function mapLaErr(code: string | undefined): AscEventErrorCode {
+  if (code === "credits_exhausted") return "402";
+  if (code === "rate_limited") return "429";
+  if (code === "schema_invalid") return "schema";
+  if (code === "network_error") return "network";
+  return "unknown";
+}
 
 export type AscLaStatus = "idle" | "loading" | "ready" | "error";
 export type AscLaErrorCode =
@@ -78,6 +87,15 @@ export function useAscLogicArchitect(params: {
   const runArchitect = useCallback(async () => {
     setStatus("loading");
     setError(null);
+    const emitOutcome = (outcome: "ok" | "fail", errorCode?: AscEventErrorCode) =>
+      emitAscEvent("asc_ai_call", {
+        ascDraftId: draft.id,
+        workspaceId: draft.workspaceId,
+        step,
+        role: "logic_architect",
+        outcome,
+        errorCode,
+      });
     const snapshot = {
       business: draft.input.business,
       purpose: draft.input.purpose,
@@ -107,6 +125,7 @@ export function useAscLogicArchitect(params: {
           code: "network_error",
           message: invokeError.message ?? "Network error",
         });
+        emitOutcome("fail", "network");
         return;
       }
       const payload = (data ?? {}) as {
@@ -121,6 +140,7 @@ export function useAscLogicArchitect(params: {
           code: (payload.code ?? "upstream_error") as AscLaErrorCode,
           message: payload.message ?? "Logic Architect error",
         });
+        emitOutcome("fail", mapLaErr(payload.code));
         return;
       }
       const parsed = parseLogicArchitectResponse(payload.response);
@@ -130,6 +150,7 @@ export function useAscLogicArchitect(params: {
           code: "schema_invalid",
           message: "Logic Architect response did not match the expected shape.",
         });
+        emitOutcome("fail", "schema");
         return;
       }
 
@@ -216,12 +237,14 @@ export function useAscLogicArchitect(params: {
         now: new Date().toISOString(),
       });
       setStatus("ready");
+      emitOutcome("ok");
     } catch (err) {
       setStatus("error");
       setError({
         code: "network_error",
         message: err instanceof Error ? err.message : "Network error",
       });
+      emitOutcome("fail", "network");
     }
   }, [draft, step, dispatch, grounding]);
 

@@ -207,6 +207,7 @@ import SystemDocsPage from "@/pages/superadmin/SystemDocsPage";
 import DesignPartnersPage from "@/pages/superadmin/DesignPartnersPage";
 import LegalConnectReportsPage from "@/pages/superadmin/LegalConnectReportsPage";
 import TestCasesPage from "@/pages/superadmin/TestCasesPage";
+import AscShadowObservationPage from "@/pages/superadmin/AscShadowObservationPage";
 
 const queryClient = new QueryClient();
 

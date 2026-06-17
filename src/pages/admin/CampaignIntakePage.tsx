@@ -31,6 +31,7 @@ import { ChevronDown, ChevronRight, CheckCircle2, Save, Rocket, Loader2, CloudOf
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WhiteLabelPartnerSelector } from "@/components/campaigns/WhiteLabelPartnerSelector";
 import { AscOriginPanel } from "@/components/campaigns/AscOriginPanel";
+import { emitAscEvent } from "@/lib/asc/telemetry";
 
 const emptyIntake: CampaignIntakeData = {
   campaignName: "",
@@ -101,6 +102,22 @@ export default function CampaignIntakePage() {
   const [autoSaveTime, setAutoSaveTime] = useState<string | null>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>("");
+
+  // ASC-origin telemetry — once-per-mount dedup refs
+  const ascHandoffEmittedRef = useRef<string | null>(null);
+  const ascSavedEmittedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const ascDraftId = intake.ascOrigin?.ascDraftId;
+    if (!ascDraftId) return;
+    if (ascHandoffEmittedRef.current === ascDraftId) return;
+    ascHandoffEmittedRef.current = ascDraftId;
+    emitAscEvent("asc_handoff_completed", {
+      ascDraftId,
+      workspaceId: workspaceId ?? null,
+      organizationId: organization?.id ?? null,
+    });
+  }, [intake.ascOrigin?.ascDraftId, workspaceId, organization?.id]);
   
 
   // Provisioning modal
@@ -216,6 +233,16 @@ export default function CampaignIntakePage() {
       setSavedId(newId);
       lastSavedRef.current = JSON.stringify(intake) + selectedDomainId;
 
+      const ascDraftId = intake.ascOrigin?.ascDraftId;
+      if (ascDraftId && ascSavedEmittedRef.current !== ascDraftId) {
+        ascSavedEmittedRef.current = ascDraftId;
+        emitAscEvent("canonical_from_asc_saved", {
+          ascDraftId,
+          workspaceId: workspaceId ?? null,
+          organizationId: organization?.id ?? null,
+        });
+      }
+
       if (status === "submitted") {
         toast.success("Campaign submitted! Starting provisioning...");
         setShowProvisionModal(true);
@@ -227,6 +254,13 @@ export default function CampaignIntakePage() {
             onProgress: setProvisionSteps,
           });
           toast.success("Provisioning complete!");
+          if (ascDraftId) {
+            emitAscEvent("canonical_from_asc_published", {
+              ascDraftId,
+              workspaceId: workspaceId ?? null,
+              organizationId: organization?.id ?? null,
+            });
+          }
         } catch (e: any) {
           toast.error("Provisioning failed at a step. Check the progress below.");
         }
