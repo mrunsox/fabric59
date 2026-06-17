@@ -13,7 +13,7 @@ import { useAscWizardFlag } from "@/lib/asc/flagResolver";
 import { useAscDraft } from "@/hooks/useAscDraft";
 import { useAuth } from "@/contexts/AuthContext";
 import { ASC_TOTAL_STEPS } from "@/lib/asc/types";
-import { selectCanFork, selectIsForked } from "@/lib/asc/selectors";
+import { selectCanFork, selectIsForked, selectIsReadOnly } from "@/lib/asc/selectors";
 import { forkToCanonical } from "@/lib/asc/reducer";
 
 import {
@@ -100,28 +100,45 @@ export default function AscWizardPage() {
     return <Navigate to={`/w/${workspaceId}/campaigns/new/manual`} replace />;
   }
 
-  // Slice 8 — once forked, lock the visible step to Step 10 so the
-  // "handed off" banner is reachable instead of silently kicking the user
-  // out. Re-fork is prevented by selectCanFork.
-  const effectiveStep = draft.state === "forked" ? ASC_TOTAL_STEPS : currentStep;
+  // Slice 2 (Phase 5) — after fork, the wizard becomes a read-only browser.
+  // Navigation across Steps 1–9 is still permitted so users can inspect the
+  // historical record, but every mutating dispatch is no-op'd at the reducer
+  // boundary and form controls are disabled via a fieldset wrapper.
+  const isReadOnly = selectIsReadOnly(draft);
 
-  const body = renderStep(effectiveStep, {
+  const stepBody = renderStep(currentStep, {
     draft,
     dispatch,
     onJumpToStep: setStep,
     onForkToCanonical: handleFork,
   });
 
+  // Step 10 keeps its own controls (navigation, "Open canonical builder")
+  // active even in read-only mode. Steps 1–9 are wrapped in a disabled
+  // fieldset so native form controls are inert.
+  const body =
+    isReadOnly && currentStep !== ASC_TOTAL_STEPS ? (
+      <fieldset
+        disabled
+        data-testid="asc-readonly-fieldset"
+        className="m-0 min-w-0 border-0 p-0"
+      >
+        {stepBody}
+      </fieldset>
+    ) : (
+      stepBody
+    );
+
   return (
     <AscWizardShell
       workspaceId={workspaceId}
-      draft={{ ...draft, step: effectiveStep }}
+      draft={{ ...draft, step: currentStep }}
       dispatch={dispatch}
       autosaveStatus={autosaveStatus}
       lastSavedAt={lastSavedAt}
       onSelectStep={setStep}
-      onBack={() => setStep(effectiveStep - 1)}
-      onContinue={() => setStep(effectiveStep + 1)}
+      onBack={() => setStep(currentStep - 1)}
+      onContinue={() => setStep(currentStep + 1)}
       onHandoffToManual={() => handoffToManual(workspaceId)}
     >
 

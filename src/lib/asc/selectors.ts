@@ -36,6 +36,18 @@ export function selectIsForked(draft: AscDraft | null | undefined): boolean {
   return !!draft && draft.state === "forked";
 }
 
+/**
+ * Slice 2 (Phase 5) — post-fork enforcement.
+ *
+ * Single named selector for "this draft is no longer editable". Today this
+ * is exactly `selectIsForked`, but routing future causes (e.g. `published`)
+ * through here means the reducer guard and UI disablement only need to
+ * change in one place.
+ */
+export function selectIsReadOnly(draft: AscDraft | null | undefined): boolean {
+  return selectIsForked(draft);
+}
+
 // Slice 8 — readiness + fork-eligibility selectors.
 export {
   computeReadiness as selectReadinessReport,
