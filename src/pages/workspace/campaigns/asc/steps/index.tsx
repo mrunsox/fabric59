@@ -865,20 +865,20 @@ export function AscStepDestination({ draft, dispatch }: AscStepProps) {
 }
 
 // ── Step 8 ─────────────────────────────────────────────────────────────────
-export function AscStepGenerate(_: AscStepProps) {
+export function AscStepGenerate({ draft, dispatch }: AscStepProps) {
+  const workspaceId = useWorkspaceIdFromRoute();
   return (
-    <div data-testid="asc-step-8">
+    <div data-testid="asc-step-8" className="space-y-4">
       <StepHeader
         number={8}
         title="Generate draft"
-        blurb="One-click generation runs Logic architect → Script writer → Explainer. Wired in Slice 2."
+        blurb="Compile your Step 1–7 inputs into a structured ASC draft. The draft stays local to ASC until you fork it later — nothing publishes from here."
       />
-      <Button disabled data-testid="asc-generate-button">
-        Generate draft (Slice 2)
-      </Button>
-      <div className="mt-4">
-        <ComingInLaterSlice what="Orchestration progress and fail-closed handoff" />
-      </div>
+      <AscGenerationPanel
+        draft={draft}
+        dispatch={dispatch}
+        workspaceId={workspaceId}
+      />
     </div>
   );
 }
