@@ -427,6 +427,8 @@ export interface AscDraft {
     gapFinder?: AscGapFinderMeta;
     /** Optional. Slice 5 — Logic Architect proposals/advisories, proposal-only. */
     logicArchitect?: AscLogicArchitectMeta;
+    /** Optional. Slice 6 — Step 8 generation lifecycle (ASC-local only). */
+    generation?: AscGenerationMeta;
   };
 }
 
