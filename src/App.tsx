@@ -207,6 +207,7 @@ import SystemDocsPage from "@/pages/superadmin/SystemDocsPage";
 import DesignPartnersPage from "@/pages/superadmin/DesignPartnersPage";
 import LegalConnectReportsPage from "@/pages/superadmin/LegalConnectReportsPage";
 import TestCasesPage from "@/pages/superadmin/TestCasesPage";
+import AscShadowObservationPage from "@/pages/superadmin/AscShadowObservationPage";
 
 const queryClient = new QueryClient();
 
@@ -368,6 +369,7 @@ const App = () => (
                 <Route path="call-flow/raw" element={<CallFlowPage />} />
                 <Route path="dev-guide" element={<DevGuidePage />} />
                 <Route path="test-cases" element={<TestCasesPage />} />
+                <Route path="asc-shadow" element={<AscShadowObservationPage />} />
                 {/* CANONICAL: internal build doc, no longer public. */}
                 <Route path="docs/outline" element={<OutlinePage />} />
               </Route>

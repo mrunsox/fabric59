@@ -9,7 +9,7 @@
  * mirrors the assigned `setupId` into the URL so a refresh resumes against
  * the same row.
  */
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AscWizardShell } from "@/components/asc/AscWizardShell";
 import { useAscWizardFlag } from "@/lib/asc/flagResolver";
@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ASC_TOTAL_STEPS } from "@/lib/asc/types";
 import { selectCanFork, selectIsForked, selectIsReadOnly } from "@/lib/asc/selectors";
 import { forkToCanonical } from "@/lib/asc/reducer";
+import { emitAscEvent } from "@/lib/asc/telemetry";
 
 import {
   AscStepBusiness,
@@ -35,8 +36,9 @@ import {
 export default function AscWizardPage() {
   const { workspaceId = "" } = useParams<{ workspaceId: string }>();
   const flag = useAscWizardFlag(workspaceId);
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const orgId = organization?.id ?? null;
 
   const existingSetupId = searchParams.get("setupId");
 
@@ -78,9 +80,72 @@ export default function AscWizardPage() {
 
   const navigate = useNavigate();
 
+  // Telemetry — once per draft id per mount
+  const openedRef = useRef<string | null>(null);
+  const lastStepRef = useRef<number>(currentStep);
+  useEffect(() => {
+    if (!draft.id) return;
+    if (openedRef.current === draft.id) return;
+    openedRef.current = draft.id;
+    emitAscEvent("asc_wizard_opened", {
+      ascDraftId: draft.id,
+      workspaceId,
+      organizationId: orgId,
+    });
+  }, [draft.id, workspaceId, orgId]);
+
+  useEffect(() => {
+    lastStepRef.current = currentStep;
+  }, [currentStep]);
+
+  useEffect(() => {
+    return () => {
+      const state = draft.state;
+      if (state === "forked" || state === "published" || state === "discarded") return;
+      emitAscEvent("asc_wizard_abandoned", {
+        ascDraftId: draft.id,
+        workspaceId,
+        organizationId: orgId,
+        lastStep: lastStepRef.current,
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const usedAiForDraft = useMemo(() => {
+    const m = draft.meta;
+    return Boolean(m.interviewer || m.gapFinder || m.logicArchitect || m.generation);
+  }, [draft.meta]);
+
+  const handleContinue = useCallback(() => {
+    emitAscEvent("asc_step_completed", {
+      ascDraftId: draft.id,
+      workspaceId,
+      organizationId: orgId,
+      step: currentStep,
+      usedAi: usedAiForDraft,
+    });
+    setStep(currentStep + 1);
+  }, [draft.id, workspaceId, orgId, currentStep, usedAiForDraft, setStep]);
+
+  const handleBack = useCallback(() => {
+    emitAscEvent("asc_step_back", {
+      ascDraftId: draft.id,
+      workspaceId,
+      organizationId: orgId,
+      step: currentStep,
+    });
+    setStep(currentStep - 1);
+  }, [draft.id, workspaceId, orgId, currentStep, setStep]);
+
   const handleFork = useCallback(() => {
     if (!selectCanFork(draft)) return;
     if (selectIsForked(draft)) return;
+    emitAscEvent("asc_handoff_initiated", {
+      ascDraftId: draft.id,
+      workspaceId,
+      organizationId: orgId,
+    });
     const now = new Date().toISOString();
     const result = forkToCanonical(draft, { forkedAt: now });
     dispatch({
@@ -96,7 +161,7 @@ export default function AscWizardPage() {
         ascDraftId: result.ascDraftId,
       },
     });
-  }, [draft, dispatch, navigate, workspaceId, user?.id]);
+  }, [draft, dispatch, navigate, workspaceId, user?.id, orgId]);
 
   // Flag off → bounce out to manual without flashing wizard UI.
   if (!flag.enabled) {
@@ -140,8 +205,8 @@ export default function AscWizardPage() {
       autosaveStatus={autosaveStatus}
       lastSavedAt={lastSavedAt}
       onSelectStep={setStep}
-      onBack={() => setStep(currentStep - 1)}
-      onContinue={() => setStep(currentStep + 1)}
+      onBack={handleBack}
+      onContinue={handleContinue}
       onHandoffToManual={() => handoffToManual(workspaceId)}
     >
 

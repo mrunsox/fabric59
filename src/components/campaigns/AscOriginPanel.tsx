@@ -14,7 +14,7 @@
  * transitions because it reads from `intake.ascOrigin` (persisted in
  * `intake_data` JSONB), not from router state.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Sparkles, ExternalLink, Copy, Plus, Info } from "lucide-react";
 import type { CampaignIntakeData } from "@/types/campaign";
 import { toast } from "sonner";
+import { emitAscEvent } from "@/lib/asc/telemetry";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   workspaceId: string;
@@ -46,6 +48,19 @@ export function AscOriginPanel({
     () => new Set(ascOrigin.reviewState?.followUpsDismissedIds ?? []),
     [ascOrigin.reviewState?.followUpsDismissedIds],
   );
+
+  const { organization } = useAuth();
+  const openedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const key = ascOrigin.ascDraftId;
+    if (!key || openedRef.current === key) return;
+    openedRef.current = key;
+    emitAscEvent("canonical_from_asc_opened", {
+      ascDraftId: ascOrigin.ascDraftId,
+      workspaceId,
+      organizationId: organization?.id ?? null,
+    });
+  }, [ascOrigin.ascDraftId, workspaceId, organization?.id]);
 
   const [showAll, setShowAll] = useState(false);
   const visibleFollowUps = showAll

@@ -25,6 +25,15 @@ import {
 } from "@/lib/asc/step8CompileSchema";
 import { normalizeOutcomeLabel } from "@/lib/asc/logicArchitectSchema";
 import type { AscLaGrounding } from "@/hooks/useAscLogicArchitect";
+import { emitAscEvent, type AscEventErrorCode } from "@/lib/asc/telemetry";
+
+function mapGenErr(code: AscGenerationErrorCode | string | undefined): AscEventErrorCode {
+  if (code === "credits_exhausted") return "402";
+  if (code === "rate_limited") return "429";
+  if (code === "schema_invalid") return "schema";
+  if (code === "network_error") return "network";
+  return "unknown";
+}
 
 export interface UseAscStep8GenerateParams {
   draft: AscDraft;
@@ -61,6 +70,14 @@ export function useAscStep8Generate(
         type: "FAIL_STEP8_GENERATION",
         now: new Date().toISOString(),
         error,
+      });
+      emitAscEvent("asc_ai_call", {
+        ascDraftId: draft.id,
+        workspaceId: draft.workspaceId,
+        step: 8,
+        role: "generator",
+        outcome: "fail",
+        errorCode: mapGenErr(code),
       });
     };
 
@@ -141,6 +158,13 @@ export function useAscStep8Generate(
         generated: result.generated,
         advisories: result.advisories,
         now: nowIso,
+      });
+      emitAscEvent("asc_ai_call", {
+        ascDraftId: draft.id,
+        workspaceId: draft.workspaceId,
+        step: 8,
+        role: "generator",
+        outcome: "ok",
       });
     } catch (err) {
       fail(

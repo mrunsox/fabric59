@@ -7,6 +7,13 @@
  * a consistent ID.
  */
 import { describe, it, expect, vi } from "vitest";
+
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({ user: { id: "u" }, organization: { id: "o" } }),
+}));
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
 import { MemoryRouter } from "react-router-dom";
 import { render, screen } from "@testing-library/react";
 import { ascReducer } from "@/lib/asc/reducer";

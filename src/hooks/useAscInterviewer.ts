@@ -32,6 +32,15 @@ import {
   targetFieldSlot,
   type AscInterviewerResponse,
 } from "@/lib/asc/interviewerSchema";
+import { emitAscEvent, type AscEventErrorCode } from "@/lib/asc/telemetry";
+
+function mapErrorCode(code: string | undefined): AscEventErrorCode {
+  if (code === "credits_exhausted") return "402";
+  if (code === "rate_limited") return "429";
+  if (code === "schema_invalid") return "schema";
+  if (code === "network_error") return "network";
+  return "unknown";
+}
 
 export type AscInterviewerStatus = "idle" | "loading" | "ready" | "error";
 
@@ -142,6 +151,15 @@ export function useAscInterviewer(params: {
       callerReasons: draft.input.callerReasons,
     };
     const confirmedFields = draft.meta.interviewer?.confirmedFields ?? [];
+    const emitOutcome = (outcome: "ok" | "fail", errorCode?: AscEventErrorCode) =>
+      emitAscEvent("asc_ai_call", {
+        ascDraftId: draft.id,
+        workspaceId: draft.workspaceId,
+        step,
+        role: "interviewer",
+        outcome,
+        errorCode,
+      });
     try {
       const { data, error: invokeError } = await supabase.functions.invoke(
         "asc-orchestrate",
@@ -162,6 +180,7 @@ export function useAscInterviewer(params: {
           code: "network_error",
           message: invokeError.message ?? "Network error",
         });
+        emitOutcome("fail", "network");
         return;
       }
       const payload = (data ?? {}) as {
@@ -178,6 +197,7 @@ export function useAscInterviewer(params: {
           force((n) => n + 1);
         }
         setError({ code, message: payload.message ?? "Assistant error" });
+        emitOutcome("fail", mapErrorCode(code));
         return;
       }
       const parsed = parseInterviewerResponse(payload.response);
@@ -189,6 +209,7 @@ export function useAscInterviewer(params: {
           code: "schema_invalid",
           message: "Assistant response did not match the expected shape.",
         });
+        emitOutcome("fail", "schema");
         return;
       }
       failuresRef.current[step] = 0;
@@ -199,20 +220,32 @@ export function useAscInterviewer(params: {
       );
       dispatch({ type: "APPLY_INTERVIEWER_TURN", step, turn });
       setStatus("ready");
+      emitOutcome("ok");
     } catch (err) {
       setStatus("error");
       setError({
         code: "network_error",
         message: err instanceof Error ? err.message : "Network error",
       });
+      emitOutcome("fail", "network");
     }
   }, [draft, step, dispatch]);
 
   const confirm = useCallback(
     (proposalId: string) => {
+      const lastTurn = draft.meta.interviewer?.lastTurnByStep?.[step];
+      const targetField = lastTurn?.proposals?.find((p) => p.id === proposalId)
+        ?.targetField;
+      emitAscEvent("asc_ai_proposal_confirmed", {
+        ascDraftId: draft.id,
+        workspaceId: draft.workspaceId,
+        step,
+        role: "interviewer",
+        targetField,
+      });
       dispatch({ type: "CONFIRM_PROPOSED_FIELD", step, proposalId });
     },
-    [dispatch, step],
+    [dispatch, step, draft.id, draft.workspaceId, draft.meta.interviewer],
   );
 
   const reject = useCallback(

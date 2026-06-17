@@ -11,6 +11,15 @@ import { supabase } from "@/integrations/supabase/client";
 import type { AscAction, AscGapFinderStep } from "@/lib/asc/actions";
 import type { AscDraft } from "@/lib/asc/types";
 import { parseGapFinderResponse } from "@/lib/asc/gapFinderSchema";
+import { emitAscEvent, type AscEventErrorCode } from "@/lib/asc/telemetry";
+
+function mapGapErr(code: string | undefined): AscEventErrorCode {
+  if (code === "credits_exhausted") return "402";
+  if (code === "rate_limited") return "429";
+  if (code === "schema_invalid") return "schema";
+  if (code === "network_error") return "network";
+  return "unknown";
+}
 
 export type AscGapFinderStatus = "idle" | "loading" | "ready" | "error";
 export type AscGapFinderErrorCode =
@@ -48,6 +57,15 @@ export function useAscGapFinder(params: {
       purpose: draft.input.purpose,
       callerReasons: draft.input.callerReasons,
     };
+    const emitOutcome = (outcome: "ok" | "fail", errorCode?: AscEventErrorCode) =>
+      emitAscEvent("asc_ai_call", {
+        ascDraftId: draft.id,
+        workspaceId: draft.workspaceId,
+        step,
+        role: "gap_finder",
+        outcome,
+        errorCode,
+      });
     try {
       const { data, error: invokeError } = await supabase.functions.invoke(
         "asc-orchestrate",
@@ -67,6 +85,7 @@ export function useAscGapFinder(params: {
           code: "network_error",
           message: invokeError.message ?? "Network error",
         });
+        emitOutcome("fail", "network");
         return;
       }
       const payload = (data ?? {}) as {
@@ -81,6 +100,7 @@ export function useAscGapFinder(params: {
           code: (payload.code ?? "upstream_error") as AscGapFinderErrorCode,
           message: payload.message ?? "Gap-finder error",
         });
+        emitOutcome("fail", mapGapErr(payload.code));
         return;
       }
       const parsed = parseGapFinderResponse(payload.response);
@@ -90,6 +110,7 @@ export function useAscGapFinder(params: {
           code: "schema_invalid",
           message: "Gap-finder response did not match the expected shape.",
         });
+        emitOutcome("fail", "schema");
         return;
       }
       dispatch({
@@ -99,12 +120,14 @@ export function useAscGapFinder(params: {
         now: new Date().toISOString(),
       });
       setStatus("ready");
+      emitOutcome("ok");
     } catch (err) {
       setStatus("error");
       setError({
         code: "network_error",
         message: err instanceof Error ? err.message : "Network error",
       });
+      emitOutcome("fail", "network");
     }
   }, [draft, step, dispatch]);
 
