@@ -369,6 +369,7 @@ const App = () => (
                 <Route path="call-flow/raw" element={<CallFlowPage />} />
                 <Route path="dev-guide" element={<DevGuidePage />} />
                 <Route path="test-cases" element={<TestCasesPage />} />
+                <Route path="asc-shadow" element={<AscShadowObservationPage />} />
                 {/* CANONICAL: internal build doc, no longer public. */}
                 <Route path="docs/outline" element={<OutlinePage />} />
               </Route>
