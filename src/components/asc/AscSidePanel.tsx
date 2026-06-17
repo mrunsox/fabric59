@@ -1,6 +1,23 @@
+/**
+ * ASC side panel — recommendations + preview/why/history tabs.
+ *
+ * Slice 4 wires the Unresolved tab to the advisory gap-finder items for the
+ * current step. Gap items are advisory only and never gate navigation.
+ */
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Dispatch } from "react";
+import type { AscDraft } from "@/lib/asc/types";
+import type { AscAction } from "@/lib/asc/actions";
+import { AscGapItemsList } from "./AscGapItemsList";
 
-export function AscSidePanel() {
+export interface AscSidePanelProps {
+  draft: AscDraft;
+  dispatch: Dispatch<AscAction>;
+}
+
+export function AscSidePanel({ draft, dispatch }: AscSidePanelProps) {
+  const step = draft.step;
+  const isGapStep = step === 3 || step === 4;
   return (
     <aside
       data-testid="asc-side-panel"
@@ -13,15 +30,19 @@ export function AscSidePanel() {
           <TabsTrigger value="rationale">Why</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
-        <TabsContent
-          value="unresolved"
-          className="p-4 text-xs text-muted-foreground"
-        >
-          <p>
-            Gaps and recommendations from the assistant will appear here.
-            Slice 1 ships the empty state; the gap-finder lands with the
-            orchestration in a later slice.
-          </p>
+        <TabsContent value="unresolved" className="p-4">
+          {isGapStep ? (
+            <AscGapItemsList
+              draft={draft}
+              step={step as 3 | 4}
+              dispatch={dispatch}
+            />
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Recommendations appear here on Steps 3–4. They are advisory and
+              never block navigation.
+            </p>
+          )}
         </TabsContent>
         <TabsContent
           value="preview"
@@ -29,7 +50,7 @@ export function AscSidePanel() {
         >
           <p>
             Agent experience preview will mount the real call-runner
-            primitives here in a later slice. No separate interpretation.
+            primitives here in a later slice.
           </p>
         </TabsContent>
         <TabsContent
