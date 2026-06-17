@@ -81,7 +81,7 @@ export default function AscWizardPage() {
     return <Navigate to={`/w/${workspaceId}/campaigns`} replace />;
   }
 
-  const body = renderStep(currentStep, { draft, dispatch });
+  const body = renderStep(currentStep, { draft, dispatch, onJumpToStep: setStep });
 
   return (
     <AscWizardShell
