@@ -104,6 +104,9 @@ export default function SuperadminOverviewPage() {
           <Button asChild variant="outline" size="sm">
             <Link to="/superadmin/docs">System Docs</Link>
           </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/superadmin/asc-shadow">ASC Shadow Observation</Link>
+          </Button>
         </CardContent>
       </Card>
     </div>
