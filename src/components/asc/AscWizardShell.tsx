@@ -143,13 +143,3 @@ function formatForkedAt(iso: string): string {
   }
 }
 
-      <AscFooterNav
-        step={draft.step}
-        canContinue={canContinue}
-        onBack={onBack}
-        onContinue={onContinue}
-        saveLabel={formatSaveLabel(autosaveStatus, lastSavedAt)}
-      />
-    </div>
-  );
-}
