@@ -139,9 +139,9 @@ describe("Phase 5 · Slice 2 — canonical-side provenance copy", () => {
             carried: undefined,
             reviewState: { followUpsDismissedIds: [] },
           }}
-          existingDispositions={[]}
-          onUpdateOrigin={vi.fn()}
-          onAddDispositions={vi.fn()}
+          existingNewDispositions={[]}
+          onUpdateAscOrigin={vi.fn()}
+          onAddNewDispositions={vi.fn()}
         />
       </MemoryRouter>,
     );
@@ -161,9 +161,9 @@ describe("Phase 5 · Slice 2 — canonical-side provenance copy", () => {
             carried: undefined,
             reviewState: { followUpsDismissedIds: [] },
           }}
-          existingDispositions={[]}
-          onUpdateOrigin={vi.fn()}
-          onAddDispositions={vi.fn()}
+          existingNewDispositions={[]}
+          onUpdateAscOrigin={vi.fn()}
+          onAddNewDispositions={vi.fn()}
         />
       </MemoryRouter>,
     );

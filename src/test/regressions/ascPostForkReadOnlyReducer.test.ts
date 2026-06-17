@@ -86,9 +86,10 @@ const MUTATING_ACTIONS: AscAction[] = [
     type: "APPLY_INTERVIEWER_TURN",
     step: 1,
     turn: {
-      id: "t1",
-      step: 1,
-      question: "?",
+      questionId: "q1",
+      questionPrompt: "?",
+      questionTargetField: null,
+      questionInputKind: null,
       proposals: [],
       askedAt: "2026-06-17T00:03:00.000Z",
     },
@@ -108,9 +109,9 @@ const MUTATING_ACTIONS: AscAction[] = [
   { type: "REMOVE_OUTCOME_EDIT", id: "o1" },
   {
     type: "ADD_NOTIFICATION_EDIT",
-    notification: { id: "nx", outcomeRef: "Booked", channelRef: "slack" },
+    notification: { id: "nx", trigger: "Booked", channel: "slack" },
   },
-  { type: "UPDATE_NOTIFICATION_EDIT", id: "nx", patch: { urgency: "high" } },
+  { type: "UPDATE_NOTIFICATION_EDIT", id: "nx", patch: { note: "high" } },
   { type: "REMOVE_NOTIFICATION_EDIT", id: "nx" },
   {
     type: "APPLY_LOGIC_ARCHITECT_RESULT",
