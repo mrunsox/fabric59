@@ -60,6 +60,7 @@ import {
   type AscLaOutcomeValue,
   type AscLaStep,
 } from "./logicArchitectSchema";
+import { computeInputFingerprint } from "./step8CompileSchema";
 
 function bumpUpdated(draft: AscDraft, now?: string): AscDraft {
   return {
