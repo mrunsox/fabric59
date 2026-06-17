@@ -15,7 +15,6 @@ import {
   type BbFactRow,
 } from "@/hooks/useBusinessBrain";
 import {
-  BB_ENTITY_TYPES,
   ENTITY_LABEL,
 } from "@/lib/business-brain/entitySchemas";
 import { BB_ENTITY_TYPES } from "@/lib/business-brain/types";
