@@ -259,13 +259,15 @@ export function selectOutcomesOverview(
   for (const r of draft.input.callerReasons ?? []) {
     reasonLabelById.set(r.id, r.label);
   }
-  return (g.outcomes ?? []).map((o) => ({
-    outcomeRef: o.outcomeRef,
-    fromReasonLabels: (o.fromReasonIds ?? [])
-      .map((id) => reasonLabelById.get(id))
-      .filter((v): v is string => typeof v === "string" && v.length > 0),
-    notificationCount: (o.notificationRefs ?? []).length,
-  }));
+  return (g.outcomes ?? [])
+    .filter((o): o is NonNullable<typeof o> => !!o && !!o.outcomeRef)
+    .map((o) => ({
+      outcomeRef: o.outcomeRef,
+      fromReasonLabels: (o.fromReasonIds ?? [])
+        .map((id) => reasonLabelById.get(id))
+        .filter((v): v is string => typeof v === "string" && v.length > 0),
+      notificationCount: (o.notificationRefs ?? []).length,
+    }));
 }
 
 export function selectNotificationsByOutcome(
