@@ -1246,7 +1246,28 @@ const GENERATION_OWNED_ACTIONS: ReadonlySet<AscAction["type"]> = new Set([
   "MARK_FORKED",
 ]);
 
+/**
+ * Slice 2 (Phase 5) — post-fork enforcement.
+ *
+ * Once `state.state === "forked"`, the draft is the historical record of
+ * what was handed off. Only lifecycle/navigation actions are honored;
+ * every other action is a silent no-op so that any leaked UI control
+ * (custom buttons, AI panels, callbacks bypassing the fieldset wrapper)
+ * cannot mutate ASC state. This is the real enforcement layer — the UI
+ * `fieldset[disabled]` wrapper is convenience on top.
+ */
+const ALLOWED_WHEN_FORKED: ReadonlySet<AscAction["type"]> = new Set([
+  "INIT_DRAFT",
+  "RESET_DRAFT",
+  "SET_STEP",
+  "TOUCH",
+  "MARK_FORKED",
+]);
+
 export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
+  if (state.state === "forked" && !ALLOWED_WHEN_FORKED.has(action.type)) {
+    return state;
+  }
   const next = ascReducerInner(state, action);
   if (GENERATION_OWNED_ACTIONS.has(action.type)) return next;
   if (next === state) return next;
