@@ -10,17 +10,19 @@
  */
 import { useState } from "react";
 import type { Dispatch } from "react";
-import { Sparkles, Plus, Trash2 } from "lucide-react";
+import { Sparkles, Plus, Trash2, Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useParams } from "react-router-dom";
-import type { AscDraft } from "@/lib/asc/types";
+import type { AscDraft, AscCallerReason } from "@/lib/asc/types";
 import type { AscAction } from "@/lib/asc/actions";
 import { ProvenanceBadge } from "@/components/asc/ProvenanceBadge";
 import { AscAssistantPanel } from "@/components/asc/AscAssistantPanel";
+import { useAscGapFinder } from "@/hooks/useAscGapFinder";
+
 
 export interface AscStepProps {
   draft: AscDraft;
@@ -179,14 +181,16 @@ export function AscStepPurpose({ draft, dispatch }: AscStepProps) {
 
 // ── Step 3 ─────────────────────────────────────────────────────────────────
 export function AscStepCallerTypes({ draft, dispatch }: AscStepProps) {
+  const workspaceId = useWorkspaceIdFromRoute();
   const [label, setLabel] = useState("");
   const reasons = draft.input.callerReasons;
+  const gap = useAscGapFinder({ draft, step: 3, dispatch });
   return (
-    <div data-testid="asc-step-3">
+    <div data-testid="asc-step-3" className="space-y-5">
       <StepHeader
         number={3}
         title="Caller types"
-        blurb="List the kinds of callers this campaign needs to handle. Per-reason handling lives in the next step."
+        blurb="List the kinds of callers this campaign needs to handle. The assistant can propose generic caller types; you confirm each one. Per-reason handling lives in the next step."
       />
       <div className="flex gap-2">
         <Input
@@ -214,7 +218,7 @@ export function AscStepCallerTypes({ draft, dispatch }: AscStepProps) {
           <Plus className="h-4 w-4 mr-1" /> Add
         </Button>
       </div>
-      <ul className="mt-4 space-y-2">
+      <ul className="space-y-2">
         {reasons.map((r) => (
           <li
             key={r.id}
@@ -224,6 +228,9 @@ export function AscStepCallerTypes({ draft, dispatch }: AscStepProps) {
             <span className="flex items-center gap-2 text-sm">
               <ProvenanceBadge provenance="user_stated" showLabel={false} />
               {r.label}
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                handling defined in Step 4
+              </span>
             </span>
             <Button
               variant="ghost"
@@ -237,42 +244,333 @@ export function AscStepCallerTypes({ draft, dispatch }: AscStepProps) {
           </li>
         ))}
       </ul>
-      <div className="mt-4">
-        <ComingInLaterSlice what="Gap-finder suggestions and inferred caller types" />
+      <AscAssistantPanel
+        draft={draft}
+        step={3}
+        dispatch={dispatch}
+        workspaceId={workspaceId}
+        hint="The assistant can suggest caller types based on your business and campaign purpose. Each suggestion is confirmable; duplicates are blocked."
+      />
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="asc-gap-check-3"
+          disabled={gap.status === "loading" || reasons.length === 0}
+          onClick={() => void gap.runGapCheck()}
+        >
+          {gap.status === "loading" ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Checking…
+            </>
+          ) : (
+            <>
+              <Search className="h-3.5 w-3.5 mr-1" /> Check for gaps
+            </>
+          )}
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          Recommendations appear in the side panel.
+        </span>
       </div>
     </div>
   );
 }
 
 // ── Step 4 ─────────────────────────────────────────────────────────────────
-export function AscStepHandling({ draft }: AscStepProps) {
+function ReasonHandlingCard({
+  reason,
+  dispatch,
+}: {
+  reason: AscCallerReason;
+  dispatch: Dispatch<AscAction>;
+}) {
+  const [captureDraft, setCaptureDraft] = useState("");
+  const [branchTrigger, setBranchTrigger] = useState("");
+  const [branchOutcome, setBranchOutcome] = useState("");
+  const patch = (p: Partial<AscCallerReason>) =>
+    dispatch({ type: "UPDATE_CALLER_REASON", id: reason.id, patch: p });
   return (
-    <div data-testid="asc-step-4">
+    <Card
+      data-testid={`asc-handling-card-${reason.id}`}
+      className="space-y-3 p-4"
+    >
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">{reason.label}</h3>
+        <ProvenanceBadge provenance="user_stated" showLabel={false} />
+      </div>
+
+      <div>
+        <Label className="text-xs">Required info to capture</Label>
+        <div className="mt-1 flex flex-wrap gap-1">
+          {(reason.requiredCapture ?? []).map((item, i) => (
+            <span
+              key={`${item}-${i}`}
+              className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5 text-xs"
+            >
+              {item}
+              <button
+                type="button"
+                aria-label={`Remove ${item}`}
+                onClick={() =>
+                  patch({
+                    requiredCapture: (reason.requiredCapture ?? []).filter(
+                      (_, idx) => idx !== i,
+                    ),
+                  })
+                }
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="mt-2 flex gap-2">
+          <Input
+            data-testid={`asc-capture-input-${reason.id}`}
+            value={captureDraft}
+            onChange={(e) => setCaptureDraft(e.target.value)}
+            placeholder="e.g. Full name"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const v = captureDraft.trim();
+              if (!v) return;
+              patch({
+                requiredCapture: [...(reason.requiredCapture ?? []), v],
+              });
+              setCaptureDraft("");
+            }}
+          >
+            Add
+          </Button>
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs" htmlFor={`asc-opener-${reason.id}`}>
+          Agent opener
+        </Label>
+        <Textarea
+          id={`asc-opener-${reason.id}`}
+          data-testid={`asc-opener-${reason.id}`}
+          rows={2}
+          value={reason.opener ?? ""}
+          onChange={(e) => patch({ opener: e.target.value })}
+          placeholder="What the agent should say first."
+        />
+      </div>
+
+      <div className="grid gap-2 md:grid-cols-2">
+        <div>
+          <Label className="text-xs">When to escalate</Label>
+          <Input
+            data-testid={`asc-esc-when-${reason.id}`}
+            value={reason.escalation?.when ?? ""}
+            onChange={(e) =>
+              patch({
+                escalation: {
+                  when: e.target.value,
+                  toRole: reason.escalation?.toRole ?? "",
+                },
+              })
+            }
+            placeholder="e.g. Caller is angry"
+          />
+        </div>
+        <div>
+          <Label className="text-xs">Escalate to (role)</Label>
+          <Input
+            data-testid={`asc-esc-role-${reason.id}`}
+            value={reason.escalation?.toRole ?? ""}
+            onChange={(e) =>
+              patch({
+                escalation: {
+                  when: reason.escalation?.when ?? "",
+                  toRole: e.target.value,
+                },
+              })
+            }
+            placeholder="e.g. Senior attorney"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-2 md:grid-cols-2">
+        <div>
+          <Label className="text-xs">After-hours variant</Label>
+          <Textarea
+            rows={2}
+            data-testid={`asc-after-hours-${reason.id}`}
+            value={reason.variants?.afterHours ?? ""}
+            onChange={(e) =>
+              patch({
+                variants: {
+                  ...(reason.variants ?? {}),
+                  afterHours: e.target.value,
+                },
+              })
+            }
+            placeholder="Optional. What to do when after hours."
+          />
+        </div>
+        <div>
+          <Label className="text-xs">Voicemail variant</Label>
+          <Textarea
+            rows={2}
+            data-testid={`asc-voicemail-${reason.id}`}
+            value={reason.variants?.voicemail ?? ""}
+            onChange={(e) =>
+              patch({
+                variants: {
+                  ...(reason.variants ?? {}),
+                  voicemail: e.target.value,
+                },
+              })
+            }
+            placeholder="Optional. Voicemail handling."
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">Simple branch hints</Label>
+        <ul className="mt-1 space-y-1">
+          {(reason.branching ?? []).map((b) => (
+            <li
+              key={b.id}
+              data-testid={`asc-branch-${b.id}`}
+              className="flex items-center justify-between rounded-md border bg-background px-2 py-1 text-xs"
+            >
+              <span>
+                <span className="font-medium">{b.trigger}</span>
+                <span className="mx-2 text-muted-foreground">→</span>
+                <span>{b.outcome}</span>
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                  patch({
+                    branching: (reason.branching ?? []).filter(
+                      (h) => h.id !== b.id,
+                    ),
+                  })
+                }
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_auto]">
+          <Input
+            data-testid={`asc-branch-trigger-${reason.id}`}
+            value={branchTrigger}
+            onChange={(e) => setBranchTrigger(e.target.value)}
+            placeholder="Trigger (e.g. existing client)"
+          />
+          <Input
+            data-testid={`asc-branch-outcome-${reason.id}`}
+            value={branchOutcome}
+            onChange={(e) => setBranchOutcome(e.target.value)}
+            placeholder="Next action (e.g. transfer to attorney)"
+          />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const t = branchTrigger.trim();
+              const o = branchOutcome.trim();
+              if (!t || !o) return;
+              patch({
+                branching: [
+                  ...(reason.branching ?? []),
+                  {
+                    id: `bh-${Date.now().toString(36)}`,
+                    trigger: t,
+                    outcome: o,
+                    origin: "user_stated",
+                  },
+                ],
+              });
+              setBranchTrigger("");
+              setBranchOutcome("");
+            }}
+          >
+            Add hint
+          </Button>
+        </div>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Simple trigger → action only. Nested branches and flow graphs come
+          later.
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+export function AscStepHandling({ draft, dispatch }: AscStepProps) {
+  const workspaceId = useWorkspaceIdFromRoute();
+  const gap = useAscGapFinder({ draft, step: 4, dispatch });
+  const reasons = draft.input.callerReasons;
+  return (
+    <div data-testid="asc-step-4" className="space-y-5">
       <StepHeader
         number={4}
         title="Per-reason handling"
-        blurb="Adaptive Q&A and a live branch sketch will let you flesh out handling for each caller type. Slice 1 just lists the reasons you've defined."
+        blurb="Define what the agent should capture and do for each caller type. The assistant asks one focused question at a time per reason and can suggest values you confirm."
       />
-      <ul className="mb-4 space-y-2">
-        {draft.input.callerReasons.length === 0 ? (
-          <li className="text-sm text-muted-foreground">
-            No caller types yet. Add some in Step 3.
-          </li>
-        ) : (
-          draft.input.callerReasons.map((r) => (
-            <li
-              key={r.id}
-              className="rounded-md border bg-card px-3 py-2 text-sm"
-            >
-              {r.label}
-            </li>
-          ))
-        )}
-      </ul>
-      <ComingInLaterSlice what="Adaptive handling Q&A and per-reason branch sketches" />
+      {reasons.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No caller types yet. Add some in Step 3.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {reasons.map((r) => (
+            <ReasonHandlingCard key={r.id} reason={r} dispatch={dispatch} />
+          ))}
+        </div>
+      )}
+      <AscAssistantPanel
+        draft={draft}
+        step={4}
+        dispatch={dispatch}
+        workspaceId={workspaceId}
+        hint="Per-reason suggestions are tagged with the caller type they belong to."
+      />
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="asc-gap-check-4"
+          disabled={gap.status === "loading" || reasons.length === 0}
+          onClick={() => void gap.runGapCheck()}
+        >
+          {gap.status === "loading" ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Checking…
+            </>
+          ) : (
+            <>
+              <Search className="h-3.5 w-3.5 mr-1" /> Check for gaps
+            </>
+          )}
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          Recommendations appear in the side panel.
+        </span>
+      </div>
     </div>
   );
 }
+
 
 // ── Step 5 ─────────────────────────────────────────────────────────────────
 export function AscStepOutcomes(_: AscStepProps) {
