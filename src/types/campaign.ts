@@ -116,6 +116,39 @@ export interface CampaignIntakeData {
   // White-Label Partner Branding
   whiteLabelOrgId?: string;
   whiteLabelEmailTemplateId?: string;
+
+  /**
+   * Phase 5 · Slice 1 — provenance only. Additive context for drafts handed
+   * off from the ASC wizard. Canonical editable fields above remain the
+   * source of record; consumers must read this strictly as origin/carry-over
+   * metadata, not as a second canonical model.
+   *
+   * Written exclusively by the ASC fork translator. The canonical builder
+   * may read it to render the AscOriginPanel and may mutate
+   * `reviewState.*` (presentation-scoped) when the user dismisses follow-ups.
+   * It must never mutate `ascDraftId`, `forkedAt`, `carried`, or `followUps`.
+   */
+  ascOrigin?: {
+    ascDraftId: string;
+    forkedAt: string; // ISO
+    carried?: {
+      primaryOutcome?: string;
+      secondaryOutcome?: string;
+      callerReasons?: Array<{ id?: string; label: string }>;
+      destination?: {
+        kind?: "internal_runner" | "external_url" | "deep_link";
+        externalUrl?: string;
+        deepLinkTemplate?: string;
+        openMode?: "same_tab" | "new_tab" | "side_panel";
+      };
+      launchSlug?: string;
+    };
+    followUps?: Array<{ id: string; area: string; message: string }>;
+    /** Presentation-scoped only. Not domain semantics. */
+    reviewState?: {
+      followUpsDismissedIds?: string[];
+    };
+  };
 }
 
 // Checklist
