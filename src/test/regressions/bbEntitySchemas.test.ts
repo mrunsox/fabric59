@@ -7,7 +7,7 @@ import {
   ENTITY_SCHEMAS,
   canonicalKey,
   validateEntityPayload,
-} from "@/lib/business-brain/entitySchemas";
+} from "@/lib/business-brain/types";
 
 describe("Business Brain — entity schemas", () => {
   it("ships exactly the 10 Phase 1 / Slice 1 entity types", () => {
