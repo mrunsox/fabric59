@@ -1,6 +1,9 @@
 /**
  * AscOriginPanel — Phase 5 · Slice 1.
  *
+ * Source of truth for handoff behavior: docs/asc-architecture.md
+ *
+ *
  * Renders ASC handoff provenance + structured carry-over inside the
  * canonical builder. Read-only by design except for:
  *   - dismissing follow-ups (presentation-scoped reviewState only)

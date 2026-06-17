@@ -1,6 +1,9 @@
 /**
  * ASC → canonical intake translator (Phase 5 · Slice 1).
  *
+ * Source of truth for handoff behavior: docs/asc-architecture.md
+ *
+ *
  * Pure (same input → same output). No I/O, no Date.now().
  *
  * Responsibilities:
