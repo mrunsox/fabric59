@@ -110,11 +110,11 @@ export function AscOriginPanel({
                 ASC did not publish
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">
-              The ASC wizard handed this draft off for review. Final review
-              and publish happen here in the canonical builder. The fields
-              below are provenance only — edits to canonical sections above
-              remain the source of record.
+            <p className="text-xs text-muted-foreground" data-testid="asc-origin-no-sync-copy">
+              This campaign was drafted in ASC. Changes here do not sync back
+              to ASC. Final review and publish happen here in the canonical
+              builder. The fields below are provenance only — edits to
+              canonical sections above remain the source of record.
             </p>
             <div className="flex items-center gap-3 pt-1">
               <Button
