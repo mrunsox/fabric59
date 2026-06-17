@@ -1,38 +1,47 @@
 /**
- * ASC Slice 3 — orchestration boundary (Interviewer role only).
+ * ASC Slice 3/4 — orchestration boundary.
  *
  * Single endpoint. Strict scope:
- *   role === "interviewer"
- *   step === 1 || step === 2
+ *   role === "interviewer"  → step in {1, 2, 3, 4}
+ *   role === "gap-finder"   → step in {3, 4} (advisory only)
  *
- * Everything else (gap-finder, logic architect, script writer, explainer,
- * readiness, fork, publish) is intentionally rejected with 400 so future
- * roles cannot be silently invoked through this boundary before they are
- * designed.
+ * Everything else (logic architect, script writer, explainer, readiness,
+ * fork, publish) is intentionally rejected with 400 so future roles cannot
+ * be silently invoked through this boundary before they are designed.
  *
- * No DB writes. No reuse of assistant-chat. The Lovable AI Gateway is
- * called directly with tool-calling so the response is schema-constrained;
- * the tool arguments are re-validated client-side before any reducer
- * dispatch.
+ * No DB writes. Tool-calling forces schema-constrained output; the tool
+ * arguments are re-validated client-side before any reducer dispatch.
  */
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { requireUser } from "../_shared/auth.ts";
 
-const ALLOWED_STEPS = new Set([1, 2]);
+const INTERVIEWER_STEPS = new Set([1, 2, 3, 4]);
+const GAP_FINDER_STEPS = new Set([3, 4]);
 
 const ALL_TARGET_FIELDS = [
+  // Step 1
   "business.description",
   "business.industryPresetId",
   "business.hours",
   "business.callerPersonas",
   "business.promisesToAvoid",
+  // Step 2
   "purpose.primaryOutcome",
   "purpose.secondaryOutcome",
   "purpose.blockingOutcomes",
   "purpose.sharedAcrossClients",
+  // Step 3
+  "callerReasons.add",
+  // Step 4
+  "callerReason.requiredCapture",
+  "callerReason.opener",
+  "callerReason.escalation",
+  "callerReason.variants.afterHours",
+  "callerReason.variants.voicemail",
+  "callerReason.branching.add",
 ] as const;
 
-const STEP_FIELDS: Record<1 | 2, string[]> = {
+const STEP_FIELDS: Record<1 | 2 | 3 | 4, string[]> = {
   1: [
     "business.description",
     "business.industryPresetId",
@@ -46,37 +55,77 @@ const STEP_FIELDS: Record<1 | 2, string[]> = {
     "purpose.blockingOutcomes",
     "purpose.sharedAcrossClients",
   ],
+  3: ["callerReasons.add"],
+  4: [
+    "callerReason.requiredCapture",
+    "callerReason.opener",
+    "callerReason.escalation",
+    "callerReason.variants.afterHours",
+    "callerReason.variants.voicemail",
+    "callerReason.branching.add",
+  ],
 };
 
-const SYSTEM_PROMPT = `You are the ASC Interviewer.
+const GAP_KINDS = [
+  "missing_handling",
+  "escalation_no_destination",
+  "implied_capture_missing",
+  "after_hours_no_variant",
+  "duplicate_reasons",
+] as const;
+
+const INTERVIEWER_SYSTEM_PROMPT = `You are the ASC Interviewer.
 
 ROLE
-- You ask one focused next question at a time to help the user describe their phone-handling campaign.
-- You are scoped strictly to Steps 1 and 2 of the wizard:
-    Step 1 — Business context (description, industry, hours, caller personas, promises to avoid)
-    Step 2 — Campaign purpose (primary outcome, secondary outcome, blocking outcomes, shared-across-clients)
-- You do NOT write the script, design call flow, propose dispositions, draft notifications, or anything past Step 2.
+- You ask one focused next question at a time about the user's phone-handling campaign.
+- Scope: Steps 1–4 only.
+    Step 1 — Business context
+    Step 2 — Campaign purpose
+    Step 3 — Caller types (propose generic, business-grounded caller reasons via callerReasons.add)
+    Step 4 — Per-reason handling (required info, opener, escalation, after-hours/voicemail variants, simple branch hints)
+- You do NOT write the script, design the flow graph, propose dispositions/notifications, or anything past Step 4.
 
-GROUNDING RULES
-- Use only: the current step, the user's prior answers, and the workspace skin id if given.
-- Do NOT invent business facts, third-party brand names, prices, hours, jurisdictions, or compliance/legal phrasing.
-- Do NOT make hard promises on the business's behalf ("we guarantee", "always", "instant").
-- If unsure, ask a question rather than infer.
+GROUNDING
+- Use only: current step, prior user answers (in the request), workspace skin id if present.
+- Never invent business facts, third-party brands, prices, hours, jurisdictions, or legal/compliance phrasing.
+- Never make hard promises for the business ("we guarantee", "always", "instant"). When unsure, ask.
 
 ADAPTIVE QUESTIONING
-- Ask exactly one nextQuestion per turn, or set nextQuestion to null when the step's required information is fully captured.
-- Do NOT re-ask a target field that appears in confirmedFields. Pick a different unanswered field, or set nextQuestion to null.
-- If you can infer a likely value with reasonable confidence, emit it under proposedFields as a confirmable chip; never silently commit it.
-- Keep prompts under 240 characters. Be concrete and plain.
+- Ask exactly one nextQuestion per turn, or set nextQuestion=null when the step is fully captured.
+- Never re-ask a target in confirmedFields (Steps 1/2). Per-reason targets are repeatable but still ask one at a time.
+- Inferred values go in proposedFields as confirmable chips; never silently commit.
 
-RESPONSE FORMAT
-- You MUST respond using the interviewer_response tool. Free-form text replies are invalid.
-- step must equal the request's step.
-- nextQuestion.targetField must be one of the allowed enum values for the current step.
-- proposedFields[*].targetField must be from the allowed enum.
-- confirmedFieldsAcknowledged should echo back the fields you treated as already-answered.`;
+PER-REASON RULES (Step 4)
+- Per-reason targets (callerReason.*) MUST include reasonId referencing an existing reason in the snapshot.
+- callerReason.branching.add carries only { trigger, outcome } simple hints — no nested branches, no IDs, no graph structure.
+- callerReason.escalation values are objects { when, toRole }.
 
-const RESPONSE_TOOL = {
+STEP 3 RULES
+- Propose generic, business-grounded reasons via callerReasons.add (value is the label string).
+- Do not propose a label whose normalized form duplicates an existing reason.
+
+RESPONSE
+- Always call the interviewer_response tool. Free-form replies are invalid.
+- step must equal the request's step. targetField must be in the allowed enum.`;
+
+const GAP_FINDER_SYSTEM_PROMPT = `You are the ASC Gap-finder.
+
+ROLE
+- Advisory only. You return soft recommendations about gaps in Steps 3–4. You do NOT write, mutate, or propose values for any field.
+- Scope: Steps 3 and 4 only.
+
+ALLOWED KINDS
+- missing_handling, escalation_no_destination, implied_capture_missing, after_hours_no_variant, duplicate_reasons
+
+RULES
+- Each message under 240 characters. Reference real caller reason ids in reasonIds when applicable. Never invent ids.
+- Do not propose values, third-party brand names, prices, jurisdictions, or named individuals.
+- Nothing you return is blocking. Empty items[] is valid.
+
+RESPONSE
+- Always call the gap_finder_response tool. Free-form replies are invalid.`;
+
+const INTERVIEWER_TOOL = {
   type: "function" as const,
   function: {
     name: "interviewer_response",
@@ -86,7 +135,7 @@ const RESPONSE_TOOL = {
       type: "object",
       additionalProperties: false,
       properties: {
-        step: { type: "integer", enum: [1, 2] },
+        step: { type: "integer", enum: [1, 2, 3, 4] },
         nextQuestion: {
           type: ["object", "null"],
           additionalProperties: false,
@@ -99,6 +148,7 @@ const RESPONSE_TOOL = {
               enum: ["text", "select", "chips", "boolean"],
             },
             options: { type: "array", items: { type: "string" } },
+            reasonId: { type: "string" },
           },
           required: ["id", "prompt", "targetField", "inputKind"],
         },
@@ -112,6 +162,7 @@ const RESPONSE_TOOL = {
               value: {},
               confidence: { type: "string", enum: ["high", "medium", "low"] },
               rationale: { type: "string" },
+              reasonId: { type: "string" },
             },
             required: ["targetField", "value", "confidence", "rationale"],
           },
@@ -131,45 +182,77 @@ const RESPONSE_TOOL = {
   },
 };
 
-interface OrchestrateRequest {
-  role: "interviewer";
-  step: 1 | 2;
+const GAP_FINDER_TOOL = {
+  type: "function" as const,
+  function: {
+    name: "gap_finder_response",
+    description:
+      "Return advisory gap-finder items for the ASC wizard. Always call this; never reply in free text.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        step: { type: "integer", enum: [3, 4] },
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              id: { type: "string" },
+              kind: { type: "string", enum: GAP_KINDS },
+              message: { type: "string", maxLength: 240 },
+              reasonIds: { type: "array", items: { type: "string" } },
+            },
+            required: ["id", "kind", "message"],
+          },
+        },
+      },
+      required: ["step", "items"],
+    },
+  },
+};
+
+interface BaseRequest {
+  role: "interviewer" | "gap-finder";
+  step: 1 | 2 | 3 | 4;
   workspaceId: string;
   skinId?: string;
-  draftInputSnapshot: {
-    business?: Record<string, unknown>;
-    purpose?: Record<string, unknown>;
-  };
+  draftInputSnapshot: Record<string, unknown>;
   confirmedFields?: string[];
   lastUserMessage?: string;
 }
 
-function validateRequest(raw: unknown): OrchestrateRequest | { error: string } {
+function validateRequest(raw: unknown): BaseRequest | { error: string } {
   if (!raw || typeof raw !== "object") return { error: "Body must be an object" };
   const r = raw as Record<string, unknown>;
-  if (r.role !== "interviewer") {
+  const role = r.role;
+  if (role !== "interviewer" && role !== "gap-finder") {
     return {
-      error: `Only role="interviewer" is supported in this slice (got ${JSON.stringify(r.role)})`,
+      error: `Only role="interviewer" or "gap-finder" is supported (got ${JSON.stringify(role)})`,
     };
   }
-  if (typeof r.step !== "number" || !ALLOWED_STEPS.has(r.step)) {
-    return { error: `step must be 1 or 2 (got ${JSON.stringify(r.step)})` };
+  if (typeof r.step !== "number") {
+    return { error: `step is required` };
+  }
+  if (role === "interviewer" && !INTERVIEWER_STEPS.has(r.step)) {
+    return { error: `interviewer step must be 1..4 (got ${r.step})` };
+  }
+  if (role === "gap-finder" && !GAP_FINDER_STEPS.has(r.step)) {
+    return { error: `gap-finder step must be 3 or 4 (got ${r.step})` };
   }
   if (typeof r.workspaceId !== "string" || r.workspaceId.length === 0) {
     return { error: "workspaceId is required" };
   }
-  if (
-    !r.draftInputSnapshot ||
-    typeof r.draftInputSnapshot !== "object"
-  ) {
+  if (!r.draftInputSnapshot || typeof r.draftInputSnapshot !== "object") {
     return { error: "draftInputSnapshot is required" };
   }
   return {
-    role: "interviewer",
-    step: r.step as 1 | 2,
+    role,
+    step: r.step as 1 | 2 | 3 | 4,
     workspaceId: r.workspaceId,
     skinId: typeof r.skinId === "string" ? r.skinId : undefined,
-    draftInputSnapshot: r.draftInputSnapshot as OrchestrateRequest["draftInputSnapshot"],
+    draftInputSnapshot: r.draftInputSnapshot as Record<string, unknown>,
     confirmedFields: Array.isArray(r.confirmedFields)
       ? (r.confirmedFields.filter((s) => typeof s === "string") as string[])
       : [],
@@ -178,25 +261,36 @@ function validateRequest(raw: unknown): OrchestrateRequest | { error: string } {
   };
 }
 
-function buildUserMessage(req: OrchestrateRequest): string {
+function buildInterviewerUserMessage(req: BaseRequest): string {
   const allowed = STEP_FIELDS[req.step].join(", ");
   const snapshot = JSON.stringify(req.draftInputSnapshot, null, 2);
   const confirmed = req.confirmedFields?.length
     ? req.confirmedFields.join(", ")
     : "(none)";
-  const skin = req.skinId ?? "(none)";
-  const last = req.lastUserMessage ?? "(none)";
   return [
     `Step: ${req.step}`,
     `Allowed target fields for this step: ${allowed}`,
     `Already-confirmed fields (do not re-ask): ${confirmed}`,
-    `Workspace skin id: ${skin}`,
-    `Last user-typed message (may be empty): ${last}`,
+    `Workspace skin id: ${req.skinId ?? "(none)"}`,
+    `Last user-typed message (may be empty): ${req.lastUserMessage ?? "(none)"}`,
     "",
     "Current draft input snapshot (JSON):",
     snapshot,
     "",
     "Reply by calling the interviewer_response tool exactly once.",
+  ].join("\n");
+}
+
+function buildGapFinderUserMessage(req: BaseRequest): string {
+  const snapshot = JSON.stringify(req.draftInputSnapshot, null, 2);
+  return [
+    `Step: ${req.step}`,
+    `Workspace skin id: ${req.skinId ?? "(none)"}`,
+    "",
+    "Current draft input snapshot (JSON):",
+    snapshot,
+    "",
+    "Return advisory recommendations only. Reply by calling the gap_finder_response tool exactly once.",
   ].join("\n");
 }
 
@@ -231,6 +325,16 @@ Deno.serve(async (req) => {
     return jsonResponse({ ok: false, code: "bad_request", message: validated.error }, 400);
   }
 
+  const isInterviewer = validated.role === "interviewer";
+  const systemPrompt = isInterviewer
+    ? INTERVIEWER_SYSTEM_PROMPT
+    : GAP_FINDER_SYSTEM_PROMPT;
+  const userMessage = isInterviewer
+    ? buildInterviewerUserMessage(validated)
+    : buildGapFinderUserMessage(validated);
+  const tool = isInterviewer ? INTERVIEWER_TOOL : GAP_FINDER_TOOL;
+  const toolName = isInterviewer ? "interviewer_response" : "gap_finder_response";
+
   try {
     const aiResponse = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -243,13 +347,13 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-2.5-flash",
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: buildUserMessage(validated) },
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage },
           ],
-          tools: [RESPONSE_TOOL],
+          tools: [tool],
           tool_choice: {
             type: "function",
-            function: { name: "interviewer_response" },
+            function: { name: toolName },
           },
         }),
       },
