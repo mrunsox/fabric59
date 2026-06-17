@@ -2,12 +2,12 @@
  * Business Brain — entity-schema unit tests (Slice 1).
  */
 import { describe, it, expect } from "vitest";
+import { BB_ENTITY_TYPES } from "@/lib/business-brain/types";
 import {
-  BB_ENTITY_TYPES,
   ENTITY_SCHEMAS,
   canonicalKey,
   validateEntityPayload,
-} from "@/lib/business-brain/types";
+} from "@/lib/business-brain/entitySchemas";
 
 describe("Business Brain — entity schemas", () => {
   it("ships exactly the 10 Phase 1 / Slice 1 entity types", () => {
