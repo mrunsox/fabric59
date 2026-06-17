@@ -1273,10 +1273,6 @@ export function ascGeneratedToRunnerPayload(): never {
  * record, and does NOT change ASC state. Callers must dispatch
  * `MARK_FORKED` separately once they actually navigate.
  */
-export function forkToCanonical(draft: AscDraft) {
-  // Imported lazily-ish via re-export to keep canonical types out of the
-  // reducer's primary type graph.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { translateAscDraftToIntake } = require("./forkTranslator") as typeof import("./forkTranslator");
+export function forkToCanonical(draft: AscDraft): AscForkResult {
   return translateAscDraftToIntake(draft);
 }
