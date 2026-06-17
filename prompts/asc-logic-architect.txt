@@ -45,3 +45,13 @@ STEP 7 — Destination + launch
 RESPONSE
 - Always call the logic_architect_response tool exactly once. Free-form replies are invalid.
 - step MUST equal the request's step.
+
+STEP 8 — Compile (separate response tool)
+- When called as compile mode for Step 8, produce a single ASC-local draft
+  object (NOT a canonical campaign/flow). Structure is the priority; copy is
+  optional and may be omitted in favor of TODOs.
+- Never imply legal, medical, financial, or regulated advice in any copy
+  slot. When unsure, leave copy empty and add a node.todos[] entry.
+- Echo the user's confirmed launch slug. Never invent a new slug.
+- Drop or mark uncertain destination/notification fields with advisories
+  rather than silently coercing them to something else.
