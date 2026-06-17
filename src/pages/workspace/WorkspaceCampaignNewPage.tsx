@@ -15,15 +15,15 @@ import type { CampaignIntakeData } from "@/types/campaign";
  * AI handoff:
  *   AIBlueprintBuilder navigates here with router state
  *   `{ prefill: Partial<CampaignIntakeData>, source: "ai-blueprint" }` and
- *   `?source=ai` in the URL. CampaignIntakePage already reads
- *   `location.state.prefill` to seed its form, so the prefill survives the
- *   navigation without any extra wiring on this page. We render a small
- *   AI-source banner so the user understands the form is pre-populated.
+ *   `?source=ai` in the URL.
  *
- * Residual compatibility leak (documented):
- *   On successful save, CampaignIntakePage internally navigates to legacy
- *   /admin/campaigns/edit/:id (autosave) and /admin/campaigns/:id (final).
- *   Re-homing those targets is deferred to a follow-up slice.
+ * ASC handoff (Phase 5 · Slice 1):
+ *   AscWizardPage navigates here with `{ prefill, source: "asc-wizard",
+ *   ascDraftId }`. The translator populates `prefill.ascOrigin`, which the
+ *   intake form persists in `intake_data` JSONB. Origin context is rendered
+ *   by `AscOriginPanel` inside CampaignIntakePage — that is the durable
+ *   surface that survives autosave + the legacy edit-route transition. We
+ *   intentionally do NOT render a duplicate banner here.
  */
 export default function WorkspaceCampaignNewPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -64,19 +64,7 @@ export default function WorkspaceCampaignNewPage() {
         </Button>
       </div>
 
-      {isAscPrefill ? (
-        <div
-          data-testid="asc-prefill-banner"
-          className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground flex items-start gap-2"
-        >
-          <Sparkles className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" />
-          <span>
-            Handed off from the ASC wizard. Review every section — ASC draft
-            follow-ups are listed in the notes field at the bottom of the
-            form.
-          </span>
-        </div>
-      ) : isAiPrefill ? (
+      {isAiPrefill ? (
         <div
           data-testid="ai-prefill-banner"
           className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground flex items-start gap-2"
@@ -87,7 +75,7 @@ export default function WorkspaceCampaignNewPage() {
             documents — review every section before saving.
           </span>
         </div>
-      ) : (
+      ) : !isAscPrefill ? (
         <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
           <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           <span>
@@ -96,7 +84,7 @@ export default function WorkspaceCampaignNewPage() {
             legacy edit URL until the canonical edit route ships.
           </span>
         </div>
-      )}
+      ) : null}
 
       <CampaignIntakePage />
     </div>
