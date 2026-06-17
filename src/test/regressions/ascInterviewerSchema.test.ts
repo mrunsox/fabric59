@@ -64,9 +64,10 @@ describe("parseInterviewerResponse (Slice 3)", () => {
     ).toBeNull();
   });
 
-  it("rejects step outside {1,2}", () => {
-    expect(parseInterviewerResponse({ ...valid, step: 3 })).toBeNull();
+  it("rejects step outside {1,2,3,4}", () => {
+    expect(parseInterviewerResponse({ ...valid, step: 5 })).toBeNull();
   });
+
 
   it("rejects missing proposedFields array", () => {
     const { proposedFields: _omit, ...bad } = valid;
