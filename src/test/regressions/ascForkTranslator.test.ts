@@ -1,14 +1,20 @@
 /**
- * ASC Slice 8 — fork translator (ASC → canonical intake prefill).
+ * ASC → canonical intake translator — Phase 5 · Slice 1 contract.
  *
- * Pure; no I/O. Conservative carry-over of todos as ASC follow-up notes,
- * no propagation of ASC-only metadata.
+ * Verifies:
+ *   - deterministic, modest name fallback unblocks Section 1 save
+ *   - structured carry-over lives in `prefill.ascOrigin`, not in
+ *     `additionalNotes`
+ *   - ASC-only metadata never leaks into prefill
+ *   - purity (same input + same options → same output)
  */
 import { describe, it, expect } from "vitest";
 import { ascReducer } from "@/lib/asc/reducer";
 import { createEmptyAscDraft } from "@/lib/asc/fixtures";
 import { translateAscDraftToIntake } from "@/lib/asc/forkTranslator";
 import type { AscDraft, AscGenerated } from "@/lib/asc/types";
+
+const FORKED_AT = "2026-06-17T00:00:00.000Z";
 
 function seed(): AscDraft {
   let d = createEmptyAscDraft({
@@ -17,7 +23,7 @@ function seed(): AscDraft {
   });
   d = ascReducer(d, {
     type: "UPDATE_BUSINESS",
-    patch: { description: "Mountain Law PLLC — boutique civil firm" },
+    patch: { description: "Mountain Law PLLC boutique civil firm in Calgary handling new client intake" },
   });
   d = ascReducer(d, {
     type: "UPDATE_PURPOSE",
@@ -56,53 +62,71 @@ function withGenerated(d: AscDraft, gen: Partial<AscGenerated>): AscDraft {
   return { ...d, generated };
 }
 
-describe("translateAscDraftToIntake (Slice 8)", () => {
-  it("maps confirmed inputs into a Partial<CampaignIntakeData> prefill", () => {
+describe("translateAscDraftToIntake (Phase 5 · Slice 1)", () => {
+  it("populates deterministic name fallback + description and ascOrigin carry-over", () => {
     const d = seed();
-    const result = translateAscDraftToIntake(d);
+    const result = translateAscDraftToIntake(d, { forkedAt: FORKED_AT });
+
     expect(result.source).toBe("asc-wizard");
     expect(result.ascDraftId).toBe("asc-fork-1");
+
+    // Section 1 unblock: campaignName/clientName non-empty, modest (no quotes, no polish).
+    expect(result.prefill.campaignName).toBeTruthy();
+    expect(result.prefill.clientName).toBeTruthy();
+    expect(result.prefill.campaignName!.length).toBeLessThanOrEqual(60);
+    expect(result.prefill.campaignName).not.toMatch(/^["']/);
     expect(result.prefill.campaignDescription).toContain("Mountain Law");
-    expect(result.prefill.additionalNotes).toBeTruthy();
-    expect(result.prefill.additionalNotes).toContain("ASC draft follow-ups");
-    expect(result.prefill.additionalNotes).toContain("Primary outcome (ASC): Book intake");
-    expect(result.prefill.additionalNotes).toContain("Caller reasons (ASC, 2)");
-    expect(result.prefill.additionalNotes).toContain("kind=external_url");
-    expect(result.prefill.additionalNotes).toContain("Launch slug (ASC): mountain-intake");
+
+    // Structured context lives in ascOrigin, NOT in additionalNotes.
+    const origin = result.prefill.ascOrigin!;
+    expect(origin.ascDraftId).toBe("asc-fork-1");
+    expect(origin.forkedAt).toBe(FORKED_AT);
+    expect(origin.carried?.primaryOutcome).toBe("Book intake");
+    expect(origin.carried?.secondaryOutcome).toBe("Schedule callback");
+    expect(origin.carried?.callerReasons).toEqual([
+      { id: "r1", label: "New matter" },
+      { id: "r2", label: "Existing client" },
+    ]);
+    expect(origin.carried?.destination?.kind).toBe("external_url");
+    expect(origin.carried?.destination?.externalUrl).toBe("https://example.com/intake");
+    expect(origin.carried?.launchSlug).toBe("mountain-intake");
+    expect(origin.reviewState?.followUpsDismissedIds).toEqual([]);
+
+    // additionalNotes is a short pointer, not a structured blob.
+    expect(result.prefill.additionalNotes ?? "").toMatch(/ASC origin panel/);
+    expect(result.prefill.additionalNotes ?? "").not.toMatch(/Caller reasons \(ASC/);
+    expect(result.prefill.additionalNotes ?? "").not.toMatch(/Primary outcome \(ASC\)/);
   });
 
-  it("omits optional fields rather than nulling them", () => {
-    let d = createEmptyAscDraft({
+  it("records provenance even when there is no structured carry-over", () => {
+    const d = createEmptyAscDraft({
       id: "asc-fork-2", workspaceId: "ws", createdBy: "u",
       now: "2026-06-17T00:00:00.000Z",
     });
-    // Minimal: one caller reason, no description, no destination.
-    d = ascReducer(d, {
-      type: "ADD_CALLER_REASON",
-      reason: { id: "r1", label: "X", requiredCapture: [] },
-    });
-    const result = translateAscDraftToIntake(d);
-    expect(result.prefill.campaignDescription).toBeUndefined();
-    // additionalNotes present (caller reason carry-over), but no destination block.
-    expect(result.prefill.additionalNotes ?? "").not.toContain("Destination (ASC)");
+    const result = translateAscDraftToIntake(d, { forkedAt: FORKED_AT });
+    expect(result.prefill.ascOrigin?.ascDraftId).toBe("asc-fork-2");
+    expect(result.prefill.ascOrigin?.carried).toBeUndefined();
+    expect(result.prefill.ascOrigin?.followUps).toBeUndefined();
+    // No pointer note when there is nothing structured to point at.
+    expect(result.prefill.additionalNotes).toBeUndefined();
+    expect(result.prefill.campaignName).toBeUndefined();
   });
 
-  it("carries todos into notes under a clear ASC header, capped + truncated", () => {
+  it("carries generated todos into ascOrigin.followUps, capped at 20", () => {
     let d = seed();
-    const longMsg = "x".repeat(500);
     const todos = Array.from({ length: 25 }, (_, i) => ({
       id: `t${i}`,
       area: "copy" as const,
-      message: i === 0 ? longMsg : `todo ${i}`,
+      message: i === 0 ? "x".repeat(500) : `todo ${i}`,
     }));
     d = withGenerated(d, { todos });
-    const result = translateAscDraftToIntake(d);
-    const notes = result.prefill.additionalNotes ?? "";
-    expect(notes).toContain("ASC draft follow-ups");
-    // First todo truncated with ellipsis.
-    expect(notes).toContain("…");
-    // Cap at 20 → message about omitted overflow present.
-    expect(notes).toContain("5 more follow-ups omitted");
+    const result = translateAscDraftToIntake(d, { forkedAt: FORKED_AT });
+    const followUps = result.prefill.ascOrigin!.followUps!;
+    // 20 carried + 1 overflow summary row.
+    expect(followUps).toHaveLength(21);
+    expect(followUps[0].message.endsWith("…")).toBe(true);
+    expect(followUps[20].id).toBe("__overflow__");
+    expect(followUps[20].message).toMatch(/5 more follow-ups omitted/);
   });
 
   it("does NOT propagate ASC-only metadata (interviewer/gapFinder/logicArchitect)", () => {
@@ -110,7 +134,6 @@ describe("translateAscDraftToIntake (Slice 8)", () => {
     d = withGenerated(d, {
       todos: [{ id: "t1", area: "copy", message: "Write opener" }],
     });
-    // Add some interviewer/gap-finder/LA-shaped junk into meta to be safe.
     d = {
       ...d,
       meta: {
@@ -120,17 +143,17 @@ describe("translateAscDraftToIntake (Slice 8)", () => {
         logicArchitect: { lastRunAt: {}, proposalsByStep: {}, advisoriesByStep: {} },
       },
     };
-    const json = JSON.stringify(translateAscDraftToIntake(d));
+    const json = JSON.stringify(translateAscDraftToIntake(d, { forkedAt: FORKED_AT }));
     expect(json).not.toContain("interviewer");
     expect(json).not.toContain("gapFinder");
     expect(json).not.toContain("logicArchitect");
     expect(json).not.toContain("confirmedFields");
   });
 
-  it("is pure: same input → same output", () => {
+  it("is pure: same input + same forkedAt → same output", () => {
     const d = seed();
-    const a = translateAscDraftToIntake(d);
-    const b = translateAscDraftToIntake(d);
+    const a = translateAscDraftToIntake(d, { forkedAt: FORKED_AT });
+    const b = translateAscDraftToIntake(d, { forkedAt: FORKED_AT });
     expect(a).toEqual(b);
   });
 });
