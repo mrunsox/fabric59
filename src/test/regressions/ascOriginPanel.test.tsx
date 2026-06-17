@@ -9,6 +9,9 @@ import type { CampaignIntakeData } from "@/types/campaign";
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({ user: { id: "u" }, organization: { id: "o" } }),
+}));
 
 const baseOrigin: NonNullable<CampaignIntakeData["ascOrigin"]> = {
   ascDraftId: "asc-99",
