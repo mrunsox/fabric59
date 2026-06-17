@@ -575,10 +575,11 @@ function validateRequest(raw: unknown): BaseRequest | { error: string } {
   if (
     role !== "interviewer" &&
     role !== "gap-finder" &&
-    role !== "logic-architect"
+    role !== "logic-architect" &&
+    role !== "logic-architect-compile"
   ) {
     return {
-      error: `Only role="interviewer" | "gap-finder" | "logic-architect" is supported (got ${JSON.stringify(role)})`,
+      error: `Only role="interviewer" | "gap-finder" | "logic-architect" | "logic-architect-compile" is supported (got ${JSON.stringify(role)})`,
     };
   }
   if (typeof r.step !== "number") {
@@ -592,6 +593,12 @@ function validateRequest(raw: unknown): BaseRequest | { error: string } {
   }
   if (role === "logic-architect" && !LOGIC_ARCHITECT_STEPS.has(r.step)) {
     return { error: `logic-architect step must be 5, 6, or 7 (got ${r.step})` };
+  }
+  if (
+    role === "logic-architect-compile" &&
+    !LOGIC_ARCHITECT_COMPILE_STEPS.has(r.step)
+  ) {
+    return { error: `logic-architect-compile step must be 8 (got ${r.step})` };
   }
   if (typeof r.workspaceId !== "string" || r.workspaceId.length === 0) {
     return { error: "workspaceId is required" };
