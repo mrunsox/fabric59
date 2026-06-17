@@ -12,10 +12,13 @@ import {
   ASC_TOTAL_STEPS,
   type AscDraft,
   type AscGapItem,
+  type AscGenerationMeta,
+  type AscGenerationStatus,
   type AscLogicArchitectProposal,
   type AscStepStatus,
 } from "./types";
 import type { AscLaAdvisory, AscLaStep } from "./logicArchitectSchema";
+import { computeInputFingerprint } from "./step8CompileSchema";
 
 export function selectStepStatus(
   draft: AscDraft,
