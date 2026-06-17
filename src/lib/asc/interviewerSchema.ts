@@ -1,27 +1,40 @@
 /**
- * ASC Slice 3 — Interviewer response contract.
+ * ASC Slice 3/4 — Interviewer response contract.
  *
- * Single source of truth for the Interviewer-role schema. Shared by:
- *   - the `asc-orchestrate` edge function (response validation),
- *   - the `useAscInterviewer` hook (client re-validation),
- *   - the reducer/actions (typed targetField enum),
- *   - the AscAssistantPanel UI.
+ * Slice 3 covered Steps 1–2. Slice 4 widens the enum to cover Steps 3–4:
+ *   - `callerReasons.add` proposes a new caller reason (value = label string).
+ *   - `callerReason.*` proposes a value scoped to a specific caller reason
+ *     (the proposal MUST carry `reasonId`). Per-reason targets cover the
+ *     handling fields collected in Step 4.
  *
- * Slice 3 is scoped to Steps 1 and 2 only. Adding new target fields must
- * land in lockstep across the edge function prompt, this schema, and any
- * UI that renders proposals.
+ * Per-reason proposals are intentionally lightweight in this slice:
+ *   - `callerReason.branching.add` carries a simple `{trigger, outcome}`
+ *     hint. No nested branches, no graph semantics, no proto-flow IDs.
  */
 
+import type { AscCallerReason, AscWizardInput } from "./types";
+
 export const ASC_INTERVIEWER_TARGET_FIELDS = [
+  // ── Step 1 ──
   "business.description",
   "business.industryPresetId",
   "business.hours",
   "business.callerPersonas",
   "business.promisesToAvoid",
+  // ── Step 2 ──
   "purpose.primaryOutcome",
   "purpose.secondaryOutcome",
   "purpose.blockingOutcomes",
   "purpose.sharedAcrossClients",
+  // ── Step 3 ──
+  "callerReasons.add",
+  // ── Step 4 (per-reason; proposal MUST carry reasonId) ──
+  "callerReason.requiredCapture",
+  "callerReason.opener",
+  "callerReason.escalation",
+  "callerReason.variants.afterHours",
+  "callerReason.variants.voicemail",
+  "callerReason.branching.add",
 ] as const;
 
 export type AscInterviewerTargetField =
@@ -29,7 +42,15 @@ export type AscInterviewerTargetField =
 
 export type AscInterviewerInputKind = "text" | "select" | "chips" | "boolean";
 
-export type AscInterviewerProposalValue = string | string[] | boolean;
+export type AscEscalationValue = { when: string; toRole: string };
+export type AscBranchHintValue = { trigger: string; outcome: string };
+
+export type AscInterviewerProposalValue =
+  | string
+  | string[]
+  | boolean
+  | AscEscalationValue
+  | AscBranchHintValue;
 
 export interface AscInterviewerNextQuestion {
   id: string;
@@ -37,6 +58,9 @@ export interface AscInterviewerNextQuestion {
   targetField: AscInterviewerTargetField;
   inputKind: AscInterviewerInputKind;
   options?: string[];
+  /** Optional. Required for `callerReason.*` next questions so the UI can
+   *  attach the question to the right reason card. */
+  reasonId?: string;
 }
 
 export interface AscInterviewerProposalPayload {
@@ -44,10 +68,13 @@ export interface AscInterviewerProposalPayload {
   value: AscInterviewerProposalValue;
   confidence: "high" | "medium" | "low";
   rationale: string;
+  /** Required when `targetField` starts with `callerReason.`. Ignored for
+   *  every other target. */
+  reasonId?: string;
 }
 
 export interface AscInterviewerResponse {
-  step: 1 | 2;
+  step: 1 | 2 | 3 | 4;
   nextQuestion: AscInterviewerNextQuestion | null;
   proposedFields: AscInterviewerProposalPayload[];
   confirmedFieldsAcknowledged: AscInterviewerTargetField[];
@@ -56,19 +83,41 @@ export interface AscInterviewerResponse {
 const TARGET_SET: ReadonlySet<string> = new Set(ASC_INTERVIEWER_TARGET_FIELDS);
 const CONFIDENCE_SET = new Set(["high", "medium", "low"]);
 const INPUT_KIND_SET = new Set(["text", "select", "chips", "boolean"]);
+const ALLOWED_STEPS = new Set([1, 2, 3, 4]);
 
 function isTargetField(v: unknown): v is AscInterviewerTargetField {
   return typeof v === "string" && TARGET_SET.has(v);
 }
 
-function isValidValue(v: unknown): v is AscInterviewerProposalValue {
+function isPerReasonField(f: AscInterviewerTargetField): boolean {
+  return f.startsWith("callerReason.");
+}
+
+function isValidValueForField(
+  field: AscInterviewerTargetField,
+  v: unknown,
+): v is AscInterviewerProposalValue {
+  if (field === "callerReason.escalation") {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+    const o = v as Record<string, unknown>;
+    return typeof o.when === "string" && typeof o.toRole === "string";
+  }
+  if (field === "callerReason.branching.add") {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+    const o = v as Record<string, unknown>;
+    return typeof o.trigger === "string" && typeof o.outcome === "string";
+  }
+  if (field === "callerReason.requiredCapture") {
+    return Array.isArray(v) && v.every((x) => typeof x === "string");
+  }
+  // Primitive families.
   if (typeof v === "string" || typeof v === "boolean") return true;
   return Array.isArray(v) && v.every((x) => typeof x === "string");
 }
 
 /**
  * Pure validator. Returns the typed response or null if anything is off.
- * Intentionally strict — any deviation must fail safely upstream.
+ * Strict — any deviation must fail safely upstream.
  */
 export function parseInterviewerResponse(
   raw: unknown,
@@ -76,7 +125,8 @@ export function parseInterviewerResponse(
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
 
-  if (r.step !== 1 && r.step !== 2) return null;
+  if (typeof r.step !== "number" || !ALLOWED_STEPS.has(r.step)) return null;
+  const step = r.step as 1 | 2 | 3 | 4;
 
   let nextQuestion: AscInterviewerNextQuestion | null = null;
   if (r.nextQuestion !== null && r.nextQuestion !== undefined) {
@@ -94,12 +144,17 @@ export function parseInterviewerResponse(
       if (!q.options.every((o) => typeof o === "string")) return null;
       options = q.options as string[];
     }
+    const reasonId =
+      typeof q.reasonId === "string" && q.reasonId.length > 0
+        ? q.reasonId
+        : undefined;
     nextQuestion = {
       id: q.id,
       prompt: q.prompt,
       targetField: q.targetField,
       inputKind: q.inputKind as AscInterviewerInputKind,
       options,
+      reasonId,
     };
   }
 
@@ -109,54 +164,43 @@ export function parseInterviewerResponse(
     if (!p || typeof p !== "object") return null;
     const pp = p as Record<string, unknown>;
     if (!isTargetField(pp.targetField)) return null;
-    if (!isValidValue(pp.value)) return null;
+    if (!isValidValueForField(pp.targetField, pp.value)) return null;
     if (typeof pp.confidence !== "string" || !CONFIDENCE_SET.has(pp.confidence))
       return null;
     if (typeof pp.rationale !== "string") return null;
+    let reasonId: string | undefined;
+    if (isPerReasonField(pp.targetField)) {
+      if (typeof pp.reasonId !== "string" || pp.reasonId.length === 0)
+        return null;
+      reasonId = pp.reasonId;
+    }
     proposedFields.push({
       targetField: pp.targetField,
-      value: pp.value,
+      value: pp.value as AscInterviewerProposalValue,
       confidence: pp.confidence as "high" | "medium" | "low",
       rationale: pp.rationale,
+      reasonId,
     });
   }
 
   if (!Array.isArray(r.confirmedFieldsAcknowledged)) return null;
   const confirmedFieldsAcknowledged: AscInterviewerTargetField[] = [];
   for (const f of r.confirmedFieldsAcknowledged) {
-    if (!isTargetField(f)) continue; // tolerate unknown strings here
+    if (!isTargetField(f)) continue;
     confirmedFieldsAcknowledged.push(f);
   }
 
   return {
-    step: r.step,
+    step,
     nextQuestion,
     proposedFields,
     confirmedFieldsAcknowledged,
   };
 }
 
-/**
- * Read the current value of a target field out of an AscDraft input shape.
- * Centralized so the reducer's "manual wins over stale proposal" check and
- * the hook's snapshot logic agree on the same comparison.
- */
+/** Slice 1/2 readers — Steps 1 & 2 input. */
 export function readTargetFieldValue(
-  input: {
-    business: {
-      description: string;
-      industryPresetId: string;
-      hours: { coverage?: string; notes?: string };
-      callerPersonas: string[];
-      promisesToAvoid?: string[];
-    };
-    purpose: {
-      primaryOutcome: string;
-      secondaryOutcome?: string;
-      blockingOutcomes: string[];
-      sharedAcrossClients: boolean;
-    };
-  },
+  input: AscWizardInput,
   field: AscInterviewerTargetField,
 ): AscInterviewerProposalValue | null {
   switch (field) {
@@ -183,25 +227,76 @@ export function readTargetFieldValue(
   }
 }
 
+/** Slice 4 reader for per-reason fields. */
+export function readPerReasonFieldValue(
+  reason: AscCallerReason | undefined,
+  field: AscInterviewerTargetField,
+): AscInterviewerProposalValue | null {
+  if (!reason) return null;
+  switch (field) {
+    case "callerReason.requiredCapture":
+      return reason.requiredCapture ?? [];
+    case "callerReason.opener":
+      return reason.opener ?? "";
+    case "callerReason.escalation":
+      return reason.escalation
+        ? { when: reason.escalation.when, toRole: reason.escalation.toRole }
+        : { when: "", toRole: "" };
+    case "callerReason.variants.afterHours":
+      return reason.variants?.afterHours ?? "";
+    case "callerReason.variants.voicemail":
+      return reason.variants?.voicemail ?? "";
+    case "callerReason.branching.add":
+      // Append-only; no staleness check, snapshot is unused.
+      return "";
+    default:
+      return null;
+  }
+}
+
+/** Normalize caller-reason labels for duplicate detection. */
+export function normalizeReasonLabel(s: string): string {
+  return s.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 /** Stable serialization for snapshot comparison across primitives + arrays. */
 export function serializeFieldValue(
   v: AscInterviewerProposalValue | null | undefined,
 ): string {
   if (v === null || v === undefined) return "";
   if (Array.isArray(v)) return JSON.stringify([...v].sort());
+  if (typeof v === "object") {
+    const keys = Object.keys(v as Record<string, unknown>).sort();
+    const ordered: Record<string, unknown> = {};
+    for (const k of keys) ordered[k] = (v as Record<string, unknown>)[k];
+    return JSON.stringify(ordered);
+  }
   return JSON.stringify(v);
 }
 
-/**
- * Which slot in AscWizardInput a target field belongs to. Used by reducer
- * to clear pending proposals when the user manually edits the same slot.
- */
+/** Snapshot for the special `callerReasons.add` field — the normalized set
+ *  of existing labels at proposal-issue time. */
+export function snapshotCallerReasonsLabels(input: AscWizardInput): string {
+  return serializeFieldValue(
+    input.callerReasons.map((r) => normalizeReasonLabel(r.label)),
+  );
+}
+
+export type AscTargetFieldSlot =
+  | "business"
+  | "purpose"
+  | "callerReasons"
+  | "callerReason";
+
 export function targetFieldSlot(
   field: AscInterviewerTargetField,
-): "business" | "purpose" {
-  return field.startsWith("business.") ? "business" : "purpose";
+): AscTargetFieldSlot {
+  if (field === "callerReasons.add") return "callerReasons";
+  if (field.startsWith("callerReason.")) return "callerReason";
+  if (field.startsWith("business.")) return "business";
+  return "purpose";
 }
 
 export function targetFieldKey(field: AscInterviewerTargetField): string {
-  return field.split(".")[1];
+  return field.split(".").slice(1).join(".");
 }
