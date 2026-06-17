@@ -221,14 +221,17 @@ describe("ASC Step 8 compile schema (Slice 6)", () => {
   });
 
   it("normalizes: incomplete (no entry node) yields fatal", () => {
-    const raw = validRawResponse() as { generated: { flow: { nodes: Array<{ kind: string }>; edges: unknown[] } } };
+    const raw = validRawResponse() as unknown as {
+      generated: {
+        flow: { nodes: Array<{ kind: string }>; edges: unknown[] };
+        reasonToBranch: Record<string, string>;
+      };
+    };
     raw.generated.flow.nodes = raw.generated.flow.nodes.filter(
       (n) => n.kind !== "entry",
     );
-    // also rewire edges so parse stays valid
     raw.generated.flow.edges = [];
-    const r = raw as { generated: { reasonToBranch: Record<string, string> } };
-    r.generated.reasonToBranch = {};
+    raw.generated.reasonToBranch = {};
     const parsed = parseStep8CompileResponse(raw)!;
     expect(parsed).not.toBeNull();
     const input = buildInput();
