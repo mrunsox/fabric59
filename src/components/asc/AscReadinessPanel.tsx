@@ -119,11 +119,14 @@ export function AscReadinessPanel({
           className="border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-900"
           data-testid="asc-readiness-forked-banner"
         >
-          <p className="font-medium">Handed off on {formatAt(lastFork.at)}</p>
+          <p className="font-medium">
+            Handed off on {formatAt(lastFork.at)} by {lastFork.by}
+          </p>
           <p className="mt-1 text-emerald-900/80">
-            This ASC draft has been handed off into the canonical campaign
-            builder. ASC will not re-fork the same draft — continue editing
-            and publishing from the canonical builder.
+            Changes here no longer affect the canonical campaign. ASC will
+            not re-fork the same draft — continue editing and publishing
+            from the canonical builder. (Deep-link to the exact handed-off
+            canonical draft is not available yet; use the campaigns list.)
           </p>
         </Card>
       )}
