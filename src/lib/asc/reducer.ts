@@ -61,6 +61,7 @@ import {
   type AscLaStep,
 } from "./logicArchitectSchema";
 import { computeInputFingerprint } from "./step8CompileSchema";
+import { translateAscDraftToIntake, type AscForkResult } from "./forkTranslator";
 
 function bumpUpdated(draft: AscDraft, now?: string): AscDraft {
   return {
