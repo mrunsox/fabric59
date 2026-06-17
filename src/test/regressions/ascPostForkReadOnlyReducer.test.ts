@@ -133,7 +133,7 @@ const MUTATING_ACTIONS: AscAction[] = [
   {
     type: "FAIL_STEP8_GENERATION",
     now: "2026-06-17T00:03:00.000Z",
-    error: { code: "validation_failed", message: "x" } as never,
+    error: { code: "schema_invalid", message: "x" },
   },
   { type: "DISCARD_STEP8_GENERATION", now: "2026-06-17T00:03:00.000Z" },
 ];
