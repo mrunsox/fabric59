@@ -29,6 +29,8 @@ import { useAscGapFinder } from "@/hooks/useAscGapFinder";
 export interface AscStepProps {
   draft: AscDraft;
   dispatch: Dispatch<AscAction>;
+  /** Optional navigation hook; currently only Step 9 consumes this. */
+  onJumpToStep?: (step: number) => void;
 }
 
 function StepHeader({
