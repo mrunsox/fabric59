@@ -950,6 +950,7 @@ export function ascReducer(state: AscDraft, action: AscAction): AscDraft {
               [
                 normalizeOutcomeLabel(n.trigger ?? ""),
                 (n.channel ?? "").trim().toLowerCase(),
+                "",
               ].join("|") === key,
           );
           let nextState = state;
