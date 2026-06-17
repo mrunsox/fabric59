@@ -54,5 +54,48 @@ describe("Business Brain — entity schemas", () => {
     const a = canonicalKey("department", { name: "Family   LAW" });
     const b = canonicalKey("department", { name: "family law" });
     expect(a).toBe(b);
+});
+
+describe("Business Brain — Slice 2 schema hardening", () => {
+  it("rejects phone numbers with fewer than 7 digits", () => {
+    expect(validateEntityPayload("phone", { label: "Main", number: "(212) 555-0100" }).ok).toBe(true);
+    expect(validateEntityPayload("phone", { label: "Main", number: "555-12" }).ok).toBe(false);
+  });
+
+  it("policy body is capped at 500 characters", () => {
+    const longBody = "x".repeat(501);
+    expect(validateEntityPayload("policy", { title: "T", body: "Short policy." }).ok).toBe(true);
+    expect(validateEntityPayload("policy", { title: "T", body: longBody }).ok).toBe(false);
+  });
+
+  it("intake_requirement dedupes and lowercases its fields list", () => {
+    const r = validateEntityPayload("intake_requirement", {
+      label: "New client intake",
+      fields: ["Name", "name", "EMAIL", "Email", "phone"],
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      const data = r.data as { fields: string[] };
+      expect(data.fields).toEqual(["name", "email", "phone"]);
+    }
+  });
+
+  it("hours payload accepts an optional weekly structure", () => {
+    expect(
+      validateEntityPayload("hours", {
+        label: "Office",
+        schedule: "Mon-Fri 9-5",
+        weekly: { mon: "9-5", tue: "9-5", wed: "9-5", thu: "9-5", fri: "9-5" },
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("faq accepts an optional service association", () => {
+    const r = validateEntityPayload("faq", {
+      question: "What is your consult fee?",
+      answer: "$250.",
+      service: "Initial Consultation",
+    });
+    expect(r.ok).toBe(true);
   });
 });
