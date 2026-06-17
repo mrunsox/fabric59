@@ -53,6 +53,11 @@ import WorkspaceAnalyticsPage from "@/pages/workspace/WorkspaceAnalyticsPage";
 import WorkspaceQaPage from "@/pages/workspace/WorkspaceQaPage";
 import WorkspaceBillingPage from "@/pages/workspace/WorkspaceBillingPage";
 import WorkspaceKnowledgePage from "@/pages/workspace/WorkspaceKnowledgePage";
+// Business Brain — Phase 1 / Slice 1 module.
+import BusinessBrainLayoutPage from "@/pages/workspace/brain/BusinessBrainLayoutPage";
+import KnowledgeBinPage from "@/pages/workspace/brain/KnowledgeBinPage";
+import SuggestedFactsPage from "@/pages/workspace/brain/SuggestedFactsPage";
+import ApprovedKnowledgePage from "@/pages/workspace/brain/ApprovedKnowledgePage";
 import WorkspaceAssistantPage from "@/pages/workspace/WorkspaceAssistantPage";
 import WorkspaceSettingsPage from "@/pages/workspace/WorkspaceSettingsPage";
 // Additive workspace-shell route completion (May 13 Canonical Build Doc §4):
