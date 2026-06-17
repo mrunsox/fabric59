@@ -10,7 +10,7 @@
  */
 import { useState } from "react";
 import type { Dispatch } from "react";
-import { Sparkles, Plus, Trash2, Search, Loader2 } from "lucide-react";
+import { Sparkles, Plus, Trash2, Search, Loader2, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,12 +23,23 @@ import { ProvenanceBadge } from "@/components/asc/ProvenanceBadge";
 import { AscAssistantPanel } from "@/components/asc/AscAssistantPanel";
 import { AscLogicArchitectPanel } from "@/components/asc/AscLogicArchitectPanel";
 import { AscGenerationPanel } from "@/components/asc/AscGenerationPanel";
+import {
+  AscReviewOverviewSection,
+  AscReviewFlowOutlineSection,
+  AscReviewOutcomesSection,
+  AscReviewNotificationsSection,
+  AscReviewDestinationSection,
+  AscReviewTodosSection,
+} from "@/components/asc/AscReviewSections";
+import { selectGenerationIsStale } from "@/lib/asc/selectors";
 import { useAscGapFinder } from "@/hooks/useAscGapFinder";
 
 
 export interface AscStepProps {
   draft: AscDraft;
   dispatch: Dispatch<AscAction>;
+  /** Optional navigation hook; currently only Step 9 consumes this. */
+  onJumpToStep?: (step: number) => void;
 }
 
 function StepHeader({
@@ -885,18 +896,111 @@ export function AscStepGenerate({ draft, dispatch }: AscStepProps) {
 }
 
 // ── Step 9 ─────────────────────────────────────────────────────────────────
-export function AscStepReview(_: AscStepProps) {
+export function AscStepReview({ draft, onJumpToStep }: AscStepProps) {
+  const [dismissedStale, setDismissedStale] = useState(false);
+  const isStale = selectGenerationIsStale(draft);
+  const hasGenerated = !!draft.generated;
+
+  // No generated draft yet — guide back to Step 8.
+  if (!hasGenerated) {
+    return (
+      <div data-testid="asc-step-9" className="space-y-4">
+        <StepHeader
+          number={9}
+          title="Review draft"
+          blurb="Review a generated draft before the canonical handoff. Nothing is published from here."
+        />
+        <Card
+          className="space-y-3 border-dashed p-5 text-sm"
+          data-testid="asc-review-empty"
+        >
+          <p className="font-medium">No draft generated yet</p>
+          <p className="text-muted-foreground">
+            Generate a draft in Step 8 first. Step 9 reviews the most recent
+            ASC-local draft and links you back to Steps 3–7 for changes.
+          </p>
+          {onJumpToStep && (
+            <Button
+              type="button"
+              onClick={() => onJumpToStep(8)}
+              data-testid="asc-review-goto-step8"
+            >
+              Go to Step 8
+            </Button>
+          )}
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div data-testid="asc-step-9">
+    <div data-testid="asc-step-9" className="space-y-4">
       <StepHeader
         number={9}
-        title="Review & agent preview"
-        blurb="Tabbed canvas: Flow, Copy, Outcomes, Notifications, Destination, Agent preview. Lands later."
+        title="Review draft"
+        blurb="Review the generated draft. Edits round-trip through Steps 3–7 — nothing here mutates the draft, and nothing is published yet."
       />
-      <ComingInLaterSlice what="Review canvas with provenance overlay and the runner-parity preview" />
+
+      {isStale && !dismissedStale && (
+        <Card
+          className="flex flex-col gap-3 border-amber-300 bg-amber-50 p-4 text-sm sm:flex-row sm:items-start sm:justify-between"
+          data-testid="asc-review-stale-banner"
+        >
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" />
+            <div>
+              <p className="font-medium text-amber-900">
+                Inputs changed since this draft was generated
+              </p>
+              <p className="mt-0.5 text-amber-800">
+                The review below reflects the previous draft. Regenerate in
+                Step 8 to refresh it.
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            {onJumpToStep && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => onJumpToStep(8)}
+                data-testid="asc-review-regenerate"
+              >
+                Regenerate draft
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setDismissedStale(true)}
+              data-testid="asc-review-dismiss-stale"
+            >
+              Continue reviewing anyway
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      <AscReviewOverviewSection draft={draft} />
+      <AscReviewFlowOutlineSection draft={draft} onJumpToStep={onJumpToStep} />
+      <AscReviewOutcomesSection draft={draft} onJumpToStep={onJumpToStep} />
+      <AscReviewNotificationsSection
+        draft={draft}
+        onJumpToStep={onJumpToStep}
+      />
+      <AscReviewDestinationSection
+        draft={draft}
+        onJumpToStep={onJumpToStep}
+      />
+      <AscReviewTodosSection draft={draft} onJumpToStep={onJumpToStep} />
     </div>
   );
 }
+
+
+
+
 
 // ── Step 10 ────────────────────────────────────────────────────────────────
 export function AscStepReadiness(_: AscStepProps) {
