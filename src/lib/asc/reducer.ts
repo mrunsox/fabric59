@@ -1256,7 +1256,7 @@ const GENERATION_OWNED_ACTIONS: ReadonlySet<AscAction["type"]> = new Set([
  * cannot mutate ASC state. This is the real enforcement layer — the UI
  * `fieldset[disabled]` wrapper is convenience on top.
  */
-const ALLOWED_WHEN_FORKED: ReadonlySet<AscAction["type"]> = new Set([
+export const ALLOWED_WHEN_FORKED: ReadonlySet<AscAction["type"]> = new Set([
   "INIT_DRAFT",
   "RESET_DRAFT",
   "SET_STEP",
