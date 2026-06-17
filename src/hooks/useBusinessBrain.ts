@@ -173,8 +173,8 @@ export function useBbIngestPaste() {
         .eq("workspace_id", input.workspaceId)
         .eq("content_hash", hash)
         .maybeSingle();
-      if (existing && (existing as { id: string }).id) {
-        return { id: (existing as { id: string }).id, reused: true };
+      if (existing && (existing as unknown as { id: string }).id) {
+        return { id: (existing as unknown as { id: string }).id, reused: true };
       }
 
       const { data, error } = await supabase
@@ -193,7 +193,7 @@ export function useBbIngestPaste() {
         .select("id")
         .single();
       if (error) throw error;
-      const sourceId = (data as { id: string }).id;
+      const sourceId = (data as unknown as { id: string }).id;
       emitBbEvent("bb_source_added", {
         workspaceId: input.workspaceId,
         organizationId: organization?.id ?? null,
@@ -272,7 +272,7 @@ export function useBbIngestUpload() {
         .select("id")
         .single();
       if (error) throw error;
-      const sourceId = (data as { id: string }).id;
+      const sourceId = (data as unknown as { id: string }).id;
       emitBbEvent("bb_source_added", {
         workspaceId: input.workspaceId,
         organizationId: organization?.id ?? null,
