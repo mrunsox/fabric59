@@ -122,7 +122,7 @@ describe("ASC reducer skeleton (Slice 1)", () => {
 
   it("forkToCanonical returns prefill (Slice 8); runner payload helper still pending", async () => {
     const mod = await import("@/lib/asc/reducer");
-    const result = mod.forkToCanonical(draft);
+    const result = mod.forkToCanonical(draft, { forkedAt: "2026-06-17T00:00:00.000Z" });
     expect(result).toMatchObject({ source: "asc-wizard", ascDraftId: draft.id });
     expect(result.prefill).toBeTruthy();
     expect(() => mod.ascGeneratedToRunnerPayload()).toThrow(/not implemented/);
