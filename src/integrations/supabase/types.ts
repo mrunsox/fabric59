@@ -324,6 +324,439 @@ export type Database = {
         }
         Relationships: []
       }
+      bb_extractions: {
+        Row: {
+          approved_fact_id: string | null
+          chunk_id: string | null
+          confidence: number
+          created_at: string
+          entity_type: Database["public"]["Enums"]["bb_entity_type"]
+          extraction_metadata: Json
+          id: string
+          payload: Json
+          review_notes: string | null
+          review_status: Database["public"]["Enums"]["bb_review_status"]
+          reviewed_at: string | null
+          reviewer_id: string | null
+          snippet: string | null
+          source_id: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          approved_fact_id?: string | null
+          chunk_id?: string | null
+          confidence?: number
+          created_at?: string
+          entity_type: Database["public"]["Enums"]["bb_entity_type"]
+          extraction_metadata?: Json
+          id?: string
+          payload?: Json
+          review_notes?: string | null
+          review_status?: Database["public"]["Enums"]["bb_review_status"]
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          snippet?: string | null
+          source_id: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          approved_fact_id?: string | null
+          chunk_id?: string | null
+          confidence?: number
+          created_at?: string
+          entity_type?: Database["public"]["Enums"]["bb_entity_type"]
+          extraction_metadata?: Json
+          id?: string
+          payload?: Json
+          review_notes?: string | null
+          review_status?: Database["public"]["Enums"]["bb_review_status"]
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          snippet?: string | null
+          source_id?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_extractions_approved_fact_id_fkey"
+            columns: ["approved_fact_id"]
+            isOneToOne: false
+            referencedRelation: "bb_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_extractions_chunk_id_fkey"
+            columns: ["chunk_id"]
+            isOneToOne: false
+            referencedRelation: "bb_source_chunks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_extractions_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "bb_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_extractions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_fact_relations: {
+        Row: {
+          created_at: string
+          from_fact_id: string
+          id: string
+          metadata: Json
+          relation: Database["public"]["Enums"]["bb_relation_kind"]
+          to_fact_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_fact_id: string
+          id?: string
+          metadata?: Json
+          relation: Database["public"]["Enums"]["bb_relation_kind"]
+          to_fact_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          from_fact_id?: string
+          id?: string
+          metadata?: Json
+          relation?: Database["public"]["Enums"]["bb_relation_kind"]
+          to_fact_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_fact_relations_from_fact_id_fkey"
+            columns: ["from_fact_id"]
+            isOneToOne: false
+            referencedRelation: "bb_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_fact_relations_to_fact_id_fkey"
+            columns: ["to_fact_id"]
+            isOneToOne: false
+            referencedRelation: "bb_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_fact_relations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_facts: {
+        Row: {
+          canonical_key: string
+          client_id: string | null
+          confidence_at_review: number | null
+          created_at: string
+          display_name: string
+          entity_type: Database["public"]["Enums"]["bb_entity_type"]
+          id: string
+          last_reviewed_at: string
+          last_reviewed_by: string | null
+          notes: string | null
+          payload: Json
+          source_refs: Json
+          superseded_by: string | null
+          updated_at: string
+          verification_state: Database["public"]["Enums"]["bb_verification_state"]
+          workspace_id: string
+        }
+        Insert: {
+          canonical_key: string
+          client_id?: string | null
+          confidence_at_review?: number | null
+          created_at?: string
+          display_name: string
+          entity_type: Database["public"]["Enums"]["bb_entity_type"]
+          id?: string
+          last_reviewed_at?: string
+          last_reviewed_by?: string | null
+          notes?: string | null
+          payload?: Json
+          source_refs?: Json
+          superseded_by?: string | null
+          updated_at?: string
+          verification_state?: Database["public"]["Enums"]["bb_verification_state"]
+          workspace_id: string
+        }
+        Update: {
+          canonical_key?: string
+          client_id?: string | null
+          confidence_at_review?: number | null
+          created_at?: string
+          display_name?: string
+          entity_type?: Database["public"]["Enums"]["bb_entity_type"]
+          id?: string
+          last_reviewed_at?: string
+          last_reviewed_by?: string | null
+          notes?: string | null
+          payload?: Json
+          source_refs?: Json
+          superseded_by?: string | null
+          updated_at?: string
+          verification_state?: Database["public"]["Enums"]["bb_verification_state"]
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_facts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "bb_facts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_facts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "bb_facts_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "bb_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_facts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_review_events: {
+        Row: {
+          action: Database["public"]["Enums"]["bb_review_action"]
+          actor_id: string | null
+          created_at: string
+          diff: Json
+          extraction_id: string | null
+          fact_id: string | null
+          id: string
+          notes: string | null
+          workspace_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["bb_review_action"]
+          actor_id?: string | null
+          created_at?: string
+          diff?: Json
+          extraction_id?: string | null
+          fact_id?: string | null
+          id?: string
+          notes?: string | null
+          workspace_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["bb_review_action"]
+          actor_id?: string | null
+          created_at?: string
+          diff?: Json
+          extraction_id?: string | null
+          fact_id?: string | null
+          id?: string
+          notes?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_review_events_extraction_id_fkey"
+            columns: ["extraction_id"]
+            isOneToOne: false
+            referencedRelation: "bb_extractions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_review_events_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: false
+            referencedRelation: "bb_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_review_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_source_chunks: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json
+          offset_end: number | null
+          offset_start: number | null
+          ordinal: number
+          source_id: string
+          text: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json
+          offset_end?: number | null
+          offset_start?: number | null
+          ordinal: number
+          source_id: string
+          text: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json
+          offset_end?: number | null
+          offset_start?: number | null
+          ordinal?: number
+          source_id?: string
+          text?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_source_chunks_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "bb_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_source_chunks_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_sources: {
+        Row: {
+          client_id: string | null
+          content_hash: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: Database["public"]["Enums"]["bb_source_kind"]
+          metadata: Json
+          prior_source_id: string | null
+          processed_at: string | null
+          status: Database["public"]["Enums"]["bb_source_status"]
+          status_message: string | null
+          title: string
+          updated_at: string
+          uri: string | null
+          version: number
+          workspace_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          content_hash?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["bb_source_kind"]
+          metadata?: Json
+          prior_source_id?: string | null
+          processed_at?: string | null
+          status?: Database["public"]["Enums"]["bb_source_status"]
+          status_message?: string | null
+          title: string
+          updated_at?: string
+          uri?: string | null
+          version?: number
+          workspace_id: string
+        }
+        Update: {
+          client_id?: string | null
+          content_hash?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["bb_source_kind"]
+          metadata?: Json
+          prior_source_id?: string | null
+          processed_at?: string | null
+          status?: Database["public"]["Enums"]["bb_source_status"]
+          status_message?: string | null
+          title?: string
+          updated_at?: string
+          uri?: string | null
+          version?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_sources_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "bb_sources_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_sources_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "bb_sources_prior_source_id_fkey"
+            columns: ["prior_source_id"]
+            isOneToOne: false
+            referencedRelation: "bb_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_sources_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_log_cache: {
         Row: {
           call_data: Json
@@ -9683,6 +10116,45 @@ export type Database = {
     }
     Enums: {
       app_role: "master_admin" | "admin" | "ops_team" | "viewer"
+      bb_entity_type:
+        | "department"
+        | "service"
+        | "staff"
+        | "phone"
+        | "hours"
+        | "destination_contact"
+        | "faq"
+        | "escalation_contact"
+        | "intake_requirement"
+        | "policy"
+      bb_relation_kind:
+        | "staff_in_department"
+        | "department_handles_service"
+        | "route_to_destination"
+        | "faq_about_service"
+        | "service_in_area"
+        | "escalation_for"
+      bb_review_action:
+        | "approve"
+        | "reject"
+        | "edit"
+        | "merge"
+        | "supersede"
+        | "reopen"
+      bb_review_status: "suggested" | "approved" | "rejected" | "superseded"
+      bb_source_kind:
+        | "upload_doc"
+        | "paste_text"
+        | "paste_faq"
+        | "upload_csv"
+        | "url_crawl"
+      bb_source_status:
+        | "pending"
+        | "processing"
+        | "processed"
+        | "failed"
+        | "superseded"
+      bb_verification_state: "approved" | "needs_review" | "stale"
       campaign_status: "draft" | "ready" | "live" | "paused" | "archived"
       crm_type:
         | "clio"
@@ -9894,6 +10366,50 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["master_admin", "admin", "ops_team", "viewer"],
+      bb_entity_type: [
+        "department",
+        "service",
+        "staff",
+        "phone",
+        "hours",
+        "destination_contact",
+        "faq",
+        "escalation_contact",
+        "intake_requirement",
+        "policy",
+      ],
+      bb_relation_kind: [
+        "staff_in_department",
+        "department_handles_service",
+        "route_to_destination",
+        "faq_about_service",
+        "service_in_area",
+        "escalation_for",
+      ],
+      bb_review_action: [
+        "approve",
+        "reject",
+        "edit",
+        "merge",
+        "supersede",
+        "reopen",
+      ],
+      bb_review_status: ["suggested", "approved", "rejected", "superseded"],
+      bb_source_kind: [
+        "upload_doc",
+        "paste_text",
+        "paste_faq",
+        "upload_csv",
+        "url_crawl",
+      ],
+      bb_source_status: [
+        "pending",
+        "processing",
+        "processed",
+        "failed",
+        "superseded",
+      ],
+      bb_verification_state: ["approved", "needs_review", "stale"],
       campaign_status: ["draft", "ready", "live", "paused", "archived"],
       crm_type: [
         "clio",
