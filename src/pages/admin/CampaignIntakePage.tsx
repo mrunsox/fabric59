@@ -30,6 +30,7 @@ import { format } from "date-fns";
 import { ChevronDown, ChevronRight, CheckCircle2, Save, Rocket, Loader2, CloudOff, Building2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WhiteLabelPartnerSelector } from "@/components/campaigns/WhiteLabelPartnerSelector";
+import { AscOriginPanel } from "@/components/campaigns/AscOriginPanel";
 
 const emptyIntake: CampaignIntakeData = {
   campaignName: "",
