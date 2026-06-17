@@ -54,6 +54,7 @@ describe("Business Brain — entity schemas", () => {
     const a = canonicalKey("department", { name: "Family   LAW" });
     const b = canonicalKey("department", { name: "family law" });
     expect(a).toBe(b);
+  });
 });
 
 describe("Business Brain — Slice 2 schema hardening", () => {
