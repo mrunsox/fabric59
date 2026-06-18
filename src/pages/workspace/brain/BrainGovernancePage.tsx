@@ -171,7 +171,7 @@ export default function BrainGovernancePage() {
                     {c.primaryFact?.displayName ?? "—"} ⇄ {c.conflictingFact?.displayName ?? "—"}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {c.conflictKind.replaceAll("_", " ")}
+                    {c.conflictKind.replace(/_/g, " ")}
                     {c.similarity != null ? ` · similarity ${c.similarity.toFixed(2)}` : ""}
                     {" · "}
                     {new Date(c.createdAt).toLocaleDateString()}

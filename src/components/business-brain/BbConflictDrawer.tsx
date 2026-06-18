@@ -39,7 +39,7 @@ export default function BbConflictDrawer({ conflict, onClose, onResolved }: Prop
         <SheetHeader>
           <SheetTitle>Conflict review</SheetTitle>
           <SheetDescription>
-            {conflict.conflictKind.replaceAll("_", " ")}
+            {conflict.conflictKind.replace(/_/g, " ")}
             {conflict.similarity != null ? ` · similarity ${conflict.similarity.toFixed(2)}` : ""}
           </SheetDescription>
         </SheetHeader>

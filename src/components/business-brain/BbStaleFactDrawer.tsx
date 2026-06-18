@@ -67,7 +67,7 @@ export default function BbStaleFactDrawer({ fact, onClose, onChanged }: Props) {
               ) : (
                 fact.staleReasons.map((r) => (
                   <Badge key={r} variant="secondary" className="bg-amber-100 text-amber-900">
-                    {r.replaceAll("_", " ")}
+                    {r.replace(/_/g, " ")}
                   </Badge>
                 ))
               )}
