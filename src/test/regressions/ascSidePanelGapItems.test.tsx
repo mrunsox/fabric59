@@ -43,7 +43,12 @@ function Harness() {
   return (
     <div>
       <div data-testid="reasons-count">{draft.input.callerReasons.length}</div>
-      <AscSidePanel draft={draft} dispatch={dispatch} />
+      <AscSidePanel
+        draft={draft}
+        dispatch={dispatch}
+        workspaceId="ws"
+        onApplyBbIntent={() => {}}
+      />
     </div>
   );
 }
