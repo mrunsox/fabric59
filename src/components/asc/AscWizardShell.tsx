@@ -58,6 +58,7 @@ export function AscWizardShell({
   onBack,
   onContinue,
   onHandoffToManual,
+  onApplyBbIntent,
   children,
 }: AscWizardShellProps) {
   const canContinue = selectCanContinue(draft, draft.step);
@@ -126,7 +127,12 @@ export function AscWizardShell({
         <main className="overflow-y-auto p-6" data-testid="asc-step-body">
           {children}
         </main>
-        <AscSidePanel draft={draft} dispatch={dispatch} />
+        <AscSidePanel
+          draft={draft}
+          dispatch={dispatch}
+          workspaceId={workspaceId}
+          onApplyBbIntent={onApplyBbIntent}
+        />
       </div>
 
       <AscFooterNav
