@@ -458,3 +458,134 @@ export const BB_STEP_ENTITY_TYPES: Record<BbAscStep, BbEntityType[]> = {
 };
 
 export const BB_SUGGESTION_CAP_PER_STEP = CAP_PER_STEP;
+
+// ────────────────────────────────────────────────────────────────────────
+// Phase 3 — Internal search (Business Brain Search tab)
+//
+// These selectors are part of the bridge surface but are intended for the
+// Business Brain UI ONLY. ASC and other downstream consumers must not call
+// search APIs from this phase — those are operator/admin retrieval flows.
+// ────────────────────────────────────────────────────────────────────────
+
+export interface BbSearchEvidence {
+  sourceId: string;
+  sourceTitle: string | null;
+  sourceKind: string | null;
+  snippet: string;
+}
+
+export interface BbSearchCard {
+  /** "fact" cards are primary; "chunk" cards are orphan evidence. */
+  kind: "fact" | "chunk";
+  id: string;
+  entityType: BbEntityType | null;
+  title: string;
+  snippet: string | null;
+  evidence: BbSearchEvidence[];
+  score: number;
+  confidence: number | null;
+  confidenceBand: "high" | "medium" | "low" | null;
+  verificationState: BbVerificationState | null;
+  lastReviewedAt: string | null;
+  /** Stable id of the underlying fact, if this card represents an approved fact. */
+  factId: string | null;
+}
+
+export interface BbSearchInput {
+  workspaceId: string;
+  clientId?: string | null;
+  query: string;
+  entityTypes?: BbEntityType[];
+  sourceKinds?: string[];
+  includeNeedsReview?: boolean;
+  limit?: number;
+}
+
+export interface BbSearchResponse {
+  cards: BbSearchCard[];
+  groups: Record<string, BbSearchCard[]>;
+  counts: { facts: number; chunks: number; total: number };
+  latencyMs: number;
+  model: string;
+}
+
+/**
+ * Calls the `bb-search` edge function and normalizes the response into
+ * view-model shapes. Empty/invalid inputs short-circuit to an empty
+ * response so consumers do not need to guard on every call.
+ */
+export async function searchApprovedKnowledge(
+  input: BbSearchInput,
+): Promise<BbSearchResponse> {
+  const empty: BbSearchResponse = {
+    cards: [],
+    groups: {},
+    counts: { facts: 0, chunks: 0, total: 0 },
+    latencyMs: 0,
+    model: "",
+  };
+  if (!input.workspaceId || !input.query?.trim()) return empty;
+  const { data, error } = await supabase.functions.invoke("bb-search", {
+    body: {
+      workspaceId: input.workspaceId,
+      clientId: input.clientId ?? null,
+      query: input.query.trim(),
+      filters: {
+        entityTypes: input.entityTypes ?? null,
+        sourceKinds: input.sourceKinds ?? null,
+        includeNeedsReview: input.includeNeedsReview === true,
+      },
+      limit: input.limit ?? 10,
+    },
+  });
+  if (error || !data || (data as { ok?: boolean }).ok === false) return empty;
+  const payload = data as {
+    cards?: BbSearchCard[];
+    groups?: Record<string, BbSearchCard[]>;
+    counts?: { facts: number; chunks: number; total: number };
+    latency_ms?: number;
+    model?: string;
+  };
+  const cards = (payload.cards ?? []).map((c) => ({
+    ...c,
+    confidenceBand:
+      c.confidence == null
+        ? null
+        : c.confidence >= 0.8
+          ? "high"
+          : c.confidence >= 0.5
+            ? "medium"
+            : "low",
+  })) as BbSearchCard[];
+  // Re-group on the client (normalize "_evidence" bucket name).
+  const groups: Record<string, BbSearchCard[]> = {};
+  for (const c of cards) {
+    const key = c.kind === "fact" ? c.entityType ?? "_other" : "_evidence";
+    (groups[key] ||= []).push(c);
+  }
+  return {
+    cards,
+    groups,
+    counts: payload.counts ?? { facts: 0, chunks: 0, total: cards.length },
+    latencyMs: payload.latency_ms ?? 0,
+    model: payload.model ?? "",
+  };
+}
+
+/** Admin-gated reindex trigger. */
+export async function triggerBbBackfill(
+  workspaceId: string,
+): Promise<{ ok: boolean; facts: number; chunks: number; failed: number }> {
+  if (!workspaceId) return { ok: false, facts: 0, chunks: 0, failed: 0 };
+  const { data, error } = await supabase.functions.invoke("bb-embed", {
+    body: { workspaceId, mode: "backfill", target: "both", limit: 50 },
+  });
+  if (error || !data) return { ok: false, facts: 0, chunks: 0, failed: 0 };
+  const r = data as { ok?: boolean; facts?: { embedded: number; failed: number }; chunks?: { embedded: number; failed: number } };
+  return {
+    ok: r.ok === true,
+    facts: r.facts?.embedded ?? 0,
+    chunks: r.chunks?.embedded ?? 0,
+    failed: (r.facts?.failed ?? 0) + (r.chunks?.failed ?? 0),
+  };
+}
