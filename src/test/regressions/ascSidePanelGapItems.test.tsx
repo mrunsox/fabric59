@@ -1,14 +1,28 @@
 /**
  * ASC Slice 4 — Side panel renders advisory gap items, with dismiss
  * removing items from view without touching draft.input.
+ *
+ * Phase 2: the side panel now also embeds the Business Brain suggestion
+ * tray, which transitively uses AuthContext + React Query. We mock both so
+ * this Slice-4 invariant test stays focused on gap items.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { useReducer } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ascReducer } from "@/lib/asc/reducer";
 import { createEmptyAscDraft } from "@/lib/asc/fixtures";
-import { AscSidePanel } from "@/components/asc/AscSidePanel";
 import type { AscDraft } from "@/lib/asc/types";
+
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({ organization: { id: "org-1" }, user: null }),
+}));
+
+vi.mock("@/lib/business-brain/flagResolver", () => ({
+  useBusinessBrainFlag: () => ({ enabled: false, source: "default" }),
+}));
+
+import { AscSidePanel } from "@/components/asc/AscSidePanel";
 
 function seedDraft(): AscDraft {
   const base = createEmptyAscDraft({
