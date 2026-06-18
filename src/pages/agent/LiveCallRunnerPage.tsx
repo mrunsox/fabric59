@@ -103,6 +103,15 @@ function LiveCallRunnerInner() {
     guide: guide ?? null,
   });
 
+  // Phase 4 — Business Brain live assist (read-only, additive). Renders only
+  // when the workspace flag is enabled; otherwise the panel is omitted from
+  // the RightStack and the runner behaves identically to before.
+  const bbAssist = useBusinessBrainAssist({
+    meta,
+    session: session.session,
+    flow: flow ?? null,
+  });
+
   const [submitting, setSubmitting] = useState(false);
   const [submissionState, setSubmissionState] =
     useState<"idle" | "submitting" | "accepted" | "deferred" | "error">("idle");
