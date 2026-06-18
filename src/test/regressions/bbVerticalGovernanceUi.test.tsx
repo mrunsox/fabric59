@@ -83,9 +83,9 @@ describe("BrainVerticalGovernanceSection", () => {
     expect(await screen.findByText(/Coverage & gaps/i)).toBeTruthy();
     // vertical label
     expect(await screen.findByText(/Local Government/)).toBeTruthy();
-    // coverage entity labels
-    expect(await screen.findByText(/^Service$/)).toBeTruthy();
-    expect(await screen.findByText(/^Hours$/)).toBeTruthy();
+    // coverage entity labels (Hours appears in multiple places, just check at least one)
+    expect((await screen.findAllByText(/^Service$/)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/^Hours$/)).length).toBeGreaterThan(0);
     // gap row + actions
     expect(await screen.findByText(/Under required count/i)).toBeTruthy();
     expect(await screen.findByText(/Go fix/i)).toBeTruthy();
