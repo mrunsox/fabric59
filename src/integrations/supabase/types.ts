@@ -410,6 +410,103 @@ export type Database = {
           },
         ]
       }
+      bb_fact_conflicts: {
+        Row: {
+          conflict_kind: string
+          conflicting_fact_id: string
+          created_at: string
+          details: Json
+          entity_type: string
+          id: string
+          primary_fact_id: string
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          similarity: number | null
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          conflict_kind: string
+          conflicting_fact_id: string
+          created_at?: string
+          details?: Json
+          entity_type: string
+          id?: string
+          primary_fact_id: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          similarity?: number | null
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          conflict_kind?: string
+          conflicting_fact_id?: string
+          created_at?: string
+          details?: Json
+          entity_type?: string
+          id?: string
+          primary_fact_id?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          similarity?: number | null
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_fact_conflicts_conflicting_fact_id_fkey"
+            columns: ["conflicting_fact_id"]
+            isOneToOne: false
+            referencedRelation: "bb_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_fact_conflicts_primary_fact_id_fkey"
+            columns: ["primary_fact_id"]
+            isOneToOne: false
+            referencedRelation: "bb_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_fact_conflicts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_fact_entity_defaults: {
+        Row: {
+          created_at: string
+          default_review_interval_days: number
+          entity_type: string
+          high_risk: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_review_interval_days: number
+          entity_type: string
+          high_risk?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_review_interval_days?: number
+          entity_type?: string
+          high_risk?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bb_fact_relations: {
         Row: {
           created_at: string
@@ -462,6 +559,75 @@ export type Database = {
           },
         ]
       }
+      bb_fact_usage: {
+        Row: {
+          asc_suggestion_dismissed: number
+          asc_suggestion_used: number
+          assist_copied: number
+          assist_inserted: number
+          assist_opened: number
+          created_at: string
+          fact_id: string
+          last_used_at: string | null
+          rolled_up_at: string
+          search_marked_not_useful: number
+          search_marked_useful: number
+          search_opens: number
+          updated_at: string
+          usage_score: number
+          workspace_id: string
+        }
+        Insert: {
+          asc_suggestion_dismissed?: number
+          asc_suggestion_used?: number
+          assist_copied?: number
+          assist_inserted?: number
+          assist_opened?: number
+          created_at?: string
+          fact_id: string
+          last_used_at?: string | null
+          rolled_up_at?: string
+          search_marked_not_useful?: number
+          search_marked_useful?: number
+          search_opens?: number
+          updated_at?: string
+          usage_score?: number
+          workspace_id: string
+        }
+        Update: {
+          asc_suggestion_dismissed?: number
+          asc_suggestion_used?: number
+          assist_copied?: number
+          assist_inserted?: number
+          assist_opened?: number
+          created_at?: string
+          fact_id?: string
+          last_used_at?: string | null
+          rolled_up_at?: string
+          search_marked_not_useful?: number
+          search_marked_useful?: number
+          search_opens?: number
+          updated_at?: string
+          usage_score?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_fact_usage_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: true
+            referencedRelation: "bb_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_fact_usage_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bb_facts: {
         Row: {
           canonical_key: string
@@ -473,13 +639,17 @@ export type Database = {
           embedding: string | null
           embedding_model: string | null
           entity_type: Database["public"]["Enums"]["bb_entity_type"]
+          expected_review_interval_days: number | null
           id: string
           last_reviewed_at: string
           last_reviewed_by: string | null
+          last_used_at: string | null
           notes: string | null
           payload: Json
           search_text: string | null
           source_refs: Json
+          stale_reasons: string[]
+          stale_state: string
           superseded_by: string | null
           updated_at: string
           verification_state: Database["public"]["Enums"]["bb_verification_state"]
@@ -495,13 +665,17 @@ export type Database = {
           embedding?: string | null
           embedding_model?: string | null
           entity_type: Database["public"]["Enums"]["bb_entity_type"]
+          expected_review_interval_days?: number | null
           id?: string
           last_reviewed_at?: string
           last_reviewed_by?: string | null
+          last_used_at?: string | null
           notes?: string | null
           payload?: Json
           search_text?: string | null
           source_refs?: Json
+          stale_reasons?: string[]
+          stale_state?: string
           superseded_by?: string | null
           updated_at?: string
           verification_state?: Database["public"]["Enums"]["bb_verification_state"]
@@ -517,13 +691,17 @@ export type Database = {
           embedding?: string | null
           embedding_model?: string | null
           entity_type?: Database["public"]["Enums"]["bb_entity_type"]
+          expected_review_interval_days?: number | null
           id?: string
           last_reviewed_at?: string
           last_reviewed_by?: string | null
+          last_used_at?: string | null
           notes?: string | null
           payload?: Json
           search_text?: string | null
           source_refs?: Json
+          stale_reasons?: string[]
+          stale_state?: string
           superseded_by?: string | null
           updated_at?: string
           verification_state?: Database["public"]["Enums"]["bb_verification_state"]
