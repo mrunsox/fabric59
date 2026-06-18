@@ -26,6 +26,13 @@ export const BB_EVENT_TYPES = [
   "bb_search_result_marked",
   "bb_search_reindex_started",
   "bb_embed_run_completed",
+  // Phase 4 — Live runner assist
+  "bb_assist_panel_shown",
+  "bb_assist_card_opened",
+  "bb_assist_card_copied",
+  "bb_assist_card_inserted",
+  "bb_assist_refresh_triggered",
+  "bb_assist_no_results",
 ] as const;
 export type BbEventType = (typeof BB_EVENT_TYPES)[number];
 
@@ -55,6 +62,12 @@ export interface BbEventPayload {
   embedTarget?: "facts" | "chunks" | "both";
   embedded?: number;
   failed?: number;
+  // Phase 4 — Live runner assist (structure only; never raw text)
+  campaignId?: string;
+  stepKind?: string;
+  cardKind?: string;
+  cardCount?: number;
+  reason?: string;
 }
 
 const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
@@ -81,6 +94,11 @@ const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
   "embedTarget",
   "embedded",
   "failed",
+  "campaignId",
+  "stepKind",
+  "cardKind",
+  "cardCount",
+  "reason",
 ]);
 
 function sanitize(p: BbEventPayload): Record<string, unknown> {

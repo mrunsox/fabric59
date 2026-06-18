@@ -299,3 +299,69 @@ or fact payloads. Only structural metadata and interaction signals.
 ASC changes, live assist, transcript ingest, auto-learning, contradiction
 detection, URL crawl execution, cross-workspace search, ranking learned
 from feedback.
+
+---
+
+## Phase 4 — Live Runner Assist
+
+Adds a read-only assist panel to the live call runner that surfaces 0–5
+ranked approved-knowledge cards based on the active session context.
+Strictly additive: when the BB flag is off, the runner behaves identically
+to before; no panel, no network calls, no telemetry.
+
+### Surface
+- `useBusinessBrainAssist(meta, session, flow, clientId?)` — runner hook
+- `BbAssistPanel` — RightStack item in `LiveCallRunnerPage`
+- `assistContext` (pure) — derives `{ stepKind, serviceHints, destinationHints, afterHours, hasContext }`
+- `assistRanker` (pure) — scores facts; emits `BbAssistCard[]`
+- `getAssistFactsForSession` — bridge selector returning approved facts only
+
+### Ranking spec (approved scope)
+1. **Step relevance** — per `(stepKind, entityType)` table; after-hours
+   boost lifts `hours` / `escalation_contact` regardless of step.
+2. **Entity / service match** — substring match against `serviceHints` /
+   `destinationHints` taken from session values.
+3. **Confidence** — `confidence_at_review` (default 0.9 when null).
+4. **Recency** — `last_reviewed_at`.
+
+### Quiet-mode rules
+- `minStepRelevance = 30`, `minConfidence = 0.4`, hard cap = 5.
+- Weak context (no step + no hints + not after-hours) → cap = 2.
+- Empty state is normal and expected; the panel shows a deep link to
+  Business Brain instead.
+
+### Interaction contract (read-only)
+- Mounting the panel never mutates ASC, canonical, or runner state.
+- **Insert into notes** — APPEND-only, formatted as
+  `[Business Brain · {kind}] {title}\n  {action}` so it's clearly
+  attributable to assist. Wired through the runner's existing
+  `appendToNotes` helper; no new reducer paths.
+- **Copy** — writes the privacy-safe action line to the clipboard.
+- **Open** — deep links to the fact (`/w/:wid/brain/approved?fact=:id`)
+  or source (`/w/:wid/brain/bin?source=:id`) detail view in a new tab.
+
+### Telemetry (added to `platform_events`)
+- `bb_assist_panel_shown` { workspaceId, campaignId, stepKind, cardCount }
+- `bb_assist_card_opened` { ...stepKind, cardKind, entityType, factId }
+- `bb_assist_card_copied` { ...stepKind, cardKind, entityType, factId }
+- `bb_assist_card_inserted` { ...stepKind, cardKind, entityType, factId }
+- `bb_assist_refresh_triggered` { workspaceId, campaignId, stepKind }
+- `bb_assist_no_results` { workspaceId, campaignId, stepKind, reason }
+
+**Privacy invariant** (enforced by sanitizer allowlist + regression):
+never log copied text, inserted text, snippets, source titles, fact
+payloads, or note content. Structural metadata and ids only.
+
+### Invariants
+- ASC must not import any assist surface — enforced by
+  `bbAssistBoundary.test.ts`.
+- The panel renders nothing when `enabled === false`.
+- Insert is append-only and clearly attributed — enforced by
+  `bbAssistPanel.test.tsx`.
+- Ranker excludes `needs_review` and `stale` facts; runner assist is
+  approved-only.
+
+### Out of scope (deferred)
+Transcript ingestion, auto-summarization, contradiction detection, gap
+detection, feedback-trained ranking, cross-workspace assist, any
+canonical schema changes, any new reducer write paths.

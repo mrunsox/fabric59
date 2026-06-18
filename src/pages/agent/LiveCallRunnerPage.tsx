@@ -39,6 +39,8 @@ import type { CallSessionMeta } from "@/types/call-runner";
 import { DraggableStack, type DraggableStackItem } from "@/components/call-runner/DraggableStack";
 import { useRunnerCardOrder } from "@/hooks/useRunnerCardOrder";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBusinessBrainAssist } from "@/hooks/useBusinessBrainAssist";
+import { BbAssistPanel } from "@/components/call-runner/BbAssistPanel";
 
 /**
  * Canonical live call runner.
@@ -99,6 +101,15 @@ function LiveCallRunnerInner() {
     session: session.session,
     flow: flow ?? null,
     guide: guide ?? null,
+  });
+
+  // Phase 4 — Business Brain live assist (read-only, additive). Renders only
+  // when the workspace flag is enabled; otherwise the panel is omitted from
+  // the RightStack and the runner behaves identically to before.
+  const bbAssist = useBusinessBrainAssist({
+    meta,
+    session: session.session,
+    flow: flow ?? null,
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -384,8 +395,32 @@ function LiveCallRunnerInner() {
                 />
               ),
             },
+            ...(bbAssist.enabled
+              ? [
+                  {
+                    id: "bb-assist",
+                    label: "Knowledge assist",
+                    node: (
+                      <BbAssistPanel
+                        enabled={bbAssist.enabled}
+                        isLoading={bbAssist.isLoading}
+                        cards={bbAssist.cards}
+                        isEmpty={bbAssist.isEmpty}
+                        workspaceId={workspaceId ?? ""}
+                        campaignId={campaignId ?? ""}
+                        organizationId={null}
+                        stepKind={bbAssist.context?.stepKind ?? null}
+                        onRefresh={bbAssist.refresh}
+                        onInsertIntoNotes={appendToNotes}
+                        lastRefreshedAt={bbAssist.lastRefreshedAt}
+                      />
+                    ),
+                  } satisfies DraggableStackItem,
+                ]
+              : []),
           ]}
         />
+
 
       </div>
       <ShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />

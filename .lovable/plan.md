@@ -115,3 +115,19 @@ Approved scope:
 - Tests: selectors view-model, source card render+interactions, telemetry sanitizer, ASC↔retrieval boundary.
 
 Out of scope for Phase 3: ASC changes, live assist, transcript ingest, auto-learning, contradiction detection, URL crawl execution, cross-workspace search, ranking learned from feedback.
+
+## Business Brain Phase 4 — Live Runner Assist (shipped)
+
+Approved scope:
+- Read-only assist panel in the live call runner; appended as the 5th RightStack item; omitted entirely when the BB flag is off.
+- Pure context builder (`assistContext.ts`) and pure ranker (`assistRanker.ts`) — both fully unit-tested.
+- Bridge selector `getAssistFactsForSession` returns approved-only facts (`needs_review` and `stale` excluded for runner).
+- Ranking spec: step relevance → entity/service match → confidence → recency. After-hours boost for `hours` / `escalation_contact`.
+- Quiet-mode rules: thresholds (`minStepRelevance=30`, `minConfidence=0.4`); weak context capped to 2 cards.
+- Deep links: `/w/:wid/brain/approved?fact=:id` (fact) and `/w/:wid/brain/bin?source=:id` (source), opened in a new tab.
+- Insert into notes is append-only and clearly attributed: `[Business Brain · {kind}] {title}\n  {action}`. Wired through existing `appendToNotes` — no new reducer paths.
+- Copy is explicit; clipboard receives the privacy-safe action line only.
+- 6 telemetry events added (panel shown / card opened / copied / inserted / refresh / no-results); sanitizer allowlist extended.
+- 21 new tests passing: context, ranker, panel invariants, telemetry privacy, ASC↔assist boundary.
+
+Out of scope for Phase 4: transcript ingestion, ASC changes, auto-summarization, contradiction detection, gap detection, feedback-trained ranking, cross-workspace assist, any canonical schema changes, any new reducer write paths.

@@ -589,3 +589,67 @@ export async function triggerBbBackfill(
     failed: (r.facts?.failed ?? 0) + (r.chunks?.failed ?? 0),
   };
 }
+
+// ────────────────────────────────────────────────────────────────────────
+// Phase 4 — Live Runner Assist
+//
+// Bridge entry for the live call runner. Returns approved facts the assist
+// ranker can score against. Read-only — never mutates anything. The runner
+// is the ONLY downstream that may import this selector; ASC must not.
+// ────────────────────────────────────────────────────────────────────────
+
+const ASSIST_ENTITY_TYPES: BbEntityType[] = [
+  "faq",
+  "service",
+  "intake_requirement",
+  "hours",
+  "escalation_contact",
+  "phone",
+  "destination_contact",
+  "policy",
+];
+
+export interface BbAssistFactsInput {
+  workspaceId: string;
+  clientId?: string | null;
+  limit?: number;
+}
+
+/**
+ * Approved-only facts for the runtime assist surface. Excludes
+ * `needs_review` and `stale`. Caller (ranker) applies relevance + thresholds.
+ */
+export async function getAssistFactsForSession(
+  input: BbAssistFactsInput,
+): Promise<ApprovedFactView[]> {
+  if (!input.workspaceId) return [];
+  const facts = await listApprovedFacts({
+    workspaceId: input.workspaceId,
+    clientId: input.clientId === undefined ? undefined : input.clientId,
+    entityType: ASSIST_ENTITY_TYPES,
+    limit: input.limit ?? 80,
+  });
+  return facts.filter((f) => f.verificationState === "approved");
+}
+
+/**
+ * Deep link to the approved fact within the Business Brain UI. The page
+ * may scroll/highlight the fact when it reads `?fact=<id>`.
+ */
+export function buildBbFactDeepLink(workspaceId: string, factId: string): string {
+  if (!workspaceId || !factId) return "";
+  return `/w/${workspaceId}/brain/approved?fact=${encodeURIComponent(factId)}`;
+}
+
+/**
+ * Deep link to the source artifact behind a fact (when sourceId is known).
+ * Falls back to the approved-knowledge view when no source is available.
+ */
+export function buildBbSourceDeepLink(
+  workspaceId: string,
+  sourceId: string | null,
+): string {
+  if (!workspaceId) return "";
+  if (!sourceId) return `/w/${workspaceId}/brain/approved`;
+  return `/w/${workspaceId}/brain/bin?source=${encodeURIComponent(sourceId)}`;
+}
