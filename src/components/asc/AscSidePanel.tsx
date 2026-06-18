@@ -3,29 +3,125 @@
  *
  * Slice 4 wires the Unresolved tab to the advisory gap-finder items for the
  * current step. Gap items are advisory only and never gate navigation.
+ *
+ * Phase 2 (Business Brain): adds a "Knowledge" tab that surfaces approved
+ * Business Brain facts as read-only suggestions on Steps 3/4/6/7. Suggestions
+ * only mutate the draft when the user clicks Use, via the parent-provided
+ * `onApplyBbIntent` callback that dispatches existing ASC actions.
  */
+import { useContext } from "react";
+import { QueryClientContext } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Dispatch } from "react";
 import type { AscDraft } from "@/lib/asc/types";
 import type { AscAction } from "@/lib/asc/actions";
 import { AscGapItemsList } from "./AscGapItemsList";
+import { BbSuggestionTray } from "./BbSuggestionTray";
+import { useBusinessBrainSuggestions } from "@/hooks/useBusinessBrainSuggestions";
+import { selectIsReadOnly } from "@/lib/asc/selectors";
+import type { BbAscApplyIntent, BbAscSuggestion } from "@/lib/business-brain/selectors";
 
 export interface AscSidePanelProps {
   draft: AscDraft;
   dispatch: Dispatch<AscAction>;
+  workspaceId: string;
+  organizationId?: string | null;
+  /** Parent maps a BB intent → existing ASC reducer dispatch. */
+  onApplyBbIntent: (intent: BbAscApplyIntent, suggestion: BbAscSuggestion) => void;
 }
 
-export function AscSidePanel({ draft, dispatch }: AscSidePanelProps) {
+const BB_STEPS: ReadonlySet<number> = new Set([3, 4, 6, 7]);
+
+/**
+ * Internal: only mounted when a `QueryClientProvider` is in scope. Owns the
+ * BB suggestions hook + tray rendering.
+ */
+function BbKnowledgePanel({
+  draft,
+  workspaceId,
+  organizationId,
+  isReadOnly,
+  isBbStep,
+  onApplyBbIntent,
+}: {
+  draft: AscDraft;
+  workspaceId: string;
+  organizationId: string | null;
+  isReadOnly: boolean;
+  isBbStep: boolean;
+  onApplyBbIntent: (intent: BbAscApplyIntent, suggestion: BbAscSuggestion) => void;
+}) {
+  const callerReasonLabels = draft.input.callerReasons.map((r) => r.label);
+  const notificationTriggers = (draft.input.notificationsDraftEdits ?? []).map(
+    (n) => n.trigger,
+  );
+  const bb = useBusinessBrainSuggestions({
+    workspaceId,
+    step: draft.step,
+    ascDraftId: draft.id,
+    isReadOnly,
+    existingCallerReasonLabels: callerReasonLabels,
+    hasCallerReason: callerReasonLabels.length > 0,
+    existingNotificationTriggers: notificationTriggers,
+    hasDestination: Boolean(draft.input.destination),
+  });
+  if (!bb.enabled) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Business Brain is not enabled for this workspace, or this step does
+        not consume approved knowledge.
+      </p>
+    );
+  }
+  if (!isBbStep) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Knowledge suggestions are surfaced on Steps 3, 4, 6, and 7.
+      </p>
+    );
+  }
+  if (bb.isLoading) {
+    return <p className="text-xs text-muted-foreground">Loading…</p>;
+  }
+  return (
+    <BbSuggestionTray
+      workspaceId={workspaceId}
+      ascDraftId={draft.id}
+      organizationId={organizationId}
+      step={draft.step}
+      isReadOnly={isReadOnly}
+      suggestions={bb.suggestions}
+      onApply={onApplyBbIntent}
+    />
+  );
+}
+
+export function AscSidePanel({
+  draft,
+  dispatch,
+  workspaceId,
+  organizationId = null,
+  onApplyBbIntent,
+}: AscSidePanelProps) {
   const step = draft.step;
   const isGapStep = step === 3 || step === 4;
+  const isBbStep = BB_STEPS.has(step);
+  const isReadOnly = selectIsReadOnly(draft);
+  // Defensive: tests that mount the side panel without a QueryClientProvider
+  // should see the empty state, not a crash.
+  const hasQueryClient = Boolean(useContext(QueryClientContext));
+
   return (
     <aside
       data-testid="asc-side-panel"
       className="flex h-full flex-col border-l bg-card/40"
     >
       <Tabs defaultValue="unresolved" className="flex flex-col">
-        <TabsList className="m-2 grid grid-cols-4">
+        <TabsList className="m-2 grid grid-cols-5">
           <TabsTrigger value="unresolved">Unresolved</TabsTrigger>
+          <TabsTrigger value="knowledge" data-testid="asc-side-tab-knowledge">
+            Knowledge
+          </TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
           <TabsTrigger value="rationale">Why</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
@@ -41,6 +137,22 @@ export function AscSidePanel({ draft, dispatch }: AscSidePanelProps) {
             <p className="text-xs text-muted-foreground">
               Recommendations appear here on Steps 3–4. They are advisory and
               never block navigation.
+            </p>
+          )}
+        </TabsContent>
+        <TabsContent value="knowledge" className="p-4">
+          {hasQueryClient ? (
+            <BbKnowledgePanel
+              draft={draft}
+              workspaceId={workspaceId}
+              organizationId={organizationId}
+              isReadOnly={isReadOnly}
+              isBbStep={isBbStep}
+              onApplyBbIntent={onApplyBbIntent}
+            />
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Knowledge suggestions are unavailable in this view.
             </p>
           )}
         </TabsContent>

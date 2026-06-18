@@ -25,7 +25,9 @@ const CONSUMER_DIRS = [
 ];
 
 const FORBIDDEN_PATTERNS = [
-  /@\/hooks\/useBusinessBrain/,
+  // Match `@/hooks/useBusinessBrain"` or `@/hooks/useBusinessBrain'` only —
+  // `useBusinessBrainSuggestions` is the Phase 2 bridge hook and is allowed.
+  /@\/hooks\/useBusinessBrain['"]/,
   /@\/pages\/workspace\/brain/,
   /@\/lib\/business-brain\/types/,
   /@\/lib\/business-brain\/entitySchemas/,
@@ -52,13 +54,29 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+// Phase 2 — explicit bridge consumers that are PERMITTED to import
+// `@/lib/business-brain/telemetry` and `@/lib/business-brain/flagResolver`
+// because they form the bridge surface itself. They still must NOT import
+// raw types, hooks, schemas, or DB modules.
+const BRIDGE_FILES_ALLOWED = new Set<string>([
+  "src/components/asc/BbSuggestionTray.tsx",
+]);
+
 describe("Business Brain — bridge boundary", () => {
   it("downstream consumer modules import only from @/lib/business-brain/selectors", () => {
     const offenders: string[] = [];
     for (const dir of CONSUMER_DIRS) {
       for (const file of walk(dir)) {
         const src = readFileSync(join(ROOT, file), "utf8");
+        const isBridgeFile = BRIDGE_FILES_ALLOWED.has(file);
         for (const pat of FORBIDDEN_PATTERNS) {
+          // Bridge files may import telemetry/flagResolver only.
+          if (
+            isBridgeFile &&
+            (pat.source.includes("telemetry") || pat.source.includes("flagResolver"))
+          ) {
+            continue;
+          }
           if (pat.test(src)) {
             offenders.push(`${file} :: ${pat}`);
           }

@@ -205,3 +205,41 @@ Failures swallow silently and never block UX.
 - Vertical-specific schemas.
 
 These are reserved for later phases tracked in `.lovable/plan.md`.
+
+## Phase 2 — ASC Advisory Integration
+
+Read-only bridge from approved Business Brain facts into the ASC wizard.
+
+### Surface
+- **Bridge module**: `src/lib/business-brain/selectors.ts` — `listApprovedFacts`, `getFactSourceRefs`, and per-step builders (`buildCallerReasonSuggestions`, `buildIntakeRequirementSuggestions`, `buildEscalationSuggestions`, `buildDestinationSuggestions`).
+- **Hook**: `useBusinessBrainSuggestions({ workspaceId, step, ascDraftId, isReadOnly, ... })` returns `{ enabled, isLoading, isError, suggestions }`. Defensively no-ops when QueryClient or AuthProvider is absent.
+- **UI**: `BbSuggestionTray` rendered inside the ASC side panel's new "Knowledge" tab.
+
+### Step mapping (per scope guards)
+| Step | Body | Entities | Action dispatched |
+|------|------|----------|-------------------|
+| 3 | Caller types | `faq`, `service` | `ADD_CALLER_REASON` |
+| 4 | Handling | `intake_requirement` | `UPDATE_CALLER_REASON` (appends to first reason's `requiredCapture`; hidden if no caller reasons) |
+| 6 | Notifications | `hours`, `escalation_contact` | `ADD_NOTIFICATION_EDIT` |
+| 7 | Destination | `phone`, `destination_contact` | `SET_DESTINATION` (deep_link) |
+
+Step 8 metadata enrichment was deferred: no existing ASC action accepts opaque citation metadata, and per scope guards there is no clipboard fallback.
+
+### Ranking & cap
+Suggestions are ranked by (1) static per-(step,entity) relevance, (2) `confidence_at_review`, (3) `last_reviewed_at`. Capped at 5 cards per step.
+
+### Telemetry (added to `platform_events`)
+- `bb_asc_suggestions_loaded` { ascDraftId, step, count }
+- `bb_asc_suggestion_used` { ascDraftId, step, factId, entityType }
+- `bb_asc_suggestion_dismissed` { ascDraftId, step, factId, entityType }
+- `bb_asc_suggestion_hidden_forked` { ascDraftId, step }
+
+### Invariants
+- ASC code imports only `@/lib/business-brain/selectors`; `BbSuggestionTray` and `useBusinessBrainSuggestions` are explicit bridge consumers permitted to import telemetry/flagResolver (allowlisted in `bbBridgeBoundary.test.ts`).
+- No new ASC reducer action types were added.
+- Post-fork drafts (`selectIsReadOnly`) suppress the tray and emit `bb_asc_suggestion_hidden_forked` once.
+- `Use` is the only mutation path; render and dismiss never dispatch.
+- When the feature flag is off, the hook is disabled and no telemetry fires.
+
+### Out of scope (deferred)
+Step 8 citations, retrieval/embeddings, URL crawl execution, live assist, transcript ingest, gap/contradiction detection, vertical skins, auto-apply, canonical writes.

@@ -15,6 +15,11 @@ export const BB_EVENT_TYPES = [
   "bb_fact_rejected",
   "bb_fact_edited",
   "bb_fact_merged",
+  // Phase 2 — ASC advisory integration
+  "bb_asc_suggestions_loaded",
+  "bb_asc_suggestion_used",
+  "bb_asc_suggestion_dismissed",
+  "bb_asc_suggestion_hidden_forked",
 ] as const;
 export type BbEventType = (typeof BB_EVENT_TYPES)[number];
 
@@ -28,6 +33,9 @@ export interface BbEventPayload {
   outcome?: "ok" | "fail";
   errorCode?: string;
   count?: number;
+  // Phase 2
+  ascDraftId?: string;
+  step?: number;
 }
 
 const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
@@ -40,6 +48,8 @@ const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
   "outcome",
   "errorCode",
   "count",
+  "ascDraftId",
+  "step",
 ]);
 
 function sanitize(p: BbEventPayload): Record<string, unknown> {

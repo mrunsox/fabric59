@@ -22,6 +22,12 @@ export interface AscWizardShellProps {
   onBack: () => void;
   onContinue: () => void;
   onHandoffToManual: () => string;
+  /** Maps a Business Brain suggestion → existing ASC action dispatch. */
+  onApplyBbIntent: (
+    intent: import("@/lib/business-brain/selectors").BbAscApplyIntent,
+    suggestion: import("@/lib/business-brain/selectors").BbAscSuggestion,
+  ) => void;
+  organizationId?: string | null;
   children: ReactNode;
 }
 
@@ -53,6 +59,8 @@ export function AscWizardShell({
   onBack,
   onContinue,
   onHandoffToManual,
+  onApplyBbIntent,
+  organizationId = null,
   children,
 }: AscWizardShellProps) {
   const canContinue = selectCanContinue(draft, draft.step);
@@ -121,7 +129,13 @@ export function AscWizardShell({
         <main className="overflow-y-auto p-6" data-testid="asc-step-body">
           {children}
         </main>
-        <AscSidePanel draft={draft} dispatch={dispatch} />
+        <AscSidePanel
+          draft={draft}
+          dispatch={dispatch}
+          workspaceId={workspaceId}
+          organizationId={organizationId}
+          onApplyBbIntent={onApplyBbIntent}
+        />
       </div>
 
       <AscFooterNav

@@ -19,6 +19,10 @@ import { ASC_TOTAL_STEPS } from "@/lib/asc/types";
 import { selectCanFork, selectIsForked, selectIsReadOnly } from "@/lib/asc/selectors";
 import { forkToCanonical } from "@/lib/asc/reducer";
 import { emitAscEvent } from "@/lib/asc/telemetry";
+import type {
+  BbAscApplyIntent,
+  BbAscSuggestion,
+} from "@/lib/business-brain/selectors";
 
 import {
   AscStepBusiness,
@@ -162,6 +166,85 @@ export default function AscWizardPage() {
       },
     });
   }, [draft, dispatch, navigate, workspaceId, user?.id, orgId]);
+  /**
+   * Phase 2 — Business Brain → ASC apply bridge.
+   *
+   * Maps a `BbAscApplyIntent` from the side panel's suggestion tray into an
+   * existing ASC reducer action. NO new action types may be added here.
+   * Intents that don't have a clean mapping are filtered out upstream in the
+   * selector layer (no clipboard fallback).
+   */
+  const applyBbIntent = useCallback(
+    (intent: BbAscApplyIntent, _suggestion: BbAscSuggestion) => {
+      if (selectIsReadOnly(draft)) return;
+      const nextId = (): string =>
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? (crypto as Crypto).randomUUID()
+          : `bb_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      const mergeUnique = (a: string[], b: string[]): string[] => {
+        const seen = new Set(a.map((s) => s.toLowerCase().trim()));
+        const out = [...a];
+        for (const v of b) {
+          const k = v.toLowerCase().trim();
+          if (!k || seen.has(k)) continue;
+          seen.add(k);
+          out.push(v);
+        }
+        return out;
+      };
+      switch (intent.kind) {
+        case "addCallerReason": {
+          dispatch({
+            type: "ADD_CALLER_REASON",
+            reason: {
+              id: nextId(),
+              label: intent.label,
+              requiredCapture: intent.requiredCapture ?? [],
+              opener: intent.opener,
+            },
+          });
+          return;
+        }
+        case "appendRequiredCaptureToFirstReason": {
+          const first = draft.input.callerReasons[0];
+          if (!first) return;
+          const merged = mergeUnique(first.requiredCapture ?? [], intent.fields);
+          dispatch({
+            type: "UPDATE_CALLER_REASON",
+            id: first.id,
+            patch: { requiredCapture: merged },
+          });
+          return;
+        }
+        case "addNotificationEdit": {
+          dispatch({
+            type: "ADD_NOTIFICATION_EDIT",
+            notification: {
+              id: nextId(),
+              trigger: intent.trigger,
+              channel: intent.channel,
+              note: intent.note,
+            },
+          });
+          return;
+        }
+        case "setDestinationDeepLink": {
+          dispatch({
+            type: "SET_DESTINATION",
+            destination: {
+              kind: "deep_link",
+              deepLinkTemplate: intent.deepLinkTemplate,
+              notes: intent.notes,
+              openMode: "new_tab",
+            },
+          });
+          return;
+        }
+      }
+    },
+    [dispatch, draft],
+  );
+
 
   // Flag off → bounce out to manual without flashing wizard UI.
   if (!flag.enabled) {
@@ -208,6 +291,8 @@ export default function AscWizardPage() {
       onBack={handleBack}
       onContinue={handleContinue}
       onHandoffToManual={() => handoffToManual(workspaceId)}
+      onApplyBbIntent={applyBbIntent}
+      organizationId={orgId}
     >
 
       {body}
