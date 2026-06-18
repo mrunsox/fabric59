@@ -166,6 +166,70 @@ export default function AscWizardPage() {
       },
     });
   }, [draft, dispatch, navigate, workspaceId, user?.id, orgId]);
+  /**
+   * Phase 2 — Business Brain → ASC apply bridge.
+   *
+   * Maps a `BbAscApplyIntent` from the side panel's suggestion tray into an
+   * existing ASC reducer action. NO new action types may be added here.
+   * Intents that don't have a clean mapping are filtered out upstream in the
+   * selector layer (no clipboard fallback).
+   */
+  const applyBbIntent = useCallback(
+    (intent: BbAscApplyIntent, _suggestion: BbAscSuggestion) => {
+      if (isReadOnlyMaybe(draft)) return;
+      switch (intent.kind) {
+        case "addCallerReason": {
+          dispatch({
+            type: "ADD_CALLER_REASON",
+            reason: {
+              id: cryptoRandomId(),
+              label: intent.label,
+              requiredCapture: intent.requiredCapture ?? [],
+              opener: intent.opener,
+            },
+          });
+          return;
+        }
+        case "appendRequiredCaptureToFirstReason": {
+          const first = draft.input.callerReasons[0];
+          if (!first) return;
+          const merged = mergeUnique(first.requiredCapture ?? [], intent.fields);
+          dispatch({
+            type: "UPDATE_CALLER_REASON",
+            id: first.id,
+            patch: { requiredCapture: merged },
+          });
+          return;
+        }
+        case "addNotificationEdit": {
+          dispatch({
+            type: "ADD_NOTIFICATION_EDIT",
+            notification: {
+              id: cryptoRandomId(),
+              trigger: intent.trigger,
+              channel: intent.channel,
+              note: intent.note,
+            },
+          });
+          return;
+        }
+        case "setDestinationDeepLink": {
+          dispatch({
+            type: "SET_DESTINATION",
+            destination: {
+              kind: "deep_link",
+              deepLinkTemplate: intent.deepLinkTemplate,
+              notes: intent.notes,
+              openMode: "new_tab",
+            },
+          });
+          return;
+        }
+      }
+    },
+    [dispatch, draft],
+  );
+
 
   // Flag off → bounce out to manual without flashing wizard UI.
   if (!flag.enabled) {
