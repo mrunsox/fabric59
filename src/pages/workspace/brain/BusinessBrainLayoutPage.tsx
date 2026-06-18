@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useParams } from "react-router-dom";
-import { Inbox, ListChecks, CheckCircle2 } from "lucide-react";
+import { Inbox, ListChecks, CheckCircle2, Search } from "lucide-react";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { useBusinessBrainFlag } from "@/lib/business-brain/flagResolver";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,7 @@ export default function BusinessBrainLayoutPage() {
     { to: base, label: "Knowledge Bin", icon: Inbox, end: true },
     { to: `${base}/suggested`, label: "Suggested Facts", icon: ListChecks },
     { to: `${base}/approved`, label: "Approved Knowledge", icon: CheckCircle2 },
+    { to: `${base}/search`, label: "Search", icon: Search },
   ];
 
   return (
