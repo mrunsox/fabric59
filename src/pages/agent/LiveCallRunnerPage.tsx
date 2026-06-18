@@ -395,8 +395,32 @@ function LiveCallRunnerInner() {
                 />
               ),
             },
+            ...(bbAssist.enabled
+              ? [
+                  {
+                    id: "bb-assist",
+                    label: "Knowledge assist",
+                    node: (
+                      <BbAssistPanel
+                        enabled={bbAssist.enabled}
+                        isLoading={bbAssist.isLoading}
+                        cards={bbAssist.cards}
+                        isEmpty={bbAssist.isEmpty}
+                        workspaceId={workspaceId ?? ""}
+                        campaignId={campaignId ?? ""}
+                        organizationId={null}
+                        stepKind={bbAssist.context?.stepKind ?? null}
+                        onRefresh={bbAssist.refresh}
+                        onInsertIntoNotes={appendToNotes}
+                        lastRefreshedAt={bbAssist.lastRefreshedAt}
+                      />
+                    ),
+                  } satisfies DraggableStackItem,
+                ]
+              : []),
           ]}
         />
+
 
       </div>
       <ShortcutsHelp open={showHelp} onOpenChange={setShowHelp} />
