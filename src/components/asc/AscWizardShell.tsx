@@ -27,6 +27,7 @@ export interface AscWizardShellProps {
     intent: import("@/lib/business-brain/selectors").BbAscApplyIntent,
     suggestion: import("@/lib/business-brain/selectors").BbAscSuggestion,
   ) => void;
+  organizationId?: string | null;
   children: ReactNode;
 }
 
@@ -59,6 +60,7 @@ export function AscWizardShell({
   onContinue,
   onHandoffToManual,
   onApplyBbIntent,
+  organizationId = null,
   children,
 }: AscWizardShellProps) {
   const canContinue = selectCanContinue(draft, draft.step);
