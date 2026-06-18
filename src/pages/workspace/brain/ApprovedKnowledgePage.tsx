@@ -162,12 +162,32 @@ export default function ApprovedKnowledgePage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-semibold">Approved knowledge</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Approved knowledge</h2>
+            {verticalQuery.data ? (
+              <Badge variant="secondary" className="bg-sky-100 text-sky-900">
+                <Layers className="mr-1 h-3 w-3" />
+                Vertical: {verticalQuery.data.label}
+              </Badge>
+            ) : null}
+          </div>
           <p className="text-sm text-muted-foreground">
             Governed business memory. Every fact is reviewer-approved and source-backed.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {verticalQuery.data ? (
+            <Button
+              size="sm"
+              variant={hasGapsOnly ? "default" : "outline"}
+              onClick={() => setHasGapsOnly((v) => !v)}
+            >
+              <AlertCircle className="mr-1 h-3.5 w-3.5" /> Has gaps
+              {gapsByFactId.size > 0 ? (
+                <span className="ml-1 text-xs">({gapsByFactId.size})</span>
+              ) : null}
+            </Button>
+          ) : null}
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
