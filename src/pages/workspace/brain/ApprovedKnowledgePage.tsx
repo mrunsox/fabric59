@@ -26,7 +26,12 @@ import {
 } from "@/hooks/useBusinessBrain";
 import { ENTITY_LABEL } from "@/lib/business-brain/entitySchemas";
 import { BB_ENTITY_TYPES } from "@/lib/business-brain/types";
-import type { BbEntityType } from "@/lib/business-brain/types";
+import type { BbEntityType, BbStaleState } from "@/lib/business-brain/types";
+import { AlertTriangle, Clock, Activity } from "lucide-react";
+import BbStaleFactDrawer from "@/components/business-brain/BbStaleFactDrawer";
+import { useQueryClient } from "@tanstack/react-query";
+import { listStaleFacts, type StaleFactView } from "@/lib/business-brain/selectors";
+import { useEffect } from "react";
 
 type DateRange = "all" | "7" | "30" | "90";
 
