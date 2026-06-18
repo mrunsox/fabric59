@@ -52,6 +52,14 @@ function withinDateRange(iso: string, range: DateRange): boolean {
   return new Date(iso).getTime() >= cutoff;
 }
 
+type StaleFilter = "all" | "fresh" | "stale_due_to_age" | "stale_due_to_usage" | "stale_due_to_conflict";
+
+const STALE_BADGE: Record<string, { label: string; cls: string; icon: typeof Clock }> = {
+  stale_due_to_age: { label: "Stale (age)", cls: "bg-amber-100 text-amber-900", icon: Clock },
+  stale_due_to_usage: { label: "Stale (usage)", cls: "bg-amber-100 text-amber-900", icon: Activity },
+  stale_due_to_conflict: { label: "Conflict", cls: "bg-rose-100 text-rose-900", icon: AlertTriangle },
+};
+
 export default function ApprovedKnowledgePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { data: facts = [], isLoading } = useBbFacts(workspaceId ?? null);
@@ -59,7 +67,10 @@ export default function ApprovedKnowledgePage() {
   const [filter, setFilter] = useState<"all" | BbEntityType>("all");
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<DateRange>("all");
+  const [staleFilter, setStaleFilter] = useState<StaleFilter>("all");
   const [drawerFact, setDrawerFact] = useState<BbFactRow | null>(null);
+  const [staleDrawer, setStaleDrawer] = useState<StaleFactView | null>(null);
+  const qc = useQueryClient();
 
   const sourceMap = useMemo(() => {
     const m = new Map<string, { title: string; created_at: string }>();
@@ -73,13 +84,15 @@ export default function ApprovedKnowledgePage() {
       if (f.verification_state === "stale") return false;
       if (filter !== "all" && f.entity_type !== filter) return false;
       if (!withinDateRange(f.last_reviewed_at, range)) return false;
+      const ss = (f.stale_state as BbStaleState | undefined) ?? "fresh";
+      if (staleFilter !== "all" && ss !== staleFilter) return false;
       if (term) {
         const hay = `${f.display_name} ${f.canonical_key}`.toLowerCase();
         if (!hay.includes(term)) return false;
       }
       return true;
     });
-  }, [facts, filter, search, range]);
+  }, [facts, filter, search, range, staleFilter]);
 
   const grouped = useMemo(() => {
     const out: Record<string, BbFactRow[]> = {};
