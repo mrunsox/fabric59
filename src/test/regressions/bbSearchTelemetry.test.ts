@@ -38,13 +38,11 @@ describe("BB Phase 3 telemetry", () => {
       organizationId: "o1",
       queryLength: 42,
       resultCount: 7,
-      // Intentionally include disallowed keys:
-      ...({
-        query: "raw query text that must never persist",
-        snippet: "raw snippet",
-        payload: { secret: true },
-      } as never),
-    });
+      // Intentionally include disallowed keys via cast:
+      query: "raw query text that must never persist",
+      snippet: "raw snippet",
+      payload: { secret: true },
+    } as unknown as Parameters<typeof emitBbEvent>[1]);
     expect(seen).toHaveLength(1);
     const p = seen[0].payload;
     expect(p.queryLength).toBe(42);
