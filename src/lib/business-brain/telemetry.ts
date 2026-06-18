@@ -111,6 +111,11 @@ export interface BbEventPayload {
   topicsUpdated?: number;
   topicsPruned?: number;
   eventsAssigned?: number;
+  // Phase 8 — Settings & Health
+  actorRole?: string;
+  flag?: string;
+  from?: string | boolean | null;
+  to?: string | boolean | null;
 }
 
 const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
