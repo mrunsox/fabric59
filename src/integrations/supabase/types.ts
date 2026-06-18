@@ -745,6 +745,157 @@ export type Database = {
           },
         ]
       }
+      bb_gap_event_topics: {
+        Row: {
+          created_at: string
+          gap_event_id: string
+          gap_topic_id: string
+          similarity_score: number | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          gap_event_id: string
+          gap_topic_id: string
+          similarity_score?: number | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          gap_event_id?: string
+          gap_topic_id?: string
+          similarity_score?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_gap_event_topics_gap_event_id_fkey"
+            columns: ["gap_event_id"]
+            isOneToOne: false
+            referencedRelation: "bb_gap_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_gap_event_topics_gap_topic_id_fkey"
+            columns: ["gap_topic_id"]
+            isOneToOne: false
+            referencedRelation: "bb_gap_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_gap_events: {
+        Row: {
+          channel: string
+          client_id: string | null
+          context: Json
+          created_at: string
+          id: string
+          normalized_query: string
+          raw_query: string
+          topic_assigned: boolean
+          vertical_profile_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          channel: string
+          client_id?: string | null
+          context?: Json
+          created_at?: string
+          id?: string
+          normalized_query: string
+          raw_query: string
+          topic_assigned?: boolean
+          vertical_profile_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          channel?: string
+          client_id?: string | null
+          context?: Json
+          created_at?: string
+          id?: string
+          normalized_query?: string
+          raw_query?: string
+          topic_assigned?: boolean
+          vertical_profile_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_gap_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_gap_topics: {
+        Row: {
+          acted_by: string | null
+          canonical_question: string
+          canonical_question_hash: string
+          channels: string[]
+          created_at: string
+          entity_type_hint: string | null
+          id: string
+          last_seen_at: string
+          linked_fact_id: string | null
+          open_event_count: number
+          status: string
+          status_reason: string | null
+          updated_at: string
+          vertical_profile_id: string | null
+          vertical_requirement_hint: string | null
+          workspace_id: string
+        }
+        Insert: {
+          acted_by?: string | null
+          canonical_question: string
+          canonical_question_hash: string
+          channels?: string[]
+          created_at?: string
+          entity_type_hint?: string | null
+          id?: string
+          last_seen_at?: string
+          linked_fact_id?: string | null
+          open_event_count?: number
+          status?: string
+          status_reason?: string | null
+          updated_at?: string
+          vertical_profile_id?: string | null
+          vertical_requirement_hint?: string | null
+          workspace_id: string
+        }
+        Update: {
+          acted_by?: string | null
+          canonical_question?: string
+          canonical_question_hash?: string
+          channels?: string[]
+          created_at?: string
+          entity_type_hint?: string | null
+          id?: string
+          last_seen_at?: string
+          linked_fact_id?: string | null
+          open_event_count?: number
+          status?: string
+          status_reason?: string | null
+          updated_at?: string
+          vertical_profile_id?: string | null
+          vertical_requirement_hint?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_gap_topics_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bb_review_events: {
         Row: {
           action: Database["public"]["Enums"]["bb_review_action"]
