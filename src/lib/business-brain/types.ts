@@ -95,3 +95,44 @@ export interface BbSourceRef {
   extraction_id: string | null;
   snippet: string | null;
 }
+
+// ===================================================================
+// Phase 6 — Vertical skins & required-entity schemas (additive)
+// ===================================================================
+
+export type VerticalGapKind = "missing_entity" | "missing_field" | "under_min_count";
+export type VerticalGapStatus = "open" | "resolved" | "suppressed";
+
+export interface VerticalProfile {
+  id: string;
+  slug: string;
+  label: string;
+  description: string | null;
+}
+
+export interface BbVerticalCoverage {
+  workspaceId: string;
+  verticalProfileId: string;
+  entityType: BbEntityType;
+  requiredCount: number;
+  actualCount: number;
+  coverageRatio: number;
+  highPriority: boolean;
+  lastComputedAt: string;
+}
+
+export interface BbVerticalGap {
+  id: string;
+  workspaceId: string;
+  verticalProfileId: string;
+  entityType: BbEntityType;
+  gapKind: VerticalGapKind;
+  factId: string | null;
+  fieldPath: string | null;
+  validationHint: string | null;
+  status: VerticalGapStatus;
+  highPriority: boolean;
+  createdAt: string;
+  resolvedAt: string | null;
+  suppressedAt: string | null;
+}
