@@ -11,9 +11,11 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-const dismissMock = vi.fn(async () => true);
-const suppressMock = vi.fn(async () => true);
-const triggerMock = vi.fn(async () => ({ ok: true }));
+const mocks = vi.hoisted(() => ({
+  dismiss: vi.fn(async () => true),
+  suppress: vi.fn(async () => true),
+  trigger: vi.fn(async () => ({ ok: true })),
+}));
 
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ organization: { id: "org-1" } }),
@@ -36,9 +38,9 @@ vi.mock("@/lib/business-brain/selectors", () => ({
       createdAt: new Date().toISOString(),
     },
   ]),
-  dismissGapTopic: dismissMock,
-  suppressGapTopic: suppressMock,
-  triggerGapClusterRun: triggerMock,
+  dismissGapTopic: mocks.dismiss,
+  suppressGapTopic: mocks.suppress,
+  triggerGapClusterRun: mocks.trigger,
   buildFactDraftLinkFromGap: () => "/w/ws-1/brain/approved?newDraft=1",
 }));
 
@@ -59,9 +61,9 @@ function renderSection() {
 
 describe("bbGapGovernanceUi", () => {
   beforeEach(() => {
-    dismissMock.mockClear();
-    suppressMock.mockClear();
-    triggerMock.mockClear();
+    mocks.dismiss.mockClear();
+    mocks.suppress.mockClear();
+    mocks.trigger.mockClear();
   });
 
   it("renders canonical question + hints and reviewer actions", async () => {
@@ -78,9 +80,9 @@ describe("bbGapGovernanceUi", () => {
     renderSection();
     await waitFor(() => screen.getByText("what are your hours"));
     fireEvent.click(screen.getByRole("button", { name: /Suppress/i }));
-    await waitFor(() => expect(suppressMock).toHaveBeenCalledWith("gt-1"));
+    await waitFor(() => expect(mocks.suppress).toHaveBeenCalledWith("gt-1"));
     fireEvent.click(screen.getByRole("button", { name: /Dismiss/i }));
-    await waitFor(() => expect(dismissMock).toHaveBeenCalledWith("gt-1"));
+    await waitFor(() => expect(mocks.dismiss).toHaveBeenCalledWith("gt-1"));
   });
 
   it("never renders raw query text fields", async () => {
