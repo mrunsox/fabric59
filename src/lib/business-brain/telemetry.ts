@@ -47,6 +47,10 @@ export const BB_EVENT_TYPES = [
   "bb_gap_cluster_run",
   "bb_gap_topic_action",
   "bb_gap_governance_view_opened",
+  // Phase 8 — Settings & Health (ids/types/counts only; no PII)
+  "bb_settings_view_opened",
+  "bb_settings_flag_changed",
+  "bb_health_view_opened",
 ] as const;
 export type BbEventType = (typeof BB_EVENT_TYPES)[number];
 
@@ -107,6 +111,11 @@ export interface BbEventPayload {
   topicsUpdated?: number;
   topicsPruned?: number;
   eventsAssigned?: number;
+  // Phase 8 — Settings & Health
+  actorRole?: string;
+  flag?: string;
+  from?: string | boolean | null;
+  to?: string | boolean | null;
 }
 
 const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
@@ -160,6 +169,10 @@ const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
   "topicsUpdated",
   "topicsPruned",
   "eventsAssigned",
+  "actorRole",
+  "flag",
+  "from",
+  "to",
 ]);
 
 function sanitize(p: BbEventPayload): Record<string, unknown> {

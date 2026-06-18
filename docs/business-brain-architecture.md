@@ -554,3 +554,46 @@ Each call also emits `bb_gap_event_logged` (ids/types/counts only).
 `bbGapBoundary.test.ts` enforces that ASC/runner code never imports the
 governance-side gap selectors or the section component. The logging helper
 is the only allowed crossing.
+
+---
+
+## Bridge API Contract (Phase 8)
+
+The `src/lib/business-brain/bridge/` directory is the **stable, in-app contract**
+for Business Brain consumers. Existing `selectors.ts` re-exports continue to
+work in Phase 8 (backward compatible); new code should import from the bridge.
+
+### Modules
+
+| Module                              | Stable surface                                      | Allowed consumers                |
+| ----------------------------------- | --------------------------------------------------- | -------------------------------- |
+| `bridge/core`                       | `ApprovedFactView`, fact lookups, deep links        | Any Brain consumer (type basis)  |
+| `bridge/asc`                        | `BbAscSuggestion`, per-step `build*Suggestions`     | ASC code **only**                |
+| `bridge/assist`                     | `getAssistFactsForSession`, assist VM types         | Runner / Live Assist **only**    |
+| `bridge/search`                     | `searchApprovedKnowledge`, search VM types          | Brain pages, internal features   |
+| `bridge/governance`                 | Stale / conflict / coverage / gap / topic surfaces  | Brain pages, internal governance |
+
+### Dependency policy
+
+- ASC modules import only from `bridge/asc` (+ `bridge/core` for type primitives).
+- Runner / Live Assist modules import only from `bridge/assist` (+ `bridge/core`).
+- Brain pages may import from any `bridge/*`.
+- **No module outside `src/lib/business-brain/**` or `supabase/functions/**` may
+  query `bb_*` tables directly.** Raw table access stays inside Brain internals.
+- Enforced by `src/test/regressions/bbBridgeContract.test.ts`.
+
+### Examples
+
+```ts
+// ASC step builder
+import { buildEscalationSuggestions } from "@/lib/business-brain/bridge/asc";
+
+// New internal feature using search
+import { searchApprovedKnowledge } from "@/lib/business-brain/bridge/search";
+
+// Internal governance dashboard
+import { listConflicts, listVerticalGaps } from "@/lib/business-brain/bridge/governance";
+```
+
+There is no public REST/GraphQL Business Brain API in this phase — the bridge
+is an internal contract for in-app code only.

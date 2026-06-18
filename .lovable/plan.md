@@ -200,3 +200,36 @@ Shipped.
 - External ticket/transcript ingestion.
 - Real-time clustering (nightly only).
 - ASC / runner UI changes.
+
+---
+
+# Phase 8 — Settings, Health & Stable Bridge
+
+## Status
+
+Shipped.
+
+## What landed
+
+- **Business Brain Settings page** at `/w/:wid/settings/brain` (workspace-admin gated). Per-row controls show effective state, source (`client`/`partner`/`org`/`default`), and editability separately. Writes go to `organizations.integration_configs.features.businessBrain.*`. Confirm dialog when disabling ASC/Assist while approved facts exist. Vertical profile selector writes `bb_workspace_vertical_profiles` and re-runs `bb-evaluate-vertical`. Status summary card distinguishes “No data” from “Failed”.
+- **Brain Health dashboard** at `/w/:wid/brain/health` (workspace admin + master). Usage metrics with 7/30/90d window + previous-window deltas, point-in-time governance counts (conflicts, stale, coverage gaps, demand topics), required-entity coverage table, and ops cards (avg latency for `bb-search`/`bb-embed`, error rate for ingest). Every card renders “No data” vs “Failed” distinctly; no raw query/snippet/note ever leaves the DB.
+- **Bridge submodules** under `src/lib/business-brain/bridge/`: `core`, `asc`, `assist`, `search`, `governance`. They re-export existing selectors so legacy callers keep working (backward compatible) while the bridge becomes the preferred contract.
+- **Telemetry** added: `bb_settings_view_opened`, `bb_settings_flag_changed`, `bb_health_view_opened` (ids/types/counts only).
+- **Tests**: `bbBridgeContract` (ASC/runner stay inside their bridge module + no raw `bb_*` access outside Brain internals + bridge re-exports match selectors), `bbSettingsUi`, `bbHealthUi`.
+- **Docs**: `docs/business-brain-architecture.md` gains a “Bridge API Contract” section.
+
+## Scope guards honored
+
+- Effective state, source, and editability shown separately per flag row.
+- Health cards include 7/30/90d windows with previous-window deltas.
+- Bridge hardening is backward compatible — `selectors.ts` keeps working.
+- “No data” vs “Failed” distinguished across status and health cards.
+- All health/settings metrics are aggregate-only; no raw query text, snippets, notes, or source payloads.
+
+## Out of scope (locked)
+
+- New AI flows, ingestion types, or entity types.
+- ASC / runner UX changes beyond honoring existing flags.
+- Public REST/GraphQL APIs.
+- Billing/pricing logic.
+- New `bb_*` schema (no migrations in this phase).

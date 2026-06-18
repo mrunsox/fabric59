@@ -60,6 +60,8 @@ import SuggestedFactsPage from "@/pages/workspace/brain/SuggestedFactsPage";
 import ApprovedKnowledgePage from "@/pages/workspace/brain/ApprovedKnowledgePage";
 import BrainSearchPage from "@/pages/workspace/brain/BrainSearchPage";
 import BrainGovernancePage from "@/pages/workspace/brain/BrainGovernancePage";
+import BrainHealthPage from "@/pages/workspace/brain/BrainHealthPage";
+import BusinessBrainSettingsPage from "@/pages/workspace/settings/BusinessBrainSettingsPage";
 import WorkspaceAssistantPage from "@/pages/workspace/WorkspaceAssistantPage";
 import WorkspaceSettingsPage from "@/pages/workspace/WorkspaceSettingsPage";
 // Additive workspace-shell route completion (May 13 Canonical Build Doc §4):
@@ -627,9 +629,11 @@ const App = () => (
                   <Route path="approved" element={<ApprovedKnowledgePage />} />
                   <Route path="search" element={<BrainSearchPage />} />
                   <Route path="governance" element={<BrainGovernancePage />} />
+                  <Route path="health" element={<BrainHealthPage />} />
                 </Route>
                 <Route path="assistant" element={<WorkspaceAssistantPage />} />
                 <Route path="settings" element={<WorkspaceSettingsPage />} />
+                <Route path="settings/brain" element={<BusinessBrainSettingsPage />} />
                 {/* Phase B canonical surfaces */}
                 <Route path="dispositions" element={<WorkspaceDispositionsPage />} />
                 <Route path="notifications" element={<WorkspaceNotificationsPage />} />
