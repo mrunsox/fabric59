@@ -33,6 +33,11 @@ export const BB_EVENT_TYPES = [
   "bb_assist_card_inserted",
   "bb_assist_refresh_triggered",
   "bb_assist_no_results",
+  // Phase 5 — Governance loop
+  "bb_fact_marked_reviewed",
+  "bb_fact_marked_needs_update",
+  "bb_conflict_resolved",
+  "bb_governance_view_opened",
 ] as const;
 export type BbEventType = (typeof BB_EVENT_TYPES)[number];
 
@@ -68,6 +73,14 @@ export interface BbEventPayload {
   cardKind?: string;
   cardCount?: number;
   reason?: string;
+  // Phase 5 — Governance (ids + structural only; never raw text/payloads)
+  conflictId?: string;
+  conflictKind?: string;
+  resolution?: "supersede" | "keep_both" | "dismiss";
+  staleStateBefore?: string;
+  staleStateAfter?: string;
+  section?: "stale" | "conflicts";
+  filtersApplied?: number;
 }
 
 const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
@@ -99,6 +112,13 @@ const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
   "cardKind",
   "cardCount",
   "reason",
+  "conflictId",
+  "conflictKind",
+  "resolution",
+  "staleStateBefore",
+  "staleStateAfter",
+  "section",
+  "filtersApplied",
 ]);
 
 function sanitize(p: BbEventPayload): Record<string, unknown> {
