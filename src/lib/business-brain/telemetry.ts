@@ -94,6 +94,11 @@ const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
   "embedTarget",
   "embedded",
   "failed",
+  "campaignId",
+  "stepKind",
+  "cardKind",
+  "cardCount",
+  "reason",
 ]);
 
 function sanitize(p: BbEventPayload): Record<string, unknown> {
