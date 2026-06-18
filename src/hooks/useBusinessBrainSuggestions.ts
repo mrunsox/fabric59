@@ -52,8 +52,17 @@ const SUPPORTED_STEPS: ReadonlySet<number> = new Set([3, 4, 6, 7]);
 export function useBusinessBrainSuggestions(
   input: UseBusinessBrainSuggestionsInput,
 ): UseBusinessBrainSuggestionsResult {
-  const flag = useBusinessBrainFlag();
-  const { organization } = useAuth();
+  let flagEnabled = false;
+  let organizationId: string | null = null;
+  try {
+    // useAuth throws when AuthProvider is missing (some test harnesses).
+    // Treat that as "disabled" rather than crashing the wizard.
+    flagEnabled = useBusinessBrainFlag().enabled;
+    organizationId = useAuth().organization?.id ?? null;
+  } catch {
+    flagEnabled = false;
+    organizationId = null;
+  }
   // Defensive: avoid hard crash in test/render contexts that don't mount a
   // QueryClientProvider. When absent, treat the hook as disabled — the BB
   // tray simply hides itself.
@@ -61,7 +70,7 @@ export function useBusinessBrainSuggestions(
   const stepSupported = SUPPORTED_STEPS.has(input.step);
   const enabled =
     hasQueryClient &&
-    Boolean(flag.enabled) &&
+    flagEnabled &&
     Boolean(input.workspaceId) &&
     !input.isReadOnly &&
     stepSupported;
