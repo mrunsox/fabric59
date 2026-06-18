@@ -243,3 +243,59 @@ Suggestions are ranked by (1) static per-(step,entity) relevance, (2) `confidenc
 
 ### Out of scope (deferred)
 Step 8 citations, retrieval/embeddings, URL crawl execution, live assist, transcript ingest, gap/contradiction detection, vertical skins, auto-apply, canonical writes.
+
+## Phase 3 — Retrieval & Internal Search
+
+Operator-facing semantic + structured retrieval over approved knowledge,
+surfaced inside `/w/:wid/brain/search`. ASC is unchanged in this phase;
+there is no live-call assist, no transcript ingest, no auto-learning, and no
+ranking learned from feedback.
+
+### Surface
+- **DB**: `bb_facts.embedding`, `bb_source_chunks.embedding` (both `vector(1536)`, HNSW cosine), `bb_facts.search_text`, and `bb_search_queries` (privacy-safe operator log).
+- **RPCs** (security definer, workspace-scoped via arg): `bb_search_facts`, `bb_search_chunks`.
+- **Edge functions**: `bb-embed` (post-ingest + post-approve enqueue, admin-gated `mode: "backfill"`), `bb-search` (query the brain).
+- **Bridge**: `searchApprovedKnowledge`, `triggerBbBackfill`, `BbSearchCard` view-models in `selectors.ts`.
+- **UI**: `BrainSearchPage` + reusable `BbSourceCard` (`src/components/business-brain/`).
+
+### Ranking
+Approved facts are the primary ranking spine; orphan chunks appear only
+when no approved fact covers the answer and are de-prioritized by a 0.9
+multiplier. Default corpus is `verification_state = 'approved'`;
+`includeNeedsReview` is an explicit reviewer/admin opt-in.
+
+### Embeddings
+Model: `openai/text-embedding-3-small` (1536 dims) via the Lovable AI
+Gateway `/v1/embeddings` endpoint. Each row stores `embedding_model` so
+future model migrations can re-embed safely. `bb-ingest` and
+`bb-approve-fact` fire a best-effort `enqueue` call to `bb-embed` after
+write; failures never block ingest/approval. The Search tab exposes a
+"Reindex search" button (org owners/admins or master_admin) that runs a
+time-budgeted `backfill` for workspaces with unembedded rows.
+
+### Telemetry (added to `platform_events`)
+- `bb_search_query_submitted` { workspaceId, queryLength, filterCount, resultCount, factCount, chunkCount, latencyMs }
+- `bb_search_result_opened` { workspaceId, hitKind, rank, factId?, entityType? }
+- `bb_search_result_marked` { workspaceId, hitKind, rank, useful, factId?, entityType? }
+- `bb_search_reindex_started` { workspaceId, embedTarget }
+- `bb_embed_run_completed` { workspaceId, embedTarget, embedded, failed, outcome }
+
+Privacy invariant (enforced by the telemetry sanitizer allowlist and a
+regression test): never log raw query text, snippet text, source titles,
+or fact payloads. Only structural metadata and interaction signals.
+
+### Invariants
+- ASC code must not import `searchApprovedKnowledge`, `triggerBbBackfill`,
+  `BbSourceCard`, or `BrainSearchPage` (enforced by
+  `bbSearchAscBoundary.test.ts`).
+- `BbSourceCard` never mutates governed facts; interactions are local
+  (mark useful/not-useful → telemetry only) and do not affect ranking.
+- Search is workspace-scoped at every layer (edge function validates
+  `has_workspace_role_min(agent)`; RPCs filter by `workspace_id`).
+- "Mark useful" feedback is observational in Phase 3 and is NOT fed back
+  into ranking. Learned ranking is deferred.
+
+### Out of scope (deferred)
+ASC changes, live assist, transcript ingest, auto-learning, contradiction
+detection, URL crawl execution, cross-workspace search, ranking learned
+from feedback.
