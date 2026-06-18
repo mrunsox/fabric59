@@ -38,6 +38,10 @@ export const BB_EVENT_TYPES = [
   "bb_fact_marked_needs_update",
   "bb_conflict_resolved",
   "bb_governance_view_opened",
+  // Phase 6 — Vertical skins & required-entity schemas
+  "bb_vertical_evaluation_run",
+  "bb_vertical_gap_suppressed",
+  "bb_vertical_governance_view_opened",
 ] as const;
 export type BbEventType = (typeof BB_EVENT_TYPES)[number];
 
