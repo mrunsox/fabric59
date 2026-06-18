@@ -127,13 +127,14 @@ export default function ApprovedKnowledgePage() {
       if (!withinDateRange(f.last_reviewed_at, range)) return false;
       const ss = (f.stale_state as BbStaleState | undefined) ?? "fresh";
       if (staleFilter !== "all" && ss !== staleFilter) return false;
+      if (hasGapsOnly && !gapsByFactId.has(f.id)) return false;
       if (term) {
         const hay = `${f.display_name} ${f.canonical_key}`.toLowerCase();
         if (!hay.includes(term)) return false;
       }
       return true;
     });
-  }, [facts, filter, search, range, staleFilter]);
+  }, [facts, filter, search, range, staleFilter, hasGapsOnly, gapsByFactId]);
 
   const grouped = useMemo(() => {
     const out: Record<string, BbFactRow[]> = {};
