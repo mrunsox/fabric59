@@ -185,6 +185,9 @@ export default function BrainGovernancePage() {
         )}
       </section>
 
+      {/* Phase 6 — Vertical coverage & gaps */}
+      <BrainVerticalGovernanceSection />
+
       <BbStaleFactDrawer
         fact={openStale}
         onClose={() => setOpenStale(null)}
