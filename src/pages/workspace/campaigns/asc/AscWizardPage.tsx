@@ -176,7 +176,22 @@ export default function AscWizardPage() {
    */
   const applyBbIntent = useCallback(
     (intent: BbAscApplyIntent, _suggestion: BbAscSuggestion) => {
-      if (isReadOnlyMaybe(draft)) return;
+      if (selectIsReadOnly(draft)) return;
+      const nextId = (): string =>
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? (crypto as Crypto).randomUUID()
+          : `bb_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      const mergeUnique = (a: string[], b: string[]): string[] => {
+        const seen = new Set(a.map((s) => s.toLowerCase().trim()));
+        const out = [...a];
+        for (const v of b) {
+          const k = v.toLowerCase().trim();
+          if (!k || seen.has(k)) continue;
+          seen.add(k);
+          out.push(v);
+        }
+        return out;
+      };
       switch (intent.kind) {
         case "addCallerReason": {
           dispatch({
