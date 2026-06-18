@@ -30,8 +30,7 @@ import type { BbEntityType, BbStaleState } from "@/lib/business-brain/types";
 import { AlertTriangle, Clock, Activity } from "lucide-react";
 import BbStaleFactDrawer from "@/components/business-brain/BbStaleFactDrawer";
 import { useQueryClient } from "@tanstack/react-query";
-import { listStaleFacts, type StaleFactView } from "@/lib/business-brain/selectors";
-import { useEffect } from "react";
+import { type StaleFactView } from "@/lib/business-brain/selectors";
 
 type DateRange = "all" | "7" | "30" | "90";
 
@@ -225,10 +224,25 @@ export default function ApprovedKnowledgePage() {
                                 <VerificationBadge state={f.verification_state} />
                                 {f.stale_state && f.stale_state !== "fresh" ? (
                                   <button
-                                    onClick={async () => {
-                                      const list = await listStaleFacts({ workspaceId: workspaceId!, limit: 1 });
-                                      const match = list.find((s) => s.id === f.id) ?? null;
-                                      setStaleDrawer(match);
+                                    onClick={() => {
+                                      const v: StaleFactView = {
+                                        id: f.id,
+                                        workspaceId: f.workspace_id,
+                                        entityType: f.entity_type,
+                                        displayName: f.display_name,
+                                        staleState: f.stale_state ?? "fresh",
+                                        staleReasons: (f.stale_reasons ?? []) as never,
+                                        lastReviewedAt: f.last_reviewed_at,
+                                        lastUsedAt: f.last_used_at ?? null,
+                                        intervalDays: f.expected_review_interval_days ?? null,
+                                        usageScore: 0,
+                                        usageBreakdown: {
+                                          searchOpens: 0, searchMarkedUseful: 0, searchMarkedNotUseful: 0,
+                                          ascUsed: 0, ascDismissed: 0,
+                                          assistOpened: 0, assistCopied: 0, assistInserted: 0,
+                                        },
+                                      };
+                                      setStaleDrawer(v);
                                     }}
                                     className="text-left"
                                   >
