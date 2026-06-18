@@ -22,6 +22,11 @@ export interface AscWizardShellProps {
   onBack: () => void;
   onContinue: () => void;
   onHandoffToManual: () => string;
+  /** Maps a Business Brain suggestion → existing ASC action dispatch. */
+  onApplyBbIntent: (
+    intent: import("@/lib/business-brain/selectors").BbAscApplyIntent,
+    suggestion: import("@/lib/business-brain/selectors").BbAscSuggestion,
+  ) => void;
   children: ReactNode;
 }
 
