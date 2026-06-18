@@ -62,6 +62,12 @@ export interface BbEventPayload {
   embedTarget?: "facts" | "chunks" | "both";
   embedded?: number;
   failed?: number;
+  // Phase 4 — Live runner assist (structure only; never raw text)
+  campaignId?: string;
+  stepKind?: string;
+  cardKind?: string;
+  cardCount?: number;
+  reason?: string;
 }
 
 const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
