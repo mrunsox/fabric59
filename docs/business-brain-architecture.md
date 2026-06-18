@@ -365,3 +365,69 @@ payloads, or note content. Structural metadata and ids only.
 Transcript ingestion, auto-summarization, contradiction detection, gap
 detection, feedback-trained ranking, cross-workspace assist, any
 canonical schema changes, any new reducer write paths.
+
+
+## Phase 5 — Continuous Learning & Governance Loop
+
+Phase 5 makes Business Brain self-maintaining via stale-knowledge flags,
+contradiction/duplicate detection, and reviewer queues prioritized by real
+usage. No auto-edits — humans stay in control. ASC, runner, and search
+ranking behavior are unchanged when governance is disabled.
+
+### Schema (additive)
+
+- `bb_facts.stale_state` (text) — single-valued for display.
+- `bb_facts.stale_reasons` (text[]) — multiple underlying reasons preserved.
+- `bb_facts.last_used_at`, `bb_facts.expected_review_interval_days`.
+- `bb_fact_entity_defaults` — per-entity default review interval and
+  `high_risk` flag. Seeded with conservative opinionated defaults:
+  escalation/hours 30d, phones/destinations 60d, others 90d.
+- `bb_fact_conflicts` — open/resolved/dismissed pairs with `conflict_kind`
+  and a unique open-conflict index per ordered pair + kind.
+- `bb_fact_usage` — per-fact counts and an explainable `usage_score`.
+
+### Jobs
+
+- **bb-usage-rollup** — aggregates `bb_*` telemetry from `platform_events`
+  into `bb_fact_usage`. Idempotent upsert keyed by `fact_id`. Score is a
+  weighted sum so reviewers can see component signals (insert > copy >
+  open; not-useful subtracts; floor at 0).
+- **bb-maintain-facts** — computes per-fact target interval, marks
+  `stale_due_to_age` past interval and `stale_due_to_usage` when usage
+  score is at/above the workspace 75th percentile AND past interval.
+  Conflict reasons are preserved across runs; only explicit conflict
+  resolution clears them.
+- **bb-detect-conflicts** — heuristic detection scoped to approved facts:
+  phone/destination/hours mismatches by normalized key; FAQ duplicates
+  (cosine ≥ 0.88) and policy duplicates (≥ 0.92) using existing Phase 3
+  embeddings. Conservative thresholds; expect tuning from observed FP/FN.
+
+### Reviewer surfaces
+
+- **Governance tab** at `/w/:wid/brain/governance` — stale list + open
+  conflicts, with entity-type and high-risk filters.
+- **Approved Knowledge** — staleness filter and per-row stale/conflict
+  badges that open the same drawers.
+- `BbStaleFactDrawer` shows the explainable usage breakdown. "Mark
+  reviewed" never clears conflict reasons; that requires explicit
+  conflict resolution.
+- `BbConflictDrawer` side-by-side, with Supersede / Keep both / Dismiss.
+
+### Boundary
+
+Governance modules live under `pages/workspace/brain/` and
+`components/business-brain/` only. ASC and the live runner must not
+import governance selectors or drawers; enforced by
+`bbGovernanceBoundary.test.ts`.
+
+### Telemetry
+
+New events: `bb_fact_marked_reviewed`, `bb_fact_marked_needs_update`,
+`bb_conflict_resolved`, `bb_governance_view_opened`. All payloads are
+ids and structural metadata; never raw text, payloads, or titles.
+
+### Out of scope
+
+Auto-merge, auto-deactivate, ranking changes in search or assist,
+ASC/runner UI changes, transcript ingestion, auto-summarization,
+cross-workspace governance, admin UI for entity defaults.
