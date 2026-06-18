@@ -291,6 +291,7 @@ export default function AscWizardPage() {
       onBack={handleBack}
       onContinue={handleContinue}
       onHandoffToManual={() => handoffToManual(workspaceId)}
+      onApplyBbIntent={applyBbIntent}
     >
 
       {body}
