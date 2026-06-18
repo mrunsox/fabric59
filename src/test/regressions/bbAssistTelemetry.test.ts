@@ -42,15 +42,15 @@ describe("BB Phase 4 — telemetry privacy", () => {
       cardKind: "intent_hint",
       entityType: "faq",
       factId: "fact-1",
-      // Disallowed fields — would leak content if accepted
-      // @ts-expect-error intentional disallowed
-      snippet: "Some snippet content",
-      // @ts-expect-error intentional disallowed
-      sourceTitle: "Confidential Doc",
-      // @ts-expect-error intentional disallowed
-      noteContent: "patient said X",
-      // @ts-expect-error intentional disallowed
-      query: "raw user query",
+      // Disallowed fields — would leak content if accepted. Cast through
+      // unknown so the type system doesn't reject them outright; the
+      // runtime sanitizer is what we are validating here.
+      ...({
+        snippet: "Some snippet content",
+        sourceTitle: "Confidential Doc",
+        noteContent: "patient said X",
+        query: "raw user query",
+      } as unknown as Record<string, unknown>),
     });
 
     expect(captured).toHaveLength(1);
