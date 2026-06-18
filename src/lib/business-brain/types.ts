@@ -52,6 +52,28 @@ export type BbReviewStatus =
 
 export type BbVerificationState = "approved" | "needs_review" | "stale";
 
+// Phase 5 — Governance (additive)
+export type BbStaleState =
+  | "fresh"
+  | "stale_due_to_age"
+  | "stale_due_to_usage"
+  | "stale_due_to_conflict";
+
+export type BbStaleReason =
+  | "stale_due_to_age"
+  | "stale_due_to_usage"
+  | "stale_due_to_conflict";
+
+export type BbConflictKind =
+  | "phone_mismatch"
+  | "hours_overlap"
+  | "destination_mismatch"
+  | "faq_duplicate"
+  | "policy_duplicate"
+  | "other";
+
+export type BbConflictStatus = "open" | "resolved" | "dismissed";
+
 export type BbRelationKind =
   | "staff_in_department"
   | "department_handles_service"

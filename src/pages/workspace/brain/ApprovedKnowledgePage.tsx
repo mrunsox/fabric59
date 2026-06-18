@@ -26,7 +26,11 @@ import {
 } from "@/hooks/useBusinessBrain";
 import { ENTITY_LABEL } from "@/lib/business-brain/entitySchemas";
 import { BB_ENTITY_TYPES } from "@/lib/business-brain/types";
-import type { BbEntityType } from "@/lib/business-brain/types";
+import type { BbEntityType, BbStaleState } from "@/lib/business-brain/types";
+import { AlertTriangle, Clock, Activity } from "lucide-react";
+import BbStaleFactDrawer from "@/components/business-brain/BbStaleFactDrawer";
+import { useQueryClient } from "@tanstack/react-query";
+import { type StaleFactView } from "@/lib/business-brain/selectors";
 
 type DateRange = "all" | "7" | "30" | "90";
 
@@ -47,6 +51,14 @@ function withinDateRange(iso: string, range: DateRange): boolean {
   return new Date(iso).getTime() >= cutoff;
 }
 
+type StaleFilter = "all" | "fresh" | "stale_due_to_age" | "stale_due_to_usage" | "stale_due_to_conflict";
+
+const STALE_BADGE: Record<string, { label: string; cls: string; icon: typeof Clock }> = {
+  stale_due_to_age: { label: "Stale (age)", cls: "bg-amber-100 text-amber-900", icon: Clock },
+  stale_due_to_usage: { label: "Stale (usage)", cls: "bg-amber-100 text-amber-900", icon: Activity },
+  stale_due_to_conflict: { label: "Conflict", cls: "bg-rose-100 text-rose-900", icon: AlertTriangle },
+};
+
 export default function ApprovedKnowledgePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { data: facts = [], isLoading } = useBbFacts(workspaceId ?? null);
@@ -54,7 +66,10 @@ export default function ApprovedKnowledgePage() {
   const [filter, setFilter] = useState<"all" | BbEntityType>("all");
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<DateRange>("all");
+  const [staleFilter, setStaleFilter] = useState<StaleFilter>("all");
   const [drawerFact, setDrawerFact] = useState<BbFactRow | null>(null);
+  const [staleDrawer, setStaleDrawer] = useState<StaleFactView | null>(null);
+  const qc = useQueryClient();
 
   const sourceMap = useMemo(() => {
     const m = new Map<string, { title: string; created_at: string }>();
@@ -68,13 +83,15 @@ export default function ApprovedKnowledgePage() {
       if (f.verification_state === "stale") return false;
       if (filter !== "all" && f.entity_type !== filter) return false;
       if (!withinDateRange(f.last_reviewed_at, range)) return false;
+      const ss = (f.stale_state as BbStaleState | undefined) ?? "fresh";
+      if (staleFilter !== "all" && ss !== staleFilter) return false;
       if (term) {
         const hay = `${f.display_name} ${f.canonical_key}`.toLowerCase();
         if (!hay.includes(term)) return false;
       }
       return true;
     });
-  }, [facts, filter, search, range]);
+  }, [facts, filter, search, range, staleFilter]);
 
   const grouped = useMemo(() => {
     const out: Record<string, BbFactRow[]> = {};
@@ -137,6 +154,16 @@ export default function ApprovedKnowledgePage() {
               <SelectItem value="90">Last 90 days</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={staleFilter} onValueChange={(v) => setStaleFilter(v as StaleFilter)}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All staleness</SelectItem>
+              <SelectItem value="fresh">Fresh only</SelectItem>
+              <SelectItem value="stale_due_to_age">Stale (age)</SelectItem>
+              <SelectItem value="stale_due_to_usage">Stale (usage)</SelectItem>
+              <SelectItem value="stale_due_to_conflict">Conflicts</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -193,7 +220,46 @@ export default function ApprovedKnowledgePage() {
                               {latest ? new Date(latest).toLocaleDateString() : "—"}
                             </td>
                             <td className="px-4 py-3">
-                              <VerificationBadge state={f.verification_state} />
+                              <div className="flex flex-col gap-1">
+                                <VerificationBadge state={f.verification_state} />
+                                {f.stale_state && f.stale_state !== "fresh" ? (
+                                  <button
+                                    onClick={() => {
+                                      const v: StaleFactView = {
+                                        id: f.id,
+                                        workspaceId: f.workspace_id,
+                                        entityType: f.entity_type,
+                                        displayName: f.display_name,
+                                        staleState: f.stale_state ?? "fresh",
+                                        staleReasons: (f.stale_reasons ?? []) as never,
+                                        lastReviewedAt: f.last_reviewed_at,
+                                        lastUsedAt: f.last_used_at ?? null,
+                                        intervalDays: f.expected_review_interval_days ?? null,
+                                        usageScore: 0,
+                                        usageBreakdown: {
+                                          searchOpens: 0, searchMarkedUseful: 0, searchMarkedNotUseful: 0,
+                                          ascUsed: 0, ascDismissed: 0,
+                                          assistOpened: 0, assistCopied: 0, assistInserted: 0,
+                                        },
+                                      };
+                                      setStaleDrawer(v);
+                                    }}
+                                    className="text-left"
+                                  >
+                                    {(() => {
+                                      const cfg = STALE_BADGE[f.stale_state];
+                                      if (!cfg) return null;
+                                      const I = cfg.icon;
+                                      return (
+                                        <Badge variant="secondary" className={cfg.cls + " cursor-pointer text-[10px]"}>
+                                          <I className="mr-1 h-3 w-3" />
+                                          {cfg.label}
+                                        </Badge>
+                                      );
+                                    })()}
+                                  </button>
+                                ) : null}
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-xs text-muted-foreground">
                               {new Date(f.last_reviewed_at).toLocaleDateString()}
@@ -248,6 +314,11 @@ export default function ApprovedKnowledgePage() {
           </div>
         </SheetContent>
       </Sheet>
+      <BbStaleFactDrawer
+        fact={staleDrawer}
+        onClose={() => setStaleDrawer(null)}
+        onChanged={() => qc.invalidateQueries({ queryKey: ["bb_facts"] })}
+      />
     </div>
   );
 }

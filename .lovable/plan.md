@@ -131,3 +131,12 @@ Approved scope:
 - 21 new tests passing: context, ranker, panel invariants, telemetry privacy, ASC↔assist boundary.
 
 Out of scope for Phase 4: transcript ingestion, ASC changes, auto-summarization, contradiction detection, gap detection, feedback-trained ranking, cross-workspace assist, any canonical schema changes, any new reducer write paths.
+
+
+## Phase 5 — Continuous Learning & Governance Loop (shipped)
+
+Additive governance schema, three jobs (bb-usage-rollup, bb-maintain-facts,
+bb-detect-conflicts), Governance tab, stale/conflict UX in Approved
+Knowledge, telemetry, boundary tests. No ASC/runner/search behavior
+changes when disabled. Conservative thresholds; explainable usage_score;
+Mark-reviewed never clears open conflicts.

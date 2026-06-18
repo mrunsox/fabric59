@@ -78,6 +78,11 @@ export interface BbFactRow {
   last_reviewed_by: string | null;
   created_at: string;
   updated_at: string;
+  // Phase 5 — Governance (additive)
+  stale_state?: "fresh" | "stale_due_to_age" | "stale_due_to_usage" | "stale_due_to_conflict";
+  stale_reasons?: string[];
+  last_used_at?: string | null;
+  expected_review_interval_days?: number | null;
 }
 
 export function useBbSources(workspaceId: string | null) {

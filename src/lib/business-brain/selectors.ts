@@ -653,3 +653,344 @@ export function buildBbSourceDeepLink(
   if (!sourceId) return `/w/${workspaceId}/brain/approved`;
   return `/w/${workspaceId}/brain/bin?source=${encodeURIComponent(sourceId)}`;
 }
+
+// ────────────────────────────────────────────────────────────────────────
+// Phase 5 — Governance (staleness, conflicts, usage)
+//
+// Bridge entries for the Business Brain Governance surfaces. These are
+// scoped to the Business Brain UI ONLY — ASC/runner must not import them
+// (enforced by bbGovernanceBoundary.test.ts).
+// ────────────────────────────────────────────────────────────────────────
+
+import type {
+  BbConflictKind,
+  BbConflictStatus,
+  BbStaleReason,
+  BbStaleState,
+} from "./types";
+
+export interface StaleFactView {
+  id: string;
+  workspaceId: string;
+  entityType: BbEntityType;
+  displayName: string;
+  staleState: BbStaleState;
+  staleReasons: BbStaleReason[];
+  lastReviewedAt: string;
+  lastUsedAt: string | null;
+  intervalDays: number | null;
+  usageScore: number;
+  /** Component signals so reviewers can see what drove prioritization. */
+  usageBreakdown: {
+    searchOpens: number;
+    searchMarkedUseful: number;
+    searchMarkedNotUseful: number;
+    ascUsed: number;
+    ascDismissed: number;
+    assistOpened: number;
+    assistCopied: number;
+    assistInserted: number;
+  };
+}
+
+export interface ConflictView {
+  id: string;
+  workspaceId: string;
+  primaryFactId: string;
+  conflictingFactId: string;
+  conflictKind: BbConflictKind;
+  entityType: BbEntityType;
+  status: BbConflictStatus;
+  similarity: number | null;
+  details: Record<string, unknown>;
+  createdAt: string;
+  resolvedAt: string | null;
+  primaryFact: ApprovedFactView | null;
+  conflictingFact: ApprovedFactView | null;
+}
+
+interface StaleFactsQuery {
+  workspaceId: string;
+  staleStates?: BbStaleState[];
+  entityType?: BbEntityType;
+  highRiskOnly?: boolean;
+  limit?: number;
+}
+
+const EMPTY_BREAKDOWN = {
+  searchOpens: 0,
+  searchMarkedUseful: 0,
+  searchMarkedNotUseful: 0,
+  ascUsed: 0,
+  ascDismissed: 0,
+  assistOpened: 0,
+  assistCopied: 0,
+  assistInserted: 0,
+};
+
+export async function listStaleFacts(q: StaleFactsQuery): Promise<StaleFactView[]> {
+  if (!q.workspaceId) return [];
+  let base = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_facts" as any)
+    .select(
+      "id,workspace_id,entity_type,display_name,stale_state,stale_reasons,last_reviewed_at,last_used_at,expected_review_interval_days",
+    )
+    .eq("workspace_id", q.workspaceId)
+    .eq("verification_state", "approved")
+    .order("last_used_at", { ascending: false, nullsFirst: false })
+    .limit(q.limit ?? 200);
+  const states = q.staleStates && q.staleStates.length
+    ? q.staleStates
+    : (["stale_due_to_age", "stale_due_to_usage", "stale_due_to_conflict"] as BbStaleState[]);
+  base = base.in("stale_state", states);
+  if (q.entityType) base = base.eq("entity_type", q.entityType);
+  const { data, error } = await base;
+  if (error || !data) return [];
+  const rows = data as unknown as Array<{
+    id: string;
+    workspace_id: string;
+    entity_type: BbEntityType;
+    display_name: string;
+    stale_state: BbStaleState;
+    stale_reasons: BbStaleReason[] | null;
+    last_reviewed_at: string;
+    last_used_at: string | null;
+    expected_review_interval_days: number | null;
+  }>;
+
+  let defaults = new Map<string, { interval: number; highRisk: boolean }>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: defs } = await supabase.from("bb_fact_entity_defaults" as any).select("*");
+  for (const d of (((defs ?? []) as unknown) as Array<{ entity_type: string; default_review_interval_days: number; high_risk: boolean }>)) {
+    defaults.set(d.entity_type, { interval: d.default_review_interval_days, highRisk: d.high_risk });
+  }
+
+  const filteredRows = q.highRiskOnly
+    ? rows.filter((r) => defaults.get(r.entity_type)?.highRisk)
+    : rows;
+
+  const ids = filteredRows.map((r) => r.id);
+  const usageById = new Map<string, Record<string, number> & { last_used_at: string | null; usage_score: number }>();
+  if (ids.length) {
+    const { data: usage } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .from("bb_fact_usage" as any)
+      .select("*")
+      .in("fact_id", ids);
+    for (const u of (((usage ?? []) as unknown) as Array<Record<string, unknown> & { fact_id: string }>)) {
+      usageById.set(u.fact_id, u as never);
+    }
+  }
+
+  return filteredRows.map((r) => {
+    const u = usageById.get(r.id);
+    return {
+      id: r.id,
+      workspaceId: r.workspace_id,
+      entityType: r.entity_type,
+      displayName: r.display_name,
+      staleState: r.stale_state,
+      staleReasons: (r.stale_reasons ?? []) as BbStaleReason[],
+      lastReviewedAt: r.last_reviewed_at,
+      lastUsedAt: r.last_used_at,
+      intervalDays: r.expected_review_interval_days ?? defaults.get(r.entity_type)?.interval ?? null,
+      usageScore: Number(u?.usage_score ?? 0),
+      usageBreakdown: u
+        ? {
+            searchOpens: Number(u.search_opens ?? 0),
+            searchMarkedUseful: Number(u.search_marked_useful ?? 0),
+            searchMarkedNotUseful: Number(u.search_marked_not_useful ?? 0),
+            ascUsed: Number(u.asc_suggestion_used ?? 0),
+            ascDismissed: Number(u.asc_suggestion_dismissed ?? 0),
+            assistOpened: Number(u.assist_opened ?? 0),
+            assistCopied: Number(u.assist_copied ?? 0),
+            assistInserted: Number(u.assist_inserted ?? 0),
+          }
+        : EMPTY_BREAKDOWN,
+    };
+  });
+}
+
+export async function listConflicts(workspaceId: string, status: BbConflictStatus = "open"): Promise<ConflictView[]> {
+  if (!workspaceId) return [];
+  const { data, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_fact_conflicts" as any)
+    .select("*")
+    .eq("workspace_id", workspaceId)
+    .eq("status", status)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error || !data) return [];
+  const rows = data as unknown as Array<{
+    id: string;
+    workspace_id: string;
+    primary_fact_id: string;
+    conflicting_fact_id: string;
+    conflict_kind: BbConflictKind;
+    entity_type: BbEntityType;
+    status: BbConflictStatus;
+    similarity: number | null;
+    details: Record<string, unknown>;
+    created_at: string;
+    resolved_at: string | null;
+  }>;
+
+  const factIds = Array.from(new Set(rows.flatMap((r) => [r.primary_fact_id, r.conflicting_fact_id])));
+  const factById = new Map<string, ApprovedFactView>();
+  if (factIds.length) {
+    const { data: facts } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .from("bb_facts" as any)
+      .select(
+        "id,workspace_id,client_id,entity_type,display_name,payload,verification_state,confidence_at_review,last_reviewed_at,source_refs",
+      )
+      .in("id", factIds);
+    for (const f of ((facts ?? []) as unknown) as BbFactRowShape[]) {
+      factById.set(f.id, rowToView(f));
+    }
+  }
+
+  return rows.map((r) => ({
+    id: r.id,
+    workspaceId: r.workspace_id,
+    primaryFactId: r.primary_fact_id,
+    conflictingFactId: r.conflicting_fact_id,
+    conflictKind: r.conflict_kind,
+    entityType: r.entity_type,
+    status: r.status,
+    similarity: r.similarity,
+    details: r.details ?? {},
+    createdAt: r.created_at,
+    resolvedAt: r.resolved_at,
+    primaryFact: factById.get(r.primary_fact_id) ?? null,
+    conflictingFact: factById.get(r.conflicting_fact_id) ?? null,
+  }));
+}
+
+/**
+ * Marks a fact as just reviewed: bumps last_reviewed_at and strips
+ * age/usage reasons. Conflict reasons are PRESERVED — explicit conflict
+ * resolution is the only path that clears them.
+ */
+export async function markFactReviewed(factId: string): Promise<boolean> {
+  if (!factId) return false;
+  const { data: fact, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_facts" as any)
+    .select("stale_reasons")
+    .eq("id", factId)
+    .maybeSingle();
+  if (error || !fact) return false;
+  const prev = new Set<string>(((fact as { stale_reasons?: string[] }).stale_reasons ?? []));
+  prev.delete("stale_due_to_age");
+  prev.delete("stale_due_to_usage");
+  const reasonsArr = Array.from(prev).sort();
+  const nextState = reasonsArr.includes("stale_due_to_conflict") ? "stale_due_to_conflict" : "fresh";
+  const { error: updErr } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_facts" as any)
+    .update({
+      last_reviewed_at: new Date().toISOString(),
+      stale_reasons: reasonsArr,
+      stale_state: nextState,
+    })
+    .eq("id", factId);
+  return !updErr;
+}
+
+/** Flips fact to needs_review without clearing conflict reasons. */
+export async function markFactNeedsUpdate(factId: string): Promise<boolean> {
+  if (!factId) return false;
+  const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_facts" as any)
+    .update({ verification_state: "needs_review" })
+    .eq("id", factId);
+  return !error;
+}
+
+export async function resolveConflict(
+  conflictId: string,
+  resolution: "supersede" | "keep_both" | "dismiss",
+): Promise<boolean> {
+  if (!conflictId) return false;
+  const status: BbConflictStatus = resolution === "dismiss" ? "dismissed" : "resolved";
+  const { data: conflict, error: readErr } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_fact_conflicts" as any)
+    .select("primary_fact_id,conflicting_fact_id,workspace_id")
+    .eq("id", conflictId)
+    .maybeSingle();
+  if (readErr || !conflict) return false;
+  const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_fact_conflicts" as any)
+    .update({
+      status,
+      resolution,
+      resolved_at: new Date().toISOString(),
+    })
+    .eq("id", conflictId);
+  if (error) return false;
+
+  // Clear conflict reason from facts that no longer have any open conflicts.
+  const c = conflict as unknown as { primary_fact_id: string; conflicting_fact_id: string };
+  const factIds = [c.primary_fact_id, c.conflicting_fact_id];
+  for (const fid of factIds) {
+    const { data: open } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .from("bb_fact_conflicts" as any)
+      .select("id")
+      .eq("status", "open")
+      .or(`primary_fact_id.eq.${fid},conflicting_fact_id.eq.${fid}`)
+      .limit(1);
+    if ((open ?? []).length === 0) {
+      const { data: f } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("bb_facts" as any)
+        .select("stale_reasons")
+        .eq("id", fid)
+        .maybeSingle();
+      const cur = new Set<string>(((f as { stale_reasons?: string[] } | null)?.stale_reasons) ?? []);
+      cur.delete("stale_due_to_conflict");
+      const arr = Array.from(cur).sort();
+      const state =
+        arr.includes("stale_due_to_usage")
+          ? "stale_due_to_usage"
+          : arr.includes("stale_due_to_age")
+            ? "stale_due_to_age"
+            : "fresh";
+      await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("bb_facts" as any)
+        .update({ stale_reasons: arr, stale_state: state })
+        .eq("id", fid);
+    }
+  }
+
+  // Supersede: mark primary as needs_review so reviewers can pick the winner.
+  if (resolution === "supersede") {
+    await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .from("bb_facts" as any)
+      .update({ verification_state: "needs_review" })
+      .eq("id", c.primary_fact_id);
+  }
+  return true;
+}
+
+export async function triggerGovernanceSweep(
+  workspaceId: string,
+): Promise<{ ok: boolean }> {
+  if (!workspaceId) return { ok: false };
+  try {
+    await supabase.functions.invoke("bb-usage-rollup", { body: { workspaceId } });
+    await supabase.functions.invoke("bb-detect-conflicts", { body: { workspaceId } });
+    await supabase.functions.invoke("bb-maintain-facts", { body: { workspaceId } });
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
