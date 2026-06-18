@@ -16,7 +16,6 @@ import type { AscAction } from "@/lib/asc/actions";
 import { AscGapItemsList } from "./AscGapItemsList";
 import { BbSuggestionTray } from "./BbSuggestionTray";
 import { useBusinessBrainSuggestions } from "@/hooks/useBusinessBrainSuggestions";
-import { useAuth } from "@/contexts/AuthContext";
 import { selectIsReadOnly } from "@/lib/asc/selectors";
 import type { BbAscApplyIntent, BbAscSuggestion } from "@/lib/business-brain/selectors";
 
@@ -24,6 +23,7 @@ export interface AscSidePanelProps {
   draft: AscDraft;
   dispatch: Dispatch<AscAction>;
   workspaceId: string;
+  organizationId?: string | null;
   /** Parent maps a BB intent → existing ASC reducer dispatch. */
   onApplyBbIntent: (intent: BbAscApplyIntent, suggestion: BbAscSuggestion) => void;
 }
@@ -34,13 +34,13 @@ export function AscSidePanel({
   draft,
   dispatch,
   workspaceId,
+  organizationId = null,
   onApplyBbIntent,
 }: AscSidePanelProps) {
   const step = draft.step;
   const isGapStep = step === 3 || step === 4;
   const isBbStep = BB_STEPS.has(step);
   const isReadOnly = selectIsReadOnly(draft);
-  const { organization } = useAuth();
 
   const callerReasonLabels = draft.input.callerReasons.map((r) => r.label);
   const notificationTriggers = (draft.input.notificationsDraftEdits ?? []).map(
