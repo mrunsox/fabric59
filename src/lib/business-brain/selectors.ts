@@ -1122,7 +1122,7 @@ export async function listVerticalGaps(
     .select("entity_type,high_priority")
     .eq("vertical_profile_id", profile.id);
   const highByType = new Map(
-    ((entityReqs ?? []) as Array<{ entity_type: string; high_priority: boolean }>).map(
+    ((entityReqs ?? []) as unknown as Array<{ entity_type: string; high_priority: boolean }>).map(
       (r) => [r.entity_type, r.high_priority],
     ),
   );
