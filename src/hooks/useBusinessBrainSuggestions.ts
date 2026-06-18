@@ -58,7 +58,7 @@ export function useBusinessBrainSuggestions(
     // useAuth throws when AuthProvider is missing (some test harnesses).
     // Treat that as "disabled" rather than crashing the wizard.
     flagEnabled = useBusinessBrainFlag().enabled;
-    organizationId = useAuth().organization?.id ?? null;
+    organizationId = useAuth().organizationId ?? null;
   } catch {
     flagEnabled = false;
     organizationId = null;
@@ -137,7 +137,7 @@ export function useBusinessBrainSuggestions(
     lastEmittedRef.current = key;
     emitBbEvent("bb_asc_suggestions_loaded", {
       workspaceId: input.workspaceId,
-      organizationId: organization?.id ?? null,
+      organizationId,
       ascDraftId: input.ascDraftId ?? undefined,
       step: input.step,
       count: suggestions.length,
@@ -149,7 +149,7 @@ export function useBusinessBrainSuggestions(
     input.ascDraftId,
     input.step,
     input.workspaceId,
-    organization?.id,
+    organizationId,
   ]);
 
   return {
