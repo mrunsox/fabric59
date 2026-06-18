@@ -61,6 +61,8 @@ describe("Business Brain ↔ ASC boundary", () => {
       "src/pages/workspace/brain",
     ];
     // Only inspect files whose name suggests Business Brain ownership.
+    // Phase 2: `useBusinessBrainSuggestions` is a BB-owned hook and must
+    // also be checked for ASC import leakage in the opposite direction.
     const isBbFile = (rel: string) =>
       rel.startsWith("src/lib/business-brain/") ||
       rel.startsWith("src/pages/workspace/brain/") ||
