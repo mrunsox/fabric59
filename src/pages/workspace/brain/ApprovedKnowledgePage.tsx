@@ -67,7 +67,7 @@ const STALE_BADGE: Record<string, { label: string; cls: string; icon: typeof Clo
 
 export default function ApprovedKnowledgePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { data: facts = [], isLoading } = useBbFacts(workspaceId ?? null);
   const { data: sources = [] } = useBbSources(workspaceId ?? null);
 
