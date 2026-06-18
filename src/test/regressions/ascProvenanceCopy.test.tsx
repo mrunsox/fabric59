@@ -90,6 +90,7 @@ describe("Phase 5 · Slice 2 — ASC wizard provenance copy", () => {
           onBack={vi.fn()}
           onContinue={vi.fn()}
           onHandoffToManual={() => ""}
+          onApplyBbIntent={vi.fn()}
         >
           <div>step body</div>
         </AscWizardShell>
@@ -124,6 +125,7 @@ describe("Phase 5 · Slice 2 — ASC wizard provenance copy", () => {
           onBack={vi.fn()}
           onContinue={vi.fn()}
           onHandoffToManual={() => ""}
+          onApplyBbIntent={vi.fn()}
         >
           <div>step body</div>
         </AscWizardShell>
