@@ -431,3 +431,72 @@ ids and structural metadata; never raw text, payloads, or titles.
 Auto-merge, auto-deactivate, ranking changes in search or assist,
 ASC/runner UI changes, transcript ingestion, auto-summarization,
 cross-workspace governance, admin UI for entity defaults.
+
+## Phase 6 — Vertical skins & required-entity schemas
+
+Vertical profiles describe what "complete and correct" means per business
+vertical (local government, healthcare-lite, property management, …). They are
+configuration only: there is no rule engine, no auto-fix, and no end-user
+profile-management UI in this phase.
+
+### Tables
+
+- `bb_vertical_profiles` — vertical catalog (slug, label, description, is_active).
+- `bb_workspace_vertical_profiles` — links a workspace (and optionally a client,
+  unused this phase) to one profile. Enforced one-per-workspace via a unique
+  index on `(workspace_id, COALESCE(client_id, '00000000-…'))`.
+- `bb_vertical_entity_requirements` — per-vertical required entity types with
+  `min_count`, `max_count`, and `high_priority`.
+- `bb_vertical_field_requirements` — per-vertical required field paths inside a
+  fact `payload`, with a reviewer-facing `validation_hint`.
+- `bb_vertical_completeness` — rollup of required vs actual approved facts per
+  `(workspace, profile, entity_type)`. Optional `min_count = 0` requirements
+  are excluded from the main coverage strip.
+- `bb_vertical_gaps` — open / resolved / suppressed gaps per shape
+  `(workspace, profile, entity_type, gap_kind, fact_id, field_path)`. Two
+  partial unique indexes (one for open, one for suppressed) make evaluation
+  idempotent. **Suppression is sticky**: a suppressed gap stays suppressed
+  across re-evaluations until an explicit future unsuppress action.
+
+### Evaluation: `bb-evaluate-vertical`
+
+POST `{ workspaceId? }`. With no `workspaceId`, evaluates every workspace that
+has a profile assigned. Per workspace:
+
+1. Resolves the assigned profile and loads entity + field requirements with
+   `is_required = true` and `min_count > 0` (required entities only).
+2. Pulls approved facts for those entity types
+   (`verification_state = 'approved'` — never `needs_review`, `rejected`, or
+   `superseded`).
+3. Upserts `bb_vertical_completeness` per entity type with
+   `coverage_ratio = min(1, actual / required)`.
+4. Computes a desired gap set:
+    - `under_min_count` per entity type with `actual < min_count`.
+    - `missing_field` per approved fact where any required `payload.*` field is
+      missing or empty (`null`, `""`, `[]`, `{}`).
+5. Reconciles against current `bb_vertical_gaps`:
+    - Skip insert when an open OR suppressed gap of the same shape exists.
+    - Insert new open gaps for shapes that don't exist.
+    - Resolve open gaps whose shape is no longer desired.
+
+Triggered daily via `pg_cron` (`bb-evaluate-vertical-daily`) and manually from
+the Governance UI ("Re-evaluate coverage").
+
+### UI
+
+- **Approved Knowledge** (`/w/:wid/brain/approved`):
+  - Header pill: `Vertical: {label}` when a profile is assigned.
+  - "Has gaps" filter button (and `?staleFilter=has_gaps` query-param entry
+    point used by Governance deep-links).
+  - Per-row red badge `N gap(s)` that opens `BbGapDrawer` listing the unmet
+    requirements + `validation_hint` for that fact.
+  - Deep-link `?entity=…&fact=…` scrolls to the target fact for editing.
+- **Governance** (`/w/:wid/brain/governance`):
+  - Third section `BrainVerticalGovernanceSection` with coverage cards
+    (sorted high-priority first), gap filters (kind, entity, high-priority
+    only), gap list, and per-row "Go fix" + "Suppress" actions.
+
+### Boundary
+
+ASC, runner, and search modules MUST NOT import vertical selectors or UI
+modules. Enforced by `bbVerticalBoundary.test.ts`.
