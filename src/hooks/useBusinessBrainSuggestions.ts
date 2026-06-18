@@ -9,8 +9,8 @@
  * `bb_asc_suggestion_hidden_forked` fires from the consuming component, not
  * here.
  */
-import { useEffect, useMemo, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useContext, useEffect, useMemo, useRef } from "react";
+import { QueryClientContext, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBusinessBrainFlag } from "@/lib/business-brain/flagResolver";
 import {
@@ -54,8 +54,13 @@ export function useBusinessBrainSuggestions(
 ): UseBusinessBrainSuggestionsResult {
   const flag = useBusinessBrainFlag();
   const { organization } = useAuth();
+  // Defensive: avoid hard crash in test/render contexts that don't mount a
+  // QueryClientProvider. When absent, treat the hook as disabled — the BB
+  // tray simply hides itself.
+  const hasQueryClient = Boolean(useContext(QueryClientContext));
   const stepSupported = SUPPORTED_STEPS.has(input.step);
   const enabled =
+    hasQueryClient &&
     Boolean(flag.enabled) &&
     Boolean(input.workspaceId) &&
     !input.isReadOnly &&
