@@ -38,6 +38,10 @@ export const BB_EVENT_TYPES = [
   "bb_fact_marked_needs_update",
   "bb_conflict_resolved",
   "bb_governance_view_opened",
+  // Phase 6 — Vertical skins & required-entity schemas
+  "bb_vertical_evaluation_run",
+  "bb_vertical_gap_suppressed",
+  "bb_vertical_governance_view_opened",
 ] as const;
 export type BbEventType = (typeof BB_EVENT_TYPES)[number];
 
@@ -79,8 +83,15 @@ export interface BbEventPayload {
   resolution?: "supersede" | "keep_both" | "dismiss";
   staleStateBefore?: string;
   staleStateAfter?: string;
-  section?: "stale" | "conflicts";
+  section?: "stale" | "conflicts" | "coverage" | "gaps";
   filtersApplied?: number;
+  // Phase 6 — Vertical (ids/types/counts only)
+  verticalProfileId?: string;
+  gapKind?: string;
+  workspacesEvaluated?: number;
+  entityTypesEvaluated?: string[];
+  gapsOpened?: number;
+  gapsResolved?: number;
 }
 
 const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
@@ -119,6 +130,12 @@ const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
   "staleStateAfter",
   "section",
   "filtersApplied",
+  "verticalProfileId",
+  "gapKind",
+  "workspacesEvaluated",
+  "entityTypesEvaluated",
+  "gapsOpened",
+  "gapsResolved",
 ]);
 
 function sanitize(p: BbEventPayload): Record<string, unknown> {

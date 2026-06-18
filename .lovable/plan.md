@@ -140,3 +140,27 @@ bb-detect-conflicts), Governance tab, stale/conflict UX in Approved
 Knowledge, telemetry, boundary tests. No ASC/runner/search behavior
 changes when disabled. Conservative thresholds; explainable usage_score;
 Mark-reviewed never clears open conflicts.
+
+## Business Brain — Phase 6 (Vertical Skins & Required-Entity Schemas) — DONE
+
+Adds vertical profiles, required entity/field schemas, coverage rollups, and
+gap detection — config-only, no auto-fix, no runner/ASC changes.
+
+- Tables: `bb_vertical_profiles`, `bb_workspace_vertical_profiles`,
+  `bb_vertical_entity_requirements`, `bb_vertical_field_requirements`,
+  `bb_vertical_completeness`, `bb_vertical_gaps`. Seeded `local_gov`,
+  `healthcare_lite`, `property_mgmt` with a conservative starter set
+  (service, hours, escalation_contact; healthcare also intake_requirement).
+- Edge function: `bb-evaluate-vertical` (cron daily + manual). Approved facts
+  only; required entities only (min_count > 0); sticky suppression.
+- Selectors: `getWorkspaceVerticalProfile`, `getVerticalCoverageSummary`,
+  `listVerticalGaps`, `suppressVerticalGap`, `triggerVerticalEvaluation`.
+- UI: vertical pill + has-gaps filter + per-row gap badges + `BbGapDrawer` on
+  Approved Knowledge. New `BrainVerticalGovernanceSection` on Governance with
+  coverage cards, filters (kind / entity / high-priority), and Go fix /
+  Suppress actions. Contextual deep-links preserve entity + fact context.
+- Telemetry: `bb_vertical_evaluation_run`, `bb_vertical_gap_suppressed`,
+  `bb_vertical_governance_view_opened` (ids + structural only).
+- Tests: `bbVerticalEvaluationLogic`, `bbVerticalSuppressionLogic`,
+  `bbVerticalCoverageUi`, `bbVerticalGovernanceUi`, `bbVerticalBoundary`.
+- Docs: Phase 6 section appended to `docs/business-brain-architecture.md`.

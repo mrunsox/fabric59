@@ -1,5 +1,6 @@
-import { useParams } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Loader2, Link as LinkIcon, Search, Eye } from "lucide-react";
+import { Loader2, Link as LinkIcon, Search, Eye, Layers, AlertCircle } from "lucide-react";
 import {
   useBbFacts,
   useBbSources,
@@ -29,8 +30,13 @@ import { BB_ENTITY_TYPES } from "@/lib/business-brain/types";
 import type { BbEntityType, BbStaleState } from "@/lib/business-brain/types";
 import { AlertTriangle, Clock, Activity } from "lucide-react";
 import BbStaleFactDrawer from "@/components/business-brain/BbStaleFactDrawer";
+import BbGapDrawer from "@/components/business-brain/BbGapDrawer";
 import { useQueryClient } from "@tanstack/react-query";
-import { type StaleFactView } from "@/lib/business-brain/selectors";
+import {
+  getWorkspaceVerticalProfile,
+  listVerticalGaps,
+  type StaleFactView,
+} from "@/lib/business-brain/selectors";
 
 type DateRange = "all" | "7" | "30" | "90";
 
@@ -61,15 +67,51 @@ const STALE_BADGE: Record<string, { label: string; cls: string; icon: typeof Clo
 
 export default function ApprovedKnowledgePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
+  const [searchParams] = useSearchParams();
   const { data: facts = [], isLoading } = useBbFacts(workspaceId ?? null);
   const { data: sources = [] } = useBbSources(workspaceId ?? null);
-  const [filter, setFilter] = useState<"all" | BbEntityType>("all");
+
+  const initialEntity = (searchParams.get("entity") as BbEntityType | null) ?? null;
+  const initialFact = searchParams.get("fact");
+  const initialStaleFilter = searchParams.get("staleFilter");
+
+  const [filter, setFilter] = useState<"all" | BbEntityType>(initialEntity ?? "all");
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<DateRange>("all");
   const [staleFilter, setStaleFilter] = useState<StaleFilter>("all");
+  const [hasGapsOnly, setHasGapsOnly] = useState(initialStaleFilter === "has_gaps");
   const [drawerFact, setDrawerFact] = useState<BbFactRow | null>(null);
   const [staleDrawer, setStaleDrawer] = useState<StaleFactView | null>(null);
+  const [gapDrawerFact, setGapDrawerFact] = useState<BbFactRow | null>(null);
   const qc = useQueryClient();
+
+  const verticalQuery = useQuery({
+    queryKey: ["bb_vertical_profile", workspaceId],
+    enabled: !!workspaceId,
+    queryFn: () => getWorkspaceVerticalProfile(workspaceId!),
+  });
+
+  const gapsQuery = useQuery({
+    queryKey: ["bb_vertical_gaps_for_approved", workspaceId],
+    enabled: !!workspaceId && !!verticalQuery.data,
+    queryFn: () => listVerticalGaps(workspaceId!, { status: "open" }),
+  });
+
+  const gapsByFactId = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const g of gapsQuery.data ?? []) {
+      if (!g.factId) continue;
+      m.set(g.factId, (m.get(g.factId) ?? 0) + 1);
+    }
+    return m;
+  }, [gapsQuery.data]);
+
+  // Scroll to a specific fact if requested via ?fact=.
+  useEffect(() => {
+    if (!initialFact) return;
+    const el = document.getElementById(`fact-${initialFact}`);
+    if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [initialFact, facts]);
 
   const sourceMap = useMemo(() => {
     const m = new Map<string, { title: string; created_at: string }>();
@@ -85,13 +127,14 @@ export default function ApprovedKnowledgePage() {
       if (!withinDateRange(f.last_reviewed_at, range)) return false;
       const ss = (f.stale_state as BbStaleState | undefined) ?? "fresh";
       if (staleFilter !== "all" && ss !== staleFilter) return false;
+      if (hasGapsOnly && !gapsByFactId.has(f.id)) return false;
       if (term) {
         const hay = `${f.display_name} ${f.canonical_key}`.toLowerCase();
         if (!hay.includes(term)) return false;
       }
       return true;
     });
-  }, [facts, filter, search, range, staleFilter]);
+  }, [facts, filter, search, range, staleFilter, hasGapsOnly, gapsByFactId]);
 
   const grouped = useMemo(() => {
     const out: Record<string, BbFactRow[]> = {};
@@ -119,12 +162,32 @@ export default function ApprovedKnowledgePage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-semibold">Approved knowledge</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Approved knowledge</h2>
+            {verticalQuery.data ? (
+              <Badge variant="secondary" className="bg-sky-100 text-sky-900">
+                <Layers className="mr-1 h-3 w-3" />
+                Vertical: {verticalQuery.data.label}
+              </Badge>
+            ) : null}
+          </div>
           <p className="text-sm text-muted-foreground">
             Governed business memory. Every fact is reviewer-approved and source-backed.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {verticalQuery.data ? (
+            <Button
+              size="sm"
+              variant={hasGapsOnly ? "default" : "outline"}
+              onClick={() => setHasGapsOnly((v) => !v)}
+            >
+              <AlertCircle className="mr-1 h-3.5 w-3.5" /> Has gaps
+              {gapsByFactId.size > 0 ? (
+                <span className="ml-1 text-xs">({gapsByFactId.size})</span>
+              ) : null}
+            </Button>
+          ) : null}
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -203,8 +266,24 @@ export default function ApprovedKnowledgePage() {
                       {rows.map((f) => {
                         const latest = latestSourceDate(f);
                         return (
-                          <tr key={f.id} className="border-b last:border-0 align-top">
-                            <td className="px-4 py-3 font-medium">{f.display_name}</td>
+                          <tr key={f.id} id={`fact-${f.id}`} className="border-b last:border-0 align-top">
+                            <td className="px-4 py-3 font-medium">
+                              <div className="flex items-center gap-2">
+                                <span>{f.display_name}</span>
+                                {gapsByFactId.get(f.id) ? (
+                                  <button
+                                    onClick={() => setGapDrawerFact(f)}
+                                    className="inline-flex"
+                                    aria-label="View vertical gaps"
+                                  >
+                                    <Badge variant="secondary" className="cursor-pointer bg-rose-100 text-rose-900 text-[10px]">
+                                      <AlertCircle className="mr-1 h-3 w-3" />
+                                      {gapsByFactId.get(f.id)} gap{(gapsByFactId.get(f.id) ?? 0) > 1 ? "s" : ""}
+                                    </Badge>
+                                  </button>
+                                ) : null}
+                              </div>
+                            </td>
                             <td className="px-4 py-3">
                               <pre className="max-w-[24rem] overflow-x-auto text-xs text-muted-foreground">
                                 {JSON.stringify(f.payload, null, 0)}
@@ -318,6 +397,13 @@ export default function ApprovedKnowledgePage() {
         fact={staleDrawer}
         onClose={() => setStaleDrawer(null)}
         onChanged={() => qc.invalidateQueries({ queryKey: ["bb_facts"] })}
+      />
+      <BbGapDrawer
+        open={!!gapDrawerFact}
+        factId={gapDrawerFact?.id ?? null}
+        factDisplayName={gapDrawerFact?.display_name ?? null}
+        gaps={gapsQuery.data ?? []}
+        onClose={() => setGapDrawerFact(null)}
       />
     </div>
   );

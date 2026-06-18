@@ -17,6 +17,7 @@ import {
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
 import BbStaleFactDrawer from "@/components/business-brain/BbStaleFactDrawer";
 import BbConflictDrawer from "@/components/business-brain/BbConflictDrawer";
+import BrainVerticalGovernanceSection from "./BrainVerticalGovernanceSection";
 
 const REASON_LABEL: Record<string, string> = {
   stale_due_to_age: "Age",
@@ -183,6 +184,9 @@ export default function BrainGovernancePage() {
           </Card>
         )}
       </section>
+
+      {/* Phase 6 — Vertical coverage & gaps */}
+      <BrainVerticalGovernanceSection />
 
       <BbStaleFactDrawer
         fact={openStale}
