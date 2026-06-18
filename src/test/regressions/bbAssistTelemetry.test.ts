@@ -68,8 +68,10 @@ describe("BB Phase 4 — telemetry privacy", () => {
   it("rejects unknown event types silently (no throw)", () => {
     const captured: string[] = [];
     __setBbTelemetryEmitter((t) => { captured.push(t); });
-    // @ts-expect-error intentional invalid event
-    emitBbEvent("bb_assist_definitely_not_a_real_event", { workspaceId: "ws1" });
+    emitBbEvent(
+      "bb_assist_definitely_not_a_real_event" as unknown as Parameters<typeof emitBbEvent>[0],
+      { workspaceId: "ws1" },
+    );
     expect(captured).toHaveLength(0);
   });
 });
