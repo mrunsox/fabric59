@@ -197,7 +197,7 @@ export default function AscWizardPage() {
           dispatch({
             type: "ADD_CALLER_REASON",
             reason: {
-              id: cryptoRandomId(),
+              id: nextId(),
               label: intent.label,
               requiredCapture: intent.requiredCapture ?? [],
               opener: intent.opener,
@@ -220,7 +220,7 @@ export default function AscWizardPage() {
           dispatch({
             type: "ADD_NOTIFICATION_EDIT",
             notification: {
-              id: cryptoRandomId(),
+              id: nextId(),
               trigger: intent.trigger,
               channel: intent.channel,
               note: intent.note,
