@@ -155,6 +155,16 @@ export default function ApprovedKnowledgePage() {
               <SelectItem value="90">Last 90 days</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={staleFilter} onValueChange={(v) => setStaleFilter(v as StaleFilter)}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All staleness</SelectItem>
+              <SelectItem value="fresh">Fresh only</SelectItem>
+              <SelectItem value="stale_due_to_age">Stale (age)</SelectItem>
+              <SelectItem value="stale_due_to_usage">Stale (usage)</SelectItem>
+              <SelectItem value="stale_due_to_conflict">Conflicts</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -211,7 +221,31 @@ export default function ApprovedKnowledgePage() {
                               {latest ? new Date(latest).toLocaleDateString() : "—"}
                             </td>
                             <td className="px-4 py-3">
-                              <VerificationBadge state={f.verification_state} />
+                              <div className="flex flex-col gap-1">
+                                <VerificationBadge state={f.verification_state} />
+                                {f.stale_state && f.stale_state !== "fresh" ? (
+                                  <button
+                                    onClick={async () => {
+                                      const list = await listStaleFacts({ workspaceId: workspaceId!, limit: 1 });
+                                      const match = list.find((s) => s.id === f.id) ?? null;
+                                      setStaleDrawer(match);
+                                    }}
+                                    className="text-left"
+                                  >
+                                    {(() => {
+                                      const cfg = STALE_BADGE[f.stale_state];
+                                      if (!cfg) return null;
+                                      const I = cfg.icon;
+                                      return (
+                                        <Badge variant="secondary" className={cfg.cls + " cursor-pointer text-[10px]"}>
+                                          <I className="mr-1 h-3 w-3" />
+                                          {cfg.label}
+                                        </Badge>
+                                      );
+                                    })()}
+                                  </button>
+                                ) : null}
+                              </div>
                             </td>
                             <td className="px-4 py-3 text-xs text-muted-foreground">
                               {new Date(f.last_reviewed_at).toLocaleDateString()}
@@ -266,6 +300,11 @@ export default function ApprovedKnowledgePage() {
           </div>
         </SheetContent>
       </Sheet>
+      <BbStaleFactDrawer
+        fact={staleDrawer}
+        onClose={() => setStaleDrawer(null)}
+        onChanged={() => qc.invalidateQueries({ queryKey: ["bb_facts"] })}
+      />
     </div>
   );
 }
