@@ -266,8 +266,24 @@ export default function ApprovedKnowledgePage() {
                       {rows.map((f) => {
                         const latest = latestSourceDate(f);
                         return (
-                          <tr key={f.id} className="border-b last:border-0 align-top">
-                            <td className="px-4 py-3 font-medium">{f.display_name}</td>
+                          <tr key={f.id} id={`fact-${f.id}`} className="border-b last:border-0 align-top">
+                            <td className="px-4 py-3 font-medium">
+                              <div className="flex items-center gap-2">
+                                <span>{f.display_name}</span>
+                                {gapsByFactId.get(f.id) ? (
+                                  <button
+                                    onClick={() => setGapDrawerFact(f)}
+                                    className="inline-flex"
+                                    aria-label="View vertical gaps"
+                                  >
+                                    <Badge variant="secondary" className="cursor-pointer bg-rose-100 text-rose-900 text-[10px]">
+                                      <AlertCircle className="mr-1 h-3 w-3" />
+                                      {gapsByFactId.get(f.id)} gap{(gapsByFactId.get(f.id) ?? 0) > 1 ? "s" : ""}
+                                    </Badge>
+                                  </button>
+                                ) : null}
+                              </div>
+                            </td>
                             <td className="px-4 py-3">
                               <pre className="max-w-[24rem] overflow-x-auto text-xs text-muted-foreground">
                                 {JSON.stringify(f.payload, null, 0)}
