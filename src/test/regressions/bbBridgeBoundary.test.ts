@@ -25,7 +25,9 @@ const CONSUMER_DIRS = [
 ];
 
 const FORBIDDEN_PATTERNS = [
-  /@\/hooks\/useBusinessBrain/,
+  // Match `@/hooks/useBusinessBrain"` or `@/hooks/useBusinessBrain'` only —
+  // `useBusinessBrainSuggestions` is the Phase 2 bridge hook and is allowed.
+  /@\/hooks\/useBusinessBrain['"]/,
   /@\/pages\/workspace\/brain/,
   /@\/lib\/business-brain\/types/,
   /@\/lib\/business-brain\/entitySchemas/,
