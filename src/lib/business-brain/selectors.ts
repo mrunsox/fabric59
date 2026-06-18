@@ -936,10 +936,8 @@ export async function resolveConflict(
   if (error) return false;
 
   // Clear conflict reason from facts that no longer have any open conflicts.
-  const factIds = [
-    (conflict as { primary_fact_id: string }).primary_fact_id,
-    (conflict as { conflicting_fact_id: string }).conflicting_fact_id,
-  ];
+  const c = conflict as unknown as { primary_fact_id: string; conflicting_fact_id: string };
+  const factIds = [c.primary_fact_id, c.conflicting_fact_id];
   for (const fid of factIds) {
     const { data: open } = await supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -978,7 +976,7 @@ export async function resolveConflict(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("bb_facts" as any)
       .update({ verification_state: "needs_review" })
-      .eq("id", (conflict as { primary_fact_id: string }).primary_fact_id);
+      .eq("id", c.primary_fact_id);
   }
   return true;
 }
