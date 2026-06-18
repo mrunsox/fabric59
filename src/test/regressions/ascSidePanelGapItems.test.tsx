@@ -69,7 +69,7 @@ function Harness() {
 
 describe("ASC Side panel — advisory gap items (Slice 4)", () => {
   it("renders the advisory list with non-blocking copy", () => {
-    render(<Harness />);
+    render(<QueryClientProvider client={new QueryClient()}><Harness /></QueryClientProvider>);
     expect(screen.getByTestId("asc-gap-list-3")).toBeInTheDocument();
     expect(screen.getByTestId("asc-gap-item-g-1")).toHaveTextContent(
       "No handling for Intake.",
@@ -80,7 +80,7 @@ describe("ASC Side panel — advisory gap items (Slice 4)", () => {
   });
 
   it("dismiss hides item from UI without touching draft.input", () => {
-    render(<Harness />);
+    render(<QueryClientProvider client={new QueryClient()}><Harness /></QueryClientProvider>);
     fireEvent.click(screen.getByTestId("asc-gap-dismiss-g-1"));
     expect(screen.queryByTestId("asc-gap-item-g-1")).not.toBeInTheDocument();
     // Caller reasons untouched.
