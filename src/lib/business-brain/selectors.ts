@@ -149,7 +149,7 @@ export async function getFactSourceRefs(
     .select("id,title")
     .in("id", ids);
   const titleById = new Map<string, string>();
-  for (const s of (sources ?? []) as Array<{ id: string; title: string }>) {
+  for (const s of ((sources ?? []) as unknown) as Array<{ id: string; title: string }>) {
     titleById.set(s.id, s.title);
   }
   return refs.map((r) => ({
