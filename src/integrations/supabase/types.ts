@@ -1001,6 +1001,314 @@ export type Database = {
           },
         ]
       }
+      bb_vertical_completeness: {
+        Row: {
+          actual_count: number
+          coverage_ratio: number
+          created_at: string
+          entity_type: string
+          id: string
+          last_computed_at: string
+          required_count: number
+          updated_at: string
+          vertical_profile_id: string
+          workspace_id: string
+        }
+        Insert: {
+          actual_count?: number
+          coverage_ratio?: number
+          created_at?: string
+          entity_type: string
+          id?: string
+          last_computed_at?: string
+          required_count?: number
+          updated_at?: string
+          vertical_profile_id: string
+          workspace_id: string
+        }
+        Update: {
+          actual_count?: number
+          coverage_ratio?: number
+          created_at?: string
+          entity_type?: string
+          id?: string
+          last_computed_at?: string
+          required_count?: number
+          updated_at?: string
+          vertical_profile_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_vertical_completeness_vertical_profile_id_fkey"
+            columns: ["vertical_profile_id"]
+            isOneToOne: false
+            referencedRelation: "bb_vertical_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_vertical_completeness_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_vertical_entity_requirements: {
+        Row: {
+          created_at: string
+          entity_type: string
+          high_priority: boolean
+          id: string
+          is_required: boolean
+          max_count: number | null
+          min_count: number
+          updated_at: string
+          vertical_profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_type: string
+          high_priority?: boolean
+          id?: string
+          is_required?: boolean
+          max_count?: number | null
+          min_count?: number
+          updated_at?: string
+          vertical_profile_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_type?: string
+          high_priority?: boolean
+          id?: string
+          is_required?: boolean
+          max_count?: number | null
+          min_count?: number
+          updated_at?: string
+          vertical_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_vertical_entity_requirements_vertical_profile_id_fkey"
+            columns: ["vertical_profile_id"]
+            isOneToOne: false
+            referencedRelation: "bb_vertical_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_vertical_field_requirements: {
+        Row: {
+          created_at: string
+          entity_type: string
+          field_path: string
+          id: string
+          is_required: boolean
+          updated_at: string
+          validation_hint: string | null
+          vertical_profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_type: string
+          field_path: string
+          id?: string
+          is_required?: boolean
+          updated_at?: string
+          validation_hint?: string | null
+          vertical_profile_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_type?: string
+          field_path?: string
+          id?: string
+          is_required?: boolean
+          updated_at?: string
+          validation_hint?: string | null
+          vertical_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_vertical_field_requirements_vertical_profile_id_fkey"
+            columns: ["vertical_profile_id"]
+            isOneToOne: false
+            referencedRelation: "bb_vertical_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_vertical_gaps: {
+        Row: {
+          created_at: string
+          entity_type: string
+          fact_id: string | null
+          field_path: string | null
+          gap_kind: string
+          id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          suppressed_at: string | null
+          suppressed_by: string | null
+          updated_at: string
+          vertical_profile_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_type: string
+          fact_id?: string | null
+          field_path?: string | null
+          gap_kind: string
+          id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          suppressed_at?: string | null
+          suppressed_by?: string | null
+          updated_at?: string
+          vertical_profile_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_type?: string
+          fact_id?: string | null
+          field_path?: string | null
+          gap_kind?: string
+          id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          suppressed_at?: string | null
+          suppressed_by?: string | null
+          updated_at?: string
+          vertical_profile_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_vertical_gaps_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: false
+            referencedRelation: "bb_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_vertical_gaps_vertical_profile_id_fkey"
+            columns: ["vertical_profile_id"]
+            isOneToOne: false
+            referencedRelation: "bb_vertical_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_vertical_gaps_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bb_vertical_profiles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          label: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bb_workspace_vertical_profiles: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          updated_at: string
+          vertical_profile_id: string
+          workspace_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          updated_at?: string
+          vertical_profile_id: string
+          workspace_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          updated_at?: string
+          vertical_profile_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bb_workspace_vertical_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "bb_workspace_vertical_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_workspace_vertical_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "bb_workspace_vertical_profiles_vertical_profile_id_fkey"
+            columns: ["vertical_profile_id"]
+            isOneToOne: false
+            referencedRelation: "bb_vertical_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bb_workspace_vertical_profiles_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_log_cache: {
         Row: {
           call_data: Json
