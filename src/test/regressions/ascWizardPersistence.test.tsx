@@ -1,4 +1,3 @@
-import { vi as __vi_bb } from "vitest"; __vi_bb.mock("@/hooks/useBusinessBrainSuggestions", () => ({ useBusinessBrainSuggestions: () => ({ enabled: false, isLoading: false, isError: false, suggestions: [] }) }));
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";

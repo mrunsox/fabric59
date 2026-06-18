@@ -1,4 +1,3 @@
-import { vi as __vi_bb } from "vitest"; __vi_bb.mock("@/hooks/useBusinessBrainSuggestions", () => ({ useBusinessBrainSuggestions: () => ({ enabled: false, isLoading: false, isError: false, suggestions: [] }) }));
 /**
  * Phase 5 · Slice 1 — Route transition continuity.
  *
