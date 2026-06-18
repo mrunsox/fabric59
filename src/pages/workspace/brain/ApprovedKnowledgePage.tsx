@@ -1,5 +1,6 @@
-import { useParams } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Loader2, Link as LinkIcon, Search, Eye } from "lucide-react";
+import { Loader2, Link as LinkIcon, Search, Eye, Layers, AlertCircle } from "lucide-react";
 import {
   useBbFacts,
   useBbSources,
@@ -29,8 +30,13 @@ import { BB_ENTITY_TYPES } from "@/lib/business-brain/types";
 import type { BbEntityType, BbStaleState } from "@/lib/business-brain/types";
 import { AlertTriangle, Clock, Activity } from "lucide-react";
 import BbStaleFactDrawer from "@/components/business-brain/BbStaleFactDrawer";
+import BbGapDrawer from "@/components/business-brain/BbGapDrawer";
 import { useQueryClient } from "@tanstack/react-query";
-import { type StaleFactView } from "@/lib/business-brain/selectors";
+import {
+  getWorkspaceVerticalProfile,
+  listVerticalGaps,
+  type StaleFactView,
+} from "@/lib/business-brain/selectors";
 
 type DateRange = "all" | "7" | "30" | "90";
 
