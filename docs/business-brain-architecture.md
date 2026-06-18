@@ -500,3 +500,57 @@ the Governance UI ("Re-evaluate coverage").
 
 ASC, runner, and search modules MUST NOT import vertical selectors or UI
 modules. Enforced by `bbVerticalBoundary.test.ts`.
+
+## Phase 7 — Demand-Driven Gap Detection
+
+Builds a prioritized backlog of "missing knowledge" topics from real usage
+signals (Search, ASC, Live Assist). Human-in-the-loop only: no auto-facts,
+no ranking changes, no ASC/runner behavior changes.
+
+### Tables (additive)
+
+- `bb_gap_events` — raw log per signal (workspace_id, channel, normalized_query, context). RLS: workspace members INSERT, only supervisor+ may SELECT raw rows.
+- `bb_gap_topics` — clustered topic with canonical_question, optional hints, channels array, status (`open` | `linked` | `dismissed` | `suppressed` | `pruned`). Overflow uses `pruned`, distinct from human `dismissed`.
+- `bb_gap_event_topics` — many-to-many event ↔ topic.
+
+### Signal logging
+
+`src/lib/business-brain/gapLogging.ts` exposes `logGapSignal()` — a tiny,
+dependency-free helper safe to import from ASC/runner. It is the only path
+into `bb_gap_events` from the app. Triggers:
+
+- Search: 0 fact hits OR only orphan-chunk evidence (low confidence)
+- ASC: empty suggestion tray for supported step (3/4/6/7)
+- Assist: 0 cards while `context.hasContext === true`
+
+Each call also emits `bb_gap_event_logged` (ids/types/counts only).
+
+### Clustering — `bb-gap-cluster` edge function
+
+- Nightly cron `bb-gap-cluster-nightly` (03:15 UTC).
+- Uses the existing Business Brain embedding model (`openai/text-embedding-3-small`) for parity with `bb-search`.
+- Cosine sim threshold 0.85 attaches events to existing topics; otherwise seeds a new topic.
+- Enforces `MAX_OPEN_TOPICS = 200` per workspace. Overflow is pruned by `(open_event_count ASC, last_seen_at ASC)` and marked `status='pruned'` with `status_reason='overflow_cap_200'` — NEVER conflated with reviewer dismissals.
+- Conservative, explainable entity/vertical hints (NL question → faq lean, etc.). Hints stay nullable — review-facing only.
+
+### Governance UI
+
+`BrainGapGovernanceSection` renders inside `BrainGovernancePage`:
+
+- Canonical question (no raw query text), entity hint, vertical requirement hint, event count, channel icons, last seen.
+- Filters: channel, entity hint, time window (7/30/90d).
+- Actions: **Create draft** (deep-link to Approved Knowledge editor with prefill params — never writes a fact), **Link** (deep-link to Search scoped to hint), **Suppress** (sticky), **Dismiss**.
+
+### Selectors
+
+`listGapTopics`, `dismissGapTopic`, `suppressGapTopic`, `linkGapTopicToFact`, `triggerGapClusterRun`, `buildFactDraftLinkFromGap`.
+
+### Telemetry events (ids/types/counts only)
+
+`bb_gap_event_logged`, `bb_gap_cluster_run`, `bb_gap_topic_action`, `bb_gap_governance_view_opened`.
+
+### Boundary
+
+`bbGapBoundary.test.ts` enforces that ASC/runner code never imports the
+governance-side gap selectors or the section component. The logging helper
+is the only allowed crossing.
