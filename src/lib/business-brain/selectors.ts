@@ -1204,3 +1204,160 @@ export async function triggerVerticalEvaluation(
     return { ok: false };
   }
 }
+
+// ===================================================================
+// Phase 7 — Demand-driven gap detection (governance-side selectors)
+//
+// NOTE: gap *signal logging* (insert into bb_gap_events) is intentionally
+// kept in `./gapLogging.ts` so ASC/runner code can import a small,
+// dependency-free helper without pulling in governance surfaces. THIS file
+// owns governance reads + reviewer actions, and ASC/runner code must NOT
+// import from here (enforced by bbGapBoundary.test.ts).
+// ===================================================================
+
+import type { GapChannel } from "./gapLogging";
+
+export interface BbGapTopicView {
+  id: string;
+  workspaceId: string;
+  canonicalQuestion: string;
+  entityTypeHint: string | null;
+  verticalRequirementHint: string | null;
+  openEventCount: number;
+  channels: GapChannel[];
+  status: "open" | "linked" | "dismissed" | "suppressed" | "pruned";
+  statusReason: string | null;
+  linkedFactId: string | null;
+  lastSeenAt: string;
+  createdAt: string;
+}
+
+export interface GapTopicFilter {
+  channel?: GapChannel;
+  entityTypeHint?: string;
+  sinceDays?: number;
+  status?: "open" | "linked" | "dismissed" | "suppressed" | "pruned";
+}
+
+export async function listGapTopics(
+  workspaceId: string,
+  filter: GapTopicFilter = {},
+): Promise<BbGapTopicView[]> {
+  if (!workspaceId) return [];
+  let q = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_gap_topics" as any)
+    .select(
+      "id,workspace_id,canonical_question,entity_type_hint,vertical_requirement_hint,open_event_count,channels,status,status_reason,linked_fact_id,last_seen_at,created_at",
+    )
+    .eq("workspace_id", workspaceId)
+    .eq("status", filter.status ?? "open")
+    .order("open_event_count", { ascending: false })
+    .order("last_seen_at", { ascending: false })
+    .limit(200);
+  if (filter.entityTypeHint) q = q.eq("entity_type_hint", filter.entityTypeHint);
+  if (filter.channel) q = q.contains("channels", [filter.channel]);
+  if (filter.sinceDays && filter.sinceDays > 0) {
+    const since = new Date(Date.now() - filter.sinceDays * 86400_000).toISOString();
+    q = q.gte("last_seen_at", since);
+  }
+  const { data, error } = await q;
+  if (error || !data) return [];
+  return (data as unknown as Array<{
+    id: string;
+    workspace_id: string;
+    canonical_question: string;
+    entity_type_hint: string | null;
+    vertical_requirement_hint: string | null;
+    open_event_count: number;
+    channels: string[] | null;
+    status: BbGapTopicView["status"];
+    status_reason: string | null;
+    linked_fact_id: string | null;
+    last_seen_at: string;
+    created_at: string;
+  }>).map((r) => ({
+    id: r.id,
+    workspaceId: r.workspace_id,
+    canonicalQuestion: r.canonical_question,
+    entityTypeHint: r.entity_type_hint,
+    verticalRequirementHint: r.vertical_requirement_hint,
+    openEventCount: r.open_event_count,
+    channels: ((r.channels ?? []) as GapChannel[]).filter((c) =>
+      c === "search" || c === "asc" || c === "assist",
+    ),
+    status: r.status,
+    statusReason: r.status_reason,
+    linkedFactId: r.linked_fact_id,
+    lastSeenAt: r.last_seen_at,
+    createdAt: r.created_at,
+  }));
+}
+
+async function setGapTopicStatus(
+  gapTopicId: string,
+  status: "dismissed" | "suppressed" | "linked",
+  extra: Record<string, unknown> = {},
+): Promise<boolean> {
+  if (!gapTopicId) return false;
+  const { data: userResult } = await supabase.auth.getUser();
+  const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_gap_topics" as any)
+    .update({
+      status,
+      acted_by: userResult.user?.id ?? null,
+      ...extra,
+    })
+    .eq("id", gapTopicId);
+  return !error;
+}
+
+export function dismissGapTopic(gapTopicId: string): Promise<boolean> {
+  return setGapTopicStatus(gapTopicId, "dismissed", { status_reason: "reviewer_dismissed" });
+}
+
+export function suppressGapTopic(gapTopicId: string): Promise<boolean> {
+  return setGapTopicStatus(gapTopicId, "suppressed", { status_reason: "reviewer_suppressed" });
+}
+
+export function linkGapTopicToFact(
+  gapTopicId: string,
+  factId: string,
+): Promise<boolean> {
+  if (!factId) return Promise.resolve(false);
+  return setGapTopicStatus(gapTopicId, "linked", {
+    linked_fact_id: factId,
+    status_reason: "reviewer_linked",
+  });
+}
+
+/**
+ * Build a deep link to the Approved Knowledge page with prefill params for a
+ * draft fact. Phase 7 stays strictly draft-only: this is just a URL — no
+ * fact is written. The destination page handles the prefilled editor.
+ */
+export function buildFactDraftLinkFromGap(
+  workspaceId: string,
+  topic: BbGapTopicView,
+): string {
+  if (!workspaceId || !topic) return "";
+  const params = new URLSearchParams();
+  params.set("newDraft", "1");
+  params.set("fromGap", topic.id);
+  if (topic.entityTypeHint) params.set("entity", topic.entityTypeHint);
+  params.set("question", topic.canonicalQuestion);
+  return `/w/${workspaceId}/brain/approved?${params.toString()}`;
+}
+
+export async function triggerGapClusterRun(
+  workspaceId: string,
+): Promise<{ ok: boolean }> {
+  if (!workspaceId) return { ok: false };
+  try {
+    await supabase.functions.invoke("bb-gap-cluster", { body: { workspaceId } });
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
