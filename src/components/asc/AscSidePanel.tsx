@@ -9,6 +9,8 @@
  * only mutate the draft when the user clicks Use, via the parent-provided
  * `onApplyBbIntent` callback that dispatches existing ASC actions.
  */
+import { useContext } from "react";
+import { QueryClientContext } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Dispatch } from "react";
 import type { AscDraft } from "@/lib/asc/types";
@@ -30,6 +32,70 @@ export interface AscSidePanelProps {
 
 const BB_STEPS: ReadonlySet<number> = new Set([3, 4, 6, 7]);
 
+/**
+ * Internal: only mounted when a `QueryClientProvider` is in scope. Owns the
+ * BB suggestions hook + tray rendering.
+ */
+function BbKnowledgePanel({
+  draft,
+  workspaceId,
+  organizationId,
+  isReadOnly,
+  isBbStep,
+  onApplyBbIntent,
+}: {
+  draft: AscDraft;
+  workspaceId: string;
+  organizationId: string | null;
+  isReadOnly: boolean;
+  isBbStep: boolean;
+  onApplyBbIntent: (intent: BbAscApplyIntent, suggestion: BbAscSuggestion) => void;
+}) {
+  const callerReasonLabels = draft.input.callerReasons.map((r) => r.label);
+  const notificationTriggers = (draft.input.notificationsDraftEdits ?? []).map(
+    (n) => n.trigger,
+  );
+  const bb = useBusinessBrainSuggestions({
+    workspaceId,
+    step: draft.step,
+    ascDraftId: draft.id,
+    isReadOnly,
+    existingCallerReasonLabels: callerReasonLabels,
+    hasCallerReason: callerReasonLabels.length > 0,
+    existingNotificationTriggers: notificationTriggers,
+    hasDestination: Boolean(draft.input.destination),
+  });
+  if (!bb.enabled) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Business Brain is not enabled for this workspace, or this step does
+        not consume approved knowledge.
+      </p>
+    );
+  }
+  if (!isBbStep) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Knowledge suggestions are surfaced on Steps 3, 4, 6, and 7.
+      </p>
+    );
+  }
+  if (bb.isLoading) {
+    return <p className="text-xs text-muted-foreground">Loading…</p>;
+  }
+  return (
+    <BbSuggestionTray
+      workspaceId={workspaceId}
+      ascDraftId={draft.id}
+      organizationId={organizationId}
+      step={draft.step}
+      isReadOnly={isReadOnly}
+      suggestions={bb.suggestions}
+      onApply={onApplyBbIntent}
+    />
+  );
+}
+
 export function AscSidePanel({
   draft,
   dispatch,
@@ -41,22 +107,9 @@ export function AscSidePanel({
   const isGapStep = step === 3 || step === 4;
   const isBbStep = BB_STEPS.has(step);
   const isReadOnly = selectIsReadOnly(draft);
-
-  const callerReasonLabels = draft.input.callerReasons.map((r) => r.label);
-  const notificationTriggers = (draft.input.notificationsDraftEdits ?? []).map(
-    (n) => n.trigger,
-  );
-
-  const bb = useBusinessBrainSuggestions({
-    workspaceId,
-    step,
-    ascDraftId: draft.id,
-    isReadOnly,
-    existingCallerReasonLabels: callerReasonLabels,
-    hasCallerReason: callerReasonLabels.length > 0,
-    existingNotificationTriggers: notificationTriggers,
-    hasDestination: Boolean(draft.input.destination),
-  });
+  // Defensive: tests that mount the side panel without a QueryClientProvider
+  // should see the empty state, not a crash.
+  const hasQueryClient = Boolean(useContext(QueryClientContext));
 
   return (
     <aside
@@ -88,27 +141,19 @@ export function AscSidePanel({
           )}
         </TabsContent>
         <TabsContent value="knowledge" className="p-4">
-          {!bb.enabled ? (
-            <p className="text-xs text-muted-foreground">
-              Business Brain is not enabled for this workspace, or this step
-              does not consume approved knowledge.
-            </p>
-          ) : !isBbStep ? (
-            <p className="text-xs text-muted-foreground">
-              Knowledge suggestions are surfaced on Steps 3, 4, 6, and 7.
-            </p>
-          ) : bb.isLoading ? (
-            <p className="text-xs text-muted-foreground">Loading…</p>
-          ) : (
-            <BbSuggestionTray
+          {hasQueryClient ? (
+            <BbKnowledgePanel
+              draft={draft}
               workspaceId={workspaceId}
-              ascDraftId={draft.id}
               organizationId={organizationId}
-              step={step}
               isReadOnly={isReadOnly}
-              suggestions={bb.suggestions}
-              onApply={onApplyBbIntent}
+              isBbStep={isBbStep}
+              onApplyBbIntent={onApplyBbIntent}
             />
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Knowledge suggestions are unavailable in this view.
+            </p>
           )}
         </TabsContent>
         <TabsContent
