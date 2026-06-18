@@ -1035,7 +1035,7 @@ export async function getWorkspaceVerticalProfile(
     .eq("id", profileId)
     .maybeSingle();
   if (!profile) return null;
-  const p = profile as { id: string; slug: string; label: string; description: string | null };
+  const p = profile as unknown as { id: string; slug: string; label: string; description: string | null };
   return { id: p.id, slug: p.slug, label: p.label, description: p.description };
 }
 
