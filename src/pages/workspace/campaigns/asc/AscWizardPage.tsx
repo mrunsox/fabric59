@@ -292,6 +292,7 @@ export default function AscWizardPage() {
       onContinue={handleContinue}
       onHandoffToManual={() => handoffToManual(workspaceId)}
       onApplyBbIntent={applyBbIntent}
+      organizationId={orgId}
     >
 
       {body}

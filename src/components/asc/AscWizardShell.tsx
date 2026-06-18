@@ -133,6 +133,7 @@ export function AscWizardShell({
           draft={draft}
           dispatch={dispatch}
           workspaceId={workspaceId}
+          organizationId={organizationId}
           onApplyBbIntent={onApplyBbIntent}
         />
       </div>
