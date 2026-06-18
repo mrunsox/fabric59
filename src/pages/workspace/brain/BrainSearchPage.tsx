@@ -42,12 +42,9 @@ const GROUP_LABEL: Record<string, string> = {
 
 export default function BrainSearchPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  const { organization, profile } = useAuth();
+  const { organization, isMasterAdmin, isWorkspaceAdmin } = useAuth();
   const orgId = organization?.id ?? null;
-  // master_admin and org admins can backfill; agent-level can search.
-  const canReindex = !!profile?.is_master_admin || ["owner", "admin"].includes(
-    organization?.role ?? "",
-  );
+  const canReindex = isMasterAdmin || isWorkspaceAdmin;
 
   const [draftQuery, setDraftQuery] = useState("");
   const [entityType, setEntityType] = useState<"all" | BbEntityType>("all");
