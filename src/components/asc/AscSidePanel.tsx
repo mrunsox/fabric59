@@ -103,7 +103,7 @@ export function AscSidePanel({
             <BbSuggestionTray
               workspaceId={workspaceId}
               ascDraftId={draft.id}
-              organizationId={organization?.id ?? null}
+              organizationId={organizationId}
               step={step}
               isReadOnly={isReadOnly}
               suggestions={bb.suggestions}
