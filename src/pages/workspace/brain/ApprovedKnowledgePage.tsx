@@ -398,6 +398,13 @@ export default function ApprovedKnowledgePage() {
         onClose={() => setStaleDrawer(null)}
         onChanged={() => qc.invalidateQueries({ queryKey: ["bb_facts"] })}
       />
+      <BbGapDrawer
+        open={!!gapDrawerFact}
+        factId={gapDrawerFact?.id ?? null}
+        factDisplayName={gapDrawerFact?.display_name ?? null}
+        gaps={gapsQuery.data ?? []}
+        onClose={() => setGapDrawerFact(null)}
+      />
     </div>
   );
 }
