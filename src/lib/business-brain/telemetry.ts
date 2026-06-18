@@ -169,6 +169,10 @@ const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
   "topicsUpdated",
   "topicsPruned",
   "eventsAssigned",
+  "actorRole",
+  "flag",
+  "from",
+  "to",
 ]);
 
 function sanitize(p: BbEventPayload): Record<string, unknown> {
