@@ -762,7 +762,7 @@ export async function listStaleFacts(q: StaleFactsQuery): Promise<StaleFactView[
   let defaults = new Map<string, { interval: number; highRisk: boolean }>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: defs } = await supabase.from("bb_fact_entity_defaults" as any).select("*");
-  for (const d of (defs ?? []) as Array<{ entity_type: string; default_review_interval_days: number; high_risk: boolean }>) {
+  for (const d of (((defs ?? []) as unknown) as Array<{ entity_type: string; default_review_interval_days: number; high_risk: boolean }>)) {
     defaults.set(d.entity_type, { interval: d.default_review_interval_days, highRisk: d.high_risk });
   }
 
@@ -778,7 +778,7 @@ export async function listStaleFacts(q: StaleFactsQuery): Promise<StaleFactView[
       .from("bb_fact_usage" as any)
       .select("*")
       .in("fact_id", ids);
-    for (const u of (usage ?? []) as Array<Record<string, unknown> & { fact_id: string }>) {
+    for (const u of (((usage ?? []) as unknown) as Array<Record<string, unknown> & { fact_id: string }>)) {
       usageById.set(u.fact_id, u as never);
     }
   }
