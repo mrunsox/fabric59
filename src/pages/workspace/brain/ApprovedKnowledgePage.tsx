@@ -67,15 +67,51 @@ const STALE_BADGE: Record<string, { label: string; cls: string; icon: typeof Clo
 
 export default function ApprovedKnowledgePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: facts = [], isLoading } = useBbFacts(workspaceId ?? null);
   const { data: sources = [] } = useBbSources(workspaceId ?? null);
-  const [filter, setFilter] = useState<"all" | BbEntityType>("all");
+
+  const initialEntity = (searchParams.get("entity") as BbEntityType | null) ?? null;
+  const initialFact = searchParams.get("fact");
+  const initialStaleFilter = searchParams.get("staleFilter");
+
+  const [filter, setFilter] = useState<"all" | BbEntityType>(initialEntity ?? "all");
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<DateRange>("all");
   const [staleFilter, setStaleFilter] = useState<StaleFilter>("all");
+  const [hasGapsOnly, setHasGapsOnly] = useState(initialStaleFilter === "has_gaps");
   const [drawerFact, setDrawerFact] = useState<BbFactRow | null>(null);
   const [staleDrawer, setStaleDrawer] = useState<StaleFactView | null>(null);
+  const [gapDrawerFact, setGapDrawerFact] = useState<BbFactRow | null>(null);
   const qc = useQueryClient();
+
+  const verticalQuery = useQuery({
+    queryKey: ["bb_vertical_profile", workspaceId],
+    enabled: !!workspaceId,
+    queryFn: () => getWorkspaceVerticalProfile(workspaceId!),
+  });
+
+  const gapsQuery = useQuery({
+    queryKey: ["bb_vertical_gaps_for_approved", workspaceId],
+    enabled: !!workspaceId && !!verticalQuery.data,
+    queryFn: () => listVerticalGaps(workspaceId!, { status: "open" }),
+  });
+
+  const gapsByFactId = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const g of gapsQuery.data ?? []) {
+      if (!g.factId) continue;
+      m.set(g.factId, (m.get(g.factId) ?? 0) + 1);
+    }
+    return m;
+  }, [gapsQuery.data]);
+
+  // Scroll to a specific fact if requested via ?fact=.
+  useEffect(() => {
+    if (!initialFact) return;
+    const el = document.getElementById(`fact-${initialFact}`);
+    if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [initialFact, facts]);
 
   const sourceMap = useMemo(() => {
     const m = new Map<string, { title: string; created_at: string }>();
