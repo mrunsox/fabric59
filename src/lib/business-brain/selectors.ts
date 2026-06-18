@@ -18,7 +18,14 @@
  * See docs/business-brain-architecture.md (Bridge rules).
  */
 import { supabase } from "@/integrations/supabase/client";
-import type { BbEntityType, BbVerificationState } from "./types";
+import type {
+  BbEntityType,
+  BbVerificationState,
+  BbVerticalCoverage,
+  BbVerticalGap,
+  VerticalGapKind,
+  VerticalProfile,
+} from "./types";
 
 /**
  * Workspace-scoped, read-only view of an approved fact. Intentionally narrow
