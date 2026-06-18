@@ -130,6 +130,12 @@ const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
   "staleStateAfter",
   "section",
   "filtersApplied",
+  "verticalProfileId",
+  "gapKind",
+  "workspacesEvaluated",
+  "entityTypesEvaluated",
+  "gapsOpened",
+  "gapsResolved",
 ]);
 
 function sanitize(p: BbEventPayload): Record<string, unknown> {
