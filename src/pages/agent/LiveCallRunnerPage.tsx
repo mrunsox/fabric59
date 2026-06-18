@@ -39,6 +39,8 @@ import type { CallSessionMeta } from "@/types/call-runner";
 import { DraggableStack, type DraggableStackItem } from "@/components/call-runner/DraggableStack";
 import { useRunnerCardOrder } from "@/hooks/useRunnerCardOrder";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBusinessBrainAssist } from "@/hooks/useBusinessBrainAssist";
+import { BbAssistPanel } from "@/components/call-runner/BbAssistPanel";
 
 /**
  * Canonical live call runner.
