@@ -19,6 +19,10 @@ import { ASC_TOTAL_STEPS } from "@/lib/asc/types";
 import { selectCanFork, selectIsForked, selectIsReadOnly } from "@/lib/asc/selectors";
 import { forkToCanonical } from "@/lib/asc/reducer";
 import { emitAscEvent } from "@/lib/asc/telemetry";
+import type {
+  BbAscApplyIntent,
+  BbAscSuggestion,
+} from "@/lib/business-brain/selectors";
 
 import {
   AscStepBusiness,
