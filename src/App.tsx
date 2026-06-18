@@ -58,6 +58,7 @@ import BusinessBrainLayoutPage from "@/pages/workspace/brain/BusinessBrainLayout
 import KnowledgeBinPage from "@/pages/workspace/brain/KnowledgeBinPage";
 import SuggestedFactsPage from "@/pages/workspace/brain/SuggestedFactsPage";
 import ApprovedKnowledgePage from "@/pages/workspace/brain/ApprovedKnowledgePage";
+import BrainSearchPage from "@/pages/workspace/brain/BrainSearchPage";
 import WorkspaceAssistantPage from "@/pages/workspace/WorkspaceAssistantPage";
 import WorkspaceSettingsPage from "@/pages/workspace/WorkspaceSettingsPage";
 // Additive workspace-shell route completion (May 13 Canonical Build Doc §4):
@@ -623,6 +624,7 @@ const App = () => (
                   <Route index element={<KnowledgeBinPage />} />
                   <Route path="suggested" element={<SuggestedFactsPage />} />
                   <Route path="approved" element={<ApprovedKnowledgePage />} />
+                  <Route path="search" element={<BrainSearchPage />} />
                 </Route>
                 <Route path="assistant" element={<WorkspaceAssistantPage />} />
                 <Route path="settings" element={<WorkspaceSettingsPage />} />

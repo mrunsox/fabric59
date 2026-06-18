@@ -20,6 +20,12 @@ export const BB_EVENT_TYPES = [
   "bb_asc_suggestion_used",
   "bb_asc_suggestion_dismissed",
   "bb_asc_suggestion_hidden_forked",
+  // Phase 3 — retrieval & internal search
+  "bb_search_query_submitted",
+  "bb_search_result_opened",
+  "bb_search_result_marked",
+  "bb_search_reindex_started",
+  "bb_embed_run_completed",
 ] as const;
 export type BbEventType = (typeof BB_EVENT_TYPES)[number];
 
@@ -36,6 +42,19 @@ export interface BbEventPayload {
   // Phase 2
   ascDraftId?: string;
   step?: number;
+  // Phase 3 — structural metadata only. Never raw query/snippet text.
+  queryLength?: number;
+  filterCount?: number;
+  resultCount?: number;
+  factCount?: number;
+  chunkCount?: number;
+  latencyMs?: number;
+  hitKind?: "fact" | "chunk";
+  rank?: number;
+  useful?: boolean;
+  embedTarget?: "facts" | "chunks" | "both";
+  embedded?: number;
+  failed?: number;
 }
 
 const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
@@ -50,6 +69,18 @@ const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
   "count",
   "ascDraftId",
   "step",
+  "queryLength",
+  "filterCount",
+  "resultCount",
+  "factCount",
+  "chunkCount",
+  "latencyMs",
+  "hitKind",
+  "rank",
+  "useful",
+  "embedTarget",
+  "embedded",
+  "failed",
 ]);
 
 function sanitize(p: BbEventPayload): Record<string, unknown> {

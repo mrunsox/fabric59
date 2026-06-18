@@ -102,3 +102,16 @@ vertical skins, auto-merge/auto-approve.
 - Step 8 enrichment deferred per scope guards (no clean mapping).
 - 4 telemetry events added; flag/QueryClient/Auth missing → silent no-op.
 - 21 new tests passing (selectors, tray, reducer invariants, boundary, fork read-only).
+
+## Business Brain Phase 3 — Retrieval & Internal Search (shipped)
+
+Approved scope:
+- Additive embedding columns on `bb_facts` + `bb_source_chunks` (vector(1536), HNSW); `bb_search_queries` log.
+- `bb-embed` edge function: post-ingest/approve enqueue + admin backfill (Lovable AI `openai/text-embedding-3-small`).
+- `bb-search` edge function: fact-primary, chunk-as-evidence, orphan fallback only when no fact covers the query.
+- Read-only bridge: `searchApprovedKnowledge`, `triggerBbBackfill`, `BbSearchCard`.
+- `/w/:wid/brain/search` page; reusable `BbSourceCard`.
+- Privacy-safe telemetry (sanitizer-enforced allowlist; no raw query/snippet text).
+- Tests: selectors view-model, source card render+interactions, telemetry sanitizer, ASC↔retrieval boundary.
+
+Out of scope for Phase 3: ASC changes, live assist, transcript ingest, auto-learning, contradiction detection, URL crawl execution, cross-workspace search, ranking learned from feedback.

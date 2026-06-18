@@ -469,12 +469,16 @@ export type Database = {
           confidence_at_review: number | null
           created_at: string
           display_name: string
+          embedded_at: string | null
+          embedding: string | null
+          embedding_model: string | null
           entity_type: Database["public"]["Enums"]["bb_entity_type"]
           id: string
           last_reviewed_at: string
           last_reviewed_by: string | null
           notes: string | null
           payload: Json
+          search_text: string | null
           source_refs: Json
           superseded_by: string | null
           updated_at: string
@@ -487,12 +491,16 @@ export type Database = {
           confidence_at_review?: number | null
           created_at?: string
           display_name: string
+          embedded_at?: string | null
+          embedding?: string | null
+          embedding_model?: string | null
           entity_type: Database["public"]["Enums"]["bb_entity_type"]
           id?: string
           last_reviewed_at?: string
           last_reviewed_by?: string | null
           notes?: string | null
           payload?: Json
+          search_text?: string | null
           source_refs?: Json
           superseded_by?: string | null
           updated_at?: string
@@ -505,12 +513,16 @@ export type Database = {
           confidence_at_review?: number | null
           created_at?: string
           display_name?: string
+          embedded_at?: string | null
+          embedding?: string | null
+          embedding_model?: string | null
           entity_type?: Database["public"]["Enums"]["bb_entity_type"]
           id?: string
           last_reviewed_at?: string
           last_reviewed_by?: string | null
           notes?: string | null
           payload?: Json
+          search_text?: string | null
           source_refs?: Json
           superseded_by?: string | null
           updated_at?: string
@@ -613,9 +625,57 @@ export type Database = {
           },
         ]
       }
+      bb_search_queries: {
+        Row: {
+          chunk_count: number
+          client_id: string | null
+          created_at: string
+          fact_count: number
+          filters: Json
+          id: string
+          latency_ms: number | null
+          query_length: number
+          result_count: number
+          top_entity_types: string[]
+          user_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          chunk_count?: number
+          client_id?: string | null
+          created_at?: string
+          fact_count?: number
+          filters?: Json
+          id?: string
+          latency_ms?: number | null
+          query_length?: number
+          result_count?: number
+          top_entity_types?: string[]
+          user_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          chunk_count?: number
+          client_id?: string | null
+          created_at?: string
+          fact_count?: number
+          filters?: Json
+          id?: string
+          latency_ms?: number | null
+          query_length?: number
+          result_count?: number
+          top_entity_types?: string[]
+          user_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       bb_source_chunks: {
         Row: {
           created_at: string
+          embedded_at: string | null
+          embedding: string | null
+          embedding_model: string | null
           id: string
           metadata: Json
           offset_end: number | null
@@ -627,6 +687,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          embedded_at?: string | null
+          embedding?: string | null
+          embedding_model?: string | null
           id?: string
           metadata?: Json
           offset_end?: number | null
@@ -638,6 +701,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          embedded_at?: string | null
+          embedding?: string | null
+          embedding_model?: string | null
           id?: string
           metadata?: Json
           offset_end?: number | null
@@ -10038,6 +10104,45 @@ export type Database = {
       }
     }
     Functions: {
+      bb_search_chunks: {
+        Args: {
+          _client_id: string
+          _limit: number
+          _query_embedding: string
+          _source_kinds: string[]
+          _workspace_id: string
+        }
+        Returns: {
+          id: string
+          ordinal: number
+          similarity: number
+          source_id: string
+          source_kind: string
+          source_title: string
+          text: string
+        }[]
+      }
+      bb_search_facts: {
+        Args: {
+          _client_id: string
+          _entity_types: string[]
+          _include_needs_review: boolean
+          _limit: number
+          _query_embedding: string
+          _workspace_id: string
+        }
+        Returns: {
+          confidence_at_review: number
+          display_name: string
+          entity_type: string
+          id: string
+          last_reviewed_at: string
+          payload: Json
+          similarity: number
+          source_refs: Json
+          verification_state: string
+        }[]
+      }
       get_rls_policy_snapshot: {
         Args: { _tables: string[] }
         Returns: {
