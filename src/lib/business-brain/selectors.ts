@@ -1001,3 +1001,206 @@ export async function triggerGovernanceSweep(
     return { ok: false };
   }
 }
+
+// ===================================================================
+// Phase 6 — Vertical skins & required-entity schemas
+// ===================================================================
+
+export interface VerticalGapFilter {
+  gapKind?: VerticalGapKind;
+  entityType?: BbEntityType;
+  highPriorityOnly?: boolean;
+  status?: "open" | "resolved" | "suppressed";
+}
+
+/** Returns the workspace's assigned vertical profile, or null. */
+export async function getWorkspaceVerticalProfile(
+  workspaceId: string,
+): Promise<VerticalProfile | null> {
+  if (!workspaceId) return null;
+  const { data } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_workspace_vertical_profiles" as any)
+    .select("vertical_profile_id")
+    .eq("workspace_id", workspaceId)
+    .is("client_id", null)
+    .maybeSingle();
+  const profileId = (data as { vertical_profile_id?: string } | null)
+    ?.vertical_profile_id;
+  if (!profileId) return null;
+  const { data: profile } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_vertical_profiles" as any)
+    .select("id,slug,label,description")
+    .eq("id", profileId)
+    .maybeSingle();
+  if (!profile) return null;
+  const p = profile as { id: string; slug: string; label: string; description: string | null };
+  return { id: p.id, slug: p.slug, label: p.label, description: p.description };
+}
+
+/** Returns per-required-entity-type coverage rows for the workspace. */
+export async function getVerticalCoverageSummary(
+  workspaceId: string,
+): Promise<BbVerticalCoverage[]> {
+  if (!workspaceId) return [];
+  const profile = await getWorkspaceVerticalProfile(workspaceId);
+  if (!profile) return [];
+  const { data: reqs } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_vertical_entity_requirements" as any)
+    .select("entity_type,is_required,min_count,high_priority")
+    .eq("vertical_profile_id", profile.id);
+  const required = ((reqs ?? []) as Array<{
+    entity_type: string;
+    is_required: boolean;
+    min_count: number;
+    high_priority: boolean;
+  }>).filter((r) => r.is_required && r.min_count > 0);
+  const highByType = new Map(required.map((r) => [r.entity_type, r.high_priority]));
+  const typesIncluded = new Set(required.map((r) => r.entity_type));
+
+  const { data: rows } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_vertical_completeness" as any)
+    .select("*")
+    .eq("workspace_id", workspaceId)
+    .eq("vertical_profile_id", profile.id);
+
+  return ((rows ?? []) as Array<{
+    workspace_id: string;
+    vertical_profile_id: string;
+    entity_type: string;
+    required_count: number;
+    actual_count: number;
+    coverage_ratio: number | string;
+    last_computed_at: string;
+  }>)
+    .filter((r) => typesIncluded.has(r.entity_type))
+    .map((r) => ({
+      workspaceId: r.workspace_id,
+      verticalProfileId: r.vertical_profile_id,
+      entityType: r.entity_type as BbEntityType,
+      requiredCount: r.required_count,
+      actualCount: r.actual_count,
+      coverageRatio: Number(r.coverage_ratio),
+      highPriority: highByType.get(r.entity_type) ?? false,
+      lastComputedAt: r.last_computed_at,
+    }))
+    .sort(
+      (a, b) =>
+        Number(b.highPriority) - Number(a.highPriority) ||
+        a.entityType.localeCompare(b.entityType),
+    );
+}
+
+/** Lists vertical gaps with filters. Defaults to status=open. */
+export async function listVerticalGaps(
+  workspaceId: string,
+  filter: VerticalGapFilter = {},
+): Promise<BbVerticalGap[]> {
+  if (!workspaceId) return [];
+  const profile = await getWorkspaceVerticalProfile(workspaceId);
+  if (!profile) return [];
+  let q = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_vertical_gaps" as any)
+    .select("*")
+    .eq("workspace_id", workspaceId)
+    .eq("vertical_profile_id", profile.id)
+    .eq("status", filter.status ?? "open")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (filter.gapKind) q = q.eq("gap_kind", filter.gapKind);
+  if (filter.entityType) q = q.eq("entity_type", filter.entityType);
+  const { data: rows } = await q;
+
+  // Join high-priority + hint via requirement tables.
+  const { data: entityReqs } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_vertical_entity_requirements" as any)
+    .select("entity_type,high_priority")
+    .eq("vertical_profile_id", profile.id);
+  const highByType = new Map(
+    ((entityReqs ?? []) as Array<{ entity_type: string; high_priority: boolean }>).map(
+      (r) => [r.entity_type, r.high_priority],
+    ),
+  );
+  const { data: fieldReqs } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_vertical_field_requirements" as any)
+    .select("entity_type,field_path,validation_hint")
+    .eq("vertical_profile_id", profile.id);
+  const hintMap = new Map<string, string>();
+  for (const fr of (fieldReqs ?? []) as Array<{
+    entity_type: string;
+    field_path: string;
+    validation_hint: string | null;
+  }>) {
+    hintMap.set(`${fr.entity_type}|${fr.field_path}`, fr.validation_hint ?? "");
+  }
+
+  let out = ((rows ?? []) as Array<{
+    id: string;
+    workspace_id: string;
+    vertical_profile_id: string;
+    entity_type: string;
+    gap_kind: VerticalGapKind;
+    fact_id: string | null;
+    field_path: string | null;
+    status: "open" | "resolved" | "suppressed";
+    created_at: string;
+    resolved_at: string | null;
+    suppressed_at: string | null;
+  }>).map((r) => ({
+    id: r.id,
+    workspaceId: r.workspace_id,
+    verticalProfileId: r.vertical_profile_id,
+    entityType: r.entity_type as BbEntityType,
+    gapKind: r.gap_kind,
+    factId: r.fact_id,
+    fieldPath: r.field_path,
+    validationHint: r.field_path
+      ? hintMap.get(`${r.entity_type}|${r.field_path}`) ?? null
+      : null,
+    status: r.status,
+    highPriority: highByType.get(r.entity_type) ?? false,
+    createdAt: r.created_at,
+    resolvedAt: r.resolved_at,
+    suppressedAt: r.suppressed_at,
+  }));
+  if (filter.highPriorityOnly) out = out.filter((g) => g.highPriority);
+  return out;
+}
+
+/** Marks a single gap as suppressed (sticky; not reopened by future runs). */
+export async function suppressVerticalGap(gapId: string): Promise<boolean> {
+  if (!gapId) return false;
+  const { data: userResult } = await supabase.auth.getUser();
+  const userId = userResult.user?.id ?? null;
+  const { error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_vertical_gaps" as any)
+    .update({
+      status: "suppressed",
+      suppressed_at: new Date().toISOString(),
+      suppressed_by: userId,
+    })
+    .eq("id", gapId);
+  return !error;
+}
+
+/** Manually trigger a vertical coverage / gap evaluation for a workspace. */
+export async function triggerVerticalEvaluation(
+  workspaceId: string,
+): Promise<{ ok: boolean }> {
+  if (!workspaceId) return { ok: false };
+  try {
+    await supabase.functions.invoke("bb-evaluate-vertical", {
+      body: { workspaceId },
+    });
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
