@@ -238,7 +238,7 @@ export default function BusinessBrainSettingsPage() {
       const updated = { ...cur, features };
       const { error } = await supabase
         .from("organizations")
-        .update({ integration_configs: updated })
+        .update({ integration_configs: updated as never })
         .eq("id", organization.id);
       if (error) throw error;
     },
