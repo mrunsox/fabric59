@@ -58,7 +58,7 @@ export function useBusinessBrainSuggestions(
     // useAuth throws when AuthProvider is missing (some test harnesses).
     // Treat that as "disabled" rather than crashing the wizard.
     flagEnabled = useBusinessBrainFlag().enabled;
-    organizationId = useAuth().organizationId ?? null;
+    organizationId = useAuth().organization?.id ?? null;
   } catch {
     flagEnabled = false;
     organizationId = null;
