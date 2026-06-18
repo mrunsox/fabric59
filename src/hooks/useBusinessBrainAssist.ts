@@ -21,6 +21,7 @@ import { getAssistFactsForSession } from "@/lib/business-brain/selectors";
 import { buildAssistContext, type AssistSessionContext } from "@/lib/business-brain/assistContext";
 import { rankAssistCards, type BbAssistCard } from "@/lib/business-brain/assistRanker";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
+import { logGapSignal } from "@/lib/business-brain/gapLogging";
 import type { CallSessionMeta, CallSessionState } from "@/types/call-runner";
 import type { CampaignFlowContent } from "@/types/campaign-flow";
 
@@ -125,6 +126,38 @@ export function useBusinessBrainAssist(
         stepKind: context.stepKind,
         reason: context.hasContext ? "no_match" : "weak_context",
       });
+      // Phase 7 — only log a gap signal when there is real context to act on.
+      if (context.hasContext) {
+        const intent = [
+          context.stepTitle ?? context.stepKind,
+          context.serviceHints[0],
+          context.destinationHints[0],
+        ]
+          .filter(Boolean)
+          .join(" — ")
+          .slice(0, 240);
+        if (intent.length >= 3) {
+          logGapSignal({
+            workspaceId: input.meta.workspaceId,
+            channel: "assist",
+            rawQuery: intent,
+            clientId: input.clientId ?? null,
+            context: {
+              stepKind: context.stepKind,
+              serviceHint: context.serviceHints[0] ?? null,
+              destinationHint: context.destinationHints[0] ?? null,
+              reason: "no_assist_cards",
+            },
+          });
+          emitBbEvent("bb_gap_event_logged", {
+            workspaceId: input.meta.workspaceId,
+            organizationId,
+            channel: "assist",
+            contextKind: "no_assist_cards",
+            stepKind: context.stepKind,
+          });
+        }
+      }
     }
   }, [
     enabled,

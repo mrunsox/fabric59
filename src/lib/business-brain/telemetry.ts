@@ -42,6 +42,11 @@ export const BB_EVENT_TYPES = [
   "bb_vertical_evaluation_run",
   "bb_vertical_gap_suppressed",
   "bb_vertical_governance_view_opened",
+  // Phase 7 — Demand-driven gap detection
+  "bb_gap_event_logged",
+  "bb_gap_cluster_run",
+  "bb_gap_topic_action",
+  "bb_gap_governance_view_opened",
 ] as const;
 export type BbEventType = (typeof BB_EVENT_TYPES)[number];
 
@@ -92,6 +97,16 @@ export interface BbEventPayload {
   entityTypesEvaluated?: string[];
   gapsOpened?: number;
   gapsResolved?: number;
+  // Phase 7 — Demand gaps (ids/types/counts only; never raw query text)
+  channel?: "search" | "asc" | "assist";
+  contextKind?: string;
+  hasVertical?: boolean;
+  gapTopicId?: string;
+  gapTopicAction?: "create_fact_draft" | "link_fact" | "dismiss" | "suppress";
+  topicsCreated?: number;
+  topicsUpdated?: number;
+  topicsPruned?: number;
+  eventsAssigned?: number;
 }
 
 const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
@@ -136,6 +151,15 @@ const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
   "entityTypesEvaluated",
   "gapsOpened",
   "gapsResolved",
+  "channel",
+  "contextKind",
+  "hasVertical",
+  "gapTopicId",
+  "gapTopicAction",
+  "topicsCreated",
+  "topicsUpdated",
+  "topicsPruned",
+  "eventsAssigned",
 ]);
 
 function sanitize(p: BbEventPayload): Record<string, unknown> {

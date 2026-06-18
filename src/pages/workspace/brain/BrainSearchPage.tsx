@@ -32,6 +32,7 @@ import {
 import { BB_ENTITY_TYPES, type BbEntityType } from "@/lib/business-brain/types";
 import { ENTITY_LABEL } from "@/lib/business-brain/entitySchemas";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
+import { logGapSignal } from "@/lib/business-brain/gapLogging";
 import { BbSourceCard } from "@/components/business-brain/BbSourceCard";
 import { toast } from "sonner";
 
@@ -76,6 +77,28 @@ export default function BrainSearchPage() {
         chunkCount: r.counts.chunks,
         latencyMs: r.latencyMs,
       });
+      // Phase 7 — log unanswered / low-confidence queries as gap signals.
+      const noResults = r.counts.total === 0;
+      const lowConfidence =
+        r.counts.facts === 0 && r.counts.chunks > 0; // only orphan evidence
+      if (workspaceId && (noResults || lowConfidence)) {
+        logGapSignal({
+          workspaceId,
+          channel: "search",
+          rawQuery: query,
+          context: {
+            reason: noResults ? "no_results" : "low_confidence",
+            entityType: entityType === "all" ? null : entityType,
+            includeNeedsReview,
+          },
+        });
+        emitBbEvent("bb_gap_event_logged", {
+          workspaceId,
+          organizationId: orgId,
+          channel: "search",
+          contextKind: noResults ? "no_results" : "low_confidence",
+        });
+      }
     },
     onError: (e: Error) => toast.error(e.message || "Search failed"),
   });

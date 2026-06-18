@@ -164,3 +164,39 @@ gap detection — config-only, no auto-fix, no runner/ASC changes.
 - Tests: `bbVerticalEvaluationLogic`, `bbVerticalSuppressionLogic`,
   `bbVerticalCoverageUi`, `bbVerticalGovernanceUi`, `bbVerticalBoundary`.
 - Docs: Phase 6 section appended to `docs/business-brain-architecture.md`.
+
+---
+
+# Phase 7 — Demand-Driven Gap Detection
+
+## Status
+
+Shipped.
+
+## What landed
+
+- Additive schema (`bb_gap_events`, `bb_gap_topics`, `bb_gap_event_topics`) with RLS — workspace members may insert signals; only supervisor+ can read raw events; aggregated topics are visible to all members.
+- `src/lib/business-brain/gapLogging.ts` — tiny logging helper safe to import from search/ASC/assist; the only path into `bb_gap_events`.
+- Signal logging wired into `BrainSearchPage` (no-results / low-confidence), `useBusinessBrainSuggestions` (empty tray), and `useBusinessBrainAssist` (zero cards with real context).
+- `supabase/functions/bb-gap-cluster/index.ts` — nightly clustering using the existing embedding model (`openai/text-embedding-3-small`), cosine ≥0.85 attach threshold, conservative nullable entity/vertical hints, 200-topic cap with **distinct `pruned` status** (machine) separate from human `dismissed`.
+- Nightly cron `bb-gap-cluster-nightly` at 03:15 UTC.
+- Governance: new `BrainGapGovernanceSection` integrated into `BrainGovernancePage` — canonical question + hints + channels + actions. Reviewer actions: **Create draft** (deep-link prefill only, never writes a fact), **Link** (deep-link to search scoped to hint), **Suppress** (sticky), **Dismiss**.
+- Selectors: `listGapTopics`, `dismissGapTopic`, `suppressGapTopic`, `linkGapTopicToFact`, `triggerGapClusterRun`, `buildFactDraftLinkFromGap`.
+- Telemetry: `bb_gap_event_logged`, `bb_gap_cluster_run`, `bb_gap_topic_action`, `bb_gap_governance_view_opened` — ids/types/counts only; raw query never leaves the DB.
+- Tests: `bbGapLogging`, `bbGapClusteringLogic`, `bbGapTelemetry`, `bbGapGovernanceUi`, `bbGapBoundary`.
+
+## Scope guards honored
+
+- Existing BB embedding model reused (no divergence).
+- Raw query text restricted at the RLS layer and never exposed to the governance UI.
+- Overflow pruning uses `status='pruned'` with `status_reason='overflow_cap_200'` — never conflated with reviewer dismissals.
+- Entity/vertical hints stay nullable, conservative, review-facing.
+- "Create draft" is a navigation deep-link only — no facts created from Phase 7 code.
+
+## Out of scope (locked)
+
+- Auto-fact creation, auto-linking, schema auto-updates.
+- Search / assist ranking changes.
+- External ticket/transcript ingestion.
+- Real-time clustering (nightly only).
+- ASC / runner UI changes.
