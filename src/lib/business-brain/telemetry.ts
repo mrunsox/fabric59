@@ -83,8 +83,15 @@ export interface BbEventPayload {
   resolution?: "supersede" | "keep_both" | "dismiss";
   staleStateBefore?: string;
   staleStateAfter?: string;
-  section?: "stale" | "conflicts";
+  section?: "stale" | "conflicts" | "coverage" | "gaps";
   filtersApplied?: number;
+  // Phase 6 — Vertical (ids/types/counts only)
+  verticalProfileId?: string;
+  gapKind?: string;
+  workspacesEvaluated?: number;
+  entityTypesEvaluated?: string[];
+  gapsOpened?: number;
+  gapsResolved?: number;
 }
 
 const ALLOWED: ReadonlySet<keyof BbEventPayload> = new Set([
