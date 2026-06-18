@@ -93,3 +93,12 @@ Nav is intentionally NOT added to the primary sidebar in this slice — pilot vi
 
 ASC integration, retrieval/search, URL crawl execution, live assist, transcript ingestion,
 vertical skins, auto-merge/auto-approve.
+
+## Business Brain Phase 2 — ASC Advisory Integration ✅ Shipped
+
+- Bridge selectors (`src/lib/business-brain/selectors.ts`) wired to real `bb_facts` reads + per-step suggestion builders for Steps 3/4/6/7.
+- `useBusinessBrainSuggestions` hook + `BbSuggestionTray` component, mounted via a new "Knowledge" tab in `AscSidePanel`.
+- `AscWizardPage.applyBbIntent` maps Use clicks → existing ASC actions (`ADD_CALLER_REASON`, `UPDATE_CALLER_REASON`, `ADD_NOTIFICATION_EDIT`, `SET_DESTINATION`). No new reducer actions.
+- Step 8 enrichment deferred per scope guards (no clean mapping).
+- 4 telemetry events added; flag/QueryClient/Auth missing → silent no-op.
+- 21 new tests passing (selectors, tray, reducer invariants, boundary, fork read-only).
