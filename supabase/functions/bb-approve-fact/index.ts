@@ -11,6 +11,7 @@
  */
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { requireUser } from "../_shared/auth.ts";
+import { enqueueBbEmbed } from "../_shared/bb-embed-trigger.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.93.3";
 
 function adminClient() {
@@ -212,5 +213,6 @@ Deno.serve(async (req) => {
       diff: { payload },
     }]);
 
+  enqueueBbEmbed(ext.workspace_id, "facts");
   return jsonResponse({ ok: true, factId, merged });
 });

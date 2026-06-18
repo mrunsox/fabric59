@@ -13,6 +13,7 @@
  */
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { requireUser } from "../_shared/auth.ts";
+import { enqueueBbEmbed } from "../_shared/bb-embed-trigger.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.93.3";
 
 const ENTITY_TYPES = [
@@ -384,6 +385,7 @@ Deno.serve(async (req) => {
       })
       .eq("id", sourceId);
 
+    enqueueBbEmbed(srcRow.workspace_id, "chunks");
     return jsonResponse({ ok: true, extracted: insertRows.length, mode: "structured_directory" });
   }
 
@@ -448,6 +450,7 @@ Deno.serve(async (req) => {
       })
       .eq("id", sourceId);
 
+    enqueueBbEmbed(srcRow.workspace_id, "chunks");
     return jsonResponse({ ok: true, extracted: insertRows.length, mode: "faq_pairs" });
   }
 
@@ -574,5 +577,6 @@ Deno.serve(async (req) => {
     })
     .eq("id", sourceId);
 
+  enqueueBbEmbed(srcRow.workspace_id, "chunks");
   return jsonResponse({ ok: true, extracted: totalExtracted });
 });
