@@ -754,7 +754,7 @@ export async function listStaleFacts(q: StaleFactsQuery): Promise<StaleFactView[
   if (q.entityType) base = base.eq("entity_type", q.entityType);
   const { data, error } = await base;
   if (error || !data) return [];
-  const rows = data as unknown as Array<{
+  const rows = data as unknown as unknown as Array<{
     id: string;
     workspace_id: string;
     entity_type: BbEntityType;
@@ -830,7 +830,7 @@ export async function listConflicts(workspaceId: string, status: BbConflictStatu
     .order("created_at", { ascending: false })
     .limit(200);
   if (error || !data) return [];
-  const rows = data as unknown as Array<{
+  const rows = data as unknown as unknown as Array<{
     id: string;
     workspace_id: string;
     primary_fact_id: string;
@@ -1051,7 +1051,7 @@ export async function getVerticalCoverageSummary(
     .from("bb_vertical_entity_requirements" as any)
     .select("entity_type,is_required,min_count,high_priority")
     .eq("vertical_profile_id", profile.id);
-  const required = ((reqs ?? []) as Array<{
+  const required = ((reqs ?? []) as unknown as Array<{
     entity_type: string;
     is_required: boolean;
     min_count: number;
@@ -1067,7 +1067,7 @@ export async function getVerticalCoverageSummary(
     .eq("workspace_id", workspaceId)
     .eq("vertical_profile_id", profile.id);
 
-  return ((rows ?? []) as Array<{
+  return ((rows ?? []) as unknown as Array<{
     workspace_id: string;
     vertical_profile_id: string;
     entity_type: string;
@@ -1132,7 +1132,7 @@ export async function listVerticalGaps(
     .select("entity_type,field_path,validation_hint")
     .eq("vertical_profile_id", profile.id);
   const hintMap = new Map<string, string>();
-  for (const fr of (fieldReqs ?? []) as Array<{
+  for (const fr of (fieldReqs ?? []) as unknown as Array<{
     entity_type: string;
     field_path: string;
     validation_hint: string | null;
@@ -1140,7 +1140,7 @@ export async function listVerticalGaps(
     hintMap.set(`${fr.entity_type}|${fr.field_path}`, fr.validation_hint ?? "");
   }
 
-  let out = ((rows ?? []) as Array<{
+  let out = ((rows ?? []) as unknown as Array<{
     id: string;
     workspace_id: string;
     vertical_profile_id: string;
