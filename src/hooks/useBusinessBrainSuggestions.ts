@@ -25,6 +25,7 @@ import {
   type BbAscSuggestion,
 } from "@/lib/business-brain/selectors";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
+import { logGapSignal } from "@/lib/business-brain/gapLogging";
 
 export interface UseBusinessBrainSuggestionsInput {
   workspaceId: string;
@@ -142,6 +143,27 @@ export function useBusinessBrainSuggestions(
       step: input.step,
       count: suggestions.length,
     });
+    // Phase 7 — log empty-suggestion gap signal once per (draft,step).
+    if (suggestions.length === 0) {
+      logGapSignal({
+        workspaceId: input.workspaceId,
+        channel: "asc",
+        rawQuery: `asc:step:${input.step}`,
+        context: {
+          step: input.step,
+          ascDraftId: input.ascDraftId ?? null,
+          reason: "no_suggestions",
+          hasCallerReason: input.hasCallerReason ?? false,
+        },
+      });
+      emitBbEvent("bb_gap_event_logged", {
+        workspaceId: input.workspaceId,
+        organizationId,
+        channel: "asc",
+        contextKind: "no_suggestions",
+        step: input.step,
+      });
+    }
   }, [
     enabled,
     factsQuery.isLoading,
@@ -149,6 +171,7 @@ export function useBusinessBrainSuggestions(
     input.ascDraftId,
     input.step,
     input.workspaceId,
+    input.hasCallerReason,
     organizationId,
   ]);
 
