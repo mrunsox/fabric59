@@ -27,6 +27,8 @@ export function WorkspaceCommandPalette() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { workspace, workspaces } = useWorkspace();
+  const { isWorkspaceAdmin, isMasterAdmin } = useAuth();
+  const showBrainAdmin = isWorkspaceAdmin || isMasterAdmin;
   const { data: campaigns = [] } = useWorkspaceCampaigns();
   const { data: guides = [] } = useWorkspaceGuides();
   const { data: forms = [] } = useWorkspaceForms();
