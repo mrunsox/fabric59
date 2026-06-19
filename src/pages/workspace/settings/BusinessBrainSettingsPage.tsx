@@ -281,11 +281,15 @@ export default function BusinessBrainSettingsPage() {
           title="Business Brain settings"
           lede="Workspace controls for the Business Brain."
         />
-        <Card>
-          <CardContent className="p-8 text-sm text-muted-foreground">
-            You need workspace admin or owner access to manage these settings.
-          </CardContent>
-        </Card>
+        <BbPermissionDenied
+          resource="Brain settings"
+          requiredRole="workspace admin or owner"
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/w/${workspaceId}/brain`}>Back to Business Brain</Link>
+            </Button>
+          }
+        />
       </div>
     );
   }
