@@ -187,6 +187,18 @@ export default function BrainHealthPage() {
         }
       />
 
+      {/* Phase 1: explicit window + freshness label so empty cards don't read as broken. */}
+      <p
+        className="text-xs text-muted-foreground"
+        data-testid="bb-health-freshness"
+      >
+        Showing the last {ws.label} of activity.{" "}
+        {dataFetchedAt
+          ? `Last updated ${dataFetchedAt.toLocaleTimeString()}.`
+          : "Loading…"}
+      </p>
+
+
       {eventsQ.isLoading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading telemetry…
