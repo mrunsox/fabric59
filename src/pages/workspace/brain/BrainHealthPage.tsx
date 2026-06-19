@@ -156,14 +156,17 @@ export default function BrainHealthPage() {
     return (
       <div className="space-y-6">
         <WorkspacePageHeader title="Brain health" lede="Operational view for the Business Brain." />
-        <Card>
-          <CardContent className="p-8 text-sm text-muted-foreground">
-            Workspace admin or master access required.
-          </CardContent>
-        </Card>
+        <BbPermissionDenied
+          resource="Brain health"
+          requiredRole="workspace admin, owner, or master admin"
+        />
       </div>
     );
   }
+
+  const dataFetchedAt = eventsQ.dataUpdatedAt
+    ? new Date(eventsQ.dataUpdatedAt)
+    : null;
 
   return (
     <div className="space-y-6">
