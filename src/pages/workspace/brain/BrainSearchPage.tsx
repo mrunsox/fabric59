@@ -34,6 +34,7 @@ import { ENTITY_LABEL } from "@/lib/business-brain/entitySchemas";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
 import { logGapSignal } from "@/lib/business-brain/gapLogging";
 import { BbSourceCard } from "@/components/business-brain/BbSourceCard";
+import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
 import { toast } from "sonner";
 
 const GROUP_LABEL: Record<string, string> = {
