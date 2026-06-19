@@ -233,3 +233,91 @@ Shipped.
 - Public REST/GraphQL APIs.
 - Billing/pricing logic.
 - New `bb_*` schema (no migrations in this phase).
+
+---
+
+# Audit & Refresh Program — Phase 1: Critical product/frontend activation fixes
+
+## Status
+
+In progress.
+
+## What landed
+
+- **Slice 0 — Audit docs.** `docs/business-brain-frontend-audit.md`,
+  `docs/business-brain-refresh-plan.md`, and `OUTLINE.md` capture the canonical
+  issue list, refresh program, and phase status. No code changes in this slice.
+- **Slice 1 — Navigation & entry points.** Sidebar `knowledge` nav item
+  repointed to `to: "brain"` and relabeled "Business Brain" (was a 404 link).
+  Command palette gained an admin-only "Business Brain" group with Brain
+  Settings and Brain Health entries (≤ 2 clicks from anywhere). No new
+  top-level nav clutter for Health.
+- **Slice 2 — Disabled / permission / dead-end states.**
+  `BusinessBrainLayoutPage` disabled state now renders `BbStateBlock` with a
+  role-aware CTA — admins get an "Open Brain Settings" button; non-admins get a
+  plain ask. ASC side panel Preview / Why / History tabs now render
+  `BbStateBlock kind="upcoming"` with surface-specific copy instead of bare
+  placeholder sentences. New `BbPermissionDenied` is used on the
+  permission-gated Settings and Health routes only; true unknown routes still
+  fall through to the global 404.
+- **Slice 3 — Workflow continuity.** `BbGapDrawer` "Edit fact" now threads
+  `?from=gap:<factId>` when navigating to `/brain/approved`. Approved Knowledge
+  renders a "← Back to gap" chip when that param is present. `BrainSearchPage`
+  no-results state explains the gap was logged and offers a permission-gated
+  next action: "Propose this as a fact" for admins (draft/review-capable),
+  "Open Governance" for everyone else. `SuggestedFactsPage` empty-state offers
+  a forward CTA to Approved Knowledge.
+- **Slice 4 — State hygiene.** New shared structural component
+  `BbStateBlock` exposes `loading | empty | noData | failed | noPermission |
+  upcoming` with a stable `data-bb-state-kind` so callers always pass
+  surface-specific copy and actions (not one generic message). Used in layout
+  disabled, search empty/no-results, suggested empty, Settings/Health
+  permission-denied, ASC side panel placeholders. Brain Health page now stamps
+  every view with "Showing the last {window} of activity. Last updated …" so
+  empty cards don't read as broken.
+
+## Files created
+
+- `docs/business-brain-frontend-audit.md`
+- `docs/business-brain-refresh-plan.md`
+- `OUTLINE.md`
+- `src/components/business-brain/BbStateBlock.tsx`
+- `src/components/business-brain/BbPermissionDenied.tsx`
+- `src/test/regressions/bbPhase1Navigation.test.ts`
+- `src/test/regressions/bbPhase1StateBlocks.test.tsx`
+- `src/test/regressions/bbPhase1WorkflowContinuity.test.tsx`
+- `src/test/regressions/bbPhase1StateHygiene.test.ts`
+- `src/test/regressions/ascSidePanelDeadEnds.test.ts`
+
+## Files edited
+
+- `src/config/canonicalNav.ts`
+- `src/components/workspace/WorkspaceCommandPalette.tsx`
+- `src/pages/workspace/brain/BusinessBrainLayoutPage.tsx`
+- `src/pages/workspace/brain/BrainSearchPage.tsx`
+- `src/pages/workspace/brain/SuggestedFactsPage.tsx`
+- `src/pages/workspace/brain/ApprovedKnowledgePage.tsx`
+- `src/pages/workspace/brain/BrainHealthPage.tsx`
+- `src/pages/workspace/settings/BusinessBrainSettingsPage.tsx`
+- `src/components/business-brain/BbGapDrawer.tsx`
+- `src/components/asc/AscSidePanel.tsx`
+
+## Scope guards honored
+
+- Slice 0 ran first so the issue list was canonical before any UI touch.
+- Broken sidebar route fixed; label standardized to "Business Brain".
+- Settings reachable globally via command palette; Health intentionally **not**
+  promoted to top-level nav (≤ 2 clicks via palette + in-layout tab).
+- `BbStateBlock` is a shared **structural** component — every caller passes
+  surface-specific copy and actions.
+- "Propose this as a fact" is gated by actual permissions (`canReindex` admin
+  check). Non-admins see "Open Governance" instead.
+- `BbPermissionDenied` only used on real permission-gated existing resources
+  (Settings, Health). Unknown routes still hit the global 404.
+
+## Out of scope (locked)
+
+- No visual reskin (Phase 2).
+- No marketing changes (Phases 3–4).
+- No new product capabilities, AI flows, or bridge/backend changes.
+- No `bb_*` schema or migration work.

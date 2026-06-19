@@ -14,7 +14,8 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceGuides } from "@/hooks/useWorkspaceGuides";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
-import { Plus, Building2, ArrowRightLeft } from "lucide-react";
+import { Plus, Building2, ArrowRightLeft, Brain, Activity } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * ⌘K command palette for the workspace shell. Mounts globally inside
@@ -26,6 +27,8 @@ export function WorkspaceCommandPalette() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { workspace, workspaces } = useWorkspace();
+  const { isWorkspaceAdmin, isMasterAdmin } = useAuth();
+  const showBrainAdmin = isWorkspaceAdmin || isMasterAdmin;
   const { data: campaigns = [] } = useWorkspaceCampaigns();
   const { data: guides = [] } = useWorkspaceGuides();
   const { data: forms = [] } = useWorkspaceForms();
@@ -107,6 +110,28 @@ export function WorkspaceCommandPalette() {
             <Plus className="h-4 w-4" /> <span>New form</span>
           </CommandItem>
         </CommandGroup>
+
+        {showBrainAdmin && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Business Brain">
+              <CommandItem
+                value="brain settings"
+                onSelect={() => go(`${base}/settings/brain`)}
+              >
+                <Brain className="h-4 w-4" />
+                <span>Brain settings</span>
+              </CommandItem>
+              <CommandItem
+                value="brain health"
+                onSelect={() => go(`${base}/brain/health`)}
+              >
+                <Activity className="h-4 w-4" />
+                <span>Brain health</span>
+              </CommandItem>
+            </CommandGroup>
+          </>
+        )}
 
         {workspaces.length > 1 && (
           <>

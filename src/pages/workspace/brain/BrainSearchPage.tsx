@@ -7,7 +7,7 @@
  * never the default operator view.
  */
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,7 @@ import { ENTITY_LABEL } from "@/lib/business-brain/entitySchemas";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
 import { logGapSignal } from "@/lib/business-brain/gapLogging";
 import { BbSourceCard } from "@/components/business-brain/BbSourceCard";
+import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
 import { toast } from "sonner";
 
 const GROUP_LABEL: Record<string, string> = {
@@ -209,21 +210,52 @@ export default function BrainSearchPage() {
           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Searching…
         </div>
       ) : results === null ? (
-        <Card className="px-6 py-12 text-center text-sm text-muted-foreground">
-          <Sparkles className="mx-auto mb-2 h-5 w-5" />
-          Search runs on approved knowledge. Try a real caller question, a
-          service name, or a policy keyword.
-        </Card>
+        <BbStateBlock
+          kind="empty"
+          data-testid="bb-search-initial"
+          title="Search the Business Brain."
+          description="Try a real caller question, a service name, or a policy keyword. Approved facts come first."
+        />
       ) : results.cards.length === 0 ? (
-        <Card className="px-6 py-12 text-center text-sm text-muted-foreground space-y-2">
-          <p>No approved knowledge matched that query.</p>
-          {canReindex ? (
-            <p className="text-xs">
-              If you just approved facts, click <strong>Reindex search</strong>{" "}
-              so they can be retrieved.
-            </p>
-          ) : null}
-        </Card>
+        <BbStateBlock
+          kind="noData"
+          data-testid="bb-search-no-results"
+          title="No approved knowledge matched that query."
+          description={
+            <>
+              We logged this question so reviewers can close the gap.
+              {canReindex ? (
+                <>
+                  {" "}If you just approved facts, click <strong>Reindex search</strong>{" "}
+                  so they can be retrieved.
+                </>
+              ) : null}
+            </>
+          }
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {canReindex ? (
+                <Button asChild size="sm" variant="default">
+                  <Link
+                    to={`/w/${workspaceId}/brain/suggested`}
+                    data-testid="bb-search-propose-fact"
+                  >
+                    Propose this as a fact
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild size="sm" variant="outline">
+                  <Link
+                    to={`/w/${workspaceId}/brain/governance`}
+                    data-testid="bb-search-open-governance"
+                  >
+                    Open Governance
+                  </Link>
+                </Button>
+              )}
+            </div>
+          }
+        />
       ) : (
         <div className="space-y-6">
           <div className="text-xs text-muted-foreground">

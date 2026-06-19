@@ -85,8 +85,13 @@ export default function BbGapDrawer({
               size="sm"
               variant="outline"
               className="w-full"
+              data-testid="bb-gap-drawer-edit-fact"
               onClick={() => {
-                navigate(`/w/${workspaceId}/brain/approved?fact=${factId}`);
+                // Phase 1 workflow continuity: thread `from=gap:<factId>` so
+                // the destination can render a back-chip and return here.
+                navigate(
+                  `/w/${workspaceId}/brain/approved?fact=${factId}&from=gap:${factId}`,
+                );
                 onClose();
               }}
             >

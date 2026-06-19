@@ -158,8 +158,28 @@ export default function ApprovedKnowledgePage() {
     return latest ? new Date(latest).toISOString() : null;
   }
 
+  // Phase 1 workflow continuity: surfaced when navigated from a gap drawer
+  // via `?from=gap:<factId>`. Provides a one-click return path.
+  const fromGap = searchParams.get("from");
+  const fromGapFactId = fromGap?.startsWith("gap:") ? fromGap.slice(4) : null;
+
   return (
     <div className="space-y-4">
+      {fromGapFactId ? (
+        <div
+          data-testid="bb-approved-back-from-gap"
+          className="flex items-center justify-between rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900"
+        >
+          <span>You came here from a vertical gap on this fact.</span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => window.history.back()}
+          >
+            ← Back to gap
+          </Button>
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">

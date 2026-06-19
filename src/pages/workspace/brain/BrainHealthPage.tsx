@@ -19,6 +19,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { BbPermissionDenied } from "@/components/business-brain/BbPermissionDenied";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
@@ -156,14 +157,17 @@ export default function BrainHealthPage() {
     return (
       <div className="space-y-6">
         <WorkspacePageHeader title="Brain health" lede="Operational view for the Business Brain." />
-        <Card>
-          <CardContent className="p-8 text-sm text-muted-foreground">
-            Workspace admin or master access required.
-          </CardContent>
-        </Card>
+        <BbPermissionDenied
+          resource="Brain health"
+          requiredRole="workspace admin, owner, or master admin"
+        />
       </div>
     );
   }
+
+  const dataFetchedAt = eventsQ.dataUpdatedAt
+    ? new Date(eventsQ.dataUpdatedAt)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -182,6 +186,18 @@ export default function BrainHealthPage() {
           </Tabs>
         }
       />
+
+      {/* Phase 1: explicit window + freshness label so empty cards don't read as broken. */}
+      <p
+        className="text-xs text-muted-foreground"
+        data-testid="bb-health-freshness"
+      >
+        Showing the last {ws.label} of activity.{" "}
+        {dataFetchedAt
+          ? `Last updated ${dataFetchedAt.toLocaleTimeString()}.`
+          : "Loading…"}
+      </p>
+
 
       {eventsQ.isLoading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

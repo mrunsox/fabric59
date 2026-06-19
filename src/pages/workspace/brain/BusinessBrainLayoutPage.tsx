@@ -1,34 +1,54 @@
-import { NavLink, Outlet, useParams } from "react-router-dom";
-import { Inbox, ListChecks, CheckCircle2, Search, ShieldCheck, Activity } from "lucide-react";
+import { Link, NavLink, Outlet, useParams } from "react-router-dom";
+import { Inbox, ListChecks, CheckCircle2, Search, ShieldCheck, Activity, Settings as SettingsIcon } from "lucide-react";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { useBusinessBrainFlag } from "@/lib/business-brain/flagResolver";
+import { useAuth } from "@/contexts/AuthContext";
+import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * Business Brain — Phase 1 / Slice 1 layout shell.
+ * Business Brain — layout shell.
  *
- * Three tabs: Knowledge Bin (sources inbox), Suggested Facts (review queue),
- * Approved Knowledge (governed truth). Hidden when the workspace flag is
- * off; consumers should also avoid linking here when disabled.
+ * Tabs: Knowledge Bin (sources inbox), Suggested Facts (review queue),
+ * Approved Knowledge (governed truth), Search, Governance, Health.
+ *
+ * Phase 1 activation fix: disabled-state shows a role-aware CTA instead of
+ * the raw `features.businessBrain.enabled` flag-name snippet. Admins are
+ * routed straight into the Settings page; non-admins see a clear ask.
  *
  * Architecture: docs/business-brain-architecture.md
  */
 export default function BusinessBrainLayoutPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const flag = useBusinessBrainFlag();
+  const { isWorkspaceAdmin, isMasterAdmin } = useAuth();
+  const adminLike = isWorkspaceAdmin || isMasterAdmin;
 
   if (!flag.enabled) {
     return (
       <div className="space-y-6">
         <WorkspacePageHeader title="Business Brain" lede="Governed business knowledge for script creation and live assist." />
-        <div className="rounded-lg border bg-card p-8 text-sm text-muted-foreground">
-          Business Brain is not enabled for this workspace. Ask a workspace
-          owner to turn on{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-            features.businessBrain.enabled
-          </code>{" "}
-          on the organization integration config.
-        </div>
+        <BbStateBlock
+          kind="empty"
+          data-testid="bb-layout-disabled"
+          title="Business Brain isn't turned on for this workspace yet."
+          description={
+            adminLike
+              ? "Enable it from Brain Settings to start ingesting sources and reviewing facts."
+              : "Ask a workspace admin or owner to enable it from Brain Settings."
+          }
+          action={
+            adminLike ? (
+              <Button asChild size="sm">
+                <Link to={`/w/${workspaceId}/settings/brain`}>
+                  <SettingsIcon className="mr-1.5 h-3.5 w-3.5" />
+                  Open Brain Settings
+                </Link>
+              </Button>
+            ) : null
+          }
+        />
       </div>
     );
   }

@@ -1,4 +1,5 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -157,9 +158,32 @@ export default function SuggestedFactsPage() {
           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading suggestions…
         </div>
       ) : filtered.length === 0 ? (
-        <Card className="px-6 py-12 text-center text-sm text-muted-foreground">
-          No suggestions match these filters.
-        </Card>
+        <BbStateBlock
+          kind={suggested.length === 0 ? "empty" : "noData"}
+          data-testid="bb-suggested-empty"
+          title={
+            suggested.length === 0
+              ? "All caught up — no suggestions waiting for review."
+              : "No suggestions match these filters."
+          }
+          description={
+            suggested.length === 0
+              ? "Approved facts are searchable in the Brain and used by ASC and Live Assist."
+              : "Try clearing a filter to see more."
+          }
+          action={
+            suggested.length === 0 ? (
+              <Button asChild size="sm" variant="outline">
+                <Link
+                  to={`/w/${workspaceId}/brain/approved`}
+                  data-testid="bb-suggested-next-cta"
+                >
+                  Review approved knowledge
+                </Link>
+              </Button>
+            ) : null
+          }
+        />
       ) : (
         <div className="grid gap-3">
           {filtered.map((ext) => {

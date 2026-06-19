@@ -11,7 +11,9 @@
  * surface labels reflect that).
  */
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { BbPermissionDenied } from "@/components/business-brain/BbPermissionDenied";
+import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -281,11 +283,15 @@ export default function BusinessBrainSettingsPage() {
           title="Business Brain settings"
           lede="Workspace controls for the Business Brain."
         />
-        <Card>
-          <CardContent className="p-8 text-sm text-muted-foreground">
-            You need workspace admin or owner access to manage these settings.
-          </CardContent>
-        </Card>
+        <BbPermissionDenied
+          resource="Brain settings"
+          requiredRole="workspace admin or owner"
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/w/${workspaceId}/brain`}>Back to Business Brain</Link>
+            </Button>
+          }
+        />
       </div>
     );
   }
