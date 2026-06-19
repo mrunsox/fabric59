@@ -19,6 +19,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { BbPermissionDenied } from "@/components/business-brain/BbPermissionDenied";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
