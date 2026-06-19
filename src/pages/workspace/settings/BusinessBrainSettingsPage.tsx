@@ -11,7 +11,9 @@
  * surface labels reflect that).
  */
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { BbPermissionDenied } from "@/components/business-brain/BbPermissionDenied";
+import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
