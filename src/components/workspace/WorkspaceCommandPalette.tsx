@@ -14,7 +14,8 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceGuides } from "@/hooks/useWorkspaceGuides";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
-import { Plus, Building2, ArrowRightLeft } from "lucide-react";
+import { Plus, Building2, ArrowRightLeft, Brain, Activity } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * ⌘K command palette for the workspace shell. Mounts globally inside
