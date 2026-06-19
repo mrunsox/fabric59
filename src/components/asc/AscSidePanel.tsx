@@ -12,6 +12,7 @@
 import { useContext } from "react";
 import { QueryClientContext } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
 import type { Dispatch } from "react";
 import type { AscDraft } from "@/lib/asc/types";
 import type { AscAction } from "@/lib/asc/actions";
