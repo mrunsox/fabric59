@@ -111,6 +111,28 @@ export function WorkspaceCommandPalette() {
           </CommandItem>
         </CommandGroup>
 
+        {showBrainAdmin && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Business Brain">
+              <CommandItem
+                value="brain settings"
+                onSelect={() => go(`${base}/settings/brain`)}
+              >
+                <Brain className="h-4 w-4" />
+                <span>Brain settings</span>
+              </CommandItem>
+              <CommandItem
+                value="brain health"
+                onSelect={() => go(`${base}/brain/health`)}
+              >
+                <Activity className="h-4 w-4" />
+                <span>Brain health</span>
+              </CommandItem>
+            </CommandGroup>
+          </>
+        )}
+
         {workspaces.length > 1 && (
           <>
             <CommandSeparator />
