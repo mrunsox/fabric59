@@ -95,6 +95,8 @@ describe("Phase 8 — bridge contract", () => {
     const offenders: string[] = [];
     for (const f of walk(SRC)) {
       if (allowedPrefix.some((p) => f.startsWith(p))) continue;
+      // Test files describe the contract — they're not app code.
+      if (f.includes(`${"/"}test${"/"}`) || f.endsWith(".test.ts") || f.endsWith(".test.tsx")) continue;
       const src = readFileSync(f, "utf8");
       // Match patterns like .from("bb_facts" or .from('bb_gap_topics'
       if (/\.from\(\s*["'`]bb_[a-z_]+/.test(src)) {
