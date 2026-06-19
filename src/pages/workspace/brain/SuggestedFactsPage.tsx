@@ -183,6 +183,7 @@ export default function SuggestedFactsPage() {
             ) : null
           }
         />
+      ) : (
         <div className="grid gap-3">
           {filtered.map((ext) => {
             const dupes = findKeyDuplicates(ext);
