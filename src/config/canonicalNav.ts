@@ -45,7 +45,9 @@ export const WORKSPACE_NAV: NavItem[] = [
   { key: "clients",      label: "Clients",      icon: Users,           to: "clients" },
   { key: "dispositions", label: "Dispositions", icon: ListChecks,      to: "dispositions" },
   { key: "notifications",label: "Notifications",icon: Bell,            to: "notifications" },
-  { key: "knowledge",    label: "Knowledge",    icon: Brain,           to: "knowledge" },
+  // Phase 1 activation fix: was `to: "knowledge"` (404). Repointed to the
+  // Business Brain shell that's actually mounted at /w/:wid/brain.
+  { key: "knowledge",    label: "Business Brain", icon: Brain,         to: "brain" },
   { key: "assistant",    label: "Assistant",    icon: Sparkles,        to: "assistant" },
   { key: "qa",           label: "QA",           icon: ClipboardCheck,  to: "qa" },
   { key: "analytics",    label: "Analytics",    icon: BarChart3,       to: "analytics" },

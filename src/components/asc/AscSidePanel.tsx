@@ -156,26 +156,32 @@ export function AscSidePanel({
             </p>
           )}
         </TabsContent>
-        <TabsContent
-          value="preview"
-          className="p-4 text-xs text-muted-foreground"
-        >
-          <p>
-            Agent experience preview will mount the real call-runner
-            primitives here in a later slice.
-          </p>
+        <TabsContent value="preview" className="p-4">
+          <BbStateBlock
+            kind="upcoming"
+            dense
+            data-testid="asc-side-preview-empty"
+            title="Agent experience preview is coming in a later phase."
+            description="In the meantime, open the live runner to see how this script behaves on a real call."
+          />
         </TabsContent>
-        <TabsContent
-          value="rationale"
-          className="p-4 text-xs text-muted-foreground"
-        >
-          <p>Hover or click an element to see why it's here.</p>
+        <TabsContent value="rationale" className="p-4">
+          <BbStateBlock
+            kind="upcoming"
+            dense
+            data-testid="asc-side-rationale-empty"
+            title="Why-it's-here explanations are coming in a later phase."
+            description="Selecting a step or node won't surface rationale yet."
+          />
         </TabsContent>
-        <TabsContent
-          value="history"
-          className="p-4 text-xs text-muted-foreground"
-        >
-          <p>Assistant call history will appear here.</p>
+        <TabsContent value="history" className="p-4">
+          <BbStateBlock
+            kind="upcoming"
+            dense
+            data-testid="asc-side-history-empty"
+            title="Assistant call history is coming in a later phase."
+            description="Past AI suggestions and applied changes will appear here once shipped."
+          />
         </TabsContent>
       </Tabs>
     </aside>
