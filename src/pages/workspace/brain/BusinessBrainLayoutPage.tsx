@@ -1,11 +1,10 @@
-import { Link, NavLink, Outlet, useParams } from "react-router-dom";
-import { Inbox, ListChecks, CheckCircle2, Search, ShieldCheck, Activity, Settings as SettingsIcon } from "lucide-react";
-import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { Link, Outlet, useParams } from "react-router-dom";
+import { Settings as SettingsIcon } from "lucide-react";
 import { useBusinessBrainFlag } from "@/lib/business-brain/flagResolver";
 import { useAuth } from "@/contexts/AuthContext";
 import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
+import { BrainPageHeader, BrainTabsBar, type BrainTab } from "@/components/business-brain/ui";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 /**
  * Business Brain — layout shell.
@@ -13,9 +12,10 @@ import { cn } from "@/lib/utils";
  * Tabs: Knowledge Bin (sources inbox), Suggested Facts (review queue),
  * Approved Knowledge (governed truth), Search, Governance, Health.
  *
- * Phase 1 activation fix: disabled-state shows a role-aware CTA instead of
- * the raw `features.businessBrain.enabled` flag-name snippet. Admins are
- * routed straight into the Settings page; non-admins see a clear ask.
+ * Phase 1 activation fix (preserved): disabled-state shows a role-aware
+ * CTA instead of the raw `features.businessBrain.enabled` flag-name snippet.
+ * Phase 2 Slice B: shell adopts BrainPageHeader + BrainTabsBar; raw nav
+ * markup removed in favor of the shared primitives.
  *
  * Architecture: docs/business-brain-architecture.md
  */
@@ -28,7 +28,11 @@ export default function BusinessBrainLayoutPage() {
   if (!flag.enabled) {
     return (
       <div className="space-y-6">
-        <WorkspacePageHeader title="Business Brain" lede="Governed business knowledge for script creation and live assist." />
+        <BrainPageHeader
+          eyebrow="Workspace"
+          title="Business Brain"
+          subtitle="Governed business knowledge for script creation and live assist."
+        />
         <BbStateBlock
           kind="empty"
           data-testid="bb-layout-disabled"
@@ -54,38 +58,33 @@ export default function BusinessBrainLayoutPage() {
   }
 
   const base = `/w/${workspaceId}/brain`;
-  const tabs: Array<{ to: string; label: string; icon: typeof Inbox; end?: boolean }> = [
-    { to: base, label: "Knowledge Bin", icon: Inbox, end: true },
-    { to: `${base}/suggested`, label: "Suggested Facts", icon: ListChecks },
-    { to: `${base}/approved`, label: "Approved Knowledge", icon: CheckCircle2 },
-    { to: `${base}/search`, label: "Search", icon: Search },
-    { to: `${base}/governance`, label: "Governance", icon: ShieldCheck },
-    { to: `${base}/health`, label: "Health", icon: Activity },
+  const tabs: BrainTab[] = [
+    { to: base, label: "Knowledge Bin", end: true },
+    { to: `${base}/suggested`, label: "Suggested Facts" },
+    { to: `${base}/approved`, label: "Approved Knowledge" },
+    { to: `${base}/search`, label: "Search" },
+    { to: `${base}/governance`, label: "Governance" },
+    { to: `${base}/health`, label: "Health" },
   ];
 
   return (
-    <div className="space-y-6">
-      <WorkspacePageHeader title="Business Brain" lede="Ingest, review, and govern the business knowledge that powers scripts and assist." />
-      <nav className="flex items-center gap-1 border-b">
-        {tabs.map((t) => (
-          <NavLink
-            key={t.to}
-            to={t.to}
-            end={t.end}
-            className={({ isActive }) =>
-              cn(
-                "inline-flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors -mb-px",
-                isActive
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
-              )
-            }
-          >
-            <t.icon className="h-4 w-4" />
-            {t.label}
-          </NavLink>
-        ))}
-      </nav>
+    <div className="space-y-6 animate-fade-in">
+      <BrainPageHeader
+        eyebrow="Workspace"
+        title="Business Brain"
+        subtitle="Ingest, review, and govern the business knowledge that powers scripts and assist."
+        actions={
+          adminLike ? (
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/w/${workspaceId}/settings/brain`}>
+                <SettingsIcon className="mr-1.5 h-3.5 w-3.5" />
+                Settings
+              </Link>
+            </Button>
+          ) : null
+        }
+      />
+      <BrainTabsBar tabs={tabs} />
       <Outlet />
     </div>
   );
