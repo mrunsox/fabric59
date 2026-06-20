@@ -150,65 +150,69 @@ export default function BrainSearchPage() {
   }, [results]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       <div>
-        <h2 className="text-lg font-semibold">Search the Business Brain</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="text-base font-semibold tracking-tight">Search the Business Brain</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Semantic search across approved knowledge. Approved facts come first;
           source snippets fill in when no fact covers the answer.
         </p>
       </div>
 
-      <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[260px]">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Ask a question or describe what you need…"
-            className="pl-9"
-            value={draftQuery}
-            onChange={(e) => setDraftQuery(e.target.value)}
-            maxLength={500}
-          />
-        </div>
-        <Select value={entityType} onValueChange={(v) => setEntityType(v as typeof entityType)}>
-          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All entity types</SelectItem>
-            {BB_ENTITY_TYPES.map((t) => (
-              <SelectItem key={t} value={t}>
-                {ENTITY_LABEL[t]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Checkbox
-            checked={includeNeedsReview}
-            onCheckedChange={(v) => setIncludeNeedsReview(v === true)}
-          />
-          Include needs review
-        </label>
-        <Button type="submit" disabled={search.isPending || !draftQuery.trim()}>
-          {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
-        </Button>
-        {canReindex ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => reindex.mutate()}
-            disabled={reindex.isPending}
-            title="Embed any approved facts and chunks that don't have a vector yet."
-          >
-            <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${reindex.isPending ? "animate-spin" : ""}`} />
-            Reindex search
+      <BrainPanel>
+        <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[260px]">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Ask a question or describe what you need…"
+              className="pl-9"
+              value={draftQuery}
+              onChange={(e) => setDraftQuery(e.target.value)}
+              maxLength={500}
+            />
+          </div>
+          <Select value={entityType} onValueChange={(v) => setEntityType(v as typeof entityType)}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All entity types</SelectItem>
+              {BB_ENTITY_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {ENTITY_LABEL[t]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Checkbox
+              checked={includeNeedsReview}
+              onCheckedChange={(v) => setIncludeNeedsReview(v === true)}
+            />
+            Include needs review
+          </label>
+          <Button type="submit" disabled={search.isPending || !draftQuery.trim()}>
+            {search.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
           </Button>
-        ) : null}
-      </form>
+          {canReindex ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => reindex.mutate()}
+              disabled={reindex.isPending}
+              title="Embed any approved facts and chunks that don't have a vector yet."
+            >
+              <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${reindex.isPending ? "animate-spin" : ""}`} />
+              Reindex search
+            </Button>
+          ) : null}
+        </form>
+      </BrainPanel>
 
       {search.isPending ? (
-        <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Searching…
-        </div>
+        <BrainPanel>
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Searching…
+          </div>
+        </BrainPanel>
       ) : results === null ? (
         <BbStateBlock
           kind="empty"
@@ -257,13 +261,13 @@ export default function BrainSearchPage() {
           }
         />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div className="text-xs text-muted-foreground">
-            {results.counts.facts} fact{results.counts.facts === 1 ? "" : "s"}
+            <span className="bb-tnum">{results.counts.facts}</span> fact{results.counts.facts === 1 ? "" : "s"}
             {results.counts.chunks > 0
-              ? `, ${results.counts.chunks} supporting snippet${results.counts.chunks === 1 ? "" : "s"}`
+              ? <>, <span className="bb-tnum">{results.counts.chunks}</span> supporting snippet{results.counts.chunks === 1 ? "" : "s"}</>
               : ""}{" "}
-            · {results.latencyMs}ms
+            · <span className="bb-tnum">{results.latencyMs}</span>ms
           </div>
           {groupedKeys.map((key) => {
             const cards = results.groups[key] ?? [];
@@ -272,13 +276,11 @@ export default function BrainSearchPage() {
               GROUP_LABEL[key] ?? ENTITY_LABEL[key as BbEntityType] ?? key;
             return (
               <section key={key} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground">
+                <div className="flex items-center gap-2 px-1">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {label}
                   </h3>
-                  <Badge variant="outline" className="text-[10px]">
-                    {cards.length}
-                  </Badge>
+                  <BrainBadge tone="muted">{cards.length}</BrainBadge>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   {cards.map((c, i) => (
