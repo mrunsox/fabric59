@@ -178,11 +178,11 @@ export default function ApprovedKnowledgePage() {
   const fromGapFactId = fromGap?.startsWith("gap:") ? fromGap.slice(4) : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       {fromGapFactId ? (
         <div
           data-testid="bb-approved-back-from-gap"
-          className="flex items-center justify-between rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900"
+          className="flex items-center justify-between rounded-md border border-[hsl(var(--bb-status-info)/0.35)] bg-[hsl(var(--bb-status-info-bg-soft))] px-3 py-2 text-xs text-[hsl(var(--bb-status-info-fg))]"
         >
           <span>You came here from a vertical gap on this fact.</span>
           <Button
@@ -194,18 +194,18 @@ export default function ApprovedKnowledgePage() {
           </Button>
         </div>
       ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold">Approved knowledge</h2>
+            <h2 className="text-base font-semibold tracking-tight">Approved knowledge</h2>
             {verticalQuery.data ? (
-              <Badge variant="secondary" className="bg-sky-100 text-sky-900">
+              <BrainBadge tone="info">
                 <Layers className="mr-1 h-3 w-3" />
                 Vertical: {verticalQuery.data.label}
-              </Badge>
+              </BrainBadge>
             ) : null}
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Governed business memory. Every fact is reviewer-approved and source-backed.
           </p>
         </div>
@@ -265,119 +265,125 @@ export default function ApprovedKnowledgePage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading approved knowledge…
-        </div>
+        <BrainPanel>
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading approved knowledge…
+          </div>
+        </BrainPanel>
       ) : filtered.length === 0 ? (
-        <Card className="px-6 py-12 text-center text-sm text-muted-foreground">
-          No approved facts match these filters.
-        </Card>
+        <BbStateBlock
+          kind="noData"
+          title="No approved facts match these filters."
+          description="Try clearing a filter, or expand the date range."
+        />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {visibleTypes.map((t) => {
             const rows = grouped[t] ?? [];
             if (rows.length === 0) return null;
             return (
               <section key={t} className="space-y-2">
-                <h3 className="text-sm font-semibold text-muted-foreground">
+                <h3 className="flex items-baseline gap-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {ENTITY_LABEL[t]}
-                  <span className="ml-2 text-xs font-normal">({rows.length})</span>
+                  <span className="font-normal normal-case tracking-normal">({rows.length})</span>
                 </h3>
-                <Card className="overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                      <tr>
-                        <th className="px-4 py-2 font-medium">Name</th>
-                        <th className="px-4 py-2 font-medium">Details</th>
-                        <th className="px-4 py-2 font-medium">Sources</th>
-                        <th className="px-4 py-2 font-medium">Latest import</th>
-                        <th className="px-4 py-2 font-medium">Verification</th>
-                        <th className="px-4 py-2 font-medium">Reviewed</th>
-                        <th className="px-4 py-2 font-medium"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((f) => {
-                        const latest = latestSourceDate(f);
-                        return (
-                          <tr key={f.id} id={`fact-${f.id}`} className="border-b last:border-0 align-top">
-                            <td className="px-4 py-3 font-medium">
-                              <div className="flex items-center gap-2">
-                                <span>{f.display_name}</span>
-                                {gapsByFactId.get(f.id) ? (
-                                  <button
-                                    onClick={() => setGapDrawerFact(f)}
-                                    className="inline-flex"
-                                    aria-label="View vertical gaps"
-                                  >
-                                    <Badge variant="secondary" className="cursor-pointer bg-rose-100 text-rose-900 text-[10px]">
-                                      <AlertCircle className="mr-1 h-3 w-3" />
-                                      {gapsByFactId.get(f.id)} gap{(gapsByFactId.get(f.id) ?? 0) > 1 ? "s" : ""}
-                                    </Badge>
-                                  </button>
-                                ) : null}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <pre className="max-w-[24rem] overflow-x-auto text-xs text-muted-foreground">
-                                {JSON.stringify(f.payload, null, 0)}
-                              </pre>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-muted-foreground">
-                              <span className="inline-flex items-center gap-1">
-                                <LinkIcon className="h-3 w-3" />
-                                {f.source_refs.length}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-muted-foreground">
-                              {latest ? new Date(latest).toLocaleDateString() : "—"}
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-col gap-1">
-                                <VerificationBadge state={f.verification_state} />
-                                {f.stale_state && f.stale_state !== "fresh" ? (
-                                  <button
-                                    onClick={() => {
-                                      const v: StaleFactView = {
-                                        id: f.id,
-                                        workspaceId: f.workspace_id,
-                                        entityType: f.entity_type,
-                                        displayName: f.display_name,
-                                        staleState: f.stale_state ?? "fresh",
-                                        staleReasons: (f.stale_reasons ?? []) as never,
-                                        lastReviewedAt: f.last_reviewed_at,
-                                        lastUsedAt: f.last_used_at ?? null,
-                                        intervalDays: f.expected_review_interval_days ?? null,
-                                        usageScore: 0,
-                                        usageBreakdown: {
-                                          searchOpens: 0, searchMarkedUseful: 0, searchMarkedNotUseful: 0,
-                                          ascUsed: 0, ascDismissed: 0,
-                                          assistOpened: 0, assistCopied: 0, assistInserted: 0,
-                                        },
-                                      };
-                                      setStaleDrawer(v);
-                                    }}
-                                    className="text-left"
-                                  >
-                                    {(() => {
-                                      const cfg = STALE_BADGE[f.stale_state];
-                                      if (!cfg) return null;
-                                      const I = cfg.icon;
-                                      return (
-                                        <Badge variant="secondary" className={cfg.cls + " cursor-pointer text-[10px]"}>
-                                          <I className="mr-1 h-3 w-3" />
-                                          {cfg.label}
-                                        </Badge>
-                                      );
-                                    })()}
-                                  </button>
-                                ) : null}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-muted-foreground">
-                              {new Date(f.last_reviewed_at).toLocaleDateString()}
-                            </td>
-                            <td className="px-4 py-3">
+                <BrainPanel className="overflow-hidden p-0">
+                  <div className="overflow-x-auto">
+                    <BrainTable density="lg">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Details</th>
+                          <th>Sources</th>
+                          <th>Latest import</th>
+                          <th>Verification</th>
+                          <th>Reviewed</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((f) => {
+                          const latest = latestSourceDate(f);
+                          return (
+                            <tr key={f.id} id={`fact-${f.id}`} className="align-top">
+                              <td className="font-medium">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span>{f.display_name}</span>
+                                  {gapsByFactId.get(f.id) ? (
+                                    <button
+                                      onClick={() => setGapDrawerFact(f)}
+                                      className="inline-flex bb-focus-ring rounded-sm"
+                                      aria-label="View vertical gaps"
+                                    >
+                                      <BrainBadge tone="bad">
+                                        <AlertCircle className="mr-1 h-3 w-3" />
+                                        {gapsByFactId.get(f.id)} gap{(gapsByFactId.get(f.id) ?? 0) > 1 ? "s" : ""}
+                                      </BrainBadge>
+                                    </button>
+                                  ) : null}
+                                </div>
+                              </td>
+                              <td>
+                                <pre className="max-w-[24rem] overflow-x-auto text-xs leading-relaxed text-muted-foreground">
+                                  {JSON.stringify(f.payload, null, 0)}
+                                </pre>
+                              </td>
+                              <td className="text-xs text-muted-foreground">
+                                <span className="inline-flex items-center gap-1">
+                                  <LinkIcon className="h-3 w-3" />
+                                  {f.source_refs.length}
+                                </span>
+                              </td>
+                              <td className="text-xs text-muted-foreground">
+                                {latest ? new Date(latest).toLocaleDateString() : "—"}
+                              </td>
+                              <td>
+                                <div className="flex flex-col items-start gap-1">
+                                  <VerificationBadge state={f.verification_state} />
+                                  {f.stale_state && f.stale_state !== "fresh" ? (
+                                    <button
+                                      onClick={() => {
+                                        const v: StaleFactView = {
+                                          id: f.id,
+                                          workspaceId: f.workspace_id,
+                                          entityType: f.entity_type,
+                                          displayName: f.display_name,
+                                          staleState: f.stale_state ?? "fresh",
+                                          staleReasons: (f.stale_reasons ?? []) as never,
+                                          lastReviewedAt: f.last_reviewed_at,
+                                          lastUsedAt: f.last_used_at ?? null,
+                                          intervalDays: f.expected_review_interval_days ?? null,
+                                          usageScore: 0,
+                                          usageBreakdown: {
+                                            searchOpens: 0, searchMarkedUseful: 0, searchMarkedNotUseful: 0,
+                                            ascUsed: 0, ascDismissed: 0,
+                                            assistOpened: 0, assistCopied: 0, assistInserted: 0,
+                                          },
+                                        };
+                                        setStaleDrawer(v);
+                                      }}
+                                      className="bb-focus-ring rounded-sm text-left"
+                                    >
+                                      {(() => {
+                                        const cfg = STALE_BADGE[f.stale_state];
+                                        if (!cfg) return null;
+                                        const I = cfg.icon;
+                                        return (
+                                          <BrainBadge tone={cfg.tone} className="cursor-pointer">
+                                            <I className="mr-1 h-3 w-3" />
+                                            {cfg.label}
+                                          </BrainBadge>
+                                        );
+                                      })()}
+                                    </button>
+                                  ) : null}
+                                </div>
+                              </td>
+                              <td className="text-xs text-muted-foreground">
+                                {new Date(f.last_reviewed_at).toLocaleDateString()}
+                              </td>
+                              <td>
+
                               <Button size="sm" variant="ghost" onClick={() => setDrawerFact(f)}>
                                 <Eye className="mr-1 h-3.5 w-3.5" /> Snippets
                               </Button>
