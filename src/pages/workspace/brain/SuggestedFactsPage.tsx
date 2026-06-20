@@ -111,11 +111,11 @@ export default function SuggestedFactsPage() {
   }, [suggested]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Suggested facts</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-base font-semibold tracking-tight">Suggested facts</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Review extractions before they enter approved knowledge. Approval creates a new fact or merges into one you select.
           </p>
         </div>
@@ -155,9 +155,11 @@ export default function SuggestedFactsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading suggestions…
-        </div>
+        <BrainPanel>
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading suggestions…
+          </div>
+        </BrainPanel>
       ) : filtered.length === 0 ? (
         <BbStateBlock
           kind={suggested.length === 0 ? "empty" : "noData"}
@@ -190,11 +192,15 @@ export default function SuggestedFactsPage() {
           {filtered.map((ext) => {
             const dupes = findKeyDuplicates(ext);
             return (
-              <Card key={ext.id} className="p-4">
+              <BrainPanel
+                key={ext.id}
+                raised
+                tone={dupes.length > 0 ? "warn" : "default"}
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="font-normal">
                         {ENTITY_LABEL[ext.entity_type as BbEntityType] ?? ext.entity_type}
                       </Badge>
                       <ConfidenceBadge value={ext.confidence} />
@@ -202,17 +208,17 @@ export default function SuggestedFactsPage() {
                         from {sourceTitleById.get(ext.source_id) ?? "source"}
                       </span>
                       {dupes.length > 0 ? (
-                        <Badge variant="secondary" className="bg-amber-50 text-amber-900">
+                        <BrainBadge tone="warn">
                           {dupes.length} duplicate{dupes.length > 1 ? "s" : ""} in approved
-                        </Badge>
+                        </BrainBadge>
                       ) : null}
                     </div>
-                    <pre className="overflow-x-auto rounded bg-muted/40 px-3 py-2 text-xs">
+                    <pre className="overflow-x-auto rounded-md border border-bb-border-subtle bg-bb-surface-inset px-3 py-2 text-xs leading-relaxed">
                       {JSON.stringify(ext.payload, null, 2)}
                     </pre>
                     {ext.snippet ? (
-                      <blockquote className="border-l-2 border-muted-foreground/30 pl-3 text-xs italic text-muted-foreground">
-                        “{ext.snippet}”
+                      <blockquote className="border-l-2 border-bb-border-strong/60 pl-3 text-xs italic text-muted-foreground">
+                        "{ext.snippet}"
                       </blockquote>
                     ) : null}
                   </div>
@@ -237,11 +243,12 @@ export default function SuggestedFactsPage() {
                     </Button>
                   </div>
                 </div>
-              </Card>
+              </BrainPanel>
             );
           })}
         </div>
       )}
+
 
       <MergeDialog
         open={!!mergeTarget}
