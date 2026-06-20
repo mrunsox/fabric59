@@ -37,17 +37,28 @@ import {
   listVerticalGaps,
   type StaleFactView,
 } from "@/lib/business-brain/selectors";
+import {
+  BrainPanel,
+  BrainTable,
+  BrainBadge,
+  type BrainBadgeTone,
+} from "@/components/business-brain/ui";
+import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
 
 type DateRange = "all" | "7" | "30" | "90";
 
+const VERIFICATION_META: Record<
+  BbFactRow["verification_state"],
+  { label: string; tone: BrainBadgeTone }
+> = {
+  approved: { label: "Approved", tone: "ok" },
+  needs_review: { label: "Needs review", tone: "warn" },
+  stale: { label: "Stale", tone: "muted" },
+};
+
 function VerificationBadge({ state }: { state: BbFactRow["verification_state"] }) {
-  const map = {
-    approved: { label: "Approved", cls: "bg-emerald-100 text-emerald-900" },
-    needs_review: { label: "Needs review", cls: "bg-amber-100 text-amber-900" },
-    stale: { label: "Stale", cls: "bg-slate-100 text-slate-700" },
-  } as const;
-  const e = map[state];
-  return <Badge variant="secondary" className={e.cls}>{e.label}</Badge>;
+  const e = VERIFICATION_META[state];
+  return <BrainBadge tone={e.tone}>{e.label}</BrainBadge>;
 }
 
 function withinDateRange(iso: string, range: DateRange): boolean {
@@ -59,10 +70,13 @@ function withinDateRange(iso: string, range: DateRange): boolean {
 
 type StaleFilter = "all" | "fresh" | "stale_due_to_age" | "stale_due_to_usage" | "stale_due_to_conflict";
 
-const STALE_BADGE: Record<string, { label: string; cls: string; icon: typeof Clock }> = {
-  stale_due_to_age: { label: "Stale (age)", cls: "bg-amber-100 text-amber-900", icon: Clock },
-  stale_due_to_usage: { label: "Stale (usage)", cls: "bg-amber-100 text-amber-900", icon: Activity },
-  stale_due_to_conflict: { label: "Conflict", cls: "bg-rose-100 text-rose-900", icon: AlertTriangle },
+const STALE_BADGE: Record<
+  string,
+  { label: string; tone: BrainBadgeTone; icon: typeof Clock }
+> = {
+  stale_due_to_age: { label: "Stale (age)", tone: "warn", icon: Clock },
+  stale_due_to_usage: { label: "Stale (usage)", tone: "warn", icon: Activity },
+  stale_due_to_conflict: { label: "Conflict", tone: "bad", icon: AlertTriangle },
 };
 
 export default function ApprovedKnowledgePage() {
