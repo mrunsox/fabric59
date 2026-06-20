@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import Papa from "papaparse";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,29 +48,37 @@ import {
   type CsvDirectoryRow,
 } from "@/lib/business-brain/csvParser";
 import { parseFaqText } from "@/lib/business-brain/faqParser";
+import {
+  BrainPanel,
+  BrainTable,
+  BrainBadge,
+  type BrainBadgeTone,
+} from "@/components/business-brain/ui";
+import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
+
+const STATUS_META: Record<
+  BbSourceRow["status"],
+  { label: string; tone: BrainBadgeTone }
+> = {
+  pending: { label: "Pending", tone: "muted" },
+  processing: { label: "Processing", tone: "warn" },
+  processed: { label: "Processed", tone: "ok" },
+  failed: { label: "Failed", tone: "bad" },
+  superseded: { label: "Superseded", tone: "muted" },
+};
 
 function StatusPill({ status }: { status: BbSourceRow["status"] }) {
-  const map: Record<BbSourceRow["status"], { label: string; cls: string }> = {
-    pending: { label: "Pending", cls: "bg-muted text-muted-foreground" },
-    processing: { label: "Processing", cls: "bg-amber-100 text-amber-900" },
-    processed: { label: "Processed", cls: "bg-emerald-100 text-emerald-900" },
-    failed: { label: "Failed", cls: "bg-red-100 text-red-900" },
-    superseded: { label: "Superseded", cls: "bg-slate-100 text-slate-700" },
-  };
-  const e = map[status];
-  return <Badge variant="secondary" className={e.cls}>{e.label}</Badge>;
+  const e = STATUS_META[status];
+  return <BrainBadge tone={e.tone}>{e.label}</BrainBadge>;
 }
 
-function KindLabel({ kind }: { kind: BbSourceRow["kind"] }) {
-  const labels: Record<BbSourceRow["kind"], string> = {
-    upload_doc: "Document",
-    paste_text: "Pasted text",
-    paste_faq: "Pasted FAQ",
-    upload_csv: "Team directory (CSV)",
-    url_crawl: "URL",
-  };
-  return <span className="text-xs text-muted-foreground">{labels[kind]}</span>;
-}
+const KIND_LABEL: Record<BbSourceRow["kind"], string> = {
+  upload_doc: "Document",
+  paste_text: "Pasted text",
+  paste_faq: "Pasted FAQ",
+  upload_csv: "Team directory (CSV)",
+  url_crawl: "URL",
+};
 
 export default function KnowledgeBinPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -84,18 +91,18 @@ export default function KnowledgeBinPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Knowledge Bin</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-base font-semibold tracking-tight">Knowledge Bin</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Every imported source is captured here with its version and processing state.
           </p>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add source
+            <Button size="sm">
+              <Plus className="mr-1.5 h-4 w-4" /> Add source
             </Button>
           </DialogTrigger>
           <AddSourceDialog
@@ -105,57 +112,70 @@ export default function KnowledgeBinPage() {
         </Dialog>
       </div>
 
-      <Card className="overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-10 text-sm text-muted-foreground">
+      {isLoading ? (
+        <BrainPanel>
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading sources…
           </div>
-        ) : sorted.length === 0 ? (
-          <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-            No sources yet. Add a document, paste FAQ content, or upload a team directory CSV.
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="px-4 py-2 font-medium">Title</th>
-                <th className="px-4 py-2 font-medium">Type</th>
-                <th className="px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2 font-medium">Version</th>
-                <th className="px-4 py-2 font-medium">Imported</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((s) => (
-                <tr key={s.id} className="border-b last:border-0">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2 font-medium">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      {s.title}
-                    </div>
-                    {s.status_message ? (
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {s.status_message}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-3"><KindLabel kind={s.kind} /></td>
-                  <td className="px-4 py-3"><StatusPill status={s.status} /></td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    v{s.version}
-                    {s.prior_source_id ? (
-                      <span className="ml-1 text-xs">(supersedes prior)</span>
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(s.created_at).toLocaleString()}
-                  </td>
+        </BrainPanel>
+      ) : sorted.length === 0 ? (
+        <BbStateBlock
+          kind="empty"
+          title="No sources yet."
+          description="Add a document, paste FAQ content, or upload a team directory CSV."
+          action={
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="mr-1.5 h-4 w-4" /> Add source
+            </Button>
+          }
+        />
+      ) : (
+        <BrainPanel className="overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <BrainTable density="lg">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Version</th>
+                  <th>Imported</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
+              </thead>
+              <tbody>
+                {sorted.map((s) => (
+                  <tr key={s.id}>
+                    <td>
+                      <div className="flex items-center gap-2 font-medium text-foreground">
+                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{s.title}</span>
+                      </div>
+                      {s.status_message ? (
+                        <div className="mt-0.5 pl-6 text-xs text-muted-foreground">
+                          {s.status_message}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className="text-xs text-muted-foreground">
+                      {KIND_LABEL[s.kind]}
+                    </td>
+                    <td><StatusPill status={s.status} /></td>
+                    <td className="text-muted-foreground">
+                      <span className="text-foreground">v{s.version}</span>
+                      {s.prior_source_id ? (
+                        <span className="ml-1 text-xs">(supersedes prior)</span>
+                      ) : null}
+                    </td>
+                    <td className="text-xs text-muted-foreground">
+                      {new Date(s.created_at).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </BrainTable>
+          </div>
+        </BrainPanel>
+      )}
     </div>
   );
 }
