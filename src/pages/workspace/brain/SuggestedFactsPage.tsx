@@ -1,7 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
 import { useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -33,6 +32,11 @@ import {
 import { ENTITY_LABEL, canonicalKey } from "@/lib/business-brain/entitySchemas";
 import { BB_ENTITY_TYPES } from "@/lib/business-brain/types";
 import type { BbEntityType } from "@/lib/business-brain/types";
+import {
+  BrainPanel,
+  BrainBadge,
+  type BrainBadgeTone,
+} from "@/components/business-brain/ui";
 
 type ConfidenceBand = "all" | "high" | "med" | "low";
 
@@ -45,12 +49,9 @@ function bandOf(value: number): "high" | "med" | "low" {
 function ConfidenceBadge({ value }: { value: number }) {
   const pct = Math.round(value * 100);
   const tier = bandOf(value);
-  const cls = {
-    high: "bg-emerald-100 text-emerald-900",
-    med: "bg-amber-100 text-amber-900",
-    low: "bg-slate-100 text-slate-700",
-  }[tier];
-  return <Badge variant="secondary" className={cls}>{pct}% conf</Badge>;
+  const tone: BrainBadgeTone =
+    tier === "high" ? "ok" : tier === "med" ? "warn" : "muted";
+  return <BrainBadge tone={tone}>{pct}% conf</BrainBadge>;
 }
 
 export default function SuggestedFactsPage() {
