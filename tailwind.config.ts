@@ -118,6 +118,19 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        "bb-sm": "var(--bb-shadow-sm)",
+        "bb-md": "var(--bb-shadow-md)",
+        "bb-pop": "var(--bb-shadow-pop)",
+      },
+      transitionTimingFunction: {
+        "bb-emphasized": "cubic-bezier(0.2, 0, 0, 1)",
+      },
+      transitionDuration: {
+        "bb-fast": "120ms",
+        "bb-std": "200ms",
+        "bb-slow": "320ms",
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
