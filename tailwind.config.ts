@@ -87,6 +87,31 @@ export default {
           ai: "hsl(var(--node-ai))",
           flow: "hsl(var(--node-flow))",
         },
+        // Phase 2 — Brain semantic aliases (additive).
+        "bb-surface": {
+          1: "hsl(var(--bb-surface-1))",
+          2: "hsl(var(--bb-surface-2))",
+          3: "hsl(var(--bb-surface-3))",
+          inset: "hsl(var(--bb-surface-inset))",
+          overlay: "hsl(var(--bb-surface-overlay))",
+        },
+        "bb-border": {
+          subtle: "hsl(var(--bb-border-subtle))",
+          strong: "hsl(var(--bb-border-strong))",
+          focus: "hsl(var(--bb-border-focus))",
+        },
+        "bb-status": {
+          ok: "hsl(var(--bb-status-ok))",
+          "ok-fg": "hsl(var(--bb-status-ok-fg))",
+          warn: "hsl(var(--bb-status-warn))",
+          "warn-fg": "hsl(var(--bb-status-warn-fg))",
+          bad: "hsl(var(--bb-status-bad))",
+          "bad-fg": "hsl(var(--bb-status-bad-fg))",
+          info: "hsl(var(--bb-status-info))",
+          "info-fg": "hsl(var(--bb-status-info-fg))",
+          muted: "hsl(var(--bb-status-muted))",
+          "muted-fg": "hsl(var(--bb-status-muted-fg))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

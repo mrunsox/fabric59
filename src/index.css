@@ -102,6 +102,62 @@ html {
     --node-call: 25 90% 55%;
     --node-ai: 260 80% 60%;
     --node-flow: 320 70% 55%;
+
+    /* ============================================================
+       Phase 2 — Business Brain visual system (additive tokens).
+       Semantic aliases on top of the existing palette. Light mode
+       is the only implemented theme this phase; dark mirrors below
+       so future theme work has structural parity.
+       ============================================================ */
+
+    /* Surfaces */
+    --bb-surface-1: 0 0% 100%;            /* page */
+    --bb-surface-2: 220 20% 99%;          /* panel */
+    --bb-surface-3: 0 0% 100%;            /* raised card */
+    --bb-surface-inset: 220 20% 97%;      /* table zebra / rails */
+    --bb-surface-overlay: 0 0% 100%;      /* drawer / popover */
+
+    /* Borders */
+    --bb-border-subtle: 220 16% 92%;
+    --bb-border-strong: 220 14% 84%;
+    --bb-border-focus: 199 89% 48%;
+
+    /* Shadows */
+    --bb-shadow-sm: 0 1px 2px 0 hsl(220 30% 12% / 0.04);
+    --bb-shadow-md: 0 2px 8px -2px hsl(220 30% 12% / 0.06), 0 1px 2px 0 hsl(220 30% 12% / 0.04);
+    --bb-shadow-pop: 0 8px 24px -8px hsl(199 89% 30% / 0.12), 0 2px 6px -2px hsl(220 30% 12% / 0.06);
+    --bb-shadow-inset-rail: inset 2px 0 0 0 hsl(var(--bb-border-subtle));
+
+    /* Status hues (subtle, operational — not neon) */
+    --bb-status-ok: 142 60% 38%;
+    --bb-status-ok-fg: 142 70% 24%;
+    --bb-status-ok-bg-soft: 142 50% 96%;
+    --bb-status-warn: 38 85% 45%;
+    --bb-status-warn-fg: 30 80% 28%;
+    --bb-status-warn-bg-soft: 42 90% 96%;
+    --bb-status-bad: 0 72% 50%;
+    --bb-status-bad-fg: 0 70% 36%;
+    --bb-status-bad-bg-soft: 0 70% 97%;
+    --bb-status-info: 199 89% 42%;
+    --bb-status-info-fg: 202 80% 28%;
+    --bb-status-info-bg-soft: 200 90% 97%;
+    --bb-status-muted: 220 9% 46%;
+    --bb-status-muted-fg: 220 12% 30%;
+    --bb-status-muted-bg-soft: 220 16% 96%;
+
+    /* Density */
+    --bb-row-h-sm: 32px;
+    --bb-row-h-md: 40px;
+    --bb-row-h-lg: 52px;
+    --bb-gutter-tight: 8px;
+    --bb-gutter-std: 12px;
+    --bb-gutter-loose: 20px;
+
+    /* Motion */
+    --bb-motion-fast: 120ms;
+    --bb-motion-std: 200ms;
+    --bb-motion-slow: 320ms;
+    --bb-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
   }
 
   .dark {
@@ -169,6 +225,35 @@ html {
     --node-call: 25 90% 55%;
     --node-ai: 260 80% 60%;
     --node-flow: 320 70% 55%;
+
+    /* Phase 2 — dark mirror (structural parity; dark theme deferred) */
+    --bb-surface-1: 222 47% 5%;
+    --bb-surface-2: 222 40% 8%;
+    --bb-surface-3: 222 40% 10%;
+    --bb-surface-inset: 222 33% 11%;
+    --bb-surface-overlay: 222 40% 9%;
+    --bb-border-subtle: 217 33% 17%;
+    --bb-border-strong: 217 28% 24%;
+    --bb-border-focus: 199 89% 48%;
+    --bb-shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.4);
+    --bb-shadow-md: 0 2px 8px -2px hsl(0 0% 0% / 0.5), 0 1px 2px 0 hsl(0 0% 0% / 0.35);
+    --bb-shadow-pop: 0 8px 24px -8px hsl(199 89% 20% / 0.45), 0 2px 6px -2px hsl(0 0% 0% / 0.4);
+    --bb-shadow-inset-rail: inset 2px 0 0 0 hsl(var(--bb-border-subtle));
+    --bb-status-ok: 142 60% 50%;
+    --bb-status-ok-fg: 142 70% 78%;
+    --bb-status-ok-bg-soft: 142 50% 12%;
+    --bb-status-warn: 38 85% 55%;
+    --bb-status-warn-fg: 42 90% 78%;
+    --bb-status-warn-bg-soft: 38 60% 12%;
+    --bb-status-bad: 0 72% 55%;
+    --bb-status-bad-fg: 0 80% 80%;
+    --bb-status-bad-bg-soft: 0 50% 14%;
+    --bb-status-info: 199 89% 55%;
+    --bb-status-info-fg: 200 90% 82%;
+    --bb-status-info-bg-soft: 200 60% 14%;
+    --bb-status-muted: 215 20% 65%;
+    --bb-status-muted-fg: 215 20% 78%;
+    --bb-status-muted-bg-soft: 217 33% 14%;
   }
 }
 
@@ -304,6 +389,60 @@ html {
   .table-row-hover {
     @apply transition-colors hover:bg-muted/30;
   }
+
+  /* === Phase 2 Brain primitives (presentational) === */
+  .bb-panel {
+    background-color: hsl(var(--bb-surface-2));
+    border: 1px solid hsl(var(--bb-border-subtle));
+    border-radius: calc(var(--radius) + 2px);
+    box-shadow: var(--bb-shadow-sm);
+  }
+  .bb-card-raised {
+    background-color: hsl(var(--bb-surface-3));
+    border: 1px solid hsl(var(--bb-border-subtle));
+    border-radius: calc(var(--radius) + 2px);
+    box-shadow: var(--bb-shadow-md);
+  }
+  .bb-overlay {
+    background-color: hsl(var(--bb-surface-overlay));
+    border: 1px solid hsl(var(--bb-border-subtle));
+    border-radius: calc(var(--radius) + 2px);
+    box-shadow: var(--bb-shadow-pop);
+  }
+  .bb-zebra > * + * { border-top: 1px solid hsl(var(--bb-border-subtle)); }
+  .bb-zebra > *:nth-child(even) { background-color: hsl(var(--bb-surface-inset) / 0.6); }
+  .bb-row-hover {
+    transition: background-color var(--bb-motion-fast) var(--bb-ease-emphasized),
+                box-shadow var(--bb-motion-fast) var(--bb-ease-emphasized);
+  }
+  .bb-row-hover:hover { background-color: hsl(var(--bb-surface-inset)); }
+  .bb-focus-ring:focus-visible {
+    outline: 2px solid hsl(var(--bb-border-focus) / 0.5);
+    outline-offset: 2px;
+  }
+  .bb-tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "cv02", "cv03";
+  }
+  .bb-badge {
+    @apply inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium;
+  }
+  .bb-badge-ok    { background: hsl(var(--bb-status-ok-bg-soft));    color: hsl(var(--bb-status-ok-fg));    border-color: hsl(var(--bb-status-ok) / 0.25); }
+  .bb-badge-warn  { background: hsl(var(--bb-status-warn-bg-soft));  color: hsl(var(--bb-status-warn-fg));  border-color: hsl(var(--bb-status-warn) / 0.30); }
+  .bb-badge-bad   { background: hsl(var(--bb-status-bad-bg-soft));   color: hsl(var(--bb-status-bad-fg));   border-color: hsl(var(--bb-status-bad) / 0.30); }
+  .bb-badge-info  { background: hsl(var(--bb-status-info-bg-soft));  color: hsl(var(--bb-status-info-fg));  border-color: hsl(var(--bb-status-info) / 0.25); }
+  .bb-badge-muted { background: hsl(var(--bb-status-muted-bg-soft)); color: hsl(var(--bb-status-muted-fg)); border-color: hsl(var(--bb-border-subtle)); }
+  .bb-rail { position: relative; }
+  .bb-rail::before {
+    content: "";
+    position: absolute; inset: 0 auto 0 0; width: 2px;
+    border-top-left-radius: inherit; border-bottom-left-radius: inherit;
+    background: hsl(var(--bb-status-muted) / 0.30);
+  }
+  .bb-rail-ok::before    { background: hsl(var(--bb-status-ok)   / 0.40); }
+  .bb-rail-warn::before  { background: hsl(var(--bb-status-warn) / 0.45); }
+  .bb-rail-bad::before   { background: hsl(var(--bb-status-bad)  / 0.45); }
+  .bb-rail-info::before  { background: hsl(var(--bb-status-info) / 0.35); }
 }
 
 @layer utilities {
