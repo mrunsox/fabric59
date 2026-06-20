@@ -383,17 +383,17 @@ export default function ApprovedKnowledgePage() {
                                 {new Date(f.last_reviewed_at).toLocaleDateString()}
                               </td>
                               <td>
-
-                              <Button size="sm" variant="ghost" onClick={() => setDrawerFact(f)}>
-                                <Eye className="mr-1 h-3.5 w-3.5" /> Snippets
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </Card>
+                                <Button size="sm" variant="ghost" onClick={() => setDrawerFact(f)}>
+                                  <Eye className="mr-1 h-3.5 w-3.5" /> Snippets
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </BrainTable>
+                  </div>
+                </BrainPanel>
               </section>
             );
           })}
