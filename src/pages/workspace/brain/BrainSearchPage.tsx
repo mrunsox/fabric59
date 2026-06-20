@@ -12,7 +12,6 @@ import { useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -21,7 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Search, RefreshCw, Sparkles } from "lucide-react";
+import { Loader2, Search, RefreshCw } from "lucide-react";
+import { BrainPanel, BrainBadge } from "@/components/business-brain/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   searchApprovedKnowledge,
