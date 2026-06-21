@@ -110,7 +110,7 @@ const MOTIONS = [
       "Per-tenant rate limits and tenant health",
       "Shared GA readiness checklist per client",
     ],
-    surfacedIn: "Admin · Connectors, Reports, Settings",
+    surfacedIn: "Admin · Connectors, Reports, Settings · Brain · Health",
     topic: "monitoring",
   },
 ];
