@@ -183,7 +183,7 @@ export default function SolutionsPage() {
           <CapabilityCard
             icon={Scale}
             title="Built for legal intake"
-            body="Decision-tree guides tuned for law firm intake — case type, urgency, conflict-check prompts, and qualifying questions per attorney or practice area."
+            body="Per-firm intake guides backed by Business Brain — conflict-check prompts, matter context, and the firm's approved language all surface inline as the intake call moves."
             bullets={[
               "Per-firm intake guides and forms",
               "Conflict-check prompts inline",
