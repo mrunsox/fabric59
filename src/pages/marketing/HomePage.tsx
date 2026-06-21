@@ -79,7 +79,7 @@ const FAQ = [
   {
     question: "Who is Fabric59 for?",
     answer:
-      "Outsourced answering service providers and virtual receptionist companies that answer calls on behalf of many clients across multiple industries. Fabric59 is the multi-tenant workspace platform you sit on top of Five9 — your clients are workspaces, your agents work guided calls across all of them.",
+      "Outsourced answering service providers and virtual receptionist companies that answer calls on behalf of many clients across multiple industries. Fabric59 is the multi-tenant workspace platform you sit on top of Five9 — your clients are workspaces, and Business Brain inside each workspace holds the answers your agents read on every call.",
   },
   {
     question: "Is Fabric59 only for legal answering services?",
@@ -89,7 +89,12 @@ const FAQ = [
   {
     question: "How does Fabric59 sit next to Five9?",
     answer:
-      "Five9 handles the call — ACD, dialer, agent desktop. Fabric59 is the brain between Five9 and your client's system of record: pre-call ANI lookup, on-call guides and forms, structured outcomes, and downstream write-back. We do not replace your phone system.",
+      "Five9 handles the call — ACD, dialer, agent desktop. Fabric59 sits between Five9 and the client's system of record: Business Brain surfaces the right approved answer on screen pop, agents work through a per-client guide, and the structured outcome is pushed into the client's system the moment the call ends. We do not replace your phone system.",
+  },
+  {
+    question: "What does Business Brain actually do during a call?",
+    answer:
+      "It puts the approved answer for that client in front of the agent the moment the call connects, and follows the conversation as the agent moves through the guide. Supervisors curate the answers in advance — paste, upload, CSV, or FAQ — and approve them once. Agents read them, they do not write them.",
   },
   {
     question: "Which systems of record can Fabric59 write into today?",
@@ -99,7 +104,7 @@ const FAQ = [
   {
     question: "How is each client's data isolated?",
     answer:
-      "Every client is a workspace under your organization. Workspace data is isolated by Postgres Row-Level Security with SECURITY DEFINER role checks. Credentials are encrypted at rest. A server-side compliance export bundles logs, config history, and an RLS snapshot per workspace.",
+      "Every client is a workspace under your organization. Workspace data — including Business Brain knowledge — is isolated by Postgres Row-Level Security with SECURITY DEFINER role checks. Credentials are encrypted at rest. A server-side compliance export bundles logs, config history, and an RLS snapshot per workspace.",
   },
   {
     question: "How do I get started?",
