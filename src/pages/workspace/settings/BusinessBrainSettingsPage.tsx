@@ -511,69 +511,69 @@ function StatusSummaryCard({
     { label: "Last search activity", matchOk: ["bb_search_query_submitted"] },
   ];
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Status summary</CardTitle>
-        <CardDescription>
-          Latest signals from the last 90 days. Empty rows mean no data — not failures.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-          </div>
-        )}
-        {error && (
-          <div className="flex items-center gap-2 text-sm text-destructive">
-            <AlertCircle className="h-4 w-4" /> Could not load status: {error}
-          </div>
-        )}
-        {!loading && !error && (
-          <div className="divide-y text-sm">
-            {rows.map((r) => {
-              const ok = events?.find((e) => r.matchOk.includes(e.event_type));
-              const fail = r.matchFail
-                ? events?.find((e) => r.matchFail!.includes(e.event_type))
-                : undefined;
-              const okAt = ok ? new Date(ok.created_at).toLocaleString() : null;
-              const failAt = fail ? new Date(fail.created_at).toLocaleString() : null;
-              const newest =
-                ok && fail
-                  ? new Date(ok.created_at) >= new Date(fail.created_at)
-                    ? "ok"
-                    : "fail"
-                  : ok
-                    ? "ok"
-                    : fail
-                      ? "fail"
-                      : "none";
-              return (
-                <div key={r.label} className="flex items-center justify-between py-2">
-                  <span className="text-muted-foreground">{r.label}</span>
-                  <span className="text-right">
-                    {newest === "none" && (
-                      <Badge variant="outline">No data</Badge>
-                    )}
-                    {newest === "ok" && (
-                      <span className="text-xs">
-                        <Badge variant="default" className="mr-2">OK</Badge>
-                        {okAt}
-                      </span>
-                    )}
-                    {newest === "fail" && (
-                      <span className="text-xs">
-                        <Badge variant="destructive" className="mr-2">Failed</Badge>
-                        {failAt}
-                      </span>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <BrainPanel
+      toolbar={
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-foreground">Status summary</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Latest signals from the last 90 days. Empty rows mean no data — not failures.
+          </p>
+        </div>
+      }
+    >
+      {loading && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+        </div>
+      )}
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-[hsl(var(--bb-status-bad-fg))]">
+          <AlertCircle className="h-4 w-4" /> Could not load status: {error}
+        </div>
+      )}
+      {!loading && !error && (
+        <div className="divide-y divide-bb-border-subtle text-sm -my-1">
+          {rows.map((r) => {
+            const ok = events?.find((e) => r.matchOk.includes(e.event_type));
+            const fail = r.matchFail
+              ? events?.find((e) => r.matchFail!.includes(e.event_type))
+              : undefined;
+            const okAt = ok ? new Date(ok.created_at).toLocaleString() : null;
+            const failAt = fail ? new Date(fail.created_at).toLocaleString() : null;
+            const newest =
+              ok && fail
+                ? new Date(ok.created_at) >= new Date(fail.created_at)
+                  ? "ok"
+                  : "fail"
+                : ok
+                  ? "ok"
+                  : fail
+                    ? "fail"
+                    : "none";
+            return (
+              <div key={r.label} className="flex items-center justify-between py-2.5">
+                <span className="text-muted-foreground">{r.label}</span>
+                <span className="text-right">
+                  {newest === "none" && <BrainBadge tone="muted">No data</BrainBadge>}
+                  {newest === "ok" && (
+                    <span className="inline-flex items-center gap-2 text-xs bb-tnum text-muted-foreground">
+                      <BrainBadge tone="ok">OK</BrainBadge>
+                      {okAt}
+                    </span>
+                  )}
+                  {newest === "fail" && (
+                    <span className="inline-flex items-center gap-2 text-xs bb-tnum text-muted-foreground">
+                      <BrainBadge tone="bad">Failed</BrainBadge>
+                      {failAt}
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </BrainPanel>
   );
 }
+
