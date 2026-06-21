@@ -14,10 +14,10 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 
 /**
- * Canonical Workspace Campaigns — /app/workspaces/:id/campaigns (Phase 3).
- * Reads canonical `campaigns` table (workspace-scoped, RLS enforced).
+ * Workspace Campaigns — list page.
  *
- * Phase F (UI primitive convergence): adopts shared StatusBadge + EmptyState.
+ * Single "New campaign" entry point in the header. Drafts saved from the
+ * New Campaign flow appear in the table below.
  */
 export default function WorkspaceCampaignsPage() {
   const { workspace } = useWorkspace();
@@ -33,7 +33,7 @@ export default function WorkspaceCampaignsPage() {
       <WorkspacePageHeader
         eyebrow="Campaigns"
         title="Campaigns"
-        lede={`Canonical campaigns for ${workspace.name}. Legacy campaign setups mirror in automatically.`}
+        lede={`Campaigns for ${workspace.name}. Drafts appear here as soon as they're saved.`}
         action={
           <div className="flex items-center gap-2">
             <SeedAssurewayButton variant="secondary" hasExistingAssureway={hasExistingAssureway} />
@@ -53,7 +53,7 @@ export default function WorkspaceCampaignsPage() {
         <EmptyState
           icon={Megaphone}
           title="No campaigns in this workspace yet"
-          description="Create your first canonical campaign to get started. Legacy campaign setups will mirror in automatically."
+          description="Create your first campaign to get started."
           action={
             <Button asChild size="sm">
               <Link to={`${base}/new`}>
@@ -64,14 +64,6 @@ export default function WorkspaceCampaignsPage() {
         />
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <ActionCard
-              to={`${base}/new`}
-              icon={Megaphone}
-              label="New campaign"
-              hint="Outbound or inbound program"
-            />
-          </div>
           <Card>
           <Table>
             <TableHeader>
