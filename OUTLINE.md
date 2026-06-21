@@ -13,7 +13,7 @@ marketing site.
 | 2 — Logged-in product visual refresh | Planned | Premium enterprise visual direction applied to Brain + ASC + Assist. |
 | 3 — Marketing messaging refresh | **In progress** | Public copy rewritten to match shipped Brain capabilities. |
 | 4 — Marketing visual refresh | **In progress** | Public design system aligned with refreshed Brain workspace; SEO/OG sweep to follow. |
-| 5 — Coherence / QA / polish | Planned | Cross-surface QA, last Medium audit items, final docs. |
+| 5 — Coherence / QA / polish | **Done** | Audit-first sweep; no new regressions; baseline parity (1068/6/7); see `docs/business-brain-phase5-audit.md`. Program complete. |
 
 ## Rules that apply to every later phase
 
