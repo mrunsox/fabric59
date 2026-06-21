@@ -7,6 +7,7 @@ import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 import { isDemoName } from "@/lib/demoHeuristic";
 import { Users, Megaphone, BookOpen, FormInput, FileStack } from "lucide-react";
 import { Link } from "react-router-dom";
+import { WorkspaceScopeStrip } from "@/components/workspace/WorkspaceScopeStrip";
 
 /**
  * WorkspaceContextBar — slim header strip rendered above every /w/:id/*
@@ -50,6 +51,7 @@ export function WorkspaceContextBar() {
           </span>
         </div>
         <div className="h-4 w-px bg-border/60 shrink-0" />
+        <WorkspaceScopeStrip />
         <div className="flex items-center gap-1.5">
           {counters.map((c) => {
             const Icon = c.icon;
