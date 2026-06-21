@@ -118,8 +118,9 @@ const MOTIONS = [
 const VR_CAPABILITIES = [
   { icon: Building2,  title: "Multi-tenant by design",   body: "One Fabric59 organization, many client workspaces. Each client is fully isolated — data, guides, dispositions, integrations." },
   { icon: Headphones, title: "Coverage you actually run", body: "After-hours, overflow, triage, message-taking, lead capture, and escalation flows — modeled per client and per service line." },
-  { icon: GitBranch,  title: "Per-client systems of record", body: "Each workspace writes into the right downstream system — legal practice management today, more vertical packs on the way." },
+  { icon: GitBranch,  title: "Per-client systems of record", body: "Each workspace pushes the call result into the right downstream system — legal practice management today, more vertical packs on the way." },
   { icon: Activity,   title: "Operations visibility across accounts", body: "Per-client health, telephony reconciliation, rate limits, and readiness state — without leaving the platform." },
+  { icon: ListChecks, title: "Per-client knowledge, governed centrally", body: "Each client's answers live in their own Business Brain. Supervisors curate; agents read. Gaps and stale answers surface in one queue across every account you run." },
 ];
 
 const VERTICALS = [
