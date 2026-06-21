@@ -278,10 +278,11 @@ export default function BusinessBrainSettingsPage() {
 
   if (!isWorkspaceAdmin) {
     return (
-      <div className="space-y-6">
-        <WorkspacePageHeader
+      <div className="space-y-6 animate-fade-in">
+        <BrainPageHeader
+          eyebrow="Workspace"
           title="Business Brain settings"
-          lede="Workspace controls for the Business Brain."
+          subtitle="Workspace controls for the Business Brain."
         />
         <BbPermissionDenied
           resource="Brain settings"
@@ -330,42 +331,46 @@ export default function BusinessBrainSettingsPage() {
   const currentVertical = verticalProfileQ.data?.id ?? "";
 
   return (
-    <div className="space-y-6">
-      <WorkspacePageHeader
+    <div className="space-y-6 animate-fade-in">
+      <BrainPageHeader
+        eyebrow="Workspace"
         title="Business Brain settings"
-        lede={`Manage Business Brain features for ${workspace?.name ?? "this workspace"}.`}
+        subtitle={`Manage Business Brain features for ${workspace?.name ?? "this workspace"}.`}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Feature flags</CardTitle>
-          <CardDescription>
-            Effective state, source, and editability shown separately. Writes here
-            apply at the organization level; partner and client overrides remain
-            authoritative when present.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="divide-y">
+      <BrainPanel
+        toolbar={
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-foreground">Feature flags</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Effective state, source, and editability shown separately. Writes here
+              apply at the organization level; partner and client overrides remain
+              authoritative when present.
+            </p>
+          </div>
+        }
+      >
+        <div className="divide-y divide-bb-border-subtle -my-1">
           {resolved.map(({ def, effective, source }) => {
             const editable = source === "org" || source === "default";
             return (
               <div
                 key={def.key}
-                className="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0"
+                className="flex items-start justify-between gap-4 py-4 first:pt-1 last:pb-1"
               >
-                <div className="space-y-1">
-                  <Label className="text-sm font-medium">{def.label}</Label>
+                <div className="space-y-1 min-w-0">
+                  <Label className="text-sm font-medium text-foreground">{def.label}</Label>
                   <p className="text-xs text-muted-foreground">{def.description}</p>
-                  <div className="flex items-center gap-2 pt-1">
-                    <Badge variant={effective ? "default" : "outline"}>
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+                    <BrainBadge tone={effective ? "ok" : "muted"}>
                       {effective ? "On" : "Off"}
-                    </Badge>
-                    <Badge variant="secondary" className="capitalize">
-                      Source: {source}
-                    </Badge>
-                    <Badge variant="outline" className="capitalize">
+                    </BrainBadge>
+                    <BrainBadge tone="muted">
+                      <span className="capitalize">Source: {source}</span>
+                    </BrainBadge>
+                    <BrainBadge tone={editable ? "info" : "warn"}>
                       {editable ? "Editable here" : "Read-only (override)"}
-                    </Badge>
+                    </BrainBadge>
                   </div>
                 </div>
                 <Switch
@@ -377,18 +382,21 @@ export default function BusinessBrainSettingsPage() {
               </div>
             );
           })}
-        </CardContent>
-      </Card>
+        </div>
+      </BrainPanel>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Vertical profile</CardTitle>
-          <CardDescription>
-            Drives coverage and gap evaluation. Changing the vertical will re-run
-            the evaluation for this workspace.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <BrainPanel
+        toolbar={
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-foreground">Vertical profile</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Drives coverage and gap evaluation. Changing the vertical will re-run
+              the evaluation for this workspace.
+            </p>
+          </div>
+        }
+      >
+        <div className="space-y-3">
           <Select
             value={currentVertical}
             onValueChange={(v) => setPendingVertical(v)}
@@ -410,8 +418,10 @@ export default function BusinessBrainSettingsPage() {
               {verticalProfileQ.data.description}
             </p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </BrainPanel>
+
+
 
       <StatusSummaryCard
         loading={statusQ.isLoading}
