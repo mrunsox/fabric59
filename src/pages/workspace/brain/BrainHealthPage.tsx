@@ -11,8 +11,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Tabs,
   TabsList,
@@ -31,6 +29,7 @@ import {
   listGapTopics,
 } from "@/lib/business-brain/bridge/governance";
 import { AlertCircle, Loader2, TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { BrainPanel, BrainStatCard, BrainBadge } from "@/components/business-brain/ui";
 
 const WINDOWS = [
   { key: "7", label: "7d", days: 7 },
@@ -91,7 +90,6 @@ export default function BrainHealthPage() {
 
   const allowed = isWorkspaceAdmin || isMasterAdmin;
 
-  // Pull 90 days once; bucket client-side for the active window AND for delta.
   const eventsQ = useQuery({
     queryKey: ["bb-health-events", organization?.id, workspaceId],
     enabled: !!organization?.id,
@@ -170,7 +168,7 @@ export default function BrainHealthPage() {
     : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <WorkspacePageHeader
         title="Brain health"
         lede="Usage, quality, and operational signals for the Business Brain."
@@ -187,9 +185,8 @@ export default function BrainHealthPage() {
         }
       />
 
-      {/* Phase 1: explicit window + freshness label so empty cards don't read as broken. */}
       <p
-        className="text-xs text-muted-foreground"
+        className="text-xs text-muted-foreground bb-tnum"
         data-testid="bb-health-freshness"
       >
         Showing the last {ws.label} of activity.{" "}
@@ -198,89 +195,38 @@ export default function BrainHealthPage() {
           : "Loading…"}
       </p>
 
-
-      {eventsQ.isLoading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading telemetry…
-        </div>
-      )}
       {eventsQ.error && (
         <div className="flex items-center gap-2 text-sm text-destructive">
           <AlertCircle className="h-4 w-4" /> Could not load telemetry.
         </div>
       )}
+      {eventsQ.isLoading && !eventsQ.error && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading telemetry…
+        </div>
+      )}
 
       <Section title="Usage" description="What people are doing with the Brain.">
-        <MetricCard
-          label="Brain searches"
-          current={countByType(current, ["bb_search_query_submitted"])}
-          previous={countByType(previous, ["bb_search_query_submitted"])}
-          loading={eventsQ.isLoading}
-          error={!!eventsQ.error}
-        />
-        <MetricCard
-          label="ASC suggestions shown"
-          current={countByType(current, ["bb_asc_suggestions_loaded"])}
-          previous={countByType(previous, ["bb_asc_suggestions_loaded"])}
-          loading={eventsQ.isLoading}
-          error={!!eventsQ.error}
-        />
-        <MetricCard
-          label="ASC suggestions used"
-          current={countByType(current, ["bb_asc_suggestion_used"])}
-          previous={countByType(previous, ["bb_asc_suggestion_used"])}
-          loading={eventsQ.isLoading}
-          error={!!eventsQ.error}
-        />
-        <MetricCard
-          label="Assist cards shown"
-          current={countByType(current, ["bb_assist_panel_shown", "bb_assist_card_opened"])}
-          previous={countByType(previous, ["bb_assist_panel_shown", "bb_assist_card_opened"])}
-          loading={eventsQ.isLoading}
-          error={!!eventsQ.error}
-        />
-        <MetricCard
-          label="Assist cards inserted"
-          current={countByType(current, ["bb_assist_card_inserted"])}
-          previous={countByType(previous, ["bb_assist_card_inserted"])}
-          loading={eventsQ.isLoading}
-          error={!!eventsQ.error}
-        />
+        <MetricCard label="Brain searches" current={countByType(current, ["bb_search_query_submitted"])} previous={countByType(previous, ["bb_search_query_submitted"])} loading={eventsQ.isLoading} error={!!eventsQ.error} />
+        <MetricCard label="ASC suggestions shown" current={countByType(current, ["bb_asc_suggestions_loaded"])} previous={countByType(previous, ["bb_asc_suggestions_loaded"])} loading={eventsQ.isLoading} error={!!eventsQ.error} />
+        <MetricCard label="ASC suggestions used" current={countByType(current, ["bb_asc_suggestion_used"])} previous={countByType(previous, ["bb_asc_suggestion_used"])} loading={eventsQ.isLoading} error={!!eventsQ.error} />
+        <MetricCard label="Assist cards shown" current={countByType(current, ["bb_assist_panel_shown", "bb_assist_card_opened"])} previous={countByType(previous, ["bb_assist_panel_shown", "bb_assist_card_opened"])} loading={eventsQ.isLoading} error={!!eventsQ.error} />
+        <MetricCard label="Assist cards inserted" current={countByType(current, ["bb_assist_card_inserted"])} previous={countByType(previous, ["bb_assist_card_inserted"])} loading={eventsQ.isLoading} error={!!eventsQ.error} />
       </Section>
 
       <Section title="Quality & governance" description="Point-in-time counts from governance tables.">
-        <CountCard
-          label="Open conflicts"
-          count={conflictsQ.data?.length ?? null}
-          loading={conflictsQ.isLoading}
-          error={!!conflictsQ.error}
-        />
-        <CountCard
-          label="Stale facts"
-          count={staleQ.data?.length ?? null}
-          loading={staleQ.isLoading}
-          error={!!staleQ.error}
-        />
-        <CountCard
-          label="Open coverage gaps"
-          count={gapsQ.data?.length ?? null}
-          loading={gapsQ.isLoading}
-          error={!!gapsQ.error}
-        />
-        <CountCard
-          label="Open demand topics"
-          count={topicsQ.data?.length ?? null}
-          loading={topicsQ.isLoading}
-          error={!!topicsQ.error}
-        />
+        <CountCard label="Open conflicts" count={conflictsQ.data?.length ?? null} loading={conflictsQ.isLoading} error={!!conflictsQ.error} />
+        <CountCard label="Stale facts" count={staleQ.data?.length ?? null} loading={staleQ.isLoading} error={!!staleQ.error} />
+        <CountCard label="Open coverage gaps" count={gapsQ.data?.length ?? null} loading={gapsQ.isLoading} error={!!gapsQ.error} />
+        <CountCard label="Open demand topics" count={topicsQ.data?.length ?? null} loading={topicsQ.isLoading} error={!!topicsQ.error} />
       </Section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Coverage by required entity type</CardTitle>
-          <CardDescription>From the active vertical profile.</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <section className="space-y-3">
+        <header>
+          <h2 className="text-base font-semibold text-foreground">Coverage by required entity type</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">From the active vertical profile.</p>
+        </header>
+        <BrainPanel>
           {coverageQ.isLoading && (
             <div className="text-sm text-muted-foreground">Loading…</div>
           )}
@@ -293,46 +239,29 @@ export default function BrainHealthPage() {
             </div>
           )}
           {(coverageQ.data ?? []).length > 0 && (
-            <div className="divide-y text-sm">
-              {(coverageQ.data ?? []).map((c) => (
-                <div key={c.entityType} className="flex items-center justify-between py-2">
-                  <span className="capitalize">{c.entityType.replace(/_/g, " ")}</span>
-                  <span className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>
-                      {c.actualCount} / {c.requiredCount}
+            <ul className="divide-y divide-bb-border-subtle text-sm">
+              {(coverageQ.data ?? []).map((c) => {
+                const pct = Math.round(c.coverageRatio * 100);
+                const tone = c.coverageRatio >= 1 ? "ok" : c.coverageRatio >= 0.6 ? "warn" : "bad";
+                return (
+                  <li key={c.entityType} className="flex items-center justify-between py-2">
+                    <span className="capitalize text-foreground">{c.entityType.replace(/_/g, " ")}</span>
+                    <span className="flex items-center gap-3 text-xs text-muted-foreground bb-tnum">
+                      <span>{c.actualCount} / {c.requiredCount}</span>
+                      <BrainBadge tone={tone}>{pct}%</BrainBadge>
                     </span>
-                    <Badge variant={c.coverageRatio >= 1 ? "default" : "outline"}>
-                      {Math.round(c.coverageRatio * 100)}%
-                    </Badge>
-                  </span>
-                </div>
-              ))}
-            </div>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-        </CardContent>
-      </Card>
+        </BrainPanel>
+      </section>
 
       <Section title="Ops" description="Latency and error rates from edge function telemetry.">
-        <OpsCard
-          label="bb-search"
-          avgMs={avgLatencyMs(current, ["bb_search_query_submitted"])}
-          loading={eventsQ.isLoading}
-          error={!!eventsQ.error}
-        />
-        <OpsCard
-          label="bb-embed"
-          avgMs={avgLatencyMs(current, ["bb_embed_run_completed"])}
-          loading={eventsQ.isLoading}
-          error={!!eventsQ.error}
-        />
-        <ErrorRateCard
-          label="Ingest"
-          okTypes={["bb_source_processed"]}
-          failTypes={["bb_source_failed"]}
-          rows={current}
-          loading={eventsQ.isLoading}
-          error={!!eventsQ.error}
-        />
+        <OpsCard label="bb-search" avgMs={avgLatencyMs(current, ["bb_search_query_submitted"])} loading={eventsQ.isLoading} error={!!eventsQ.error} />
+        <OpsCard label="bb-embed" avgMs={avgLatencyMs(current, ["bb_embed_run_completed"])} loading={eventsQ.isLoading} error={!!eventsQ.error} />
+        <ErrorRateCard label="Ingest" okTypes={["bb_source_processed"]} failTypes={["bb_source_failed"]} rows={current} loading={eventsQ.isLoading} error={!!eventsQ.error} />
       </Section>
     </div>
   );
@@ -348,21 +277,28 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <div className="mb-3">
-        <h2 className="text-base font-semibold">{title}</h2>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
-      </div>
+    <section className="space-y-3">
+      <header>
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+      </header>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {children}
       </div>
-    </div>
+    </section>
   );
 }
 
 function deltaPct(current: number, previous: number): number | null {
   if (previous === 0) return current === 0 ? 0 : null;
   return ((current - previous) / previous) * 100;
+}
+
+function deltaInfo(pct: number | null): { label: string; direction: "up" | "down" | "flat" } {
+  if (pct === null) return { label: "new", direction: "up" };
+  if (pct === 0) return { label: "flat", direction: "flat" };
+  const up = pct > 0;
+  return { label: `${up ? "+" : "-"}${Math.abs(Math.round(pct))}% vs prev`, direction: up ? "up" : "down" };
 }
 
 function MetricCard({
@@ -379,51 +315,25 @@ function MetricCard({
   error: boolean;
 }) {
   const d = deltaPct(current, previous);
+  const info = deltaInfo(d);
+  const state = error ? "failed" : loading ? "loading" : current === 0 && previous === 0 ? "noData" : "ready";
+  // Inline icon paired with delta label for emphasis.
+  const Icon = info.direction === "up" ? TrendingUp : info.direction === "down" ? TrendingDown : Minus;
   return (
-    <Card>
-      <CardContent className="space-y-1 p-4">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        {error ? (
-          <div className="text-sm text-destructive">Failed</div>
-        ) : loading ? (
-          <div className="text-sm text-muted-foreground">…</div>
-        ) : current === 0 && previous === 0 ? (
-          <>
-            <div className="text-xl font-semibold">0</div>
-            <Badge variant="outline" className="text-[10px]">No data</Badge>
-          </>
-        ) : (
-          <>
-            <div className="text-xl font-semibold">{current.toLocaleString()}</div>
-            <DeltaBadge pct={d} />
-          </>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function DeltaBadge({ pct }: { pct: number | null }) {
-  if (pct === null) {
-    return (
-      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-        <TrendingUp className="h-3 w-3" /> new
-      </span>
-    );
-  }
-  if (pct === 0) {
-    return (
-      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-        <Minus className="h-3 w-3" /> flat
-      </span>
-    );
-  }
-  const up = pct > 0;
-  const Icon = up ? TrendingUp : TrendingDown;
-  return (
-    <span className={"inline-flex items-center gap-1 text-[10px] " + (up ? "text-success" : "text-warning")}>
-      <Icon className="h-3 w-3" /> {Math.abs(Math.round(pct))}% vs prev
-    </span>
+    <BrainStatCard
+      label={label}
+      value={current.toLocaleString()}
+      state={state}
+      delta={
+        state === "ready" ? (
+          <span className="inline-flex items-center gap-1">
+            <Icon className="h-3 w-3" />
+            {info.label}
+          </span>
+        ) : undefined
+      }
+      deltaDirection={info.direction}
+    />
   );
 }
 
@@ -438,24 +348,14 @@ function CountCard({
   loading: boolean;
   error: boolean;
 }) {
+  const state =
+    error ? "failed" : loading || count === null ? "loading" : count === 0 ? "noData" : "ready";
   return (
-    <Card>
-      <CardContent className="space-y-1 p-4">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        {error ? (
-          <div className="text-sm text-destructive">Failed</div>
-        ) : loading || count === null ? (
-          <div className="text-sm text-muted-foreground">…</div>
-        ) : count === 0 ? (
-          <>
-            <div className="text-xl font-semibold">0</div>
-            <Badge variant="outline" className="text-[10px]">No data</Badge>
-          </>
-        ) : (
-          <div className="text-xl font-semibold">{count.toLocaleString()}</div>
-        )}
-      </CardContent>
-    </Card>
+    <BrainStatCard
+      label={label}
+      value={(count ?? 0).toLocaleString()}
+      state={state}
+    />
   );
 }
 
@@ -470,21 +370,14 @@ function OpsCard({
   loading: boolean;
   error: boolean;
 }) {
+  const state = error ? "failed" : loading ? "loading" : avgMs === null ? "noData" : "ready";
   return (
-    <Card>
-      <CardContent className="space-y-1 p-4">
-        <div className="text-xs text-muted-foreground">{label} · avg latency</div>
-        {error ? (
-          <div className="text-sm text-destructive">Failed</div>
-        ) : loading ? (
-          <div className="text-sm text-muted-foreground">…</div>
-        ) : avgMs === null ? (
-          <Badge variant="outline" className="text-[10px]">No data</Badge>
-        ) : (
-          <div className="text-xl font-semibold">{avgMs} ms</div>
-        )}
-      </CardContent>
-    </Card>
+    <BrainStatCard
+      label={`${label} · avg latency`}
+      value={avgMs ?? 0}
+      unit="ms"
+      state={state}
+    />
   );
 }
 
@@ -504,20 +397,16 @@ function ErrorRateCard({
   error: boolean;
 }) {
   const r = errorRate(rows, okTypes, failTypes);
+  const state = error ? "failed" : loading ? "loading" : r.total === 0 ? "noData" : "ready";
+  const pct = Math.round(r.rate * 100);
   return (
-    <Card>
-      <CardContent className="space-y-1 p-4">
-        <div className="text-xs text-muted-foreground">{label} · error rate</div>
-        {error ? (
-          <div className="text-sm text-destructive">Failed</div>
-        ) : loading ? (
-          <div className="text-sm text-muted-foreground">…</div>
-        ) : r.total === 0 ? (
-          <Badge variant="outline" className="text-[10px]">No data</Badge>
-        ) : (
-          <div className="text-xl font-semibold">{Math.round(r.rate * 100)}%</div>
-        )}
-      </CardContent>
-    </Card>
+    <BrainStatCard
+      label={`${label} · error rate`}
+      value={pct}
+      unit="%"
+      state={state}
+      delta={state === "ready" ? `${r.total} events` : undefined}
+      deltaDirection={pct > 5 ? "down" : "flat"}
+    />
   );
 }
