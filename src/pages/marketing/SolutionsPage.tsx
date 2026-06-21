@@ -82,7 +82,7 @@ const MOTIONS = [
       "Scorecards bound to live per-client guides",
       "Supervisor live-ops view",
     ],
-    surfacedIn: "Workspace · QA, Analytics",
+    surfacedIn: "Workspace · QA, Analytics · Brain · Governance (stale facts, gaps)",
     topic: "qa-review",
   },
   {
