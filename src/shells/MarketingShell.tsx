@@ -37,7 +37,11 @@ export function MarketingShell({
       <SEOHead title={title} description={description} noindex={noindex} />
       <CanonicalMarketingHeader />
       <main className="flex-1">{children}</main>
-      {ctaBanner && <div className="border-t border-border/30">{ctaBanner}</div>}
+      {ctaBanner && (
+        <div className="border-t border-border/40 bg-[hsl(var(--bb-surface-inset))]">
+          {ctaBanner}
+        </div>
+      )}
       <CanonicalMarketingFooter />
       <ScrollToTopButton />
     </div>
