@@ -36,8 +36,8 @@ import { CtaRow } from "@/components/marketing/CtaRow";
  */
 
 const QUESTIONS = [
-  { icon: UserSearch, title: "Who called?",                body: "Workspace + campaign context, caller identity, multi-tenant client separation." },
-  { icon: ListChecks, title: "What happened on the call?", body: "Guides, decision trees, structured forms, AI summaries — every call captured as a clean interaction record." },
+  { icon: UserSearch, title: "Who called?",                body: "Caller matched to the right client workspace before screen pop, with prior history and account context already on screen." },
+  { icon: ListChecks, title: "What happened on the call?", body: "Agents follow a per-client guide and read from approved Business Brain knowledge — not free-text notes nobody can route." },
   { icon: Target,     title: "What was the outcome?",       body: "Dispositions, urgency selectors, outcome model — structured decisions, not free-text notes." },
   { icon: BellRing,   title: "Who needs to be notified?",   body: "Notification routing, system-of-record write-back, sync logs, exception queues." },
 ];
