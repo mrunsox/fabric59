@@ -42,6 +42,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useAuth } from "@/contexts/AuthContext";
 import { WorkspaceProvider, useWorkspace } from "@/contexts/WorkspaceContext";
+import { WorkspaceScopeProvider } from "@/contexts/WorkspaceScopeContext";
 import { WORKSPACE_NAV, WORKSPACE_NAV_GROUPS, WORKSPACE_NAV_PINNED } from "@/config/canonicalNav";
 import { useKeyboardNav, KEYBOARD_HINTS } from "@/hooks/useKeyboardNav";
 import { WorkspaceCommandPalette } from "@/components/workspace/WorkspaceCommandPalette";
@@ -50,9 +51,9 @@ import { WorkspaceContextBar } from "@/components/workspace/WorkspaceContextBar"
 
 
 /**
- * Canonical WorkspaceShell — premium polish pass.
+ * Canonical WorkspaceShell.
  *
- * Layout: grouped sidebar (Build / Operate / Intelligence / Settings),
+ * Layout: grouped sidebar (Build / Operate / Insight / Connect / Settings),
  * top bar with breadcrumb (Org → Workspace → Section), ⌘K palette hint,
  * notifications, and account menu. Global ⌘K opens command palette,
  * "g + key" shortcuts jump between sections.
@@ -388,7 +389,9 @@ export function WorkspaceIndexRedirect() {
 export function WorkspaceShell() {
   return (
     <WorkspaceProvider>
-      <WorkspaceChrome />
+      <WorkspaceScopeProvider>
+        <WorkspaceChrome />
+      </WorkspaceScopeProvider>
     </WorkspaceProvider>
   );
 }

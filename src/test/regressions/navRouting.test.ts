@@ -45,24 +45,41 @@ function collectChildRoutes(parentPath: string): Map<string, "page" | "redirect"
   if (!openMatch || openMatch.index === undefined) {
     throw new Error(`Could not find <Route path="${parentPath}"> shell block in App.tsx`);
   }
-  // Slice from end of opening tag forward; stop at first balanced </Route>
-  // that corresponds to this shell. Since children are all self-closing
-  // <Route ... />, the next bare </Route> closes the shell block.
+  // Walk forward from the end of the opening tag, tracking <Route ...> opens
+  // (children with their own nested routes) vs </Route> closes so we stop at
+  // the matching close for THIS shell, not at the first nested close.
   const start = openMatch.index + openMatch[0].length;
   const rest = APP_SRC.slice(start);
-  const closeIdx = rest.indexOf("</Route>");
-  if (closeIdx < 0) throw new Error("Unterminated shell <Route> block");
-  const body = rest.slice(0, closeIdx);
+  const tokenRe = /<Route\s[^>]*?element=\{[\s\S]*?\}\s*(\/)?>|<\/Route>/g;
+  let depth = 0;
+  let bodyEnd = -1;
+  let m: RegExpExecArray | null;
+  while ((m = tokenRe.exec(rest)) !== null) {
+    const tok = m[0];
+    if (tok === "</Route>") {
+      if (depth === 0) { bodyEnd = m.index; break; }
+      depth -= 1;
+    } else if (m[1] === "/") {
+      // self-closing child route — depth unchanged
+    } else {
+      // opening tag for a nested route with children
+      depth += 1;
+    }
+  }
+  if (bodyEnd < 0) throw new Error("Unterminated shell <Route> block");
+  const body = rest.slice(0, bodyEnd);
 
   const result = new Map<string, "page" | "redirect">();
-  const childRe = /<Route\s+path=["']([^"']+)["'][^>]*element=\{([\s\S]*?)\}\s*\/>/g;
-  let m: RegExpExecArray | null;
-  while ((m = childRe.exec(body)) !== null) {
-    const p = m[1];
-    const element = m[2];
-    const kind: "page" | "redirect" = /<\s*Navigate\b/.test(element) ? "redirect" : "page";
-    // Last write wins is fine; App.tsx never duplicates paths intentionally.
-    result.set(p, kind);
+  const selfClosingRe = /<Route\s+path=["']([^"']+)["'][^>]*element=\{([\s\S]*?)\}\s*\/>/g;
+  const openingRe = /<Route\s+path=["']([^"']+)["'][^>]*element=\{([\s\S]*?)\}\s*>/g;
+  for (const re of [selfClosingRe, openingRe]) {
+    let cm: RegExpExecArray | null;
+    while ((cm = re.exec(body)) !== null) {
+      const p = cm[1];
+      const element = cm[2];
+      const kind: "page" | "redirect" = /<\s*Navigate\b/.test(element) ? "redirect" : "page";
+      result.set(p, kind);
+    }
   }
   return result;
 }

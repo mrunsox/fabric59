@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { KpiCard } from "@/components/common/KpiCard";
 import { EmptyState } from "@/components/common/EmptyState";
 import {
@@ -168,11 +168,8 @@ export default function WorkspaceAnalyticsPage() {
       </Card>
 
       <p className="text-[11px] text-muted-foreground">
-        <Badge variant="outline" className="mr-1.5 text-[10px]">
-          Phase 8
-        </Badge>
-        Underlying data tables remain org-scoped. Strict workspace_id plumbing on call_sessions,
-        qa_reviews, and invoices is tracked as a Phase 8 follow-up.
+        Some underlying tables remain org-scoped today; strict workspace-level scoping for call
+        sessions, QA reviews, and invoices is a tracked follow-up.
       </p>
     </div>
   );

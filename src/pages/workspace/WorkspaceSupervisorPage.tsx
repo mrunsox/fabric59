@@ -20,8 +20,8 @@ export default function WorkspaceSupervisorPage() {
       />
       <EmptyState
         icon={Eye}
-        title="Supervisor is a deferred canonical module"
-        description="Real-time agent monitoring, listen / whisper / barge, and live queue health will land in this workspace surface in a later phase."
+        title="Supervisor view is on the roadmap"
+        description="Real-time agent monitoring, listen / whisper / barge, and live queue health will land in this workspace surface."
       />
     </div>
   );

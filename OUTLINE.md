@@ -42,8 +42,8 @@ all operational surfaces.
 
 | Phase | Status | What it produces |
 |---|---|---|
-| 0 — Audit & blueprint | **In progress** | `docs/dashboard-ux-audit.md`, `docs/dashboard-ia-reset-plan.md`, this section, `.lovable/plan.md` entry |
-| 1 — IA & navigation cleanup | Planned | Sidebar/groups aligned to canonical IA; ghost routes hidden; workspace landing readiness strip; client scope chip; language-leak fixes |
+| 0 — Audit & blueprint | **Done** | `docs/dashboard-ux-audit.md`, `docs/dashboard-ia-reset-plan.md`, this section, `.lovable/plan.md` entry |
+| 1 — IA & navigation cleanup | **Done** | Sidebar regrouped to Build / Operate / Insight / Connect / Settings; Cockpit + Library relabels; Runs/Agents/Supervisor/Templates demoted; admin-only "Hidden / Legacy" group in ⌘K; workspace scope strip; Clients-detail Ownership & scope block; language-leak sweep across workspace surfaces. |
 | 2 — Setup / onboarding flow redesign | Planned | Canonical new-workspace → first-campaign-live journey; ASC as default authoring path; shared empty-state primitive |
 | 3 — Page-type unification | Planned | Library (Guides + Templates + Blueprints) shell; sectioned Settings; Connect shell; Notifications log/config split |
 | 4 — Operator cockpit + live workflow polish | Planned | Cockpit shell merges Live + Supervisor + Runs; readiness preconditions; campaign-context links across QA/Analytics |

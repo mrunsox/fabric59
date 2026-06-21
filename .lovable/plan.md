@@ -519,3 +519,71 @@ criteria pass.
 ## Next stop-gate
 
 Stop after Phase 0 deliverables land. Present: audit highlights (critical/high), proposed roadmap, parked feature gaps. **Await explicit approval before starting Phase 1.**
+
+---
+
+# Dashboard Consolidation + UX Reset — Phase 1 (IA & Navigation Cleanup)
+
+## Status
+
+**Done.** Implementation, language-leak sweep, doc updates, and regression
+pass complete. Awaiting Phase 2 approval.
+
+## What landed
+
+- **Canonical nav regrouping** — sidebar groups are now **Build / Operate /
+  Insight / Connect / Settings**. Connect is a new sibling for
+  Integrations. (`src/config/canonicalNav.ts`, `src/shells/WorkspaceShell.tsx`)
+- **Cockpit virtual label** — single Operate entry that points at the
+  existing `/w/:id/agent` route. The tabbed Cockpit shell merging Live /
+  Supervisor / Runs remains Phase 4.
+- **Library virtual label** — single Build entry that points at the
+  existing `/w/:id/guides` route. Merged Library shell remains Phase 3.
+- **Demotion expanded** — `runs`, `agents`, `supervisor`, `templates`,
+  `guides` removed from the primary sidebar and from operator-visible
+  ⌘K. Routes stay mounted. Admin / master-admin still reach them via the
+  ⌘K **Hidden / Legacy** group.
+  (`src/components/workspace/WorkspaceCommandPalette.tsx`)
+- **Workspace scope surfacing** — new minimal
+  `WorkspaceScopeContext` + `WorkspaceScopeStrip` rendered globally in the
+  context bar. Workspace name is always visible; client / ownership chips
+  only render when a page sets authoritative scope. (Currently only
+  Clients detail opts in.)
+  (`src/contexts/WorkspaceScopeContext.tsx`,
+  `src/components/workspace/WorkspaceScopeStrip.tsx`,
+  `src/components/workspace/WorkspaceContextBar.tsx`)
+- **Clients detail Ownership & scope block** — structured card with
+  *Visible in this workspace*, *Owned at*, *Editable in*, *Inherited into
+  this workspace* rows, plus a `Go to org-level client settings` link to
+  `/admin/clients/:id`. Replaces the prior dim Info paragraph.
+  (`src/pages/workspace/WorkspaceClientDetailPage.tsx`)
+- **Campaigns entry-point cleanup** — single `New campaign` button in the
+  list header; redundant ActionCard removed. New Campaign helper copy
+  rewritten in plain operator language (no "canonical… legacy edit URL").
+  (`src/pages/workspace/WorkspaceCampaignsPage.tsx`,
+  `src/pages/workspace/WorkspaceCampaignNewPage.tsx`)
+- **Language-leak sweep** — stripped user-visible "Phase N", "Slice",
+  "canonical", "bridge", "shadow", "promotion" wording from Business
+  Brain Settings flag descriptions, QA / Analytics page footnotes,
+  Campaign detail "Phase 3 note", Supervisor empty state, Knowledge
+  config descriptions, Clients list lede, Campaigns list lede. Internal
+  developer comments and module identifiers were left alone.
+- **Regression baseline** — `bunx vitest run`: **1069 / 5 / 7** (vs prior
+  1068 / 6 / 7). The five remaining failures are pre-existing
+  (ASC / BB / chrome) and unrelated to Phase 1. Fixed a pre-existing
+  `navRouting` parser bug that silently swallowed routes after the
+  nested `brain` block; updated `canonicalScopeAlignment` assertions to
+  match the new IA.
+
+## Out of scope (locked for Phase 1)
+
+- No new routes, no route removals, no backend/schema changes.
+- No tabbed Cockpit, no merged Library, no Settings sectioned shell.
+- No setup / onboarding redesign.
+- No marketing changes.
+- No copy rewrites beyond the catalogued language-leak fixes.
+
+## Next stop-gate
+
+Await explicit approval before starting Phase 2 (setup / onboarding
+flow redesign).

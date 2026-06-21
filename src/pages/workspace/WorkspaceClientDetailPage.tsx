@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Users, Info } from "lucide-react";
+import { ArrowLeft, Users, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/common/StatusBadge";
@@ -8,17 +8,15 @@ import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader"
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
+import { useSetWorkspaceScope } from "@/contexts/WorkspaceScopeContext";
 
 /**
- * Phase 6 — Canonical workspace client detail (read-only first version).
+ * Workspace client detail (read-only).
  *
- * Honest scope: tenants/clients still belong to the parent organization
- * (no tenants.workspace_id column yet). This page reads the client by id,
- * verifies it belongs to the workspace's organization, and surfaces the
- * canonical fields plus any workspace campaigns that reference it.
- *
- * No edit affordances are rendered — client editing remains in the legacy
- * /admin clients surface until per-workspace client ownership lands.
+ * Clients are owned at the organization level; this surface verifies the
+ * record belongs to the workspace's parent organization, displays the
+ * canonical profile, and links any workspace campaigns that reference it.
+ * Editing happens in the org admin Clients surface.
  */
 export default function WorkspaceClientDetailPage() {
   const { workspaceId, clientId } = useParams<{ workspaceId: string; clientId: string }>();
@@ -42,6 +40,11 @@ export default function WorkspaceClientDetailPage() {
 
   const linkedCampaigns = campaigns.filter((c) => (c as { client_id?: string }).client_id === clientId);
 
+  // Surface scope chips globally while this page is mounted.
+  useSetWorkspaceScope(
+    client ? { client: client.name, ownership: "inherited-from-org" } : {},
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
       <Button variant="ghost" size="sm" asChild>
@@ -59,22 +62,37 @@ export default function WorkspaceClientDetailPage() {
           <WorkspacePageHeader
             eyebrow="Client"
             title={client.name}
-            lede={
-              workspace
-                ? `Inherited from the parent organization. Workspace-specific client controls land once per-workspace ownership ships.`
-                : undefined
-            }
             secondary={<StatusBadge status={client.status ?? "active"} />}
           />
 
-          <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
-            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            <span>
-              Read-only view. Client records are still owned at the organization level, so edits,
-              integration credentials, and notification routing are managed under the org admin
-              surface for now.
-            </span>
-          </div>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Ownership &amp; scope</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <dl className="grid gap-y-2 gap-x-4 text-sm sm:grid-cols-[200px,1fr]">
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Visible in this workspace</dt>
+                <dd>{workspace?.name ?? "This workspace"}</dd>
+
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Owned at</dt>
+                <dd>Organization level</dd>
+
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Editable in</dt>
+                <dd>Org admin → Clients</dd>
+
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Inherited into this workspace</dt>
+                <dd>Profile, CRM type, status, integration credentials, notification routing</dd>
+              </dl>
+              <div className="pt-1">
+                <Button asChild size="sm" variant="outline">
+                  <Link to={`/admin/clients/${client.id}`}>
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    Go to org-level client settings
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="grid gap-4 md:grid-cols-2">
             <Card>

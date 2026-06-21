@@ -276,3 +276,47 @@ park as future capability work rather than fold into this program:
 These are listed here so they aren't silently absorbed into Phases 1–5.
 
 — End of audit —
+
+---
+
+## 11. Phase 1 resolutions — IA & Navigation Cleanup
+
+Mapping of Phase 0 issues to the Phase 1 file changes that resolved (or
+visibly relabeled) them. Items not listed remain open for Phase 2+.
+
+| Audit theme | Resolution | Files |
+|---|---|---|
+| Sidebar groups not aligned to canonical IA | Sidebar reshaped to **Build / Operate / Insight / Connect / Settings**. Connect is a new sibling for Integrations. | `src/config/canonicalNav.ts`, `src/shells/WorkspaceShell.tsx` |
+| Three competing cockpit entries (`agent`, `runs`, `supervisor`) | Introduced a virtual **Cockpit** nav item pointing at the existing `/agent` route. Runs and Supervisor moved into the demoted set. The tabbed Cockpit shell is Phase 4. | `src/config/canonicalNav.ts` |
+| Guides vs Templates IA confusion | Introduced a virtual **Library** nav label pointing at `/guides`. Templates moved to the demoted set. Phase 3 will merge the actual surfaces. | `src/config/canonicalNav.ts` |
+| Demoted routes still visible in ⌘K to all roles | Demoted group renamed **Hidden / Legacy** and gated behind workspace-admin / master-admin only. Operators no longer see them. Routes still mounted. | `src/components/workspace/WorkspaceCommandPalette.tsx` |
+| Workspace ownership invisible to operators | New `WorkspaceScopeContext` + `WorkspaceScopeStrip` rendered in the context bar. Pages with authoritative scope (currently Clients detail) opt in. No inference elsewhere. | `src/contexts/WorkspaceScopeContext.tsx`, `src/components/workspace/WorkspaceScopeStrip.tsx`, `src/components/workspace/WorkspaceContextBar.tsx` |
+| Clients detail explains ownership as prose | Replaced with a structured **Ownership & scope** card: visible in this workspace, owned at org, editable in org admin, inherited fields. CTA links to `/admin/clients/:id`. | `src/pages/workspace/WorkspaceClientDetailPage.tsx` |
+| Duplicate "New campaign" affordances | Removed the redundant ActionCard above the campaigns table; the header `New campaign` button is now the single entry. | `src/pages/workspace/WorkspaceCampaignsPage.tsx` |
+| Internal phrasing in New Campaign helper copy | "Canonical campaign intake… legacy edit URL" rewritten as a plain operator description noting drafts autosave and appear in the Campaigns list. | `src/pages/workspace/WorkspaceCampaignNewPage.tsx` |
+| Language leaks (Phase N / canonical / slice) | Stripped from Business Brain Settings flag descriptions, QA page footnote, Analytics page footnote, Campaign detail "Phase 3 note", Supervisor empty state, Knowledge config descriptions, Clients list lede, Campaigns list lede. | `src/pages/workspace/settings/BusinessBrainSettingsPage.tsx`, `src/pages/workspace/WorkspaceQaPage.tsx`, `src/pages/workspace/WorkspaceAnalyticsPage.tsx`, `src/pages/workspace/WorkspaceCampaignDetailPage.tsx`, `src/pages/workspace/WorkspaceSupervisorPage.tsx`, `src/pages/workspace/WorkspaceKnowledgePage.tsx`, `src/pages/workspace/WorkspaceClientsPage.tsx`, `src/pages/workspace/WorkspaceCampaignsPage.tsx` |
+| Stale regression assertions about prior IA | Updated nav-group assertions to expect Build / Operate / Insight / Connect, Cockpit in Operate, Library in Build, Templates / Guides in the demoted set. Fixed a pre-existing `navRouting` parser bug that silently swallowed routes after the nested `brain` block. | `src/test/regressions/canonicalScopeAlignment.test.ts`, `src/test/regressions/navRouting.test.ts` |
+
+### Residual items deferred
+
+- **Cockpit shell as a tabbed surface** merging Live / Supervisor / Runs — Phase 4.
+- **Merged Library shell** (Guides + Templates + Blueprints) — Phase 3.
+- **Settings sectioned shell** — Phase 3.
+- **Workspace landing readiness checklist** — Phase 2.
+- **Notifications log/config split** — Phase 3.
+- **Cross-workspace ownership** (true `workspace_id` on `tenants`) — would require backend/schema work; remains a parked feature gap.
+
+### Regression baseline
+
+`bunx vitest run`: **1069 passed / 5 failed / 7 skipped** (1081 total).
+Previous baseline: 1068 / 6 / 7. The five remaining failures are all
+pre-existing and unrelated to Phase 1:
+
+- `ascRouteTransitionContinuity` (AscOriginPanel parity)
+- `ascWizardPersistence` (2 — campaign_setups lazy insert + ascDraft payload)
+- `bbSearchAscBoundary` (ASC ↔ BB import boundary)
+- `chromeNeutralization` (placeholder strings in ASC steps)
+
+Phase 1 fixed the previously-failing `navRouting` "visible workspace
+sidebar items are mounted" assertion as a side effect of repairing the
+parser that was silently skipping routes after the `brain` nested block.

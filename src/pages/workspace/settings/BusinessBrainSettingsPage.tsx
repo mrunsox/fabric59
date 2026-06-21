@@ -67,37 +67,37 @@ const FLAG_DEFS: Array<{
     key: "enabled",
     path: ["enabled"],
     label: "Business Brain core UI",
-    description: "Sidebar entry and the /brain/** routes.",
+    description: "Sidebar entry and the Business Brain workspace.",
   },
   {
     key: "asc",
     path: ["asc", "enabled"],
     label: "ASC advisory",
-    description: "Phase 2 — suggestion trays inside ASC.",
+    description: "Knowledge-backed suggestion trays inside the ASC wizard.",
   },
   {
     key: "assist",
     path: ["assist", "enabled"],
     label: "Live Assist",
-    description: "Phase 4 — Knowledge Assist panel in the call runner.",
+    description: "Knowledge Assist panel inside the call runner.",
   },
   {
     key: "search",
     path: ["search", "enabled"],
     label: "Search & internal console",
-    description: "Phase 3 — /brain/search tab.",
+    description: "Search tab inside the Business Brain workspace.",
   },
   {
     key: "governance",
     path: ["governance", "enabled"],
     label: "Governance & gaps",
-    description: "Phase 5/6 — staleness, conflicts, coverage.",
+    description: "Staleness, conflicts, and coverage views in Governance.",
   },
   {
     key: "gaps",
     path: ["gaps", "enabled"],
     label: "Demand-driven gaps",
-    description: "Phase 7 — missing-knowledge backlog from real usage.",
+    description: "Missing-knowledge backlog generated from real usage.",
   },
 ];
 

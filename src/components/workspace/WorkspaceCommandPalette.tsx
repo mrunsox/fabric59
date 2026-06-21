@@ -78,24 +78,26 @@ export function WorkspaceCommandPalette() {
           </CommandGroup>
         ))}
 
-        <CommandGroup heading="More">
-          {WORKSPACE_NAV_DEMOTED.map((item) => {
-            const Icon = item.icon;
-            return (
-              <CommandItem
-                key={item.key}
-                value={`nav ${item.label}`}
-                onSelect={() => go(`${base}/${item.to}`)}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
-                <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                  hidden
-                </span>
-              </CommandItem>
-            );
-          })}
-        </CommandGroup>
+        {showBrainAdmin && (
+          <CommandGroup heading="Hidden / Legacy">
+            {WORKSPACE_NAV_DEMOTED.map((item) => {
+              const Icon = item.icon;
+              return (
+                <CommandItem
+                  key={item.key}
+                  value={`nav ${item.label}`}
+                  onSelect={() => go(`${base}/${item.to}`)}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                  <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                    legacy
+                  </span>
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        )}
 
         <CommandSeparator />
 

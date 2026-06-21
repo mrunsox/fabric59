@@ -8,13 +8,11 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 
 /**
- * Phase 4 — Canonical Workspace Clients.
+ * Workspace Clients list.
  *
- * NOTE: Until tenants gain a workspace_id column, this list is resolved via the
- * workspace's parent organization (see useWorkspaceClients). Surface copy is
- * deliberately honest: clients shown here belong to the parent organization,
- * not strictly to this workspace. Per-row deep links are intentionally omitted
- * until canonical client detail surfaces ship.
+ * Clients are owned at the organization level and inherited into every
+ * workspace under that organization. This list reads them via the parent
+ * organization; the Clients detail page surfaces full ownership context.
  */
 export default function WorkspaceClientsPage() {
   const { workspace } = useWorkspace();
@@ -27,7 +25,7 @@ export default function WorkspaceClientsPage() {
         title="Clients"
         lede={
           workspace
-            ? `Clients available to ${workspace.name}. Sourced from the parent organization until per-workspace client ownership ships.`
+            ? `Clients available to ${workspace.name}. Owned at the organization level.`
             : "Clients available to this workspace."
         }
       />
@@ -38,7 +36,7 @@ export default function WorkspaceClientsPage() {
         <EmptyState
           icon={Users}
           title="No clients available"
-          description="Clients are added at the organization level. Once a client is created, it will appear in every workspace under that organization."
+          description="Clients are added at the organization level. Once a client is created, it appears in every workspace under that organization."
         />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">

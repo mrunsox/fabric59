@@ -70,11 +70,12 @@ describe("canonical nav config", () => {
   });
 
 
-  it("renders Build / Operate / Insight groups in order", () => {
+  it("renders Build / Operate / Insight / Connect groups in order", () => {
     expect(WORKSPACE_NAV_GROUPS.map((g) => g.label)).toEqual([
       "Build",
       "Operate",
       "Insight",
+      "Connect",
     ]);
   });
 
@@ -82,21 +83,26 @@ describe("canonical nav config", () => {
     expect(WORKSPACE_NAV_PINNED.map((n) => n.key)).toEqual(["settings"]);
   });
 
-  it("demotes Runs / Agents / Supervisor (Agent cockpit is promoted in Operate)", () => {
+  it("demotes Runs / Agents / Supervisor / Templates / Guides; Cockpit lives in Operate", () => {
     const demotedKeys = WORKSPACE_NAV_DEMOTED.map((n) => n.key);
     expect(demotedKeys).toEqual(
-      expect.arrayContaining(["runs", "agents", "supervisor"]),
+      expect.arrayContaining(["runs", "agents", "supervisor", "templates", "guides"]),
     );
+    expect(demotedKeys).not.toContain("cockpit");
     expect(demotedKeys).not.toContain("agent");
   });
 
-  it("no demoted item leaks into the visible groups; Agent cockpit lives in Operate", () => {
+  it("no demoted item leaks into the visible groups; Cockpit and Library live in their groups", () => {
     const visible = WORKSPACE_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.key));
-    for (const k of ["runs", "agents", "supervisor"]) {
+    for (const k of ["runs", "agents", "supervisor", "templates", "guides"]) {
       expect(visible, `"${k}" must not appear in the primary sidebar`).not.toContain(k);
     }
     const operate = WORKSPACE_NAV_GROUPS.find((g) => g.label === "Operate");
-    expect(operate?.items.map((i) => i.key)).toContain("agent");
+    expect(operate?.items.map((i) => i.key)).toContain("cockpit");
+    const build = WORKSPACE_NAV_GROUPS.find((g) => g.label === "Build");
+    expect(build?.items.map((i) => i.key)).toContain("library");
+    const connect = WORKSPACE_NAV_GROUPS.find((g) => g.label === "Connect");
+    expect(connect?.items.map((i) => i.key)).toContain("integrations");
   });
 });
 

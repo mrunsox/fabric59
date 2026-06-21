@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import {
   Tabs,
@@ -130,10 +130,7 @@ export default function WorkspaceQaPage() {
       </Card>
 
       <p className="text-[11px] text-muted-foreground">
-        <Badge variant="outline" className="mr-1.5 text-[10px]">
-          Phase 8
-        </Badge>
-        Detailed scoring rubrics, calibration, and reviewer assignment land in Phase 9.
+        Detailed scoring rubrics, calibration, and reviewer assignment are on the roadmap.
       </p>
     </div>
   );
