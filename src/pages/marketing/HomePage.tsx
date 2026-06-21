@@ -168,7 +168,7 @@ export default function HomePage() {
       </SectionShell>
 
       <SectionShell id="integrations" muted bordered>
-        <SectionIntro eyebrow="Integrations posture" title="Five9-native telephony, vertical packs for downstream" lede="Five9 is the call layer. Downstream system-of-record is grouped into vertical packs — legal practice management ships first, more verticals follow. Each pack plugs into the same canonical outcome pipeline." className="mb-12" />
+        <SectionIntro eyebrow="Integrations posture" title="Five9-native telephony, vertical packs for downstream" lede="Five9 is the call layer. Downstream system-of-record is grouped into vertical packs — legal practice management ships first, more verticals follow. Every integration feeds the same Business Brain, so the answers your agents read and the records you push to the client's system stay in sync." className="mb-12" />
         <div className="grid gap-5 md:grid-cols-2">
           {INTEGRATIONS.map((i) => (
             <CapabilityCard key={i.title} icon={i.icon} title={i.title} body={i.body} />
