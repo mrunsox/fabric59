@@ -153,7 +153,7 @@ export default function SolutionsPage() {
       <MarketingHero
         eyebrow="Solutions"
         title="Built for outsourced answering services and virtual receptionists"
-        lede="Five9 handles the call. Fabric59 is the brain. Your client's system of record holds the outcome — across every vertical you answer for."
+        lede="Five9 handles the call. Fabric59 runs the workspace. Business Brain — the governed knowledge layer inside Fabric59 — gives your agents the right answer for each client, every time."
       />
 
       {/* Four-question framing as the spine */}
