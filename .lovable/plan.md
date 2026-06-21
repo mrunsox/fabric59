@@ -321,3 +321,87 @@ In progress.
 - No marketing changes (Phases 3–4).
 - No new product capabilities, AI flows, or bridge/backend changes.
 - No `bb_*` schema or migration work.
+
+---
+
+# Phase 3 / Slice 2 — Marketing messaging refresh (In progress)
+
+Copy-and-IA-only rewrite of the public marketing site to name **Business Brain**
+as the governed knowledge layer inside Fabric59. No new routes, no component
+restructures, no visual reskin. Every claim traces to a shipped surface — full
+mapping lives in `docs/business-brain-marketing-audit.md`.
+
+## What landed
+
+- **Home (`src/pages/marketing/HomePage.tsx`)**
+  - Hero eyebrow tightened; hero lede rewritten to name Business Brain in
+    buyer-first language ("the governed knowledge layer that learns what
+    each client wants you to say, and keeps it accurate").
+  - Replaced the "Every call, structured / four questions" section with a
+    new **"How Business Brain helps your team"** section (4 cards: Capture →
+    Review → Right answer → Keep it honest), mapping 1:1 to Knowledge Bin,
+    Suggested Facts, Approved Knowledge + Assist, and Governance.
+  - Integrations section lede gains one sentence on Brain feeding every
+    integration.
+  - FAQ Q1, Q3, Q5 rewritten to name Business Brain in plain language;
+    new Q4 added: *"What does Business Brain actually do during a call?"*.
+- **Solutions (`src/pages/marketing/SolutionsPage.tsx`)**
+  - Hero subhead names Business Brain.
+  - Four-question card bodies updated (Who called / What happened) to point
+    at Approved Knowledge + per-client guides.
+  - Legal answering services first card rewritten to credit Business Brain
+    for conflict prompts, matter context, and approved language.
+  - VR section gains a fifth capability card: *"Per-client knowledge,
+    governed centrally."*
+  - Three motion `surfacedIn` strings appended with their Brain surface
+    (Inbound intake → Approved Knowledge; QA → Governance; Monitoring →
+    Health).
+- **Personas (`src/pages/marketing/PersonasPage.tsx`)**
+  - Hero subhead names Business Brain.
+  - Exactly one bullet per persona replaced with a Brain-surface line:
+    Ops → Brain Health; Supervisor → Suggested Facts + stale-fact queue;
+    Implementation → Knowledge Bin ingestion + Approved Knowledge;
+    Intake → Approved Brain answers on screen pop.
+- **Customers (`src/pages/marketing/CustomersPage.tsx`)**
+  - Hero subhead acknowledges Business Brain ships inside Fabric59.
+  - All three story bodies rewritten to credit Brain where it is already
+    true today (legal → Brain answers on screen; BPO → curate + Governance;
+    platform partner → Brain Health for pilot coordination). Outcome lines
+    unchanged.
+- **Pricing (`src/pages/marketing/PricingPage.tsx`)**
+  - Hero subhead names Business Brain.
+  - Exactly one new feature line per tier (no other changes): Starter →
+    "knowledge ingestion, review, approved answers, governance, health";
+    Growing → "across every workspace"; Network → "across every workspace
+    and brand."
+- **Footer (`src/components/shells/marketing/CanonicalMarketingFooter.tsx`)**
+  - Brand blurb rewritten to lead with Business Brain. Links unchanged.
+- **SEO metadata (`src/seo/marketingMetadata.ts`)**
+  - `canonicalSiteDescription()` and `productOverviewDescription()` extended
+    with one Brain sentence each.
+  - `organizationLD.description` rewritten to current positioning + Brain.
+  - `CANONICAL_TAGLINE`, `softwareApplicationLD()`, `buildFaqLD()`, and
+    `integrationsIndexDescription()` unchanged (guardrail: integration
+    facts untouched).
+
+## What did not change
+
+- No new routes, no nav restructure (`MARKETING_NAV` untouched).
+- No marketing component internals or layout (`SectionShell`, `MarketingHero`,
+  `CapabilityCard`, `PersonaList`, etc. unchanged).
+- No visual reskin — Phase 4 territory.
+- `IntegrationsIndexPage.tsx`, Trust, Security, Privacy, Terms,
+  Responsible Disclosure pages untouched.
+- `CanonicalMarketingHeader.tsx` untouched (no copy drift; nav labels
+  already accurate).
+
+## Tests
+
+No marketing snapshot or copy-pinned tests exist for the rewritten strings
+(verified via `rg` against `src/test/**` for old hero/section copy and
+old metadata description). No test updates required this slice.
+
+## Stop gate
+
+Slice 2 ships only the copy/IA changes above. Phase 4 (marketing visual
+refresh, SEO/OG image sweep) is out of scope and waits for approval.

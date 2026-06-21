@@ -18,7 +18,7 @@ const PERSONAS = [
     jobs: [
       "Run multiple Five9 programs across clients with workspace isolation",
       "Govern config inheritance across Org, Partner, and Client",
-      "See what is healthy: tenant health, rate limits, audit-grade export",
+      "Watch coverage, freshness, and gaps across every client from one Business Brain Health view",
     ],
     motionLabel: "Maps to monitoring and readiness",
     motionHref: "/solutions#monitoring-readiness",
@@ -29,7 +29,7 @@ const PERSONAS = [
     anchorId: "supervisor",
     jobs: [
       "Live ops on a single workspace — callbacks, queues, KPIs",
-      "QA review queue scored against the live decision-tree guide",
+      "Review suggested answers before they reach a live call, and resolve stale facts from the same queue",
       "Push script changes inline without filing a ticket",
     ],
     motionLabel: "Maps to QA and review",
@@ -41,7 +41,7 @@ const PERSONAS = [
     anchorId: "implementation-admin",
     jobs: [
       "Wire Five9 to the downstream systems the team already uses",
-      "Visual field mapping with a Test runner before go-live",
+      "Load each client's knowledge into Business Brain — paste, upload, CSV, FAQ — and approve it once",
       "Roll out through the shared GA readiness checklist",
     ],
     motionLabel: "Maps to CRM sync and handoff",
@@ -54,7 +54,7 @@ const PERSONAS = [
     jobs: [
       "Own outcomes per call — intake, qualification, handoff",
       "Decision-tree guides with per-disposition routing",
-      "Reconciliation against telephony logs and downstream writeback",
+      "Approved Business Brain answers and per-disposition routing surface on screen pop, every call",
     ],
     motionLabel: "Maps to inbound intake",
     motionHref: "/solutions#inbound-intake",
@@ -84,7 +84,7 @@ export default function PersonasPage() {
       <MarketingHero
         eyebrow="Personas"
         title="Built for the four roles that own a Five9 program"
-        lede="Fabric59 is opinionated. Each persona lands in a workspace surface mapped to their day."
+        lede="Fabric59 is opinionated about who runs guided calls across many clients. Each role lands in a workspace surface — and a slice of Business Brain — mapped to their day."
       />
 
       <SectionShell bordered>

@@ -36,8 +36,8 @@ import { CtaRow } from "@/components/marketing/CtaRow";
  */
 
 const QUESTIONS = [
-  { icon: UserSearch, title: "Who called?",                body: "Workspace + campaign context, caller identity, multi-tenant client separation." },
-  { icon: ListChecks, title: "What happened on the call?", body: "Guides, decision trees, structured forms, AI summaries — every call captured as a clean interaction record." },
+  { icon: UserSearch, title: "Who called?",                body: "Caller matched to the right client workspace before screen pop, with prior history and account context already on screen." },
+  { icon: ListChecks, title: "What happened on the call?", body: "Agents follow a per-client guide and read from approved Business Brain knowledge — not free-text notes nobody can route." },
   { icon: Target,     title: "What was the outcome?",       body: "Dispositions, urgency selectors, outcome model — structured decisions, not free-text notes." },
   { icon: BellRing,   title: "Who needs to be notified?",   body: "Notification routing, system-of-record write-back, sync logs, exception queues." },
 ];
@@ -54,7 +54,7 @@ const MOTIONS = [
       "Per-client decision-tree guides edited inside the workspace",
       "Outcome-routed write-back into the client's system of record",
     ],
-    surfacedIn: "Workspace · Guides, Forms, Campaigns, QA",
+    surfacedIn: "Workspace · Guides, Forms, Campaigns, QA · Brain · Approved Knowledge on screen pop",
     topic: "inbound-intake",
   },
   {
@@ -82,7 +82,7 @@ const MOTIONS = [
       "Scorecards bound to live per-client guides",
       "Supervisor live-ops view",
     ],
-    surfacedIn: "Workspace · QA, Analytics",
+    surfacedIn: "Workspace · QA, Analytics · Brain · Governance (stale facts, gaps)",
     topic: "qa-review",
   },
   {
@@ -110,7 +110,7 @@ const MOTIONS = [
       "Per-tenant rate limits and tenant health",
       "Shared GA readiness checklist per client",
     ],
-    surfacedIn: "Admin · Connectors, Reports, Settings",
+    surfacedIn: "Admin · Connectors, Reports, Settings · Brain · Health",
     topic: "monitoring",
   },
 ];
@@ -118,8 +118,9 @@ const MOTIONS = [
 const VR_CAPABILITIES = [
   { icon: Building2,  title: "Multi-tenant by design",   body: "One Fabric59 organization, many client workspaces. Each client is fully isolated — data, guides, dispositions, integrations." },
   { icon: Headphones, title: "Coverage you actually run", body: "After-hours, overflow, triage, message-taking, lead capture, and escalation flows — modeled per client and per service line." },
-  { icon: GitBranch,  title: "Per-client systems of record", body: "Each workspace writes into the right downstream system — legal practice management today, more vertical packs on the way." },
+  { icon: GitBranch,  title: "Per-client systems of record", body: "Each workspace pushes the call result into the right downstream system — legal practice management today, more vertical packs on the way." },
   { icon: Activity,   title: "Operations visibility across accounts", body: "Per-client health, telephony reconciliation, rate limits, and readiness state — without leaving the platform." },
+  { icon: ListChecks, title: "Per-client knowledge, governed centrally", body: "Each client's answers live in their own Business Brain. Supervisors curate; agents read. Gaps and stale answers surface in one queue across every account you run." },
 ];
 
 const VERTICALS = [
@@ -153,7 +154,7 @@ export default function SolutionsPage() {
       <MarketingHero
         eyebrow="Solutions"
         title="Built for outsourced answering services and virtual receptionists"
-        lede="Five9 handles the call. Fabric59 is the brain. Your client's system of record holds the outcome — across every vertical you answer for."
+        lede="Five9 handles the call. Fabric59 runs the workspace. Business Brain — the governed knowledge layer inside Fabric59 — gives your agents the right answer for each client, every time."
       />
 
       {/* Four-question framing as the spine */}
@@ -183,7 +184,7 @@ export default function SolutionsPage() {
           <CapabilityCard
             icon={Scale}
             title="Built for legal intake"
-            body="Decision-tree guides tuned for law firm intake — case type, urgency, conflict-check prompts, and qualifying questions per attorney or practice area."
+            body="Per-firm intake guides backed by Business Brain — conflict-check prompts, matter context, and the firm's approved language all surface inline as the intake call moves."
             bullets={[
               "Per-firm intake guides and forms",
               "Conflict-check prompts inline",

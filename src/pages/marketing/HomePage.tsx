@@ -30,26 +30,26 @@ import {
  * brain. The client's system of record holds the outcome.
  */
 
-const QUESTIONS = [
-  {
-    icon: UserSearch,
-    title: "Who called?",
-    body: "Pre-call ANI lookup matches the caller against the right client workspace before screen pop — caller identity, prior history, and account context land with the agent in under 500ms.",
-  },
+const BRAIN_LIFECYCLE = [
   {
     icon: ListChecks,
-    title: "What happened on the call?",
-    body: "Decision-tree guides, structured forms, and AI summaries capture the call as a clean interaction record — not a free-text note that nobody can route.",
+    title: "Capture what each client wants",
+    body: "Paste it, upload it, drop in a CSV, or import an FAQ. Your team turns documents into facts your agents can actually use.",
+  },
+  {
+    icon: UserSearch,
+    title: "Review before it goes live",
+    body: "Suggested answers wait for a human approval. Nothing reaches a live call until a supervisor signs off.",
   },
   {
     icon: Target,
-    title: "What was the outcome?",
-    body: "Dispositions, urgency selectors, and an outcome model turn the call into a structured decision the rest of your operation can act on.",
+    title: "Right answer, right call",
+    body: "Approved knowledge shows up on screen the moment the call connects — tied to the client and the question being asked.",
   },
   {
     icon: BellRing,
-    title: "Who needs to be notified?",
-    body: "Notification routing, integration write-back, sync logs, and exception queues push the outcome into the client's system of record and the right humans, instantly.",
+    title: "Keep it honest",
+    body: "Gaps, conflicts, and stale answers surface in one queue, so the brain stays current without anyone chasing it.",
   },
 ];
 
@@ -79,7 +79,7 @@ const FAQ = [
   {
     question: "Who is Fabric59 for?",
     answer:
-      "Outsourced answering service providers and virtual receptionist companies that answer calls on behalf of many clients across multiple industries. Fabric59 is the multi-tenant workspace platform you sit on top of Five9 — your clients are workspaces, your agents work guided calls across all of them.",
+      "Outsourced answering service providers and virtual receptionist companies that answer calls on behalf of many clients across multiple industries. Fabric59 is the multi-tenant workspace platform you sit on top of Five9 — your clients are workspaces, and Business Brain inside each workspace holds the answers your agents read on every call.",
   },
   {
     question: "Is Fabric59 only for legal answering services?",
@@ -89,7 +89,12 @@ const FAQ = [
   {
     question: "How does Fabric59 sit next to Five9?",
     answer:
-      "Five9 handles the call — ACD, dialer, agent desktop. Fabric59 is the brain between Five9 and your client's system of record: pre-call ANI lookup, on-call guides and forms, structured outcomes, and downstream write-back. We do not replace your phone system.",
+      "Five9 handles the call — ACD, dialer, agent desktop. Fabric59 sits between Five9 and the client's system of record: Business Brain surfaces the right approved answer on screen pop, agents work through a per-client guide, and the structured outcome is pushed into the client's system the moment the call ends. We do not replace your phone system.",
+  },
+  {
+    question: "What does Business Brain actually do during a call?",
+    answer:
+      "It puts the approved answer for that client in front of the agent the moment the call connects, and follows the conversation as the agent moves through the guide. Supervisors curate the answers in advance — paste, upload, CSV, or FAQ — and approve them once. Agents read them, they do not write them.",
   },
   {
     question: "Which systems of record can Fabric59 write into today?",
@@ -99,7 +104,7 @@ const FAQ = [
   {
     question: "How is each client's data isolated?",
     answer:
-      "Every client is a workspace under your organization. Workspace data is isolated by Postgres Row-Level Security with SECURITY DEFINER role checks. Credentials are encrypted at rest. A server-side compliance export bundles logs, config history, and an RLS snapshot per workspace.",
+      "Every client is a workspace under your organization. Workspace data — including Business Brain knowledge — is isolated by Postgres Row-Level Security with SECURITY DEFINER role checks. Credentials are encrypted at rest. A server-side compliance export bundles logs, config history, and an RLS snapshot per workspace.",
   },
   {
     question: "How do I get started?",
@@ -131,27 +136,27 @@ export default function HomePage() {
       <StructuredData data={[organizationLD, softwareApplicationLD(), buildFaqLD(FAQ)]} />
 
       <MarketingHero
-        eyebrow="Multi-tenant guided call workspace · For outsourced answering & virtual receptionists"
+        eyebrow="Guided call workspace · For outsourced answering & virtual receptionist providers"
         title={
           <>
             Five9 handles the call.{" "}
             <span className="text-primary">Fabric59 is the brain.</span>
           </>
         }
-        lede="Your client's system of record holds the outcome. Fabric59 is the multi-tenant guided call workspace platform for outsourced answering services and virtual receptionist providers — multi-vertical by design, with a deep legal practice management pack shipping first."
+        lede="Fabric59 gives your team one workspace per client, the answers your agents need on every call, and a clean handoff into the system the client already runs. Powered by Business Brain — the governed knowledge layer that learns what each client wants you to say, and keeps it accurate."
         primary={{ label: "Start a pilot", to: "/contact?topic=pilot" }}
         secondary={{ label: "Sign in", to: "/login" }}
       />
 
-      <SectionShell id="four-questions" bordered>
+      <SectionShell id="how-brain-helps" bordered>
         <SectionIntro
-          eyebrow="Every call, structured"
-          title="Four questions. One workspace. Every client."
-          lede="Fabric59 structures every call your agents take around the four questions that actually matter for an answering service — and routes the answers into the right client's system of record."
+          eyebrow="How Business Brain helps your team"
+          title="One governed answer for each client, on every call"
+          lede="Business Brain is the governed knowledge layer inside Fabric59. Your team curates each client's answers once; agents read them on the call, the moment the call connects."
           className="mb-12"
         />
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {QUESTIONS.map((q) => (
+          {BRAIN_LIFECYCLE.map((q) => (
             <CapabilityCard key={q.title} icon={q.icon} title={q.title} body={q.body} />
           ))}
         </div>
@@ -168,7 +173,7 @@ export default function HomePage() {
       </SectionShell>
 
       <SectionShell id="integrations" muted bordered>
-        <SectionIntro eyebrow="Integrations posture" title="Five9-native telephony, vertical packs for downstream" lede="Five9 is the call layer. Downstream system-of-record is grouped into vertical packs — legal practice management ships first, more verticals follow. Each pack plugs into the same canonical outcome pipeline." className="mb-12" />
+        <SectionIntro eyebrow="Integrations posture" title="Five9-native telephony, vertical packs for downstream" lede="Five9 is the call layer. Downstream system-of-record is grouped into vertical packs — legal practice management ships first, more verticals follow. Every integration feeds the same Business Brain, so the answers your agents read and the records you push to the client's system stay in sync." className="mb-12" />
         <div className="grid gap-5 md:grid-cols-2">
           {INTEGRATIONS.map((i) => (
             <CapabilityCard key={i.title} icon={i.icon} title={i.title} body={i.body} />

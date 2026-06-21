@@ -28,6 +28,7 @@ const TIERS = [
       "1 Five9 domain, shared across clients",
       "Legal practice management pack included",
       "Standard guides, forms, QA queue, and analytics",
+      "Business Brain included — knowledge ingestion, review, approved answers, governance, health",
       "Direct channel with the build team",
     ],
     cta: { label: "Start a pilot", to: "/contact?topic=pricing" },
@@ -44,6 +45,7 @@ const TIERS = [
       "Concurrent agent seats sized to your shift coverage",
       "Legal practice management pack included; additional vertical packs add-on",
       "Per-tenant rate limits and tenant health",
+      "Business Brain included across every workspace",
       "Implementation-led rollout per client",
     ],
     cta: { label: "Talk to us", to: "/contact?topic=pricing" },
@@ -59,6 +61,7 @@ const TIERS = [
       "Multi-domain Five9 across brands or regions",
       "All current vertical integration packs included",
       "White-label branding overrides per brand and per client",
+      "Business Brain included across every workspace and brand",
       "Design-partner ops view and custom adapter scoping",
     ],
     cta: { label: "Become a network partner", to: "/contact?topic=pricing" },
@@ -89,7 +92,7 @@ export default function PricingPage() {
       <MarketingHero
         eyebrow="Pricing"
         title="Priced for providers, not for end clients"
-        lede="Fabric59 is purchased by outsourced answering services and virtual receptionist providers. Your clients are workspaces. Tiers scale with workspaces, concurrent agents, and the vertical integration packs you need."
+        lede="Fabric59 is purchased by outsourced answering services and virtual receptionist providers. Every tier includes Business Brain — the governed knowledge layer that powers your agents on every call. Tiers scale with workspaces, concurrent agents, and the vertical packs you need."
       />
 
       <SectionShell bordered>

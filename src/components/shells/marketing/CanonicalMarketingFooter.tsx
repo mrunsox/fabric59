@@ -40,8 +40,10 @@ export function CanonicalMarketingFooter() {
               </span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Five9-native operational intelligence connecting telephony to CRM, workflow, QA,
-              and downstream service systems.
+              Fabric59 is the multi-tenant guided call workspace for outsourced answering and
+              virtual receptionist providers. Business Brain — the governed knowledge layer
+              inside Fabric59 — gives your agents the right answer for every client. Five9-native.
+              Multi-vertical.
             </p>
             <a
               href="mailto:hi@fabric59.com"
