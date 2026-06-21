@@ -56,7 +56,7 @@ export default function CustomersPage() {
       <MarketingHero
         eyebrow="Customers"
         title="Real teams. Real workspaces. Real Five9."
-        lede="Fabric59 is in active design-partner mode. We do not stage fake logos. The stories below describe how the product is being used today."
+        lede="Fabric59 is in active design-partner mode. The stories below describe how teams use Fabric59 today, including the Business Brain that ships inside it. No fabricated logos, no inflated metrics."
       />
 
       <SectionShell muted bordered>
