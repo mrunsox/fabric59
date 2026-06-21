@@ -46,7 +46,7 @@ export const organizationLD = {
   name: SITE_NAME,
   url: `${SITE_URL}/`,
   description:
-    "Multi-tenant operational-intelligence platform for Five9 contact centers and legal-intake operations.",
+    "Multi-tenant guided call workspace for outsourced answering services and virtual receptionist providers. Includes Business Brain, the governed knowledge layer that powers agent answers on every call.",
   contactPoint: {
     "@type": "ContactPoint",
     email: "hi@fabric59.com",
