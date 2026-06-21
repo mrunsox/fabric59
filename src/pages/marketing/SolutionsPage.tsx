@@ -54,7 +54,7 @@ const MOTIONS = [
       "Per-client decision-tree guides edited inside the workspace",
       "Outcome-routed write-back into the client's system of record",
     ],
-    surfacedIn: "Workspace · Guides, Forms, Campaigns, QA",
+    surfacedIn: "Workspace · Guides, Forms, Campaigns, QA · Brain · Approved Knowledge on screen pop",
     topic: "inbound-intake",
   },
   {
