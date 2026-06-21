@@ -13,13 +13,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { BbPermissionDenied } from "@/components/business-brain/BbPermissionDenied";
-import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -37,7 +34,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { BrainPageHeader } from "@/components/business-brain/ui/BrainPageHeader";
+import { BrainPanel } from "@/components/business-brain/ui/BrainPanel";
+import { BrainBadge } from "@/components/business-brain/ui/BrainBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +47,7 @@ import {
   triggerVerticalEvaluation,
 } from "@/lib/business-brain/bridge/governance";
 import { Activity, AlertCircle, Loader2 } from "lucide-react";
+
 
 type FlagKey =
   | "enabled"
