@@ -50,7 +50,7 @@ function collectChildRoutes(parentPath: string): Map<string, "page" | "redirect"
   // the matching close for THIS shell, not at the first nested close.
   const start = openMatch.index + openMatch[0].length;
   const rest = APP_SRC.slice(start);
-  const tokenRe = /<Route\b[^>]*?(\/)?>|<\/Route>/g;
+  const tokenRe = /<Route\s[^>]*?element=\{[\s\S]*?\}\s*(\/)?>|<\/Route>/g;
   let depth = 0;
   let bodyEnd = -1;
   let m: RegExpExecArray | null;
