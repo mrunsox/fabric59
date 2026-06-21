@@ -25,7 +25,7 @@ export const CANONICAL_TAGLINE =
 
 /** Canonical long-form description used on the home OG card. */
 export const canonicalSiteDescription = (): string =>
-  `Fabric59 is a multi-tenant guided call workspace platform for outsourced answering services and virtual receptionist providers. Five9 handles the call. Fabric59 structures every call around who called, what happened, what the outcome was, and who needs to be notified — then writes it back into the client's system of record. Multi-vertical by design, with a deep legal practice management pack live today (${liveCrmSeoPhrase()}, Smokeball on the roadmap).`;
+  `Fabric59 is a multi-tenant guided call workspace platform for outsourced answering services and virtual receptionist providers. Five9 handles the call. Fabric59 structures every call around who called, what happened, what the outcome was, and who needs to be notified — then pushes the result into the client's system of record. Multi-vertical by design, with a deep legal practice management pack live today (${liveCrmSeoPhrase()}, Smokeball on the roadmap). Fabric59 ships with Business Brain — the governed knowledge layer that turns each client's documents, FAQs, and team directories into approved answers your agents see on every call.`;
 
 /** Short subhead-style phrase, e.g. "MyCase and Clio Grow intake". */
 export const canonicalCrmSubhead = (): string => liveCrmSubheadPhrase();
@@ -33,7 +33,7 @@ export const canonicalCrmSubhead = (): string => liveCrmSubheadPhrase();
 // Per-page descriptions ---------------------------------------------------
 
 export const productOverviewDescription = (): string =>
-  `Fabric59 structures every call around four questions: who called, what happened, what the outcome was, and who needs to be notified. Five9 handles the call. Fabric59 is the workflow layer between Five9 and downstream systems of record — legal practice management today (${liveCrmSeoPhrase()}), more vertical packs to come.`;
+  `Fabric59 structures every call around four questions: who called, what happened, what the outcome was, and who needs to be notified. Five9 handles the call. Fabric59 is the workflow layer between Five9 and downstream systems of record — legal practice management today (${liveCrmSeoPhrase()}), more vertical packs to come. Powered by Business Brain — paste, upload, CSV, or FAQ becomes approved knowledge your agents read on the call.`;
 
 export const integrationsIndexDescription = (): string =>
   `Vertical integration packs for outsourced answering and virtual receptionist providers. Five9 telephony, the legal practice management pack (${liveCrmSeoPhrase()}, Smokeball on the roadmap), Slack, Zapier, and Make — all wired through one canonical outcome pipeline.`;
