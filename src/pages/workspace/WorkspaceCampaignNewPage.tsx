@@ -6,24 +6,24 @@ import CampaignIntakePage from "@/pages/admin/CampaignIntakePage";
 import type { CampaignIntakeData } from "@/types/campaign";
 
 /**
- * Phase 6 — Canonical workspace campaign creation.
+ * Workspace campaign creation.
  *
- * The 10-section intake form (CampaignIntakePage) is the only safe authoring
- * surface for campaigns; it is mounted in-place under the canonical workspace
- * route so the workspace shell renders around it.
+ * Mounts the existing intake form (CampaignIntakePage) inside the workspace
+ * shell so all the campaign-authoring chrome (autosave, validation, ASC
+ * origin context) renders unchanged. Drafts appear in this workspace's
+ * Campaigns list as soon as they're saved.
  *
  * AI handoff:
  *   AIBlueprintBuilder navigates here with router state
  *   `{ prefill: Partial<CampaignIntakeData>, source: "ai-blueprint" }` and
  *   `?source=ai` in the URL.
  *
- * ASC handoff (Phase 5 · Slice 1):
+ * ASC handoff:
  *   AscWizardPage navigates here with `{ prefill, source: "asc-wizard",
  *   ascDraftId }`. The translator populates `prefill.ascOrigin`, which the
- *   intake form persists in `intake_data` JSONB. Origin context is rendered
- *   by `AscOriginPanel` inside CampaignIntakePage — that is the durable
- *   surface that survives autosave + the legacy edit-route transition. We
- *   intentionally do NOT render a duplicate banner here.
+ *   intake form persists in `intake_data` JSONB. Origin context is
+ *   rendered by `AscOriginPanel` inside CampaignIntakePage. We do not
+ *   render a duplicate banner here.
  */
 export default function WorkspaceCampaignNewPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -79,9 +79,8 @@ export default function WorkspaceCampaignNewPage() {
         <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
           <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
           <span>
-            Canonical campaign intake. Drafts autosave; once submitted the campaign appears in this
-            workspace's canonical campaign list. Edits to in-progress drafts currently continue at the
-            legacy edit URL until the canonical edit route ships.
+            New campaign. Changes autosave as a draft; submitting publishes it to this workspace's
+            Campaigns list. You can continue editing drafts at any time from the Campaigns list.
           </span>
         </div>
       ) : null}
