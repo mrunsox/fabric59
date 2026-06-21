@@ -1,15 +1,32 @@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { markFactNeedsUpdate, markFactReviewed, type StaleFactView } from "@/lib/business-brain/selectors";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
 import { toast } from "sonner";
+import { BrainBadge } from "@/components/business-brain/ui";
 
 interface Props {
   fact: StaleFactView | null;
   onClose: () => void;
   onChanged?: () => void;
+}
+
+const REASON_TONE: Record<string, "muted" | "warn" | "bad"> = {
+  stale_due_to_age: "muted",
+  stale_due_to_usage: "muted",
+  stale_due_to_conflict: "warn",
+};
+
+function MetaCell({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded-md border border-bb-border-subtle bg-bb-surface-inset px-2.5 py-2">
+      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-0.5 bb-tnum text-sm text-foreground">{value}</div>
+    </div>
+  );
 }
 
 export default function BbStaleFactDrawer({ fact, onClose, onChanged }: Props) {
@@ -54,48 +71,43 @@ export default function BbStaleFactDrawer({ fact, onClose, onChanged }: Props) {
     <Sheet open onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full max-w-md overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>{fact.displayName}</SheetTitle>
+          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Governance · Stale fact
+          </div>
+          <SheetTitle className="text-lg">{fact.displayName}</SheetTitle>
           <SheetDescription>{fact.entityType}</SheetDescription>
         </SheetHeader>
 
-        <div className="mt-4 space-y-4 text-sm">
-          <div className="space-y-1">
-            <div className="text-xs uppercase text-muted-foreground">Reasons</div>
+        <div className="mt-5 space-y-5 text-sm">
+          <div className="space-y-1.5">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Reasons
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {fact.staleReasons.length === 0 ? (
-                <Badge variant="secondary">Fresh</Badge>
+                <BrainBadge tone="ok">Fresh</BrainBadge>
               ) : (
                 fact.staleReasons.map((r) => (
-                  <Badge key={r} variant="secondary" className="bg-amber-100 text-amber-900">
+                  <BrainBadge key={r} tone={REASON_TONE[r] ?? "warn"}>
                     {r.replace(/_/g, " ")}
-                  </Badge>
+                  </BrainBadge>
                 ))
               )}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <div className="text-xs uppercase text-muted-foreground">Last reviewed</div>
-              <div>{new Date(fact.lastReviewedAt).toLocaleDateString()}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase text-muted-foreground">Last used</div>
-              <div>{fact.lastUsedAt ? new Date(fact.lastUsedAt).toLocaleDateString() : "—"}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase text-muted-foreground">Review interval</div>
-              <div>{fact.intervalDays != null ? `${fact.intervalDays} days` : "—"}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase text-muted-foreground">Usage score</div>
-              <div>{fact.usageScore.toFixed(2)}</div>
-            </div>
+          <div className="grid grid-cols-2 gap-2">
+            <MetaCell label="Last reviewed" value={new Date(fact.lastReviewedAt).toLocaleDateString()} />
+            <MetaCell label="Last used" value={fact.lastUsedAt ? new Date(fact.lastUsedAt).toLocaleDateString() : "—"} />
+            <MetaCell label="Review interval" value={fact.intervalDays != null ? `${fact.intervalDays} days` : "—"} />
+            <MetaCell label="Usage score" value={fact.usageScore.toFixed(2)} />
           </div>
 
           <div>
-            <div className="text-xs uppercase text-muted-foreground">Usage breakdown</div>
-            <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Usage breakdown
+            </div>
+            <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 rounded-md border border-bb-border-subtle bg-bb-surface-inset px-3 py-2 text-xs text-foreground/90 bb-tnum">
               <div>Search opens: {breakdown.searchOpens}</div>
               <div>Useful: {breakdown.searchMarkedUseful}</div>
               <div>Not useful: {breakdown.searchMarkedNotUseful}</div>
@@ -108,12 +120,12 @@ export default function BbStaleFactDrawer({ fact, onClose, onChanged }: Props) {
           </div>
 
           {hasConflict ? (
-            <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              This fact has an open conflict. "Mark reviewed" will not clear it — resolve the conflict explicitly.
+            <div className="bb-panel bb-rail bb-rail-warn px-3 py-2 text-xs text-foreground/90">
+              This fact has an open conflict. &ldquo;Mark reviewed&rdquo; will not clear it — resolve the conflict explicitly.
             </div>
           ) : null}
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-1">
             <Button size="sm" onClick={onReviewed}>Mark reviewed</Button>
             <Button size="sm" variant="outline" onClick={onNeedsUpdate}>Mark needs update</Button>
           </div>

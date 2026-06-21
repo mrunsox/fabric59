@@ -1,8 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, RefreshCw, AlertTriangle, Clock, Activity, ShieldAlert } from "lucide-react";
@@ -17,6 +15,8 @@ import {
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
 import BbStaleFactDrawer from "@/components/business-brain/BbStaleFactDrawer";
 import BbConflictDrawer from "@/components/business-brain/BbConflictDrawer";
+import BbStateBlock from "@/components/business-brain/BbStateBlock";
+import { BrainPanel, BrainBadge } from "@/components/business-brain/ui";
 import BrainVerticalGovernanceSection from "./BrainVerticalGovernanceSection";
 import BrainGapGovernanceSection from "./BrainGapGovernanceSection";
 
@@ -31,6 +31,34 @@ const REASON_ICON = {
   stale_due_to_usage: Activity,
   stale_due_to_conflict: AlertTriangle,
 } as const;
+
+const REASON_TONE: Record<string, "muted" | "warn" | "bad"> = {
+  stale_due_to_age: "muted",
+  stale_due_to_usage: "muted",
+  stale_due_to_conflict: "warn",
+};
+
+function SectionHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string;
+  description?: string;
+  actions?: React.ReactNode;
+}) {
+  return (
+    <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        {description ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+        ) : null}
+      </div>
+      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+    </header>
+  );
+}
 
 export default function BrainGovernancePage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -81,108 +109,134 @@ export default function BrainGovernancePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Governance</h2>
-          <p className="text-sm text-muted-foreground">
-            Staleness, conflicts, and usage signals. Humans make every call.
-          </p>
-        </div>
-        <Button onClick={runSweep} disabled={sweeping} size="sm" variant="outline">
-          {sweeping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-          Run sweep
-        </Button>
-      </div>
+    <div className="space-y-8 animate-fade-in">
+      <SectionHeader
+        title="Governance"
+        description="Staleness, conflicts, and usage signals. Humans make every call."
+        actions={
+          <Button onClick={runSweep} disabled={sweeping} size="sm" variant="outline">
+            {sweeping ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Run sweep
+          </Button>
+        }
+      />
 
       {/* Stale */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Stale facts</h3>
-          <div className="flex items-center gap-2">
-            <Select value={staleEntity} onValueChange={setStaleEntity}>
-              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All entity types</SelectItem>
-                {["phone", "hours", "destination_contact", "escalation_contact", "service", "faq", "policy", "intake_requirement"].map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button size="sm" variant={highRiskOnly ? "default" : "outline"} onClick={() => setHighRiskOnly((v) => !v)}>
-              <ShieldAlert className="mr-1 h-3.5 w-3.5" /> High-risk only
-            </Button>
-          </div>
-        </div>
+        <SectionHeader
+          title="Stale facts"
+          description="Facts overdue for review based on age, usage, or open conflict."
+          actions={
+            <>
+              <Select value={staleEntity} onValueChange={setStaleEntity}>
+                <SelectTrigger className="w-44 h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All entity types</SelectItem>
+                  {["phone", "hours", "destination_contact", "escalation_contact", "service", "faq", "policy", "intake_requirement"].map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button size="sm" variant={highRiskOnly ? "default" : "outline"} onClick={() => setHighRiskOnly((v) => !v)}>
+                <ShieldAlert className="mr-1 h-3.5 w-3.5" /> High-risk only
+              </Button>
+            </>
+          }
+        />
         {staleQuery.isLoading ? (
-          <div className="flex items-center py-6 text-sm text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
-          </div>
+          <BrainPanel>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
+            </div>
+          </BrainPanel>
         ) : (staleQuery.data ?? []).length === 0 ? (
-          <Card className="p-6 text-sm text-muted-foreground">No stale facts. Knowledge looks fresh.</Card>
+          <BbStateBlock
+            kind="noData"
+            title="No stale facts"
+            description="Knowledge looks fresh — nothing requires reviewer attention right now."
+          />
         ) : (
-          <Card className="divide-y overflow-hidden">
-            {(staleQuery.data ?? []).map((f) => (
-              <button
-                key={f.id}
-                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/40"
-                onClick={() => setOpenStale(f)}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{f.displayName}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {f.entityType} · reviewed {new Date(f.lastReviewedAt).toLocaleDateString()} · usage {f.usageScore.toFixed(1)}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {f.staleReasons.map((r) => {
-                    const I = REASON_ICON[r];
-                    return (
-                      <Badge key={r} variant="secondary" className="text-xs">
-                        <I className="mr-1 h-3 w-3" />
-                        {REASON_LABEL[r]}
-                      </Badge>
-                    );
-                  })}
-                </div>
-              </button>
-            ))}
-          </Card>
+          <BrainPanel className="p-0 overflow-hidden">
+            <ul className="divide-y divide-bb-border-subtle">
+              {(staleQuery.data ?? []).map((f) => (
+                <li key={f.id}>
+                  <button
+                    className="bb-row-hover flex w-full items-center justify-between gap-3 px-4 py-3 text-left bb-focus-ring"
+                    onClick={() => setOpenStale(f)}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-foreground">{f.displayName}</div>
+                      <div className="mt-0.5 text-xs text-muted-foreground bb-tnum">
+                        {f.entityType} · reviewed {new Date(f.lastReviewedAt).toLocaleDateString()} · usage {f.usageScore.toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {f.staleReasons.map((r) => {
+                        const I = REASON_ICON[r];
+                        return (
+                          <BrainBadge key={r} tone={REASON_TONE[r] ?? "muted"}>
+                            <I className="mr-1 h-3 w-3" />
+                            {REASON_LABEL[r]}
+                          </BrainBadge>
+                        );
+                      })}
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </BrainPanel>
         )}
       </section>
 
       {/* Conflicts */}
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold">Conflicts</h3>
+        <SectionHeader
+          title="Conflicts"
+          description="Facts the system thinks may disagree. Resolution is always reviewer-confirmed."
+        />
         {conflictsQuery.isLoading ? (
-          <div className="flex items-center py-6 text-sm text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
-          </div>
+          <BrainPanel>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
+            </div>
+          </BrainPanel>
         ) : (conflictsQuery.data ?? []).length === 0 ? (
-          <Card className="p-6 text-sm text-muted-foreground">No open conflicts.</Card>
+          <BbStateBlock
+            kind="noData"
+            title="No open conflicts"
+            description="No facts are flagged as conflicting right now."
+          />
         ) : (
-          <Card className="divide-y overflow-hidden">
-            {(conflictsQuery.data ?? []).map((c) => (
-              <button
-                key={c.id}
-                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/40"
-                onClick={() => setOpenConflict(c)}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">
-                    {c.primaryFact?.displayName ?? "—"} ⇄ {c.conflictingFact?.displayName ?? "—"}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {c.conflictKind.replace(/_/g, " ")}
-                    {c.similarity != null ? ` · similarity ${c.similarity.toFixed(2)}` : ""}
-                    {" · "}
-                    {new Date(c.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-                <Badge variant="secondary" className="bg-amber-100 text-amber-900">{c.entityType}</Badge>
-              </button>
-            ))}
-          </Card>
+          <BrainPanel tone="warn" className="p-0 overflow-hidden">
+            <ul className="divide-y divide-bb-border-subtle">
+              {(conflictsQuery.data ?? []).map((c) => (
+                <li key={c.id}>
+                  <button
+                    className="bb-row-hover flex w-full items-center justify-between gap-3 px-4 py-3 text-left bb-focus-ring"
+                    onClick={() => setOpenConflict(c)}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-foreground">
+                        {c.primaryFact?.displayName ?? "—"} ⇄ {c.conflictingFact?.displayName ?? "—"}
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground bb-tnum">
+                        {c.conflictKind.replace(/_/g, " ")}
+                        {c.similarity != null ? ` · similarity ${c.similarity.toFixed(2)}` : ""}
+                        {" · "}
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <BrainBadge tone="warn">{c.entityType}</BrainBadge>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </BrainPanel>
         )}
       </section>
 
