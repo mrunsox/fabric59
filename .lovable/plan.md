@@ -483,3 +483,39 @@ guard issues unrelated to the refresh program.
 
 **Business Brain refresh program — complete.** All Phases 0–5 acceptance
 criteria pass.
+
+---
+
+# Dashboard Consolidation + UX Reset — Phase 0 (Audit & Blueprint)
+
+## Status
+
+**In progress (audit)** — read-only Phase 0. No JSX, schema, route, nav, or copy changes.
+
+## Deliverables
+
+- `docs/dashboard-ux-audit.md` — full surface inventory, per-route audit table, thematic deep-dives (authoring duplication, client vs workspace ownership, setup flow opacity, cockpit readiness, operate-vs-insight blur, demoted ghost routes, empty states, language leaks, settings sprawl, integrations sprawl), empty-state catalog, language-leak catalog, severity summary, feature-gap callouts.
+- `docs/dashboard-ia-reset-plan.md` — canonical IA (Build / Operate / Insight / Connect / Settings), canonical setup journey, canonical ongoing operator journey, page-type unification patterns, demote/admin/future list, visual unification targets (reusing Brain primitives), Phase 1–5 roadmap, constraints, Phase 0 stop-gate.
+- `OUTLINE.md` — new "Dashboard Consolidation + UX Reset" program section with Phase table (Phase 0 In progress, 1–5 Planned) and program rules.
+- This entry in `.lovable/plan.md`.
+
+## Out of scope (locked for Phase 0)
+
+- No `.tsx` / component / shell / page edits.
+- No `src/config/canonicalNav.ts` or nav changes.
+- No `supabase/**`, RLS, schema, or edge-function changes.
+- No marketing or product copy rewrites beyond cataloging issues.
+- No visual / design / token work.
+- No test suite changes or runs (no code shipped).
+- No Business Brain sub-IA changes (Phase 5 of that program is closed).
+
+## Acceptance criteria (Phase 0)
+
+- Both new docs exist and cover every surface in the inventory.
+- Every audit row has a severity and a recommended action.
+- The roadmap is concrete enough that Phase 1 can be planned without re-auditing.
+- Only four files modified: `docs/dashboard-ux-audit.md`, `docs/dashboard-ia-reset-plan.md`, `OUTLINE.md`, `.lovable/plan.md`.
+
+## Next stop-gate
+
+Stop after Phase 0 deliverables land. Present: audit highlights (critical/high), proposed roadmap, parked feature gaps. **Await explicit approval before starting Phase 1.**
