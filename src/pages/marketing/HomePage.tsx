@@ -30,26 +30,26 @@ import {
  * brain. The client's system of record holds the outcome.
  */
 
-const QUESTIONS = [
-  {
-    icon: UserSearch,
-    title: "Who called?",
-    body: "Pre-call ANI lookup matches the caller against the right client workspace before screen pop — caller identity, prior history, and account context land with the agent in under 500ms.",
-  },
+const BRAIN_LIFECYCLE = [
   {
     icon: ListChecks,
-    title: "What happened on the call?",
-    body: "Decision-tree guides, structured forms, and AI summaries capture the call as a clean interaction record — not a free-text note that nobody can route.",
+    title: "Capture what each client wants",
+    body: "Paste it, upload it, drop in a CSV, or import an FAQ. Your team turns documents into facts your agents can actually use.",
+  },
+  {
+    icon: UserSearch,
+    title: "Review before it goes live",
+    body: "Suggested answers wait for a human approval. Nothing reaches a live call until a supervisor signs off.",
   },
   {
     icon: Target,
-    title: "What was the outcome?",
-    body: "Dispositions, urgency selectors, and an outcome model turn the call into a structured decision the rest of your operation can act on.",
+    title: "Right answer, right call",
+    body: "Approved knowledge shows up on screen the moment the call connects — tied to the client and the question being asked.",
   },
   {
     icon: BellRing,
-    title: "Who needs to be notified?",
-    body: "Notification routing, integration write-back, sync logs, and exception queues push the outcome into the client's system of record and the right humans, instantly.",
+    title: "Keep it honest",
+    body: "Gaps, conflicts, and stale answers surface in one queue, so the brain stays current without anyone chasing it.",
   },
 ];
 
