@@ -10,8 +10,8 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Sparkles, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BrainBadge, type BrainBadgeTone } from "@/components/business-brain/ui/BrainBadge";
 import type {
   BbAscApplyIntent,
   BbAscSuggestion,
@@ -45,6 +45,13 @@ const BAND_LABEL: Record<BbAscSuggestion["confidenceBand"], string> = {
   medium: "Medium confidence",
   low: "Low confidence",
 };
+
+const BAND_TONE: Record<BbAscSuggestion["confidenceBand"], BrainBadgeTone> = {
+  high: "ok",
+  medium: "warn",
+  low: "muted",
+};
+
 
 export function BbSuggestionTray({
   workspaceId,
@@ -99,15 +106,15 @@ export function BbSuggestionTray({
           key={s.id}
           data-testid="bb-suggestion-card"
           data-suggestion-id={s.id}
-          className="rounded-md border bg-background p-3 shadow-sm"
+          className="bb-card-raised p-3 transition-shadow hover:shadow-md"
         >
           <header className="flex items-start justify-between gap-2">
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2 min-w-0">
               <Sparkles
                 aria-hidden
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary"
+                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[hsl(var(--bb-status-info))]"
               />
-              <h4 className="text-sm font-medium leading-tight">{s.title}</h4>
+              <h4 className="text-sm font-medium leading-tight text-foreground">{s.title}</h4>
             </div>
             <button
               type="button"
@@ -127,7 +134,7 @@ export function BbSuggestionTray({
                 });
               }}
               aria-label="Dismiss suggestion"
-              className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="bb-focus-ring rounded p-0.5 text-muted-foreground hover:bg-[hsl(var(--bb-surface-inset))] hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -138,16 +145,17 @@ export function BbSuggestionTray({
             </p>
           ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <Badge variant="outline" className="text-[10px]" title={BAND_LABEL[s.confidenceBand]}>
-              {s.confidenceBand}
-            </Badge>
-            <span className="text-[10px] text-muted-foreground">
+            <BrainBadge tone={BAND_TONE[s.confidenceBand]}>
+              <span title={BAND_LABEL[s.confidenceBand]}>{s.confidenceBand}</span>
+            </BrainBadge>
+            <span className="text-[10px] text-muted-foreground bb-tnum">
               {s.sourceCount} source{s.sourceCount === 1 ? "" : "s"}
             </span>
             <span className="text-[10px] text-muted-foreground">
               · reviewed {formatRelative(s.lastReviewedAt)}
             </span>
           </div>
+
           <div className="mt-2 flex justify-end">
             <Button
               type="button"

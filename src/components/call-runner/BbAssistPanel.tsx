@@ -25,7 +25,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { BrainBadge, type BrainBadgeTone } from "@/components/business-brain/ui/BrainBadge";
 import { RunnerSurface } from "@/components/call-runner/primitives";
 import { cn } from "@/lib/utils";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
@@ -41,11 +41,12 @@ const KIND_LABEL: Record<AssistCardKind, string> = {
   phrasing_reminder: "Policy reminder",
 };
 
-const BAND_CLS: Record<BbAssistCard["confidenceBand"], string> = {
-  high: "bg-emerald-100 text-emerald-900",
-  medium: "bg-amber-100 text-amber-900",
-  low: "bg-slate-100 text-slate-700",
+const BAND_TONE: Record<BbAssistCard["confidenceBand"], BrainBadgeTone> = {
+  high: "ok",
+  medium: "warn",
+  low: "muted",
 };
+
 
 export interface BbAssistPanelProps {
   enabled: boolean;
@@ -138,21 +139,21 @@ export function BbAssistPanel({
 
   return (
     <RunnerSurface className="overflow-hidden" data-testid="bb-assist-panel">
-      <header className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-muted/30">
+      <header className="flex items-center justify-between gap-2 px-3 py-2 border-b border-bb-border-subtle bg-[hsl(var(--bb-surface-inset)/0.6)]">
         <div className="flex items-center gap-1.5 min-w-0">
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider truncate">
+          <Sparkles className="h-3.5 w-3.5 text-[hsl(var(--bb-status-info))]" />
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-foreground truncate">
             Knowledge assist
           </h3>
-          <Badge variant="outline" className="text-[10px]">
-            {cards.length}
-          </Badge>
+          <BrainBadge tone="muted">
+            <span className="bb-tnum">{cards.length}</span>
+          </BrainBadge>
         </div>
         <Button
           type="button"
           size="sm"
           variant="ghost"
-          className="h-6 px-2 text-[11px]"
+          className="h-6 px-2 text-[11px] bb-focus-ring"
           onClick={onRefresh}
           aria-label="Refresh assist"
           disabled={isLoading}
@@ -173,7 +174,7 @@ export function BbAssistPanel({
               href={`/w/${workspaceId}/brain/approved`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-primary hover:underline"
+              className="bb-focus-ring inline-flex items-center gap-1 text-[hsl(var(--bb-status-info))] hover:underline"
             >
               Open Business Brain <ExternalLink className="h-3 w-3" />
             </a>
@@ -186,7 +187,7 @@ export function BbAssistPanel({
             return (
               <article
                 key={card.id}
-                className="rounded-md border bg-card p-2 space-y-1.5"
+                className="bb-card-raised p-2 space-y-1.5"
                 data-testid="bb-assist-card"
                 data-card-kind={card.kind}
               >
@@ -194,7 +195,7 @@ export function BbAssistPanel({
                   <button
                     type="button"
                     onClick={() => toggle(card.id)}
-                    className="flex items-start gap-1.5 text-left min-w-0 flex-1"
+                    className="bb-focus-ring flex items-start gap-1.5 text-left min-w-0 flex-1 rounded-sm"
                     aria-expanded={open}
                   >
                     {open ? (
@@ -204,17 +205,14 @@ export function BbAssistPanel({
                     )}
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-1">
-                        <Badge variant="outline" className="text-[9px] uppercase tracking-wider">
-                          {KIND_LABEL[card.kind]}
-                        </Badge>
-                        <Badge
-                          variant="secondary"
-                          className={cn("text-[9px]", BAND_CLS[card.confidenceBand])}
-                        >
+                        <BrainBadge tone="muted">
+                          <span className="uppercase tracking-wider">{KIND_LABEL[card.kind]}</span>
+                        </BrainBadge>
+                        <BrainBadge tone={BAND_TONE[card.confidenceBand]}>
                           {card.confidenceBand}
-                        </Badge>
+                        </BrainBadge>
                       </div>
-                      <h4 className="text-xs font-semibold mt-1 leading-snug truncate">
+                      <h4 className="text-xs font-semibold mt-1 leading-snug truncate text-foreground">
                         {card.title}
                       </h4>
                       <p className="text-[11px] text-muted-foreground line-clamp-1">
@@ -228,20 +226,20 @@ export function BbAssistPanel({
                   <div className="space-y-1.5 pl-4">
                     <p className="text-[11px] text-foreground">{card.action}</p>
                     {card.snippet ? (
-                      <blockquote className="text-[11px] italic text-muted-foreground border-l-2 border-muted-foreground/20 pl-2 line-clamp-3">
+                      <blockquote className="text-[11px] italic text-muted-foreground border-l-2 border-bb-border-subtle pl-2 line-clamp-3">
                         “{card.snippet}”
                       </blockquote>
                     ) : null}
                     <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[10px] text-muted-foreground">
                       <div className="flex items-center gap-1.5">
                         {card.verificationState === "approved" ? (
-                          <span className="inline-flex items-center gap-0.5">
-                            <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
+                          <span className="inline-flex items-center gap-0.5 text-[hsl(var(--bb-status-ok-fg))]">
+                            <CheckCircle2 className="h-2.5 w-2.5" />
                             Approved
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-0.5">
-                            <AlertCircle className="h-2.5 w-2.5 text-amber-600" />
+                          <span className="inline-flex items-center gap-0.5 text-[hsl(var(--bb-status-warn-fg))]">
+                            <AlertCircle className="h-2.5 w-2.5" />
                             Needs review
                           </span>
                         )}
@@ -254,7 +252,7 @@ export function BbAssistPanel({
                           type="button"
                           size="sm"
                           variant="ghost"
-                          className="h-6 px-1.5 text-[10px]"
+                          className="h-6 px-1.5 text-[10px] bb-focus-ring"
                           onClick={() => handleCopy(card)}
                           aria-label="Copy assist line"
                         >
@@ -265,7 +263,7 @@ export function BbAssistPanel({
                           type="button"
                           size="sm"
                           variant="ghost"
-                          className="h-6 px-1.5 text-[10px]"
+                          className="h-6 px-1.5 text-[10px] bb-focus-ring"
                           onClick={() => handleInsert(card)}
                           aria-label="Insert into notes"
                         >
@@ -276,7 +274,7 @@ export function BbAssistPanel({
                           href={factLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-0.5 text-primary hover:underline"
+                          className="bb-focus-ring inline-flex items-center gap-0.5 text-[hsl(var(--bb-status-info))] hover:underline"
                           aria-label="Open fact in Business Brain"
                         >
                           Open <ExternalLink className="h-2.5 w-2.5" />
@@ -286,7 +284,7 @@ export function BbAssistPanel({
                             href={sourceLink}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-0.5 text-muted-foreground hover:text-primary"
+                            className="bb-focus-ring inline-flex items-center gap-0.5 text-muted-foreground hover:text-[hsl(var(--bb-status-info))]"
                             aria-label="Open source"
                           >
                             Source
@@ -303,7 +301,7 @@ export function BbAssistPanel({
       </div>
 
       {lastRefreshedAt ? (
-        <footer className="px-3 py-1.5 border-t text-[10px] text-muted-foreground bg-muted/20">
+        <footer className="px-3 py-1.5 border-t border-bb-border-subtle text-[10px] text-muted-foreground bg-[hsl(var(--bb-surface-inset)/0.4)] bb-tnum">
           Updated {new Date(lastRefreshedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </footer>
       ) : null}
@@ -312,3 +310,4 @@ export function BbAssistPanel({
 }
 
 export default BbAssistPanel;
+

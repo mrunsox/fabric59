@@ -115,17 +115,41 @@ export function AscSidePanel({
   return (
     <aside
       data-testid="asc-side-panel"
-      className="flex h-full flex-col border-l bg-card/40"
+      className="flex h-full flex-col border-l border-bb-border-subtle bg-[hsl(var(--bb-surface-inset)/0.4)]"
     >
       <Tabs defaultValue="unresolved" className="flex flex-col">
-        <TabsList className="m-2 grid grid-cols-5">
-          <TabsTrigger value="unresolved">Unresolved</TabsTrigger>
-          <TabsTrigger value="knowledge" data-testid="asc-side-tab-knowledge">
+        <TabsList className="m-2 grid grid-cols-5 bg-transparent p-0 gap-1 h-auto">
+          <TabsTrigger
+            value="unresolved"
+            className="bb-focus-ring data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-bb-border-subtle border border-transparent text-xs"
+          >
+            Unresolved
+          </TabsTrigger>
+          <TabsTrigger
+            value="knowledge"
+            data-testid="asc-side-tab-knowledge"
+            className="bb-focus-ring data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-bb-border-subtle border border-transparent text-xs"
+          >
             Knowledge
           </TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
-          <TabsTrigger value="rationale">Why</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger
+            value="preview"
+            className="bb-focus-ring data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-bb-border-subtle border border-transparent text-xs"
+          >
+            Preview
+          </TabsTrigger>
+          <TabsTrigger
+            value="rationale"
+            className="bb-focus-ring data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-bb-border-subtle border border-transparent text-xs"
+          >
+            Why
+          </TabsTrigger>
+          <TabsTrigger
+            value="history"
+            className="bb-focus-ring data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-bb-border-subtle border border-transparent text-xs"
+          >
+            History
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="unresolved" className="p-4">
           {isGapStep ? (
@@ -188,3 +212,4 @@ export function AscSidePanel({
     </aside>
   );
 }
+

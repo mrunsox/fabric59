@@ -13,13 +13,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { BbPermissionDenied } from "@/components/business-brain/BbPermissionDenied";
-import { BbStateBlock } from "@/components/business-brain/BbStateBlock";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -37,7 +34,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { BrainPageHeader } from "@/components/business-brain/ui/BrainPageHeader";
+import { BrainPanel } from "@/components/business-brain/ui/BrainPanel";
+import { BrainBadge } from "@/components/business-brain/ui/BrainBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +47,7 @@ import {
   triggerVerticalEvaluation,
 } from "@/lib/business-brain/bridge/governance";
 import { Activity, AlertCircle, Loader2 } from "lucide-react";
+
 
 type FlagKey =
   | "enabled"
@@ -278,10 +278,11 @@ export default function BusinessBrainSettingsPage() {
 
   if (!isWorkspaceAdmin) {
     return (
-      <div className="space-y-6">
-        <WorkspacePageHeader
+      <div className="space-y-6 animate-fade-in">
+        <BrainPageHeader
+          eyebrow="Workspace"
           title="Business Brain settings"
-          lede="Workspace controls for the Business Brain."
+          subtitle="Workspace controls for the Business Brain."
         />
         <BbPermissionDenied
           resource="Brain settings"
@@ -330,42 +331,46 @@ export default function BusinessBrainSettingsPage() {
   const currentVertical = verticalProfileQ.data?.id ?? "";
 
   return (
-    <div className="space-y-6">
-      <WorkspacePageHeader
+    <div className="space-y-6 animate-fade-in">
+      <BrainPageHeader
+        eyebrow="Workspace"
         title="Business Brain settings"
-        lede={`Manage Business Brain features for ${workspace?.name ?? "this workspace"}.`}
+        subtitle={`Manage Business Brain features for ${workspace?.name ?? "this workspace"}.`}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Feature flags</CardTitle>
-          <CardDescription>
-            Effective state, source, and editability shown separately. Writes here
-            apply at the organization level; partner and client overrides remain
-            authoritative when present.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="divide-y">
+      <BrainPanel
+        toolbar={
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-foreground">Feature flags</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Effective state, source, and editability shown separately. Writes here
+              apply at the organization level; partner and client overrides remain
+              authoritative when present.
+            </p>
+          </div>
+        }
+      >
+        <div className="divide-y divide-bb-border-subtle -my-1">
           {resolved.map(({ def, effective, source }) => {
             const editable = source === "org" || source === "default";
             return (
               <div
                 key={def.key}
-                className="flex items-start justify-between gap-4 py-4 first:pt-0 last:pb-0"
+                className="flex items-start justify-between gap-4 py-4 first:pt-1 last:pb-1"
               >
-                <div className="space-y-1">
-                  <Label className="text-sm font-medium">{def.label}</Label>
+                <div className="space-y-1 min-w-0">
+                  <Label className="text-sm font-medium text-foreground">{def.label}</Label>
                   <p className="text-xs text-muted-foreground">{def.description}</p>
-                  <div className="flex items-center gap-2 pt-1">
-                    <Badge variant={effective ? "default" : "outline"}>
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+                    <BrainBadge tone={effective ? "ok" : "muted"}>
                       {effective ? "On" : "Off"}
-                    </Badge>
-                    <Badge variant="secondary" className="capitalize">
-                      Source: {source}
-                    </Badge>
-                    <Badge variant="outline" className="capitalize">
+                    </BrainBadge>
+                    <BrainBadge tone="muted">
+                      <span className="capitalize">Source: {source}</span>
+                    </BrainBadge>
+                    <BrainBadge tone={editable ? "info" : "warn"}>
                       {editable ? "Editable here" : "Read-only (override)"}
-                    </Badge>
+                    </BrainBadge>
                   </div>
                 </div>
                 <Switch
@@ -377,18 +382,21 @@ export default function BusinessBrainSettingsPage() {
               </div>
             );
           })}
-        </CardContent>
-      </Card>
+        </div>
+      </BrainPanel>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Vertical profile</CardTitle>
-          <CardDescription>
-            Drives coverage and gap evaluation. Changing the vertical will re-run
-            the evaluation for this workspace.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <BrainPanel
+        toolbar={
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-foreground">Vertical profile</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Drives coverage and gap evaluation. Changing the vertical will re-run
+              the evaluation for this workspace.
+            </p>
+          </div>
+        }
+      >
+        <div className="space-y-3">
           <Select
             value={currentVertical}
             onValueChange={(v) => setPendingVertical(v)}
@@ -410,8 +418,10 @@ export default function BusinessBrainSettingsPage() {
               {verticalProfileQ.data.description}
             </p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </BrainPanel>
+
+
 
       <StatusSummaryCard
         loading={statusQ.isLoading}
@@ -501,69 +511,69 @@ function StatusSummaryCard({
     { label: "Last search activity", matchOk: ["bb_search_query_submitted"] },
   ];
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Status summary</CardTitle>
-        <CardDescription>
-          Latest signals from the last 90 days. Empty rows mean no data — not failures.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-          </div>
-        )}
-        {error && (
-          <div className="flex items-center gap-2 text-sm text-destructive">
-            <AlertCircle className="h-4 w-4" /> Could not load status: {error}
-          </div>
-        )}
-        {!loading && !error && (
-          <div className="divide-y text-sm">
-            {rows.map((r) => {
-              const ok = events?.find((e) => r.matchOk.includes(e.event_type));
-              const fail = r.matchFail
-                ? events?.find((e) => r.matchFail!.includes(e.event_type))
-                : undefined;
-              const okAt = ok ? new Date(ok.created_at).toLocaleString() : null;
-              const failAt = fail ? new Date(fail.created_at).toLocaleString() : null;
-              const newest =
-                ok && fail
-                  ? new Date(ok.created_at) >= new Date(fail.created_at)
-                    ? "ok"
-                    : "fail"
-                  : ok
-                    ? "ok"
-                    : fail
-                      ? "fail"
-                      : "none";
-              return (
-                <div key={r.label} className="flex items-center justify-between py-2">
-                  <span className="text-muted-foreground">{r.label}</span>
-                  <span className="text-right">
-                    {newest === "none" && (
-                      <Badge variant="outline">No data</Badge>
-                    )}
-                    {newest === "ok" && (
-                      <span className="text-xs">
-                        <Badge variant="default" className="mr-2">OK</Badge>
-                        {okAt}
-                      </span>
-                    )}
-                    {newest === "fail" && (
-                      <span className="text-xs">
-                        <Badge variant="destructive" className="mr-2">Failed</Badge>
-                        {failAt}
-                      </span>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <BrainPanel
+      toolbar={
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-foreground">Status summary</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Latest signals from the last 90 days. Empty rows mean no data — not failures.
+          </p>
+        </div>
+      }
+    >
+      {loading && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+        </div>
+      )}
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-[hsl(var(--bb-status-bad-fg))]">
+          <AlertCircle className="h-4 w-4" /> Could not load status: {error}
+        </div>
+      )}
+      {!loading && !error && (
+        <div className="divide-y divide-bb-border-subtle text-sm -my-1">
+          {rows.map((r) => {
+            const ok = events?.find((e) => r.matchOk.includes(e.event_type));
+            const fail = r.matchFail
+              ? events?.find((e) => r.matchFail!.includes(e.event_type))
+              : undefined;
+            const okAt = ok ? new Date(ok.created_at).toLocaleString() : null;
+            const failAt = fail ? new Date(fail.created_at).toLocaleString() : null;
+            const newest =
+              ok && fail
+                ? new Date(ok.created_at) >= new Date(fail.created_at)
+                  ? "ok"
+                  : "fail"
+                : ok
+                  ? "ok"
+                  : fail
+                    ? "fail"
+                    : "none";
+            return (
+              <div key={r.label} className="flex items-center justify-between py-2.5">
+                <span className="text-muted-foreground">{r.label}</span>
+                <span className="text-right">
+                  {newest === "none" && <BrainBadge tone="muted">No data</BrainBadge>}
+                  {newest === "ok" && (
+                    <span className="inline-flex items-center gap-2 text-xs bb-tnum text-muted-foreground">
+                      <BrainBadge tone="ok">OK</BrainBadge>
+                      {okAt}
+                    </span>
+                  )}
+                  {newest === "fail" && (
+                    <span className="inline-flex items-center gap-2 text-xs bb-tnum text-muted-foreground">
+                      <BrainBadge tone="bad">Failed</BrainBadge>
+                      {failAt}
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </BrainPanel>
   );
 }
+

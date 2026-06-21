@@ -1,6 +1,6 @@
 /**
  * ASC — shared provenance badge.
- * Visual only; behavior wired in later slices.
+ * Phase 2: rebuilt on Brain tonal tokens (bb-badge recipes). No prop changes.
  */
 import { cn } from "@/lib/utils";
 import type { AscBranchOrigin } from "@/lib/asc/types";
@@ -11,13 +11,16 @@ const LABELS: Record<AscBranchOrigin, string> = {
   unresolved_recommendation: "Recommendation",
 };
 
-const STYLES: Record<AscBranchOrigin, string> = {
-  user_stated:
-    "bg-primary/10 text-primary border-primary/40",
-  inferred_best_practice:
-    "bg-muted text-muted-foreground border-border",
-  unresolved_recommendation:
-    "bg-amber-50 text-amber-700 border-amber-300 border-dashed",
+const TONE: Record<AscBranchOrigin, string> = {
+  user_stated: "bb-badge bb-badge-info",
+  inferred_best_practice: "bb-badge bb-badge-muted",
+  unresolved_recommendation: "bb-badge bb-badge-warn border-dashed",
+};
+
+const DOT: Record<AscBranchOrigin, string> = {
+  user_stated: "bg-[hsl(var(--bb-status-info))]",
+  inferred_best_practice: "border border-muted-foreground/50",
+  unresolved_recommendation: "border border-[hsl(var(--bb-status-warn))] border-dashed",
 };
 
 export interface ProvenanceBadgeProps {
@@ -34,21 +37,11 @@ export function ProvenanceBadge({
   return (
     <span
       data-testid={`asc-provenance-${provenance}`}
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium",
-        STYLES[provenance],
-        className,
-      )}
+      data-provenance={provenance}
+      className={cn(TONE[provenance], "gap-1", className)}
     >
       <span
-        className={cn(
-          "h-1.5 w-1.5 rounded-full",
-          provenance === "user_stated" && "bg-primary",
-          provenance === "inferred_best_practice" &&
-            "border border-muted-foreground/60",
-          provenance === "unresolved_recommendation" &&
-            "border border-amber-500 border-dashed",
-        )}
+        className={cn("h-1.5 w-1.5 rounded-full shrink-0", DOT[provenance])}
         aria-hidden
       />
       {showLabel && <span>{LABELS[provenance]}</span>}
