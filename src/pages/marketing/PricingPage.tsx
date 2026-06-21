@@ -92,7 +92,7 @@ export default function PricingPage() {
       <MarketingHero
         eyebrow="Pricing"
         title="Priced for providers, not for end clients"
-        lede="Fabric59 is purchased by outsourced answering services and virtual receptionist providers. Your clients are workspaces. Tiers scale with workspaces, concurrent agents, and the vertical integration packs you need."
+        lede="Fabric59 is purchased by outsourced answering services and virtual receptionist providers. Every tier includes Business Brain — the governed knowledge layer that powers your agents on every call. Tiers scale with workspaces, concurrent agents, and the vertical packs you need."
       />
 
       <SectionShell bordered>
