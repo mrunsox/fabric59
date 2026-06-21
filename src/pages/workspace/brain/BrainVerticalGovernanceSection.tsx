@@ -1,8 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -28,6 +26,8 @@ import {
   triggerVerticalEvaluation,
 } from "@/lib/business-brain/selectors";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
+import { BrainPanel, BrainBadge } from "@/components/business-brain/ui";
+import BbStateBlock from "@/components/business-brain/BbStateBlock";
 
 const GAP_KIND_LABEL: Record<VerticalGapKind, string> = {
   missing_entity: "Missing entity",
@@ -37,10 +37,6 @@ const GAP_KIND_LABEL: Record<VerticalGapKind, string> = {
 
 /**
  * Phase 6 — Coverage & gaps section embedded in Governance.
- *
- * Surfaces per-entity coverage rollups + open gaps for the workspace's
- * assigned vertical profile. Required-entity coverage only (min_count > 0).
- * No auto-fix; reviewers either navigate to the fact or suppress the gap.
  */
 export default function BrainVerticalGovernanceSection() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -82,7 +78,6 @@ export default function BrainVerticalGovernanceSection() {
       }),
   });
 
-  // Telemetry: fire once when section becomes visible with a profile assigned.
   useEffect(() => {
     if (!profileQuery.data) return;
     emitBbEvent("bb_vertical_governance_view_opened", {
@@ -134,23 +129,26 @@ export default function BrainVerticalGovernanceSection() {
   if (!profileQuery.isLoading && !profileQuery.data) {
     return (
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold">Coverage & gaps</h3>
-        <Card className="p-6 text-sm text-muted-foreground">
-          No vertical profile is assigned to this workspace. Vertical coverage
-          checks are skipped.
-        </Card>
+        <header>
+          <h2 className="text-base font-semibold text-foreground">Coverage &amp; gaps</h2>
+        </header>
+        <BbStateBlock
+          kind="noData"
+          title="No vertical profile assigned"
+          description="Vertical coverage checks are skipped until a profile is assigned to this workspace."
+        />
       </section>
     );
   }
 
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold">Coverage & gaps</h3>
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-foreground">Coverage &amp; gaps</h2>
           {profileQuery.data ? (
-            <p className="text-xs text-muted-foreground">
-              Vertical: <span className="font-medium">{profileQuery.data.label}</span>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Vertical: <span className="font-medium text-foreground/80">{profileQuery.data.label}</span>
             </p>
           ) : null}
         </div>
@@ -167,43 +165,49 @@ export default function BrainVerticalGovernanceSection() {
           )}
           Re-evaluate coverage
         </Button>
-      </div>
+      </header>
 
       {/* Coverage cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {(coverageQuery.data ?? []).map((c) => {
           const pct = Math.round(c.coverageRatio * 100);
           return (
-            <Card key={`${c.verticalProfileId}-${c.entityType}`} className="p-3">
+            <article
+              key={`${c.verticalProfileId}-${c.entityType}`}
+              className="bb-card-raised p-3"
+            >
               <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="text-sm font-medium">
+                <span className="text-sm font-medium text-foreground">
                   {ENTITY_LABEL[c.entityType] ?? c.entityType}
                 </span>
                 {c.highPriority ? (
-                  <Badge variant="secondary" className="bg-amber-100 text-amber-900">
+                  <BrainBadge tone="warn">
                     <ShieldAlert className="mr-1 h-3 w-3" /> High priority
-                  </Badge>
+                  </BrainBadge>
                 ) : null}
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground bb-tnum">
                 {c.actualCount} / {c.requiredCount} required ({pct}%)
               </div>
               <Progress value={pct} className="mt-2 h-1.5" />
-            </Card>
+            </article>
           );
         })}
         {coverageQuery.data && coverageQuery.data.length === 0 ? (
-          <Card className="col-span-full p-6 text-sm text-muted-foreground">
-            No coverage data yet. Run "Re-evaluate coverage" to compute the
-            first snapshot.
-          </Card>
+          <div className="col-span-full">
+            <BbStateBlock
+              kind="noData"
+              title="No coverage data yet"
+              description='Run "Re-evaluate coverage" to compute the first snapshot.'
+            />
+          </div>
         ) : null}
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 pt-2">
         <Select value={gapKind} onValueChange={(v) => setGapKind(v as typeof gapKind)}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-48 h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All gap kinds</SelectItem>
             <SelectItem value="missing_field">Missing field</SelectItem>
@@ -212,7 +216,7 @@ export default function BrainVerticalGovernanceSection() {
           </SelectContent>
         </Select>
         <Select value={entityType} onValueChange={(v) => setEntityType(v as typeof entityType)}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-48 h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All entity types</SelectItem>
             {BB_ENTITY_TYPES.map((t) => (
@@ -236,57 +240,61 @@ export default function BrainVerticalGovernanceSection() {
 
       {/* Gap list */}
       {gapsQuery.isLoading ? (
-        <div className="flex items-center py-6 text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading gaps…
-        </div>
+        <BrainPanel>
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading gaps…
+          </div>
+        </BrainPanel>
       ) : (gapsQuery.data ?? []).length === 0 ? (
-        <Card className="p-6 text-sm text-muted-foreground">
-          No open gaps. Coverage looks good for this vertical.
-        </Card>
+        <BbStateBlock
+          kind="noData"
+          title="No open gaps"
+          description="Coverage looks good for this vertical."
+        />
       ) : (
-        <Card className="divide-y overflow-hidden">
-          {(gapsQuery.data ?? []).map((g) => (
-            <div
-              key={g.id}
-              className="flex items-center justify-between gap-3 px-4 py-3"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-rose-100 text-rose-900">
-                    {GAP_KIND_LABEL[g.gapKind]}
-                  </Badge>
-                  <span className="text-sm font-medium">
-                    {ENTITY_LABEL[g.entityType] ?? g.entityType}
-                  </span>
-                  {g.highPriority ? (
-                    <Badge variant="outline" className="text-[10px]">High priority</Badge>
+        <BrainPanel className="p-0 overflow-hidden">
+          <ul className="divide-y divide-bb-border-subtle">
+            {(gapsQuery.data ?? []).map((g) => (
+              <li
+                key={g.id}
+                className="flex items-center justify-between gap-3 px-4 py-3 bb-row-hover"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <BrainBadge tone="bad">{GAP_KIND_LABEL[g.gapKind]}</BrainBadge>
+                    <span className="text-sm font-medium text-foreground">
+                      {ENTITY_LABEL[g.entityType] ?? g.entityType}
+                    </span>
+                    {g.highPriority ? (
+                      <BrainBadge tone="warn">High priority</BrainBadge>
+                    ) : null}
+                  </div>
+                  {g.fieldPath ? (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {g.validationHint ?? g.fieldPath}
+                    </div>
                   ) : null}
                 </div>
-                {g.fieldPath ? (
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {g.validationHint ?? g.fieldPath}
-                  </div>
-                ) : null}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onGoFix(g.entityType, g.factId)}
-                >
-                  <ExternalLink className="mr-1 h-3.5 w-3.5" /> Go fix
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => onSuppress(g.id, g.gapKind, g.entityType)}
-                >
-                  <EyeOff className="mr-1 h-3.5 w-3.5" /> Suppress
-                </Button>
-              </div>
-            </div>
-          ))}
-        </Card>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onGoFix(g.entityType, g.factId)}
+                  >
+                    <ExternalLink className="mr-1 h-3.5 w-3.5" /> Go fix
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => onSuppress(g.id, g.gapKind, g.entityType)}
+                  >
+                    <EyeOff className="mr-1 h-3.5 w-3.5" /> Suppress
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </BrainPanel>
       )}
     </section>
   );

@@ -1,11 +1,10 @@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { resolveConflict, type ConflictView } from "@/lib/business-brain/selectors";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
 import { toast } from "sonner";
+import { BrainBadge } from "@/components/business-brain/ui";
 
 interface Props {
   conflict: ConflictView | null;
@@ -37,37 +36,42 @@ export default function BbConflictDrawer({ conflict, onClose, onResolved }: Prop
     <Sheet open onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full max-w-xl overflow-y-auto sm:max-w-xl">
         <SheetHeader>
-          <SheetTitle>Conflict review</SheetTitle>
-          <SheetDescription>
+          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Governance · Conflict
+          </div>
+          <SheetTitle className="text-lg">Conflict review</SheetTitle>
+          <SheetDescription className="bb-tnum">
             {conflict.conflictKind.replace(/_/g, " ")}
             {conflict.similarity != null ? ` · similarity ${conflict.similarity.toFixed(2)}` : ""}
+            {" · "}
+            {conflict.entityType}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {[conflict.primaryFact, conflict.conflictingFact].map((f, idx) =>
             f ? (
-              <Card key={f.id} className="p-3 text-sm">
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="font-medium">{f.displayName}</span>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {idx === 0 ? "A" : "B"}
-                  </Badge>
+              <article key={f.id} className="bb-panel p-3 text-sm">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <span className="truncate font-medium text-foreground">{f.displayName}</span>
+                  <BrainBadge tone="info">{idx === 0 ? "A" : "B"}</BrainBadge>
                 </div>
                 <div className="mb-2 text-xs text-muted-foreground">
                   {f.entityType} · reviewed {new Date(f.lastReviewedAt).toLocaleDateString()}
                 </div>
-                <pre className="max-h-48 overflow-auto rounded bg-muted/40 p-2 text-[11px]">
+                <pre className="max-h-48 overflow-auto rounded border border-bb-border-subtle bg-bb-surface-inset p-2 text-[11px] text-foreground/85">
                   {JSON.stringify(f.payload, null, 2)}
                 </pre>
-              </Card>
+              </article>
             ) : (
-              <Card key={idx} className="p-3 text-sm text-muted-foreground">Fact unavailable</Card>
+              <div key={idx} className="bb-panel p-3 text-sm text-muted-foreground">
+                Fact unavailable
+              </div>
             ),
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           <Button size="sm" onClick={() => act("supersede")}>Mark A as duplicate &amp; supersede</Button>
           <Button size="sm" variant="outline" onClick={() => act("keep_both")}>Keep both</Button>
           <Button size="sm" variant="ghost" onClick={() => act("dismiss")}>Dismiss conflict</Button>

@@ -13,8 +13,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -45,6 +43,8 @@ import {
 } from "@/lib/business-brain/selectors";
 import { emitBbEvent } from "@/lib/business-brain/telemetry";
 import type { GapChannel } from "@/lib/business-brain/gapLogging";
+import { BrainPanel, BrainBadge } from "@/components/business-brain/ui";
+import BbStateBlock from "@/components/business-brain/BbStateBlock";
 
 const CHANNEL_ICON: Record<GapChannel, typeof SearchIcon> = {
   search: SearchIcon,
@@ -153,8 +153,6 @@ export default function BrainGapGovernanceSection() {
       gapTopicAction: "link_fact",
       entityType: t.entityTypeHint ?? undefined,
     });
-    // Send reviewer to search scoped to entity hint; explicit confirmation
-    // happens there. Phase 7 keeps the link action UI-only (no auto-write).
     const params = new URLSearchParams();
     if (t.entityTypeHint) params.set("entity", t.entityTypeHint);
     params.set("linkGap", t.id);
@@ -163,12 +161,11 @@ export default function BrainGapGovernanceSection() {
 
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold">Demand gaps</h3>
-          <p className="text-xs text-muted-foreground">
-            Topics derived from unanswered search, ASC, and assist signals. No
-            automatic facts are created — every action is explicit.
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-foreground">Demand gaps</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Topics derived from unanswered search, ASC, and assist signals. No automatic facts are created — every action is explicit.
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={runClustering} disabled={running}>
@@ -179,11 +176,11 @@ export default function BrainGapGovernanceSection() {
           )}
           Re-cluster now
         </Button>
-      </div>
+      </header>
 
       <div className="flex flex-wrap items-center gap-2">
         <Select value={channel} onValueChange={(v) => setChannel(v as typeof channel)}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-40 h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All channels</SelectItem>
             <SelectItem value="search">Search</SelectItem>
@@ -192,7 +189,7 @@ export default function BrainGapGovernanceSection() {
           </SelectContent>
         </Select>
         <Select value={entityHint} onValueChange={setEntityHint}>
-          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-44 h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All entity hints</SelectItem>
             {entityHints.map((h) => (
@@ -201,7 +198,7 @@ export default function BrainGapGovernanceSection() {
           </SelectContent>
         </Select>
         <Select value={windowDays} onValueChange={(v) => setWindowDays(v as typeof windowDays)}>
-          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="7">Last 7 days</SelectItem>
             <SelectItem value="30">Last 30 days</SelectItem>
@@ -211,62 +208,64 @@ export default function BrainGapGovernanceSection() {
       </div>
 
       {topicsQuery.isLoading ? (
-        <div className="flex items-center py-6 text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading gap topics…
-        </div>
+        <BrainPanel>
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading gap topics…
+          </div>
+        </BrainPanel>
       ) : (topicsQuery.data ?? []).length === 0 ? (
-        <Card className="p-6 text-sm text-muted-foreground">
-          No open demand gaps. Knowledge coverage is keeping up with caller demand.
-        </Card>
+        <BbStateBlock
+          kind="noData"
+          title="No open demand gaps"
+          description="Knowledge coverage is keeping up with caller demand for this window."
+        />
       ) : (
-        <Card className="divide-y overflow-hidden">
-          {(topicsQuery.data ?? []).map((t) => (
-            <div key={t.id} className="flex items-start justify-between gap-3 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{t.canonicalQuestion}</div>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  {t.entityTypeHint ? (
-                    <Badge variant="secondary" className="text-[10px]">
-                      hint: {t.entityTypeHint}
-                    </Badge>
-                  ) : null}
-                  {t.verticalRequirementHint ? (
-                    <Badge variant="outline" className="text-[10px]">
-                      {t.verticalRequirementHint}
-                    </Badge>
-                  ) : null}
-                  <span>{t.openEventCount} signal{t.openEventCount === 1 ? "" : "s"}</span>
-                  <span>·</span>
-                  <span>last {new Date(t.lastSeenAt).toLocaleDateString()}</span>
-                  <span className="flex items-center gap-1">
-                    {t.channels.map((c) => {
-                      const I = CHANNEL_ICON[c];
-                      return (
-                        <span key={c} title={CHANNEL_LABEL[c]} className="inline-flex items-center">
-                          <I className="h-3 w-3" />
-                        </span>
-                      );
-                    })}
-                  </span>
+        <BrainPanel className="p-0 overflow-hidden">
+          <ul className="divide-y divide-bb-border-subtle">
+            {(topicsQuery.data ?? []).map((t) => (
+              <li key={t.id} className="flex items-start justify-between gap-3 px-4 py-3 bb-row-hover">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium text-foreground">{t.canonicalQuestion}</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    {t.entityTypeHint ? (
+                      <BrainBadge tone="info">hint: {t.entityTypeHint}</BrainBadge>
+                    ) : null}
+                    {t.verticalRequirementHint ? (
+                      <BrainBadge tone="muted">{t.verticalRequirementHint}</BrainBadge>
+                    ) : null}
+                    <span className="bb-tnum">{t.openEventCount} signal{t.openEventCount === 1 ? "" : "s"}</span>
+                    <span>·</span>
+                    <span className="bb-tnum">last {new Date(t.lastSeenAt).toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1 text-muted-foreground/80">
+                      {t.channels.map((c) => {
+                        const I = CHANNEL_ICON[c];
+                        return (
+                          <span key={c} title={CHANNEL_LABEL[c]} className="inline-flex items-center">
+                            <I className="h-3 w-3" />
+                          </span>
+                        );
+                      })}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-1.5">
-                <Button size="sm" variant="default" onClick={() => onCreateDraft(t)}>
-                  <Plus className="mr-1 h-3.5 w-3.5" /> Create draft
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => onLinkExisting(t)}>
-                  <Link2 className="mr-1 h-3.5 w-3.5" /> Link
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => onSuppress(t)}>
-                  <EyeOff className="mr-1 h-3.5 w-3.5" /> Suppress
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => onDismiss(t)}>
-                  <Trash2 className="mr-1 h-3.5 w-3.5" /> Dismiss
-                </Button>
-              </div>
-            </div>
-          ))}
-        </Card>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <Button size="sm" variant="default" onClick={() => onCreateDraft(t)}>
+                    <Plus className="mr-1 h-3.5 w-3.5" /> Create draft
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => onLinkExisting(t)}>
+                    <Link2 className="mr-1 h-3.5 w-3.5" /> Link
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => onSuppress(t)}>
+                    <EyeOff className="mr-1 h-3.5 w-3.5" /> Suppress
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => onDismiss(t)}>
+                    <Trash2 className="mr-1 h-3.5 w-3.5" /> Dismiss
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </BrainPanel>
       )}
     </section>
   );
