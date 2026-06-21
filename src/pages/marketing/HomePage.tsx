@@ -143,15 +143,15 @@ export default function HomePage() {
         secondary={{ label: "Sign in", to: "/login" }}
       />
 
-      <SectionShell id="four-questions" bordered>
+      <SectionShell id="how-brain-helps" bordered>
         <SectionIntro
-          eyebrow="Every call, structured"
-          title="Four questions. One workspace. Every client."
-          lede="Fabric59 structures every call your agents take around the four questions that actually matter for an answering service — and routes the answers into the right client's system of record."
+          eyebrow="How Business Brain helps your team"
+          title="One governed answer for each client, on every call"
+          lede="Business Brain is the governed knowledge layer inside Fabric59. Your team curates each client's answers once; agents read them on the call, the moment the call connects."
           className="mb-12"
         />
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {QUESTIONS.map((q) => (
+          {BRAIN_LIFECYCLE.map((q) => (
             <CapabilityCard key={q.title} icon={q.icon} title={q.title} body={q.body} />
           ))}
         </div>
