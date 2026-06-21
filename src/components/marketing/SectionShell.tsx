@@ -4,17 +4,21 @@ import { cn } from "@/lib/utils";
 interface SectionShellProps {
   id?: string;
   children: ReactNode;
+  /** @deprecated use `surface="muted"` */
   muted?: boolean;
   bordered?: boolean;
   size?: "sm" | "md" | "lg";
+  surface?: "default" | "muted" | "inset";
   className?: string;
 }
 
 /**
- * Phase H — Canonical marketing section wrapper.
+ * Phase 4 — Canonical marketing section wrapper.
  *
- * Consistent vertical rhythm and max-width across all marketing pages.
- * Optional muted background and top border for visual separation.
+ * `surface`:
+ *   - "default" — plain background
+ *   - "muted"   — soft muted band (back-compat with `muted` prop)
+ *   - "inset"   — Brain-aligned inset surface (hsl bb-surface-inset)
  */
 export function SectionShell({
   id,
@@ -22,17 +26,24 @@ export function SectionShell({
   muted,
   bordered,
   size = "md",
+  surface,
   className,
 }: SectionShellProps) {
-  const padY =
-    size === "sm" ? "py-14" : size === "lg" ? "py-28" : "py-20";
+  const padY = size === "sm" ? "py-14" : size === "lg" ? "py-28" : "py-20";
+  const resolved = surface ?? (muted ? "muted" : "default");
+  const bg =
+    resolved === "muted"
+      ? "bg-muted/25"
+      : resolved === "inset"
+        ? "bg-[hsl(var(--bb-surface-inset))]"
+        : "";
   return (
     <section
       id={id}
       className={cn(
         padY,
-        muted && "bg-muted/20",
-        bordered && "border-t border-border/30",
+        bg,
+        bordered && "border-t border-border/40",
         className,
       )}
     >

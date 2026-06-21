@@ -6,22 +6,25 @@ interface ProofStripProps {
 }
 
 /**
- * Phase G — Calm, text-only proof strip.
+ * Phase 4 — Calm, text-only proof strip rendered as hairline pills.
  * No fake logos, no fabricated metrics. Use short factual phrases only.
  */
 export function ProofStrip({ items, className }: ProofStripProps) {
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground",
+        "flex flex-wrap items-center justify-center gap-2.5",
         className,
       )}
     >
-      {items.map((item, i) => (
-        <div key={item} className="flex items-center gap-3">
-          <span>{item}</span>
-          {i < items.length - 1 && <span aria-hidden className="hidden sm:inline h-1 w-1 rounded-full bg-border" />}
-        </div>
+      {items.map((item) => (
+        <span
+          key={item}
+          className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1.5 text-xs text-foreground/80"
+        >
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-primary/70" />
+          {item}
+        </span>
       ))}
     </div>
   );
