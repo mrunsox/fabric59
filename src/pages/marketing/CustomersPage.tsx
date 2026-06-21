@@ -16,19 +16,19 @@ const STORIES = [
   {
     sector: "Legal intake",
     headline: "Five9 + MyCase, agents in one console",
-    body: "First Fabric59 design partner running live MyCase intake via per-client API key. Agents work from canonical decision-tree guides; outcomes route per disposition into the right matter, with telephony reconciliation against Five9 logs.",
+    body: "First Fabric59 design partner running live MyCase intake. Agents work from a per-firm guide with Business Brain answers on screen — conflict prompts, matter context, the firm's own language. Outcomes route per disposition into the right matter, with telephony reconciliation against Five9 logs.",
     outcome: "Eliminated glue scripts between dialer and case file",
   },
   {
     sector: "BPO operations",
     headline: "Multi-client workspaces on a shared Five9 domain",
-    body: "Workspace-per-client isolation with Postgres RLS, per-tenant rate limits, tenant health, and a Supervisor / QA review queue replaced spreadsheet-driven client management.",
+    body: "Workspace-per-client isolation with row-level data separation, per-tenant rate limits, and tenant health replaced spreadsheet-driven client management. Business Brain gave supervisors one place to curate each client's answers and one Governance queue to keep them current.",
     outcome: "One cockpit replaces a folder of client trackers",
   },
   {
     sector: "Platform partner",
     headline: "Concierge onboarding, safe-mode rollout",
-    body: "Design-partner flag, rollout status, GA readiness checklist, feedback drawer, and What's New release notes coordinate every pilot from kickoff through go-live.",
+    body: "Design-partner flag, rollout status, GA readiness checklist, feedback drawer, and What's New release notes coordinate every pilot from kickoff through go-live. Business Brain Health gives the partner and the pilot team the same view of coverage and freshness.",
     outcome: "Predictable pilots with a documented path to GA",
   },
 ];
