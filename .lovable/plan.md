@@ -450,3 +450,36 @@ Guardrails kept:
 
 Visual verification screenshots, then stop for approval before Phase 5.
 
+
+---
+
+# Phase 5 — Coherence, A11y, Performance & Regression Sweep (done)
+
+Audit-first hardening pass. **No code edits required** — audit returned zero
+critical/high/medium items inside Phase 5 scope.
+
+## Deliverables
+
+- `docs/business-brain-phase5-audit.md` — categorized issue list, surface
+  matrix, screenshots reference, parked items.
+- Visual regression screenshots: `/tmp/browser/phase5/screenshots/` (Home,
+  Solutions, Personas, Customers, Pricing × desktop + mobile 375).
+  Representative subset mirrored to `/mnt/documents/phase5/`.
+- `OUTLINE.md` — Phase 5 marked done.
+
+## Regression
+
+`bunx vitest run`: 1068 passed / 6 failed / 7 skipped — parity with end of
+Phase 4 baseline; the 6 failures are pre-existing `navRouting` and tokens
+guard issues unrelated to the refresh program.
+
+## Parked
+
+- `WorkspaceAgentsPage` ghost-route guard in `navRouting.test.ts` — routing
+  scope, deferred per guardrail.
+- Legacy `MarketingLayout.tsx` cleanup — out of scope.
+
+## Program status
+
+**Business Brain refresh program — complete.** All Phases 0–5 acceptance
+criteria pass.
