@@ -18,10 +18,10 @@ interface PersonaListProps {
 }
 
 /**
- * Phase H — Premium persona cards.
+ * Phase 4 — Persona panels aligned to the Brain panel chrome.
  *
- * Role + jobs-to-be-done, optional link to a related operating motion.
- * No badges. No fake titles. Tokens only.
+ * Two-column layout: left rail with icon + role; right column with
+ * jobs and an optional motion link. Tokens only.
  */
 export function PersonaList({ items, className }: PersonaListProps) {
   return (
@@ -32,25 +32,33 @@ export function PersonaList({ items, className }: PersonaListProps) {
           <article
             key={p.role}
             id={p.anchorId}
-            className="rounded-2xl border border-border/60 bg-card/80 p-6 flex flex-col scroll-mt-24"
+            className="bb-panel scroll-mt-24 p-6 flex flex-col"
           >
-            <div className="flex items-center gap-3">
-              <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/15">
+            <div className="flex items-start gap-4 pb-5 border-b border-border/40">
+              <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary/12 to-primary/[0.04] ring-1 ring-primary/20 flex items-center justify-center shrink-0">
                 <Icon className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="text-base font-semibold tracking-tight text-foreground">
-                {p.role}
-              </h3>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-1">
+                  Role
+                </p>
+                <h3 className="text-base font-semibold tracking-tight text-foreground">
+                  {p.role}
+                </h3>
+              </div>
             </div>
-            <ul className="mt-5 space-y-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mt-5 mb-3">
+              Day-to-day
+            </p>
+            <ul className="space-y-2 flex-1">
               {p.jobs.map((j) => (
                 <li
                   key={j}
-                  className="text-sm text-muted-foreground leading-relaxed flex items-start gap-2"
+                  className="text-sm text-muted-foreground leading-relaxed flex items-start gap-2.5"
                 >
                   <span
                     aria-hidden
-                    className="mt-2 h-1 w-1 rounded-full bg-primary/60 shrink-0"
+                    className="mt-[7px] h-1 w-1 rounded-full bg-primary/60 shrink-0"
                   />
                   <span>{j}</span>
                 </li>

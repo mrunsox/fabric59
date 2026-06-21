@@ -5,17 +5,15 @@ import { MarketingHero } from "@/components/marketing/MarketingHero";
 import { SectionShell } from "@/components/marketing/SectionShell";
 import { SectionIntro } from "@/components/marketing/SectionIntro";
 import { CtaRow } from "@/components/marketing/CtaRow";
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 /**
- * Phase 3 — Pricing page.
+ * Phase 3 / Phase 4 — Pricing page.
  *
- * Tiers framed around provider scale: number of client workspaces, campaigns
- * per workspace, concurrent agents, and the vertical integration packs
- * included. Fabric59 is purchased by the provider (outsourced answering or
- * virtual receptionist business), not by the individual end-client firm.
- *
- * Concierge-led only. Every CTA routes to /contact?topic=pricing or pilot.
+ * Tiers framed around provider scale. Concierge-led only. Every CTA
+ * routes to /contact?topic=pricing or pilot. The middle tier carries a
+ * restrained "Recommended" treatment — small primary eyebrow only, no
+ * loud ribbon or glow.
  */
 const TIERS = [
   {
@@ -95,55 +93,55 @@ export default function PricingPage() {
         lede="Fabric59 is purchased by outsourced answering services and virtual receptionist providers. Every tier includes Business Brain — the governed knowledge layer that powers your agents on every call. Tiers scale with workspaces, concurrent agents, and the vertical packs you need."
       />
 
-      <SectionShell bordered>
-        <div className="grid md:grid-cols-3 gap-5">
+      <SectionShell surface="inset" bordered>
+        <div className="grid md:grid-cols-3 gap-5 items-stretch">
           {TIERS.map((t) => (
-            <Card
+            <article
               key={t.name}
-              className={
+              className={cn(
+                "relative flex flex-col rounded-2xl border bg-card p-6 transition-colors",
                 t.highlight
-                  ? "border-primary/60 shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.25)]"
-                  : "border-border/60"
-              }
+                  ? "border-primary/40 ring-1 ring-primary/15"
+                  : "border-border/60",
+              )}
             >
-              <CardContent className="p-6 space-y-5">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold tracking-tight">{t.name}</h2>
-                    {t.highlight && (
-                      <span className="text-[10px] uppercase tracking-[0.18em] text-primary">
-                        Most providers
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">{t.blurb}</p>
+              {t.highlight && (
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary mb-2">
+                  Recommended
+                </p>
+              )}
+              <h2 className="text-base font-semibold tracking-tight text-foreground">
+                {t.name}
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                {t.blurb}
+              </p>
+              <div className="mt-5 pb-5 border-b border-border/40">
+                <div className="text-3xl font-semibold tracking-tight text-foreground">
+                  {t.price}
                 </div>
-                <div>
-                  <div className="text-3xl font-semibold tracking-tight text-foreground">
-                    {t.price}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{t.cadence}</div>
-                </div>
-                <ul className="text-sm text-muted-foreground space-y-2">
-                  {t.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to={t.cta.to}
-                  className={
-                    t.highlight
-                      ? "inline-flex w-full items-center justify-center gap-1.5 h-10 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-                      : "inline-flex w-full items-center justify-center gap-1.5 h-10 rounded-md border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
-                  }
-                >
-                  {t.cta.label} <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </CardContent>
-            </Card>
+                <div className="text-xs text-muted-foreground mt-0.5">{t.cadence}</div>
+              </div>
+              <ul className="text-sm text-muted-foreground space-y-2 mt-5 flex-1">
+                {t.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <Check className="h-3.5 w-3.5 text-primary mt-1 shrink-0" />
+                    <span className="leading-relaxed">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to={t.cta.to}
+                className={cn(
+                  "mt-6 inline-flex w-full items-center justify-center gap-1.5 h-10 rounded-md text-sm font-medium transition-colors",
+                  t.highlight
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "border border-border bg-background hover:bg-muted",
+                )}
+              >
+                {t.cta.label} <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </article>
           ))}
         </div>
         <p className="mt-10 text-center text-xs text-muted-foreground">

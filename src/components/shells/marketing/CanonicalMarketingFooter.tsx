@@ -4,11 +4,11 @@ import { Fabric59Icon } from "@/components/brand/Fabric59Icon";
 import { MARKETING_NAV } from "@/config/canonicalNav";
 
 /**
- * Phase 1 — Canonical marketing footer.
+ * Phase 4 — Canonical marketing footer.
  *
- * Product column is driven by MARKETING_NAV. Trust/legal links remain
- * authoritative, exposed verbatim. No CTA targets routes to /admin,
- * /master, /superadmin or any internal surface.
+ * Four-column tighter grid on lg+, collapses cleanly on tablet/mobile.
+ * Hairline dividers and small-caps headers align with the Brain workspace
+ * footer treatment without transplanting the app shell.
  */
 
 const RESOURCE_LINKS = [
@@ -26,13 +26,21 @@ const COMPANY_LINKS = [
   { label: "Responsible Disclosure", href: "/responsible-disclosure" },
 ];
 
+function ColHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <h4 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-4">
+      {children}
+    </h4>
+  );
+}
+
 export function CanonicalMarketingFooter() {
   return (
-    <footer className="border-t border-border/30 bg-background pt-20 pb-8">
+    <footer className="border-t border-border/40 bg-background pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 mb-14">
           {/* Brand */}
-          <div className="lg:col-span-1 flex flex-col gap-4">
+          <div className="sm:col-span-2 lg:col-span-5 flex flex-col gap-4 max-w-md">
             <div className="flex items-center gap-2.5">
               <Fabric59Icon size="sm" />
               <span className="text-base font-extrabold tracking-tight text-foreground">
@@ -40,10 +48,10 @@ export function CanonicalMarketingFooter() {
               </span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Fabric59 is the multi-tenant guided call workspace for outsourced answering and
-              virtual receptionist providers. Business Brain — the governed knowledge layer
-              inside Fabric59 — gives your agents the right answer for every client. Five9-native.
-              Multi-vertical.
+              The multi-tenant guided call workspace for outsourced answering and
+              virtual receptionist providers. Business Brain — the governed
+              knowledge layer inside Fabric59 — gives your agents the right answer
+              for every client. Five9-native. Multi-vertical.
             </p>
             <a
               href="mailto:hi@fabric59.com"
@@ -53,9 +61,8 @@ export function CanonicalMarketingFooter() {
             </a>
           </div>
 
-          {/* Product — MARKETING_NAV driven */}
-          <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Product</h4>
+          <div className="lg:col-span-2">
+            <ColHeader>Product</ColHeader>
             <nav className="flex flex-col gap-2.5">
               {MARKETING_NAV.map((item) => (
                 <Link
@@ -69,9 +76,8 @@ export function CanonicalMarketingFooter() {
             </nav>
           </div>
 
-          {/* Resources */}
-          <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Resources</h4>
+          <div className="lg:col-span-2">
+            <ColHeader>Resources</ColHeader>
             <nav className="flex flex-col gap-2.5">
               {RESOURCE_LINKS.map((link) => (
                 <Link
@@ -85,9 +91,8 @@ export function CanonicalMarketingFooter() {
             </nav>
           </div>
 
-          {/* Company */}
-          <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Company</h4>
+          <div className="lg:col-span-3">
+            <ColHeader>Company</ColHeader>
             <nav className="flex flex-col gap-2.5">
               {COMPANY_LINKS.map((link) => (
                 <Link
@@ -100,28 +105,13 @@ export function CanonicalMarketingFooter() {
               ))}
             </nav>
           </div>
-
-          {/* Trust */}
-          <div>
-            <h4 className="text-sm font-semibold text-foreground mb-4">Trust</h4>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Credentials encrypted at rest. Tenants isolated by Postgres row-level security.
-              Full audit trail. Founder-led pilots.
-            </p>
-            <Link
-              to="/trust"
-              className="text-xs text-primary hover:underline inline-block mt-3"
-            >
-              Read the trust overview →
-            </Link>
-          </div>
         </div>
 
-        <div className="border-t border-border/30 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm text-muted-foreground">
+        <div className="border-t border-border/40 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Fabric59. All rights reserved.
           </span>
-          <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
             An UNSOX Digital Solution
             <a
               href="https://unsox.com"
@@ -130,7 +120,7 @@ export function CanonicalMarketingFooter() {
               className="inline-flex"
             >
               <Heart
-                className="h-4 w-4 text-orange-500 animate-pulse hover:scale-125 transition-transform"
+                className="h-3.5 w-3.5 text-orange-500 hover:scale-125 transition-transform"
                 fill="currentColor"
               />
             </a>

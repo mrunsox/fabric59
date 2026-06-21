@@ -36,13 +36,13 @@ export function CanonicalMarketingHeader() {
     <header
       ref={headerRef}
       className={cn(
-        "border-b sticky top-0 z-50 backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-200",
+        "sticky top-0 z-50 backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-200 border-b",
         scrolled
-          ? "border-border/70 bg-background/95 shadow-sm"
-          : "border-border/40 bg-background/80",
+          ? "border-border/60 bg-background/90 shadow-[0_1px_0_hsl(var(--border)/0.4),0_8px_24px_-18px_hsl(var(--foreground)/0.15)]"
+          : "border-transparent bg-background/70",
       )}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-6 px-6 py-3">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-6 px-6 h-14">
         <Link to="/" aria-label="Fabric59 home" className="shrink-0 whitespace-nowrap">
           <Fabric59Logo iconSize="md" />
         </Link>

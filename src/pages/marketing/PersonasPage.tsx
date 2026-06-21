@@ -87,7 +87,7 @@ export default function PersonasPage() {
         lede="Fabric59 is opinionated about who runs guided calls across many clients. Each role lands in a workspace surface — and a slice of Business Brain — mapped to their day."
       />
 
-      <SectionShell bordered>
+      <SectionShell surface="inset" bordered>
         <PersonaList items={PERSONAS} />
       </SectionShell>
     </MarketingLayout>
