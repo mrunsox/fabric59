@@ -131,14 +131,14 @@ export default function HomePage() {
       <StructuredData data={[organizationLD, softwareApplicationLD(), buildFaqLD(FAQ)]} />
 
       <MarketingHero
-        eyebrow="Multi-tenant guided call workspace · For outsourced answering & virtual receptionists"
+        eyebrow="Guided call workspace · For outsourced answering & virtual receptionist providers"
         title={
           <>
             Five9 handles the call.{" "}
             <span className="text-primary">Fabric59 is the brain.</span>
           </>
         }
-        lede="Your client's system of record holds the outcome. Fabric59 is the multi-tenant guided call workspace platform for outsourced answering services and virtual receptionist providers — multi-vertical by design, with a deep legal practice management pack shipping first."
+        lede="Fabric59 gives your team one workspace per client, the answers your agents need on every call, and a clean handoff into the system the client already runs. Powered by Business Brain — the governed knowledge layer that learns what each client wants you to say, and keeps it accurate."
         primary={{ label: "Start a pilot", to: "/contact?topic=pilot" }}
         secondary={{ label: "Sign in", to: "/login" }}
       />
