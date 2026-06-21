@@ -11,7 +11,7 @@ marketing site.
 | 0 — Audit & blueprint | Done | `docs/business-brain-frontend-audit.md`, `docs/business-brain-refresh-plan.md`, this file |
 | 1 — Critical product / frontend activation fixes | **In progress** | Broken nav fixed, hidden surfaces reachable, dead ends removed, empty/error/permission states tightened. No visual reskin. |
 | 2 — Logged-in product visual refresh | Planned | Premium enterprise visual direction applied to Brain + ASC + Assist. |
-| 3 — Marketing messaging refresh | Planned | Public copy rewritten to match shipped Brain capabilities. |
+| 3 — Marketing messaging refresh | **In progress** | Public copy rewritten to match shipped Brain capabilities. |
 | 4 — Marketing visual refresh | Planned | Public design system + SEO/OG sweep. |
 | 5 — Coherence / QA / polish | Planned | Cross-surface QA, last Medium audit items, final docs. |
 
