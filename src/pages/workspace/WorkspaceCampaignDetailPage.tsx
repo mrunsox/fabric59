@@ -123,12 +123,12 @@ export default function WorkspaceCampaignDetailPage() {
 
 
       <Card>
-        <CardHeader><CardTitle className="text-sm">Phase 3 note</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">About this view</CardTitle></CardHeader>
         <CardContent className="text-xs text-muted-foreground space-y-1">
-          <p>This is the canonical campaign detail shell. Builder, checklist, provisioning, and
-            archive workflows remain in the legacy admin page until Phase 4+.</p>
-          <p>Status, client linkage, and workspace ownership are now sourced from the canonical
-            <code className="px-1">campaigns</code> table.</p>
+          <p>This is the workspace campaign detail shell. Builder, readiness checklist, provisioning,
+            and archive workflows are reached from the org admin campaign page for now.</p>
+          <p>Status, client linkage, and workspace ownership shown here are sourced from the campaigns
+            record.</p>
         </CardContent>
       </Card>
     </div>
