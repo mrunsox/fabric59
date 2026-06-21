@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { MarketingShell } from "@/shells/MarketingShell";
 import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { HeroOpsPanel } from "@/components/marketing/HeroOpsPanel";
 import { SectionShell } from "@/components/marketing/SectionShell";
 import { SectionIntro } from "@/components/marketing/SectionIntro";
 import { MotionList } from "@/components/marketing/MotionList";
@@ -136,7 +137,7 @@ export default function HomePage() {
       <StructuredData data={[organizationLD, softwareApplicationLD(), buildFaqLD(FAQ)]} />
 
       <MarketingHero
-        eyebrow="Guided call workspace · For outsourced answering & virtual receptionist providers"
+        eyebrow="Guided call workspace · For outsourced answering & VR providers"
         title={
           <>
             Five9 handles the call.{" "}
@@ -146,13 +147,16 @@ export default function HomePage() {
         lede="Fabric59 gives your team one workspace per client, the answers your agents need on every call, and a clean handoff into the system the client already runs. Powered by Business Brain — the governed knowledge layer that learns what each client wants you to say, and keeps it accurate."
         primary={{ label: "Start a pilot", to: "/contact?topic=pilot" }}
         secondary={{ label: "Sign in", to: "/login" }}
+        align="left"
+        visual={<HeroOpsPanel />}
       />
 
-      <SectionShell id="how-brain-helps" bordered>
+      <SectionShell id="how-brain-helps" surface="inset" bordered>
         <SectionIntro
           eyebrow="How Business Brain helps your team"
           title="One governed answer for each client, on every call"
           lede="Business Brain is the governed knowledge layer inside Fabric59. Your team curates each client's answers once; agents read them on the call, the moment the call connects."
+          align="left"
           className="mb-12"
         />
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -162,30 +166,30 @@ export default function HomePage() {
         </div>
       </SectionShell>
 
-      <SectionShell id="motions" muted bordered>
+      <SectionShell id="motions" bordered>
         <SectionIntro eyebrow="Operating motions" title="Five real motions, one multi-client workspace" lede="Each motion lands in a real workspace surface that already ships — scoped per client account you run on Fabric59." className="mb-12" />
         <MotionList items={MOTIONS} />
       </SectionShell>
 
-      <SectionShell id="personas" bordered>
+      <SectionShell id="personas" surface="inset" bordered>
         <SectionIntro eyebrow="Built for" title="The four roles that run an answering-service operation" lede="Fabric59 is opinionated about who runs guided calls across many clients. Each persona has a workspace surface mapped to their day." className="mb-12" />
         <PersonaList items={PERSONAS} />
       </SectionShell>
 
-      <SectionShell id="integrations" muted bordered>
+      <SectionShell id="integrations" bordered>
         <SectionIntro eyebrow="Integrations posture" title="Five9-native telephony, vertical packs for downstream" lede="Five9 is the call layer. Downstream system-of-record is grouped into vertical packs — legal practice management ships first, more verticals follow. Every integration feeds the same Business Brain, so the answers your agents read and the records you push to the client's system stay in sync." className="mb-12" />
         <div className="grid gap-5 md:grid-cols-2">
           {INTEGRATIONS.map((i) => (
-            <CapabilityCard key={i.title} icon={i.icon} title={i.title} body={i.body} />
+            <CapabilityCard key={i.title} icon={i.icon} title={i.title} body={i.body} tone="raised" />
           ))}
         </div>
         <ProofStrip
-          className="mt-14"
+          className="mt-12"
           items={["Postgres RLS isolation per workspace", "AES-256 credential vault", "Per-client rate limits", "Visual mapping with Test runner"]}
         />
       </SectionShell>
 
-      <SectionShell id="proof" bordered>
+      <SectionShell id="proof" surface="inset" bordered>
         <ProofQuote
           quote="We stopped maintaining glue scripts the day Fabric59 wired Five9 into our clients' systems of record."
           context="Operations lead at an outsourced answering service running multiple legal clients on Fabric59 today"
@@ -195,11 +199,11 @@ export default function HomePage() {
         </p>
       </SectionShell>
 
-      <SectionShell id="faq" muted bordered>
+      <SectionShell id="faq" bordered>
         <SectionIntro eyebrow="Questions" title="Honest answers about what ships today" className="mb-10" />
-        <div className="max-w-3xl mx-auto space-y-4">
+        <div className="max-w-3xl mx-auto space-y-3">
           {FAQ.map((q) => (
-            <details key={q.question} className="group rounded-xl border border-border/60 bg-card/60 p-5 open:bg-card">
+            <details key={q.question} className="group rounded-xl border border-border/60 bg-card p-5 open:border-primary/30 transition-colors">
               <summary className="cursor-pointer list-none text-sm font-semibold text-foreground flex items-center justify-between gap-4">
                 {q.question}
                 <span aria-hidden className="text-primary transition-transform group-open:rotate-45 text-lg leading-none">+</span>
