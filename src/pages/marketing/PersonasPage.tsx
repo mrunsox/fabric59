@@ -84,7 +84,7 @@ export default function PersonasPage() {
       <MarketingHero
         eyebrow="Personas"
         title="Built for the four roles that own a Five9 program"
-        lede="Fabric59 is opinionated. Each persona lands in a workspace surface mapped to their day."
+        lede="Fabric59 is opinionated about who runs guided calls across many clients. Each role lands in a workspace surface — and a slice of Business Brain — mapped to their day."
       />
 
       <SectionShell bordered>
