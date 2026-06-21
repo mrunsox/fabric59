@@ -405,3 +405,48 @@ old metadata description). No test updates required this slice.
 
 Slice 2 ships only the copy/IA changes above. Phase 4 (marketing visual
 refresh, SEO/OG image sweep) is out of scope and waits for approval.
+
+
+---
+
+# Phase 4 — Marketing visual refresh (in progress)
+
+Visual + layout refresh of the public marketing surfaces to match the refreshed Business Brain workspace (Phase 2). Copy and routes unchanged.
+
+## Slice 1 — shared primitives and pages (shipped in this turn)
+
+Touched primitives:
+- src/components/marketing/MarketingHero.tsx — layered backdrop (radial wash + dot grid), pill eyebrow, optional right visual slot, size variants.
+- src/components/marketing/SectionShell.tsx — new `surface` prop (default | muted | inset) aligned with bb-surface-inset; back-compat with `muted`.
+- src/components/marketing/SectionIntro.tsx — eyebrow recipe aligned with BrainPageHeader (11px / tracking-[0.22em]).
+- src/components/marketing/CapabilityCard.tsx — `tone` prop (default | raised | inset), calmer hover, hairline icon chip.
+- src/components/marketing/ProofStrip.tsx — hairline pill row replacing the inline text strip.
+- src/components/marketing/ProofQuote.tsx — inset frame + thin primary accent rule.
+- src/components/marketing/PersonaList.tsx — bb-panel chrome with small-caps section labels (Role / Day-to-day).
+- src/components/marketing/MotionList.tsx — single bb-panel with hairline rows + ArrowUpRight affordance.
+- src/components/marketing/HeroOpsPanel.tsx — NEW illustrative product-adjacent panel for the home hero; clearly labeled "illustrative" / "Preview"; no fabricated metrics or screenshots.
+
+Touched shells:
+- src/shells/MarketingShell.tsx — ctaBanner now sits on an inset band.
+- src/components/shells/marketing/CanonicalMarketingHeader.tsx — reduced height to h-14, scroll-shadow on scroll, transparent border at top.
+- src/components/shells/marketing/CanonicalMarketingFooter.tsx — 12-col footer grid (collapses 1 → 2 → 12), small-caps column headers, tighter rhythm.
+
+Touched pages (JSX-only; copy unchanged):
+- src/pages/marketing/HomePage.tsx — left-aligned hero with HeroOpsPanel; alternating default/inset surfaces; `raised` tone for integration cards.
+- src/pages/marketing/SolutionsPage.tsx — non-sticky mini-nav linking to motion anchors; "Surfaced in" promoted to a small inset chip; motion sections alternate inset/default; legal section now inset.
+- src/pages/marketing/PersonasPage.tsx — personas now on inset surface using refreshed PersonaList.
+- src/pages/marketing/CustomersPage.tsx — design-partner stories rendered as bb-panel story cards with badge eyebrow and inset Outcome strip.
+- src/pages/marketing/PricingPage.tsx — restrained "Recommended" treatment (small primary eyebrow + 1px ring), tiers on inset surface, tighter card chrome.
+
+Guardrails kept:
+- Approved Phase 3 copy and claims untouched.
+- No new routes, no new product promises, no fake screenshots, no fabricated data states.
+- Trust / Security / Responsible disclosure / legal pages untouched.
+- IntegrationsIndexPage untouched (out of Phase 4 scope).
+- Footer grid collapses cleanly: 1 col (mobile) → 2 col (sm) → 12 col (lg).
+- Solutions mini-nav is non-sticky.
+
+## Next
+
+Visual verification screenshots, then stop for approval before Phase 5.
+

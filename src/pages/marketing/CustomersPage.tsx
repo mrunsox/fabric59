@@ -4,13 +4,13 @@ import { SectionShell } from "@/components/marketing/SectionShell";
 import { SectionIntro } from "@/components/marketing/SectionIntro";
 import { CtaRow } from "@/components/marketing/CtaRow";
 import { ProofQuote } from "@/components/marketing/ProofQuote";
-import { Card, CardContent } from "@/components/ui/card";
 
 /**
- * Phase H — Customers page.
+ * Phase 3 / Phase 4 — Customers page.
  *
  * Design-partner framing only. No fabricated logos, no inflated metrics.
- * One calm proof quote, then operating-motion narratives.
+ * One calm proof quote, then operating-motion narratives rendered as
+ * Brain-aligned story panels.
  */
 const STORIES = [
   {
@@ -57,9 +57,10 @@ export default function CustomersPage() {
         eyebrow="Customers"
         title="Real teams. Real workspaces. Real Five9."
         lede="Fabric59 is in active design-partner mode. The stories below describe how teams use Fabric59 today, including the Business Brain that ships inside it. No fabricated logos, no inflated metrics."
+        size="md"
       />
 
-      <SectionShell muted bordered>
+      <SectionShell surface="inset" bordered>
         <ProofQuote
           quote="We stopped maintaining glue scripts the day Fabric59 wired Five9 into our intake CRM."
           context="Operations lead at a legal-intake contact center using Fabric59 today"
@@ -69,20 +70,26 @@ export default function CustomersPage() {
       <SectionShell bordered>
         <div className="max-w-4xl mx-auto space-y-5">
           {STORIES.map((s) => (
-            <Card key={s.headline} className="border-border/60">
-              <CardContent className="p-6 space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary">
-                  {s.sector}
-                </p>
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                  {s.headline}
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">{s.body}</p>
-                <p className="text-xs text-muted-foreground italic border-l-2 border-primary/40 pl-3">
-                  {s.outcome}
-                </p>
-              </CardContent>
-            </Card>
+            <article
+              key={s.headline}
+              className="bb-panel p-6 md:p-8 transition-colors hover:border-primary/30"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <span className="bb-badge bb-badge-info">{s.sector}</span>
+              </div>
+              <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-foreground leading-tight">
+                {s.headline}
+              </h2>
+              <p className="mt-3 text-sm md:text-[15px] text-muted-foreground leading-relaxed">
+                {s.body}
+              </p>
+              <div className="mt-5 flex items-start gap-3 rounded-lg border border-border/60 bg-[hsl(var(--bb-surface-inset))] px-4 py-3">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary mt-0.5 shrink-0">
+                  Outcome
+                </span>
+                <span className="text-sm text-foreground/85">{s.outcome}</span>
+              </div>
+            </article>
           ))}
         </div>
       </SectionShell>

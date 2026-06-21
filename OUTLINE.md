@@ -12,7 +12,7 @@ marketing site.
 | 1 — Critical product / frontend activation fixes | **In progress** | Broken nav fixed, hidden surfaces reachable, dead ends removed, empty/error/permission states tightened. No visual reskin. |
 | 2 — Logged-in product visual refresh | Planned | Premium enterprise visual direction applied to Brain + ASC + Assist. |
 | 3 — Marketing messaging refresh | **In progress** | Public copy rewritten to match shipped Brain capabilities. |
-| 4 — Marketing visual refresh | Planned | Public design system + SEO/OG sweep. |
+| 4 — Marketing visual refresh | **In progress** | Public design system aligned with refreshed Brain workspace; SEO/OG sweep to follow. |
 | 5 — Coherence / QA / polish | Planned | Cross-surface QA, last Medium audit items, final docs. |
 
 ## Rules that apply to every later phase
