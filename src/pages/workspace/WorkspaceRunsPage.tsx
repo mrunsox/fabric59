@@ -45,10 +45,13 @@ export default function WorkspaceRunsPage() {
   const { workspace } = useWorkspace();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState("all");
   const [depFilter, setDepFilter] = useState("all");
   const [retrying, setRetrying] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  // Phase 4 — accept `?search=` from QA / Cockpit deep links so operators
+  // can land on a specific session id without re-typing it.
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
 
   const { data: runs = [], isLoading } = useQuery({
     queryKey: ["workspace-runs", workspace?.id ?? null],
