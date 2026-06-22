@@ -163,15 +163,7 @@ export function useWorkspaceSetupReadiness(): WorkspaceSetupReadiness {
   const factCountQ = useQuery({
     queryKey: ["bb-fact-count-setup", workspaceId],
     enabled: !!workspaceId,
-    queryFn: async (): Promise<number> => {
-      const { count } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from("bb_facts" as any)
-        .select("id", { count: "exact", head: true })
-        .eq("workspace_id", workspaceId!)
-        .eq("verification_state", "approved");
-      return count ?? 0;
-    },
+    queryFn: () => countApprovedFacts(workspaceId),
   });
 
   const guidePublishedQ = useQuery({
