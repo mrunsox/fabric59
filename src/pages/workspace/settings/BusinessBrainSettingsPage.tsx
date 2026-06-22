@@ -353,6 +353,7 @@ export default function BusinessBrainSettingsPage() {
         <div className="divide-y divide-bb-border-subtle -my-1">
           {resolved.map(({ def, effective, source }) => {
             const editable = source === "org" || source === "default";
+            const affectsReadiness = def.key === "enabled";
             return (
               <div
                 key={def.key}
@@ -371,6 +372,9 @@ export default function BusinessBrainSettingsPage() {
                     <BrainBadge tone={editable ? "info" : "warn"}>
                       {editable ? "Editable here" : "Read-only (override)"}
                     </BrainBadge>
+                    {affectsReadiness ? (
+                      <BrainBadge tone="muted">Affects workspace readiness</BrainBadge>
+                    ) : null}
                   </div>
                 </div>
                 <Switch
