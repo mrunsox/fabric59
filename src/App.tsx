@@ -74,6 +74,7 @@ import WorkspaceSupervisorPage from "@/pages/workspace/WorkspaceSupervisorPage";
 import WorkspaceDispositionsPage from "@/pages/workspace/WorkspaceDispositionsPage";
 import WorkspaceNotificationsPage from "@/pages/workspace/WorkspaceNotificationsPage";
 import WorkspaceAgentCockpitPage from "@/pages/workspace/WorkspaceAgentCockpitPage";
+import WorkspaceCockpitShell from "@/pages/workspace/cockpit/WorkspaceCockpitShell";
 // Phase 6 — canonical live call runner.
 import LiveCallRunnerPage from "@/pages/agent/LiveCallRunnerPage";
 import AgentWorkspaceLandingPage from "@/pages/agent/AgentWorkspaceLandingPage";
