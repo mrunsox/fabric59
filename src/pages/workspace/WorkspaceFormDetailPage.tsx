@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Pencil, Eye, Link2, X, Inbox } from "lucide-react";
+import { Pencil, Eye, Link2, X, Inbox } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailPage } from "@/components/workspace/page-types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,13 +33,32 @@ export default function WorkspaceFormDetailPage() {
   const ruleCount = schema?.logic.length ?? 0;
 
   return (
-    <div className="space-y-4">
-      <Button asChild variant="ghost" size="sm">
-        <Link to={`/w/${workspaceId}/forms`}>
-          <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Back to forms
-        </Link>
-      </Button>
-
+    <DetailPage
+      back={{ to: `/w/${workspaceId}/forms`, label: "Back to forms" }}
+      eyebrow="Form"
+      title={form?.name ?? (isLoading ? "Loading…" : "Form not found")}
+      lede={form?.description ?? undefined}
+      status={
+        form ? (
+          <div className="flex items-center gap-2">
+            <StatusBadge status={form.status} />
+            <Badge variant="outline" className="text-xs">v{form.current_version ?? 1}</Badge>
+            <span className="text-xs text-muted-foreground">
+              Updated {new Date(form.updated_at).toLocaleString()}
+            </span>
+          </div>
+        ) : undefined
+      }
+      action={
+        form ? (
+          <Button asChild size="sm">
+            <Link to={editHref} data-testid="form-edit-cta">
+              <Pencil className="h-3.5 w-3.5 mr-1" /> Edit form
+            </Link>
+          </Button>
+        ) : undefined
+      }
+    >
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : !form ? (
@@ -47,34 +67,12 @@ export default function WorkspaceFormDetailPage() {
         </Card>
       ) : (
         <>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold tracking-tight">{form.name}</h1>
-              {form.description && (
-                <p className="text-sm text-muted-foreground max-w-2xl">{form.description}</p>
-              )}
-              <div className="flex items-center gap-2">
-                <StatusBadge status={form.status} />
-                <Badge variant="outline" className="text-xs">v{form.current_version ?? 1}</Badge>
-                <span className="text-xs text-muted-foreground">
-                  Updated {new Date(form.updated_at).toLocaleString()}
-                </span>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button asChild size="sm">
-                <Link to={editHref} data-testid="form-edit-cta">
-                  <Pencil className="h-3.5 w-3.5 mr-1" /> Edit form
-                </Link>
-              </Button>
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <SummaryStat label="Sections" value={sectionCount} />
             <SummaryStat label="Fields" value={fieldCount} />
             <SummaryStat label="Logic rules" value={ruleCount} />
           </div>
+
 
           <Card>
             <CardHeader className="pb-2">
@@ -117,7 +115,7 @@ export default function WorkspaceFormDetailPage() {
           <RecentSubmissionsPanel workspaceId={workspaceId!} formId={formId!} />
         </>
       )}
-    </div>
+    </DetailPage>
   );
 }
 

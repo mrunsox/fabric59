@@ -1,8 +1,9 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { DetailPage } from "@/components/workspace/page-types";
 import {
   useIntegrationConnection,
   useUpdateIntegrationConnection,
@@ -50,28 +51,17 @@ export default function WorkspaceIntegrationDetailPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link
-          to={`/w/${workspaceId}/integrations`}
-          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-        >
-          <ArrowLeft className="h-3 w-3" /> Integrations
-        </Link>
-        <div className="flex items-start justify-between gap-4 mt-2">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {connection.display_name ?? provider?.display_name ?? connection.provider_id}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {provider?.display_name ?? connection.provider_id} · {provider?.category}
-            </p>
-          </div>
-          <Button variant="outline" size="sm" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4 mr-1.5" /> Remove
-          </Button>
-        </div>
-      </div>
+    <DetailPage
+      back={{ to: `/w/${workspaceId}/integrations`, label: "Back to integrations" }}
+      eyebrow="Integration"
+      title={connection.display_name ?? provider?.display_name ?? connection.provider_id}
+      lede={`${provider?.display_name ?? connection.provider_id}${provider?.category ? ` · ${provider.category}` : ""}`}
+      action={
+        <Button variant="outline" size="sm" onClick={handleDelete}>
+          <Trash2 className="h-4 w-4 mr-1.5" /> Remove
+        </Button>
+      }
+    >
 
       <Card>
         <CardHeader>
@@ -173,6 +163,6 @@ export default function WorkspaceIntegrationDetailPage() {
           </pre>
         </CardContent>
       </Card>
-    </div>
+    </DetailPage>
   );
 }

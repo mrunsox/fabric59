@@ -685,3 +685,72 @@ complete. Awaiting Phase 3 approval.
 
 Await explicit approval before starting Phase 3 (page-type unification:
 Library shell, sectioned Settings, Connect shell, Notifications split).
+
+---
+
+# Dashboard Consolidation — Phase 3 — Canonical Page-Type Unification (Done)
+
+## What shipped
+
+- **Page-type primitives** at `src/components/workspace/page-types/`:
+  `ListPage`, `DetailPage`, `BuilderPage`, `ConfigPage`, `LogPage`. All
+  presentational — none own data, filters, or empty-state copy.
+- **Library shell** at `/w/:id/library` (`WorkspaceLibraryPage`) built on
+  `ConfigPage`. Three sections:
+  - **Guides** — embeds `WorkspaceGuidesPage` + an explanatory note that
+    the workspace guide (`/w/:id/guide`) is canonical and additional
+    guides are supplementary.
+  - **Templates** — embeds `WorkspaceTemplatesPage`.
+  - **Blueprints** — read-only listing from `useCampaignBlueprints` with
+    a note that authoring lives at the org level. Explanatory empty state
+    when none exist. Clearly secondary; no implied third library system.
+- **Sectioned Settings** — `WorkspaceSettingsPage` rebuilt on `ConfigPage`
+  with sections **Workspace · Brand · Readiness · Members · Brain ·
+  Advanced**. Section state lives in `?section=`. The Brain section is a
+  summary + deep link into the canonical `/settings/brain` route; the two
+  surfaces stay cleanly separated.
+- **Notifications** — header lede reframed to explain the log/config
+  split; tabs labelled "Log — Deliveries" and "Config — Post-call rules".
+- **Dispositions** — inline note showing effective source (defined at
+  org level via `disposition_access`; authoring lives in the org
+  disposition manager).
+- **Form / Client / Integration detail pages** adopt the `DetailPage`
+  primitive for back-link + header + status/action slots.
+- **Nav** — `library` nav entry now points at `/library` (not the Phase 1
+  virtual `/guides` alias).
+- **Regression** — `pageTypeUnification.test.tsx` locks in the route,
+  nav target, primitive barrel, and back-compat for standalone
+  `/guides` + `/templates`.
+
+## Duplication intentionally left mounted
+
+- `/w/:id/guides` (and all `guides/*` sub-routes) — keeps every Guides
+  deep link working; the Library Guides section embeds the same page.
+- `/w/:id/templates` and `/w/:id/templates/:templateId` — same reasoning.
+- `/admin/automations` → `/w/:id/notifications` silent redirect from
+  Phase D is preserved.
+- Form builder save/publish UX — not retrofitted onto `BuilderPage`
+  because the existing model already matches; primitive is available for
+  future builders that need it.
+
+## Deferred to Phase 4 (operator cockpit + live workflow polish)
+
+- Cockpit tabbed shell merging Live + Supervisor + Runs.
+- Campaign-detail Readiness + Runs tabs.
+- Supervisor promoted out of demoted state as a cockpit tab.
+- QA / Analytics campaign + disposition context links.
+- Connect shell unifying workspace integrations with relevant admin
+  connector instances — held until cockpit work; today's `/integrations`
+  is already canonical and consistent enough to live without a shell.
+
+## Out of scope (locked for Phase 3)
+
+- No backend / schema / RLS / edge-function changes.
+- No new product capabilities. No merged data models.
+- No new routes beyond `/library`.
+- No copy rewrites beyond the headers/ledes touched above.
+
+## Next stop-gate
+
+Await explicit approval before starting Phase 4 (operator cockpit + live
+workflow polish).

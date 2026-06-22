@@ -33,6 +33,13 @@ export default function WorkspaceDispositionsPage() {
         lede="Disposition labels surfaced to agents and routed to outcomes & post-call automations."
       />
 
+      <p className="text-xs text-muted-foreground">
+        Effective source: dispositions are defined at the <span className="font-medium text-foreground">organization</span> level
+        and surfaced into this workspace via <span className="font-mono">disposition_access</span>.
+        Authoring lives in the organization disposition manager.
+      </p>
+
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">

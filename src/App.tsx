@@ -37,6 +37,7 @@ import WorkspaceCampaignNewDecisionPage from "@/pages/workspace/campaigns/Worksp
 import AscWizardPage from "@/pages/workspace/campaigns/asc/AscWizardPage";
 import AscPreviewPage from "@/pages/workspace/campaigns/asc/AscPreviewPage";
 import WorkspaceGuidesPage from "@/pages/workspace/WorkspaceGuidesPage";
+import WorkspaceLibraryPage from "@/pages/workspace/library/WorkspaceLibraryPage";
 import WorkspaceGuideDetailPage from "@/pages/workspace/WorkspaceGuideDetailPage";
 import WorkspaceGuideEditPage from "@/pages/workspace/WorkspaceGuideEditPage";
 import WorkspaceGuideNewPage from "@/pages/workspace/WorkspaceGuideNewPage";
@@ -603,6 +604,7 @@ const App = () => (
                 <Route path="campaigns/:campaignId/builder" element={<WorkspaceCampaignFlowBuilderPage />} />
                 <Route path="campaigns/:campaignId/embed-preview" element={<EmbedCampaignRunnerPage />} />
                 <Route path="guide" element={<WorkspaceGuideBuilderPage />} />
+                <Route path="library" element={<WorkspaceLibraryPage />} />
                 <Route path="guides" element={<WorkspaceGuidesPage />} />
                 <Route path="guides/new" element={<WorkspaceGuideNewPage />} />
                 <Route path="guides/:guideId" element={<WorkspaceGuideDetailPage />} />

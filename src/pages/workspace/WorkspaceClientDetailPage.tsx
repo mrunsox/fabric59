@@ -1,10 +1,10 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Users, ExternalLink } from "lucide-react";
+import { Users, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/common/StatusBadge";
-import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { DetailPage } from "@/components/workspace/page-types";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
@@ -45,25 +45,24 @@ export default function WorkspaceClientDetailPage() {
     client ? { client: client.name, ownership: "inherited-from-org" } : {},
   );
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <Button variant="ghost" size="sm" asChild>
-        <Link to={`/w/${workspaceId}/clients`}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Back to clients
-        </Link>
-      </Button>
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground p-6">Loading client…</p>;
+  }
+  if (error || !client) {
+    return (
+      <p className="text-sm text-muted-foreground p-6">
+        Client not found in this workspace's organization.
+      </p>
+    );
+  }
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading client…</p>
-      ) : error || !client ? (
-        <p className="text-sm text-muted-foreground">Client not found in this workspace's organization.</p>
-      ) : (
-        <>
-          <WorkspacePageHeader
-            eyebrow="Client"
-            title={client.name}
-            secondary={<StatusBadge status={client.status ?? "active"} />}
-          />
+  return (
+    <DetailPage
+      back={{ to: `/w/${workspaceId}/clients`, label: "Back to clients" }}
+      eyebrow="Client"
+      title={client.name}
+      status={<StatusBadge status={client.status ?? "active"} />}
+    >
 
           <Card>
             <CardHeader className="pb-3">
@@ -131,10 +130,8 @@ export default function WorkspaceClientDetailPage() {
                 )}
               </CardContent>
             </Card>
-          </div>
-        </>
-      )}
-    </div>
+      </div>
+    </DetailPage>
   );
 }
 

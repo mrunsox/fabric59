@@ -320,3 +320,26 @@ pre-existing and unrelated to Phase 1:
 Phase 1 fixed the previously-failing `navRouting` "visible workspace
 sidebar items are mounted" assertion as a side effect of repairing the
 parser that was silently skipping routes after the `brain` nested block.
+
+## 12. Phase 3 resolutions — Page-Type Unification
+
+### Resolved by Phase 3
+
+- **Page chrome divergence across list / detail / builder / config / log surfaces** — five canonical primitives shipped (`ListPage`, `DetailPage`, `BuilderPage`, `ConfigPage`, `LogPage`) under `src/components/workspace/page-types/`. Form, Client, and Integration detail pages now compose `DetailPage` instead of hand-rolling back-link + header treatments.
+- **"Guides vs Templates vs Blueprints" confusion** (Sev: High) — resolved presentationally by a Library shell at `/w/:id/library` that hosts all three as `ConfigPage` sections. No merged data model; standalone routes remain mounted for back-compat and deep links.
+- **Workspace guide vs Guides precedence ambiguity** (Sev: High) — Library → Guides section carries an explicit note that the workspace guide is canonical and additional guides are supplementary.
+- **Monolithic Settings page** (Sev: Medium) — replaced by a sectioned `ConfigPage` (Workspace · Brand · Readiness · Members · Brain · Advanced) with `?section=` deep links. Brain section is a summary + link to the canonical `/settings/brain` route; the two surfaces stay cleanly separated.
+- **Notifications muddled log vs config** (Sev: Medium) — header lede reframed; tabs labeled "Log — Deliveries" and "Config — Post-call rules".
+- **Dispositions effective-source opacity** (Sev: Low) — inline note explains org-level definition and `disposition_access` surfacing.
+
+### Intentionally deferred to Phase 4
+
+- Cockpit tabbed shell (Live + Supervisor + Runs).
+- Campaign detail Readiness + Runs tabs.
+- Supervisor promotion out of demoted state.
+- QA / Analytics ↔ disposition / campaign deep-links.
+- A dedicated Connect shell (today's `/integrations` is already canonical enough; revisit alongside cockpit work).
+
+### Regression baseline (Phase 3)
+
+`bunx vitest run`: **1078 passed / 5 failed / 7 skipped** (1090 total). Same five pre-existing failures as the Phase 2 baseline; Phase 3 added 4 new passing tests in `pageTypeUnification.test.tsx`.

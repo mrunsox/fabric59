@@ -37,7 +37,7 @@ export default function WorkspaceNotificationsPage() {
       <WorkspacePageHeader
         eyebrow="Operate"
         title="Notifications"
-        lede="Outbound notification deliveries and the post-call rules that produced them."
+        lede="Inspect deliveries (log) or edit the rules that produce them (config)."
       />
 
       {stats && (
@@ -51,8 +51,8 @@ export default function WorkspaceNotificationsPage() {
 
       <Tabs defaultValue="deliveries" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
-          <TabsTrigger value="rules">Post-call rules</TabsTrigger>
+          <TabsTrigger value="deliveries">Log — Deliveries</TabsTrigger>
+          <TabsTrigger value="rules">Config — Post-call rules</TabsTrigger>
         </TabsList>
 
         <TabsContent value="deliveries">

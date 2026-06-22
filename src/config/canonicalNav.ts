@@ -49,9 +49,10 @@ export type NavItem = {
 export const WORKSPACE_NAV: NavItem[] = [
   { key: "campaigns",    label: "Campaigns",    icon: Megaphone,       to: "campaigns" },
   { key: "guide",        label: "Workspace guide", icon: BookMarked,   to: "guide" },
-  // Phase 1 virtual label — points at existing /guides route. Does not
-  // imply merged Guides/Templates behavior; that's Phase 3.
-  { key: "library",      label: "Library",      icon: Library,         to: "guides" },
+  // Phase 3 — Library shell mounted at /w/:id/library; merges Guides +
+  // Templates + Blueprints under one umbrella. Standalone /guides and
+  // /templates routes remain mounted for deep links and back-compat.
+  { key: "library",      label: "Library",      icon: Library,         to: "library" },
   { key: "guides",       label: "Guides",       icon: BookOpen,        to: "guides" },
   { key: "forms",        label: "Forms",        icon: FormInput,       to: "forms" },
   { key: "templates",    label: "Templates",    icon: FileStack,       to: "templates" },

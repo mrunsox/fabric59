@@ -198,15 +198,15 @@ introduce new product capabilities.
 - BB ingest and Integrations connection deep-linked into the checklist.
 - No new routes; no new capabilities.
 
-### Phase 3 — Page-type unification
-- Library shell merges Guides + Templates + Blueprints with a typed picker; sub-routes preserved as redirects.
-- Workspace guide vs Guides precedence made explicit in UI (which wins, where).
-- Settings sectioned shell ships (Workspace / Brand / Readiness / Members / Advanced).
-- Connect shell ships, surfacing workspace integrations + relevant admin connector instances behind a scope chip.
-- Notifications split into Log + Config tabs.
-- Dispositions surfaces effective access source.
-- Form builder surfaces campaign assignment inline.
-- Forms / clients / integrations detail pages standardize on the detail pattern.
+### Phase 3 — Page-type unification (Done)
+- Canonical page-type primitives shipped under `src/components/workspace/page-types/`: `ListPage`, `DetailPage`, `BuilderPage`, `ConfigPage`, `LogPage`. Each is a thin presentational wrapper over `WorkspacePageHeader` + shared tokens; none own data.
+- Library shell mounted at `/w/:id/library` (`WorkspaceLibraryPage`) using `ConfigPage` with three sections: **Guides** (embeds `WorkspaceGuidesPage` + workspace-guide precedence note), **Templates** (embeds `WorkspaceTemplatesPage`), **Blueprints** (read-only listing from `useCampaignBlueprints` with an explanatory note that authoring lives at the org level).
+- Standalone `/w/:id/guides`, `/w/:id/templates`, `/w/:id/templates/:templateId`, and all `/w/:id/guides/*` deep links remain mounted unchanged for back-compat. The sidebar `library` virtual label now points at `/library` instead of `/guides`.
+- Sectioned Settings shell — `WorkspaceSettingsPage` converted to `ConfigPage` with sections **Workspace · Brand · Readiness · Members · Brain · Advanced**. Section state lives in `?section=`. The Brain section is a summary + deep link into `/settings/brain`; Settings does not own Brain configuration.
+- Notifications reframed: header lede explains the log / config split; tab labels are "Log — Deliveries" and "Config — Post-call rules".
+- Dispositions page surfaces effective source (defined at org level via `disposition_access`).
+- `WorkspaceFormDetailPage`, `WorkspaceClientDetailPage`, `WorkspaceIntegrationDetailPage` adopt `DetailPage` for consistent back-link + header strip + status/action slots.
+- Form builder intentionally **not** retrofitted — its existing save/publish UX already matches the builder pattern; introducing a new save paradigm just for consistency was out of scope.
 
 ### Phase 4 — Operator cockpit + live workflow polish
 - Cockpit shell merges Live + Supervisor + Runs as tabs.
