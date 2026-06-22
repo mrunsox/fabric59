@@ -249,22 +249,6 @@ function CockpitTopBar({
 // ---------------------------------------------------------------------------
 type CallPhase = "live" | "wrap_up" | "completed";
 
-function CockpitBody({
-  campaignId,
-  campaignName,
-}: {
-  campaignId: string;
-  campaignName: string;
-  formId: string;
-}) {
-  return null;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _legacyTypePlaceholder() {
-  /* keep type imports referenced */
-  return CockpitBody({ campaignId: "", campaignName: "", formId: "" });
-}
 
 function CockpitBodyV2({
   campaignId,
