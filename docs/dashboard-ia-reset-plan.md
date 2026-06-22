@@ -208,13 +208,13 @@ introduce new product capabilities.
 - `WorkspaceFormDetailPage`, `WorkspaceClientDetailPage`, `WorkspaceIntegrationDetailPage` adopt `DetailPage` for consistent back-link + header strip + status/action slots.
 - Form builder intentionally **not** retrofitted — its existing save/publish UX already matches the builder pattern; introducing a new save paradigm just for consistency was out of scope.
 
-### Phase 4 — Operator cockpit + live workflow polish
-- Cockpit shell merges Live + Supervisor + Runs as tabs.
-- Readiness/preconditions panel surfaces blockers before going live.
-- Campaign detail gains Readiness + Runs tabs.
-- QA queue gains disposition + campaign context links.
-- Analytics scoped explicitly to workspace; cross-tenant deep-link to admin.
-- Supervisor view promoted (out of demoted state) as a cockpit tab.
+### Phase 4 — Operator cockpit + live workflow polish (Done)
+- Cockpit shell mounted at `/w/:id/cockpit` (`WorkspaceCockpitShell`) with `?tab=live|supervisor|runs`. Live embeds `WorkspaceAgentCockpitPage`, Supervisor embeds `WorkspaceSupervisorPage`, Runs embeds `WorkspaceRunsPage`. Standalone `/agent`, `/supervisor`, `/runs` remain mounted for back-compat.
+- Sidebar `cockpit` virtual label now points at `/cockpit` instead of the Phase 1 `/agent` alias.
+- In-call clarity: small `In call` pill in the cockpit top bar; wrap-up rail unchanged.
+- QA queue gains an `Open in Runs` link per review (when `script_session_id` is set) that deep-links into `/cockpit?tab=runs&search=<id>`; `WorkspaceRunsPage` now reads `?search=` to prefill its existing filter.
+- Analytics drill-downs add `Cockpit` and `Runs` cards alongside QA / Campaigns.
+- Out of scope (deferred — would require backend): real Supervisor controls (listen / whisper / barge / live presence), first-class `qa_reviews → deployment_runs` xref, workspace-scoped `call_sessions`/`qa_reviews`.
 
 ### Phase 5 — Final coherence, a11y, regression sweep
 - Mirrors the Business Brain Phase 5 model: audit-first, categorized fix pass, screenshot set, regression baseline restored.

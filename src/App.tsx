@@ -74,6 +74,7 @@ import WorkspaceSupervisorPage from "@/pages/workspace/WorkspaceSupervisorPage";
 import WorkspaceDispositionsPage from "@/pages/workspace/WorkspaceDispositionsPage";
 import WorkspaceNotificationsPage from "@/pages/workspace/WorkspaceNotificationsPage";
 import WorkspaceAgentCockpitPage from "@/pages/workspace/WorkspaceAgentCockpitPage";
+import WorkspaceCockpitShell from "@/pages/workspace/cockpit/WorkspaceCockpitShell";
 // Phase 6 — canonical live call runner.
 import LiveCallRunnerPage from "@/pages/agent/LiveCallRunnerPage";
 import AgentWorkspaceLandingPage from "@/pages/agent/AgentWorkspaceLandingPage";
@@ -640,6 +641,9 @@ const App = () => (
                 <Route path="dispositions" element={<WorkspaceDispositionsPage />} />
                 <Route path="notifications" element={<WorkspaceNotificationsPage />} />
                 <Route path="agent" element={<WorkspaceAgentCockpitPage />} />
+                {/* Phase 4 — canonical Cockpit shell with Live / Supervisor / Runs tabs.
+                    Standalone /agent, /runs, /supervisor remain mounted for deep links. */}
+                <Route path="cockpit" element={<WorkspaceCockpitShell />} />
               </Route>
             </Route>
 

@@ -754,3 +754,78 @@ Library shell, sectioned Settings, Connect shell, Notifications split).
 
 Await explicit approval before starting Phase 4 (operator cockpit + live
 workflow polish).
+
+# Dashboard Consolidation — Phase 4 — Cockpit & Live Workflow Polish (Done)
+
+Goal: turn the live operator experience (Cockpit, Supervisor, Runs, QA /
+Analytics tie-ins) into one coherent control surface, without backend
+changes or new capabilities.
+
+## What shipped
+
+- **Cockpit shell** — new `WorkspaceCockpitShell` at
+  `/w/:id/cockpit` with `?tab=live|supervisor|runs`. Live tab embeds the
+  existing `WorkspaceAgentCockpitPage`, Supervisor tab embeds the
+  existing `WorkspaceSupervisorPage` placeholder, Runs tab embeds the
+  existing `WorkspaceRunsPage`. Standalone `/agent`, `/supervisor` and
+  `/runs` routes remain mounted for deep links.
+- **Nav repointing** — `cockpit` virtual label now points at the real
+  `/cockpit` shell instead of the Phase 1 `/agent` alias. Sidebar
+  grouping (Operate) and ⌘K behavior unchanged.
+- **In-call clarity** — added a small `In call` pill in the cockpit top
+  bar next to ANI / elapsed; wrap-up rail and "Submission saved" state
+  already existed and are preserved.
+- **QA → Runs link** — each QA review row now has an `Open in Runs`
+  button (when `script_session_id` is present) that deep-links into
+  `/w/:id/cockpit?tab=runs&search=<sessionId>`. The Runs page reads
+  `?search=` to prefill its existing search box.
+- **Analytics drill-downs** — added `Cockpit` and `Runs` cards alongside
+  the existing QA / Campaigns entries.
+
+## Signal mapping
+
+- Cockpit tabs: route-driven, deep-linkable via `?tab=`.
+- Runs prefill: `?search=` consumed by existing `WorkspaceRunsPage`
+  filter; no new query schema.
+- QA → Runs link uses existing `qa_reviews.script_session_id` only; no
+  new join.
+
+## Files changed
+
+- created `src/pages/workspace/cockpit/WorkspaceCockpitShell.tsx`
+- created `src/test/regressions/cockpitShell.test.ts`
+- edited `src/App.tsx` (added `/cockpit` route + import)
+- edited `src/config/canonicalNav.ts` (cockpit nav → `cockpit`)
+- edited `src/pages/workspace/WorkspaceAgentCockpitPage.tsx` (In-call pill)
+- edited `src/pages/workspace/WorkspaceRunsPage.tsx` (read `?search=`)
+- edited `src/pages/workspace/WorkspaceQaPage.tsx` (Open in Runs link)
+- edited `src/pages/workspace/WorkspaceAnalyticsPage.tsx` (drill-downs)
+
+## Verification
+
+- New `cockpitShell.test.ts` passes (3 / 3).
+- Full suite: 1081 passed, 5 pre-existing failures (same set tracked
+  through Phases 1–3 baseline), 7 skipped.
+
+## Out of scope (locked for Phase 4)
+
+- No backend / schema / RLS / edge-function changes.
+- No new supervisor capabilities (no listen / whisper / barge).
+- No new design system or motion language.
+- Cockpit body internals (`AgentCockpitPage`, `RunsPage`) unchanged
+  beyond the targeted polish above.
+
+## Remaining items that would require backend changes
+
+- Real Supervisor view (live queue, listen / whisper / barge): needs
+  realtime presence + telephony control plane.
+- QA ↔ Runs join by `script_session_id` → `deployment_runs`: today
+  `Runs` filters by free-text `search`; a first-class link would need a
+  session→run xref.
+- Workspace-scoped `call_sessions` / `qa_reviews` (tracked Phase 8
+  follow-up in Analytics).
+
+## Next stop-gate
+
+Await explicit approval before continuing into post-Phase 4 work.
+

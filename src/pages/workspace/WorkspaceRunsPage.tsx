@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,10 +45,13 @@ export default function WorkspaceRunsPage() {
   const { workspace } = useWorkspace();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [statusFilter, setStatusFilter] = useState("all");
   const [depFilter, setDepFilter] = useState("all");
   const [retrying, setRetrying] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  // Phase 4 — accept `?search=` from QA / Cockpit deep links so operators
+  // can land on a specific session id without re-typing it.
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
 
   const { data: runs = [], isLoading } = useQuery({
     queryKey: ["workspace-runs", workspace?.id ?? null],

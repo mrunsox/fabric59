@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import {
 } from "@/hooks/useWorkspaceQa";
 
 export default function WorkspaceQaPage() {
-  useParams<{ workspaceId: string }>();
+  const { workspaceId } = useParams<{ workspaceId: string }>();
   const [tab, setTab] = useState<"pending" | "completed" | "all">("pending");
   const { data: reviews = [], isLoading } = useWorkspaceQaReviews({
     status: tab === "all" ? undefined : tab,
@@ -98,6 +98,20 @@ export default function WorkspaceQaPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <StatusBadge status={r.status} />
+                        {r.script_session_id && (
+                          <Button
+                            asChild
+                            size="sm"
+                            variant="ghost"
+                            data-testid={`qa-open-runs-${r.id}`}
+                          >
+                            <Link
+                              to={`/w/${workspaceId}/cockpit?tab=runs&search=${encodeURIComponent(r.script_session_id)}`}
+                            >
+                              Open in Runs
+                            </Link>
+                          </Button>
+                        )}
                         {r.status === "pending" && (
                           <Button
                             size="sm"

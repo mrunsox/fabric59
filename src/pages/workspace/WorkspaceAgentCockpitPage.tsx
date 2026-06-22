@@ -209,6 +209,13 @@ function CockpitTopBar({
             </SelectContent>
           </Select>
         </div>
+        <Badge variant="secondary" className="text-[11px] gap-1" data-testid="cockpit-phase">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+          </span>
+          In call
+        </Badge>
         <Badge variant="outline" className="font-mono text-xs gap-1">
           <PhoneCall className="h-3 w-3" /> ANI 555-0100
         </Badge>

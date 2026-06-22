@@ -67,9 +67,10 @@ export const WORKSPACE_NAV: NavItem[] = [
   { key: "analytics",    label: "Analytics",    icon: BarChart3,       to: "analytics" },
   { key: "integrations", label: "Integrations", icon: Plug,            to: "integrations" },
   { key: "settings",     label: "Settings",     icon: Settings,        to: "settings" },
-  // Phase 1 virtual label — points at existing /agent route. The tabbed
-  // Cockpit shell merging Live / Supervisor / Runs is Phase 4.
-  { key: "cockpit",      label: "Cockpit",      icon: Radio,           to: "agent" },
+  // Phase 4 — Cockpit shell mounted at /w/:id/cockpit with Live / Supervisor
+  // / Runs tabs. Standalone /agent, /runs and /supervisor remain mounted for
+  // back-compat and deep links.
+  { key: "cockpit",      label: "Cockpit",      icon: Radio,           to: "cockpit" },
   // Demoted: still mounted + reachable, hidden from primary sidebar and
   // from operator ⌘K. Admins still see them in ⌘K "Hidden / Legacy".
   { key: "runs",         label: "Runs",         icon: PlayCircle,      to: "runs" },
