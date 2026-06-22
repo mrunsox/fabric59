@@ -641,6 +641,9 @@ const App = () => (
                 <Route path="dispositions" element={<WorkspaceDispositionsPage />} />
                 <Route path="notifications" element={<WorkspaceNotificationsPage />} />
                 <Route path="agent" element={<WorkspaceAgentCockpitPage />} />
+                {/* Phase 4 — canonical Cockpit shell with Live / Supervisor / Runs tabs.
+                    Standalone /agent, /runs, /supervisor remain mounted for deep links. */}
+                <Route path="cockpit" element={<WorkspaceCockpitShell />} />
               </Route>
             </Route>
 
