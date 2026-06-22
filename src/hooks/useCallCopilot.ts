@@ -14,11 +14,16 @@ import { useMemo, useState, useCallback } from "react";
 import type { CallSessionState, CopilotResult, CopilotSuggestion, CopilotFeedbackVerdict } from "@/types/call-runner";
 import type { CampaignFlowContent, FlowStep, QuestionBranchConfig, FieldCaptureConfig, OutcomeDispositionConfig, InformationDisplayConfig } from "@/types/campaign-flow";
 import type { WorkspaceGuideContentV2, WorkspaceGuideSection } from "@/types/workspace-guide";
+import type { KnowledgeBin, KnowledgeBinItem } from "@/lib/workspace/cockpit/knowledgeBin";
 
 export interface CopilotInputs {
   session: CallSessionState;
   flow: CampaignFlowContent | null;
   guide: WorkspaceGuideContentV2 | null;
+  /** Phase 5 — optional grounding source. When present, suggestions attach
+   *  source/precedence/conflictReason and may emit `missing_knowledge`
+   *  instead of fabricating an answer. */
+  bin?: KnowledgeBin | null;
 }
 
 function id(prefix: string): string {
@@ -181,7 +186,80 @@ export function computeSuggestions(inputs: CopilotInputs): CopilotResult {
     likelyOutcome(step, inputs.session),
     notificationTarget(step),
   ].filter(Boolean) as CopilotSuggestion[];
-  return { suggestions: all, empty: all.length === 0 };
+
+  const grounded = inputs.bin
+    ? all.map((s) => groundSuggestion(s, inputs.bin!))
+    : all;
+
+  // If bin is present but produced no suggested_answer that maps to any bin
+  // item, surface an honest "missing_knowledge" card for the speak lane.
+  if (inputs.bin) {
+    const hasAnswerWithSource = grounded.some(
+      (s) => s.kind === "suggested_answer" && s.sourceType,
+    );
+    const stepKind = step?.type;
+    const speakRelevant =
+      stepKind === "information_display" ||
+      stepKind === "question_branch" ||
+      stepKind === "field_capture";
+    if (speakRelevant && !hasAnswerWithSource && inputs.bin.ordered.length === 0) {
+      grounded.unshift({
+        id: id("sug"),
+        kind: "missing_knowledge",
+        title: "No grounded answer in the knowledge bin",
+        body:
+          "Nothing in the workspace guide, approved Business Brain, or campaign instructions matches this step. Tell the caller you will follow up, and capture what they asked so the gap can be reviewed.",
+        source: "Knowledge bin — no match",
+      });
+    }
+  }
+
+  return { suggestions: grounded, empty: grounded.length === 0 };
+}
+
+/**
+ * Phase 5 grounding — attach source/precedence/conflictReason to a suggestion
+ * by matching against the resolved bin. Bodies of low-precedence sources are
+ * NOT mixed with higher-precedence content. If a higher-precedence bin item
+ * targets the same topic, we swap in its body and record the conflict.
+ */
+function groundSuggestion(s: CopilotSuggestion, bin: KnowledgeBin): CopilotSuggestion {
+  if (s.kind !== "suggested_answer") {
+    return s;
+  }
+  const needleParts = [s.title, s.body].join(" ").toLowerCase();
+  const match = pickBestBinMatch(bin, needleParts);
+  if (!match) return s;
+  const conflict = bin.conflicts.find((c) => c.winner.id === match.item.id);
+  return {
+    ...s,
+    body: match.item.body || s.body,
+    source: `${match.item.scope}`,
+    sourceType: match.item.sourceType,
+    sourceId: match.item.sourceId,
+    precedence: Number.isFinite(match.item.precedence)
+      ? match.item.precedence
+      : undefined,
+    conflictReason: conflict?.reason,
+  };
+}
+
+function pickBestBinMatch(
+  bin: KnowledgeBin,
+  needle: string,
+): { item: KnowledgeBinItem } | null {
+  // Highest precedence first. Substring match on label or body.
+  for (const item of bin.ordered) {
+    const lbl = item.label.toLowerCase();
+    if (lbl && needle.includes(lbl)) return { item };
+  }
+  for (const item of bin.ordered) {
+    const bodyHead = item.body.slice(0, 80).toLowerCase();
+    if (bodyHead && needle.includes(bodyHead)) return { item };
+  }
+  // Fall back to the first guide/approved item so suggestions still carry
+  // attribution rather than appearing ungrounded.
+  return bin.ordered[0] ? { item: bin.ordered[0] } : null;
 }
 
 /**

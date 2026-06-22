@@ -171,7 +171,7 @@ describe("Agent Cockpit smoke", () => {
     // Cockpit body + all three rails render.
     await waitFor(() => {
       expect(screen.getByTestId("agent-cockpit")).toBeInTheDocument();
-      expect(screen.getByTestId("cockpit-guide-rail")).toBeInTheDocument();
+      expect(screen.getByTestId("cockpit-assist-rail")).toBeInTheDocument();
       expect(screen.getByTestId("cockpit-wrapup-rail")).toBeInTheDocument();
     });
 

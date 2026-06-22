@@ -46,6 +46,7 @@ const KIND_META: Record<CopilotSuggestion["kind"], KindMeta> = {
   draft_summary: { label: "Draft summary", icon: FileText, intent: "summarize" },
   likely_outcome: { label: "Likely outcome", icon: Target, intent: "decide" },
   notification_target: { label: "Notification target", icon: Bell, intent: "notify" },
+  missing_knowledge: { label: "Missing knowledge", icon: Sparkle, intent: "summarize" },
 };
 
 /**

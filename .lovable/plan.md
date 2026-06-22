@@ -829,3 +829,91 @@ changes or new capabilities.
 
 Await explicit approval before continuing into post-Phase 4 work.
 
+
+---
+
+## In-Call Copilot + Knowledge Bin (Phase 5 — focused initiative)
+
+Status: **Done** (frontend-only; no schema change).
+
+### What shipped
+
+- **Knowledge Bin resolver** (`src/lib/workspace/cockpit/knowledgeBin.ts`)
+  Pure, deterministic `buildKnowledgeBin()` that assembles runtime
+  knowledge for the active call into the locked precedence ladder:
+  1. `live_session` (prec 1)
+  2. `campaign_instruction` / `required_field` (prec 2)
+  3. `workspace_guide` — canonical singleton only (prec 3)
+  4. `business_brain` — approved facts only (prec 4)
+  5. `supplementary` — supplementary guides / references (prec 5)
+  Dispositions / routing live in a separate `dispositions` sidecar
+  group; they are NEVER part of the factual precedence ladder.
+- **Runtime hook** (`src/hooks/workspace/useInCallKnowledgeBin.ts`)
+  Composes existing data hooks. Approved facts read **directly** from
+  the Business Brain selector (`getAssistFactsForSession`) — NOT via
+  `useBusinessBrainAssist`, so assist consumes the bin rather than
+  being the source of truth.
+- **3-zone in-call layout** (`WorkspaceAgentCockpitPage.tsx` rewrite)
+  Primary column (required-fields panel · canonical script ·
+  FormRunner) + 360px assist rail (`InCallAssistPanel` +
+  `InCallKnowledgeBin`) + footer wrap-up card. Explicit phase pill
+  (`live | wrap_up | completed`).
+- **Grounded assist** (`src/hooks/useCallCopilot.ts`)
+  Optional `bin` input. Suggestions are grounded against the
+  highest-precedence bin item; bodies of lower-precedence sources are
+  not merged with higher-precedence content. When no bin item matches
+  a speak-relevant step, an honest `missing_knowledge` card is emitted
+  instead of fabricating an answer.
+- **"Why this answer" affordance** (`InCallAssistPanel`)
+  Every non-missing suggestion exposes a `Why this answer` toggle
+  surfacing `Source`, `Scope`, `Precedence`, and the `Conflict reason`
+  when a higher-precedence source displaced another.
+- **UI primitives**: `InCallSourceChip`, `InCallRequiredFieldsPanel`,
+  `InCallKnowledgeBin`, `InCallAssistPanel`.
+
+### Files created
+
+- `src/lib/workspace/cockpit/knowledgeBin.ts`
+- `src/hooks/workspace/useInCallKnowledgeBin.ts`
+- `src/components/workspace/cockpit/InCallSourceChip.tsx`
+- `src/components/workspace/cockpit/InCallRequiredFieldsPanel.tsx`
+- `src/components/workspace/cockpit/InCallKnowledgeBin.tsx`
+- `src/components/workspace/cockpit/InCallAssistPanel.tsx`
+- `src/test/regressions/inCallCopilot.test.tsx`
+
+### Files edited
+
+- `src/pages/workspace/WorkspaceAgentCockpitPage.tsx` (3-zone layout +
+  phase pill + bin/assist wiring)
+- `src/hooks/useCallCopilot.ts` (accept `bin`, ground suggestions,
+  emit `missing_knowledge`)
+- `src/types/call-runner.ts` (`CopilotSuggestion` gains `sourceType`,
+  `sourceId`, `precedence`, `conflictReason`; new `missing_knowledge`
+  kind)
+- `src/components/call-runner/CopilotPanel.tsx` (KIND_META gains
+  `missing_knowledge`)
+- `src/test/regressions/agentCockpitSmoke.test.tsx` (updated test-id
+  for new layout)
+
+### Verification
+
+- 7 / 7 new tests in `inCallCopilot.test.tsx` pass.
+- `agentCockpitSmoke.test.tsx` updated and green.
+- Full suite: **1088 passed**, 5 pre-existing failures (same baseline
+  set), 7 skipped.
+
+### Schema / backend
+
+- **Zero schema changes.** All sources read from existing tables
+  (`bb_facts`, `guides`, `guide_versions`, `campaigns`, `forms`,
+  `form_versions`, `disposition_access`).
+
+### Deferred (would require backend work)
+
+- Real telephony presence / ANI from Five9 (the cockpit currently
+  uses a placeholder ANI for synthesis demos).
+- Materialized per-session knowledge snapshot for replay / audit.
+- Retrieval ranking beyond substring matching.
+- Caller history joins beyond what `getAssistFactsForSession`
+  already filters by `clientId`.
+- Supervisor real-time listen / whisper / barge.
