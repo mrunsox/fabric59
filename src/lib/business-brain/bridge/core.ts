@@ -15,6 +15,7 @@ export type {
 } from "../selectors";
 export {
   listApprovedFacts,
+  countApprovedFacts,
   getFactSourceRefs,
   buildBbFactDeepLink,
   buildBbSourceDeepLink,

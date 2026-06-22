@@ -587,3 +587,101 @@ pass complete. Awaiting Phase 2 approval.
 
 Await explicit approval before starting Phase 2 (setup / onboarding
 flow redesign).
+
+---
+
+# Dashboard Consolidation + UX Reset — Phase 2 (Setup & Onboarding Flow Redesign)
+
+## Status
+
+**Done.** Implementation, unit test, doc updates, and regression pass
+complete. Awaiting Phase 3 approval.
+
+## What landed
+
+- **Canonical workspace setup checklist** — single source of truth in
+  `src/hooks/useWorkspaceSetupReadiness.ts` (composed entirely from
+  existing data; no schema, no new capabilities). Eight steps with
+  honest labels, deep-links, and explicit `signal` strings per step.
+  See `docs/dashboard-ia-reset-plan.md` §2.1 for the full table.
+- **Shared `WorkspaceSetupChecklist` component** with two variants:
+  `panel` (full card) and `strip` (compact progress + CTA). No
+  `localStorage`; strip disappears at 100% readiness.
+  (`src/components/workspace/WorkspaceSetupChecklist.tsx`)
+- **Canonical campaign-readiness helper** extracted to
+  `src/lib/readiness/canonicalCampaignReadiness.ts`. Both the per-campaign
+  `CampaignReadinessChecklist` card and the workspace-level checklist's
+  "Campaign reaches publish-ready" step call the same helper — no
+  competing definitions.
+- **Surface wiring:**
+  - **Campaigns landing** — panel when empty; strip above the list while
+    partially complete; hidden when ready.
+    (`src/pages/workspace/WorkspaceCampaignsPage.tsx`)
+  - **Agent Cockpit** — prominent "not ready" panel above the cockpit
+    body when incomplete; cockpit content de-emphasized at 60% opacity
+    but never hard-blocked. Slim "Ready" strip when complete.
+    (`src/pages/workspace/WorkspaceAgentCockpitPage.tsx`)
+  - **Campaign New** — inline "Before this campaign can go live" hint
+    listing the missing prerequisites with deep-links.
+    (`src/pages/workspace/WorkspaceCampaignNewPage.tsx`)
+  - **Guides / Forms / Dispositions empty states** — copy refreshed to
+    state each surface's role in readiness.
+  - **Brain Settings** — subtle `Affects workspace readiness` badge on
+    the Brain core flag. Brain Settings remains a settings surface, not
+    an onboarding hub.
+- **Bridge contract preserved** — added `countApprovedFacts` selector
+  re-exported via `@/lib/business-brain/bridge/core` so the setup hook
+  never queries raw `bb_*` tables. `bbBridgeContract` test still passes.
+- **Unit test** — `src/test/regressions/workspaceSetupReadiness.test.ts`
+  covers step order, signal-to-done mapping, the "seeded not complete"
+  wording for the knowledge step, the derivative cockpit step, and
+  deep-link scoping. 5 / 5 passing.
+- **Regression baseline** — `bunx vitest run`: **1074 / 5 / 7** (vs
+  prior 1069 / 5 / 7). The 5 failures are the same pre-existing
+  ASC / BB / chrome ones unrelated to this phase. Two tests
+  (`aiBlueprintHandoff`, `ascFlagRouting`) gained a small
+  `useWorkspaceSetupReadiness` mock to keep their provider-free shape.
+
+## Honest signal mapping (recap)
+
+| Step | Backend signal | Honest? |
+|---|---|---|
+| Workspace identity | `workspaces.name` non-empty | yes |
+| Business Brain seeded | approved `bb_facts` count ≥ 1 | yes — label avoids implying complete knowledge |
+| Channel connected | `integration_connections.status='connected'` ≥ 1 | yes |
+| Workspace guide published | singleton guide row status='published' | yes |
+| First campaign created | workspace-scoped campaign count ≥ 1 | yes |
+| Dispositions configured | `disposition_access` (org) count ≥ 1 | yes |
+| Campaign publish-ready | `fetchCanonicalCampaignReadiness` (4/4) for ≥ 1 campaign | yes — reuses the canonical per-campaign helper |
+| Cockpit ready | derivative of steps 1–7 | yes |
+
+## Out of scope (locked for Phase 2)
+
+- No backend / schema / RLS / edge-function changes.
+- No new product capabilities. No new routes. No new wizards or modals.
+- No changes to Business Brain logic, ASC behaviour, or campaign publish
+  semantics.
+- No persistent dismissal. No localStorage. Session-only behaviour only.
+- Workspace home / landing page — not introduced in this phase. The
+  checklist surfaces inline on Campaigns + Cockpit instead.
+
+## Desired signals that would require backend work (parked)
+
+- **Verified test call** — currently inferred from successful campaign
+  readiness, not from a true end-to-end event. A dedicated test-call
+  event + view would let the checklist show "First test call landed in
+  dashboard". Parked for a future capability phase.
+- **Knowledge coverage minimum (per vertical)** — today we only count
+  approved facts. A coverage signal would need vertical-aware thresholds
+  evaluated server-side. Parked.
+- **Notifications routing healthy** — campaign readiness checks that a
+  `notification_trigger` step exists, not that the route actually fires.
+  Parked.
+- **Workspace-level "live" flag** — there is no canonical `is_live` on
+  `workspaces`; cockpit readiness is computed entirely from preconditions.
+  A real go-live flag would belong with a future readiness workflow.
+
+## Next stop-gate
+
+Await explicit approval before starting Phase 3 (page-type unification:
+Library shell, sectioned Settings, Connect shell, Notifications split).

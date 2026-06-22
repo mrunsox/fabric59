@@ -1,9 +1,10 @@
 import { Link, useLocation, useParams } from "react-router-dom";
-import { ArrowLeft, Info, Sparkles } from "lucide-react";
+import { ArrowLeft, Info, Sparkles, ListChecks } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import CampaignIntakePage from "@/pages/admin/CampaignIntakePage";
 import type { CampaignIntakeData } from "@/types/campaign";
+import { useWorkspaceSetupReadiness } from "@/hooks/useWorkspaceSetupReadiness";
 
 /**
  * Workspace campaign creation.
@@ -35,6 +36,15 @@ export default function WorkspaceCampaignNewPage() {
   };
   const isAiPrefill = state.source === "ai-blueprint" && !!state.prefill;
   const isAscPrefill = state.source === "asc-wizard" && !!state.prefill;
+  const setup = useWorkspaceSetupReadiness();
+  const missingPrereqs = setup.steps.filter(
+    (s) =>
+      !s.done &&
+      (s.key === "knowledge" ||
+        s.key === "channel" ||
+        s.key === "dispositions" ||
+        s.key === "workspace_guide"),
+  );
 
   useEffect(() => {
     if (isAiPrefill) {
@@ -82,6 +92,27 @@ export default function WorkspaceCampaignNewPage() {
             New campaign. Changes autosave as a draft; submitting publishes it to this workspace's
             Campaigns list. You can continue editing drafts at any time from the Campaigns list.
           </span>
+        </div>
+      ) : null}
+
+      {missingPrereqs.length > 0 ? (
+        <div
+          data-testid="campaign-new-prereqs"
+          className="rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-xs text-foreground"
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <ListChecks className="h-3.5 w-3.5 text-warning shrink-0" />
+            <span className="font-medium">Before this campaign can go live</span>
+          </div>
+          <ul className="ml-5 list-disc text-muted-foreground space-y-0.5">
+            {missingPrereqs.map((s) => (
+              <li key={s.key}>
+                <Link to={s.href} className="hover:text-foreground underline-offset-2 hover:underline">
+                  {s.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 

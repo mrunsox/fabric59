@@ -14,6 +14,16 @@ vi.mock("@/pages/admin/CampaignIntakePage", () => ({
 vi.mock("@/pages/workspace/campaigns/asc/AscWizardPage", () => ({
   default: () => <div data-testid="asc-wizard-mounted">wizard</div>,
 }));
+vi.mock("@/hooks/useWorkspaceSetupReadiness", () => ({
+  useWorkspaceSetupReadiness: () => ({
+    steps: [],
+    completed: 0,
+    total: 0,
+    isReady: true,
+    nextStep: null,
+    isLoading: false,
+  }),
+}));
 
 import WorkspaceCampaignNewDecisionPage from "@/pages/workspace/campaigns/WorkspaceCampaignNewDecisionPage";
 

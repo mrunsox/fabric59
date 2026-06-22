@@ -44,7 +44,7 @@ all operational surfaces.
 |---|---|---|
 | 0 — Audit & blueprint | **Done** | `docs/dashboard-ux-audit.md`, `docs/dashboard-ia-reset-plan.md`, this section, `.lovable/plan.md` entry |
 | 1 — IA & navigation cleanup | **Done** | Sidebar regrouped to Build / Operate / Insight / Connect / Settings; Cockpit + Library relabels; Runs/Agents/Supervisor/Templates demoted; admin-only "Hidden / Legacy" group in ⌘K; workspace scope strip; Clients-detail Ownership & scope block; language-leak sweep across workspace surfaces. |
-| 2 — Setup / onboarding flow redesign | Planned | Canonical new-workspace → first-campaign-live journey; ASC as default authoring path; shared empty-state primitive |
+| 2 — Setup / onboarding flow redesign | **Done** | Canonical 8-step workspace setup checklist (`useWorkspaceSetupReadiness`) + shared `WorkspaceSetupChecklist` component (panel + strip variants); wired into Campaigns landing, Cockpit, Campaign New, and surface empty states; subtle "Affects workspace readiness" indicator in Brain Settings |
 | 3 — Page-type unification | Planned | Library (Guides + Templates + Blueprints) shell; sectioned Settings; Connect shell; Notifications log/config split |
 | 4 — Operator cockpit + live workflow polish | Planned | Cockpit shell merges Live + Supervisor + Runs; readiness preconditions; campaign-context links across QA/Analytics |
 | 5 — Final coherence / a11y / regression sweep | Planned | Audit-first sweep mirroring Business Brain Phase 5; `docs/dashboard-consolidation-phase5-audit.md`; program closeout |

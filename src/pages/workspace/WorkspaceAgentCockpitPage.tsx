@@ -38,6 +38,9 @@ import { useQuery } from "@tanstack/react-query";
 import { FormRunner } from "@/components/forms/runtime/FormRunner";
 import { GuideContentRenderer } from "@/components/guides/GuideContentRenderer";
 import { migrateGuideContentToV1 } from "@/lib/guides/guideContentSchema";
+import { WorkspaceSetupChecklist } from "@/components/workspace/WorkspaceSetupChecklist";
+import { useWorkspaceSetupReadiness } from "@/hooks/useWorkspaceSetupReadiness";
+import { cn } from "@/lib/utils";
 
 /**
  * Agent Cockpit (Checkpoint 4).
@@ -53,6 +56,7 @@ export default function WorkspaceAgentCockpitPage() {
   const { workspace } = useWorkspace();
   const { data: campaigns = [] } = useWorkspaceCampaigns();
   const { data: assignments = [] } = useEligibleAssignments();
+  const setup = useWorkspaceSetupReadiness();
 
   const eligibleCampaigns = useMemo(() => {
     const byCampaign = new Map<string, string>();
@@ -72,6 +76,17 @@ export default function WorkspaceAgentCockpitPage() {
 
   if (!workspace) return null;
 
+  const readinessHeader = !setup.isReady ? (
+    <WorkspaceSetupChecklist
+      variant="panel"
+      readiness={setup}
+      title="Cockpit not ready to take calls"
+      description="Some setup steps remain. Agents can still preview the cockpit, but live calls expect every step below to be complete."
+    />
+  ) : (
+    <WorkspaceSetupChecklist variant="strip" readiness={setup} />
+  );
+
   if (eligibleCampaigns.length === 0) {
     return (
       <div className="space-y-6">
@@ -80,6 +95,7 @@ export default function WorkspaceAgentCockpitPage() {
           title="Agent cockpit"
           lede="Live script, intake, and disposition in one workspace."
         />
+        {readinessHeader}
         <EmptyState
           icon={Radio}
           title="No campaign ready for the cockpit yet"
@@ -103,16 +119,25 @@ export default function WorkspaceAgentCockpitPage() {
 
   return (
     <div className="space-y-4" data-testid="agent-cockpit">
-      <CockpitTopBar
-        campaigns={eligibleCampaigns}
-        selectedId={selectedCampaignId}
-        onSelect={(id) => setSelectedCampaignId(id)}
-      />
-      {selected ? (
-        <CockpitBody campaignId={selected.id} formId={selected.formId} />
-      ) : (
-        <EmptyState icon={Radio} title="Pick a campaign to begin." />
-      )}
+      {readinessHeader}
+      <div
+        className={cn(
+          "space-y-4 transition-opacity",
+          setup.isReady ? "" : "opacity-60",
+        )}
+        aria-disabled={!setup.isReady}
+      >
+        <CockpitTopBar
+          campaigns={eligibleCampaigns}
+          selectedId={selectedCampaignId}
+          onSelect={(id) => setSelectedCampaignId(id)}
+        />
+        {selected ? (
+          <CockpitBody campaignId={selected.id} formId={selected.formId} />
+        ) : (
+          <EmptyState icon={Radio} title="Pick a campaign to begin." />
+        )}
+      </div>
     </div>
   );
 }

@@ -34,7 +34,7 @@ export default function WorkspaceGuidesPage() {
         <EmptyState
           icon={FileText}
           title="No guides yet"
-          description="Create your first canonical guide. Mirrored entries from existing scripts will appear here automatically."
+          description="Guides give agents a script to follow. Publishing the workspace guide is also one of the workspace setup steps."
           action={
             <Button asChild size="sm">
               <Link to={`/w/${workspaceId}/guides/new`}>

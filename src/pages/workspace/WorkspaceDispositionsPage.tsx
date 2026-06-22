@@ -49,7 +49,7 @@ export default function WorkspaceDispositionsPage() {
             <EmptyState
               icon={ListChecks}
               title="No dispositions yet"
-              description="Add dispositions from the organization disposition manager to surface them here."
+              description="Dispositions are required for a workspace to be ready. Add them from the organization disposition manager and they'll appear here."
             />
           ) : (
             <Table>
