@@ -65,12 +65,51 @@ proposed by this program.
 8. Go live                     (Cockpit → Live; readiness panel confirms preconditions)
 ```
 
+### 2.1 Canonical workspace setup checklist (Phase 2 implementation)
+
+Implemented as a single read-only model in `useWorkspaceSetupReadiness`
+and rendered by `WorkspaceSetupChecklist` (panel + strip variants). No
+schema, no new capabilities — every signal is composed from existing
+data. The labels are deliberately honest about what each signal proves
+(for example, "Business Brain seeded" reflects fact count ≥ 1, not
+complete knowledge).
+
+| Step | Label | Signal (existing data) | Deep-link |
+|---|---|---|---|
+| 1 | Workspace identity set | `workspaces.name` non-empty (`useWorkspace`) | `/w/:id/settings` |
+| 2 | Business Brain seeded | Approved `bb_facts` count ≥ 1 (via `countApprovedFacts` in `bridge/core`) | `/w/:id/knowledge` |
+| 3 | Channel connected | `integration_connections.status='connected'` count ≥ 1 (`useWorkspaceIntegrationConnections`) | `/w/:id/integrations` |
+| 4 | Workspace guide published | `guides.status='published'` where `name = WORKSPACE_GUIDE_SINGLETON_NAME` | `/w/:id/guide` |
+| 5 | First campaign created | `campaigns` (workspace-scoped) count ≥ 1 (`useWorkspaceCampaigns`) | `/w/:id/campaigns` |
+| 6 | Dispositions configured | `disposition_access` (org-scoped) count ≥ 1 (`useDispositions`) | `/w/:id/dispositions` |
+| 7 | Campaign reaches publish-ready | `fetchCanonicalCampaignReadiness` (firmGuide + flow + intake + notifications) true for ≥ 1 campaign — the **same** helper that drives `CampaignReadinessChecklist` | `/w/:id/campaigns` |
+| 8 | Cockpit ready to take calls | Steps 1–7 all complete (derivative) | `/w/:id/agent` |
+
+Surface mapping:
+
+- **Campaigns landing** — full panel when no campaigns exist; compact
+  strip above the table when partially complete; hidden when ready.
+- **Agent Cockpit** — prominent "not ready" panel above the cockpit body
+  when incomplete (body de-emphasized at 60% opacity, never hard-blocked);
+  slim "Ready" strip when complete.
+- **Campaign New** — inline `Before this campaign can go live` hint
+  listing missing prerequisites (knowledge, channel, dispositions,
+  workspace guide).
+- **Guides / Forms / Dispositions empty states** — explain how each
+  surface contributes to readiness; primary CTA unchanged.
+- **Brain Settings** — subtle `Affects workspace readiness` badge on
+  the Brain core flag. Brain Settings is **not** an onboarding hub.
+
+Dismissal: no `localStorage`. The strip simply disappears once readiness
+reaches 100%; the panel surfaces revert to their default content.
+
 Gating signals (already in backend, surfaced inline):
 
-- `useClientReadiness` → readiness checklist on workspace landing.
-- `useCampaignPublishConfig` + `computeCampaignReadiness` → publish gate.
-- `useWorkspaceIntegrations` → channel-connected gate.
-- BB `bb_facts` count + verticals coverage → "knowledge minimum" indicator.
+- `countApprovedFacts` (bridge/core) → knowledge minimum indicator.
+- `useWorkspaceIntegrationConnections` → channel-connected gate.
+- `useWorkspaceCampaigns`, `useDispositions` → list-presence gates.
+- `fetchCanonicalCampaignReadiness` → publish gate (shared with
+  per-campaign view; never forked).
 
 Surface owner: **Workspace landing** hosts the readiness checklist; each
 step deep-links into the surface that owns it. Single source of truth, no
