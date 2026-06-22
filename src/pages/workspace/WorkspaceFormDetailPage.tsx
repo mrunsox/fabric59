@@ -115,7 +115,7 @@ export default function WorkspaceFormDetailPage() {
           <RecentSubmissionsPanel workspaceId={workspaceId!} formId={formId!} />
         </>
       )}
-    </div>
+    </DetailPage>
   );
 }
 
