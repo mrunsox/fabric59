@@ -95,6 +95,27 @@ export default function WorkspaceCampaignNewPage() {
         </div>
       ) : null}
 
+      {missingPrereqs.length > 0 ? (
+        <div
+          data-testid="campaign-new-prereqs"
+          className="rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-xs text-foreground"
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <ListChecks className="h-3.5 w-3.5 text-warning shrink-0" />
+            <span className="font-medium">Before this campaign can go live</span>
+          </div>
+          <ul className="ml-5 list-disc text-muted-foreground space-y-0.5">
+            {missingPrereqs.map((s) => (
+              <li key={s.key}>
+                <Link to={s.href} className="hover:text-foreground underline-offset-2 hover:underline">
+                  {s.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <CampaignIntakePage />
     </div>
   );
