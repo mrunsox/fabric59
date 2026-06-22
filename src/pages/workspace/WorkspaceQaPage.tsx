@@ -98,6 +98,20 @@ export default function WorkspaceQaPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <StatusBadge status={r.status} />
+                        {r.script_session_id && (
+                          <Button
+                            asChild
+                            size="sm"
+                            variant="ghost"
+                            data-testid={`qa-open-runs-${r.id}`}
+                          >
+                            <Link
+                              to={`/w/${workspaceId}/cockpit?tab=runs&search=${encodeURIComponent(r.script_session_id)}`}
+                            >
+                              Open in Runs
+                            </Link>
+                          </Button>
+                        )}
                         {r.status === "pending" && (
                           <Button
                             size="sm"
