@@ -48,13 +48,31 @@ export interface CopilotSuggestion {
     | "next_best_question"
     | "draft_summary"
     | "likely_outcome"
-    | "notification_target";
+    | "notification_target"
+    | "missing_knowledge";
   title: string;
   body: string;
   /** Short attribution / source explainer ("From workspace guide · Hours"). */
   source?: string;
   /** Optional rationale shown under the suggestion. */
   rationale?: string;
+  /**
+   * Phase 5 — "Why this answer" attribution. Populated when the suggestion
+   * was grounded in a Knowledge Bin item. Missing-knowledge suggestions
+   * intentionally leave these undefined.
+   */
+  sourceType?:
+    | "live_session"
+    | "campaign_instruction"
+    | "required_field"
+    | "workspace_guide"
+    | "business_brain"
+    | "supplementary"
+    | "routing";
+  sourceId?: string | null;
+  precedence?: number;
+  /** When a higher-precedence source displaced another, the human reason. */
+  conflictReason?: string;
 }
 
 export interface CopilotResult {

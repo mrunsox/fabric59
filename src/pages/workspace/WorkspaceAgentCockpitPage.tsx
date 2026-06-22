@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   StickyNote,
   Search,
+  PhoneIncoming,
+  PhoneOff,
 } from "lucide-react";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -41,6 +43,10 @@ import { migrateGuideContentToV1 } from "@/lib/guides/guideContentSchema";
 import { WorkspaceSetupChecklist } from "@/components/workspace/WorkspaceSetupChecklist";
 import { useWorkspaceSetupReadiness } from "@/hooks/useWorkspaceSetupReadiness";
 import { cn } from "@/lib/utils";
+import { InCallAssistPanel } from "@/components/workspace/cockpit/InCallAssistPanel";
+import { InCallKnowledgeBin } from "@/components/workspace/cockpit/InCallKnowledgeBin";
+import { InCallRequiredFieldsPanel } from "@/components/workspace/cockpit/InCallRequiredFieldsPanel";
+import { useInCallKnowledgeBin } from "@/hooks/workspace/useInCallKnowledgeBin";
 
 /**
  * Agent Cockpit (Checkpoint 4).
@@ -133,7 +139,13 @@ export default function WorkspaceAgentCockpitPage() {
           onSelect={(id) => setSelectedCampaignId(id)}
         />
         {selected ? (
-          <CockpitBody campaignId={selected.id} formId={selected.formId} />
+          <CockpitBodyV2
+            campaignId={selected.id}
+            campaignName={selected.name}
+            formId={selected.formId}
+            workspaceId={workspace.id}
+            workspaceName={workspace.name ?? ""}
+          />
         ) : (
           <EmptyState icon={Radio} title="Pick a campaign to begin." />
         )}
@@ -231,9 +243,42 @@ function CockpitTopBar({
 }
 
 // ---------------------------------------------------------------------------
-// Body — 3-column at lg, stacked below.
+// Body — 3-zone layout (primary / assist rail / wrap-up footer).
+// Phase 5: adds InCallKnowledgeBin + InCallAssistPanel grounded by the bin,
+// and an explicit phase pill (live | wrap_up | completed).
 // ---------------------------------------------------------------------------
-function CockpitBody({ campaignId, formId }: { campaignId: string; formId: string }) {
+type CallPhase = "live" | "wrap_up" | "completed";
+
+function CockpitBody({
+  campaignId,
+  campaignName,
+}: {
+  campaignId: string;
+  campaignName: string;
+  formId: string;
+}) {
+  return null;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _legacyTypePlaceholder() {
+  /* keep type imports referenced */
+  return CockpitBody({ campaignId: "", campaignName: "", formId: "" });
+}
+
+function CockpitBodyV2({
+  campaignId,
+  campaignName,
+  formId,
+  workspaceId,
+  workspaceName,
+}: {
+  campaignId: string;
+  campaignName: string;
+  formId: string;
+  workspaceId: string;
+  workspaceName: string;
+}) {
   const { data: form } = useWorkspaceForm(formId);
   const { data: schema } = useFormSchema(formId);
   const { data: guides = [] } = useWorkspaceGuides({ campaignId });
@@ -247,6 +292,8 @@ function CockpitBody({ campaignId, formId }: { campaignId: string; formId: strin
   const [notes, setNotes] = useState("");
   const [pendingValues, setPendingValues] = useState<Record<string, unknown>>({});
   const [wrapped, setWrapped] = useState(false);
+  const [phase, setPhase] = useState<CallPhase>("live");
+  const [startedAt] = useState(() => new Date().toISOString());
 
   // Reset cockpit state when campaign/form changes.
   useEffect(() => {
@@ -255,22 +302,23 @@ function CockpitBody({ campaignId, formId }: { campaignId: string; formId: strin
     setNotes("");
     setPendingValues({});
     setWrapped(false);
+    setPhase("live");
   }, [campaignId, formId]);
 
-  // When the runner ends with an outcome, auto-map disposition if defined.
+  // When the runner ends with an outcome, auto-map disposition + move to wrap_up.
   useEffect(() => {
     if (!outcomeKey || !schema) return;
     const o = schema.outcomes.find((x) => x.key === outcomeKey);
     if (o?.dispositionKey && !dispositionKey) {
       setDispositionKey(o.dispositionKey);
     }
-  }, [outcomeKey, schema, dispositionKey]);
+    if (phase === "live") setPhase("wrap_up");
+  }, [outcomeKey, schema, dispositionKey, phase]);
 
   const guideContent = useMemo(
     () => migrateGuideContentToV1(guideVersion?.content),
     [guideVersion],
   );
-
   const [guideSearch, setGuideSearch] = useState("");
   const filteredGuideContent = useMemo(() => {
     if (!guideSearch.trim()) return guideContent;
@@ -284,6 +332,20 @@ function CockpitBody({ campaignId, formId }: { campaignId: string; formId: strin
       }),
     };
   }, [guideContent, guideSearch]);
+
+  // ── Knowledge Bin (Phase 5) ──────────────────────────────────────────
+  const knowledge = useInCallKnowledgeBin({
+    campaign: { id: campaignId, name: campaignName, instructions: null },
+    formId,
+    session: {
+      ani: "555-0100",
+      callerName:
+        (pendingValues.caller_name as string | undefined) ??
+        (pendingValues.full_name as string | undefined) ??
+        null,
+      capturedValues: pendingValues,
+    },
+  });
 
   const onWrapUp = async () => {
     if (!form) return;
@@ -300,6 +362,7 @@ function CockpitBody({ campaignId, formId }: { campaignId: string; formId: strin
       });
       toast.success("Submission saved");
       setWrapped(true);
+      setPhase("completed");
     } catch (e) {
       // toast handled by hook
     }
@@ -324,6 +387,7 @@ function CockpitBody({ campaignId, formId }: { campaignId: string; formId: strin
               setDispositionKey(null);
               setNotes("");
               setPendingValues({});
+              setPhase("live");
             }}
           >
             Start next call
@@ -334,130 +398,171 @@ function CockpitBody({ campaignId, formId }: { campaignId: string; formId: strin
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)_320px] gap-4">
-      {/* Left rail — Guide */}
-      <Card className="lg:sticky lg:top-4 self-start" data-testid="cockpit-guide-rail">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <BookOpen className="h-3.5 w-3.5" /> Knowledge
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {!guide ? (
-            <p className="text-xs text-muted-foreground">
-              No guide attached to this campaign. Open Guides to assign one.
-            </p>
-          ) : (
-            <>
-              <div className="relative">
-                <Search className="h-3.5 w-3.5 absolute left-2 top-2.5 text-muted-foreground" />
-                <Input
-                  className="h-8 pl-7 text-xs"
-                  placeholder="Filter guide…"
-                  value={guideSearch}
-                  onChange={(e) => setGuideSearch(e.target.value)}
-                  data-testid="cockpit-guide-search"
-                />
-              </div>
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                {guide.name}
-              </p>
-              <GuideContentRenderer content={filteredGuideContent} />
-            </>
-          )}
-        </CardContent>
-      </Card>
+    <div className="space-y-3" data-testid="cockpit-body-v2">
+      <CockpitPhasePill phase={phase} />
 
-      {/* Center — FormRunner */}
-      <div className="space-y-3" data-testid="cockpit-form-column">
-        {!schema || !form ? (
-          <Card>
-            <CardContent className="py-8 text-sm text-muted-foreground text-center">
-              Loading form…
-            </CardContent>
-          </Card>
-        ) : (
-          <FormRunner
-            key={`${campaignId}:${formId}`}
-            schema={schema}
-            onSubmit={(result) => {
-              setPendingValues(result.values);
-              setOutcomeKey(result.outcomeKey ?? null);
-            }}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-4">
+        {/* Primary column — script / required fields / form */}
+        <div className="space-y-3" data-testid="cockpit-primary-column">
+          <InCallRequiredFieldsPanel bin={knowledge.bin} />
+
+          {guide && (
+            <Card data-testid="cockpit-script-card">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2 space-y-0">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <BookOpen className="h-3.5 w-3.5" /> Current script · {guide.name}
+                </CardTitle>
+                <div className="relative w-40">
+                  <Search className="h-3.5 w-3.5 absolute left-2 top-2 text-muted-foreground" />
+                  <Input
+                    className="h-7 pl-7 text-xs"
+                    placeholder="Filter…"
+                    value={guideSearch}
+                    onChange={(e) => setGuideSearch(e.target.value)}
+                    data-testid="cockpit-guide-search"
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <GuideContentRenderer content={filteredGuideContent} />
+              </CardContent>
+            </Card>
+          )}
+
+          {!schema || !form ? (
+            <Card>
+              <CardContent className="py-8 text-sm text-muted-foreground text-center">
+                Loading form…
+              </CardContent>
+            </Card>
+          ) : (
+            <div data-testid="cockpit-form-column">
+              <FormRunner
+                key={`${campaignId}:${formId}`}
+                schema={schema}
+                onSubmit={(result) => {
+                  setPendingValues(result.values);
+                  setOutcomeKey(result.outcomeKey ?? null);
+                }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Assist rail — AI assist + Knowledge Bin */}
+        <aside
+          className="space-y-3 lg:sticky lg:top-4 self-start"
+          data-testid="cockpit-assist-rail"
+        >
+          <InCallAssistPanel
+            bin={knowledge.bin}
+            workspaceId={workspaceId}
+            workspaceName={workspaceName}
+            campaignId={campaignId}
+            campaignName={campaignName}
+            ani="555-0100"
+            capturedValues={pendingValues}
+            notes={notes}
+            startedAt={startedAt}
           />
-        )}
+          <InCallKnowledgeBin bin={knowledge.bin} isLoading={knowledge.isLoading} />
+        </aside>
       </div>
 
-      {/* Right rail — Disposition + notes */}
-      <Card className="lg:sticky lg:top-4 self-start" data-testid="cockpit-wrapup-rail">
+      {/* Footer wrap-up zone */}
+      <Card data-testid="cockpit-wrapup-rail">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <StickyNote className="h-3.5 w-3.5" /> Wrap up
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Outcome
-            </p>
-            <Select
-              value={outcomeKey ?? ""}
-              onValueChange={(v) => setOutcomeKey(v || null)}
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_auto] gap-3 items-end">
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                Outcome
+              </p>
+              <Select
+                value={outcomeKey ?? ""}
+                onValueChange={(v) => setOutcomeKey(v || null)}
+              >
+                <SelectTrigger className="h-9" data-testid="cockpit-outcome">
+                  <SelectValue placeholder="Select outcome…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(schema?.outcomes ?? []).map((o) => (
+                    <SelectItem key={o.key} value={o.key}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                Disposition
+              </p>
+              <Select
+                value={dispositionKey ?? ""}
+                onValueChange={(v) => setDispositionKey(v || null)}
+              >
+                <SelectTrigger className="h-9" data-testid="cockpit-disposition">
+                  <SelectValue placeholder="Select disposition…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {dispositions.map((d) => (
+                    <SelectItem key={d.id} value={d.name}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+                Notes
+              </p>
+              <Textarea
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Call notes…"
+                data-testid="cockpit-notes"
+              />
+            </div>
+            <Button
+              onClick={onWrapUp}
+              disabled={create.isPending || !form}
+              data-testid="cockpit-wrapup"
             >
-              <SelectTrigger className="h-9" data-testid="cockpit-outcome">
-                <SelectValue placeholder="Select outcome…" />
-              </SelectTrigger>
-              <SelectContent>
-                {(schema?.outcomes ?? []).map((o) => (
-                  <SelectItem key={o.key} value={o.key}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {create.isPending ? "Saving…" : "Wrap up"}
+            </Button>
           </div>
-          <div className="space-y-1">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Disposition
-            </p>
-            <Select
-              value={dispositionKey ?? ""}
-              onValueChange={(v) => setDispositionKey(v || null)}
-            >
-              <SelectTrigger className="h-9" data-testid="cockpit-disposition">
-                <SelectValue placeholder="Select disposition…" />
-              </SelectTrigger>
-              <SelectContent>
-                {dispositions.map((d) => (
-                  <SelectItem key={d.id} value={d.name}>
-                    {d.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Notes
-            </p>
-            <Textarea
-              rows={5}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Call notes…"
-              data-testid="cockpit-notes"
-            />
-          </div>
-          <Button
-            className="w-full"
-            onClick={onWrapUp}
-            disabled={create.isPending || !form}
-            data-testid="cockpit-wrapup"
-          >
-            {create.isPending ? "Saving…" : "Wrap up"}
-          </Button>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+function CockpitPhasePill({ phase }: { phase: CallPhase }) {
+  const meta = {
+    live: { label: "Live call", tone: "text-emerald-700 bg-emerald-500/10 border-emerald-500/30", Icon: PhoneIncoming },
+    wrap_up: { label: "Wrap up", tone: "text-amber-700 bg-amber-500/10 border-amber-500/30", Icon: StickyNote },
+    completed: { label: "Completed", tone: "text-muted-foreground bg-muted/40 border-border", Icon: PhoneOff },
+  }[phase];
+  const { Icon } = meta;
+  return (
+    <div className="flex items-center gap-2" data-testid={`cockpit-phase-${phase}`}>
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded border px-2 h-6 text-[11px] font-medium",
+          meta.tone,
+        )}
+      >
+        <Icon className="h-3 w-3" aria-hidden />
+        {meta.label}
+      </span>
+    </div>
+  );
+}
+
