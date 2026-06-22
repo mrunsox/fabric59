@@ -38,6 +38,9 @@ import { useQuery } from "@tanstack/react-query";
 import { FormRunner } from "@/components/forms/runtime/FormRunner";
 import { GuideContentRenderer } from "@/components/guides/GuideContentRenderer";
 import { migrateGuideContentToV1 } from "@/lib/guides/guideContentSchema";
+import { WorkspaceSetupChecklist } from "@/components/workspace/WorkspaceSetupChecklist";
+import { useWorkspaceSetupReadiness } from "@/hooks/useWorkspaceSetupReadiness";
+import { cn } from "@/lib/utils";
 
 /**
  * Agent Cockpit (Checkpoint 4).
@@ -53,6 +56,7 @@ export default function WorkspaceAgentCockpitPage() {
   const { workspace } = useWorkspace();
   const { data: campaigns = [] } = useWorkspaceCampaigns();
   const { data: assignments = [] } = useEligibleAssignments();
+  const setup = useWorkspaceSetupReadiness();
 
   const eligibleCampaigns = useMemo(() => {
     const byCampaign = new Map<string, string>();
