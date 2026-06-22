@@ -130,10 +130,8 @@ export default function WorkspaceClientDetailPage() {
                 )}
               </CardContent>
             </Card>
-          </div>
-        </>
-      )}
-    </div>
+      </div>
+    </DetailPage>
   );
 }
 
