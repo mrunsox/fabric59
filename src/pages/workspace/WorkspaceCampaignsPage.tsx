@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Megaphone, Plus, ArrowRight } from "lucide-react";
-import { EmptyState } from "@/components/common/EmptyState";
+import { Plus, ArrowRight } from "lucide-react";
 import { StatusBadge } from "@/components/common/StatusBadge";
 
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
@@ -61,6 +60,9 @@ export default function WorkspaceCampaignsPage() {
         />
       ) : (
         <>
+          {!setup.isReady && (
+            <WorkspaceSetupChecklist variant="strip" readiness={setup} />
+          )}
           <Card>
           <Table>
             <TableHeader>
