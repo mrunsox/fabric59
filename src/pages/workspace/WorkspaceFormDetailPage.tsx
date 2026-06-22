@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Pencil, Eye, Link2, X, Inbox } from "lucide-react";
+import { Pencil, Eye, Link2, X, Inbox } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailPage } from "@/components/workspace/page-types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
