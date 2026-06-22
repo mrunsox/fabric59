@@ -10,8 +10,10 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { SeedAssurewayButton } from "@/components/dashboard/SeedAssurewayButton";
+import { WorkspaceSetupChecklist } from "@/components/workspace/WorkspaceSetupChecklist";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
+import { useWorkspaceSetupReadiness } from "@/hooks/useWorkspaceSetupReadiness";
 
 /**
  * Workspace Campaigns — list page.
@@ -22,6 +24,7 @@ import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 export default function WorkspaceCampaignsPage() {
   const { workspace } = useWorkspace();
   const { data: campaigns = [], isLoading } = useWorkspaceCampaigns();
+  const setup = useWorkspaceSetupReadiness();
   if (!workspace) return null;
   const base = `/w/${workspace.id}/campaigns`;
   const hasExistingAssureway = campaigns.some(
@@ -50,17 +53,11 @@ export default function WorkspaceCampaignsPage() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading campaigns…</p>
       ) : campaigns.length === 0 ? (
-        <EmptyState
-          icon={Megaphone}
-          title="No campaigns in this workspace yet"
-          description="Create your first campaign to get started."
-          action={
-            <Button asChild size="sm">
-              <Link to={`${base}/new`}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> New campaign
-              </Link>
-            </Button>
-          }
+        <WorkspaceSetupChecklist
+          variant="panel"
+          readiness={setup}
+          title="Get this workspace live"
+          description="Your first campaign sits inside a setup journey. Each step links to the surface that owns it; complete them in any order."
         />
       ) : (
         <>
