@@ -142,7 +142,21 @@ export default function WorkspaceAnalyticsPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium">Drill-downs</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+          <Link
+            to={`/w/${workspaceId}/cockpit`}
+            className="border rounded-md p-3 hover:border-primary/40 transition-colors"
+          >
+            <div className="font-medium">Cockpit</div>
+            <div className="text-xs text-muted-foreground">Live, supervisor & runs</div>
+          </Link>
+          <Link
+            to={`/w/${workspaceId}/cockpit?tab=runs`}
+            className="border rounded-md p-3 hover:border-primary/40 transition-colors"
+          >
+            <div className="font-medium">Runs</div>
+            <div className="text-xs text-muted-foreground">Flow execution history</div>
+          </Link>
           <Link
             to={`/w/${workspaceId}/qa`}
             className="border rounded-md p-3 hover:border-primary/40 transition-colors"
@@ -156,13 +170,6 @@ export default function WorkspaceAnalyticsPage() {
           >
             <div className="font-medium">Campaigns</div>
             <div className="text-xs text-muted-foreground">Status + performance</div>
-          </Link>
-          <Link
-            to={`/w/${workspaceId}/guides`}
-            className="border rounded-md p-3 hover:border-primary/40 transition-colors"
-          >
-            <div className="font-medium">Guides</div>
-            <div className="text-xs text-muted-foreground">Authoring + versions</div>
           </Link>
         </CardContent>
       </Card>
