@@ -33,7 +33,7 @@ export default function WorkspaceFormsPage() {
         <EmptyState
           icon={FormInput}
           title="No forms in this workspace yet"
-          description="Forms capture inbound leads and route them into campaigns. Create your first one below."
+          description="Forms capture inbound leads. A form must be attached to a campaign to count toward that campaign's readiness."
           action={
             <Button asChild size="sm">
               <Link to={`${base}/new`}>
