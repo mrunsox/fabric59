@@ -37,6 +37,7 @@ import WorkspaceCampaignNewDecisionPage from "@/pages/workspace/campaigns/Worksp
 import AscWizardPage from "@/pages/workspace/campaigns/asc/AscWizardPage";
 import AscPreviewPage from "@/pages/workspace/campaigns/asc/AscPreviewPage";
 import WorkspaceGuidesPage from "@/pages/workspace/WorkspaceGuidesPage";
+import WorkspaceLibraryPage from "@/pages/workspace/library/WorkspaceLibraryPage";
 import WorkspaceGuideDetailPage from "@/pages/workspace/WorkspaceGuideDetailPage";
 import WorkspaceGuideEditPage from "@/pages/workspace/WorkspaceGuideEditPage";
 import WorkspaceGuideNewPage from "@/pages/workspace/WorkspaceGuideNewPage";
