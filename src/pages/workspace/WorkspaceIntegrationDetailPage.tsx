@@ -163,6 +163,6 @@ export default function WorkspaceIntegrationDetailPage() {
           </pre>
         </CardContent>
       </Card>
-    </div>
+    </DetailPage>
   );
 }
