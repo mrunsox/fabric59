@@ -20,7 +20,7 @@ import {
 } from "@/hooks/useWorkspaceQa";
 
 export default function WorkspaceQaPage() {
-  useParams<{ workspaceId: string }>();
+  const { workspaceId } = useParams<{ workspaceId: string }>();
   const [tab, setTab] = useState<"pending" | "completed" | "all">("pending");
   const { data: reviews = [], isLoading } = useWorkspaceQaReviews({
     status: tab === "all" ? undefined : tab,
