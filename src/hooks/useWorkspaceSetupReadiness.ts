@@ -18,6 +18,7 @@ import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceIntegrationConnections } from "@/hooks/useWorkspaceIntegrations";
 import { useDispositions } from "@/hooks/useDispositions";
 import { supabase } from "@/integrations/supabase/client";
+import { countApprovedFacts } from "@/lib/business-brain/bridge/core";
 import { WORKSPACE_GUIDE_SINGLETON_NAME } from "@/types/workspace-guide";
 import {
   fetchCanonicalCampaignReadiness,

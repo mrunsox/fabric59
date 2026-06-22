@@ -133,6 +133,22 @@ export async function listApprovedFacts(
 }
 
 /**
+ * Counts approved facts for a workspace. Read-only; head-count query
+ * exposed for setup/readiness surfaces that should not load fact bodies.
+ */
+export async function countApprovedFacts(workspaceId: string | null | undefined): Promise<number> {
+  if (!workspaceId) return 0;
+  const { count, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .from("bb_facts" as any)
+    .select("id", { count: "exact", head: true })
+    .eq("workspace_id", workspaceId)
+    .eq("verification_state", "approved");
+  if (error) return 0;
+  return count ?? 0;
+}
+
+/**
  * Returns source titles + snippets behind a fact. Read-only; no writes.
  */
 export async function getFactSourceRefs(
