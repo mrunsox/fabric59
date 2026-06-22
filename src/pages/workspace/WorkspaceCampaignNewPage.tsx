@@ -1,9 +1,10 @@
 import { Link, useLocation, useParams } from "react-router-dom";
-import { ArrowLeft, Info, Sparkles } from "lucide-react";
+import { ArrowLeft, Info, Sparkles, ListChecks } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import CampaignIntakePage from "@/pages/admin/CampaignIntakePage";
 import type { CampaignIntakeData } from "@/types/campaign";
+import { useWorkspaceSetupReadiness } from "@/hooks/useWorkspaceSetupReadiness";
 
 /**
  * Workspace campaign creation.
@@ -35,6 +36,15 @@ export default function WorkspaceCampaignNewPage() {
   };
   const isAiPrefill = state.source === "ai-blueprint" && !!state.prefill;
   const isAscPrefill = state.source === "asc-wizard" && !!state.prefill;
+  const setup = useWorkspaceSetupReadiness();
+  const missingPrereqs = setup.steps.filter(
+    (s) =>
+      !s.done &&
+      (s.key === "knowledge" ||
+        s.key === "channel" ||
+        s.key === "dispositions" ||
+        s.key === "workspace_guide"),
+  );
 
   useEffect(() => {
     if (isAiPrefill) {
