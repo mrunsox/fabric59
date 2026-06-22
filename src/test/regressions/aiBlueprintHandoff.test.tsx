@@ -18,6 +18,16 @@ import WorkspaceCampaignNewPage from "@/pages/workspace/WorkspaceCampaignNewPage
 vi.mock("@/pages/admin/CampaignIntakePage", () => ({
   default: () => <div data-testid="campaign-intake">intake</div>,
 }));
+vi.mock("@/hooks/useWorkspaceSetupReadiness", () => ({
+  useWorkspaceSetupReadiness: () => ({
+    steps: [],
+    completed: 0,
+    total: 0,
+    isReady: true,
+    nextStep: null,
+    isLoading: false,
+  }),
+}));
 
 describe("WorkspaceCampaignNewPage · AI prefill handoff", () => {
   function renderAt(state: unknown) {
