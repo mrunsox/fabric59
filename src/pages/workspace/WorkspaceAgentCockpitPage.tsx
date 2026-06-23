@@ -63,9 +63,28 @@ import type { CallPresenceSnapshot } from "@/lib/workspace/cockpit/callSession";
  */
 export default function WorkspaceAgentCockpitPage() {
   const { workspace } = useWorkspace();
+  const { user } = useAuth();
   const { data: campaigns = [] } = useWorkspaceCampaigns();
   const { data: assignments = [] } = useEligibleAssignments();
   const setup = useWorkspaceSetupReadiness();
+
+  // Resolve the current user's agent record for this org so the cockpit can
+  // hydrate a real `call_sessions` row instead of a synthetic one.
+  const { data: agentRecord } = useQuery({
+    queryKey: ["cockpit-agent-self", workspace?.organization_id, user?.email],
+    enabled: !!workspace?.organization_id && !!user?.email,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agents")
+        .select("id")
+        .eq("organization_id", workspace!.organization_id)
+        .eq("email", user!.email!)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const eligibleCampaigns = useMemo(() => {
     const byCampaign = new Map<string, string>();
