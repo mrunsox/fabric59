@@ -210,6 +210,11 @@ export default function WorkspaceRunsPage() {
                           )}
                         </div>
                       )}
+                      {r.idempotency_key && (
+                        <p className="text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5" title={r.idempotency_key}>
+                          idem: {r.idempotency_key}
+                        </p>
+                      )}
                       {r.error && (
                         <div className="mt-1 flex items-start gap-2">
                           {meta && (
