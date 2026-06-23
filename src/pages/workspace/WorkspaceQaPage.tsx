@@ -9,11 +9,13 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
-import { ClipboardCheck, CheckCircle2, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ClipboardCheck, CheckCircle2, Clock, PlayCircle } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { KpiCard } from "@/components/common/KpiCard";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { CallSessionReplay } from "@/components/workspace/calls/CallSessionReplay";
 import {
   useWorkspaceQaReviews,
   useUpdateQaReviewStatus,
