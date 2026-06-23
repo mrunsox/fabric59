@@ -44,12 +44,22 @@ export interface RawNoteRow {
   created_at: string;
 }
 
+export interface RawAssistEventRow {
+  created_at: string;
+  suggestion_id: string | null;
+  source_type: string | null;
+  source_precedence: number | null;
+  action: "accepted" | "copied" | "ignored" | null;
+}
+
 export interface BuildSnapshotInput {
   session: CallSessionRow;
   knowledgeBin: KnowledgeBin | null;
   events: RawSessionEventRow[];
   outcome: RawOutcomeRow | null;
   latestNote: RawNoteRow | null;
+  /** Phase 7B — assist usage trail. Optional; absent = empty list. */
+  assistEvents?: RawAssistEventRow[];
   capturedAt?: string;
 }
 
