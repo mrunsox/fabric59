@@ -93,10 +93,12 @@ export function CampaignCoachingQueue({ candidates, loading, emptyHint }: Props)
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setReplayId(c.sessionId)}
+                    onClick={() => openReplay(c)}
+                    data-testid={`coaching-replay-${c.sessionId}`}
                   >
                     <Play className="h-3.5 w-3.5 mr-1.5" /> Replay
                   </Button>
+
                 </li>
               ))}
             </ul>
@@ -104,7 +106,7 @@ export function CampaignCoachingQueue({ candidates, loading, emptyHint }: Props)
         </CardContent>
       </Card>
 
-      <Sheet open={!!replayId} onOpenChange={(o) => !o && setReplayId(null)}>
+      <Sheet open={!!replayId} onOpenChange={(o) => !o && closeReplay()}>
         <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Call replay</SheetTitle>
