@@ -46,7 +46,7 @@ export async function buildSessionSnapshot(supabase: any, callSessionId: string)
     return null;
   }
 
-  const [{ data: events }, { data: outcome }, { data: note }] = await Promise.all([
+  const [{ data: events }, { data: outcome }, { data: note }, { data: assistEvents }] = await Promise.all([
     supabase
       .from("call_session_events")
       .select("timestamp,event_type,data")
@@ -67,6 +67,12 @@ export async function buildSessionSnapshot(supabase: any, callSessionId: string)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("call_assist_events")
+      .select("created_at,suggestion_id,source_type,source_precedence,action")
+      .eq("call_session_id", callSessionId)
+      .order("created_at", { ascending: true })
+      .limit(200),
   ]);
 
   const phase = mapStatusToPhase(session.status, session.ended_at, session.phase);
@@ -98,6 +104,34 @@ export async function buildSessionSnapshot(supabase: any, callSessionId: string)
     }
   }
 
+  // Phase 7B — assist usage trail (labels/provenance only, no bodies).
+  const usedSuggestions: Array<Record<string, unknown>> = [];
+  for (const r of (assistEvents ?? []) as Array<{
+    created_at: string;
+    suggestion_id: string | null;
+    source_type: string | null;
+    source_precedence: number | null;
+    action: string | null;
+  }>) {
+    if (!r.suggestion_id || !r.action) continue;
+    usedSuggestions.push({
+      ts: r.created_at,
+      suggestion_id: r.suggestion_id,
+      source_precedence:
+        typeof r.source_precedence === "number" && Number.isFinite(r.source_precedence)
+          ? r.source_precedence
+          : 0,
+      source_type: r.source_type ?? "live_session",
+      action: r.action,
+    });
+  }
+
+  // Phase 7B — lite Knowledge Bin slice. Compact: labels/provenance/precedence
+  // only, never bodies or transcript-like payloads. Heavy resolution still
+  // happens client-side via `useInCallKnowledgeBin`; this server path is the
+  // honest minimum that's safe to derive without the full hook stack.
+  const kbGroups = await buildServerKnowledgeBinLite(supabase, session);
+
   return {
     session: {
       id: session.id,
@@ -112,17 +146,115 @@ export async function buildSessionSnapshot(supabase: any, callSessionId: string)
       ani: session.ani ?? null,
       caller_label: callerLabel,
     },
-    // Knowledge Bin is not assembled server-side in 7A; Phase 7B may add
-    // a server resolver. Emit an empty, contract-shaped placeholder.
-    knowledge_bin: { captured_at: new Date().toISOString(), groups: [] },
+    knowledge_bin: { captured_at: new Date().toISOString(), groups: kbGroups },
     events: eventList,
     outcome: {
       disposition_id: outcome?.outcome_type_id ?? null,
       disposition_label: outcome?.disposition ?? null,
       notes_excerpt: note?.note_text ? String(note.note_text).slice(0, 280) : (outcome?.summary ?? null),
     },
-    ai_assist: { used_suggestions: [] },
+    ai_assist: { used_suggestions: usedSuggestions },
   };
+}
+
+/**
+ * Phase 7B — server-side compact Knowledge Bin builder.
+ *
+ * Emits the subset of groups we can safely derive from server data:
+ *   - caller (from session.ani / caller_name)
+ *   - approved (bb_facts, label-only, no payloads)
+ *   - dispositions (call_outcome_types for the org, label-only)
+ *
+ * Other groups (instructions, required, guide, references) require the
+ * client-side resolver chain and are intentionally omitted server-side so
+ * the snapshot never fabricates them.
+ */
+async function buildServerKnowledgeBinLite(
+  supabase: any,
+  session: Record<string, any>,
+): Promise<Array<Record<string, unknown>>> {
+  const groups: Array<Record<string, unknown>> = [];
+
+  if (session.ani || session.caller_name) {
+    groups.push({
+      key: "caller",
+      precedence: 1,
+      items: [
+        {
+          id: `caller:${session.id}`,
+          source_type: "live_session",
+          source_id: null,
+          label: session.caller_name || session.ani || "Caller",
+          body: "",
+          scope: "Live session",
+          approval_state: "n/a",
+          topic_key: "caller_identity",
+        },
+      ],
+    });
+  }
+
+  // Approved BB facts — labels only.
+  if (session.workspace_id) {
+    try {
+      const { data: facts } = await supabase
+        .from("bb_facts")
+        .select("id,display_name,entity_type,verification_state,client_id")
+        .eq("workspace_id", session.workspace_id)
+        .eq("verification_state", "approved")
+        .order("last_reviewed_at", { ascending: false })
+        .limit(40);
+      if (facts && facts.length > 0) {
+        groups.push({
+          key: "approved",
+          precedence: 4,
+          items: (facts as Array<{ id: string; display_name: string | null; entity_type: string | null }>).map((f) => ({
+            id: f.id,
+            source_type: "business_brain",
+            source_id: f.id,
+            label: f.display_name || f.entity_type || "Approved fact",
+            body: "",
+            scope: "Approved",
+            approval_state: "approved",
+            topic_key: `bb_${f.id}`,
+          })),
+        });
+      }
+    } catch (_) {
+      /* ignore — snapshot is best-effort */
+    }
+  }
+
+  // Dispositions — org-scoped types as routing sidecar.
+  if (session.organization_id) {
+    try {
+      const { data: dispos } = await supabase
+        .from("call_outcome_types")
+        .select("id,name,category")
+        .eq("organization_id", session.organization_id)
+        .limit(50);
+      if (dispos && dispos.length > 0) {
+        groups.push({
+          key: "dispositions",
+          precedence: Number.MAX_SAFE_INTEGER,
+          items: (dispos as Array<{ id: string; name: string | null; category: string | null }>).map((d) => ({
+            id: d.id,
+            source_type: "routing",
+            source_id: d.id,
+            label: d.name || "Disposition",
+            body: "",
+            scope: d.category || "Routing",
+            approval_state: "n/a",
+            topic_key: `disp_${d.id}`,
+          })),
+        });
+      }
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
+  return groups;
 }
 
 export async function persistSessionSnapshot(
