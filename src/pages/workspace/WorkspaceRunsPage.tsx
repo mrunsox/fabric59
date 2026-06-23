@@ -293,10 +293,3 @@ export default function WorkspaceRunsPage() {
     </div>
   );
 }
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
