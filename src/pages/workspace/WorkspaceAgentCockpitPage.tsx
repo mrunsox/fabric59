@@ -47,6 +47,9 @@ import { InCallAssistPanel } from "@/components/workspace/cockpit/InCallAssistPa
 import { InCallKnowledgeBin } from "@/components/workspace/cockpit/InCallKnowledgeBin";
 import { InCallRequiredFieldsPanel } from "@/components/workspace/cockpit/InCallRequiredFieldsPanel";
 import { useInCallKnowledgeBin } from "@/hooks/workspace/useInCallKnowledgeBin";
+import { useCallSession } from "@/hooks/workspace/useCallSession";
+import { useAuth } from "@/contexts/AuthContext";
+import type { CallPresenceSnapshot } from "@/lib/workspace/cockpit/callSession";
 
 /**
  * Agent Cockpit (Checkpoint 4).
