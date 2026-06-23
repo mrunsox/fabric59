@@ -1632,6 +1632,8 @@ export type Database = {
         Row: {
           agent_id: string | null
           ani: string | null
+          caller_name: string | null
+          campaign_id: string | null
           dnis: string | null
           duration_seconds: number | null
           ended_at: string | null
@@ -1640,15 +1642,19 @@ export type Database = {
           metadata: Json | null
           organization_id: string
           partner_id: string | null
+          phase: string | null
           script_id: string | null
           script_session_id: string | null
           started_at: string
           status: string
           tenant_id: string | null
+          workspace_id: string | null
         }
         Insert: {
           agent_id?: string | null
           ani?: string | null
+          caller_name?: string | null
+          campaign_id?: string | null
           dnis?: string | null
           duration_seconds?: number | null
           ended_at?: string | null
@@ -1657,15 +1663,19 @@ export type Database = {
           metadata?: Json | null
           organization_id: string
           partner_id?: string | null
+          phase?: string | null
           script_id?: string | null
           script_session_id?: string | null
           started_at?: string
           status?: string
           tenant_id?: string | null
+          workspace_id?: string | null
         }
         Update: {
           agent_id?: string | null
           ani?: string | null
+          caller_name?: string | null
+          campaign_id?: string | null
           dnis?: string | null
           duration_seconds?: number | null
           ended_at?: string | null
@@ -1674,11 +1684,13 @@ export type Database = {
           metadata?: Json | null
           organization_id?: string
           partner_id?: string | null
+          phase?: string | null
           script_id?: string | null
           script_session_id?: string | null
           started_at?: string
           status?: string
           tenant_id?: string | null
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -1694,6 +1706,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "fabric59_agents_identity"
             referencedColumns: ["fabric59_agent_id"]
+          },
+          {
+            foreignKeyName: "call_sessions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "call_sessions_organization_id_fkey"
@@ -1721,6 +1740,13 @@ export type Database = {
             columns: ["script_session_id"]
             isOneToOne: false
             referencedRelation: "script_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_sessions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -2374,6 +2400,8 @@ export type Database = {
       }
       deployment_runs: {
         Row: {
+          call_session_id: string | null
+          campaign_id: string | null
           connector_instance_id: string | null
           deployment_id: string
           error: string | null
@@ -2394,6 +2422,8 @@ export type Database = {
           workspace_id: string | null
         }
         Insert: {
+          call_session_id?: string | null
+          campaign_id?: string | null
           connector_instance_id?: string | null
           deployment_id: string
           error?: string | null
@@ -2414,6 +2444,8 @@ export type Database = {
           workspace_id?: string | null
         }
         Update: {
+          call_session_id?: string | null
+          campaign_id?: string | null
           connector_instance_id?: string | null
           deployment_id?: string
           error?: string | null
@@ -2434,6 +2466,20 @@ export type Database = {
           workspace_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "deployment_runs_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deployment_runs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "deployment_runs_deployment_id_fkey"
             columns: ["deployment_id"]
@@ -8178,6 +8224,7 @@ export type Database = {
       qa_reviews: {
         Row: {
           agent_id: string | null
+          call_session_id: string | null
           created_at: string
           id: string
           notes: string | null
@@ -8191,6 +8238,7 @@ export type Database = {
         }
         Insert: {
           agent_id?: string | null
+          call_session_id?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -8204,6 +8252,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string | null
+          call_session_id?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -8229,6 +8278,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "fabric59_agents_identity"
             referencedColumns: ["fabric59_agent_id"]
+          },
+          {
+            foreignKeyName: "qa_reviews_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "qa_reviews_organization_id_fkey"

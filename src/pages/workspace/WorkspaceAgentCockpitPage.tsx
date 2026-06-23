@@ -47,6 +47,9 @@ import { InCallAssistPanel } from "@/components/workspace/cockpit/InCallAssistPa
 import { InCallKnowledgeBin } from "@/components/workspace/cockpit/InCallKnowledgeBin";
 import { InCallRequiredFieldsPanel } from "@/components/workspace/cockpit/InCallRequiredFieldsPanel";
 import { useInCallKnowledgeBin } from "@/hooks/workspace/useInCallKnowledgeBin";
+import { useCallSession } from "@/hooks/workspace/useCallSession";
+import { useAuth } from "@/contexts/AuthContext";
+
 
 /**
  * Agent Cockpit (Checkpoint 4).
@@ -60,9 +63,28 @@ import { useInCallKnowledgeBin } from "@/hooks/workspace/useInCallKnowledgeBin";
  */
 export default function WorkspaceAgentCockpitPage() {
   const { workspace } = useWorkspace();
+  const { user } = useAuth();
   const { data: campaigns = [] } = useWorkspaceCampaigns();
   const { data: assignments = [] } = useEligibleAssignments();
   const setup = useWorkspaceSetupReadiness();
+
+  // Resolve the current user's agent record for this org so the cockpit can
+  // hydrate a real `call_sessions` row instead of a synthetic one.
+  const { data: agentRecord } = useQuery({
+    queryKey: ["cockpit-agent-self", workspace?.organization_id, user?.email],
+    enabled: !!workspace?.organization_id && !!user?.email,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agents")
+        .select("id")
+        .eq("organization_id", workspace!.organization_id)
+        .eq("email", user!.email!)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const eligibleCampaigns = useMemo(() => {
     const byCampaign = new Map<string, string>();
@@ -137,6 +159,8 @@ export default function WorkspaceAgentCockpitPage() {
           campaigns={eligibleCampaigns}
           selectedId={selectedCampaignId}
           onSelect={(id) => setSelectedCampaignId(id)}
+          workspaceId={workspace.id}
+          agentId={agentRecord?.id ?? null}
         />
         {selected ? (
           <CockpitBodyV2
@@ -145,6 +169,7 @@ export default function WorkspaceAgentCockpitPage() {
             formId={selected.formId}
             workspaceId={workspace.id}
             workspaceName={workspace.name ?? ""}
+            agentId={agentRecord?.id ?? null}
           />
         ) : (
           <EmptyState icon={Radio} title="Pick a campaign to begin." />
@@ -185,30 +210,43 @@ function CockpitTopBar({
   campaigns,
   selectedId,
   onSelect,
+  workspaceId,
+  agentId,
 }: {
   campaigns: Array<{ id: string; name: string }>;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  workspaceId: string;
+  agentId: string | null;
 }) {
-  const [startedAt] = useState(() => new Date());
-  const [now, setNow] = useState(() => new Date());
+  const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
+    const t = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const elapsedSec = Math.max(0, Math.floor((now.getTime() - startedAt.getTime()) / 1000));
-  const mm = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
-  const ss = String(elapsedSec % 60).padStart(2, "0");
+
+  const { presence, session } = useCallSession({ workspaceId, agentId, nowTick });
+
+  // Local fallback timer when telephony is unavailable, with explicit affordance.
+  const [localStart] = useState(() => Date.now());
+  const elapsedMs = presence.elapsedMs ?? nowTick - localStart;
+  const sec = Math.max(0, Math.floor(elapsedMs / 1000));
+  const mm = String(Math.floor(sec / 60)).padStart(2, "0");
+  const ss = String(sec % 60).padStart(2, "0");
+
+  const phaseChipMeta = {
+    connecting: { label: "Connecting", className: "bg-blue-500" },
+    live: { label: "In call", className: "bg-emerald-500" },
+    wrap_up: { label: "Wrap-up", className: "bg-amber-500" },
+    completed: { label: "Completed", className: "bg-muted-foreground" },
+  }[presence.phase];
 
   return (
     <Card>
       <CardContent className="py-3 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 min-w-[260px]">
           <Radio className="h-4 w-4 text-primary" />
-          <Select
-            value={selectedId ?? ""}
-            onValueChange={(v) => onSelect(v)}
-          >
+          <Select value={selectedId ?? ""} onValueChange={(v) => onSelect(v)}>
             <SelectTrigger className="h-9" data-testid="cockpit-campaign-picker">
               <SelectValue placeholder="Pick a campaign…" />
             </SelectTrigger>
@@ -223,20 +261,40 @@ function CockpitTopBar({
         </div>
         <Badge variant="secondary" className="text-[11px] gap-1" data-testid="cockpit-phase">
           <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+            {presence.phase === "live" && (
+              <span className={cn("absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping", phaseChipMeta.className)} />
+            )}
+            <span className={cn("relative inline-flex rounded-full h-1.5 w-1.5", phaseChipMeta.className)} />
           </span>
-          In call
+          {phaseChipMeta.label}
         </Badge>
-        <Badge variant="outline" className="font-mono text-xs gap-1">
-          <PhoneCall className="h-3 w-3" /> ANI 555-0100
+        <Badge
+          variant="outline"
+          className="font-mono text-xs gap-1"
+          data-testid="cockpit-caller"
+          title={`Caller source: ${presence.caller.source}`}
+        >
+          <PhoneCall className="h-3 w-3" /> {presence.caller.label}
+          <span className="ml-1 text-[9px] uppercase tracking-wider opacity-70" data-testid="cockpit-caller-source">
+            {presence.caller.source === "caller_name" ? "name" : presence.caller.source === "ani" ? "ani" : "?"}
+          </span>
         </Badge>
         <Badge variant="outline" className="font-mono text-xs gap-1" data-testid="cockpit-elapsed">
           <Clock className="h-3 w-3" /> {mm}:{ss}
+          {!presence.telephonyAvailable && (
+            <span className="ml-1 text-[9px] uppercase opacity-70">local</span>
+          )}
         </Badge>
-        <span className="ml-auto text-[11px] uppercase tracking-wider text-muted-foreground">
-          Session started {startedAt.toLocaleTimeString()}
-        </span>
+        {!presence.telephonyAvailable && (
+          <span className="text-[11px] text-muted-foreground" data-testid="cockpit-telephony-unavailable">
+            Telephony presence unavailable
+          </span>
+        )}
+        {session && (
+          <span className="ml-auto text-[11px] uppercase tracking-wider text-muted-foreground" data-testid="cockpit-session-id">
+            Session {session.id.slice(0, 8)}…
+          </span>
+        )}
       </CardContent>
     </Card>
   );
@@ -256,13 +314,16 @@ function CockpitBodyV2({
   formId,
   workspaceId,
   workspaceName,
+  agentId,
 }: {
   campaignId: string;
   campaignName: string;
   formId: string;
   workspaceId: string;
   workspaceName: string;
+  agentId: string | null;
 }) {
+  const { presence, session } = useCallSession({ workspaceId, agentId });
   const { data: form } = useWorkspaceForm(formId);
   const { data: schema } = useFormSchema(formId);
   const { data: guides = [] } = useWorkspaceGuides({ campaignId });
@@ -318,15 +379,20 @@ function CockpitBodyV2({
   }, [guideContent, guideSearch]);
 
   // ── Knowledge Bin (Phase 5) ──────────────────────────────────────────
+  // Phase 6: ANI + caller name now come from the canonical call session when
+  // telephony is available; we never fabricate an ANI.
+  const resolvedAni = session?.ani ?? null;
+  const resolvedCallerName =
+    session?.caller_name ??
+    (pendingValues.caller_name as string | undefined) ??
+    (pendingValues.full_name as string | undefined) ??
+    null;
   const knowledge = useInCallKnowledgeBin({
     campaign: { id: campaignId, name: campaignName, instructions: null },
     formId,
     session: {
-      ani: "555-0100",
-      callerName:
-        (pendingValues.caller_name as string | undefined) ??
-        (pendingValues.full_name as string | undefined) ??
-        null,
+      ani: resolvedAni,
+      callerName: resolvedCallerName,
       capturedValues: pendingValues,
     },
   });
@@ -444,7 +510,7 @@ function CockpitBodyV2({
             workspaceName={workspaceName}
             campaignId={campaignId}
             campaignName={campaignName}
-            ani="555-0100"
+            ani={resolvedAni ?? ""}
             capturedValues={pendingValues}
             notes={notes}
             startedAt={startedAt}

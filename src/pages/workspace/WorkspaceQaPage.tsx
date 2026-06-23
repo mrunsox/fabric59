@@ -98,7 +98,7 @@ export default function WorkspaceQaPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <StatusBadge status={r.status} />
-                        {r.script_session_id && (
+                        {(r.call_session_id || r.script_session_id) && (
                           <Button
                             asChild
                             size="sm"
@@ -106,7 +106,11 @@ export default function WorkspaceQaPage() {
                             data-testid={`qa-open-runs-${r.id}`}
                           >
                             <Link
-                              to={`/w/${workspaceId}/cockpit?tab=runs&search=${encodeURIComponent(r.script_session_id)}`}
+                              to={
+                                r.call_session_id
+                                  ? `/w/${workspaceId}/cockpit?tab=runs&session=${encodeURIComponent(r.call_session_id)}`
+                                  : `/w/${workspaceId}/cockpit?tab=runs&search=${encodeURIComponent(r.script_session_id!)}`
+                              }
                             >
                               Open in Runs
                             </Link>

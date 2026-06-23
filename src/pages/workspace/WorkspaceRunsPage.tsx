@@ -32,14 +32,16 @@ interface Run {
   external_record_id: string | null;
   idempotency_key: string | null;
   workspace_id: string | null;
+  call_session_id: string | null;
+  campaign_id: string | null;
 }
 
 /**
  * Canonical workspace Runs surface.
  *
- * Workspace-strict: filters `deployment_runs` by `workspace_id` for the
- * current workspace. Backfilled from `deployments.owner_scope_id` in the
- * Outline + Data convergence migration.
+ * Phase 6 — supports `?session=<call_session_id>` and `?campaign=<id>` deep
+ * links (from Cockpit, QA, and Supervisor) without falling back to free-text
+ * search. Legacy `?search=` continues to work for back-compat.
  */
 export default function WorkspaceRunsPage() {
   const { workspace } = useWorkspace();
@@ -49,20 +51,25 @@ export default function WorkspaceRunsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [depFilter, setDepFilter] = useState("all");
   const [retrying, setRetrying] = useState<string | null>(null);
-  // Phase 4 — accept `?search=` from QA / Cockpit deep links so operators
-  // can land on a specific session id without re-typing it.
+  const sessionFilter = searchParams.get("session");
+  const campaignFilter = searchParams.get("campaign");
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
 
   const { data: runs = [], isLoading } = useQuery({
-    queryKey: ["workspace-runs", workspace?.id ?? null],
+    queryKey: ["workspace-runs", workspace?.id ?? null, sessionFilter, campaignFilter],
     enabled: !!workspace,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("deployment_runs")
-        .select("id, status, started_at, finished_at, error, deployment_id, retry_of, external_record_id, idempotency_key, workspace_id")
+        .select(
+          "id, status, started_at, finished_at, error, deployment_id, retry_of, external_record_id, idempotency_key, workspace_id, call_session_id, campaign_id",
+        )
         .eq("workspace_id", workspace!.id)
         .order("started_at", { ascending: false })
         .limit(200);
+      if (sessionFilter) q = q.eq("call_session_id", sessionFilter);
+      if (campaignFilter) q = q.eq("campaign_id", campaignFilter);
+      const { data, error } = await q;
       if (error) throw error;
       return (data || []) as Run[];
     },
@@ -74,7 +81,7 @@ export default function WorkspaceRunsPage() {
     if (statusFilter !== "all" && r.status !== statusFilter) return false;
     if (depFilter !== "all" && r.deployment_id !== depFilter) return false;
     if (q) {
-      const hay = [r.idempotency_key, r.retry_of, r.id, r.external_record_id]
+      const hay = [r.idempotency_key, r.retry_of, r.id, r.external_record_id, r.call_session_id]
         .filter(Boolean).join(" ").toLowerCase();
       if (!hay.includes(q)) return false;
     }
@@ -139,6 +146,27 @@ export default function WorkspaceRunsPage() {
           </SelectContent>
         </Select>
         {q && <span className="text-xs text-muted-foreground">{filtered.length} of {runs.length} match</span>}
+        {sessionFilter && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs gap-1"
+            onClick={() => navigate(`/w/${workspace?.id}/cockpit?tab=runs`, { replace: true })}
+            data-testid="runs-clear-session-filter"
+          >
+            <X className="h-3 w-3" /> Session {sessionFilter.slice(0, 8)}…
+          </Button>
+        )}
+        {campaignFilter && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs gap-1"
+            onClick={() => navigate(`/w/${workspace?.id}/cockpit?tab=runs`, { replace: true })}
+          >
+            <X className="h-3 w-3" /> Campaign {campaignFilter.slice(0, 8)}…
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -168,6 +196,20 @@ export default function WorkspaceRunsPage() {
                         {r.retry_of ? ` · retry of ${r.retry_of.slice(0, 8)}…` : ""}
                         {r.external_record_id ? ` · ext ${r.external_record_id}` : ""}
                       </p>
+                      {(r.call_session_id || r.campaign_id) && (
+                        <div className="mt-1 flex flex-wrap gap-1" data-testid={`runs-row-joins-${r.id}`}>
+                          {r.call_session_id && (
+                            <Badge variant="outline" className="text-[10px] font-mono gap-1">
+                              <Link2 className="h-3 w-3" /> session {r.call_session_id.slice(0, 8)}…
+                            </Badge>
+                          )}
+                          {r.campaign_id && (
+                            <Badge variant="outline" className="text-[10px] font-mono gap-1">
+                              campaign {r.campaign_id.slice(0, 8)}…
+                            </Badge>
+                          )}
+                        </div>
+                      )}
                       {r.idempotency_key && (
                         <p className="text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5" title={r.idempotency_key}>
                           idem: {r.idempotency_key}

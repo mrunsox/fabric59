@@ -7,6 +7,7 @@ export type QaReview = {
   id: string;
   organization_id: string;
   script_session_id: string | null;
+  call_session_id: string | null;
   agent_id: string | null;
   reviewer_id: string | null;
   status: string;

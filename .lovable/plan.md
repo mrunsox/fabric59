@@ -917,3 +917,68 @@ Status: **Done** (frontend-only; no schema change).
 - Caller history joins beyond what `getAssistFactsForSession`
   already filters by `clientId`.
 - Supervisor real-time listen / whisper / barge.
+
+---
+
+## Phase 6 — Call Lifecycle & Supervisor Presence
+
+### Canonical session model
+
+`call_sessions` is now the single source of truth shared by Cockpit, Runs, QA,
+and Supervisor. Schema is **additive only**:
+
+- `call_sessions`: `workspace_id`, `campaign_id`, `phase`, `caller_name`
+- `qa_reviews.call_session_id`
+- `deployment_runs.call_session_id`, `campaign_id`
+- supporting indexes; `call_sessions` added to `supabase_realtime` and set to
+  `REPLICA IDENTITY FULL` so the cockpit/supervisor see live updates.
+
+### Explicit lifecycle mapping layer
+
+`src/lib/workspace/cockpit/callSession.ts` is the **only** place that derives
+`phase` (`connecting | live | wrap_up | completed`) from raw telephony status.
+The Five9 webhook (`supabase/functions/five9-main`) writes the same mapping
+into the `phase` column so reads and writes agree without a hidden trigger.
+
+### Presence / ANI in Cockpit
+
+- `useCallSession({ workspaceId, agentId })` hydrates the open
+  `call_sessions` row and subscribes to realtime updates.
+- Cockpit header now shows real `ani` + optional resolved `caller_name`;
+  the source (`name` / `ani` / `?`) is always visible.
+- Elapsed time uses real `started_at`; a local fallback timer with an
+  explicit **local** chip + "Telephony presence unavailable" message
+  appears when no row exists.
+
+### Runs / QA / Campaign joins
+
+- `WorkspaceRunsPage` accepts `?session=` and `?campaign=` deep links and
+  renders join chips per row. Legacy `?search=` continues to work.
+- `WorkspaceQaPage` "Open in Runs" emits `?session=<call_session_id>` when
+  the review carries one and falls back to `?search=<script_session_id>`
+  otherwise.
+
+### Supervisor (read-only)
+
+Rewritten `WorkspaceSupervisorPage`:
+
+- Lists active workspace agents (`agents.status = 'active'`) with their
+  current presence (`on-call | wrap-up | idle`).
+- **Offline policy** is explicit and documented inline: reserved for agents
+  whose record is not active; those rows are filtered out of the view.
+- Per-row deep link to Cockpit Runs tab with `?session=<id>`.
+- Realtime subscription on `call_sessions` keeps the list fresh.
+
+### Tests / verification
+
+- New `callLifecycle.test.tsx` — 17 / 17 pass (status→phase, caller
+  identity provenance, elapsed math, presence snapshot, Supervisor
+  presence mapping, deep-link contract).
+- All cockpit/QA/Runs regressions still pass.
+- Full suite: **1105 passed**, 5 pre-existing failures unchanged.
+
+### Deferred
+
+Listen / whisper / barge, queue manipulation, telephony control APIs,
+richer caller history joins, embeddings-based retrieval / ranking, session
+snapshotting for replay.
