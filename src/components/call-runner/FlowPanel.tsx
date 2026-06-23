@@ -617,9 +617,9 @@ function CompactStepList({
   const others = steps.filter((s) => s.id !== current?.id);
   if (others.length === 0) return null;
   return (
-    <details className="group rounded-md border bg-muted/10" open>
-      <summary className="cursor-pointer list-none px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground flex items-center justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-md">
-        <span>All steps</span>
+    <details className="group rounded-md border bg-muted/10">
+      <summary className="cursor-pointer list-none px-3 py-2 text-[10px] uppercase tracking-wider text-muted-foreground flex items-center justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-md hover:bg-muted/20">
+        <span>Show all {steps.length} steps</span>
         <span className="tabular-nums">{steps.length}</span>
       </summary>
       <ol className="px-2 pb-2 space-y-1" aria-label="All flow steps">

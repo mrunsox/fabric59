@@ -95,6 +95,9 @@ export function SessionHeader({
         </StatusPill>
       </div>
 
+      {/* Separator between identity and call signal */}
+      <span aria-hidden className="hidden md:block h-5 w-px bg-[hsl(var(--border-subtle))]" />
+
       {/* Call signal zone */}
       <div className="flex items-center gap-1.5">
         <StatusPill icon={PhoneCall} dense title="Caller line">
@@ -123,8 +126,9 @@ export function SessionHeader({
         )}
       </div>
 
-      {/* Ops state zone — pushed right */}
+      {/* Ops state zone — pushed right, separated */}
       <div className="ml-auto flex items-center gap-1.5">
+        <span aria-hidden className="hidden md:block h-5 w-px bg-[hsl(var(--border-subtle))] mr-1" />
         {stepPosition && stepPosition.total > 0 && (
           <StatusPill icon={ListChecks} dense title="Active step position">
             <span data-testid="runner-step-position">
