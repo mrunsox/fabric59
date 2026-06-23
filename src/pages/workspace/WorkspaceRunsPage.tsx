@@ -146,6 +146,27 @@ export default function WorkspaceRunsPage() {
           </SelectContent>
         </Select>
         {q && <span className="text-xs text-muted-foreground">{filtered.length} of {runs.length} match</span>}
+        {sessionFilter && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs gap-1"
+            onClick={() => navigate(`/w/${workspace?.id}/cockpit?tab=runs`, { replace: true })}
+            data-testid="runs-clear-session-filter"
+          >
+            <X className="h-3 w-3" /> Session {sessionFilter.slice(0, 8)}…
+          </Button>
+        )}
+        {campaignFilter && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs gap-1"
+            onClick={() => navigate(`/w/${workspace?.id}/cockpit?tab=runs`, { replace: true })}
+          >
+            <X className="h-3 w-3" /> Campaign {campaignFilter.slice(0, 8)}…
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
