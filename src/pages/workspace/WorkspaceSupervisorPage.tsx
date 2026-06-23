@@ -39,10 +39,16 @@ import {
 
 type AgentRow = {
   id: string;
-  display_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   email: string | null;
   status: string | null;
 };
+
+function displayName(a: AgentRow): string {
+  const name = `${a.first_name ?? ""} ${a.last_name ?? ""}`.trim();
+  return name || a.email || a.id.slice(0, 8);
+}
 
 const PRESENCE_META: Record<AgentPresenceState, { label: string; tone: string }> = {
   "on-call": { label: "On call", tone: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" },
