@@ -42,6 +42,18 @@ export default function WorkspaceAnalyticsPage() {
         lede="Workspace-scoped operational insight. Last 7 days unless noted."
       />
 
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="performance" className="space-y-6">
+          <WorkspacePerformanceOverview />
+        </TabsContent>
+
+        <TabsContent value="overview" className="space-y-6">
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard
           label="Calls (7d)"
