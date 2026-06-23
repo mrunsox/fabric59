@@ -192,6 +192,8 @@ export default function WorkspaceAnalyticsPage() {
         Some underlying tables remain org-scoped today; strict workspace-level scoping for call
         sessions, QA reviews, and invoices is a tracked follow-up.
       </p>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
