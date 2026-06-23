@@ -20,6 +20,8 @@ import {
   useWorkspaceQaReviews,
   useUpdateQaReviewStatus,
 } from "@/hooks/useWorkspaceQa";
+import { useCallsTelemetry } from "@/lib/workspace/telemetry/callsTelemetry";
+
 
 export default function WorkspaceQaPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -29,6 +31,30 @@ export default function WorkspaceQaPage() {
     status: tab === "all" ? undefined : tab,
   });
   const update = useUpdateQaReviewStatus();
+  const track = useCallsTelemetry();
+  const openReplay = (sid: string) => {
+    setReplaySessionId(sid);
+    track("calls.replay.opened", { call_session_id: sid, source: "qa" });
+  };
+  const closeReplay = () => {
+    if (replaySessionId) {
+      track("calls.replay.closed", {
+        call_session_id: replaySessionId,
+        source: "qa",
+      });
+    }
+    setReplaySessionId(null);
+  };
+  const updateStatus = (id: string, status: string, callSessionId: string | null) => {
+    update.mutate({ id, status });
+    track("calls.qa.review_updated", {
+      call_session_id: callSessionId,
+      source: "qa",
+      review_id: id,
+      status,
+    });
+  };
+
 
   const { data: pendingAll = [] } = useWorkspaceQaReviews({ status: "pending" });
   const { data: completedAll = [] } = useWorkspaceQaReviews({ status: "completed" });
@@ -105,7 +131,7 @@ export default function WorkspaceQaPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => setReplaySessionId(r.call_session_id)}
+                            onClick={() => openReplay(r.call_session_id!)}
                             data-testid={`qa-replay-${r.id}`}
                           >
                             <PlayCircle className="h-3.5 w-3.5 mr-1" /> Replay
@@ -133,9 +159,7 @@ export default function WorkspaceQaPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() =>
-                              update.mutate({ id: r.id, status: "in_review" })
-                            }
+                            onClick={() => updateStatus(r.id, "in_review", r.call_session_id)}
                           >
                             Start
                           </Button>
@@ -143,9 +167,7 @@ export default function WorkspaceQaPage() {
                         {r.status !== "completed" && (
                           <Button
                             size="sm"
-                            onClick={() =>
-                              update.mutate({ id: r.id, status: "completed" })
-                            }
+                            onClick={() => updateStatus(r.id, "completed", r.call_session_id)}
                           >
                             Complete
                           </Button>
@@ -161,10 +183,11 @@ export default function WorkspaceQaPage() {
       </Card>
 
       <p className="text-[11px] text-muted-foreground">
-        Detailed scoring rubrics, calibration, and reviewer assignment are on the roadmap.
+        Advisory only — replay and AI hints assist reviewers; they do not auto-score calls.
       </p>
 
-      <Dialog open={!!replaySessionId} onOpenChange={(o) => !o && setReplaySessionId(null)}>
+      <Dialog open={!!replaySessionId} onOpenChange={(o) => !o && closeReplay()}>
+
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Call replay &amp; QA hints</DialogTitle>
