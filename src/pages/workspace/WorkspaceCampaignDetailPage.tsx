@@ -18,6 +18,8 @@ import { CampaignReadinessChecklist } from "@/components/dashboard/CampaignReadi
 import { PublishSettingsCard } from "@/components/campaign-admin/PublishSettingsCard";
 import { TransferDirectoryEditor } from "@/components/campaign-admin/TransferDirectoryEditor";
 import { ExternalResourcesEditor } from "@/components/campaign-admin/ExternalResourcesEditor";
+import { CampaignOutcomesPanel } from "@/components/workspace/performance/CampaignOutcomesPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 /**
  * Canonical Campaign Detail shell — /w/:workspaceId/campaigns/:campaignId.
