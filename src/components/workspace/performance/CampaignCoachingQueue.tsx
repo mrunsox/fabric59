@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CallSessionReplay } from "@/components/workspace/calls/CallSessionReplay";
 import { GraduationCap, CheckCircle2, Play } from "lucide-react";
 import type { CoachingCandidate } from "@/lib/workspace/performance/metrics";
+import { useCallsTelemetry } from "@/lib/workspace/telemetry/callsTelemetry";
+
 
 interface Props {
   candidates: CoachingCandidate[];
@@ -22,6 +24,31 @@ interface Props {
 
 export function CampaignCoachingQueue({ candidates, loading, emptyHint }: Props) {
   const [replayId, setReplayId] = useState<string | null>(null);
+  const track = useCallsTelemetry();
+  const openReplay = (c: CoachingCandidate) => {
+    setReplayId(c.sessionId);
+    track("calls.coaching.item_opened", {
+      call_session_id: c.sessionId,
+      campaign_id: c.campaignId,
+      source: "campaign",
+      reasons: c.reasons,
+    });
+    track("calls.replay.opened", {
+      call_session_id: c.sessionId,
+      campaign_id: c.campaignId,
+      source: "campaign",
+    });
+  };
+  const closeReplay = () => {
+    if (replayId) {
+      track("calls.replay.closed", {
+        call_session_id: replayId,
+        source: "campaign",
+      });
+    }
+    setReplayId(null);
+  };
+
   return (
     <>
       <Card>
