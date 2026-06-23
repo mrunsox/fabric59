@@ -203,7 +203,7 @@ export default function WorkspaceSupervisorPage() {
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">
-                        {agent.display_name ?? agent.email ?? agent.id.slice(0, 8)}
+                        {displayName(agent)}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
                         {campaign ?? "No active campaign"}
