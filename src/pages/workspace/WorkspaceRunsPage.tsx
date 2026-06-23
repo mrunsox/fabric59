@@ -245,6 +245,17 @@ export default function WorkspaceRunsPage() {
                       </TooltipProvider>
                     )}
                     <Badge variant={r.status === "succeeded" ? "default" : r.status === "failed" ? "destructive" : "secondary"}>{r.status}</Badge>
+                    {r.call_session_id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs"
+                        onClick={(e) => { e.stopPropagation(); setReplaySessionId(r.call_session_id!); }}
+                        data-testid={`runs-replay-${r.id}`}
+                      >
+                        <PlayCircle className="h-3.5 w-3.5 mr-1" /> Replay
+                      </Button>
+                    )}
                     {(r.status === "failed" || r.status === "succeeded") && (
                       <TooltipProvider delayDuration={150}>
                         <Tooltip>
@@ -264,6 +275,24 @@ export default function WorkspaceRunsPage() {
                   </li>
                 );
               })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      <Sheet open={!!replaySessionId} onOpenChange={(o) => !o && setReplaySessionId(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Call replay</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            {replaySessionId && <CallSessionReplay sessionId={replaySessionId} />}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
             </ul>
           </CardContent>
         </Card>
