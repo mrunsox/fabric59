@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { KpiCard } from "@/components/common/KpiCard";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -17,6 +18,7 @@ import {
   useWorkspaceKpis,
   useWorkspaceDispositions,
 } from "@/hooks/useWorkspaceAnalytics";
+import { WorkspacePerformanceOverview } from "@/components/workspace/performance/WorkspacePerformanceOverview";
 
 /**
  * Phase 8 — Canonical workspace analytics surface.
@@ -39,6 +41,18 @@ export default function WorkspaceAnalyticsPage() {
         title="Analytics"
         lede="Workspace-scoped operational insight. Last 7 days unless noted."
       />
+
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="performance" className="space-y-6">
+          <WorkspacePerformanceOverview />
+        </TabsContent>
+
+        <TabsContent value="overview" className="space-y-6">
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard
@@ -178,6 +192,8 @@ export default function WorkspaceAnalyticsPage() {
         Some underlying tables remain org-scoped today; strict workspace-level scoping for call
         sessions, QA reviews, and invoices is a tracked follow-up.
       </p>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
