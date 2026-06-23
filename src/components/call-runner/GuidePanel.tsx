@@ -137,10 +137,10 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes, currentStepHint 
   };
 
   return (
-    <RunnerSurface className="overflow-hidden" data-testid="runner-guide-panel">
-      <div className="px-3 pt-3 pb-2 border-b flex items-center justify-between gap-2 shrink-0">
-        <h2 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
-          <BookOpen className="h-3.5 w-3.5 text-primary" /> Workspace guide
+    <RunnerSurface tone="muted" className="overflow-hidden" data-testid="runner-guide-panel">
+      <div className="px-3 pt-3 pb-2 border-b border-[hsl(var(--border-subtle))] flex items-center justify-between gap-2 shrink-0">
+        <h2 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 text-muted-foreground">
+          <BookOpen className="h-3.5 w-3.5" /> Workspace guide
         </h2>
         {guide && (
           <span className="text-[10px] text-muted-foreground">
