@@ -130,6 +130,6 @@ describe("Phase 7B — CallSessionReplay", () => {
     });
     renderReplay({ showQaHints: true });
     await waitFor(() => expect(screen.getByTestId("replay-qa-hints")).toBeInTheDocument());
-    expect(screen.getByText(/Advisory only/i)).toBeInTheDocument();
+    expect(screen.getByText(/Advisory only — not a QA score/i)).toBeInTheDocument();
   });
 });

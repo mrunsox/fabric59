@@ -79,3 +79,67 @@ Lives at `src/components/call-runner/primitives.tsx`:
   gets `aria-invalid="true"`.
 - Autosave status uses `aria-live="polite"` (saving) or `assertive`
   (error) so screen readers announce save state without spam.
+
+## Phase 9 — Calls OS adoption telemetry & coaching
+
+### Telemetry events (platform_events)
+
+Wired via `useCallsTelemetry()` (`src/lib/workspace/telemetry/callsTelemetry.ts`).
+All events carry `workspace_id` (auto-injected), and where applicable
+`call_session_id`, `campaign_id`, `source` (runs|qa|cockpit|campaign|analytics).
+
+| event_type                          | source(s)        | wired from                                    |
+| ----------------------------------- | ---------------- | --------------------------------------------- |
+| calls.replay.opened                 | runs/qa/cockpit/campaign | WorkspaceRunsPage, WorkspaceQaPage, CockpitLastCallButton, CampaignCoachingQueue |
+| calls.replay.closed                 | (same)           | (same)                                        |
+| calls.qa.review_updated             | qa               | WorkspaceQaPage `updateStatus`                |
+| calls.performance.viewed            | analytics        | TelemetryView wrapping Performance tab        |
+| calls.campaign_outcomes.viewed      | campaign         | TelemetryView wrapping Outcomes tab           |
+| calls.coaching.item_opened          | campaign         | CampaignCoachingQueue                         |
+| calls.assist.suggestion_used        | cockpit          | already via `call_assist_events` append log   |
+
+### Quick analytics queries
+
+```sql
+-- Assist used rate over calls with snapshots, last 14d
+WITH covered AS (
+  SELECT s.call_session_id FROM call_session_snapshots s
+  WHERE s.created_at > now() - interval '14 days'
+), used AS (
+  SELECT DISTINCT call_session_id FROM call_assist_events
+  WHERE event_type = 'suggestion_used' AND created_at > now() - interval '14 days'
+)
+SELECT count(*) FILTER (WHERE used.call_session_id IS NOT NULL)::float
+       / nullif(count(*), 0) AS assist_used_rate
+FROM covered LEFT JOIN used USING (call_session_id);
+
+-- Replay opens by source, last 7d
+SELECT split_part(source, ':', 2) AS surface, count(*)
+FROM platform_events
+WHERE event_type = 'calls.replay.opened' AND created_at > now() - interval '7 days'
+GROUP BY surface ORDER BY 2 DESC;
+
+-- QA review updates per week
+SELECT date_trunc('week', created_at) AS wk, count(*)
+FROM platform_events
+WHERE event_type = 'calls.qa.review_updated'
+GROUP BY wk ORDER BY wk DESC;
+```
+
+### AI tag → coaching queue
+
+`extractAiTagsFromSnapshot()` (in `src/lib/workspace/performance/metrics.ts`)
+scans the snapshot's `outcome.notes_excerpt` + `outcome.disposition_label`
+for the canonical FLAG_TAGS set (`frustrated`, `cancellation_risk`,
+`complaint`, `escalation`, `confused`, `angry`). `selectCoachingCandidates`
+merges those with any caller-supplied `aiTags` Map, deduplicates, and
+renders them as chips on each coaching row. Ranking remains deterministic:
+`hard_fail (1000) > soft_fail (500) > tag (+100 per match) > newest`.
+
+### Cockpit "Last call"
+
+`CockpitLastCallButton` mounts in the cockpit top bar. It resolves the
+most recent `call_sessions` row for `(workspace_id, agent_id)` with
+`ended_at NOT NULL`, opens a side sheet, and renders
+`CallSessionReplay`. If no such row exists, the sheet shows an honest
+empty-state message. Disabled when no agent record is available.

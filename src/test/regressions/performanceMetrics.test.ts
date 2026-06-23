@@ -179,7 +179,7 @@ describe("selectCoachingCandidates", () => {
       snapshots: [],
       aiTags: new Map([["plain", ["frustrated"]]]),
     });
-    expect(list[0].reasons).toContain("frustrated");
+    expect(list[0].reasons).toContain("Frustrated");
   });
 
   it("caps at limit", () => {

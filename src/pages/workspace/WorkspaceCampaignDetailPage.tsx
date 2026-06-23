@@ -19,7 +19,9 @@ import { PublishSettingsCard } from "@/components/campaign-admin/PublishSettings
 import { TransferDirectoryEditor } from "@/components/campaign-admin/TransferDirectoryEditor";
 import { ExternalResourcesEditor } from "@/components/campaign-admin/ExternalResourcesEditor";
 import { CampaignOutcomesPanel } from "@/components/workspace/performance/CampaignOutcomesPanel";
+import { TelemetryView } from "@/components/workspace/telemetry/TelemetryView";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 /**
  * Canonical Campaign Detail shell — /w/:workspaceId/campaigns/:campaignId.
@@ -128,8 +130,14 @@ export default function WorkspaceCampaignDetailPage() {
         </TabsContent>
 
         <TabsContent value="outcomes">
-          <CampaignOutcomesPanel campaignId={campaign.id} />
+          <TelemetryView
+            event="calls.campaign_outcomes.viewed"
+            payload={{ campaign_id: campaign.id, source: "campaign" }}
+          >
+            <CampaignOutcomesPanel campaignId={campaign.id} />
+          </TelemetryView>
         </TabsContent>
+
       </Tabs>
 
 

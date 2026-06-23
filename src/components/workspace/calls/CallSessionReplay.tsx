@@ -210,9 +210,10 @@ function SummaryInsights({
             ))}
           </div>
         )}
-        <p className="text-[10px] text-muted-foreground italic">
-          Generated from snapshot v1{capturedAt ? ` captured at ${new Date(capturedAt).toLocaleString()}` : ""}.
+        <p className="text-[10px] text-muted-foreground italic" data-testid="replay-summary-footer">
+          Generated from snapshot v1{capturedAt ? ` · captured ${new Date(capturedAt).toLocaleString()}` : ""} · advisory only.
         </p>
+
       </CardContent>
     </Card>
   );

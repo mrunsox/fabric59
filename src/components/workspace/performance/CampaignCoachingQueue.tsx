@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CallSessionReplay } from "@/components/workspace/calls/CallSessionReplay";
 import { GraduationCap, CheckCircle2, Play } from "lucide-react";
 import type { CoachingCandidate } from "@/lib/workspace/performance/metrics";
+import { useCallsTelemetry } from "@/lib/workspace/telemetry/callsTelemetry";
+
 
 interface Props {
   candidates: CoachingCandidate[];
@@ -22,6 +24,31 @@ interface Props {
 
 export function CampaignCoachingQueue({ candidates, loading, emptyHint }: Props) {
   const [replayId, setReplayId] = useState<string | null>(null);
+  const track = useCallsTelemetry();
+  const openReplay = (c: CoachingCandidate) => {
+    setReplayId(c.sessionId);
+    track("calls.coaching.item_opened", {
+      call_session_id: c.sessionId,
+      campaign_id: c.campaignId,
+      source: "campaign",
+      reasons: c.reasons,
+    });
+    track("calls.replay.opened", {
+      call_session_id: c.sessionId,
+      campaign_id: c.campaignId,
+      source: "campaign",
+    });
+  };
+  const closeReplay = () => {
+    if (replayId) {
+      track("calls.replay.closed", {
+        call_session_id: replayId,
+        source: "campaign",
+      });
+    }
+    setReplayId(null);
+  };
+
   return (
     <>
       <Card>
@@ -66,10 +93,12 @@ export function CampaignCoachingQueue({ candidates, loading, emptyHint }: Props)
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setReplayId(c.sessionId)}
+                    onClick={() => openReplay(c)}
+                    data-testid={`coaching-replay-${c.sessionId}`}
                   >
                     <Play className="h-3.5 w-3.5 mr-1.5" /> Replay
                   </Button>
+
                 </li>
               ))}
             </ul>
@@ -77,7 +106,7 @@ export function CampaignCoachingQueue({ candidates, loading, emptyHint }: Props)
         </CardContent>
       </Card>
 
-      <Sheet open={!!replayId} onOpenChange={(o) => !o && setReplayId(null)}>
+      <Sheet open={!!replayId} onOpenChange={(o) => !o && closeReplay()}>
         <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Call replay</SheetTitle>

@@ -222,15 +222,22 @@ export function selectCoachingCandidates(input: {
       rank += 500;
     }
 
-    const explicitTags = input.aiTags?.get(s.id) ?? [];
+    // Merge explicit tags (e.g. from server-side AI summaries) with
+    // tags inferred directly from the snapshot payload (notes excerpt +
+    // disposition label keyword scan). Both flow through the same FLAG_TAGS
+    // gate so the coaching reasons stay short and predictable.
     const snap = snapshotBySession.get(s.id);
-    const snapTags: string[] = [];
-    // Snapshots may carry tags in their (forward-compatible) ai_assist or via aiTags map.
-    // We don't read snapshot.summary here — caller supplies aiTags for richer signals.
-    for (const t of explicitTags) {
+    const inferred = snap ? extractAiTagsFromSnapshot(snap) : [];
+    const combined = new Set<string>([
+      ...(input.aiTags?.get(s.id) ?? []),
+      ...inferred,
+    ]);
+    const seenReasons = new Set<string>();
+    for (const t of combined) {
       const norm = t.toLowerCase().replace(/\s+/g, "_");
-      if (FLAG_TAGS.has(norm)) {
-        reasons.push(t);
+      if (FLAG_TAGS.has(norm) && !seenReasons.has(norm)) {
+        reasons.push(formatTagLabel(norm));
+        seenReasons.add(norm);
         rank += 100;
       }
     }
@@ -238,7 +245,7 @@ export function selectCoachingCandidates(input: {
     // Newest tie-breaker (ms since epoch, scaled small so it never beats bucket)
     rank += new Date(s.started_at).getTime() / 1e12;
 
-    if (rank > 0 || reasons.length > 0 || snapTags.length > 0) {
+    if (rank > 0 || reasons.length > 0) {
       scored.push({
         sessionId: s.id,
         startedAt: s.started_at,
@@ -253,3 +260,43 @@ export function selectCoachingCandidates(input: {
   scored.sort((a, b) => b.rank - a.rank);
   return scored.slice(0, limit);
 }
+
+/**
+ * Phase 9 — Derive a compact tag set from a snapshot's free-text surfaces
+ * (outcome notes excerpt + disposition label). Pure keyword scan; never
+ * calls a model. Returns canonical FLAG_TAGS-shaped strings.
+ */
+const TAG_KEYWORDS: Array<{ tag: string; pattern: RegExp }> = [
+  { tag: "frustrated", pattern: /\b(frustrat|annoyed|upset)/i },
+  { tag: "angry", pattern: /\b(angry|furious|irate)/i },
+  { tag: "cancellation_risk", pattern: /\b(cancel|cancellation|churn)/i },
+  { tag: "complaint", pattern: /\b(complaint|complain|dissatisfied)/i },
+  { tag: "escalation", pattern: /\b(escalat|supervisor|manager)/i },
+  { tag: "confused", pattern: /\b(confus|unclear|don'?t understand)/i },
+];
+
+export function extractAiTagsFromSnapshot(
+  snap: CallSessionSnapshotV1 | null | undefined,
+): string[] {
+  if (!snap) return [];
+  const haystack = [
+    snap.outcome?.notes_excerpt ?? "",
+    snap.outcome?.disposition_label ?? "",
+  ]
+    .join(" ")
+    .trim();
+  if (!haystack) return [];
+  const hits = new Set<string>();
+  for (const { tag, pattern } of TAG_KEYWORDS) {
+    if (pattern.test(haystack)) hits.add(tag);
+  }
+  return [...hits];
+}
+
+function formatTagLabel(norm: string): string {
+  return norm
+    .split("_")
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .join(" ");
+}
+
