@@ -79,46 +79,58 @@ export default function WorkspaceCampaignDetailPage() {
 
       <CampaignReadinessChecklist workspaceId={workspace.id} campaignId={campaign.id} />
 
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="outcomes">Outcomes</TabsTrigger>
+        </TabsList>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Status</CardTitle></CardHeader>
-          <CardContent className="text-sm">
-            Canonical: <span className="font-medium">{campaign.status}</span>
-            {campaign.legacy_status && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Legacy: {campaign.legacy_status}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Client</CardTitle></CardHeader>
-          <CardContent className="text-sm">
-            {campaign.client_id ? (
-              <Link className="hover:text-primary" to={`/w/${workspace.id}/clients`}>
-                View clients
-              </Link>
-            ) : (
-              <span className="text-muted-foreground">Not linked</span>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Source</CardTitle></CardHeader>
-          <CardContent className="text-sm">
-            <span className="text-muted-foreground">{campaign.source_type ?? "canonical"}</span>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Status</CardTitle></CardHeader>
+              <CardContent className="text-sm">
+                Canonical: <span className="font-medium">{campaign.status}</span>
+                {campaign.legacy_status && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Legacy: {campaign.legacy_status}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Client</CardTitle></CardHeader>
+              <CardContent className="text-sm">
+                {campaign.client_id ? (
+                  <Link className="hover:text-primary" to={`/w/${workspace.id}/clients`}>
+                    View clients
+                  </Link>
+                ) : (
+                  <span className="text-muted-foreground">Not linked</span>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-xs uppercase tracking-wide">Source</CardTitle></CardHeader>
+              <CardContent className="text-sm">
+                <span className="text-muted-foreground">{campaign.source_type ?? "canonical"}</span>
+              </CardContent>
+            </Card>
+          </div>
 
-      <IntakeFormCard workspaceId={workspace.id} campaignId={campaign.id} />
+          <IntakeFormCard workspaceId={workspace.id} campaignId={campaign.id} />
 
-      <PublishSettingsCard campaignId={campaign.id} workspaceId={workspace.id} />
+          <PublishSettingsCard campaignId={campaign.id} workspaceId={workspace.id} />
 
-      <TransferDirectoryEditor campaignId={campaign.id} />
+          <TransferDirectoryEditor campaignId={campaign.id} />
 
-      <ExternalResourcesEditor campaignId={campaign.id} />
+          <ExternalResourcesEditor campaignId={campaign.id} />
+        </TabsContent>
+
+        <TabsContent value="outcomes">
+          <CampaignOutcomesPanel campaignId={campaign.id} />
+        </TabsContent>
+      </Tabs>
 
 
 
