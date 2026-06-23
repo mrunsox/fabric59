@@ -728,6 +728,42 @@ function statusForEvent(eventType: string | undefined, fallback: string): string
   }
 }
 
+// Phase 6 — single mapper from raw `status` → canonical lifecycle `phase`.
+// Mirrors src/lib/workspace/cockpit/callSession.ts so Cockpit and the
+// webhook agree without a hidden DB trigger.
+function phaseForStatus(status: string, endedAt: string | null | undefined): string {
+  if (endedAt) return 'completed';
+  switch (status) {
+    case 'queued':
+      return 'connecting';
+    case 'acw':
+      return 'wrap_up';
+    case 'ended':
+    case 'disposed':
+    case 'failed':
+      return 'completed';
+    case 'connected':
+    case 'in_progress':
+    default:
+      return 'live';
+  }
+}
+
+async function resolveDefaultWorkspaceId(supabase: any, orgId: string): Promise<string | null> {
+  try {
+    const { data } = await supabase
+      .from('workspaces')
+      .select('id')
+      .eq('organization_id', orgId)
+      .eq('is_default', true)
+      .limit(1)
+      .maybeSingle();
+    return data?.id ?? null;
+  } catch (_e) {
+    return null;
+  }
+}
+
 async function upsertCallSession(
   supabase: any,
   orgId: string,
@@ -737,21 +773,26 @@ async function upsertCallSession(
 ): Promise<void> {
   if (!call.id) return;
   const status = statusForEvent(eventType, call.endedAt ? 'ended' : 'in_progress');
+  const phase = phaseForStatus(status, call.endedAt);
   try {
     const { data: existing } = await supabase
       .from('call_sessions')
-      .select('id')
+      .select('id, workspace_id')
       .eq('organization_id', orgId)
       .eq('five9_call_id', call.id)
       .maybeSingle();
 
+    const workspaceId = existing?.workspace_id ?? (await resolveDefaultWorkspaceId(supabase, orgId));
+
     const row: Record<string, unknown> = {
       organization_id: orgId,
       tenant_id: tenantId,
+      workspace_id: workspaceId,
       five9_call_id: call.id,
       ani: call.fromNumber || null,
       dnis: call.toNumber || null,
       status,
+      phase,
       ended_at: call.endedAt || null,
       duration_seconds: call.durationSeconds ?? null,
       metadata: { event_type: eventType, queue: call.queue, campaign: call.campaign, disposition: call.disposition },
