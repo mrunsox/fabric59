@@ -75,10 +75,10 @@ export default function WorkspaceSupervisorPage() {
     queryFn: async (): Promise<AgentRow[]> => {
       const { data, error } = await supabase
         .from("agents")
-        .select("id, display_name, email, status")
+        .select("id, first_name, last_name, email, status")
         .eq("organization_id", workspace!.organization_id)
         .eq("status", "active")
-        .order("display_name", { ascending: true });
+        .order("last_name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as AgentRow[];
     },
