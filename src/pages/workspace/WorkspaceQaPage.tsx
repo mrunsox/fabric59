@@ -24,6 +24,7 @@ import {
 export default function WorkspaceQaPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const [tab, setTab] = useState<"pending" | "completed" | "all">("pending");
+  const [replaySessionId, setReplaySessionId] = useState<string | null>(null);
   const { data: reviews = [], isLoading } = useWorkspaceQaReviews({
     status: tab === "all" ? undefined : tab,
   });
