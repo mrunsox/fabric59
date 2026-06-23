@@ -19,6 +19,8 @@ import {
   useWorkspaceDispositions,
 } from "@/hooks/useWorkspaceAnalytics";
 import { WorkspacePerformanceOverview } from "@/components/workspace/performance/WorkspacePerformanceOverview";
+import { TelemetryView } from "@/components/workspace/telemetry/TelemetryView";
+
 
 /**
  * Phase 8 — Canonical workspace analytics surface.
@@ -49,8 +51,11 @@ export default function WorkspaceAnalyticsPage() {
         </TabsList>
 
         <TabsContent value="performance" className="space-y-6">
-          <WorkspacePerformanceOverview />
+          <TelemetryView event="calls.performance.viewed" payload={{ source: "analytics" }}>
+            <WorkspacePerformanceOverview />
+          </TelemetryView>
         </TabsContent>
+
 
         <TabsContent value="overview" className="space-y-6">
 
