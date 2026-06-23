@@ -53,6 +53,7 @@ export default function WorkspaceRunsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [depFilter, setDepFilter] = useState("all");
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [replaySessionId, setReplaySessionId] = useState<string | null>(null);
   const sessionFilter = searchParams.get("session");
   const campaignFilter = searchParams.get("campaign");
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
