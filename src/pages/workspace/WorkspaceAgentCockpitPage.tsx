@@ -379,15 +379,20 @@ function CockpitBodyV2({
   }, [guideContent, guideSearch]);
 
   // ── Knowledge Bin (Phase 5) ──────────────────────────────────────────
+  // Phase 6: ANI + caller name now come from the canonical call session when
+  // telephony is available; we never fabricate an ANI.
+  const resolvedAni = session?.ani ?? null;
+  const resolvedCallerName =
+    session?.caller_name ??
+    (pendingValues.caller_name as string | undefined) ??
+    (pendingValues.full_name as string | undefined) ??
+    null;
   const knowledge = useInCallKnowledgeBin({
     campaign: { id: campaignId, name: campaignName, instructions: null },
     formId,
     session: {
-      ani: "555-0100",
-      callerName:
-        (pendingValues.caller_name as string | undefined) ??
-        (pendingValues.full_name as string | undefined) ??
-        null,
+      ani: resolvedAni,
+      callerName: resolvedCallerName,
       capturedValues: pendingValues,
     },
   });
