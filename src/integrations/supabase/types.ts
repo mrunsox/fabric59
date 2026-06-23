@@ -1628,6 +1628,64 @@ export type Database = {
           },
         ]
       }
+      call_session_snapshots: {
+        Row: {
+          call_session_id: string
+          campaign_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          snapshot: Json
+          source: string
+          version: number
+          workspace_id: string
+        }
+        Insert: {
+          call_session_id: string
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          snapshot: Json
+          source?: string
+          version?: number
+          workspace_id: string
+        }
+        Update: {
+          call_session_id?: string
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          snapshot?: Json
+          source?: string
+          version?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_session_snapshots_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_session_snapshots_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_session_snapshots_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_sessions: {
         Row: {
           agent_id: string | null

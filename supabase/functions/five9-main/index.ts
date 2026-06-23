@@ -777,7 +777,7 @@ async function upsertCallSession(
   try {
     const { data: existing } = await supabase
       .from('call_sessions')
-      .select('id, workspace_id')
+      .select('id, workspace_id, phase')
       .eq('organization_id', orgId)
       .eq('five9_call_id', call.id)
       .maybeSingle();
@@ -798,10 +798,30 @@ async function upsertCallSession(
       metadata: { event_type: eventType, queue: call.queue, campaign: call.campaign, disposition: call.disposition },
     };
 
+    let sessionId: string | null = existing?.id ?? null;
     if (existing?.id) {
       await supabase.from('call_sessions').update(row).eq('id', existing.id);
     } else {
-      await supabase.from('call_sessions').insert({ ...row, started_at: call.startedAt });
+      const { data: inserted } = await supabase
+        .from('call_sessions')
+        .insert({ ...row, started_at: call.startedAt })
+        .select('id')
+        .single();
+      sessionId = inserted?.id ?? null;
+    }
+
+    // Phase 7A — capture derived snapshot on transitions into wrap_up / completed.
+    // Snapshots are append-only and never block the lifecycle write.
+    if (sessionId && (phase === 'wrap_up' || phase === 'completed')) {
+      const prevPhase = existing?.phase ?? null;
+      if (prevPhase !== phase) {
+        try {
+          const { persistSessionSnapshot } = await import('../_shared/session-snapshot.ts');
+          await persistSessionSnapshot(supabase, sessionId, { source: 'five9-main' });
+        } catch (snapErr) {
+          console.error('snapshot capture failed:', snapErr);
+        }
+      }
     }
   } catch (e) {
     console.error('upsertCallSession error:', e);
