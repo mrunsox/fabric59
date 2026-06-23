@@ -62,3 +62,29 @@ all operational surfaces.
 - `docs/dashboard-ux-audit.md`
 - `docs/dashboard-ia-reset-plan.md`
 - `.lovable/plan.md` (latest entries)
+
+---
+
+# Calls OS — Outcome, QA & Performance Program
+
+Live-call operating system built across Cockpit, QA, Replay, and
+Performance surfaces. Snapshot-driven; no new telephony.
+
+## Phases
+
+| Phase | Status | What it produces |
+|---|---|---|
+| 5 — Call session foundation | **In use** | `call_sessions`, `call_session_snapshots`, runner shell. |
+| 6 — QA & Replay surfaces | **In use** | Workspace QA queue, `CallSessionReplay`, run history. |
+| 7 — AI tagging on snapshots | **In use** | Compact tag extraction on 7B snapshots. |
+| 8 — Outcome & Performance OS | **In use** | Workspace performance, campaign outcomes, advisory coaching queue. |
+| 9 — Live Adoption & Tuning | **In use** | Telemetry events, AI-tag-driven coaching, cockpit "Last call", copy hardening. |
+| 10 — Run It In The Wild | **Run & Learn (observation window open)** | Phase 10 Questions, Fixes log, end-of-window outcome — see `docs/live-call-runner-ux.md`. |
+
+## Rules for Phase 10
+
+- No new routes, tabs, dashboards, tables, or columns.
+- No telephony, auto-scoring, or new AI behaviors.
+- Only bug fixes, perf, copy/empty/loading/error clarity, tiny layout fixes.
+- Every fix gets a regression test and a row in the Phase 10 Fixes table.
+
