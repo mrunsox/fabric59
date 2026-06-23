@@ -184,11 +184,23 @@ export function buildCallSessionSnapshotV1(
   input: BuildSnapshotInput,
 ): CallSessionSnapshotV1 {
   const capturedAt = input.capturedAt ?? new Date().toISOString();
+  const assistEvents = (input.assistEvents ?? [])
+    .filter((r) => r.suggestion_id && r.action)
+    .map((r) => ({
+      ts: r.created_at,
+      suggestion_id: r.suggestion_id as string,
+      source_precedence:
+        typeof r.source_precedence === "number" && Number.isFinite(r.source_precedence)
+          ? r.source_precedence
+          : 0,
+      source_type: (r.source_type ?? "live_session") as CallSessionSnapshotV1["ai_assist"]["used_suggestions"][number]["source_type"],
+      action: (r.action ?? "accepted") as "accepted" | "copied" | "ignored",
+    }));
   return {
     session: snapshotSession(input.session),
     knowledge_bin: snapshotKnowledgeBin(input.knowledgeBin, capturedAt),
     events: snapshotEvents(input.events, input.outcome?.disposition ?? null),
     outcome: snapshotOutcome(input.outcome, input.latestNote),
-    ai_assist: { used_suggestions: [] },
+    ai_assist: { used_suggestions: assistEvents },
   };
 }
