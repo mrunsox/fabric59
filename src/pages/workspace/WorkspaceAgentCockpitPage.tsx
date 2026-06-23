@@ -510,7 +510,7 @@ function CockpitBodyV2({
             workspaceName={workspaceName}
             campaignId={campaignId}
             campaignName={campaignName}
-            ani="555-0100"
+            ani={resolvedAni ?? ""}
             capturedValues={pendingValues}
             notes={notes}
             startedAt={startedAt}
