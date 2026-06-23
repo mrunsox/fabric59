@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { KpiCard } from "@/components/common/KpiCard";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -17,6 +18,7 @@ import {
   useWorkspaceKpis,
   useWorkspaceDispositions,
 } from "@/hooks/useWorkspaceAnalytics";
+import { WorkspacePerformanceOverview } from "@/components/workspace/performance/WorkspacePerformanceOverview";
 
 /**
  * Phase 8 — Canonical workspace analytics surface.
