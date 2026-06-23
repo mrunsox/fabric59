@@ -163,6 +163,15 @@ export default function WorkspaceQaPage() {
       <p className="text-[11px] text-muted-foreground">
         Detailed scoring rubrics, calibration, and reviewer assignment are on the roadmap.
       </p>
+
+      <Dialog open={!!replaySessionId} onOpenChange={(o) => !o && setReplaySessionId(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Call replay &amp; QA hints</DialogTitle>
+          </DialogHeader>
+          {replaySessionId && <CallSessionReplay sessionId={replaySessionId} showQaHints />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
