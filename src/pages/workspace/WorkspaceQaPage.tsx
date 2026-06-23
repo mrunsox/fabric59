@@ -101,6 +101,16 @@ export default function WorkspaceQaPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <StatusBadge status={r.status} />
+                        {r.call_session_id && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setReplaySessionId(r.call_session_id)}
+                            data-testid={`qa-replay-${r.id}`}
+                          >
+                            <PlayCircle className="h-3.5 w-3.5 mr-1" /> Replay
+                          </Button>
+                        )}
                         {(r.call_session_id || r.script_session_id) && (
                           <Button
                             asChild
