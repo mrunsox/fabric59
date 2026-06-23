@@ -48,7 +48,9 @@ import { InCallKnowledgeBin } from "@/components/workspace/cockpit/InCallKnowled
 import { InCallRequiredFieldsPanel } from "@/components/workspace/cockpit/InCallRequiredFieldsPanel";
 import { useInCallKnowledgeBin } from "@/hooks/workspace/useInCallKnowledgeBin";
 import { useCallSession } from "@/hooks/workspace/useCallSession";
+import { CockpitLastCallButton } from "@/components/workspace/cockpit/CockpitLastCallButton";
 import { useAuth } from "@/contexts/AuthContext";
+
 
 
 /**
@@ -295,10 +297,14 @@ function CockpitTopBar({
             Session {session.id.slice(0, 8)}…
           </span>
         )}
+        <div className={session ? "" : "ml-auto"}>
+          <CockpitLastCallButton workspaceId={workspaceId} agentId={agentId} />
+        </div>
       </CardContent>
     </Card>
   );
 }
+
 
 // ---------------------------------------------------------------------------
 // Body — 3-zone layout (primary / assist rail / wrap-up footer).
