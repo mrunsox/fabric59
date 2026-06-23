@@ -16,6 +16,8 @@ import { classifyError, type RetryClass } from "@/lib/flow-runner/retry-classifi
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { CallSessionReplay } from "@/components/workspace/calls/CallSessionReplay";
+import { useCallsTelemetry } from "@/lib/workspace/telemetry/callsTelemetry";
+
 
 const CLASS_META: Record<RetryClass, { label: string; tone: string; Icon: typeof AlertTriangle }> = {
   retriable: { label: "Retriable", tone: "border-amber-500/40 bg-amber-500/10 text-amber-700", Icon: AlertTriangle },
@@ -54,6 +56,21 @@ export default function WorkspaceRunsPage() {
   const [depFilter, setDepFilter] = useState("all");
   const [retrying, setRetrying] = useState<string | null>(null);
   const [replaySessionId, setReplaySessionId] = useState<string | null>(null);
+  const track = useCallsTelemetry();
+  const openReplay = (sid: string) => {
+    setReplaySessionId(sid);
+    track("calls.replay.opened", { call_session_id: sid, source: "runs" });
+  };
+  const closeReplay = () => {
+    if (replaySessionId) {
+      track("calls.replay.closed", {
+        call_session_id: replaySessionId,
+        source: "runs",
+      });
+    }
+    setReplaySessionId(null);
+  };
+
   const sessionFilter = searchParams.get("session");
   const campaignFilter = searchParams.get("campaign");
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
@@ -250,7 +267,7 @@ export default function WorkspaceRunsPage() {
                         size="sm"
                         variant="ghost"
                         className="h-7 px-2 text-xs"
-                        onClick={(e) => { e.stopPropagation(); setReplaySessionId(r.call_session_id!); }}
+                        onClick={(e) => { e.stopPropagation(); openReplay(r.call_session_id!); }}
                         data-testid={`runs-replay-${r.id}`}
                       >
                         <PlayCircle className="h-3.5 w-3.5 mr-1" /> Replay
@@ -280,7 +297,7 @@ export default function WorkspaceRunsPage() {
         </Card>
       )}
 
-      <Sheet open={!!replaySessionId} onOpenChange={(o) => !o && setReplaySessionId(null)}>
+      <Sheet open={!!replaySessionId} onOpenChange={(o) => !o && closeReplay()}>
         <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Call replay</SheetTitle>
