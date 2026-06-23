@@ -71,24 +71,38 @@ export function useCallSession(input: UseCallSessionInput): UseCallSessionResult
   });
 
   // Realtime: targeted subscription on the resolved session id, or on the
-  // workspace when we're still waiting for one to appear.
+  // workspace when we're still waiting for one to appear. Defensive: tests
+  // may mock supabase without `.channel`, so we noop on any setup failure.
   useEffect(() => {
     if (!workspaceId) return;
-    const channel = supabase
-      .channel(`call-session-${workspaceId}-${sessionId ?? agentId ?? "any"}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "call_sessions",
-          filter: data?.id ? `id=eq.${data.id}` : `workspace_id=eq.${workspaceId}`,
-        },
-        () => qc.invalidateQueries({ queryKey }),
-      )
-      .subscribe();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      const sb = supabase as unknown as { channel?: typeof supabase.channel };
+      if (typeof sb.channel !== "function") return;
+      channel = supabase
+        .channel(`call-session-${workspaceId}-${sessionId ?? agentId ?? "any"}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "call_sessions",
+            filter: data?.id ? `id=eq.${data.id}` : `workspace_id=eq.${workspaceId}`,
+          },
+          () => qc.invalidateQueries({ queryKey }),
+        )
+        .subscribe();
+    } catch (_e) {
+      // realtime unavailable (tests / offline) — fall back to react-query polling
+    }
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch (_e) {
+          /* noop */
+        }
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, sessionId, agentId, data?.id]);
