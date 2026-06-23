@@ -266,4 +266,43 @@ describe("LiveCallRunner UX overhaul", () => {
     expect(within(card).getByLabelText(/mark helpful/i)).toBeInTheDocument();
     expect(within(card).getByLabelText(/mark not helpful/i)).toBeInTheDocument();
   });
+
+  it("runner panes wear distinct visual tiers (muted guide / primary flow / assist copilot)", () => {
+    const { rerender } = renderWithTooltip(
+      <GuidePanel guide={GUIDE} isLoading={false} />,
+    );
+    expect(screen.getByTestId("runner-guide-panel").getAttribute("data-runner-tone")).toBe("muted");
+
+    rerender(
+      <TooltipProvider>
+        <CopilotPanel
+          copilot={EMPTY_COPILOT}
+          feedback={{}}
+          onRate={vi.fn()}
+          notes=""
+          onNotesChange={vi.fn()}
+        />
+      </TooltipProvider>,
+    );
+    expect(screen.getByTestId("runner-copilot-panel").getAttribute("data-runner-tone")).toBe(
+      "assist",
+    );
+  });
+
+  it("'All steps' list is collapsed by default and shows a 'Show all' affordance", () => {
+    renderWithTooltip(
+      <FlowPanel
+        flow={FLOW}
+        isLoading={false}
+        session={SESSION}
+        onValueChange={vi.fn()}
+        onCurrentStep={vi.fn()}
+        onCompleted={vi.fn()}
+        onSubmit={vi.fn()}
+      />,
+    );
+    const details = screen.getByText(/show all \d+ steps/i).closest("details");
+    expect(details).not.toBeNull();
+    expect((details as HTMLDetailsElement).open).toBe(false);
+  });
 });

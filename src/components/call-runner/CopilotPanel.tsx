@@ -91,7 +91,7 @@ export function CopilotPanel({
   );
 
   return (
-    <RunnerSurface calm className="overflow-hidden" data-testid="runner-copilot-panel">
+    <RunnerSurface tone="assist" className="overflow-hidden" data-testid="runner-copilot-panel">
       <div className="px-3 pt-3 pb-2 border-b border-border/60 flex items-center justify-between shrink-0">
         <h2 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
           <Sparkle className="h-3.5 w-3.5 text-primary" /> Call copilot

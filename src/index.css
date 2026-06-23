@@ -158,6 +158,13 @@ html {
     --bb-motion-std: 200ms;
     --bb-motion-slow: 320ms;
     --bb-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Runner pane tier surfaces (light) — role-based hierarchy for the
+       three-column live call workspace. Each tier picks a distinct surface
+       so the agent's eye lands on the active flow first. */
+    --surface-muted: 220 20% 97%;     /* reference / guide rail */
+    --surface-assist: 195 60% 98%;    /* AI assist / copilot rail */
+    --border-subtle: 220 16% 92%;     /* quieter divider for muted tier */
   }
 
   .dark {
@@ -254,6 +261,11 @@ html {
     --bb-status-muted: 215 20% 65%;
     --bb-status-muted-fg: 215 20% 78%;
     --bb-status-muted-bg-soft: 217 33% 14%;
+
+    /* Runner pane tiers — dark mirror */
+    --surface-muted: 222 40% 9%;
+    --surface-assist: 200 40% 11%;
+    --border-subtle: 217 33% 17%;
   }
 }
 

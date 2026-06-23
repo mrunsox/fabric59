@@ -118,24 +118,53 @@ export function AutosaveIndicator({ state, savedAt, className }: AutosaveIndicat
 interface RunnerSurfaceProps {
   children: React.ReactNode;
   className?: string;
-  /** Adds a subtle layered background — used for calm panels (copilot). */
+  /**
+   * Visual tier. Drives surface tone + border weight so the three runner
+   * panels read as distinct roles instead of identical cards:
+   *   - "primary" (default): pure white, elevation shadow. The active center
+   *     pane — what the agent is doing right now.
+   *   - "muted":  near-white reference surface with quieter borders. Used by
+   *     the workspace guide rail so it recedes.
+   *   - "assist": faint cyan wash to signal AI-driven content. Used by the
+   *     copilot column.
+   */
+  tone?: "primary" | "muted" | "assist";
+  /** @deprecated Use tone="assist" instead. Kept for back-compat callers. */
   calm?: boolean;
   /** Removes the border for nested surfaces. */
   flush?: boolean;
+  ["data-testid"]?: string;
 }
+
+const TONE_SURFACE: Record<NonNullable<RunnerSurfaceProps["tone"]>, string> = {
+  primary: "bg-card shadow-sm border-border",
+  muted: "bg-[hsl(var(--surface-muted))] border-[hsl(var(--border-subtle))]",
+  assist: "bg-[hsl(var(--surface-assist))] border-[hsl(var(--border-subtle))]",
+};
 
 /**
  * Standard card surface for the three runner panels. Keeps padding rhythm
- * and elevation consistent so panels read as siblings, not as a collage.
+ * and tier-based contrast consistent so the columns read as distinct roles
+ * (reference / active / assist), not as a wall of identical cards.
  */
-export function RunnerSurface({ children, className, calm, flush }: RunnerSurfaceProps) {
+export function RunnerSurface({
+  children,
+  className,
+  tone,
+  calm,
+  flush,
+  ...rest
+}: RunnerSurfaceProps) {
+  const resolvedTone: NonNullable<RunnerSurfaceProps["tone"]> =
+    tone ?? (calm ? "assist" : "primary");
   return (
     <div
+      data-testid={rest["data-testid"]}
+      data-runner-tone={resolvedTone}
       className={cn(
         "h-full min-h-0 flex flex-col rounded-lg",
         flush ? "" : "border",
-        calm ? "bg-muted/20" : "bg-card",
-        "shadow-sm",
+        TONE_SURFACE[resolvedTone],
         className,
       )}
     >
