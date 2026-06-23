@@ -143,3 +143,52 @@ most recent `call_sessions` row for `(workspace_id, agent_id)` with
 `ended_at NOT NULL`, opens a side sheet, and renders
 `CallSessionReplay`. If no such row exists, the sheet shows an honest
 empty-state message. Disabled when no agent record is available.
+
+---
+
+## Phase 10 — Run It In The Wild (Stability & Learning)
+
+No new features, no schema changes, no new surfaces. This phase is an
+observation + learning window on top of the Phase 9 telemetry. Only bug
+fixes, copy/clarity tweaks, and small usability-bug layout fixes are
+permitted while the window is open.
+
+### Phase 10 Questions
+
+Each question maps to a query in the **Quick analytics queries** block
+above (or a small variant of one). No new event types are introduced —
+all five telemetry names from Phase 9 already cover this.
+
+| # | Question | Query / source |
+|---|---|---|
+| 1 | What % of snapshot-covered calls have ≥1 `calls.assist.suggestion_used`? | "Assist used rate" query (above), unchanged. |
+| 2 | Which campaigns use assist much more than others? | Same query, grouped by `campaign_id` from `call_assist_events`. |
+| 3 | What % of completed snapshot-covered calls ever get `calls.replay.opened`? | LEFT JOIN `call_session_snapshots` against `platform_events WHERE event_type='calls.replay.opened'`. |
+| 4 | How many QA reviews are created per week, per campaign? | "QA review updates per week" query, add `, campaign_id` to GROUP BY. |
+| 5 | How often is `calls.performance.viewed` vs `calls.campaign_outcomes.viewed`? | `SELECT event_type, count(*) FROM platform_events WHERE event_type IN (...) GROUP BY event_type`. |
+| 6 | Are certain campaigns never drilled into? | Same as #5 with `GROUP BY campaign_id` and `HAVING count(*) = 0` via anti-join against `campaigns`. |
+| 7 | How often is `calls.coaching.item_opened` fired, and for which campaigns / dispositions / tags? | `SELECT campaign_id, payload->>'disposition', payload->>'ai_tag', count(*) FROM platform_events WHERE event_type='calls.coaching.item_opened' GROUP BY 1,2,3`. |
+
+These queries are operator-run (SQL only). No UI is built for them in
+Phase 10.
+
+### Phase 10 Fixes
+
+Append a row whenever a bug or friction fix lands during the window.
+
+| Date | Change | Why (signal) | Verification |
+|---|---|---|---|
+| _(none yet)_ | | | |
+
+### Phase 10 Outcome (TBD)
+
+Filled in at the end of the observation window. Will answer:
+
+1. Are agents using in-call assist in the way we hoped?
+2. Is replay being used by QA/supervisors on a meaningful share of calls?
+3. Are Performance & Outcomes actually consulted, or do people still drop into raw tables?
+4. Are coaching queues pulling their weight, or are they ignored?
+5. Do we see systemic quality issues that argue for one targeted follow-on?
+
+Recommendation at close: **freeze Calls OS** or **scope one tight Phase 11 follow-up**. Bring this summary back for approval before any Phase 11 work begins.
+
