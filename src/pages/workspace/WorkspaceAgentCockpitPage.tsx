@@ -159,6 +159,8 @@ export default function WorkspaceAgentCockpitPage() {
           campaigns={eligibleCampaigns}
           selectedId={selectedCampaignId}
           onSelect={(id) => setSelectedCampaignId(id)}
+          workspaceId={workspace.id}
+          agentId={agentRecord?.id ?? null}
         />
         {selected ? (
           <CockpitBodyV2
@@ -167,6 +169,7 @@ export default function WorkspaceAgentCockpitPage() {
             formId={selected.formId}
             workspaceId={workspace.id}
             workspaceName={workspace.name ?? ""}
+            agentId={agentRecord?.id ?? null}
           />
         ) : (
           <EmptyState icon={Radio} title="Pick a campaign to begin." />
