@@ -9,11 +9,13 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/ui/tabs";
-import { ClipboardCheck, CheckCircle2, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ClipboardCheck, CheckCircle2, Clock, PlayCircle } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { KpiCard } from "@/components/common/KpiCard";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { CallSessionReplay } from "@/components/workspace/calls/CallSessionReplay";
 import {
   useWorkspaceQaReviews,
   useUpdateQaReviewStatus,
@@ -22,6 +24,7 @@ import {
 export default function WorkspaceQaPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const [tab, setTab] = useState<"pending" | "completed" | "all">("pending");
+  const [replaySessionId, setReplaySessionId] = useState<string | null>(null);
   const { data: reviews = [], isLoading } = useWorkspaceQaReviews({
     status: tab === "all" ? undefined : tab,
   });
@@ -98,6 +101,16 @@ export default function WorkspaceQaPage() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <StatusBadge status={r.status} />
+                        {r.call_session_id && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setReplaySessionId(r.call_session_id)}
+                            data-testid={`qa-replay-${r.id}`}
+                          >
+                            <PlayCircle className="h-3.5 w-3.5 mr-1" /> Replay
+                          </Button>
+                        )}
                         {(r.call_session_id || r.script_session_id) && (
                           <Button
                             asChild
@@ -150,6 +163,15 @@ export default function WorkspaceQaPage() {
       <p className="text-[11px] text-muted-foreground">
         Detailed scoring rubrics, calibration, and reviewer assignment are on the roadmap.
       </p>
+
+      <Dialog open={!!replaySessionId} onOpenChange={(o) => !o && setReplaySessionId(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Call replay &amp; QA hints</DialogTitle>
+          </DialogHeader>
+          {replaySessionId && <CallSessionReplay sessionId={replaySessionId} showQaHints />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

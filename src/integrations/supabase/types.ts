@@ -1460,6 +1460,53 @@ export type Database = {
           },
         ]
       }
+      call_assist_events: {
+        Row: {
+          action: string | null
+          call_session_id: string
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          source_precedence: number | null
+          source_type: string | null
+          suggestion_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          action?: string | null
+          call_session_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          source_precedence?: number | null
+          source_type?: string | null
+          suggestion_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          action?: string | null
+          call_session_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          source_precedence?: number | null
+          source_type?: string | null
+          suggestion_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_assist_events_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_log_cache: {
         Row: {
           call_data: Json

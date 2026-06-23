@@ -8,12 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Activity, RotateCw, AlertTriangle, ShieldAlert, HelpCircle, Search, X, Link2 } from "lucide-react";
+import { Activity, RotateCw, AlertTriangle, ShieldAlert, HelpCircle, Search, X, Link2, PlayCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { classifyError, type RetryClass } from "@/lib/flow-runner/retry-classification";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
+import { CallSessionReplay } from "@/components/workspace/calls/CallSessionReplay";
 
 const CLASS_META: Record<RetryClass, { label: string; tone: string; Icon: typeof AlertTriangle }> = {
   retriable: { label: "Retriable", tone: "border-amber-500/40 bg-amber-500/10 text-amber-700", Icon: AlertTriangle },
@@ -51,6 +53,7 @@ export default function WorkspaceRunsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [depFilter, setDepFilter] = useState("all");
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [replaySessionId, setReplaySessionId] = useState<string | null>(null);
   const sessionFilter = searchParams.get("session");
   const campaignFilter = searchParams.get("campaign");
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
@@ -242,6 +245,17 @@ export default function WorkspaceRunsPage() {
                       </TooltipProvider>
                     )}
                     <Badge variant={r.status === "succeeded" ? "default" : r.status === "failed" ? "destructive" : "secondary"}>{r.status}</Badge>
+                    {r.call_session_id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs"
+                        onClick={(e) => { e.stopPropagation(); setReplaySessionId(r.call_session_id!); }}
+                        data-testid={`runs-replay-${r.id}`}
+                      >
+                        <PlayCircle className="h-3.5 w-3.5 mr-1" /> Replay
+                      </Button>
+                    )}
                     {(r.status === "failed" || r.status === "succeeded") && (
                       <TooltipProvider delayDuration={150}>
                         <Tooltip>
@@ -265,6 +279,17 @@ export default function WorkspaceRunsPage() {
           </CardContent>
         </Card>
       )}
+
+      <Sheet open={!!replaySessionId} onOpenChange={(o) => !o && setReplaySessionId(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Call replay</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            {replaySessionId && <CallSessionReplay sessionId={replaySessionId} />}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
