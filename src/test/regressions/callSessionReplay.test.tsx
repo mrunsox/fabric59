@@ -105,7 +105,7 @@ describe("Phase 7B — CallSessionReplay", () => {
     await waitFor(() => expect(screen.getByTestId("replay-root")).toBeInTheDocument());
     expect(screen.getByText("Casey Chen")).toBeInTheDocument();
     expect(screen.getByTestId("replay-timeline")).toBeInTheDocument();
-    expect(screen.getByText(/Booked/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Booked/i).length).toBeGreaterThan(0);
     expect(screen.getByTestId("replay-kb")).toBeInTheDocument();
   });
 
