@@ -196,10 +196,19 @@ export default function WorkspaceRunsPage() {
                         {r.retry_of ? ` · retry of ${r.retry_of.slice(0, 8)}…` : ""}
                         {r.external_record_id ? ` · ext ${r.external_record_id}` : ""}
                       </p>
-                      {r.idempotency_key && (
-                        <p className="text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5" title={r.idempotency_key}>
-                          idem: {r.idempotency_key}
-                        </p>
+                      {(r.call_session_id || r.campaign_id) && (
+                        <div className="mt-1 flex flex-wrap gap-1" data-testid={`runs-row-joins-${r.id}`}>
+                          {r.call_session_id && (
+                            <Badge variant="outline" className="text-[10px] font-mono gap-1">
+                              <Link2 className="h-3 w-3" /> session {r.call_session_id.slice(0, 8)}…
+                            </Badge>
+                          )}
+                          {r.campaign_id && (
+                            <Badge variant="outline" className="text-[10px] font-mono gap-1">
+                              campaign {r.campaign_id.slice(0, 8)}…
+                            </Badge>
+                          )}
+                        </div>
                       )}
                       {r.error && (
                         <div className="mt-1 flex items-start gap-2">
