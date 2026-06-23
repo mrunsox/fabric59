@@ -314,13 +314,16 @@ function CockpitBodyV2({
   formId,
   workspaceId,
   workspaceName,
+  agentId,
 }: {
   campaignId: string;
   campaignName: string;
   formId: string;
   workspaceId: string;
   workspaceName: string;
+  agentId: string | null;
 }) {
+  const { presence, session } = useCallSession({ workspaceId, agentId });
   const { data: form } = useWorkspaceForm(formId);
   const { data: schema } = useFormSchema(formId);
   const { data: guides = [] } = useWorkspaceGuides({ campaignId });
