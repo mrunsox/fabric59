@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, ExternalLink, ClipboardList, Workflow, Headphones, Library } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, ExternalLink, ClipboardList, Workflow, Headphones, Library, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { EditCampaignDialog } from "@/components/workspace/campaigns/EditCampaignDialog";
+import { DeleteCampaignDialog } from "@/components/workspace/campaigns/DeleteCampaignDialog";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaign } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
@@ -33,6 +43,8 @@ export default function WorkspaceCampaignDetailPage() {
   const { campaignId } = useParams<{ campaignId: string }>();
   const { workspace } = useWorkspace();
   const { data: campaign, isLoading } = useWorkspaceCampaign(campaignId);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   if (!workspace) return null;
   const base = `/w/${workspace.id}/campaigns`;
 
@@ -82,8 +94,39 @@ export default function WorkspaceCampaignDetailPage() {
               <Workflow className="h-3.5 w-3.5 mr-1.5" /> Open flow builder
             </Link>
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="Campaign actions" data-testid="campaign-actions">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                <Pencil className="h-3.5 w-3.5 mr-2" /> Edit campaign
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() => setDeleteOpen(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete campaign
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+
+      <EditCampaignDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        campaign={{ id: campaign.id, name: campaign.name, status: campaign.status }}
+      />
+      <DeleteCampaignDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        campaign={{ id: campaign.id, name: campaign.name }}
+        redirectTo={base}
+      />
 
       <CampaignReadinessChecklist workspaceId={workspace.id} campaignId={campaign.id} />
 
