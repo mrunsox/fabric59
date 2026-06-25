@@ -206,10 +206,10 @@ export function computeSuggestions(inputs: CopilotInputs): CopilotResult {
       grounded.unshift({
         id: id("sug"),
         kind: "missing_knowledge",
-        title: "No grounded answer in the knowledge bin",
+        title: "No grounded answer in the knowledge base",
         body:
-          "Nothing in the workspace guide, approved Business Brain, or campaign instructions matches this step. Tell the caller you will follow up, and capture what they asked so the gap can be reviewed.",
-        source: "Knowledge bin — no match",
+          "Nothing in the campaign guide, approved Business Brain, or campaign instructions matches this step. Tell the caller you will follow up, and capture what they asked so the gap can be reviewed.",
+        source: "Knowledge base — no match",
       });
     }
   }

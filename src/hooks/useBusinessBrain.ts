@@ -27,6 +27,7 @@ export interface BbSourceRow {
   id: string;
   workspace_id: string;
   client_id: string | null;
+  campaign_id: string | null;
   kind: BbSourceKind;
   title: string;
   uri: string | null;
@@ -159,6 +160,7 @@ async function sha256Hex(input: string): Promise<string> {
 export interface IngestPasteInput {
   workspaceId: string;
   clientId?: string | null;
+  campaignId?: string | null;
   title: string;
   text: string;
   kind: "paste_text" | "paste_faq";
@@ -189,6 +191,7 @@ export function useBbIngestPaste() {
           {
             workspace_id: input.workspaceId,
             client_id: input.clientId ?? null,
+            campaign_id: input.campaignId ?? null,
             kind: input.kind,
             title: input.title,
             content_hash: hash,
@@ -230,6 +233,7 @@ export function useBbIngestPaste() {
 export interface IngestUploadInput {
   workspaceId: string;
   clientId?: string | null;
+  campaignId?: string | null;
   file: File;
 }
 
@@ -264,6 +268,7 @@ export function useBbIngestUpload() {
           {
             workspace_id: input.workspaceId,
             client_id: input.clientId ?? null,
+            campaign_id: input.campaignId ?? null,
             kind: "upload_doc",
             title: input.file.name,
             uri: path,
@@ -309,6 +314,7 @@ export function useBbIngestUpload() {
 export interface IngestCsvInput {
   workspaceId: string;
   clientId?: string | null;
+  campaignId?: string | null;
   file: File;
   title: string;
   rows: import("@/lib/business-brain/csvParser").CsvDirectoryRow[];
@@ -337,6 +343,7 @@ export function useBbIngestCsv() {
           {
             workspace_id: input.workspaceId,
             client_id: input.clientId ?? null,
+            campaign_id: input.campaignId ?? null,
             kind: "upload_csv",
             title: input.title || input.file.name,
             uri: path,
@@ -389,6 +396,7 @@ export function useBbIngestCsv() {
 export interface IngestFaqInput {
   workspaceId: string;
   clientId?: string | null;
+  campaignId?: string | null;
   title: string;
   text: string;
   pairs: import("@/lib/business-brain/faqParser").FaqPair[];
@@ -412,6 +420,7 @@ export function useBbIngestFaq() {
           {
             workspace_id: input.workspaceId,
             client_id: input.clientId ?? null,
+            campaign_id: input.campaignId ?? null,
             kind: "paste_faq",
             title: input.title || "Pasted FAQ",
             content_hash: hash,

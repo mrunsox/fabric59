@@ -1,31 +1,38 @@
-## Rename "Workspace guide" → "Campaign guide" (UI labels only)
+## Rename Knowledge Bin → Knowledge Base + attach sources to campaigns
 
-Update user-facing strings only. Internal route paths (`/guide`), table names, type names, and variable names stay as-is to avoid churn.
+### 1. Rename (UI labels only)
+- `src/pages/workspace/brain/BusinessBrainLayoutPage.tsx` — tab `"Knowledge Bin"` → `"Knowledge Base"`.
+- `src/pages/workspace/brain/KnowledgeBinPage.tsx` — page heading `"Knowledge Bin"` → `"Knowledge Base"` and description copy referring to "imported source".
+- `src/components/workspace/cockpit/InCallKnowledgeBin.tsx` — visible header `"Knowledge bin · N items"` → `"Knowledge base · N items"`; loading/empty strings.
+- `src/components/workspace/cockpit/InCallAssistPanel.tsx` — empty-state `"Knowledge bin is empty."` → `"Knowledge base is empty."`.
+- `src/components/workspace/calls/CallSessionReplay.tsx` — section header `"Knowledge Bin"` → `"Knowledge Base"`; empty-state copy.
+- `src/hooks/useCallCopilot.ts` — fallback suggestion strings (`"No grounded answer in the knowledge bin"`, source label).
 
-### Files to update
+Internal type names (`KnowledgeBin`, `KnowledgeBinGroup`, hook names like `useInCallKnowledgeBin`), file names, comments, route paths, query keys, and DB tables are left unchanged — UI-only rename to avoid churn.
 
-**Navigation**
-- `src/config/canonicalNav.ts` line 51 — nav label `"Workspace guide"` → `"Campaign guide"`.
+### 2. Attach knowledge base sources to campaigns
 
-**Page chrome**
-- `src/pages/workspace/WorkspaceGuideBuilderPage.tsx` — `eyebrow`, `title`, and the loading text.
-- `src/pages/workspace/WorkspaceGuidesPage.tsx` — description copy.
-- `src/pages/workspace/WorkspaceLibraryPage.tsx` — inline link label.
-- `src/pages/workspace/WorkspaceKnowledgePage.tsx` — guides description.
+The `bb_sources` table already has a `campaign_id` column (added in Phase 12 for the per-campaign Library page). The workspace-level Knowledge Base page currently ignores it. Surface it.
 
-**Components**
-- `src/components/workspace/guides/AttachGuideCard.tsx` — button/label "Workspace guide".
-- `src/components/call-runner/GuidePanel.tsx` — panel header + empty-state copy.
-- `src/components/workspace-guide/WorkspaceGuideAssembler.tsx` — visible "Workspace Guide" text in the assembler explainer.
+**`KnowledgeBinPage.tsx`**
+- Add a **Campaign filter** in the header next to "Add source": Select with `"All campaigns"`, `"Workspace-wide (no campaign)"`, and each workspace campaign. Filters the rendered table in memory.
+- Add a **Campaign** column to the table showing the campaign name (or "Workspace-wide" if `campaign_id` is null).
 
-**Setup readiness**
-- `src/hooks/useWorkspaceSetupReadiness.ts` — `label` and `hint` strings.
+**`AddSourceDialog`**
+- Add a **Campaign** select at the top of the dialog (above the tabs). Default = `"Workspace-wide"`. Options = workspace campaigns + `"Workspace-wide"`.
+- Persist the chosen `campaignId` and pass it through every ingest call.
 
-**Regression tests that assert the old label**
-- `src/test/regressions/phase11BuildIA.test.ts` — update expected label.
-- `src/test/regressions/workspaceGuideBuilder.test.ts` — update label regex.
+**`useBusinessBrain.ts` ingest mutations**
+- Extend `UseBbIngestPaste/Upload/Csv/Faq` input types with optional `campaignId?: string | null`.
+- Include `campaign_id: input.campaignId ?? null` in every `bb_sources` insert.
+- Pass `campaignId` along to the `bb-embed` edge function invocation payload so chunks are tagged for retrieval (existing edge function already accepts campaign metadata — verify; if not, just store on `bb_sources` and rely on `bb_search_chunks_v2` joining via the source).
+
+**`useBbSources`**
+- Continue returning the full workspace list. Add `campaign_id` to the `BbSourceRow` type (select includes it) so the filter and column can use it. Pull campaign names via `useWorkspaceCampaigns()` and merge in-page (no DB join required).
+
+**No new DB migration** — the column already exists. Existing RLS on `bb_sources` already permits workspace members.
 
 ### Out of scope
-- Route `/w/:workspaceId/guide` stays.
-- DB/table names, type names, file names, code comments referencing "workspace guide" internally — left as-is.
-- Cockpit attribution string `"From workspace guide · …"` — left as-is for now (cockpit copy is a separate surface; can rename in a follow-up if desired).
+- Renaming the existing per-campaign Library page (`/campaigns/:id/library`) — it stays as the campaign-scoped view of the same data.
+- Bulk reassign UI for existing sources (can be a follow-up).
+- Edge-function rewrites; we only thread `campaignId` through if the function already supports it.

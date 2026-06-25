@@ -241,7 +241,7 @@ function EmptyAssist({ hasBin }: { hasBin: boolean }) {
     >
       <Sparkle className="h-4 w-4 mx-auto text-primary" aria-hidden />
       <p className="text-xs font-medium">
-        {hasBin ? "Assist is listening…" : "Knowledge bin is empty."}
+        {hasBin ? "Assist is listening…" : "Knowledge base is empty."}
       </p>
       <p className="text-[11px] text-muted-foreground">
         {hasBin
