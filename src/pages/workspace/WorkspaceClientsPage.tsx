@@ -4,6 +4,7 @@ import { Users } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
+import { SeedAssurewayButton } from "@/components/dashboard/SeedAssurewayButton";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 
@@ -17,6 +18,7 @@ import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 export default function WorkspaceClientsPage() {
   const { workspace } = useWorkspace();
   const { data: clients = [], isLoading } = useWorkspaceClients();
+  const hasAssureway = clients.some((c) => c.name === "Assureway");
 
   return (
     <div className="space-y-6">
@@ -28,6 +30,7 @@ export default function WorkspaceClientsPage() {
             ? `Clients available to ${workspace.name}. Owned at the organization level.`
             : "Clients available to this workspace."
         }
+        action={<SeedAssurewayButton variant="secondary" hasExistingAssureway={hasAssureway} />}
       />
 
       {isLoading ? (
@@ -35,8 +38,8 @@ export default function WorkspaceClientsPage() {
       ) : clients.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="No clients available"
-          description="Clients are added at the organization level. Once a client is created, it appears in every workspace under that organization."
+          title="No clients yet"
+          description="Add a client to start building campaigns. You can also load the Assureway client to explore a working setup."
         />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -62,4 +65,3 @@ export default function WorkspaceClientsPage() {
     </div>
   );
 }
-
