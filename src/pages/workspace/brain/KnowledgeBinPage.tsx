@@ -488,23 +488,34 @@ function AddSourceDialog({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="bb-campaign">Attach to campaign</Label>
-        <Select value={campaignId} onValueChange={setCampaignId}>
-          <SelectTrigger id="bb-campaign">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE}>Workspace-wide (no campaign)</SelectItem>
-            {campaigns.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          When attached, this source is only retrieved during calls for the selected campaign.
-        </p>
-      </div>
+      {lockCampaign ? (
+        <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          Attaching to{" "}
+          <span className="font-medium text-foreground">
+            {defaultCampaignId
+              ? campaigns.find((c) => c.id === defaultCampaignId)?.name ?? "this campaign"
+              : "Workspace-wide"}
+          </span>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <Label htmlFor="bb-campaign">Attach to campaign</Label>
+          <Select value={campaignId} onValueChange={setCampaignId}>
+            <SelectTrigger id="bb-campaign">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>Workspace-wide (no campaign)</SelectItem>
+              {campaigns.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            When attached, this source is only retrieved during calls for the selected campaign.
+          </p>
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList className="grid grid-cols-5">
