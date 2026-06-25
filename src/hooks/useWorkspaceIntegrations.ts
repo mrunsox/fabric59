@@ -149,7 +149,7 @@ export function useUpdateIntegrationConnection() {
   return useMutation({
     mutationFn: async (input: {
       id: string;
-      patch: Partial<Pick<IntegrationConnection, "display_name" | "status" | "config" | "last_error" | "credentials_ref">>;
+      patch: Partial<Pick<IntegrationConnection, "display_name" | "status" | "config" | "last_error" | "credentials_ref" | "campaign_id">>;
     }) => {
       const { data, error } = await supabase
         .from("integration_connections" as never)
