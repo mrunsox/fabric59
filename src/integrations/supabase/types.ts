@@ -2727,27 +2727,47 @@ export type Database = {
       }
       disposition_access: {
         Row: {
+          campaign_id: string | null
           created_at: string
           created_by: string | null
           disposition_name: string
           id: string
+          is_active: boolean
           organization_id: string
+          sort_order: number
+          updated_at: string
         }
         Insert: {
+          campaign_id?: string | null
           created_at?: string
           created_by?: string | null
           disposition_name: string
           id?: string
+          is_active?: boolean
           organization_id: string
+          sort_order?: number
+          updated_at?: string
         }
         Update: {
+          campaign_id?: string | null
           created_at?: string
           created_by?: string | null
           disposition_name?: string
           id?: string
+          is_active?: boolean
           organization_id?: string
+          sort_order?: number
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "disposition_access_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_templates: {
         Row: {

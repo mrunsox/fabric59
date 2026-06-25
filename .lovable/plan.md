@@ -1,45 +1,53 @@
-# Knowledge Base: Campaign-scoped cards
+# Dispositions: campaign-grouped CRUD
 
-Restructure the **Business Brain → Knowledge Base** tab so sources are organized by campaign instead of a single flat table. Each campaign gets its own card; clicking a card opens that campaign's isolated Knowledge Base where the user adds/manages docs scoped only to it.
+Turn the **Dispositions** page into a campaign-grouped management surface (same UX pattern just shipped for the Knowledge Base). Each campaign gets its own card; opening one shows that campaign's isolated dispositions with full create / edit / delete.
 
 ## UX
 
-**Knowledge Base index (default view)**
-- Grid of cards, one per workspace campaign + a "Workspace-wide" card (for sources with no `campaign_id`).
-- Each card shows: campaign name, source count, last-updated timestamp, small status badge (e.g. "3 ready / 1 processing"), and a `→` affordance.
-- Header keeps "Add source" button (opens dialog with no pre-selected campaign).
-- Remove the existing "All campaigns / Workspace-wide / per-campaign" filter dropdown and the flat sources table — replaced by the card grid.
+**Index (default)**
+- Card grid: one card per workspace campaign + a "Workspace-wide" card (dispositions with no campaign).
+- Each card shows: name, disposition count, active/inactive breakdown, last update.
+- Header keeps "New disposition" button (creates workspace-wide by default).
+- Outcome types card stays at the bottom unchanged.
 
 **Campaign drill-in**
-- Clicking a card switches the panel to a per-campaign view (in-page state, no route change needed; back button at top).
-- Shows: campaign name as heading, "Add source" button pre-scoped to that campaign, and the sources table filtered to `campaign_id === <thisCampaign>` (or `null` for the Workspace-wide card).
-- "Add source" dialog opens with the campaign locked (campaign select hidden or disabled showing the current campaign).
+- Back button → "All campaigns".
+- Heading = campaign name + lede.
+- Table of dispositions for that campaign with columns: Name, Order, Status, Actions (edit, delete).
+- "New disposition" button pre-scoped to the campaign (campaign field locked in the dialog).
+- Inline create / edit dialog with fields: Name (required), Sort order, Active toggle.
+- Delete confirms via AlertDialog.
 
 **Auto-card on campaign creation**
-- No DB work needed: cards are derived live from `useWorkspaceCampaigns()`. Any new campaign created elsewhere in the app instantly shows up as an empty card in Knowledge Base (0 sources). Confirmed `bb_sources.campaign_id` already exists.
+- Cards derive live from `useWorkspaceCampaigns()` — any new campaign instantly appears with 0 dispositions.
 
 ## Technical
 
-Files touched (UI only, no schema changes):
+### Migration (single migration, additive)
+Add the missing columns to `public.disposition_access`:
+- `campaign_id uuid NULL REFERENCES public.campaigns(id) ON DELETE CASCADE`
+- `is_active boolean NOT NULL DEFAULT true`
+- `sort_order integer NOT NULL DEFAULT 0`
+- `updated_at timestamptz NOT NULL DEFAULT now()` + trigger
+- Index on `(organization_id, campaign_id)`
 
-- **`src/pages/workspace/brain/KnowledgeBinPage.tsx`**
-  - Add local state `selectedCampaignId: string | null | undefined` (`undefined` = index view, `null` = Workspace-wide, string = specific campaign).
-  - When `undefined`: render new `<KnowledgeBaseCampaignGrid />` component. Compute per-campaign source counts and latest `updated_at` from existing `sources` array grouped by `campaign_id`.
-  - When defined: render existing sources table filtered to that campaign + a back button ("← All campaigns"). Reuse current row rendering.
-  - Drop the campaign filter `Select` from the header (replaced by cards).
-  - Pass `defaultCampaignId` and `lockCampaign` props to `AddSourceDialog` when adding from inside a drilled-in card.
+Existing rows backfill to `campaign_id = NULL` (= workspace-wide), `is_active = true`, `sort_order = 0`. RLS policies already scope by `organization_id`; no policy changes needed since `campaign_id` is just an extra column. GRANTs already present.
 
-- **`AddSourceDialog`** (same file, ~line 230+)
-  - Accept new optional `lockCampaign?: boolean`. When true, hide the campaign `Select` and render a read-only line "Attaching to: <campaign name>".
+### Hook changes — `src/hooks/useDispositions.ts`
+- Extend `Disposition` to surface `campaign_id` from the row (no more synthetic defaults for these three fields).
+- `useDispositions()` returns all rows for the org; grouping happens in the page.
+- Add `useUpdateDisposition()` (name, sort_order, is_active, campaign_id).
+- Extend `useCreateDisposition()` input with optional `campaignId`, `sortOrder`, `isActive`.
+- `useDeleteDisposition()` unchanged.
 
-- **New component (inline or extracted)**: `KnowledgeBaseCampaignGrid`
-  - Props: `campaigns`, `sources`, `onSelect(campaignId | null)`.
-  - Renders Workspace-wide card first, then one card per campaign sorted by name.
-  - Card markup uses existing shadcn `Card`/`CardHeader`/`CardContent` for consistency with the rest of the workspace.
-
-No edge-function, hook, or migration changes — `useBusinessBrain` / `useBbSources` / `useWorkspaceCampaigns` already provide everything needed.
+### Page rewrite — `src/pages/workspace/WorkspaceDispositionsPage.tsx`
+- Drop the "Authoring lives in the organization disposition manager" copy.
+- Add local `selection: undefined | null | string` state (mirrors KB pattern).
+- Index view → `<DispositionCampaignGrid>` (inline component) computing per-campaign counts.
+- Drill-in view → table + `<DispositionFormDialog>` for create/edit + AlertDialog for delete.
+- Reuse shadcn `Card`, `Table`, `Dialog`, `AlertDialog`, `Switch`, `Input`.
 
 ## Out of scope
-- Renaming routes or DB tables.
-- Bulk reassigning existing sources between campaigns.
-- Suggested Facts / Approved Knowledge / Search / Governance / Health tabs (Knowledge Base tab only).
+- Outcome types CRUD (kept read-only, unchanged).
+- Bulk reassign dispositions between campaigns.
+- Per-disposition email/SMS template wiring (those fields already live elsewhere on org-level disposition manager and aren't part of disposition_access today).
