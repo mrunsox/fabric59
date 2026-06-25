@@ -41,6 +41,7 @@ import {
   useBbIngestFaq,
   type BbSourceRow,
 } from "@/hooks/useBusinessBrain";
+import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 import {
   autoMapHeaders,
   normalizeRow,
@@ -80,36 +81,68 @@ const KIND_LABEL: Record<BbSourceRow["kind"], string> = {
   url_crawl: "URL",
 };
 
+const ALL = "__all__";
+const NONE = "__none__";
+
 export default function KnowledgeBinPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { data: sources = [], isLoading } = useBbSources(workspaceId ?? null);
+  const { data: campaigns = [] } = useWorkspaceCampaigns();
   const [addOpen, setAddOpen] = useState(false);
+  const [filterCampaign, setFilterCampaign] = useState<string>(ALL);
 
-  const sorted = useMemo(
-    () => [...sources].sort((a, b) => b.created_at.localeCompare(a.created_at)),
-    [sources],
-  );
+  const campaignNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of campaigns) map.set(c.id, c.name);
+    return map;
+  }, [campaigns]);
+
+  const filtered = useMemo(() => {
+    const list =
+      filterCampaign === ALL
+        ? sources
+        : filterCampaign === NONE
+          ? sources.filter((s) => !s.campaign_id)
+          : sources.filter((s) => s.campaign_id === filterCampaign);
+    return [...list].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }, [sources, filterCampaign]);
 
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold tracking-tight">Knowledge Bin</h2>
+          <h2 className="text-base font-semibold tracking-tight">Knowledge Base</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             Every imported source is captured here with its version and processing state.
+            Attach a source to a campaign to isolate it for that campaign's AI retrieval.
           </p>
         </div>
-        <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="mr-1.5 h-4 w-4" /> Add source
-            </Button>
-          </DialogTrigger>
-          <AddSourceDialog
-            workspaceId={workspaceId ?? ""}
-            onClose={() => setAddOpen(false)}
-          />
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Select value={filterCampaign} onValueChange={setFilterCampaign}>
+            <SelectTrigger className="w-56" aria-label="Filter by campaign">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>All campaigns</SelectItem>
+              <SelectItem value={NONE}>Workspace-wide (no campaign)</SelectItem>
+              {campaigns.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="mr-1.5 h-4 w-4" /> Add source
+              </Button>
+            </DialogTrigger>
+            <AddSourceDialog
+              workspaceId={workspaceId ?? ""}
+              defaultCampaignId={filterCampaign !== ALL && filterCampaign !== NONE ? filterCampaign : null}
+              onClose={() => setAddOpen(false)}
+            />
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (
@@ -118,7 +151,7 @@ export default function KnowledgeBinPage() {
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading sources…
           </div>
         </BrainPanel>
-      ) : sorted.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <BbStateBlock
           kind="empty"
           title="No sources yet."
@@ -137,13 +170,14 @@ export default function KnowledgeBinPage() {
                 <tr>
                   <th>Title</th>
                   <th>Type</th>
+                  <th>Campaign</th>
                   <th>Status</th>
                   <th>Version</th>
                   <th>Imported</th>
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((s) => (
+                {filtered.map((s) => (
                   <tr key={s.id}>
                     <td>
                       <div className="flex items-center gap-2 font-medium text-foreground">
@@ -158,6 +192,15 @@ export default function KnowledgeBinPage() {
                     </td>
                     <td className="text-xs text-muted-foreground">
                       {KIND_LABEL[s.kind]}
+                    </td>
+                    <td className="text-xs">
+                      {s.campaign_id ? (
+                        <BrainBadge tone="muted">
+                          {campaignNameById.get(s.campaign_id) ?? "Unknown campaign"}
+                        </BrainBadge>
+                      ) : (
+                        <span className="text-muted-foreground">Workspace-wide</span>
+                      )}
                     </td>
                     <td><StatusPill status={s.status} /></td>
                     <td className="text-muted-foreground">
@@ -184,15 +227,19 @@ type Tab = "upload" | "text" | "faq" | "csv" | "url";
 
 function AddSourceDialog({
   workspaceId,
+  defaultCampaignId,
   onClose,
 }: {
   workspaceId: string;
+  defaultCampaignId: string | null;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("upload");
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [campaignId, setCampaignId] = useState<string>(defaultCampaignId ?? NONE);
+  const { data: campaigns = [] } = useWorkspaceCampaigns();
   const ingestPaste = useBbIngestPaste();
   const ingestUpload = useBbIngestUpload();
   const ingestCsv = useBbIngestCsv();
@@ -209,6 +256,8 @@ function AddSourceDialog({
     ingestUpload.isPending ||
     ingestCsv.isPending ||
     ingestFaq.isPending;
+
+  const resolvedCampaignId = campaignId === NONE ? null : campaignId;
 
   // FAQ live-parse preview
   const faqPairs = useMemo(() => parseFaqText(text), [text]);
@@ -240,7 +289,7 @@ function AddSourceDialog({
     if (!workspaceId) return;
     if (tab === "upload") {
       if (!file) return;
-      await ingestUpload.mutateAsync({ workspaceId, file });
+      await ingestUpload.mutateAsync({ workspaceId, file, campaignId: resolvedCampaignId });
     } else if (tab === "csv") {
       if (!csvFile || normalizedRows.length === 0) return;
       await ingestCsv.mutateAsync({
@@ -249,6 +298,7 @@ function AddSourceDialog({
         title: title.trim() || csvFile.name,
         rows: normalizedRows,
         mapping: csvMapping,
+        campaignId: resolvedCampaignId,
       });
     } else if (tab === "faq") {
       const trimmed = text.trim();
@@ -258,6 +308,7 @@ function AddSourceDialog({
         title: title.trim() || "Pasted FAQ",
         text: trimmed,
         pairs: faqPairs,
+        campaignId: resolvedCampaignId,
       });
     } else {
       const trimmed = text.trim();
@@ -267,6 +318,7 @@ function AddSourceDialog({
         kind: "paste_text",
         title: title.trim() || "Pasted text",
         text: trimmed,
+        campaignId: resolvedCampaignId,
       });
     }
     onClose();
@@ -299,6 +351,25 @@ function AddSourceDialog({
           Sources are ingested, chunked, and extracted into suggested facts you review.
         </DialogDescription>
       </DialogHeader>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="bb-campaign">Attach to campaign</Label>
+        <Select value={campaignId} onValueChange={setCampaignId}>
+          <SelectTrigger id="bb-campaign">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NONE}>Workspace-wide (no campaign)</SelectItem>
+            {campaigns.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          When attached, this source is only retrieved during calls for the selected campaign.
+        </p>
+      </div>
+
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList className="grid grid-cols-5">
           <TabsTrigger value="upload"><FileText className="mr-1.5 h-4 w-4" /> Upload</TabsTrigger>
