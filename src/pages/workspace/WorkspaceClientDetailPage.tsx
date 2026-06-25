@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 import { useSetWorkspaceScope } from "@/contexts/WorkspaceScopeContext";
+import { AttachGuideCard } from "@/components/workspace/guides/AttachGuideCard";
 
 /**
  * Workspace client detail (read-only).
@@ -131,6 +132,8 @@ export default function WorkspaceClientDetailPage() {
               </CardContent>
             </Card>
       </div>
+
+      <AttachGuideCard workspaceId={workspaceId!} scope="client" scopeId={client.id} />
     </DetailPage>
   );
 }

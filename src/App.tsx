@@ -31,6 +31,7 @@ import WorkspaceClientsPage from "@/pages/workspace/WorkspaceClientsPage";
 import WorkspaceClientDetailPage from "@/pages/workspace/WorkspaceClientDetailPage";
 import WorkspaceCampaignsPage from "@/pages/workspace/WorkspaceCampaignsPage";
 import WorkspaceCampaignDetailPage from "@/pages/workspace/WorkspaceCampaignDetailPage";
+import CampaignLibraryPage from "@/pages/workspace/campaigns/CampaignLibraryPage";
 import WorkspaceCampaignNewPage from "@/pages/workspace/WorkspaceCampaignNewPage";
 // ASC (AI-Assisted Script Creation) — Slice 1: flag-gated decision shim + wizard.
 import WorkspaceCampaignNewDecisionPage from "@/pages/workspace/campaigns/WorkspaceCampaignNewDecisionPage";
@@ -602,6 +603,7 @@ const App = () => (
                 <Route path="campaigns/new/assisted" element={<AscWizardPage />} />
                 <Route path="campaigns/new/assisted/preview" element={<AscPreviewPage />} />
                 <Route path="campaigns/:campaignId" element={<WorkspaceCampaignDetailPage />} />
+                <Route path="campaigns/:campaignId/library" element={<CampaignLibraryPage />} />
                 <Route path="campaigns/:campaignId/builder" element={<WorkspaceCampaignFlowBuilderPage />} />
                 <Route path="campaigns/:campaignId/embed-preview" element={<EmbedCampaignRunnerPage />} />
                 <Route path="guide" element={<WorkspaceGuideBuilderPage />} />
