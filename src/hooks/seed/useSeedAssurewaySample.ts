@@ -375,16 +375,17 @@ export function useSeedAssurewaySample() {
   const { workspace } = useWorkspace();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (): Promise<{ campaignId: string; created: boolean }> => {
+    mutationFn: async (): Promise<{ campaignId: string; clientId: string; created: boolean }> => {
       if (!workspace) throw new Error("No active workspace");
       const wsId = workspace.id;
       const orgId = workspace.organization_id;
       const uid = user?.id ?? null;
 
-      // Step 1 — tenant
-      toast.message("Adding Assureway demo client", { description: "Creating client…" });
+      // Step 1 — tenant (client)
+      toast.message("Loading Assureway client", { description: "Creating client record…" });
       let { data: existingTenant } = await supabase
         .from("tenants").select("id")
         .eq("workspace_id", wsId).eq("name", CLIENT_NAME).maybeSingle();
@@ -401,7 +402,7 @@ export function useSeedAssurewaySample() {
       }
 
       // Step 2 — campaign (rename legacy "General Inquiry" → "Main Reception" if present)
-      toast.message("Adding Assureway demo client", { description: "Creating campaign…" });
+      toast.message("Loading Assureway client", { description: "Creating campaign…" });
       const { data: legacyCampaign } = await supabase
         .from("campaigns").select("id, name")
         .eq("workspace_id", wsId).eq("client_id", clientId).eq("name", LEGACY_CAMPAIGN_NAME).maybeSingle();
@@ -428,13 +429,10 @@ export function useSeedAssurewaySample() {
         campaignId = c.id;
       }
 
-      // No early short-circuit: downstream steps compare content hashes and
-      // only re-publish on actual change, so re-runs are cheap AND pick up
-      // new flow/form revisions when this seeder is updated.
       void isExisting;
 
       // Step 3 — singleton workspace guide
-      toast.message("Adding Assureway demo client", { description: "Publishing firm guide…" });
+      toast.message("Loading Assureway client", { description: "Publishing firm guide…" });
       let { data: sg } = await supabase.from("guides")
         .select("id, current_version, status, metadata").eq("workspace_id", wsId)
         .eq("name", WORKSPACE_GUIDE_SINGLETON_NAME).is("source_type", null).maybeSingle();
@@ -470,7 +468,7 @@ export function useSeedAssurewaySample() {
       }
 
       // Step 4 — campaign flow
-      toast.message("Loading Assureway sample", { description: "Publishing decision tree…" });
+      toast.message("Loading Assureway client", { description: "Publishing decision tree…" });
       let { data: cf } = await supabase.from("guides")
         .select("id, status, current_version").eq("workspace_id", wsId)
         .eq("campaign_id", campaignId).eq("name", CAMPAIGN_FLOW_SENTINEL_NAME).maybeSingle();
@@ -507,7 +505,7 @@ export function useSeedAssurewaySample() {
       }
 
       // Step 5 — intake form (rename legacy form if found)
-      toast.message("Loading Assureway sample", { description: "Publishing intake form…" });
+      toast.message("Loading Assureway client", { description: "Publishing intake form…" });
       const schema = buildFormSchema();
       const { data: legacyForm } = await supabase.from("forms")
         .select("id, name").eq("workspace_id", wsId).eq("name", LEGACY_FORM_NAME).maybeSingle();
@@ -531,7 +529,6 @@ export function useSeedAssurewaySample() {
         if (fErr) throw fErr;
         formId = f.id;
       }
-      // Ensure a v1 form_versions row exists & is current.
       const { data: existingFV } = await supabase.from("form_versions")
         .select("id, version, is_current").eq("form_id", formId)
         .order("version", { ascending: false }).limit(1).maybeSingle();
@@ -547,7 +544,7 @@ export function useSeedAssurewaySample() {
       }
 
       // Step 6 — attach form (single-active rule)
-      toast.message("Loading Assureway sample", { description: "Attaching form to campaign…" });
+      toast.message("Loading Assureway client", { description: "Attaching form to campaign…" });
       await supabase.from("form_campaign_assignments").delete()
         .eq("workspace_id", wsId).eq("campaign_id", campaignId);
       const { error: aErr } = await supabase.from("form_campaign_assignments").insert({
@@ -561,22 +558,24 @@ export function useSeedAssurewaySample() {
       }, {} as Record<string, number>);
       console.log("[seed-assureway] complete", {
         workspaceId: wsId,
+        clientId,
         campaignId,
         campaignName: CAMPAIGN_NAME,
         stepCounts,
       });
-      // Expected stepCounts: { information_display: 4, question_branch: 1, field_capture: 9, outcome_disposition: 1, notification_trigger: 1, end_flow: 1 }
 
-      return { campaignId, created: true };
+      return { campaignId, clientId, created: true };
     },
-    onSuccess: ({ campaignId, created }) => {
+    onSuccess: ({ clientId }) => {
       if (!workspace) return;
-      if (created) toast.success("Assureway sample loaded — opening campaign…");
-      else toast.success("Assureway sample already loaded");
-      navigate(`/w/${workspace.id}/campaigns/${campaignId}`);
+      toast.success("Assureway client ready");
+      qc.invalidateQueries({ queryKey: ["workspace-clients"] });
+      qc.invalidateQueries({ queryKey: ["workspace-campaigns"] });
+      navigate(`/w/${workspace.id}/clients/${clientId}`);
     },
     onError: (e: Error) => {
-      toast.error(`Seed failed: ${e.message}`);
+      toast.error(`Load failed: ${e.message}`);
     },
   });
 }
+
