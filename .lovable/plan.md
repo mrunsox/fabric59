@@ -1,33 +1,43 @@
-# Promote Assureway to a real Client (with a Campaign)
+# Show Assureway as a real client + campaign (no demo affordances)
 
-The seed already creates a real `tenants` row (Assureway) and a real `campaigns` row (Main Reception) — but the UI still calls it a "demo client", which is what you're seeing on the Campaigns page. We'll rebrand the action so Assureway is treated as a first-class client, and make sure the entry point lives where clients are created.
+Two issues to fix:
+
+1. **Clients page is empty even though Assureway loaded.** The `tenants` table only allows SELECT for admins / master-admin / ops / org-owners. Regular workspace members can't read the row, so the card never appears.
+2. **Re-sync / Load buttons keep the "demo" feel.** Once Assureway exists, it should look like a normal client and a normal campaign — no special buttons in the header.
 
 ## Changes
 
-1. **Rename the seed action** (UI copy only — same backend behavior):
-   - `SeedAssurewayButton` label: `Add Assureway demo client` / `Re-sync Assureway demo client` → `Load Assureway client` / `Re-sync Assureway`.
-   - Toast strings in `useSeedAssurewaySample` (`"Adding Assureway demo client"`, etc.) → `"Loading Assureway client"` / `"Assureway client ready"`.
-   - `aria-label` and test id updated accordingly (keep `data-testid="seed-assureway-button"` for test stability).
+### 1. RLS: workspace members can read their workspace's tenants
+Add a SELECT policy on `public.tenants` mirroring the campaigns policy:
 
-2. **Move the button to the Clients page as the primary location**:
-   - Add `SeedAssurewayButton` to `WorkspaceClientsPage` header (next to `New client`), shown only when no Assureway tenant exists in this workspace; otherwise show `Re-sync Assureway` secondary.
-   - Keep a secondary copy on `WorkspaceCampaignsPage` for now (so the empty-state journey still works), but reword to `Load Assureway sample campaign`.
+```sql
+CREATE POLICY "tenants readable by workspace members"
+ON public.tenants FOR SELECT
+USING (
+  workspace_id IS NOT NULL
+  AND is_workspace_member(auth.uid(), workspace_id)
+);
+```
 
-3. **Make Assureway visible as a Client immediately after seeding**:
-   - After `mutate()` success, navigate to `/w/:wsId/clients/:tenantId` (the new tenant) instead of the campaign detail, so the user lands on the Client record. Campaign remains reachable from the client page.
-   - Invalidate `useWorkspaceClients` and `useWorkspaceCampaigns` queries on success (already partially done — verify both keys).
+No other policies change. Existing admin/org-owner ALL policies stay.
 
-4. **Empty-state copy on Campaigns page**:
-   - Update checklist/empty copy to say "Assureway is loaded as a client — open it to see its Main Reception campaign" when the seed has run.
+### 2. Clients page: render Assureway as a normal card
+- After the RLS fix, `useWorkspaceClients` will return Assureway and the existing card grid renders it (no UI change needed beyond removing the seed button when it exists).
+- Show `Load Assureway client` button **only when the clients list is empty**. Hide it entirely once any client exists — no "Re-sync" affordance.
 
-## Technical notes
+### 3. Campaigns page: drop the seed button entirely
+- Remove `SeedAssurewayButton` from `WorkspaceCampaignsPage`. Header keeps only `New campaign`.
+- Main Reception campaign already shows in the table; no other change.
 
-- No DB migration. The seed already writes to `tenants` (client) + `campaigns` + `guides`/`guide_versions` + `forms`/`form_versions`/`form_campaign_assignments`, workspace-scoped.
-- Files touched: `src/components/dashboard/SeedAssurewayButton.tsx`, `src/hooks/seed/useSeedAssurewaySample.ts`, `src/pages/workspace/WorkspaceClientsPage.tsx`, `src/pages/workspace/WorkspaceCampaignsPage.tsx`.
-- Update `src/test/regressions/phase11BuildIA.test.ts` label assertions to match new copy.
+### 4. Client detail entry point
+- Verify the card on Clients page links to `/w/:wsId/clients/:tenantId` so clicking Assureway opens its detail (which already lists its campaigns).
+
+## Files touched
+- `supabase/migrations/<new>.sql` — add SELECT policy on `tenants`.
+- `src/pages/workspace/WorkspaceClientsPage.tsx` — conditionally render seed button (empty-state only).
+- `src/pages/workspace/WorkspaceCampaignsPage.tsx` — remove seed button from header.
 
 ## Out of scope
-
-- Schema rename of `tenants` → `clients` (still deferred).
-- New campaign creation flow changes — `New campaign` button on Campaigns page already works for ad-hoc clients.
-- Removing the seed entirely (kept as a fast-path to load the canonical Assureway content).
+- Renaming `tenants` → `clients` schema.
+- Changes to the seed content itself.
+- Removing the seed hook (kept as the one-click way to populate the canonical Assureway guide/flow/form into a new workspace).
