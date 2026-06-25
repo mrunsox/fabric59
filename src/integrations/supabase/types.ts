@@ -1061,6 +1061,7 @@ export type Database = {
       }
       bb_sources: {
         Row: {
+          campaign_id: string | null
           client_id: string | null
           content_hash: string | null
           created_at: string
@@ -1079,6 +1080,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          campaign_id?: string | null
           client_id?: string | null
           content_hash?: string | null
           created_at?: string
@@ -1097,6 +1099,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          campaign_id?: string | null
           client_id?: string | null
           content_hash?: string | null
           created_at?: string
@@ -1115,6 +1118,13 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bb_sources_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bb_sources_client_id_fkey"
             columns: ["client_id"]
@@ -3808,6 +3818,7 @@ export type Database = {
       guides: {
         Row: {
           campaign_id: string | null
+          client_id: string | null
           created_at: string
           created_by: string | null
           current_version: number
@@ -3823,6 +3834,7 @@ export type Database = {
         }
         Insert: {
           campaign_id?: string | null
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
           current_version?: number
@@ -3838,6 +3850,7 @@ export type Database = {
         }
         Update: {
           campaign_id?: string | null
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
           current_version?: number
@@ -3858,6 +3871,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "campaigns"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guides_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "fabric59_customers_identity"
+            referencedColumns: ["fabric59_client_id"]
+          },
+          {
+            foreignKeyName: "guides_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guides_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "v_client_readiness"
+            referencedColumns: ["client_id"]
           },
           {
             foreignKeyName: "guides_workspace_id_fkey"
@@ -10904,6 +10938,25 @@ export type Database = {
     Functions: {
       bb_search_chunks: {
         Args: {
+          _client_id: string
+          _limit: number
+          _query_embedding: string
+          _source_kinds: string[]
+          _workspace_id: string
+        }
+        Returns: {
+          id: string
+          ordinal: number
+          similarity: number
+          source_id: string
+          source_kind: string
+          source_title: string
+          text: string
+        }[]
+      }
+      bb_search_chunks_v2: {
+        Args: {
+          _campaign_id: string
           _client_id: string
           _limit: number
           _query_embedding: string
