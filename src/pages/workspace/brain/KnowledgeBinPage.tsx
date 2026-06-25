@@ -32,7 +32,12 @@ import {
   Globe,
   Loader2,
   Table as TableIcon,
+  ArrowLeft,
+  ChevronRight,
+  Inbox,
+  Folder,
 } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import {
   useBbSources,
   useBbIngestPaste,
