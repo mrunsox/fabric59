@@ -10,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -41,8 +40,8 @@ const CONNECTION_STATUS_TONE: Record<string, "success" | "warning" | "danger" | 
   not_connected: "neutral",
 };
 
-const WORKSPACE_KEY = "__workspace__";
-type Selection = undefined | typeof WORKSPACE_KEY | string;
+const UNASSIGNED_KEY = "__unassigned__";
+type Selection = undefined | typeof UNASSIGNED_KEY | string;
 
 export default function WorkspaceIntegrationsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -56,7 +55,6 @@ export default function WorkspaceIntegrationsPage() {
   const [open, setOpen] = useState(false);
   const [providerId, setProviderId] = useState<string>("");
   const [displayName, setDisplayName] = useState("");
-  const [createScope, setCreateScope] = useState<string>(WORKSPACE_KEY);
 
   const providerById = useMemo(
     () => Object.fromEntries(providers.map((p) => [p.id, p])),
@@ -65,10 +63,10 @@ export default function WorkspaceIntegrationsPage() {
 
   const connectionsByScope = useMemo(() => {
     const m = new Map<string, IntegrationConnection[]>();
-    m.set(WORKSPACE_KEY, []);
+    m.set(UNASSIGNED_KEY, []);
     for (const c of campaigns) m.set(c.id, []);
     for (const c of connections) {
-      const key = c.campaign_id ?? WORKSPACE_KEY;
+      const key = c.campaign_id ?? UNASSIGNED_KEY;
       const arr = m.get(key) ?? [];
       arr.push(c);
       m.set(key, arr);
@@ -76,29 +74,32 @@ export default function WorkspaceIntegrationsPage() {
     return m;
   }, [connections, campaigns]);
 
-  const openCreate = (scope: string) => {
-    setCreateScope(scope);
-    setProviderId("");
+  const unassignedConnections = connectionsByScope.get(UNASSIGNED_KEY) ?? [];
+
+  const openCreate = (presetProviderId?: string) => {
+    setProviderId(presetProviderId ?? "");
     setDisplayName("");
     setOpen(true);
   };
 
   const handleCreate = async () => {
-    if (!providerId) return;
+    if (!providerId || !selection || selection === UNASSIGNED_KEY) return;
     await create.mutateAsync({
       provider_id: providerId,
       display_name: displayName || providerById[providerId]?.display_name,
-      campaign_id: createScope === WORKSPACE_KEY ? null : createScope,
+      campaign_id: selection,
     });
     setOpen(false);
   };
 
+  const selectedCampaign =
+    selection && selection !== UNASSIGNED_KEY
+      ? campaigns.find((c) => c.id === selection)
+      : null;
   const scopeLabel =
-    selection === WORKSPACE_KEY
-      ? "Workspace-wide"
-      : selection
-        ? campaigns.find((c) => c.id === selection)?.name ?? "Campaign"
-        : null;
+    selection === UNASSIGNED_KEY
+      ? "Unassigned"
+      : selectedCampaign?.name ?? null;
 
   return (
     <div className="space-y-6">
@@ -107,15 +108,15 @@ export default function WorkspaceIntegrationsPage() {
           <WorkspacePageHeader
             eyebrow="Integrations"
             title="Integrations"
-            lede="Connections grouped by campaign. Workspace-wide connections apply to every campaign by default."
+            lede="Each campaign owns its own integrations. Pick a campaign to add or manage its connections."
           />
         ) : (
           <WorkspacePageHeader
             eyebrow="Integrations"
             title={`${scopeLabel} integrations`}
             lede={
-              selection === WORKSPACE_KEY
-                ? "Shared connections available to every campaign in this workspace."
+              selection === UNASSIGNED_KEY
+                ? "Legacy connections not yet attached to a campaign. Move each one to a campaign."
                 : "Connections scoped only to this campaign."
             }
             action={
@@ -123,11 +124,11 @@ export default function WorkspaceIntegrationsPage() {
                 <Button size="sm" variant="outline" onClick={() => setSelection(undefined)}>
                   <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back
                 </Button>
-                <DialogTrigger asChild>
-                  <Button size="sm" onClick={() => openCreate(selection!)}>
+                {selection !== UNASSIGNED_KEY && (
+                  <Button size="sm" onClick={() => openCreate()}>
                     <Plus className="h-3.5 w-3.5 mr-1.5" /> New connection
                   </Button>
-                </DialogTrigger>
+                )}
               </div>
             }
           />
@@ -137,9 +138,7 @@ export default function WorkspaceIntegrationsPage() {
           <DialogHeader>
             <DialogTitle>New connection</DialogTitle>
             <DialogDescription>
-              {createScope === WORKSPACE_KEY
-                ? "This connection will be available workspace-wide."
-                : `Attaching to: ${campaigns.find((c) => c.id === createScope)?.name ?? "Campaign"}`}
+              Attaching to: {selectedCampaign?.name ?? "Campaign"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -193,43 +192,87 @@ export default function WorkspaceIntegrationsPage() {
       )}
 
       {selection === undefined ? (
-        <div>
-          <h2 className="text-sm font-semibold mb-3">Connections by campaign</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <ScopeCard
-              icon={<Inbox className="h-4 w-4" />}
-              title="Workspace-wide"
-              subtitle="Shared across all campaigns"
-              connections={connectionsByScope.get(WORKSPACE_KEY) ?? []}
-              providerById={providerById}
-              onOpen={() => setSelection(WORKSPACE_KEY)}
-            />
-            {campaigns.map((c) => (
-              <ScopeCard
-                key={c.id}
-                icon={<Folder className="h-4 w-4" />}
-                title={c.name}
-                subtitle={c.status}
-                connections={connectionsByScope.get(c.id) ?? []}
-                providerById={providerById}
-                onOpen={() => setSelection(c.id)}
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-sm font-semibold mb-3">Integrations by campaign</h2>
+            {campaigns.length === 0 ? (
+              <EmptyState
+                icon={Folder}
+                title="No campaigns yet"
+                description="Create a campaign to start attaching integrations."
               />
-            ))}
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {campaigns.map((c) => (
+                  <ScopeCard
+                    key={c.id}
+                    icon={<Folder className="h-4 w-4" />}
+                    title={c.name}
+                    subtitle={c.status}
+                    connections={connectionsByScope.get(c.id) ?? []}
+                    providerById={providerById}
+                    onOpen={() => setSelection(c.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
+
+          {unassignedConnections.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold mb-3">Unassigned</h2>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <ScopeCard
+                  icon={<Inbox className="h-4 w-4" />}
+                  title="Unassigned connections"
+                  subtitle="Move each one to a campaign"
+                  connections={unassignedConnections}
+                  providerById={providerById}
+                  onOpen={() => setSelection(UNASSIGNED_KEY)}
+                />
+              </div>
+            </div>
+          )}
         </div>
       ) : (
-        <div>
+        <div className="space-y-6">
+          {selection !== UNASSIGNED_KEY && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Add an integration
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {providers.length === 0 ? (
+                    <span className="text-xs text-muted-foreground">No providers available.</span>
+                  ) : (
+                    providers.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => openCreate(p.id)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs hover:border-primary/50 hover:bg-accent transition-colors"
+                      >
+                        <Plus className="h-3 w-3" />
+                        {p.display_name}
+                        <span className="text-muted-foreground">· {p.category}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : (connectionsByScope.get(selection) ?? []).length === 0 ? (
             <EmptyState
               icon={Plug}
-              title="No connections yet"
-              description={
-                selection === WORKSPACE_KEY
-                  ? "Add a workspace-wide connection to make it available to every campaign."
-                  : "Attach a connection scoped only to this campaign."
-              }
+              title="No integrations yet"
+              description="Pick a provider above to add one to this campaign."
             />
           ) : (
             <div className="grid sm:grid-cols-2 gap-3">
@@ -260,30 +303,28 @@ export default function WorkspaceIntegrationsPage() {
                           Last sync {new Date(c.last_sync_at).toLocaleString()}
                         </div>
                       )}
-                      <div className="pt-2 border-t flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Move to:</span>
-                        <Select
-                          value={c.campaign_id ?? WORKSPACE_KEY}
-                          onValueChange={(v) =>
-                            update.mutate({
-                              id: c.id,
-                              patch: { campaign_id: v === WORKSPACE_KEY ? null : v },
-                            })
-                          }
-                        >
-                          <SelectTrigger className="h-7 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={WORKSPACE_KEY}>Workspace-wide</SelectItem>
-                            {campaigns.map((cm) => (
-                              <SelectItem key={cm.id} value={cm.id}>
-                                {cm.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      {selection === UNASSIGNED_KEY && (
+                        <div className="pt-2 border-t flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Move to:</span>
+                          <Select
+                            value=""
+                            onValueChange={(v) =>
+                              update.mutate({ id: c.id, patch: { campaign_id: v } })
+                            }
+                          >
+                            <SelectTrigger className="h-7 text-xs">
+                              <SelectValue placeholder="Pick campaign" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {campaigns.map((cm) => (
+                                <SelectItem key={cm.id} value={cm.id}>
+                                  {cm.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -324,11 +365,7 @@ function ScopeCard({
   ).slice(0, 4);
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="text-left group"
-    >
+    <button type="button" onClick={onOpen} className="text-left group">
       <Card className="hover:border-primary/40 transition-colors h-full">
         <CardContent className="pt-5 space-y-3">
           <div className="flex items-start justify-between gap-2">
@@ -343,9 +380,9 @@ function ScopeCard({
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{connections.length}</span>
-            <span>{connections.length === 1 ? "connection" : "connections"}</span>
+            <span>{connections.length === 1 ? "integration" : "integrations"}</span>
           </div>
-          {providerNames.length > 0 && (
+          {providerNames.length > 0 ? (
             <div className="flex flex-wrap gap-1">
               {providerNames.map((n) => (
                 <Badge key={n} variant="outline" className="text-xs">
@@ -353,6 +390,8 @@ function ScopeCard({
                 </Badge>
               ))}
             </div>
+          ) : (
+            <div className="text-xs text-muted-foreground">No integrations yet — click to add.</div>
           )}
           {lastUpdated && (
             <div className="text-xs text-muted-foreground">
