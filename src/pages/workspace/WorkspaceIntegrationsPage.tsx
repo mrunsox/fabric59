@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Plug, Plus } from "lucide-react";
+import { ArrowLeft, ChevronRight, Folder, Inbox, Plug, Plus } from "lucide-react";
 import { EmptyState } from "@/components/common/EmptyState";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
@@ -28,7 +28,11 @@ import {
   useIntegrationProviders,
   useWorkspaceIntegrationConnections,
   useCreateIntegrationConnection,
+  useUpdateIntegrationConnection,
+  type IntegrationConnection,
+  type IntegrationProvider,
 } from "@/hooks/useWorkspaceIntegrations";
+import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
 
 const CONNECTION_STATUS_TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   connected: "success",
@@ -37,52 +41,105 @@ const CONNECTION_STATUS_TONE: Record<string, "success" | "warning" | "danger" | 
   not_connected: "neutral",
 };
 
+const WORKSPACE_KEY = "__workspace__";
+type Selection = undefined | typeof WORKSPACE_KEY | string;
+
 export default function WorkspaceIntegrationsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { data: providers = [] } = useIntegrationProviders();
   const { data: connections = [], isLoading } = useWorkspaceIntegrationConnections();
+  const { data: campaigns = [] } = useWorkspaceCampaigns();
   const create = useCreateIntegrationConnection();
+  const update = useUpdateIntegrationConnection();
 
+  const [selection, setSelection] = useState<Selection>(undefined);
   const [open, setOpen] = useState(false);
   const [providerId, setProviderId] = useState<string>("");
   const [displayName, setDisplayName] = useState("");
+  const [createScope, setCreateScope] = useState<string>(WORKSPACE_KEY);
 
   const providerById = useMemo(
     () => Object.fromEntries(providers.map((p) => [p.id, p])),
     [providers],
   );
 
+  const connectionsByScope = useMemo(() => {
+    const m = new Map<string, IntegrationConnection[]>();
+    m.set(WORKSPACE_KEY, []);
+    for (const c of campaigns) m.set(c.id, []);
+    for (const c of connections) {
+      const key = c.campaign_id ?? WORKSPACE_KEY;
+      const arr = m.get(key) ?? [];
+      arr.push(c);
+      m.set(key, arr);
+    }
+    return m;
+  }, [connections, campaigns]);
+
+  const openCreate = (scope: string) => {
+    setCreateScope(scope);
+    setProviderId("");
+    setDisplayName("");
+    setOpen(true);
+  };
+
   const handleCreate = async () => {
     if (!providerId) return;
     await create.mutateAsync({
       provider_id: providerId,
       display_name: displayName || providerById[providerId]?.display_name,
+      campaign_id: createScope === WORKSPACE_KEY ? null : createScope,
     });
     setOpen(false);
-    setProviderId("");
-    setDisplayName("");
   };
+
+  const scopeLabel =
+    selection === WORKSPACE_KEY
+      ? "Workspace-wide"
+      : selection
+        ? campaigns.find((c) => c.id === selection)?.name ?? "Campaign"
+        : null;
 
   return (
     <div className="space-y-6">
       <Dialog open={open} onOpenChange={setOpen}>
-        <WorkspacePageHeader
-          eyebrow="Integrations"
-          title="Integrations"
-          lede="Workspace-scoped, provider-agnostic connections. Org-wide connectors are managed under organization settings."
-          action={
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="h-3.5 w-3.5 mr-1.5" /> New connection
-              </Button>
-            </DialogTrigger>
-          }
-        />
+        {selection === undefined ? (
+          <WorkspacePageHeader
+            eyebrow="Integrations"
+            title="Integrations"
+            lede="Connections grouped by campaign. Workspace-wide connections apply to every campaign by default."
+          />
+        ) : (
+          <WorkspacePageHeader
+            eyebrow="Integrations"
+            title={`${scopeLabel} integrations`}
+            lede={
+              selection === WORKSPACE_KEY
+                ? "Shared connections available to every campaign in this workspace."
+                : "Connections scoped only to this campaign."
+            }
+            action={
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => setSelection(undefined)}>
+                  <ArrowLeft className="h-3.5 w-3.5 mr-1.5" /> Back
+                </Button>
+                <DialogTrigger asChild>
+                  <Button size="sm" onClick={() => openCreate(selection!)}>
+                    <Plus className="h-3.5 w-3.5 mr-1.5" /> New connection
+                  </Button>
+                </DialogTrigger>
+              </div>
+            }
+          />
+        )}
+
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New connection</DialogTitle>
             <DialogDescription>
-              Pick a provider from the canonical registry. Credentials are configured after creation.
+              {createScope === WORKSPACE_KEY
+                ? "This connection will be available workspace-wide."
+                : `Attaching to: ${campaigns.find((c) => c.id === createScope)?.name ?? "Campaign"}`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -124,112 +181,75 @@ export default function WorkspaceIntegrationsPage() {
         </DialogContent>
       </Dialog>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Available providers</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {(() => {
-            const LEGAL_PM_CATEGORIES = new Set([
-              "legal_pm",
-              "legal-pm",
-              "legal",
-              "legal_practice_management",
-            ]);
-            const isLegalPm = (cat?: string) => !!cat && LEGAL_PM_CATEGORIES.has(cat);
-            const legalProviders = providers.filter((p) => isLegalPm(p.category));
-            const otherByCat = new Map<string, typeof providers>();
-            for (const p of providers) {
-              if (isLegalPm(p.category)) continue;
-              const key = p.category || "other";
-              const arr = otherByCat.get(key) ?? [];
-              arr.push(p);
-              otherByCat.set(key, arr);
-            }
-            const legalNames = legalProviders.length
-              ? legalProviders
-              : providers.filter((p) =>
-                  ["clio", "mycase", "smokeball"].some((n) =>
-                    (p.display_name ?? "").toLowerCase().includes(n),
-                  ),
-                );
-            return (
-              <>
-                <div>
-                  <div className="text-xs font-semibold text-foreground mb-2">
-                    Legal practice management
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {legalNames.length === 0 ? (
-                      <span className="text-xs text-muted-foreground">
-                        No legal providers registered yet.
-                      </span>
-                    ) : (
-                      legalNames.map((p) => (
-                        <Badge key={p.id} variant="outline" className="text-xs">
-                          {p.display_name}
-                        </Badge>
-                      ))
-                    )}
-                    <Badge
-                      variant="outline"
-                      className="text-xs border-dashed text-muted-foreground"
-                    >
-                      More integration packs coming
-                    </Badge>
-                  </div>
-                </div>
-                {[...otherByCat.entries()].map(([cat, list]) => (
-                  <div key={cat}>
-                    <div className="text-xs font-semibold text-foreground mb-2 capitalize">
-                      {cat.replace(/[_-]/g, " ")}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {list.map((p) => (
-                        <Badge key={p.id} variant="outline" className="text-xs">
-                          {p.display_name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </>
-            );
-          })()}
-        </CardContent>
-      </Card>
+      {selection === undefined && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Available providers</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <AvailableProvidersBlock providers={providers} />
+          </CardContent>
+        </Card>
+      )}
 
-      <div>
-        <h2 className="text-sm font-semibold mb-3">Connections</h2>
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
-        ) : connections.length === 0 ? (
-          <EmptyState
-            icon={Plug}
-            title="No connections yet"
-            description="Create your first connection from a provider above to begin syncing data."
-          />
-        ) : (
-          <div className="grid sm:grid-cols-2 gap-3">
-            {connections.map((c) => {
-              const prov = providerById[c.provider_id];
-              return (
-                <Link
-                  key={c.id}
-                  to={`/w/${workspaceId}/integrations/${c.id}`}
-                  className="block"
-                >
-                  <Card className="hover:border-primary/40 transition-colors">
+      {selection === undefined ? (
+        <div>
+          <h2 className="text-sm font-semibold mb-3">Connections by campaign</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <ScopeCard
+              icon={<Inbox className="h-4 w-4" />}
+              title="Workspace-wide"
+              subtitle="Shared across all campaigns"
+              connections={connectionsByScope.get(WORKSPACE_KEY) ?? []}
+              providerById={providerById}
+              onOpen={() => setSelection(WORKSPACE_KEY)}
+            />
+            {campaigns.map((c) => (
+              <ScopeCard
+                key={c.id}
+                icon={<Folder className="h-4 w-4" />}
+                title={c.name}
+                subtitle={c.status}
+                connections={connectionsByScope.get(c.id) ?? []}
+                providerById={providerById}
+                onOpen={() => setSelection(c.id)}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div>
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : (connectionsByScope.get(selection) ?? []).length === 0 ? (
+            <EmptyState
+              icon={Plug}
+              title="No connections yet"
+              description={
+                selection === WORKSPACE_KEY
+                  ? "Add a workspace-wide connection to make it available to every campaign."
+                  : "Attach a connection scoped only to this campaign."
+              }
+            />
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {(connectionsByScope.get(selection) ?? []).map((c) => {
+                const prov = providerById[c.provider_id];
+                return (
+                  <Card key={c.id} className="hover:border-primary/40 transition-colors">
                     <CardContent className="pt-5 space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="font-medium text-sm">
+                        <Link
+                          to={`/w/${workspaceId}/integrations/${c.id}`}
+                          className="block flex-1 min-w-0"
+                        >
+                          <div className="font-medium text-sm truncate">
                             {c.display_name ?? prov?.display_name ?? c.provider_id}
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs text-muted-foreground truncate">
                             {prov?.display_name ?? c.provider_id} · {prov?.category}
                           </div>
-                        </div>
+                        </Link>
                         <StatusBadge status={c.status} tone={CONNECTION_STATUS_TONE[c.status]} />
                       </div>
                       {c.last_error && (
@@ -240,14 +260,168 @@ export default function WorkspaceIntegrationsPage() {
                           Last sync {new Date(c.last_sync_at).toLocaleString()}
                         </div>
                       )}
+                      <div className="pt-2 border-t flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Move to:</span>
+                        <Select
+                          value={c.campaign_id ?? WORKSPACE_KEY}
+                          onValueChange={(v) =>
+                            update.mutate({
+                              id: c.id,
+                              patch: { campaign_id: v === WORKSPACE_KEY ? null : v },
+                            })
+                          }
+                        >
+                          <SelectTrigger className="h-7 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={WORKSPACE_KEY}>Workspace-wide</SelectItem>
+                            {campaigns.map((cm) => (
+                              <SelectItem key={cm.id} value={cm.id}>
+                                {cm.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </CardContent>
                   </Card>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
+  );
+}
+
+function ScopeCard({
+  icon,
+  title,
+  subtitle,
+  connections,
+  providerById,
+  onOpen,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  connections: IntegrationConnection[];
+  providerById: Record<string, IntegrationProvider>;
+  onOpen: () => void;
+}) {
+  const lastUpdated = connections.reduce<string | null>(
+    (acc, c) => (!acc || c.updated_at > acc ? c.updated_at : acc),
+    null,
+  );
+  const providerNames = Array.from(
+    new Set(
+      connections
+        .map((c) => providerById[c.provider_id]?.display_name ?? c.provider_id)
+        .filter(Boolean),
+    ),
+  ).slice(0, 4);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="text-left group"
+    >
+      <Card className="hover:border-primary/40 transition-colors h-full">
+        <CardContent className="pt-5 space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="text-muted-foreground">{icon}</div>
+              <div className="min-w-0">
+                <div className="font-medium text-sm truncate">{title}</div>
+                <div className="text-xs text-muted-foreground capitalize truncate">{subtitle}</div>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">{connections.length}</span>
+            <span>{connections.length === 1 ? "connection" : "connections"}</span>
+          </div>
+          {providerNames.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {providerNames.map((n) => (
+                <Badge key={n} variant="outline" className="text-xs">
+                  {n}
+                </Badge>
+              ))}
+            </div>
+          )}
+          {lastUpdated && (
+            <div className="text-xs text-muted-foreground">
+              Updated {new Date(lastUpdated).toLocaleDateString()}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </button>
+  );
+}
+
+function AvailableProvidersBlock({ providers }: { providers: IntegrationProvider[] }) {
+  const LEGAL_PM_CATEGORIES = new Set([
+    "legal_pm",
+    "legal-pm",
+    "legal",
+    "legal_practice_management",
+  ]);
+  const isLegalPm = (cat?: string) => !!cat && LEGAL_PM_CATEGORIES.has(cat);
+  const legalProviders = providers.filter((p) => isLegalPm(p.category));
+  const otherByCat = new Map<string, IntegrationProvider[]>();
+  for (const p of providers) {
+    if (isLegalPm(p.category)) continue;
+    const key = p.category || "other";
+    const arr = otherByCat.get(key) ?? [];
+    arr.push(p);
+    otherByCat.set(key, arr);
+  }
+  const legalNames = legalProviders.length
+    ? legalProviders
+    : providers.filter((p) =>
+        ["clio", "mycase", "smokeball"].some((n) =>
+          (p.display_name ?? "").toLowerCase().includes(n),
+        ),
+      );
+  return (
+    <>
+      <div>
+        <div className="text-xs font-semibold text-foreground mb-2">Legal practice management</div>
+        <div className="flex flex-wrap gap-2">
+          {legalNames.length === 0 ? (
+            <span className="text-xs text-muted-foreground">No legal providers registered yet.</span>
+          ) : (
+            legalNames.map((p) => (
+              <Badge key={p.id} variant="outline" className="text-xs">
+                {p.display_name}
+              </Badge>
+            ))
+          )}
+          <Badge variant="outline" className="text-xs border-dashed text-muted-foreground">
+            More integration packs coming
+          </Badge>
+        </div>
+      </div>
+      {[...otherByCat.entries()].map(([cat, list]) => (
+        <div key={cat}>
+          <div className="text-xs font-semibold text-foreground mb-2 capitalize">
+            {cat.replace(/[_-]/g, " ")}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {list.map((p) => (
+              <Badge key={p.id} variant="outline" className="text-xs">
+                {p.display_name}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
   );
 }
