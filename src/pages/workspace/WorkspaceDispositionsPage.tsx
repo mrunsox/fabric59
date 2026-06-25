@@ -377,7 +377,7 @@ function DispositionFormDialog({
   const [campaignId, setCampaignId] = useState<string | null>(defaultCampaignId);
 
   // Reset when dialog opens
-  useMemo(() => {
+  useEffect(() => {
     if (open) {
       setName(editing?.name ?? "");
       setSortOrder(editing?.sort_order ?? 0);
