@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { newId } from "@/lib/workspace-guide/schema";
+import { BlueprintFileUpload } from "@/components/campaigns/BlueprintFileUpload";
 import {
   type WorkspaceGuideContentV2,
   type WorkspaceGuideSection,
@@ -221,6 +222,16 @@ export function WorkspaceGuideAssembler({
         </SheetHeader>
 
         <div className="mt-4 space-y-3">
+          <BlueprintFileUpload
+            label="Drop a brief or runbook to auto-fill"
+            accept=".pdf,.docx,.doc,.txt,.md"
+            onTextExtracted={(text, fileName) => {
+              if (source.trim().length > 0) {
+                toast.message(`Replaced source text with ${fileName}`);
+              }
+              setSource(text);
+            }}
+          />
           <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Source text
           </label>
