@@ -29,6 +29,7 @@ export type IntegrationConnection = {
   organization_id: string;
   provider_id: string;
   client_id: string | null;
+  campaign_id: string | null;
   display_name: string | null;
   status: string;
   auth_type: string | null;
@@ -39,6 +40,7 @@ export type IntegrationConnection = {
   created_at: string;
   updated_at: string;
 };
+
 
 export type IntegrationMapping = {
   id: string;
@@ -111,6 +113,7 @@ export function useCreateIntegrationConnection() {
       provider_id: string;
       display_name?: string;
       client_id?: string | null;
+      campaign_id?: string | null;
       config?: Record<string, unknown>;
     }) => {
       if (!workspace) throw new Error("No workspace");
@@ -122,6 +125,7 @@ export function useCreateIntegrationConnection() {
           provider_id: input.provider_id,
           display_name: input.display_name ?? null,
           client_id: input.client_id ?? null,
+          campaign_id: input.campaign_id ?? null,
           status: "not_connected",
           config: (input.config ?? {}) as never,
           created_by: user?.id ?? null,
@@ -131,6 +135,7 @@ export function useCreateIntegrationConnection() {
       if (error) throw error;
       return data;
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["integration-connections"] });
       toast.success("Connection created");
@@ -144,7 +149,7 @@ export function useUpdateIntegrationConnection() {
   return useMutation({
     mutationFn: async (input: {
       id: string;
-      patch: Partial<Pick<IntegrationConnection, "display_name" | "status" | "config" | "last_error" | "credentials_ref">>;
+      patch: Partial<Pick<IntegrationConnection, "display_name" | "status" | "config" | "last_error" | "credentials_ref" | "campaign_id">>;
     }) => {
       const { data, error } = await supabase
         .from("integration_connections" as never)
