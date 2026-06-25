@@ -79,7 +79,7 @@ export default function WorkspaceGuideBuilderPage() {
   );
 
   if (isLoading || !guide) {
-    return <p className="text-sm text-muted-foreground">Loading workspace guide…</p>;
+    return <p className="text-sm text-muted-foreground">Loading campaign guide…</p>;
   }
 
   const updateSections = (next: WorkspaceGuideSection[]) =>
@@ -135,8 +135,8 @@ export default function WorkspaceGuideBuilderPage() {
   return (
     <div className="space-y-6 animate-fade-in" data-testid="workspace-guide-builder">
       <WorkspacePageHeader
-        eyebrow="Workspace guide"
-        title="Workspace guide"
+        eyebrow="Campaign guide"
+        title="Campaign guide"
         lede="Structured, section-based agent guide for this workspace. Agents see the published version in the live call runner."
         action={
           <div className="flex items-center gap-2">

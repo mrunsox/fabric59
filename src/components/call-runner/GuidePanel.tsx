@@ -140,7 +140,7 @@ export function GuidePanel({ guide, isLoading, onAppendToNotes, currentStepHint 
     <RunnerSurface tone="muted" className="overflow-hidden" data-testid="runner-guide-panel">
       <div className="px-3 pt-3 pb-2 border-b border-[hsl(var(--border-subtle))] flex items-center justify-between gap-2 shrink-0">
         <h2 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 text-muted-foreground">
-          <BookOpen className="h-3.5 w-3.5" /> Workspace guide
+          <BookOpen className="h-3.5 w-3.5" /> Campaign guide
         </h2>
         {guide && (
           <span className="text-[10px] text-muted-foreground">
@@ -392,9 +392,9 @@ function GuideEmpty() {
       data-testid="runner-guide-empty"
     >
       <BookOpen className="h-5 w-5 mx-auto text-muted-foreground" aria-hidden />
-      <p className="text-xs font-medium">No published workspace guide</p>
+      <p className="text-xs font-medium">No published campaign guide</p>
       <p className="text-[11px] text-muted-foreground">
-        Ask an admin to publish a workspace guide so this rail shows reference content.
+        Ask an admin to publish a campaign guide so this rail shows reference content.
       </p>
     </div>
   );

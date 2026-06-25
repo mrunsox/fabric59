@@ -22,7 +22,7 @@ import {
 
 const SOURCE_LABELS: Record<string, { label: string; description: string }> = {
   kb_articles: { label: "Knowledge base articles", description: "Published KB content for the organization." },
-  guides: { label: "Guides", description: "Workspace guides as procedural knowledge." },
+  guides: { label: "Guides", description: "Campaign guides as procedural knowledge." },
   templates: { label: "Templates", description: "Workspace + org templates available for grounding." },
   call_summaries: { label: "Call summaries", description: "Recent summarized call sessions (opt-in per workspace)." },
   call_outcomes: { label: "Call outcomes", description: "Outcome metadata for post-call intelligence." },

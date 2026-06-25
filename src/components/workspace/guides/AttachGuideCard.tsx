@@ -84,7 +84,7 @@ export function AttachGuideCard({ workspaceId, scope, scopeId }: Props) {
           </Select>
           <Button asChild variant="outline" size="sm">
             <Link to={`/w/${workspaceId}/guide`}>
-              <Library className="h-3.5 w-3.5 mr-1" /> Workspace guide
+              <Library className="h-3.5 w-3.5 mr-1" /> Campaign guide
             </Link>
           </Button>
         </div>

@@ -60,7 +60,7 @@ function GuidesSection() {
     <div className="space-y-4">
       <Card className="border-dashed bg-muted/30">
         <CardContent className="pt-4 pb-4 text-xs text-muted-foreground">
-          The <Link to={`/w/${workspaceId}/guide`} className="text-primary hover:underline">workspace guide</Link>{" "}
+          The <Link to={`/w/${workspaceId}/guide`} className="text-primary hover:underline">campaign guide</Link>{" "}
           is the canonical playbook for this workspace. Additional guides
           listed here are supplementary references.
         </CardContent>

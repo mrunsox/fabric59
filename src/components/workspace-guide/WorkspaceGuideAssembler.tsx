@@ -338,7 +338,7 @@ export function WorkspaceGuideAssembler({
             </DraftPreviewBlock>
 
             <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-              This pass applies <strong>guide sections only</strong> to your Workspace Guide draft.
+              This pass applies <strong>guide sections only</strong> to your Campaign Guide draft.
               Dispositions, call flow, and routing show above for review; their apply paths land in
               the next iteration.
             </div>
