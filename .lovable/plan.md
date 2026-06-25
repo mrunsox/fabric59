@@ -1,109 +1,33 @@
-## Phase 11 — Streamlined Build IA + Workspace Guide AI Assembler
+# Promote Assureway to a real Client (with a Campaign)
 
-Two tracks. Track A is the IA cleanup approved last turn. Track B wires the existing `generate-script` AI into the Workspace Guide so you can drop a doc and get a full call program out the other end.
+The seed already creates a real `tenants` row (Assureway) and a real `campaigns` row (Main Reception) — but the UI still calls it a "demo client", which is what you're seeing on the Campaigns page. We'll rebrand the action so Assureway is treated as a first-class client, and make sure the entry point lives where clients are created.
 
----
+## Changes
 
-## Track A — IA alignment (unchanged from approved plan)
+1. **Rename the seed action** (UI copy only — same backend behavior):
+   - `SeedAssurewayButton` label: `Add Assureway demo client` / `Re-sync Assureway demo client` → `Load Assureway client` / `Re-sync Assureway`.
+   - Toast strings in `useSeedAssurewaySample` (`"Adding Assureway demo client"`, etc.) → `"Loading Assureway client"` / `"Assureway client ready"`.
+   - `aria-label` and test id updated accordingly (keep `data-testid="seed-assureway-button"` for test stability).
 
-Model: `Workspace → Client → Campaign(s)`. Forms live inside a Campaign.
+2. **Move the button to the Clients page as the primary location**:
+   - Add `SeedAssurewayButton` to `WorkspaceClientsPage` header (next to `New client`), shown only when no Assureway tenant exists in this workspace; otherwise show `Re-sync Assureway` secondary.
+   - Keep a secondary copy on `WorkspaceCampaignsPage` for now (so the empty-state journey still works), but reword to `Load Assureway sample campaign`.
 
-1. **Assureway becomes real** — `SeedAssurewayButton` creates a `tenants` (Client) row "Assureway" + one Campaign "Assureway – Main reception" under it. Drop the word "sample".
-2. **Sidebar Build group reordered** — `Clients → Campaigns → Workspace guide → Library`. Library demoted visually.
-3. **Forms moved into Campaign detail** as a tab; top-level Forms route redirects to a campaign picker.
-4. **Settings absorbs** workspace-wide knobs currently buried in Campaign Builder (Five9 domain, branding, default callback policy).
-5. **Empty-state copy** explains what each surface is and what creates a row in it.
-6. **Setup checklist** swaps "First campaign created" for "First client added" + "First campaign created under that client".
-7. **Tests** for sidebar order, Forms redirect, campaign-requires-client.
+3. **Make Assureway visible as a Client immediately after seeding**:
+   - After `mutate()` success, navigate to `/w/:wsId/clients/:tenantId` (the new tenant) instead of the campaign detail, so the user lands on the Client record. Campaign remains reachable from the client page.
+   - Invalidate `useWorkspaceClients` and `useWorkspaceCampaigns` queries on success (already partially done — verify both keys).
 
----
+4. **Empty-state copy on Campaigns page**:
+   - Update checklist/empty copy to say "Assureway is loaded as a client — open it to see its Main Reception campaign" when the seed has run.
 
-## Track B — Workspace Guide as the AI assembler
+## Technical notes
 
-### What you'll be able to do
+- No DB migration. The seed already writes to `tenants` (client) + `campaigns` + `guides`/`guide_versions` + `forms`/`form_versions`/`form_campaign_assignments`, workspace-scoped.
+- Files touched: `src/components/dashboard/SeedAssurewayButton.tsx`, `src/hooks/seed/useSeedAssurewaySample.ts`, `src/pages/workspace/WorkspaceClientsPage.tsx`, `src/pages/workspace/WorkspaceCampaignsPage.tsx`.
+- Update `src/test/regressions/phase11BuildIA.test.ts` label assertions to match new copy.
 
-Open Workspace Guide → "Assemble from document" → drop a PDF/DOCX/TXT (or paste text) → AI produces a draft that fills:
+## Out of scope
 
-- Guide sections (greeting, business overview, hours, escalation, FAQs, etc.)
-- **Dispositions** (labels + routing + post-call action per disposition)
-- **Call flow** decision tree (greeting → identify caller type → branch by reason → resolution)
-- **ANI / DNIS routing rules** (numbers → campaign/skill mapping inferred from the doc)
-- **Variables** the script references (caller name, matter type, etc.)
-- **Post-call automations** suggested per disposition (email template, CRM push, callback)
-
-Everything lands as a **draft** the user reviews, edits, and publishes. Nothing auto-applies.
-
-### Where it lives
-
-- Workspace Guide page gets two new actions next to "Apply template":
-  - **Assemble from document** (primary CTA when guide is empty)
-  - **Re-assemble** (when guide already has content — opens a diff view)
-- A right-side drawer hosts the assembly run: upload area → status stream → section-by-section accept/reject.
-
-### Plumbing reuse
-
-| Need | Reuse |
-|---|---|
-| Document parse | `document--parse_document` capability already in the platform; for in-app use, mirror logic from `supabase/functions/parse-blueprint-doc/index.ts` |
-| LLM call | Existing `supabase/functions/generate-script/index.ts` — extend, do not fork |
-| Frontend trigger | Pattern from `src/components/script-builder/AIScriptGenerator.tsx` — port to a workspace-shell component `WorkspaceGuideAssembler.tsx` |
-| Guide write surface | Existing Workspace Guide draft store (sections + version history already supported) |
-| Disposition / flow writes | Existing `useDispositions`, `useCampaignFlow`, `useCampaignScripts` hooks |
-
-### New edge function: `assemble-workspace-program`
-
-One function, server-side, orchestrates the whole assembly so the client only uploads once:
-
-```text
-input:  { workspaceId, sourceText, sourceFilename? }
-steps:
-  1. (if upload) parse-blueprint-doc → normalized text
-  2. Lovable AI Gateway, google/gemini-3-flash-preview, structured Output schema:
-       {
-         guideSections[], dispositions[], callFlow{nodes,edges},
-         routing{ani[],dnis[]}, variables[], postCallSuggestions[]
-       }
-  3. Persist as a single "assembly_draft" row (reuses campaign_builder_drafts table — no schema change; payload kind = "workspace_assembly")
-  4. Return draft_id
-client polls/streams draft_id → renders the diff drawer
-```
-
-- Uses AI SDK `Output.object` with a deliberately compact schema (per `ai-sdk-agent-patterns` guidance on Gemini state limits).
-- System prompt extracted to `prompts/workspace-assembler.txt`; reuses tone and structure of `prompts/script-generator.txt`.
-- `verify_jwt` true, scoped to workspace member.
-
-### UI
-
-- `src/components/workspace/guide/WorkspaceGuideAssembler.tsx` — drawer with upload, progress, and per-section apply.
-- Section diff view: existing value (left) | proposed value (right) | Accept / Skip.
-- "Apply all" button at the bottom; writes accepted pieces to Guide, Dispositions, Campaign flow draft.
-- Surfaces 429/402 errors per AI gateway guidance.
-
-### Test plan (end-to-end, after wiring)
-
-Single happy-path test you can run live:
-
-1. Click **Assemble from document** in Workspace Guide.
-2. Upload a one-page intake brief (we'll keep a sample at `docs/sample-intake.md`).
-3. Verify the drawer shows: ≥5 Guide sections, ≥3 Dispositions, a 1-screen Call Flow, at least one DNIS rule, at least one variable.
-4. Accept all → confirm Guide draft has sections; Dispositions list shows new rows; Campaign flow draft visible in Campaigns.
-5. Publish Guide v1; re-run cockpit smoke test (existing Phase 9 telemetry) to confirm the agent runner reads the new guide.
-
-### Out of scope for Phase 11 (still deferred)
-
-- DB renames (`tenants` → `clients`).
-- Auto-applying assembly output without user review.
-- Multi-doc assembly in one pass (one source per run; users can re-run).
-- Telephony provisioning of the DNIS/ANI rules — assembler produces routing config only; pushing to Five9 stays manual.
-- Auto-scoring, new dashboards, Phase 10 observation window stays open in parallel.
-
----
-
-## Suggested implementation order
-
-1. Track A steps 1–3 (the visible IA win) → ship.
-2. Track B `assemble-workspace-program` edge function + `WorkspaceGuideAssembler` drawer (text-paste only first) → ship.
-3. Track B document upload + diff/accept UI → ship.
-4. Track A steps 4–7 (polish) + full live test.
-
-Each step gets a regression test and a row in the Phase 10 Fixes table.
+- Schema rename of `tenants` → `clients` (still deferred).
+- New campaign creation flow changes — `New campaign` button on Campaigns page already works for ad-hoc clients.
+- Removing the seed entirely (kept as a fast-path to load the canonical Assureway content).
