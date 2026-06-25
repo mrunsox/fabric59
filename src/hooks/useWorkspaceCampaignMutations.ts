@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export type CampaignStatus = "draft" | "active" | "paused" | "archived";
+export type CampaignStatus = "draft" | "ready" | "live" | "paused" | "archived";
 
 export type CampaignFormValues = {
   name: string;

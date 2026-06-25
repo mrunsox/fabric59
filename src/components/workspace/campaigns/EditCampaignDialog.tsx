@@ -28,7 +28,7 @@ type Props = {
   campaign: { id: string; name: string; status: string };
 };
 
-const STATUSES: CampaignStatus[] = ["draft", "active", "paused", "archived"];
+const STATUSES: CampaignStatus[] = ["draft", "ready", "live", "paused", "archived"];
 
 export function EditCampaignDialog({ open, onOpenChange, campaign }: Props) {
   const [name, setName] = useState(campaign.name);
