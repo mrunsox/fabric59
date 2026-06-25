@@ -22,6 +22,8 @@ import { History, LayoutTemplate, RotateCcw, Save, Send } from "lucide-react";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { SectionList } from "@/components/workspace-guide/SectionList";
 import { SectionEditor } from "@/components/workspace-guide/SectionEditor";
+import { WorkspaceGuideAssembler } from "@/components/workspace-guide/WorkspaceGuideAssembler";
+
 import {
   useWorkspaceCanonicalGuide,
   useLatestSingletonVersion,
@@ -149,6 +151,16 @@ export default function WorkspaceGuideBuilderPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
+          {workspaceId && (
+            <WorkspaceGuideAssembler
+              workspaceId={workspaceId}
+              currentContent={content}
+              onApplyGuideSections={(next) => {
+                setContent(next);
+                setActiveId(next.sections[0]?.id ?? null);
+              }}
+            />
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5" data-testid="apply-template">
@@ -169,6 +181,7 @@ export default function WorkspaceGuideBuilderPage() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
 
           <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
             <DialogTrigger asChild>
