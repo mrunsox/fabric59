@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, ExternalLink, ClipboardList, Workflow, Headphones } from "lucide-react";
+import { ArrowLeft, ExternalLink, ClipboardList, Workflow, Headphones, Library } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaign } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
@@ -20,6 +20,7 @@ import { TransferDirectoryEditor } from "@/components/campaign-admin/TransferDir
 import { ExternalResourcesEditor } from "@/components/campaign-admin/ExternalResourcesEditor";
 import { CampaignOutcomesPanel } from "@/components/workspace/performance/CampaignOutcomesPanel";
 import { TelemetryView } from "@/components/workspace/telemetry/TelemetryView";
+import { AttachGuideCard } from "@/components/workspace/guides/AttachGuideCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
@@ -66,6 +67,11 @@ export default function WorkspaceCampaignDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to={`${base}/${campaign.id}/library`}>
+              <Library className="h-3.5 w-3.5 mr-1.5" /> Library
+            </Link>
+          </Button>
           <Button asChild variant="outline" size="sm" data-testid="open-agent-cockpit">
             <Link to={`/app/agent/workspace/${workspace.id}/${campaign.id}`}>
               <Headphones className="h-3.5 w-3.5 mr-1.5" /> Open agent cockpit
@@ -121,6 +127,8 @@ export default function WorkspaceCampaignDetailPage() {
           </div>
 
           <IntakeFormCard workspaceId={workspace.id} campaignId={campaign.id} />
+
+          <AttachGuideCard workspaceId={workspace.id} scope="campaign" scopeId={campaign.id} />
 
           <PublishSettingsCard campaignId={campaign.id} workspaceId={workspace.id} />
 
