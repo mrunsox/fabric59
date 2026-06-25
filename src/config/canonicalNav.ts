@@ -92,7 +92,12 @@ export type NavGroup = { label: string; items: NavItem[] };
 export const WORKSPACE_NAV_GROUPS: NavGroup[] = [
   {
     label: "Build",
-    items: ["campaigns", "guide", "library", "forms", "clients"].map(byKey),
+    // Phase 11 — IA reorder: Clients first (parent), Campaigns second
+    // (children), then Workspace guide (default script) and Library
+    // (reusable templates/blueprints, demoted visually). Forms moves
+    // out of the sidebar and lives inside a Campaign detail tab; the
+    // top-level /forms route stays mounted for back-compat.
+    items: ["clients", "campaigns", "guide", "library"].map(byKey),
   },
   {
     label: "Operate",
@@ -122,7 +127,11 @@ export const WORKSPACE_NAV_DEMOTED: NavItem[] = [
   byKey("supervisor"),
   byKey("templates"),
   byKey("guides"),
+  // Phase 11 — Forms demoted from top-level. It now lives inside each
+  // Campaign detail page; top-level /forms route still works via ⌘K.
+  byKey("forms"),
 ];
+
 
 /** Canonical Marketing nav — 6 items. Public, no auth. */
 export const MARKETING_NAV: NavItem[] = [

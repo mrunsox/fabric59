@@ -1,53 +1,109 @@
-# Phase 10 — Run It In The Wild (Stability & Learning)
+## Phase 11 — Streamlined Build IA + Workspace Guide AI Assembler
 
-This phase is intentionally tiny in code terms. We're setting up the observation/learning scaffolding now, then logging fixes as they arise during the live window. No new features, no schema, no new surfaces.
+Two tracks. Track A is the IA cleanup approved last turn. Track B wires the existing `generate-script` AI into the Workspace Guide so you can drop a doc and get a full call program out the other end.
 
-## 1. Scope at kickoff (this implementation pass)
+---
 
-Only three files touched up front:
+## Track A — IA alignment (unchanged from approved plan)
 
-1. **`docs/live-call-runner-ux.md`** — add three new sections:
-   - **Phase 10 Questions** — the exact questions from the brief (assist usage %, replay coverage, QA volume, performance vs outcomes view ratio, coaching open rate), each paired with the existing telemetry/SQL query that answers it. Reuse the Phase 9 query block as the source of truth; reference event names already emitted (`calls.assist.suggestion_used`, `calls.replay.opened`, `calls.qa.review_updated`, `calls.performance.viewed`, `calls.campaign_outcomes.viewed`, `calls.coaching.item_opened`).
-   - **Phase 10 Fixes** — empty table with columns `Date | Change | Why (signal) | Verification`. Fixes get appended here as they happen.
-   - **Phase 10 Outcome (TBD)** — placeholder for the end-of-window narrative answering the five success-criteria questions.
+Model: `Workspace → Client → Campaign(s)`. Forms live inside a Campaign.
 
-2. **`OUTLINE.md`** — mark Phases 5–9 as **In use**, Phase 10 as **Run & Learn (observation window open)**.
+1. **Assureway becomes real** — `SeedAssurewayButton` creates a `tenants` (Client) row "Assureway" + one Campaign "Assureway – Main reception" under it. Drop the word "sample".
+2. **Sidebar Build group reordered** — `Clients → Campaigns → Workspace guide → Library`. Library demoted visually.
+3. **Forms moved into Campaign detail** as a tab; top-level Forms route redirects to a campaign picker.
+4. **Settings absorbs** workspace-wide knobs currently buried in Campaign Builder (Five9 domain, branding, default callback policy).
+5. **Empty-state copy** explains what each surface is and what creates a row in it.
+6. **Setup checklist** swaps "First campaign created" for "First client added" + "First campaign created under that client".
+7. **Tests** for sidebar order, Forms redirect, campaign-requires-client.
 
-3. **`.lovable/plan.md`** — same status update, kept in sync.
+---
 
-No source/test files are edited in this pass. The regression suite stays as-is (5 pre-existing failures).
+## Track B — Workspace Guide as the AI assembler
 
-## 2. During the observation window (separate later turns)
+### What you'll be able to do
 
-Each bug or friction fix the user reports gets handled as its own small change:
+Open Workspace Guide → "Assemble from document" → drop a PDF/DOCX/TXT (or paste text) → AI produces a draft that fills:
 
-- Edit only the affected file(s).
-- Add or extend a regression test covering the bug.
-- Append a row to the **Phase 10 Fixes** table with what / why / verification.
+- Guide sections (greeting, business overview, hours, escalation, FAQs, etc.)
+- **Dispositions** (labels + routing + post-call action per disposition)
+- **Call flow** decision tree (greeting → identify caller type → branch by reason → resolution)
+- **ANI / DNIS routing rules** (numbers → campaign/skill mapping inferred from the doc)
+- **Variables** the script references (caller name, matter type, etc.)
+- **Post-call automations** suggested per disposition (email template, CRM push, callback)
 
-Guardrails enforced on every such turn:
-- No new routes, tabs, dashboards, tables, or columns.
-- No telephony, auto-scoring, or new AI behavior.
-- Only: bug fixes, perf, copy/label/empty/loading/error clarity, tiny layout corrections.
+Everything lands as a **draft** the user reviews, edits, and publishes. Nothing auto-applies.
 
-## 3. Stop-gate (end of window)
+### Where it lives
 
-When the user signals the window is closed, fill in **Phase 10 Outcome** in `docs/live-call-runner-ux.md` with:
-- key metric snapshots (from the Phase 10 Questions queries),
-- the accumulated fix list,
-- answers to the five success-criteria questions,
-- recommendation: freeze Calls OS, or one tightly scoped follow-up.
+- Workspace Guide page gets two new actions next to "Apply template":
+  - **Assemble from document** (primary CTA when guide is empty)
+  - **Re-assemble** (when guide already has content — opens a diff view)
+- A right-side drawer hosts the assembly run: upload area → status stream → section-by-section accept/reject.
 
-Then stop and wait for approval before any Phase 11 proposal.
+### Plumbing reuse
 
-## Technical notes
+| Need | Reuse |
+|---|---|
+| Document parse | `document--parse_document` capability already in the platform; for in-app use, mirror logic from `supabase/functions/parse-blueprint-doc/index.ts` |
+| LLM call | Existing `supabase/functions/generate-script/index.ts` — extend, do not fork |
+| Frontend trigger | Pattern from `src/components/script-builder/AIScriptGenerator.tsx` — port to a workspace-shell component `WorkspaceGuideAssembler.tsx` |
+| Guide write surface | Existing Workspace Guide draft store (sections + version history already supported) |
+| Disposition / flow writes | Existing `useDispositions`, `useCampaignFlow`, `useCampaignScripts` hooks |
 
-- All Phase 10 telemetry already exists from Phase 9 — no new event names, no new emitters.
-- The Questions section will link to the existing "Phase 9 internal metrics" SQL block rather than duplicate it; only the question → query mapping is new.
-- No `plan.md` schema change — just a status line edit at the top of the phase list.
+### New edge function: `assemble-workspace-program`
 
-## Out of scope (explicit)
+One function, server-side, orchestrates the whole assembly so the client only uploads once:
 
-- New product surfaces, dashboards, or charts for the metrics (queries stay SQL-only, run by operator).
-- Persisting metric snapshots to a table.
-- Any Phase 11 work or scoping.
+```text
+input:  { workspaceId, sourceText, sourceFilename? }
+steps:
+  1. (if upload) parse-blueprint-doc → normalized text
+  2. Lovable AI Gateway, google/gemini-3-flash-preview, structured Output schema:
+       {
+         guideSections[], dispositions[], callFlow{nodes,edges},
+         routing{ani[],dnis[]}, variables[], postCallSuggestions[]
+       }
+  3. Persist as a single "assembly_draft" row (reuses campaign_builder_drafts table — no schema change; payload kind = "workspace_assembly")
+  4. Return draft_id
+client polls/streams draft_id → renders the diff drawer
+```
+
+- Uses AI SDK `Output.object` with a deliberately compact schema (per `ai-sdk-agent-patterns` guidance on Gemini state limits).
+- System prompt extracted to `prompts/workspace-assembler.txt`; reuses tone and structure of `prompts/script-generator.txt`.
+- `verify_jwt` true, scoped to workspace member.
+
+### UI
+
+- `src/components/workspace/guide/WorkspaceGuideAssembler.tsx` — drawer with upload, progress, and per-section apply.
+- Section diff view: existing value (left) | proposed value (right) | Accept / Skip.
+- "Apply all" button at the bottom; writes accepted pieces to Guide, Dispositions, Campaign flow draft.
+- Surfaces 429/402 errors per AI gateway guidance.
+
+### Test plan (end-to-end, after wiring)
+
+Single happy-path test you can run live:
+
+1. Click **Assemble from document** in Workspace Guide.
+2. Upload a one-page intake brief (we'll keep a sample at `docs/sample-intake.md`).
+3. Verify the drawer shows: ≥5 Guide sections, ≥3 Dispositions, a 1-screen Call Flow, at least one DNIS rule, at least one variable.
+4. Accept all → confirm Guide draft has sections; Dispositions list shows new rows; Campaign flow draft visible in Campaigns.
+5. Publish Guide v1; re-run cockpit smoke test (existing Phase 9 telemetry) to confirm the agent runner reads the new guide.
+
+### Out of scope for Phase 11 (still deferred)
+
+- DB renames (`tenants` → `clients`).
+- Auto-applying assembly output without user review.
+- Multi-doc assembly in one pass (one source per run; users can re-run).
+- Telephony provisioning of the DNIS/ANI rules — assembler produces routing config only; pushing to Five9 stays manual.
+- Auto-scoring, new dashboards, Phase 10 observation window stays open in parallel.
+
+---
+
+## Suggested implementation order
+
+1. Track A steps 1–3 (the visible IA win) → ship.
+2. Track B `assemble-workspace-program` edge function + `WorkspaceGuideAssembler` drawer (text-paste only first) → ship.
+3. Track B document upload + diff/accept UI → ship.
+4. Track A steps 4–7 (polish) + full live test.
+
+Each step gets a regression test and a row in the Phase 10 Fixes table.

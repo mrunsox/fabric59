@@ -384,7 +384,7 @@ export function useSeedAssurewaySample() {
       const uid = user?.id ?? null;
 
       // Step 1 — tenant
-      toast.message("Loading Assureway sample", { description: "Creating client…" });
+      toast.message("Adding Assureway demo client", { description: "Creating client…" });
       let { data: existingTenant } = await supabase
         .from("tenants").select("id")
         .eq("workspace_id", wsId).eq("name", CLIENT_NAME).maybeSingle();
@@ -401,7 +401,7 @@ export function useSeedAssurewaySample() {
       }
 
       // Step 2 — campaign (rename legacy "General Inquiry" → "Main Reception" if present)
-      toast.message("Loading Assureway sample", { description: "Creating campaign…" });
+      toast.message("Adding Assureway demo client", { description: "Creating campaign…" });
       const { data: legacyCampaign } = await supabase
         .from("campaigns").select("id, name")
         .eq("workspace_id", wsId).eq("client_id", clientId).eq("name", LEGACY_CAMPAIGN_NAME).maybeSingle();
@@ -434,7 +434,7 @@ export function useSeedAssurewaySample() {
       void isExisting;
 
       // Step 3 — singleton workspace guide
-      toast.message("Loading Assureway sample", { description: "Publishing firm guide…" });
+      toast.message("Adding Assureway demo client", { description: "Publishing firm guide…" });
       let { data: sg } = await supabase.from("guides")
         .select("id, current_version, status, metadata").eq("workspace_id", wsId)
         .eq("name", WORKSPACE_GUIDE_SINGLETON_NAME).is("source_type", null).maybeSingle();
