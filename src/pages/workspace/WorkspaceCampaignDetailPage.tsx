@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, ExternalLink, ClipboardList, Workflow, Headphones, Library } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, ExternalLink, ClipboardList, Workflow, Headphones, Library, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { EditCampaignDialog } from "@/components/workspace/campaigns/EditCampaignDialog";
+import { DeleteCampaignDialog } from "@/components/workspace/campaigns/DeleteCampaignDialog";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaign } from "@/hooks/useWorkspaceCampaigns";
 import { useWorkspaceForms } from "@/hooks/useWorkspaceForms";
