@@ -362,10 +362,12 @@ type Tab = "upload" | "text" | "faq" | "csv" | "url";
 function AddSourceDialog({
   workspaceId,
   defaultCampaignId,
+  lockCampaign = false,
   onClose,
 }: {
   workspaceId: string;
   defaultCampaignId: string | null;
+  lockCampaign?: boolean;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("upload");
