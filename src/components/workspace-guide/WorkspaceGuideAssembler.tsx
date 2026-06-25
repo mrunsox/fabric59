@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { newId } from "@/lib/workspace-guide/schema";
+import { BlueprintFileUpload } from "@/components/campaigns/BlueprintFileUpload";
 import {
   type WorkspaceGuideContentV2,
   type WorkspaceGuideSection,
