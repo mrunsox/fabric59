@@ -117,9 +117,9 @@ describe("Phase 4 · route + nav wiring", () => {
     expect(src).toMatch(/import WorkspaceGuideBuilderPage from/);
   });
 
-  it("canonical nav exposes a Workspace guide entry in the Build group", () => {
+  it("canonical nav exposes a Campaign guide entry in the Build group", () => {
     const src = read("config/canonicalNav.ts");
-    expect(src).toMatch(/key:\s*["']guide["'][^}]*label:\s*["']Workspace guide["']/);
+    expect(src).toMatch(/key:\s*["']guide["'][^}]*label:\s*["']Campaign guide["']/);
     expect(src).toMatch(/items:\s*\[[^\]]*"guide"/);
   });
 

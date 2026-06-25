@@ -48,7 +48,7 @@ export type NavItem = {
  */
 export const WORKSPACE_NAV: NavItem[] = [
   { key: "campaigns",    label: "Campaigns",    icon: Megaphone,       to: "campaigns" },
-  { key: "guide",        label: "Workspace guide", icon: BookMarked,   to: "guide" },
+  { key: "guide",        label: "Campaign guide", icon: BookMarked,   to: "guide" },
   // Phase 3 — Library shell mounted at /w/:id/library; merges Guides +
   // Templates + Blueprints under one umbrella. Standalone /guides and
   // /templates routes remain mounted for deep links and back-compat.

@@ -103,8 +103,8 @@ export function computeWorkspaceSetupSteps(
     },
     {
       key: "workspace_guide",
-      label: "Workspace guide published",
-      hint: "The canonical workspace guide is published.",
+      label: "Campaign guide published",
+      hint: "The canonical campaign guide is published.",
       done: input.workspaceGuidePublished,
       href: `${base}/guide`,
       signal:
