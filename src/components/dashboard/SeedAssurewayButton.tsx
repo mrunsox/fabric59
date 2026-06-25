@@ -10,8 +10,9 @@ export function SeedAssurewayButton({
   hasExistingAssureway?: boolean;
 }) {
   const seed = useSeedAssurewaySample();
-  const label = hasExistingAssureway ? "Re-run Assureway sample" : "Load Assureway sample";
+  const label = hasExistingAssureway ? "Re-sync Assureway demo client" : "Add Assureway demo client";
   const Icon = hasExistingAssureway ? RotateCw : Download;
+
   return (
     <Button
       variant={variant}
@@ -26,7 +27,7 @@ export function SeedAssurewayButton({
       ) : (
         <Icon className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
       )}
-      {seed.isPending ? "Loading sample…" : label}
+      {seed.isPending ? "Adding client…" : label}
     </Button>
   );
 }
