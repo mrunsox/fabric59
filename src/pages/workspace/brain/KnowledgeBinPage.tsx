@@ -32,7 +32,12 @@ import {
   Globe,
   Loader2,
   Table as TableIcon,
+  ArrowLeft,
+  ChevronRight,
+  Inbox,
+  Folder,
 } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import {
   useBbSources,
   useBbIngestPaste,
@@ -84,12 +89,17 @@ const KIND_LABEL: Record<BbSourceRow["kind"], string> = {
 const ALL = "__all__";
 const NONE = "__none__";
 
+// selection: undefined = index/grid; null = workspace-wide; string = campaign id
+type Selection = undefined | null | string;
+
+const WORKSPACE_KEY = "__workspace__";
+
 export default function KnowledgeBinPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { data: sources = [], isLoading } = useBbSources(workspaceId ?? null);
   const { data: campaigns = [] } = useWorkspaceCampaigns();
   const [addOpen, setAddOpen] = useState(false);
-  const [filterCampaign, setFilterCampaign] = useState<string>(ALL);
+  const [selection, setSelection] = useState<Selection>(undefined);
 
   const campaignNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -97,39 +107,42 @@ export default function KnowledgeBinPage() {
     return map;
   }, [campaigns]);
 
-  const filtered = useMemo(() => {
-    const list =
-      filterCampaign === ALL
-        ? sources
-        : filterCampaign === NONE
-          ? sources.filter((s) => !s.campaign_id)
-          : sources.filter((s) => s.campaign_id === filterCampaign);
-    return [...list].sort((a, b) => b.created_at.localeCompare(a.created_at));
-  }, [sources, filterCampaign]);
+  // Group sources by campaign bucket
+  const sourcesByCampaign = useMemo(() => {
+    const map = new Map<string, BbSourceRow[]>();
+    map.set(WORKSPACE_KEY, []);
+    for (const c of campaigns) map.set(c.id, []);
+    for (const s of sources) {
+      const key = s.campaign_id ?? WORKSPACE_KEY;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(s);
+    }
+    return map;
+  }, [sources, campaigns]);
 
-  return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight">Knowledge Base</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Every imported source is captured here with its version and processing state.
-            Attach a source to a campaign to isolate it for that campaign's AI retrieval.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Select value={filterCampaign} onValueChange={setFilterCampaign}>
-            <SelectTrigger className="w-56" aria-label="Filter by campaign">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All campaigns</SelectItem>
-              <SelectItem value={NONE}>Workspace-wide (no campaign)</SelectItem>
-              {campaigns.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+  if (selection !== undefined) {
+    const key = selection ?? WORKSPACE_KEY;
+    const list = (sourcesByCampaign.get(key) ?? []).slice().sort((a, b) =>
+      b.created_at.localeCompare(a.created_at),
+    );
+    const heading = selection ? campaignNameById.get(selection) ?? "Campaign" : "Workspace-wide";
+
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => setSelection(undefined)}>
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> All campaigns
+            </Button>
+            <div>
+              <h2 className="text-base font-semibold tracking-tight">{heading}</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {selection
+                  ? "Sources here are isolated to this campaign's AI retrieval."
+                  : "Sources available to every campaign in this workspace."}
+              </p>
+            </div>
+          </div>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -138,100 +151,223 @@ export default function KnowledgeBinPage() {
             </DialogTrigger>
             <AddSourceDialog
               workspaceId={workspaceId ?? ""}
-              defaultCampaignId={filterCampaign !== ALL && filterCampaign !== NONE ? filterCampaign : null}
+              defaultCampaignId={selection ?? null}
+              lockCampaign
               onClose={() => setAddOpen(false)}
             />
           </Dialog>
         </div>
+
+        {isLoading ? (
+          <BrainPanel>
+            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading sources…
+            </div>
+          </BrainPanel>
+        ) : list.length === 0 ? (
+          <BbStateBlock
+            kind="empty"
+            title="No sources yet."
+            description={
+              selection
+                ? "Add knowledge that should only be used for this campaign."
+                : "Add a document, paste FAQ content, or upload a team directory CSV."
+            }
+            action={
+              <Button size="sm" onClick={() => setAddOpen(true)}>
+                <Plus className="mr-1.5 h-4 w-4" /> Add source
+              </Button>
+            }
+          />
+        ) : (
+          <BrainPanel className="overflow-hidden p-0">
+            <div className="overflow-x-auto">
+              <BrainTable density="lg">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Version</th>
+                    <th>Imported</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {list.map((s) => (
+                    <tr key={s.id}>
+                      <td>
+                        <div className="flex items-center gap-2 font-medium text-foreground">
+                          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{s.title}</span>
+                        </div>
+                        {s.status_message ? (
+                          <div className="mt-0.5 pl-6 text-xs text-muted-foreground">
+                            {s.status_message}
+                          </div>
+                        ) : null}
+                      </td>
+                      <td className="text-xs text-muted-foreground">{KIND_LABEL[s.kind]}</td>
+                      <td><StatusPill status={s.status} /></td>
+                      <td className="text-muted-foreground">
+                        <span className="text-foreground">v{s.version}</span>
+                        {s.prior_source_id ? (
+                          <span className="ml-1 text-xs">(supersedes prior)</span>
+                        ) : null}
+                      </td>
+                      <td className="text-xs text-muted-foreground">
+                        {new Date(s.created_at).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </BrainTable>
+            </div>
+          </BrainPanel>
+        )}
+      </div>
+    );
+  }
+
+  // Index: card grid
+  const workspaceList = sourcesByCampaign.get(WORKSPACE_KEY) ?? [];
+
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold tracking-tight">Knowledge Base</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Each campaign has its own isolated knowledge. Open a card to add and review the
+            documents that power its AI retrieval.
+          </p>
+        </div>
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="mr-1.5 h-4 w-4" /> Add source
+            </Button>
+          </DialogTrigger>
+          <AddSourceDialog
+            workspaceId={workspaceId ?? ""}
+            defaultCampaignId={null}
+            onClose={() => setAddOpen(false)}
+          />
+        </Dialog>
       </div>
 
       {isLoading ? (
         <BrainPanel>
           <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading sources…
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading…
           </div>
         </BrainPanel>
-      ) : filtered.length === 0 ? (
-        <BbStateBlock
-          kind="empty"
-          title="No sources yet."
-          description="Add a document, paste FAQ content, or upload a team directory CSV."
-          action={
-            <Button size="sm" onClick={() => setAddOpen(true)}>
-              <Plus className="mr-1.5 h-4 w-4" /> Add source
-            </Button>
-          }
-        />
       ) : (
-        <BrainPanel className="overflow-hidden p-0">
-          <div className="overflow-x-auto">
-            <BrainTable density="lg">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Type</th>
-                  <th>Campaign</th>
-                  <th>Status</th>
-                  <th>Version</th>
-                  <th>Imported</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((s) => (
-                  <tr key={s.id}>
-                    <td>
-                      <div className="flex items-center gap-2 font-medium text-foreground">
-                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{s.title}</span>
-                      </div>
-                      {s.status_message ? (
-                        <div className="mt-0.5 pl-6 text-xs text-muted-foreground">
-                          {s.status_message}
-                        </div>
-                      ) : null}
-                    </td>
-                    <td className="text-xs text-muted-foreground">
-                      {KIND_LABEL[s.kind]}
-                    </td>
-                    <td className="text-xs">
-                      {s.campaign_id ? (
-                        <BrainBadge tone="muted">
-                          {campaignNameById.get(s.campaign_id) ?? "Unknown campaign"}
-                        </BrainBadge>
-                      ) : (
-                        <span className="text-muted-foreground">Workspace-wide</span>
-                      )}
-                    </td>
-                    <td><StatusPill status={s.status} /></td>
-                    <td className="text-muted-foreground">
-                      <span className="text-foreground">v{s.version}</span>
-                      {s.prior_source_id ? (
-                        <span className="ml-1 text-xs">(supersedes prior)</span>
-                      ) : null}
-                    </td>
-                    <td className="text-xs text-muted-foreground">
-                      {new Date(s.created_at).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </BrainTable>
-          </div>
-        </BrainPanel>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <CampaignCard
+            icon={<Inbox className="h-4 w-4" />}
+            title="Workspace-wide"
+            subtitle="Shared across every campaign"
+            sources={workspaceList}
+            onClick={() => setSelection(null)}
+          />
+          {campaigns.map((c) => (
+            <CampaignCard
+              key={c.id}
+              icon={<Folder className="h-4 w-4" />}
+              title={c.name}
+              subtitle="Campaign-scoped knowledge"
+              sources={sourcesByCampaign.get(c.id) ?? []}
+              onClick={() => setSelection(c.id)}
+            />
+          ))}
+          {campaigns.length === 0 ? (
+            <Card className="flex items-center justify-center border-dashed p-6 text-center text-sm text-muted-foreground">
+              Create a campaign to give it its own knowledge base.
+            </Card>
+          ) : null}
+        </div>
       )}
     </div>
   );
 }
+
+function CampaignCard({
+  icon,
+  title,
+  subtitle,
+  sources,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  sources: BbSourceRow[];
+  onClick: () => void;
+}) {
+  const ready = sources.filter((s) => s.status === "processed").length;
+  const processing = sources.filter(
+    (s) => s.status === "processing" || s.status === "pending",
+  ).length;
+  const failed = sources.filter((s) => s.status === "failed").length;
+  const lastUpdated = sources.reduce<string | null>((acc, s) => {
+    return !acc || s.created_at > acc ? s.created_at : acc;
+  }, null);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group text-left transition-transform hover:-translate-y-0.5 focus:outline-none"
+    >
+      <Card className="h-full p-4 transition-shadow group-hover:shadow-md">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="rounded-md bg-muted p-1.5 text-muted-foreground">{icon}</span>
+            <div>
+              <div className="text-sm font-semibold text-foreground">{title}</div>
+              <div className="text-xs text-muted-foreground">{subtitle}</div>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </div>
+        <div className="mt-4 flex items-baseline gap-1">
+          <span className="text-2xl font-semibold tabular-nums text-foreground">
+            {sources.length}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            source{sources.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {ready > 0 ? <BrainBadge tone="ok">{ready} ready</BrainBadge> : null}
+          {processing > 0 ? <BrainBadge tone="warn">{processing} processing</BrainBadge> : null}
+          {failed > 0 ? <BrainBadge tone="bad">{failed} failed</BrainBadge> : null}
+          {sources.length === 0 ? (
+            <BrainBadge tone="muted">No sources yet</BrainBadge>
+          ) : null}
+        </div>
+        {lastUpdated ? (
+          <div className="mt-3 text-xs text-muted-foreground">
+            Last update {new Date(lastUpdated).toLocaleDateString()}
+          </div>
+        ) : null}
+      </Card>
+    </button>
+  );
+}
+
 
 type Tab = "upload" | "text" | "faq" | "csv" | "url";
 
 function AddSourceDialog({
   workspaceId,
   defaultCampaignId,
+  lockCampaign = false,
   onClose,
 }: {
   workspaceId: string;
   defaultCampaignId: string | null;
+  lockCampaign?: boolean;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("upload");
@@ -352,23 +488,34 @@ function AddSourceDialog({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="bb-campaign">Attach to campaign</Label>
-        <Select value={campaignId} onValueChange={setCampaignId}>
-          <SelectTrigger id="bb-campaign">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE}>Workspace-wide (no campaign)</SelectItem>
-            {campaigns.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          When attached, this source is only retrieved during calls for the selected campaign.
-        </p>
-      </div>
+      {lockCampaign ? (
+        <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          Attaching to{" "}
+          <span className="font-medium text-foreground">
+            {defaultCampaignId
+              ? campaigns.find((c) => c.id === defaultCampaignId)?.name ?? "this campaign"
+              : "Workspace-wide"}
+          </span>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          <Label htmlFor="bb-campaign">Attach to campaign</Label>
+          <Select value={campaignId} onValueChange={setCampaignId}>
+            <SelectTrigger id="bb-campaign">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>Workspace-wide (no campaign)</SelectItem>
+              {campaigns.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            When attached, this source is only retrieved during calls for the selected campaign.
+          </p>
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList className="grid grid-cols-5">
