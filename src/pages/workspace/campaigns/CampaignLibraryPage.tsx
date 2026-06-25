@@ -83,8 +83,7 @@ export default function CampaignLibraryPage() {
           <CardContent>
             <BlueprintFileUpload
               onTextExtracted={handleFileExtracted}
-              disabled={add.isPending}
-              accept="pdf,docx,doc,txt,md"
+              accept=".pdf,.docx,.doc,.txt,.md"
             />
           </CardContent>
         </Card>
