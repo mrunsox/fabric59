@@ -59,7 +59,7 @@ export default function BusinessBrainLayoutPage() {
 
   const base = `/w/${workspaceId}/brain`;
   const tabs: BrainTab[] = [
-    { to: base, label: "Knowledge Bin", end: true },
+    { to: base, label: "Knowledge Base", end: true },
     { to: `${base}/suggested`, label: "Suggested Facts" },
     { to: `${base}/approved`, label: "Approved Knowledge" },
     { to: `${base}/search`, label: "Search" },
