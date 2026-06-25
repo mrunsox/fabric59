@@ -178,7 +178,10 @@ Append a row whenever a bug or friction fix lands during the window.
 
 | Date | Change | Why (signal) | Verification |
 |---|---|---|---|
-| _(none yet)_ | | | |
+| 2026-06-25 | Reordered workspace Build sidebar to Clients → Campaigns → Workspace guide → Library; demoted Forms from top-level | User feedback: nav was fragmented; client/campaign hierarchy was invisible; Forms didn't read as part of a campaign | `src/test/regressions/phase11BuildIA.test.ts` locks order + Forms demotion |
+| 2026-06-25 | Renamed "Load Assureway sample" → "Add Assureway demo client"; updated all seed toasts to match | User feedback: Assureway should be a real client/campaign, not a "sample" | Manual: button label in `SeedAssurewayButton.tsx`; toast strings in `useSeedAssurewaySample.ts` |
+| 2026-06-25 | Added Workspace Guide AI Assembler — drops source text, drafts guide sections + dispositions + call flow + ANI/DNIS + variables + post-call automations via `assemble-workspace-program` edge fn; first pass applies guide sections only | User feedback: Workspace Guide should be where the whole script (including logic) is assembled from a dropped doc | Edge fn deployed; UI mounted on `/w/:id/guide` next to Apply template; preview drawer shows all parts read-only |
+
 
 ### Phase 10 Outcome (TBD)
 
