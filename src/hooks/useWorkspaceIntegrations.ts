@@ -113,6 +113,7 @@ export function useCreateIntegrationConnection() {
       provider_id: string;
       display_name?: string;
       client_id?: string | null;
+      campaign_id?: string | null;
       config?: Record<string, unknown>;
     }) => {
       if (!workspace) throw new Error("No workspace");
@@ -124,6 +125,7 @@ export function useCreateIntegrationConnection() {
           provider_id: input.provider_id,
           display_name: input.display_name ?? null,
           client_id: input.client_id ?? null,
+          campaign_id: input.campaign_id ?? null,
           status: "not_connected",
           config: (input.config ?? {}) as never,
           created_by: user?.id ?? null,
@@ -133,6 +135,7 @@ export function useCreateIntegrationConnection() {
       if (error) throw error;
       return data;
     },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["integration-connections"] });
       toast.success("Connection created");
