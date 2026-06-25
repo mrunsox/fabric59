@@ -292,13 +292,13 @@ function ReplayKnowledgeBin({ groups }: { groups: SnapshotKnowledgeGroup[] }) {
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-primary" aria-hidden /> Knowledge Bin
+          <BookOpen className="h-4 w-4 text-primary" aria-hidden /> Knowledge Base
         </CardTitle>
       </CardHeader>
       <CardContent>
         {sorted.length === 0 ? (
           <p className="text-xs text-muted-foreground" data-testid="replay-kb-empty">
-            No knowledge bin slice in this snapshot.
+            No knowledge base slice in this snapshot.
           </p>
         ) : (
           <ul className="space-y-1" data-testid="replay-kb">

@@ -33,7 +33,7 @@ export function InCallKnowledgeBin({ bin, isLoading }: InCallKnowledgeBinProps) 
   if (isLoading && !bin) {
     return (
       <div className="rounded-md border border-dashed border-border bg-muted/20 px-3 py-6 text-xs text-muted-foreground text-center">
-        Resolving knowledge bin…
+        Resolving knowledge base…
       </div>
     );
   }
@@ -43,7 +43,7 @@ export function InCallKnowledgeBin({ bin, isLoading }: InCallKnowledgeBinProps) 
         className="rounded-md border border-dashed border-border bg-muted/20 px-3 py-6 text-xs text-muted-foreground text-center"
         data-testid="incall-bin-empty"
       >
-        Knowledge bin unavailable for this call.
+        Knowledge base unavailable for this call.
       </div>
     );
   }
@@ -57,7 +57,7 @@ export function InCallKnowledgeBin({ bin, isLoading }: InCallKnowledgeBinProps) 
     <div className="space-y-3" data-testid="incall-knowledge-bin">
       <div className="flex items-center justify-between gap-2 px-1">
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Knowledge bin · {totalFactual} item{totalFactual === 1 ? "" : "s"}
+          Knowledge base · {totalFactual} item{totalFactual === 1 ? "" : "s"}
         </p>
         {bin.conflicts.length > 0 && (
           <span
