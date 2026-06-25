@@ -29,6 +29,7 @@ export type IntegrationConnection = {
   organization_id: string;
   provider_id: string;
   client_id: string | null;
+  campaign_id: string | null;
   display_name: string | null;
   status: string;
   auth_type: string | null;
@@ -39,6 +40,7 @@ export type IntegrationConnection = {
   created_at: string;
   updated_at: string;
 };
+
 
 export type IntegrationMapping = {
   id: string;
