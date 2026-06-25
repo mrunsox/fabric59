@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ListChecks, Plus, ArrowLeft, ChevronRight, Folder, Inbox, Pencil, Trash2 } from "lucide-react";
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
