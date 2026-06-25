@@ -3963,6 +3963,7 @@ export type Database = {
       integration_connections: {
         Row: {
           auth_type: string | null
+          campaign_id: string | null
           client_id: string | null
           config: Json
           created_at: string
@@ -3980,6 +3981,7 @@ export type Database = {
         }
         Insert: {
           auth_type?: string | null
+          campaign_id?: string | null
           client_id?: string | null
           config?: Json
           created_at?: string
@@ -3997,6 +3999,7 @@ export type Database = {
         }
         Update: {
           auth_type?: string | null
+          campaign_id?: string | null
           client_id?: string | null
           config?: Json
           created_at?: string
@@ -4013,6 +4016,13 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "integration_connections_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "integration_connections_client_id_fkey"
             columns: ["client_id"]
