@@ -38,7 +38,7 @@ export function useAddCampaignLibrarySource(campaignId: string | undefined) {
   return useMutation({
     mutationFn: async (input: {
       title: string;
-      kind: "upload" | "url" | "text";
+      kind: "upload_doc" | "upload_csv" | "url_crawl" | "paste_text" | "paste_faq";
       uri?: string | null;
       content?: string | null;
       metadata?: Record<string, unknown>;
@@ -47,7 +47,7 @@ export function useAddCampaignLibrarySource(campaignId: string | undefined) {
       const user = (await supabase.auth.getUser()).data.user;
       const { data, error } = await supabase
         .from("bb_sources")
-        .insert({
+        .insert([{
           workspace_id: workspace.id,
           campaign_id: campaignId,
           kind: input.kind,
@@ -56,7 +56,7 @@ export function useAddCampaignLibrarySource(campaignId: string | undefined) {
           status: "pending",
           metadata: { ...(input.metadata ?? {}), content: input.content ?? null },
           created_by: user?.id ?? null,
-        })
+        }])
         .select("id")
         .single();
       if (error) throw error;
