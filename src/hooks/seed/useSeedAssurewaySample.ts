@@ -5,7 +5,7 @@
  * forms, form_versions, form_campaign_assignments). No schema changes,
  * no edge functions, no auth changes. Workspace-scoped on every write.
  */
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
