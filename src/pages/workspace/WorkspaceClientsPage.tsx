@@ -18,7 +18,7 @@ import { useWorkspaceClients } from "@/hooks/useWorkspaceClients";
 export default function WorkspaceClientsPage() {
   const { workspace } = useWorkspace();
   const { data: clients = [], isLoading } = useWorkspaceClients();
-  const hasAssureway = clients.some((c) => c.name === "Assureway");
+
 
   return (
     <div className="space-y-6">
@@ -30,7 +30,11 @@ export default function WorkspaceClientsPage() {
             ? `Clients available to ${workspace.name}. Owned at the organization level.`
             : "Clients available to this workspace."
         }
-        action={<SeedAssurewayButton variant="secondary" hasExistingAssureway={hasAssureway} />}
+        action={
+          clients.length === 0 && !isLoading ? (
+            <SeedAssurewayButton variant="secondary" hasExistingAssureway={false} />
+          ) : undefined
+        }
       />
 
       {isLoading ? (
@@ -45,6 +49,7 @@ export default function WorkspaceClientsPage() {
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {clients.map((c) => (
             <Link key={c.id} to={`./${c.id}`} className="block group">
+
               <Card className="h-full transition-colors group-hover:border-primary/40">
                 <CardHeader className="flex-row items-center gap-3 space-y-0">
                   <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">

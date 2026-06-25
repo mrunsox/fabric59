@@ -8,7 +8,7 @@ import { Plus, ArrowRight } from "lucide-react";
 import { StatusBadge } from "@/components/common/StatusBadge";
 
 import { WorkspacePageHeader } from "@/components/workspace/WorkspacePageHeader";
-import { SeedAssurewayButton } from "@/components/dashboard/SeedAssurewayButton";
+
 import { WorkspaceSetupChecklist } from "@/components/workspace/WorkspaceSetupChecklist";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useWorkspaceCampaigns } from "@/hooks/useWorkspaceCampaigns";
@@ -26,9 +26,6 @@ export default function WorkspaceCampaignsPage() {
   const setup = useWorkspaceSetupReadiness();
   if (!workspace) return null;
   const base = `/w/${workspace.id}/campaigns`;
-  const hasExistingAssureway = campaigns.some(
-    (c) => c.name === "Main Reception" || c.name === "Assureway" || c.name === "General Inquiry",
-  );
 
   return (
     <div className="space-y-6">
@@ -37,16 +34,14 @@ export default function WorkspaceCampaignsPage() {
         title="Campaigns"
         lede={`Campaigns for ${workspace.name}. Drafts appear here as soon as they're saved.`}
         action={
-          <div className="flex items-center gap-2">
-            <SeedAssurewayButton variant="secondary" hasExistingAssureway={hasExistingAssureway} />
-            <Button asChild size="sm">
-              <Link to={`${base}/new`}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> New campaign
-              </Link>
-            </Button>
-          </div>
+          <Button asChild size="sm">
+            <Link to={`${base}/new`}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> New campaign
+            </Link>
+          </Button>
         }
       />
+
 
 
       {isLoading ? (
